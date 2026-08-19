@@ -92,7 +92,14 @@ export function PlanFormDialog({
             <div className="space-y-2">
               <Label>Price (₹) *</Label>
               <Input
+                // PR-48 (FINANCE P1-9): min raised from 0 to 1 so the
+                // form rejects a zero-priced plan at the UI layer. The
+                // server-side Zod schema (`createPlanSchema` in
+                // validators.ts) already enforces positive price via
+                // `z.number().positive()` — this is the matching
+                // client-side guard.
                 type="number"
+                min="1"
                 placeholder="299"
                 value={form.price}
                 onChange={(e) => set({ price: e.target.value })}
@@ -102,6 +109,7 @@ export function PlanFormDialog({
               <Label>Security Deposit (₹) *</Label>
               <Input
                 type="number"
+                min="0"
                 placeholder="0"
                 value={form.securityDeposit}
                 onChange={(e) => set({ securityDeposit: e.target.value })}

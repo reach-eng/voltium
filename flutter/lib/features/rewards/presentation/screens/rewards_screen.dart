@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class RewardsScreen extends ConsumerStatefulWidget {
@@ -51,38 +52,21 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
         backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: Text('Rewards',
+        // T-66: hardcoded English AppBar title. Localised via
+        // the existing `txtrewards` ARB key.
+        title: Text(AppLocalizations.of(context)!.txtrewards,
             style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 color: AppColors.of(context).onSurface)),
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: UnconstrainedBox(
-            child: GestureDetector(
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                child: Icon(Icons.arrow_back,
-                    color: AppColors.of(context).onSurface, size: 20),
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back,
+              color: AppColors.of(context).onSurface, size: 20),
+          tooltip: AppLocalizations.of(context)?.txtback ?? 'Back',
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/widgets/notification_bell.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
@@ -28,6 +29,8 @@ import 'package:voltium_rider/widgets/tilt_card.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+
 /// Active Dashboard screen for the Voltium Rider App.
 ///
 /// Displays the rider's status, subscription details, assigned vehicle, and referral widget.
@@ -43,6 +46,7 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    PostHogService.capture('active_dashboard_viewed');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(engagementProvider.notifier).initEngagementData();
     });
@@ -113,13 +117,14 @@ class _DashboardEmptyWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: GlassCard(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'No data available',
+              l10n?.txtnoDataAvailable ?? 'No data available',
               style:
                   AppTypography.titleMedium.copyWith(color: colors.onSurface),
             ),
@@ -127,10 +132,7 @@ class _DashboardEmptyWidget extends ConsumerWidget {
             FilledButton.icon(
               onPressed: () => ref.read(riderProvider.notifier).refresh(),
               icon: const Icon(Icons.refresh),
-              // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded English
-              // button label. Localised via the existing
-              // `txtinitializeSystem` ARB key.
-              label: Text(AppLocalizations.of(context)!.txtinitializeSystem),
+              label: Text(l10n?.txtinitializeSystem ?? 'Initialize System'),
             ),
           ],
         ),
@@ -157,22 +159,24 @@ class _DashboardContentWidget extends ConsumerWidget {
   }
 
   Widget _buildCacheIndicator(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.of(context).warningLight,
+        color: colors.warningLight,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off, size: 14, color: AppColors.warningDark),
-          SizedBox(width: 6),
+          Icon(Icons.cloud_off, size: 14, color: colors.warningLightForeground),
+          const SizedBox(width: 6),
           Text(
-            'Showing cached data',
-            style:
-                AppTypography.bodySmall.copyWith(color: AppColors.warningDark),
+            l10n?.txtshowingCachedData ?? 'Showing cached data',
+            style: AppTypography.bodySmall
+                .copyWith(color: colors.warningLightForeground),
           ),
         ],
       ),
@@ -182,6 +186,7 @@ class _DashboardContentWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final walletMinTopup =
         ref.watch(walletProvider.select((p) => p.walletMinTopup));
     final dataState = ref.watch(riderProvider.select((p) => p.dataState));
@@ -203,15 +208,19 @@ class _DashboardContentWidget extends ConsumerWidget {
             centerTitle: false,
             titleSpacing: 20,
             title: Builder(builder: (context) {
+              final headerColors = AppColors.of(context);
               final nowIst = DateTime.now()
                   .toUtc()
                   .add(const Duration(hours: 5, minutes: 30));
               final hour = nowIst.hour;
               final firstName = rider.name.split(' ').first;
-              final displayName = firstName.isEmpty ? 'Rider' : firstName;
+              final fallbackRider = l10n?.txtguestRider ?? 'Rider';
+              final displayName = firstName.isEmpty ? fallbackRider : firstName;
               final greeting = hour < 12
-                  ? 'Good Morning'
-                  : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+                  ? (l10n?.txtgreetingMorning ?? 'Good Morning')
+                  : (hour < 17
+                      ? (l10n?.txtgreetingAfternoon ?? 'Good Afternoon')
+                      : (l10n?.txtgreetingEvening ?? 'Good Evening'));
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,13 +230,13 @@ class _DashboardContentWidget extends ConsumerWidget {
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: headerColors.onSurfaceVariant,
                             letterSpacing: 0.5),
                   ),
                   Text(
                     displayName,
                     style: AppTypography.headingMedium.copyWith(
-                        color: AppColors.onSurface, letterSpacing: -0.5),
+                        color: headerColors.onSurface, letterSpacing: -0.5),
                   ),
                 ],
               );
@@ -319,20 +328,20 @@ class _DashboardContentWidget extends ConsumerWidget {
                         teamLeaderName: rider.teamLeader,
                         onViewDetails: () => showTLDetailsSheet(context, rider),
                         onCall: () async {
-                          final phone = (rider.emergencyContact == null ||
-                                  rider.emergencyContact!.isEmpty)
+                          // PR-AUDIT-FIX 2026-08-17 (AD-P0-1): dial the assigned Team Leader's phone,
+                          // not the rider's private emergency contact.
+                          final phone = (rider.teamLeaderPhone == null ||
+                                  rider.teamLeaderPhone!.isEmpty)
                               ? ''
-                              : rider.emergencyContact!;
+                              : rider.teamLeaderPhone!;
                           final sanitized =
                               phone.replaceAll(RegExp(r'[^\d+]'), '');
                           if (sanitized.isEmpty) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'No contact number available for your Team Leader.'),
-                                  backgroundColor: AppColors.warning,
-                                ),
+                              Toast.warning(
+                                context,
+                                l10n?.txtnoContactNumberTl ??
+                                    'No contact number available for your Team Leader.',
                               );
                             }
                             return;
@@ -345,12 +354,10 @@ class _DashboardContentWidget extends ConsumerWidget {
                             }
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Could not open the phone dialer. Please try again.'),
-                                  backgroundColor: AppColors.error,
-                                ),
+                              Toast.error(
+                                context,
+                                l10n?.txtcouldNotOpenDialer ??
+                                    'Could not open the phone dialer. Please try again.',
                               );
                             }
                           }

@@ -123,10 +123,12 @@ export function SendNotificationDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="system">System</SelectItem>
-                <SelectItem value="payment">Payment</SelectItem>
-                <SelectItem value="vehicle">Vehicle</SelectItem>
-                <SelectItem value="alert">Alert</SelectItem>
+                <SelectItem value="SYSTEM">System</SelectItem>
+                <SelectItem value="PAYMENT">Payment</SelectItem>
+                <SelectItem value="VEHICLE">Vehicle</SelectItem>
+                <SelectItem value="ALERT">Alert</SelectItem>
+                <SelectItem value="INFO">Info</SelectItem>
+                <SelectItem value="PROMOTION">Promotion</SelectItem>
               </SelectContent>
             </Select>
           </div>

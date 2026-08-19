@@ -2,6 +2,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_client.dart';
+import 'file_category.dart';
 import 'generated/api_client.dart';
 import 'generated/api_models.dart';
 import '../../utils/app_logger.dart';
@@ -12,20 +13,24 @@ class FilesRepository {
 
   FilesRepository(this._client, this._apiClient);
 
-  Future<String> uploadFile(File file, String category) async {
+  Future<String> uploadFile(File file, dynamic category) async {
+    final String categoryStr = category is FileCategory
+        ? category.value
+        : FileCategory.fromString(category.toString()).value;
+
     if (!kReleaseMode && const String.fromEnvironment('TEST_MODE') == 'true') {
-      return 'https://mock-storage.voltium.in/test-upload-$category.png';
+      return 'https://mock-storage.voltium.in/test-upload-$categoryStr.png';
     }
 
     try {
       final fileName = file.path.split('/').last;
       final fileBytes = await file.readAsBytes();
-      final mimeType = _inferMimeType(fileName);
+      final mimeType = _inferMimeType(fileName, fileBytes);
 
       final req = RequestUploadUrlRequest(
         fileName: fileName,
         mimeType: mimeType,
-        category: category,
+        category: categoryStr,
         fileSize: fileBytes.length.toDouble(),
       );
 
@@ -83,7 +88,27 @@ class FilesRepository {
     }
   }
 
-  String _inferMimeType(String fileName) {
+  String _inferMimeType(String fileName, List<int> bytes) {
+    if (bytes.length >= 3 &&
+        bytes[0] == 0xFF &&
+        bytes[1] == 0xD8 &&
+        bytes[2] == 0xFF) {
+      return 'image/jpeg';
+    }
+    if (bytes.length >= 4 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return 'image/png';
+    }
+    if (bytes.length >= 4 &&
+        bytes[0] == 0x25 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x44 &&
+        bytes[3] == 0x46) {
+      return 'application/pdf';
+    }
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
       case 'png':

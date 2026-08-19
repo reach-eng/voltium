@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { istDateKey } from '@/lib/date-keys';
@@ -10,7 +11,7 @@ interface AuditCleanupResult {
 }
 
 export const auditCleanupJob = {
-  async process(job: any): Promise<AuditCleanupResult> {
+  async process(job: Pick<QueueJob, 'id'>): Promise<AuditCleanupResult> {
     logger.info('[AuditCleanupJob] Starting', { jobId: job.id });
 
     // PR-108b: idempotency guard keyed on the IST date so the 06:00

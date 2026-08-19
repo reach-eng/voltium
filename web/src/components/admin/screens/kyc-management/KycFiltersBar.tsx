@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Keyboard, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { ExportButton } from '@/components/admin/export-button';
 import type { KycRider } from './types';
 
@@ -34,11 +34,7 @@ export function KycFiltersBar({
 }: KycFiltersBarProps) {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Keyboard className="w-3 h-3" />
-          <span>Ctrl+A Select All · Ctrl+K Approve · Ctrl+R Reject · Ctrl+Z Undo</span>
-        </div>
+      <div className="flex justify-end items-center">
         <div className="flex items-center gap-3">
           {exportProgress !== null && (
             <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-lg">
@@ -86,6 +82,7 @@ export function KycFiltersBar({
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="submitted">Submitted</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="info_required">Needs Correction</TabsTrigger>
@@ -109,6 +106,7 @@ export function KycFiltersBar({
           <Input
             type="date"
             value={endDate}
+            min={startDate || undefined}
             onChange={(e) => setEndDate(e.target.value)}
             className="h-8 w-40 text-xs"
           />

@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 
 /// Onboarding Flow Widget Tests
+///
+/// The old checklist-style `OnboardingScreen` was replaced by the KYC
+/// `UserOnboardingScreen` (feat/ux-2 router rework). Tests follow the
+/// screen's data contract: it reads `riderProvider` for the rider id
+/// used to scope the cached form, so the provider is seeded directly.
 void main() {
   Widget buildTestApp({required Widget child}) {
     return ProviderScope(
       overrides: [
-        localeProviderRef.overrideWith((ref) => LocaleProvider()),
-        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+        localeProviderRef.overrideWith(() => LocaleProvider()),
+        themeProviderRef.overrideWith(() => ThemeProvider()),
+        riderProvider.overrideWith(() => _SeededRiderNotifier(
+              const RiderModel(
+                id: 'test_rider_123',
+                riderId: 'test_rider_123',
+                name: 'Test Rider',
+                phone: '9999999999',
+                lifecycleStatus: 'NEW',
+              ),
+            )),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -30,39 +46,31 @@ void main() {
   }
 
   group('Onboarding Screen', () {
-    testWidgets('onboarding screen renders without error', (tester) async {
+    testWidgets('user onboarding screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(
-        child: OnboardingScreen(
-          onComplete: () {},
-          pages: const [],
-        ),
+        child: const UserOnboardingScreen(onNext: null, onBack: null),
       ));
       await tester.pump(const Duration(seconds: 1));
-      expect(find.byType(OnboardingScreen), findsOneWidget);
+      expect(find.byType(UserOnboardingScreen), findsOneWidget);
     });
 
-    testWidgets('onboarding screen shows checklist or steps', (tester) async {
+    testWidgets('user onboarding shows rider profile step', (tester) async {
       await tester.pumpWidget(buildTestApp(
-        child: OnboardingScreen(
-          onComplete: () {},
-          pages: const [],
-        ),
+        child: const UserOnboardingScreen(onNext: null, onBack: null),
       ));
       await tester.pump(const Duration(seconds: 1));
 
-      final hasSteps = find.byType(ListTile).evaluate().isNotEmpty ||
+      final hasForm = find.byType(TextField).evaluate().isNotEmpty ||
+          find.byType(TextFormField).evaluate().isNotEmpty ||
           find.byType(Card).evaluate().isNotEmpty ||
           find.byType(Text).evaluate().isNotEmpty;
 
-      expect(hasSteps, isTrue);
+      expect(hasForm, isTrue);
     });
 
-    testWidgets('onboarding screen does not overflow', (tester) async {
+    testWidgets('user onboarding screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(
-        child: OnboardingScreen(
-          onComplete: () {},
-          pages: const [],
-        ),
+        child: const UserOnboardingScreen(onNext: null, onBack: null),
       ));
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
@@ -84,4 +92,21 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     });
   });
+}
+
+/// Seeds the Riverpod `riderProvider` directly (R4.3c-6 migration): the
+/// UserOnboardingScreen reads `ref.read(riderProvider).riderId` for the
+/// cache key, so the legacy AppProvider seed alone no longer satisfies it.
+class _SeededRiderNotifier extends RiderNotifier {
+  _SeededRiderNotifier(this._seed);
+  final RiderModel _seed;
+
+  @override
+  RiderState build() => RiderState(
+        rider: _seed,
+        riderId: _seed.riderId.isNotEmpty ? _seed.riderId : _seed.id,
+        phone: _seed.phone,
+        dataState: DataState.fresh,
+        hasFetchedOnce: true,
+      );
 }

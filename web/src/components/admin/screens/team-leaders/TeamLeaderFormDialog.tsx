@@ -58,11 +58,15 @@ export function TeamLeaderFormDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Phone</Label>
+            <Label>Phone <span className="text-[11px] text-muted-foreground font-normal">(10 digits)</span></Label>
             <Input
               value={form.phone}
-              onChange={(e) => set({ phone: e.target.value })}
-              placeholder="Phone number"
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                set({ phone: cleaned });
+              }}
+              placeholder="10-digit phone number"
+              maxLength={10}
             />
           </div>
           <div className="space-y-2">
@@ -88,7 +92,7 @@ export function TeamLeaderFormDialog({
           </Button>
           <Button
             onClick={onSubmit}
-            disabled={!form.name || !form.phone || saving}
+            disabled={!form.name.trim() || form.phone.trim().length !== 10 || saving}
           >
             {saving ? 'Saving...' : 'Save'}
           </Button>

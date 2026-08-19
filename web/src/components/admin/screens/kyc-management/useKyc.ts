@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import type { KycRider, KycConfirmAction, LastKycBulkAction } from './types';
+import { toast } from 'sonner';
+import type { KycRider, KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
 
 export function useKyc() {
   const [riders, setRiders] = useState<KycRider[]>([]);
@@ -10,7 +11,9 @@ export function useKyc() {
   const [tab, setTab] = useState('pending');
   const [selectedRider, setSelectedRider] = useState<KycRider | null>(null);
   const [confirmAction, setConfirmAction] = useState<KycConfirmAction | null>(null);
+  const [bulkConfirmAction, setBulkConfirmAction] = useState<KycBulkConfirmAction | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [bulkRejectionReason, setBulkRejectionReason] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -20,7 +23,6 @@ export function useKyc() {
   const [showUndoToast, setShowUndoToast] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [rowLoadingIds, setRowLoadingIds] = useState<Set<string>>(new Set());
-  const componentRef = useRef<HTMLDivElement>(null);
 
   const fetchRiders = useCallback(async () => {
     setLoading(true);
@@ -30,8 +32,9 @@ export function useKyc() {
       if (tab === 'info_required') {
         params.set('kycStatus', 'INFO_REQUIRED');
       } else if (tab === 'pending') {
-        params.append('kycStatus', 'PENDING');
-        params.append('kycStatus', 'SUBMITTED');
+        params.set('kycStatus', 'PENDING');
+      } else if (tab === 'submitted') {
+        params.set('kycStatus', 'SUBMITTED');
       } else if (tab !== 'all') {
         params.set('kycStatus', tab.toUpperCase());
       }
@@ -42,9 +45,12 @@ export function useKyc() {
         const json = await res.json();
         const data = json.data?.riders || json.data || [];
         setRiders(Array.isArray(data) ? data : []);
+      } else {
+        toast.error('Failed to fetch KYC queue.');
       }
     } catch (err) {
       logger.error('Failed to fetch riders for KYC', { error: err });
+      toast.error('Network error loading KYC queue.');
     } finally {
       setLoading(false);
     }
@@ -84,20 +90,27 @@ export function useKyc() {
     const statusMap = { approve: 'APPROVED', reject: 'REJECTED', info_required: 'INFO_REQUIRED' };
     const previousStatus = rider.kycStatus;
     try {
-      await fetch('/api/admin/riders', {
+      if ((action === 'reject' || action === 'info_required') && rejectionReason.trim().length < 5) {
+        toast.error('Please provide a reason of at least 5 characters.');
+        return;
+      }
+      const res = await fetch('/api/admin/riders', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: rider.id,
           kycStatus: statusMap[action],
           rejectionReason:
-            action === 'reject'
-              ? rejectionReason
-              : action === 'info_required'
-                ? rejectionReason
-                : undefined,
+            action === 'reject' || action === 'info_required'
+              ? rejectionReason.trim()
+              : undefined,
         }),
       });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || errJson.message || `Request failed: ${res.status}`);
+      }
+      toast.success(`Rider KYC ${statusMap[action].toLowerCase()}`);
       setLastAction({
         ids: [rider.id],
         previousStatuses: { [rider.id]: previousStatus },
@@ -116,8 +129,9 @@ export function useKyc() {
       if (selectedRider?.id === rider.id) {
         setSelectedRider({ ...rider, kycStatus: statusMap[action] });
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Failed to update KYC', { error: err });
+      toast.error(err?.message || 'Failed to update KYC');
     } finally {
       setActionLoading(false);
       setRowLoadingIds((prev) => {
@@ -132,28 +146,42 @@ export function useKyc() {
     if (!lastAction) return;
     setBulkLoading(true);
     try {
-      const promises = Object.entries(lastAction.previousStatuses).map(([id, status]) =>
-        fetch('/api/admin/riders', {
+      const promises = Object.entries(lastAction.previousStatuses).map(async ([id, status]) => {
+        const res = await fetch('/api/admin/riders', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, kycStatus: status }),
-        })
-      );
+        });
+        if (!res.ok) throw new Error(`Undo failed for ${id}`);
+      });
       await Promise.all(promises);
+      toast.success('Undo successful');
       setLastAction(null);
       setShowUndoToast(false);
       fetchRiders();
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Undo failed', { error: err });
+      toast.error('Undo failed. Please try again.');
     } finally {
       setBulkLoading(false);
     }
   };
 
-  const handleBulkAction = async (action: 'approve' | 'reject' | 'info_required') => {
+  const handleBulkAction = async (action: KycBulkConfirmAction, reason?: string) => {
     const statusMap = { approve: 'APPROVED', reject: 'REJECTED', info_required: 'INFO_REQUIRED' };
     const targets = filteredRiders.filter((r) => selectedIds.has(r.id));
     const targetIds = targets.map((r) => r.id);
+    if (targetIds.length === 0) return;
+
+    if (action === 'reject' && (!reason || reason.trim().length < 10)) {
+      toast.error('Rejection reason must be at least 10 characters.');
+      return;
+    }
+    if (action === 'info_required' && (!reason || reason.trim().length < 5)) {
+      toast.error('Correction details must be at least 5 characters.');
+      return;
+    }
+
     setRowLoadingIds((prev) => new Set([...prev, ...targetIds]));
     const previousStatuses: Record<string, string> = {};
     targets.forEach((r) => {
@@ -162,15 +190,21 @@ export function useKyc() {
 
     setBulkLoading(true);
     try {
-      await fetch('/api/admin/riders/bulk', {
+      const res = await fetch('/api/admin/riders/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ids: targetIds,
           action: 'bulkKyc',
           value: statusMap[action],
+          rejectionReason: reason?.trim() || undefined,
         }),
       });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || errJson.message || `Bulk request failed: ${res.status}`);
+      }
+      toast.success(`Bulk KYC ${statusMap[action].toLowerCase()} applied to ${targetIds.length} rider(s)`);
       setLastAction({
         ids: targetIds,
         previousStatuses,
@@ -178,10 +212,13 @@ export function useKyc() {
       });
       setShowUndoToast(true);
       setTimeout(() => setShowUndoToast(false), 5000);
+      setBulkConfirmAction(null);
+      setBulkRejectionReason('');
       setSelectedIds(new Set());
       fetchRiders();
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Bulk KYC action failed', { error: err });
+      toast.error(err?.message || 'Bulk KYC action failed');
     } finally {
       setBulkLoading(false);
       setRowLoadingIds((prev) => {
@@ -191,39 +228,6 @@ export function useKyc() {
       });
     }
   };
-
-  // Keyboard Shortcuts (Ctrl+A, Ctrl+K, Ctrl+R, Ctrl+Z)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (confirmAction) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-        e.preventDefault();
-        toggleSelectAll();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        if (selectedIds.size > 0 && !bulkLoading) {
-          handleBulkAction('approve');
-        }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-        e.preventDefault();
-        if (selectedIds.size > 0 && !bulkLoading) {
-          handleBulkAction('reject');
-        }
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault();
-        if (lastAction && !bulkLoading) {
-          handleUndo();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedIds, bulkLoading, lastAction, confirmAction, filteredRiders]);
 
   return {
     riders,
@@ -235,8 +239,12 @@ export function useKyc() {
     setSelectedRider,
     confirmAction,
     setConfirmAction,
+    bulkConfirmAction,
+    setBulkConfirmAction,
     rejectionReason,
     setRejectionReason,
+    bulkRejectionReason,
+    setBulkRejectionReason,
     selectedIds,
     setSelectedIds,
     toggleSelect,
@@ -253,7 +261,6 @@ export function useKyc() {
     setShowUndoToast,
     actionLoading,
     rowLoadingIds,
-    componentRef,
 
     // Handlers
     handleKycAction,

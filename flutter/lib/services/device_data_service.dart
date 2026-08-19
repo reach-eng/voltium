@@ -62,7 +62,7 @@ class DeviceDataService {
     }
   }
 
-  Future<void> syncLocation(String riderId) async {
+  Future<void> syncLocation(String riderId, {int? batteryLevel}) async {
     if (PlatformInfo.isWeb) return;
     if (!_isMobile) return;
     try {
@@ -83,15 +83,20 @@ class DeviceDataService {
         ),
       );
 
+      final locationData = <String, dynamic>{
+        'lat': position.latitude,
+        'lng': position.longitude,
+        'accuracy': position.accuracy,
+        'speed': position.speed,
+        'isMocked': position.isMocked,
+      };
+      if (batteryLevel != null) {
+        locationData['batteryLevel'] = batteryLevel;
+      }
+
       await VoltiumApiService().syncDeviceData(
         type: 'LOCATION',
-        data: {
-          'lat': position.latitude,
-          'lng': position.longitude,
-          'accuracy': position.accuracy,
-          'speed': position.speed,
-          'isMocked': position.isMocked,
-        },
+        data: locationData,
       );
       appDebug('DeviceDataService: Location synced');
     } catch (e) {

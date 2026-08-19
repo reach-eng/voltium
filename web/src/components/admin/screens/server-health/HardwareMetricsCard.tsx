@@ -11,16 +11,17 @@ interface HardwareMetricsCardProps {
 /**
  * R3.7i split — Hardware Metrics card.
  *
- * Three metrics in a 3-col grid: CPU utilisation, RAM usage (showing
- * uptime in minutes since the laptop service doesn't expose RAM),
- * and disk space remaining (with total). The card spans both columns
- * of the outer grid.
+ * Three metrics in a 3-col grid: CPU utilisation, RAM usage, and disk
+ * space remaining (with total). The card spans both columns of the
+ * outer grid. (2026-08-07 verification: the doc comment previously
+ * claimed RAM showed uptime — the hook actually feeds memoryCheck
+ * into ramUsage, so the labels and data were always aligned.)
  */
 export function HardwareMetricsCard({ health }: HardwareMetricsCardProps) {
   return (
     <Card className="md:col-span-2">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-base font-bold">Laptop Hardware Metrics</CardTitle>
+        <CardTitle className="text-base font-bold">Server Hardware Metrics</CardTitle>
         <Cpu className="h-5 w-5 text-primary" />
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">

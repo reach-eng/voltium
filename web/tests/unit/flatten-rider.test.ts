@@ -44,9 +44,11 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
   test('should correctly map KYC alias fields for frontend compatibility', () => {
     const flat = flattenRider(mockRider);
     expect(flat.kycStatus).toBe('VERIFIED');
-    expect(flat.bankAccount).toBe('1234567890');
+    // PR-5 (RIDER_DASHBOARD P0-3 PII strip): account fields are masked in
+    // the flattened payload — only the last 4 digits survive.
+    expect(flat.bankAccount).toBe('******7890');
     expect(flat.bankIfsc).toBe('HDFC0001234');
-    expect(flat.accountNumber).toBe('1234567890');
+    expect(flat.accountNumber).toBe('******7890');
   });
 
   test('should correctly flatten guarantor fields', () => {
@@ -78,5 +80,44 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
     };
     const flat = flattenRider(riderWithReturn);
     expect(flat.returnPending).toBe(true);
+  });
+
+  // PR-2026-08-16: the data-deletion queue needs to tell "pending 7-day
+  // window" (deletedAt set, purgedAt null) from "purged" (purgedAt set).
+  // flattenRider spreads the raw rider row, so the deletion markers must
+  // survive flattening untouched for the admin queue UI to read them.
+  test('should pass through deletion-state markers (deletedAt/purgedAt)', () => {
+    const pending: any = {
+      ...mockRider,
+      deletedAt: '2026-08-10T00:00:00.000Z',
+      purgedAt: null,
+    };
+    const purged: any = {
+      ...mockRider,
+      deletedAt: '2026-08-01T00:00:00.000Z',
+      purgedAt: '2026-08-08T00:00:00.000Z',
+    };
+
+    const flatPending = flattenRider(pending);
+    expect(flatPending.deletedAt).toBe('2026-08-10T00:00:00.000Z');
+    expect(flatPending.purgedAt).toBeNull();
+
+    const flatPurged = flattenRider(purged);
+    expect(flatPurged.deletedAt).toBe('2026-08-01T00:00:00.000Z');
+    expect(flatPurged.purgedAt).toBe('2026-08-08T00:00:00.000Z');
+  });
+
+  test('P0-S1: should never leak lockPasswordHash, fcmToken, or tokenVersion', () => {
+    const sensitiveRider: any = {
+      ...mockRider,
+      lockPasswordHash: '$2b$10$abcdef1234567890abcdef1234567890abcdef1234567890',
+      fcmToken: 'fcm-secret-push-token-12345',
+      tokenVersion: 4,
+    };
+
+    const flat = flattenRider(sensitiveRider) as any;
+    expect(flat.lockPasswordHash).toBeUndefined();
+    expect(flat.fcmToken).toBeUndefined();
+    expect(flat.tokenVersion).toBeUndefined();
   });
 });

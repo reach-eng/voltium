@@ -9,7 +9,7 @@
 
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+import { Prisma, RiderLifecycleStatus, KycStatus } from '@prisma/client';
 import { flattenRider as sharedFlattenRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { signRiderUrlsWithProvider } from '@/lib/sign-rider';
@@ -20,7 +20,9 @@ import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
 import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache } from '@/lib/server-cache';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -32,7 +34,7 @@ const SAFE_RIDER_FIELDS = new Set([
   'currentAddress',
   'emergencyContact',
   'pickupHub',
-  'teamLeader',
+  'teamLeaderId',
   'planStartDate',
   'planEndDate',
   'intent',
@@ -63,7 +65,6 @@ const KYC_FIELDS = new Set([
 ]);
 
 const WALLET_FIELDS = new Set([
-  'walletBalance',
   'securityDeposit',
   'balanceInPaise',
   'depositStatus',
@@ -101,6 +102,7 @@ export const adminRiderUseCases = {
     limit?: number;
     sortBy?: string;
     sortDir?: string;
+    deleted?: boolean;
   }) {
     const flags = await getFeatureFlags();
     const {
@@ -114,13 +116,14 @@ export const adminRiderUseCases = {
       limit = 20,
       sortBy = 'createdAt',
       sortDir = 'desc',
+      deleted = false,
     } = filters;
 
     if (kycStatus && !flags.enableKYCVerification) {
       throw new Error('KYC verification is currently disabled');
     }
 
-    const where: Record<string, any> = {};
+    const where: Prisma.RiderWhereInput = {};
     if (search) {
       const trimmed = search.trim();
       const isPhoneLike = /^\+?[0-9]{5,15}$/.test(trimmed);
@@ -134,14 +137,21 @@ export const adminRiderUseCases = {
         ];
       }
     }
-    if (state && state !== 'ALL') where.lifecycleStatus = state;
+    // PR-7 (2026-08-06 fix-plan; 1st audit P0-1): the data-deletion queue
+    // needs to list soft-deleted riders. Explicit `deletedAt` filter overrides
+    // the middleware's default `deletedAt: null` (see lib/db.ts).
+    if (deleted) {
+      where.deletedAt = { not: null };
+    }
+    if (state && state !== 'ALL') where.lifecycleStatus = state as RiderLifecycleStatus;
     if (kycStatus) {
-      where.kycProfile = { status: kycStatus };
+      where.kycProfile = { status: kycStatus as KycStatus };
     }
     if (startDate || endDate) {
-      where.createdAt = {} as any;
-      if (startDate) (where.createdAt as any).gte = new Date(startDate);
-      if (endDate) (where.createdAt as any).lte = new Date(`${endDate}T23:59:59.999Z`);
+      where.createdAt = {
+        ...(startDate ? { gte: new Date(startDate) } : {}),
+        ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
+      };
     }
 
     const validSortFields = new Set([
@@ -163,6 +173,11 @@ export const adminRiderUseCases = {
           fullName: true,
           phone: true,
           email: true,
+          fatherName: true,
+          motherName: true,
+          dob: true,
+          currentAddress: true,
+          emergencyContact: true,
           lifecycleStatus: true,
           pickupHub: true,
           pickedUpAt: true,
@@ -170,7 +185,7 @@ export const adminRiderUseCases = {
           depositDoneAt: true,
           kycDoneAt: true,
           planDoneAt: true,
-          teamLeader: true,
+          teamLeaderId: true,
           planStartDate: true,
           planEndDate: true,
           currentPlan: true,
@@ -181,6 +196,13 @@ export const adminRiderUseCases = {
           referralCode: true,
           createdAt: true,
           updatedAt: true,
+          // PR-7 (1st audit P0-1): the data-deletion queue shows
+          // daysRemaining from deletedAt; the purge worker (7-day window)
+          // needs it in the payload too.
+          deletedAt: true,
+          // PR-2026-08-16: lets the queue distinguish "purged" from
+          // "pending 7-day window" (deletedAt set, purgedAt null).
+          purgedAt: true,
           kycProfile: {
             select: {
               id: true,
@@ -204,7 +226,7 @@ export const adminRiderUseCases = {
             select: {
               id: true,
               balanceInPaise: true,
-              securityDeposit: true,
+              securityDepositInPaise: true,
               depositStatus: true,
               paymentStreak: true,
             },
@@ -262,23 +284,23 @@ export const adminRiderUseCases = {
     ]);
 
     // Shared guarantor detection
-    const guarantorPhones = (riders as any[])
+    const guarantorPhones = riders
       .map((r) => r.guarantor?.phone)
       .filter((phone): phone is string => !!phone && phone.trim() !== '');
 
-    let sharingRiders: any[] = [];
+    let sharingRiders: Array<{ id: string; fullName: string | null; riderId: string; guarantor: { phone: string | null } | null }> = [];
     if (guarantorPhones.length > 0) {
-      sharingRiders = (await db.rider.findMany({
+      sharingRiders = await db.rider.findMany({
         where: { guarantor: { phone: { in: guarantorPhones } } },
         select: { id: true, fullName: true, riderId: true, guarantor: { select: { phone: true } } },
-      })) as any[];
+      });
     }
 
-    const flat = riders.map((r: any) => {
-      const flattened = sharedFlattenRider(r as any);
-      const gPhone = (r as any).guarantor?.phone;
+    const flat = riders.map((r) => {
+      const flattened = sharedFlattenRider(r);
+      const gPhone = r.guarantor?.phone;
       if (gPhone && sharingRiders.length > 0) {
-        (flattened as any).sharedGuarantorWith = sharingRiders
+        (flattened as { sharedGuarantorWith?: string[] }).sharedGuarantorWith = sharingRiders
           .filter((sr) => sr.id !== r.id && sr.guarantor?.phone === gPhone)
           .map((sr) => (sr.fullName || sr.riderId) as string);
       }
@@ -288,9 +310,7 @@ export const adminRiderUseCases = {
     const { getStorageProvider } = await import('@/lib/storage');
     const storage = await getStorageProvider();
     const urlCache = new Map<string, string>();
-    const signed = await Promise.all(
-      flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage, urlCache))
-    );
+    const signed = await Promise.all(flat.map((r) => signRiderUrlsWithProvider(r, storage, urlCache)));
 
     const lastRider = signed[signed.length - 1];
     return {
@@ -322,7 +342,7 @@ export const adminRiderUseCases = {
 
     const riderId = `VF-RD-${randomUUID().slice(0, 8).toUpperCase()}`;
 
-    const rider = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const rider = await db.$transaction(async (tx) => {
       let created = await tx.rider.create({
         data: {
           phone,
@@ -356,7 +376,8 @@ export const adminRiderUseCases = {
     // the freshly-inserted rider and fails the unique constraint cleanly.
     invalidateRiderPhoneCache(phone);
 
-    return sharedFlattenRider(rider as any);
+    if (!rider) throw new Error('Rider created but could not be reloaded');
+    return sharedFlattenRider(rider);
   },
 
   /**
@@ -380,12 +401,15 @@ export const adminRiderUseCases = {
     const guarantorData: any = {};
 
     for (const [key, value] of Object.entries(data)) {
+      if (key === 'walletBalance') {
+        throw new Error('Direct walletBalance mutations are blocked — use Wallet Adjust API');
+      }
+
       if (KYC_FIELDS.has(key)) {
         if (key === 'kycStatus') kycData.status = value;
         else kycData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (WALLET_FIELDS.has(key)) {
-        if (key === 'walletBalance') walletData.balanceInPaise = Math.round(Number(value) * 100);
-        else if (key === 'securityDeposit')
+        if (key === 'securityDeposit')
           walletData.securityDeposit = Math.round(Number(value) * 100);
         else walletData[key] = value;
       } else if (GUARANTOR_FIELDS.has(key)) {
@@ -414,15 +438,54 @@ export const adminRiderUseCases = {
       }
     }
 
-    // Sync lifecycleStatus with KycProfile status
+    // Sync lifecycleStatus with KycProfile status.
+    //
+    // PR-ONBOARDING-FLOW-2026-08-13: do NOT downgrade a rider who has
+    // already progressed past the KYC rank. The admin can legitimately
+    // approve KYC for a rider who is already PICKUP_SCHEDULED or
+    // ACTIVE (e.g., the KYC was pending when the rider was fast-tracked
+    // through the flow, or the admin is fixing a stale KYC record after
+    // the fact). Setting lifecycleStatus = 'KYC_APPROVED' in that
+    // case would yank the rider back to the KYC-approved rank and
+    // strand them on the wrong screen — the mobile app would have
+    // stale PICKUP_SCHEDULED data and the hang-tight poll would never
+    // see the new (downgraded) state because the rider is already
+    // past it on the server. The rider would be stuck on hang-tight
+    // even though the admin intended to *progress* them.
+    //
+    // The correct behaviour: only set lifecycleStatus if the rider's
+    // current rank is <= the KYC rank (4). For a rider already at
+    // rank 5+ (GUARANTOR_SUBMITTED or beyond), the KYC approval is
+    // recorded (kycDoneAt + guarantorData.status) but the lifecycle
+    // stays where it is.
     if (kycData.status === 'APPROVED') {
-      riderData.lifecycleStatus = 'KYC_APPROVED';
+      const currentRank = lifecycleRankOf(existing.lifecycleStatus);
+      if (currentRank <= 4) {
+        riderData.lifecycleStatus = 'KYC_APPROVED';
+      }
       riderData.kycDoneAt = new Date();
-      guarantorData.status = 'APPROVED';
+      // PR-ONBOARDING-FLOW-2026-08-13: only auto-approve the guarantor
+      // if it was already in SUBMITTED state. Previously, KYC approval
+      // unconditionally set guarantorData.status = 'APPROVED', which
+      // silently auto-approved a rider's guarantor on KYC review alone.
+      // KYC review and guarantor review are independent gates — the
+      // admin should explicitly approve the guarantor, not piggyback
+      // on KYC approval. If the guarantor is still in PENDING/DRAFT
+      // (rider hasn't submitted it yet), leave it alone.
+      const existingGuarantor = await db.guarantor.findUnique({ where: { riderId: id } });
+      if (existingGuarantor?.status === 'SUBMITTED') {
+        guarantorData.status = 'APPROVED';
+      }
     }
     if (kycData.status === 'REJECTED' || kycData.status === 'INFO_REQUIRED') {
+      // Same guard for rejections: do not downgrade a rider who is
+      // already past KYC in the flow. A late rejection should not
+      // yank them back to KYC_SUBMITTED.
       const wasSuspended = kycData.status === 'REJECTED';
-      riderData.lifecycleStatus = wasSuspended ? 'SUSPENDED' : 'KYC_SUBMITTED';
+      const currentRank = lifecycleRankOf(existing.lifecycleStatus);
+      if (currentRank <= 4) {
+        riderData.lifecycleStatus = wasSuspended ? 'SUSPENDED' : 'KYC_SUBMITTED';
+      }
       guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
 
       // PR-99: fire the security-event logger when a rider is suspended
@@ -438,7 +501,7 @@ export const adminRiderUseCases = {
       }
     }
 
-    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await db.$transaction(async (tx) => {
       if (Object.keys(riderData).length > 0) {
         if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
           const name = riderData.fullName as string;
@@ -540,7 +603,8 @@ export const adminRiderUseCases = {
         .catch((e) => logger.error('Failed to notify KYC change', e));
     }
 
-    return sharedFlattenRider(result as any);
+    if (!result) throw new Error('Rider not found after KYC update');
+    return sharedFlattenRider(result);
   },
 
   /**
@@ -561,23 +625,29 @@ export const adminRiderUseCases = {
   async assignPlan(
     riderId: string,
     planId: string,
-    planName: string,
     actorId: string,
     actorRole: string
   ) {
-    const plan = await db.rentalPlan.findUnique({ where: { id: planId } });
+    // P0-4 (2026-08-05 legal/device audit): the old signature took a
+    // caller-supplied `planName` that the route passed `planId` into — the
+    // audit log recorded the plan ID as its name. The plan is fetched below
+    // anyway, so derive the name from the DB row (single source of truth).
+    // P1.9: a soft-deleted plan must not be assignable.
+    const plan = await db.rentalPlan.findUnique({ where: { id: planId, deletedAt: null } });
     if (!plan) throw new Error('Plan not found');
 
     const now = new Date();
     const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + plan.durationDays);
+    // P2.1: durationDays is strictly derived from type — the DB column is a
+    // sanity-check only, never the billing source of truth.
+    endDate.setDate(endDate.getDate() + getDurationForPlanType(plan.type));
 
     await transitionRiderStatus(riderId, 'PLAN_SELECTED');
     const result = await db.rider.update({
       where: { id: riderId },
       data: {
         currentPlan: plan.name,
-        currentPlanPrice: plan.price,
+        currentPlanPrice: plan.priceInPaise,
         planStartDate: now,
         planEndDate: endDate,
         planDoneAt: new Date(),
@@ -592,7 +662,7 @@ export const adminRiderUseCases = {
       action: 'rider.assign_plan',
       entity: 'Rider',
       entityId: riderId,
-      details: { planId, planName, override: true },
+      details: { planId, planName: plan.name, override: true },
     }).catch(() => {});
     return result;
   },
@@ -602,17 +672,17 @@ export const adminRiderUseCases = {
    */
   async completePickup(
     riderId: string,
-    data: { vehicleId?: string; hubId?: string; teamLeader?: string },
+    data: { vehicleId?: string; hubId?: string; teamLeaderId?: string },
     actorId: string,
     actorRole: string
   ) {
     const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
     if (!rider) throw new Error('Rider not found');
 
-    let assignedTl = data.teamLeader || rider.teamLeader;
+    let assignedTl = data.teamLeaderId || rider.teamLeaderId;
     if (!assignedTl || assignedTl === 'Not Assigned') {
       const activeTl = await db.teamLeader.findFirst({ where: { isActive: true } });
-      assignedTl = activeTl ? activeTl.name : 'Amit Sharma';
+      assignedTl = activeTl ? activeTl.id : null;
     }
 
     let assignedVehicleString = 'VF-ASSIGNED-BY-ADMIN';
@@ -628,7 +698,7 @@ export const adminRiderUseCases = {
         pickedUpAt: new Date(),
         assignedVehicle: assignedVehicleString,
         pickupHub: data.hubId || 'Central Hub',
-        teamLeader: assignedTl,
+        teamLeaderId: assignedTl,
       },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
@@ -677,18 +747,27 @@ export const adminRiderUseCases = {
    * Get device data for a rider (contacts, call logs, locations).
    */
   async getDeviceData(riderId: string, type: string = 'all') {
+    // P0-5 (2026-08-05 legal/device audit): the old select read
+    // `lockPassword` — a field that does not exist on the Rider model (the
+    // column is `lockPasswordHash`). Prisma silently returned undefined and
+    // the TS type lied. The hash must never reach the admin UI anyway, so
+    // drop the field entirely rather than selecting the hash.
     const rider = await db.rider.findUnique({
       where: { id: riderId },
       select: {
         isAdminLocked: true,
-        lockPassword: true,
         isUninstallBlocked: true,
         isLocationMandatory: true,
         isAppsControlRestricted: true,
       },
     });
 
-    const results: any = { rider };
+    const results: {
+      rider: typeof rider;
+      contacts?: Awaited<ReturnType<typeof db.userContact.findMany>>;
+      callLogs?: Awaited<ReturnType<typeof db.userCallLog.findMany>>;
+      locations?: Awaited<ReturnType<typeof db.userLocation.findMany>>;
+    } = { rider };
 
     if (type === 'CONTACTS' || type === 'all') {
       results.contacts = await db.userContact.findMany({
@@ -734,15 +813,25 @@ export const adminRiderUseCases = {
   /**
    * Delete a rider with cascade clean-up of related records.
    */
-  async delete(id: string) {
-    await db.$transaction([
-      db.notification.deleteMany({ where: { riderId: id } }),
-      db.rentalLease.deleteMany({ where: { riderId: id } }),
-      db.guarantor.deleteMany({ where: { riderId: id } }),
-      db.kycProfile.deleteMany({ where: { riderId: id } }),
-      db.wallet.deleteMany({ where: { riderId: id } }),
-      db.rider.delete({ where: { id } }),
-    ]);
+  async delete(id: string, actorId?: string) {
+    await db.$transaction(async (tx) => {
+      await tx.notification.deleteMany({ where: { riderId: id } });
+      await tx.rentalLease.deleteMany({ where: { riderId: id } });
+      await tx.guarantor.deleteMany({ where: { riderId: id } });
+      await tx.kycProfile.deleteMany({ where: { riderId: id } });
+      await tx.wallet.deleteMany({ where: { riderId: id } });
+      await tx.rider.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          action: 'rider.delete',
+          entity: 'rider',
+          entityId: id,
+          actorId: actorId ?? 'system',
+          actorType: actorId ? 'ADMIN' : 'SYSTEM',
+          details: JSON.stringify({ riderId: id }),
+        },
+      });
+    });
     invalidateRiderCache(id);
   },
 
@@ -753,7 +842,7 @@ export const adminRiderUseCases = {
     lowBattery?: boolean;
   }) {
     const { hubId, status, search, lowBattery } = filters;
-    const where: any = {};
+    const where: Prisma.RiderWhereInput = {};
 
     if (status && status !== 'ALL') {
       if (status === 'active') {
@@ -781,7 +870,7 @@ export const adminRiderUseCases = {
       where.batteryLevel = { lt: 20 };
     }
 
-    const riders = (await db.rider.findMany({
+    const riders = await db.rider.findMany({
       where,
       select: {
         id: true,
@@ -791,7 +880,7 @@ export const adminRiderUseCases = {
         lifecycleStatus: true,
         createdAt: true,
         pickupHub: true,
-        teamLeader: true,
+        teamLeaderId: true,
         currentPlan: true,
         planStartDate: true,
         planEndDate: true,
@@ -817,7 +906,7 @@ export const adminRiderUseCases = {
         },
       },
       orderBy: { lastLocationAt: 'desc' },
-    })) as any[];
+    });
 
     const formatted = riders.map((r) => {
       const lease = r.leases[0];
@@ -829,7 +918,7 @@ export const adminRiderUseCases = {
         createdAt: r.createdAt,
         lifecycleStatus: r.lifecycleStatus,
         pickupHub: r.pickupHub,
-        teamLeader: r.teamLeader,
+        teamLeaderId: r.teamLeaderId,
         currentPlan: r.currentPlan,
         planStartDate: r.planStartDate,
         planEndDate: r.planEndDate,

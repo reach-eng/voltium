@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'doc_tile.dart';
@@ -12,6 +13,7 @@ class IdentityVerificationCard extends StatelessWidget {
   final bool panUploaded;
   final String? panPath;
   final bool bankDetailsDone;
+  final String? bankSummary;
   final VoidCallback onPickAadhaarFront;
   final VoidCallback onPickAadhaarBack;
   final VoidCallback onPickPan;
@@ -30,6 +32,7 @@ class IdentityVerificationCard extends StatelessWidget {
     required this.panUploaded,
     this.panPath,
     required this.bankDetailsDone,
+    this.bankSummary,
     required this.onPickAadhaarFront,
     required this.onPickAadhaarBack,
     required this.onPickPan,
@@ -43,6 +46,8 @@ class IdentityVerificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -62,13 +67,13 @@ class IdentityVerificationCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Identity Verification',
+            l10n?.txtidentityVerification ?? 'Identity Verification',
             style: AppTypography.titleSmall
                 .copyWith(color: colors.onSurface, letterSpacing: -0.2),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
-            'Clear photos only. Max 5MB each.',
+            l10n?.txtclearPhotosOnly ?? 'Clear photos only. Max 5MB each.',
             style: GoogleFonts.plusJakartaSans(
                 fontSize: 12, color: colors.onSurfaceMuted),
           ),
@@ -77,7 +82,7 @@ class IdentityVerificationCard extends StatelessWidget {
             children: [
               Expanded(
                 child: DocTile(
-                  label: 'Aadhaar Card\n(Front)',
+                  label: l10n?.txtaadhaarFront ?? 'Aadhaar Card\n(Front)',
                   icon: Icons.upload_file,
                   isUploaded: aadhaarFrontUploaded,
                   filePath: aadhaarFrontPath,
@@ -89,7 +94,7 @@ class IdentityVerificationCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: DocTile(
-                  label: 'Aadhaar Card\n(Back)',
+                  label: l10n?.txtaadhaarBack ?? 'Aadhaar Card\n(Back)',
                   icon: Icons.upload_file,
                   isUploaded: aadhaarBackUploaded,
                   filePath: aadhaarBackPath,
@@ -105,7 +110,7 @@ class IdentityVerificationCard extends StatelessWidget {
             children: [
               Expanded(
                 child: DocTile(
-                  label: 'PAN Card',
+                  label: l10n?.txtpanCard ?? 'PAN Card',
                   icon: Icons.upload_file,
                   isUploaded: panUploaded,
                   filePath: panPath,
@@ -117,9 +122,10 @@ class IdentityVerificationCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: DocTile(
-                  label: 'Bank Details',
+                  label: l10n?.txtbankDetails ?? 'Bank Details',
                   icon: Icons.account_balance,
                   isUploaded: bankDetailsDone,
+                  customUploadedLabel: bankSummary,
                   onTap: onShowBankDialog,
                   enabled: bankEnabled,
                   key: const Key('bankTile'),

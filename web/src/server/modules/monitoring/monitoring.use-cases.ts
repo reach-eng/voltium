@@ -22,10 +22,10 @@ export const monitoringUseCases = {
       db.transaction.count({
         where: { createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
       }),
-      db.outboxEvent?.count({ where: { status: 'FAILED' } }).catch(() => 0),
-      db.outboxEvent?.count({ where: { status: 'PENDING' } }).catch(() => 0),
-      db.deviceViolation.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
-      db.reconciliationReport.findFirst({ orderBy: { createdAt: 'desc' } }).catch(() => null),
+      db.outboxEvent.count({ where: { status: 'FAILED' } }),
+      db.outboxEvent.count({ where: { status: 'PENDING' } }),
+      db.deviceViolation.count({ where: { status: 'ACTIVE' } }),
+      db.reconciliationReport.findFirst({ orderBy: { createdAt: 'desc' } }),
     ]);
     return {
       totalRiders,

@@ -11,7 +11,14 @@ export async function GET(request: NextRequest) {
     const riderDbId = auth.riderDbId;
 
     const result = await riderUseCases.getRewards(riderDbId);
-    if (!result) return errors.notFound('Rider not found');
+    if (!result) {
+      return success({
+        rewards: [],
+        totalPoints: 0,
+        thisMonthPoints: 0,
+        currentStreak: 0,
+      });
+    }
 
     return success(result);
   } catch (err) {

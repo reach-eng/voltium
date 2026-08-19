@@ -16,8 +16,7 @@ import {
   sendOtpSchema,
   verifyOtpSchema,
   updateProfileSchema,
-  submitKycSchema,
-  submitGuarantorSchema,
+  consentSchema,
   topUpSchema,
   createTicketSchema,
   createVehicleSchema,
@@ -38,7 +37,6 @@ import {
   ticketBulkActionSchema,
   adminWalletTopupSchema,
   updateSettingsSchema,
-  updateLegalSchema,
   updateTicketSchema,
   ticketReplySchema,
   awardRewardSchema,
@@ -50,6 +48,7 @@ import {
   registerTokenSchema,
   refreshTokenSchema,
 } from '../../src/lib/validators';
+import { updateLegalAdminSchema } from '../../src/lib/validators/admin';
 
 // ── Helper ──────────────────────────────────────────────────────────────────
 
@@ -151,8 +150,8 @@ describe('updateProfileSchema — negative', () => {
     expectInvalid(updateProfileSchema, { email: 'not-an-email' });
   });
 
-  it('rejects dob in wrong format (yyyy-mm-dd)', () => {
-    expectInvalid(updateProfileSchema, { dob: '1998-05-15' });
+  it('rejects dob with slash separators (yyyy/mm/dd)', () => {
+    expectInvalid(updateProfileSchema, { dob: '1998/05/15' });
   });
 
   it('rejects dob with wrong separators', () => {
@@ -182,134 +181,43 @@ describe('updateProfileSchema — negative', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// submitKycSchema
+// consentSchema
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('submitKycSchema — negative', () => {
-  const validKyc = {
-    riderId: 'rider-1',
-    aadhaarNumber: '1234-5678-9012',
-    panNumber: 'ABCDE1234F',
-    bankName: 'HDFC',
-    bankAccount: '1234567890',
-    bankIfsc: 'HDFC0000123',
-    riderPhoto: 'https://example.com/photo.jpg',
-    riderVideo: 'https://example.com/video.mp4',
+describe('consentSchema — negative', () => {
+  const validConsent = {
+    consentType: 'LOCATION',
+    granted: true,
   };
 
-  it('rejects missing riderId', () => {
-    const { riderId, ...rest } = validKyc;
-    expectInvalid(submitKycSchema, rest);
+  it('rejects missing consentType', () => {
+    const { consentType, ...rest } = validConsent;
+    expectInvalid(consentSchema, rest);
   });
 
-  it('rejects missing aadhaarNumber', () => {
-    const { aadhaarNumber, ...rest } = validKyc;
-    expectInvalid(submitKycSchema, rest);
+  it('rejects invalid consentType', () => {
+    expectInvalid(consentSchema, { ...validConsent, consentType: 'INVALID_TYPE' });
   });
 
-  it('rejects aadhaar without dashes', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, aadhaarNumber: '123456789012' });
+  it('rejects missing granted flag', () => {
+    const { granted, ...rest } = validConsent;
+    expectInvalid(consentSchema, rest);
   });
 
-  it('rejects aadhaar with wrong digit count', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, aadhaarNumber: '1234-5678-901' }); // 11 digits
+  it('rejects extra unknown fields (strict schema)', () => {
+    expectInvalid(consentSchema, { ...validConsent, extraField: 'test' });
   });
 
-  it('rejects aadhaar with letters', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, aadhaarNumber: 'ABCD-EFGH-IJKL' });
+  it('accepts valid LOCATION consent', () => {
+    expectValid(consentSchema, validConsent);
   });
 
-  it('rejects PAN with lowercase', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, panNumber: 'abcde1234f' });
+  it('accepts valid CONTACTS consent', () => {
+    expectValid(consentSchema, { consentType: 'CONTACTS', granted: false });
   });
 
-  it('rejects PAN too short', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, panNumber: 'ABCDE1234' }); // 9 chars
-  });
-
-  it('rejects PAN too long', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, panNumber: 'ABCDE1234FG' }); // 11 chars
-  });
-
-  it('rejects PAN with wrong pattern (starts with digit)', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, panNumber: '1BCDE1234F' });
-  });
-
-  it('rejects missing bankName', () => {
-    const { bankName, ...rest } = validKyc;
-    expectInvalid(submitKycSchema, rest);
-  });
-
-  it('rejects bankAccount too short (< 8 digits)', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankAccount: '1234567' });
-  });
-
-  it('rejects bankAccount too long (> 18 digits)', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankAccount: '1'.repeat(19) });
-  });
-
-  it('rejects bankAccount with letters', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankAccount: 'abcdefghij' });
-  });
-
-  it('rejects IFSC too short', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankIfsc: 'SBIN001' }); // 7 chars
-  });
-
-  it('rejects IFSC wrong format (no zero at position 5)', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankIfsc: 'SBIN1001234' });
-  });
-
-  it('rejects IFSC with lowercase', () => {
-    expectInvalid(submitKycSchema, { ...validKyc, bankIfsc: 'sbin0001234' });
-  });
-
-  it('accepts valid KYC data', () => {
-    expectValid(submitKycSchema, validKyc);
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// submitGuarantorSchema
-// ═══════════════════════════════════════════════════════════════════════════════
-
-describe('submitGuarantorSchema — negative', () => {
-  const validGuarantor = {
-    riderId: 'rider-1',
-    name: 'Vikram Sharma',
-    relation: 'Father',
-    phone: '9876543210',
-    video: 'https://example.com/guarantor.mp4',
-  };
-
-  it('rejects missing name', () => {
-    const { name, ...rest } = validGuarantor;
-    expectInvalid(submitGuarantorSchema, rest);
-  });
-
-  it('rejects name too short', () => {
-    expectInvalid(submitGuarantorSchema, { ...validGuarantor, name: 'V' }); // min 2
-  });
-
-  it('rejects missing relation', () => {
-    const { relation, ...rest } = validGuarantor;
-    expectInvalid(submitGuarantorSchema, rest);
-  });
-
-  it('rejects invalid phone format', () => {
-    expectInvalid(submitGuarantorSchema, { ...validGuarantor, phone: '12345' });
-  });
-
-  it('rejects phone with letters', () => {
-    expectInvalid(submitGuarantorSchema, { ...validGuarantor, phone: 'abcdefghij' });
-  });
-
-  it('rejects dob in wrong format', () => {
-    expectInvalid(submitGuarantorSchema, { ...validGuarantor, dob: '1970-03-20' });
-  });
-
-  it('accepts valid guarantor data', () => {
-    expectValid(submitGuarantorSchema, validGuarantor);
+  it('accepts valid CALL_LOGS consent', () => {
+    expectValid(consentSchema, { consentType: 'CALL_LOGS', granted: true, policyVersion: 'v2' });
   });
 });
 
@@ -485,7 +393,11 @@ describe('approveTransactionSchema — negative', () => {
 
   it('accepts all valid actions', () => {
     expectValid(approveTransactionSchema, { id: 'txn-1', action: 'APPROVE' });
-    expectValid(approveTransactionSchema, { id: 'txn-1', action: 'REJECT' });
+    expectValid(approveTransactionSchema, {
+      id: 'txn-1',
+      action: 'REJECT',
+      rejectionReason: 'Invalid document details submitted',
+    });
     expectValid(approveTransactionSchema, { id: 'txn-1', action: 'REVERSE' });
   });
 });
@@ -880,27 +792,37 @@ describe('adminWalletTopupSchema — negative', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// updateLegalSchema
+// updateLegalAdminSchema (P1-1: the strict admin schema is the only one)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('updateLegalSchema — negative', () => {
+describe('updateLegalAdminSchema — negative', () => {
   it('rejects invalid type', () => {
-    expectInvalid(updateLegalSchema, { type: 'warranty', content: 'Some content' });
+    expectInvalid(updateLegalAdminSchema, { type: 'warranty', content: 'Some content' });
   });
 
   it('rejects missing content', () => {
-    expectInvalid(updateLegalSchema, { type: 'terms' });
+    expectInvalid(updateLegalAdminSchema, { type: 'terms' });
   });
 
   it('rejects empty content', () => {
-    expectInvalid(updateLegalSchema, { type: 'terms', content: '' });
+    expectInvalid(updateLegalAdminSchema, { type: 'terms', content: '' });
   });
 
   it('accepts all valid types', () => {
-    expectValid(updateLegalSchema, { type: 'terms', content: 'Terms text' });
-    expectValid(updateLegalSchema, { type: 'privacy', content: 'Privacy text' });
-    expectValid(updateLegalSchema, { type: 'refund', content: 'Refund text' });
-    expectValid(updateLegalSchema, { type: 'lease', content: 'Lease text' });
+    expectValid(updateLegalAdminSchema, { type: 'terms', content: 'Terms text' });
+    expectValid(updateLegalAdminSchema, { type: 'privacy', content: 'Privacy text' });
+    expectValid(updateLegalAdminSchema, { type: 'refund', content: 'Refund text' });
+    expectValid(updateLegalAdminSchema, { type: 'lease', content: 'Lease text' });
+  });
+
+  // P1-1 (2026-08-05 legal/device audit): the schema is `.strict()` — unknown
+  // keys must be rejected, not silently stripped.
+  it('rejects unknown keys (strict)', () => {
+    expectInvalid(updateLegalAdminSchema, {
+      type: 'terms',
+      content: 'Terms text',
+      foo: 'bar',
+    });
   });
 });
 
@@ -988,9 +910,16 @@ describe('riderActionSchema — negative', () => {
     expectInvalid(riderActionSchema, { riderId: 'r-1', action: 'WIPE_DEVICE' });
   });
 
+  // P1-13 (2026-08-05 legal/device audit): LOCK_DEVICE is dead (the route
+  // rejected it unconditionally) and was removed from the enum. SYNC_DEVICE_DATA
+  // was missing from the enum even though the UI + route support it — now valid.
+  it('rejects the removed LOCK_DEVICE action', () => {
+    expectInvalid(riderActionSchema, { riderId: 'r-1', action: 'LOCK_DEVICE' });
+  });
+
   it('accepts valid actions', () => {
     const actions = [
-      'ASSIGN_PLAN', 'COMPLETE_PICKUP', 'END_RENTAL', 'LOCK_DEVICE',
+      'ASSIGN_PLAN', 'COMPLETE_PICKUP', 'END_RENTAL', 'SYNC_DEVICE_DATA',
       'FACTORY_RESET', 'DISABLE_CAMERA', 'ENABLE_CAMERA', 'ENFORCE_PASSCODE',
       'CHECK_LOCATION_INTEGRITY', 'ADMIN_LOCK', 'UNLOCK_DEVICE',
       'PERSIST_APP', 'ENFORCE_LOCATION', 'RESTRICT_APPS_CONTROL',

@@ -6,6 +6,8 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -33,13 +35,36 @@ class _TestAppProvider extends AppProvider {
   Future<void> refreshFromApi() async {}
 }
 
+/// WalletScreen consumes `riderProvider` / `walletProvider` directly — see
+/// wallet_screen_enhanced_test.dart for why these overrides are required.
+class _StaticRiderNotifier extends RiderNotifier {
+  @override
+  RiderState build() => RiderState(
+        rider: const RiderModel(
+          riderId: '1',
+          name: 'Test Rider',
+          phone: '123',
+          walletBalance: 100,
+        ),
+        riderId: '1',
+        dataState: DataState.fresh,
+      );
+}
+
+class _StaticWalletNotifier extends WalletNotifier {
+  @override
+  WalletState build() => const WalletState(transactions: []);
+}
+
 void main() {
   Widget buildWalletScreen() {
     return ProviderScope(
       overrides: [
-        localeProviderRef.overrideWith((ref) => LocaleProvider()),
-        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+        localeProviderRef.overrideWith(() => LocaleProvider()),
+        themeProviderRef.overrideWith(() => ThemeProvider()),
         appProvider.overrideWith((ref) => _TestAppProvider()),
+        riderProvider.overrideWith(() => _StaticRiderNotifier()),
+        walletProvider.overrideWith(() => _StaticWalletNotifier()),
       ],
       child: const MaterialApp(
         localizationsDelegates: [

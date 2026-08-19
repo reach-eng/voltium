@@ -43,13 +43,6 @@ class VoltiumApiClient {
     return KycStatusResponse.fromJson(response);
   }
 
-  /// Submit KYC documents
-  Future<SubmitKycResponse> postRiderKyc(SubmitKycRequest request) async {
-    final response =
-        await _client.post('/api/rider/kyc', body: request.toJson());
-    return SubmitKycResponse.fromJson(response);
-  }
-
   /// Get guarantor status
   Future<Map<String, dynamic>> getRiderGuarantor() async {
     final response = await _client.get('/api/rider/guarantor');
@@ -353,8 +346,10 @@ class VoltiumApiClient {
     return response;
   }
 
-  /// Submit device telemetry or token
-  Future<Map<String, dynamic>> postRiderDevice(
+  /// Report a device policy violation.
+  /// Sends { permissionId: string } to POST /api/rider/device.
+  /// NOTE: this is NOT for device registration — use postRidersRegisterToken for FCM tokens.
+  Future<Map<String, dynamic>> reportDeviceViolation(
       Map<String, dynamic> request) async {
     final response = await _client.post('/api/rider/device', body: request);
     return response;
@@ -379,11 +374,9 @@ class VoltiumApiClient {
     return response;
   }
 
-  /// Fetch rental offers
-  Future<Map<String, dynamic>> getRiderOffers() async {
-    final response = await _client.get('/api/rider/offers');
-    return response;
-  }
+  // PR-6 (2026-08-06 fix-plan; 14th audit P0-2): getRiderOffers was dead
+  // (zero callers) and the /api/rider/offers route was deleted. Promotions
+  // feature deferred until a product decision (docs/FOLLOWUP_TICKETS.md).
 
   /// List available plans
   Future<Map<String, dynamic>> getRiderPlans() async {
@@ -550,6 +543,15 @@ class VoltiumApiClient {
   /// List Hubs
   Future<Map<String, dynamic>> getRiderHubs() async {
     final response = await _client.get('/api/rider/hubs');
+    return response;
+  }
+
+  /// List active team leaders for a hub (PR-ONBOARDING-2026-08-11, audit 2.5).
+  Future<Map<String, dynamic>> getRiderTeamLeaders(String hubId) async {
+    final response = await _client.get(
+      '/api/rider/team-leaders',
+      queryParams: {'hubId': hubId},
+    );
     return response;
   }
 

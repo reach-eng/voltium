@@ -80,7 +80,10 @@ export async function POST(request: NextRequest) {
         session.adminId ?? '',
         session.adminRole as AdminRole
       );
-      return success(result);
+      // P0-3 (2026-08-07 verification, Section 2 — Admin Data Mgmt): the
+      // job is enqueued to the outbox and runs in the background — return
+      // 202 Accepted, not 200 OK, so clients know the work isn't finished.
+      return success(result, 'Backup job queued', 202);
     }
 
     return errors.badRequest('Invalid action. Use ?action=test or ?action=run-now');

@@ -68,5 +68,39 @@ void main() {
 
       expect(CacheService().getString(expectedKey), isNull);
     });
+
+    // PR-GUARANTOR-OTP: the epoch-ms verification timestamp must survive
+    // the JSON round-trip as an int (GuarantorCache is the persistence
+    // path for the short-lived phone-verification receipt).
+    test('verifiedAt survives the save/load round-trip as an int', () async {
+      final verifiedAt = DateTime.now().millisecondsSinceEpoch;
+      await GuarantorCache.saveFormCache(testRiderId, {
+        'phone': '9876543210',
+        'isPhoneVerified': true,
+        'verifiedPhone': '9876543210',
+        'verifiedAt': verifiedAt,
+      });
+
+      final loaded = GuarantorCache.loadFormCache(testRiderId);
+      expect(loaded, isNotNull);
+      expect(loaded!['verifiedAt'], verifiedAt,
+          reason: 'epoch-ms receipt timestamp must persist as an int');
+      expect(loaded['verifiedPhone'], '9876543210');
+      expect(loaded['isPhoneVerified'], true);
+    });
+
+    // PR-GUARANTOR-OTP: GuarantorCache null-filters entries — an unverified
+    // form must not leave a stale verifiedAt behind that could look like a
+    // fresh receipt on a later resume.
+    test('null verifiedAt is filtered out of the stored blob', () async {
+      await GuarantorCache.saveFormCache(testRiderId, {
+        'phone': '9876543210',
+        'verifiedAt': null,
+      });
+
+      final loaded = GuarantorCache.loadFormCache(testRiderId);
+      expect(loaded, isNotNull);
+      expect(loaded!.containsKey('verifiedAt'), isFalse);
+    });
   });
 }

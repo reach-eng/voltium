@@ -1221,13 +1221,19 @@ abstract class AppLocalizations {
   /// **'Emergency SOS'**
   String get txtemergencySos;
 
-  /// No description provided for @txttakeAPhoto.
+  /// SnackBar shown after the rider triggers Emergency SOS
+  ///
+  /// In en, this message translates to:
+  /// **'SOS Alert Triggered! Dialing emergency services (112)...'**
+  String get txtsosAlertTriggeredDialing;
+
+  /// Take a photo sheet action
   ///
   /// In en, this message translates to:
   /// **'Take a Photo'**
   String get txttakeAPhoto;
 
-  /// No description provided for @txtchooseFromGallery.
+  /// Choose from gallery sheet action
   ///
   /// In en, this message translates to:
   /// **'Choose from Gallery'**
@@ -1335,6 +1341,156 @@ abstract class AppLocalizations {
   /// **'Unable to open document'**
   String get txtunableToOpenDocument;
 
+  /// Referral card title
+  ///
+  /// In en, this message translates to:
+  /// **'Refer & Earn'**
+  String get txtreferAndEarn;
+
+  /// Generic Refresh button label (used in error/retry states)
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get txtrefresh;
+
+  /// SnackBar shown when a top-up/deposit proof photo upload fails. {error} is the underlying exception message.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload proof: {error}'**
+  String txtfailedToUploadProof(String error);
+
+  /// SnackBar shown when the rider tries to submit a deposit without a proof photo attached
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload a payment proof before submitting.'**
+  String get txtpleaseUploadPaymentProof;
+
+  /// SnackBar shown when the deposit submission fails. {error} is the underlying exception message.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit deposit: {error}'**
+  String txtfailedToSubmitDeposit(String error);
+
+  /// Discard button label (e.g. when leaving an unsaved edit profile screen)
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get txtdiscard;
+
+  /// Button to remove a captured/attached photo in the end-rental flow
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Photo'**
+  String get txtremovePhoto;
+
+  /// Helper text in the create-ticket form, showing the per-ticket photo limit. {count} is the integer limit.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to {count} photos per ticket'**
+  String txtupToNPhotosPerTicket(String count);
+
+  /// SnackBar shown after a support ticket is created
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket created successfully'**
+  String get txtticketCreatedSuccessfully;
+
+  /// SnackBar shown when a support ticket submission fails. {error} is the underlying exception message.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create ticket: {error}'**
+  String txtfailedToCreateTicket(String error);
+
+  /// SnackBar shown when the feedback form submission fails. {error} is the underlying exception message.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit feedback: {error}'**
+  String txtfailedToSubmitFeedback(String error);
+
+  /// Button/CTA label for creating a new support ticket
+  ///
+  /// In en, this message translates to:
+  /// **'Create Ticket'**
+  String get txtcreateTicket;
+
+  /// Confirmation dialog message before launching the emergency call. {number} is the SOS phone number.
+  ///
+  /// In en, this message translates to:
+  /// **'Call {number} for emergency assistance?'**
+  String txtcallNumberForEmergencyAssistance(String number);
+
+  /// Label in the top-up flow breakdown for the optional advance rental fee
+  ///
+  /// In en, this message translates to:
+  /// **'Advance Rental Plan Fee'**
+  String get txtadvanceRentalPlanFee;
+
+  /// SnackBar shown after the rider submits a top-up/deposit proof photo
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up proof submitted successfully!'**
+  String get txttopUpProofSubmittedSuccessfully;
+
+  /// SnackBar shown when the rider copies the UPI ID for offline payment
+  ///
+  /// In en, this message translates to:
+  /// **'UPI ID copied to clipboard'**
+  String get txtupiIdCopiedToClipboard;
+
+  /// Receipt line label — the top-up amount that gets added to the rider's wallet balance
+  ///
+  /// In en, this message translates to:
+  /// **'Top-Up Amount (Added to Wallet)'**
+  String get txttopUpAmountAddedToWallet;
+
+  /// Receipt line label — the final total the rider pays (top-up + plan fee + deposit)
+  ///
+  /// In en, this message translates to:
+  /// **'Total Payable'**
+  String get txttotalPayable;
+
+  /// Settings → tile + dialog title for the lock-password verification flow
+  ///
+  /// In en, this message translates to:
+  /// **'Change Lock Password'**
+  String get txtchangeLockPassword;
+
+  /// TextField label inside the lock-password verification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Lock Password'**
+  String get txtlockPassword;
+
+  /// Body text of the lock-password verification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your device lock password to verify security configuration.'**
+  String get txtlockPasswordSubtitle;
+
+  /// SnackBar shown when the lock-password verification request throws
+  ///
+  /// In en, this message translates to:
+  /// **'Lock password verification failed'**
+  String get txtlockPasswordVerifyFailed;
+
+  /// Submit-button label on the lock-password verification dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get txtverify;
+
+  /// EditProfile screen SnackBar when guarantor phone is too short
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 10-digit number'**
+  String get txtenterAValid10DigitNumber;
+
+  /// EditProfile screen SnackBar when the OTP input isn't 6 digits yet
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit OTP'**
+  String get txtenterThe6DigitOtp;
+
   /// No description provided for @txtmyDocuments.
   ///
   /// In en, this message translates to:
@@ -1378,7 +1534,7 @@ abstract class AppLocalizations {
   /// **'CONTACT SUPPORT'**
   String get txtcontactSupport;
 
-  /// No description provided for @txtintentOfUse.
+  /// Intent of use dialog title
   ///
   /// In en, this message translates to:
   /// **'Intent of Use'**
@@ -1427,7 +1583,7 @@ abstract class AppLocalizations {
   /// **'Bank Details'**
   String get txtbankDetails;
 
-  /// No description provided for @txtclose.
+  /// Close button label
   ///
   /// In en, this message translates to:
   /// **'Close'**
@@ -1487,7 +1643,7 @@ abstract class AppLocalizations {
   /// **'Photo Captured'**
   String get txtphotoCaptured;
 
-  /// No description provided for @txtdigitalSignature.
+  /// Digital Signature document label
   ///
   /// In en, this message translates to:
   /// **'Digital Signature'**
@@ -1657,6 +1813,90 @@ abstract class AppLocalizations {
   String
       get txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide;
 
+  /// Splash screen tagline below the brand name
+  ///
+  /// In en, this message translates to:
+  /// **'Electric scooter rentals'**
+  String get txtsplashTagline;
+
+  /// Login screen welcome-section body text
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the registered phone number to login or enter a new number to create another account.'**
+  String get txtloginWelcomeSubtitle;
+
+  /// Login screen footer intro line above the Terms/Privacy links
+  ///
+  /// In en, this message translates to:
+  /// **'By signing in, you agree to our'**
+  String get txtloginLegalIntro;
+
+  /// Phone-entry widget referral-code field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Referral Code (Optional)'**
+  String get txtloginReferralHint;
+
+  /// Phone-entry widget OTP note shown below the inputs
+  ///
+  /// In en, this message translates to:
+  /// **'A secure OTP will be sent'**
+  String get txtloginSecureOtpNote;
+
+  /// Login screen primary submit button (sends OTP)
+  ///
+  /// In en, this message translates to:
+  /// **'Enter'**
+  String get txtloginEnterButton;
+
+  /// Login screen submit-button label while the OTP request is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get txtloginSendingButton;
+
+  /// Login screen SnackBar when the OTP send request fails on a non-API error (e.g. socket)
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please try again.'**
+  String get txtloginNetworkError;
+
+  /// OTP screen title shown for new riders
+  ///
+  /// In en, this message translates to:
+  /// **'Verify OTP'**
+  String get txtotpVerifyTitle;
+
+  /// OTP screen title shown for returning riders
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back!'**
+  String get txtotpWelcomeBack;
+
+  /// OTP screen subtitle for new riders, followed by the phone number in primary blue
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code sent to '**
+  String get txtotpSignupSubtitle;
+
+  /// OTP screen subtitle for returning riders, followed by the phone number in primary blue
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code to login to your account '**
+  String get txtotpLoginSubtitle;
+
+  /// OTP screen SnackBar when the verify request fails on a non-API error
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to verify OTP. Please try again.'**
+  String get txtotpVerifyFailed;
+
+  /// OTP screen SnackBar when the resend request fails
+  ///
+  /// In en, this message translates to:
+  /// **'Error resending OTP'**
+  String get txtotpResendError;
+
   /// No description provided for @txtgoToDashboard.
   ///
   /// In en, this message translates to:
@@ -1707,13 +1947,13 @@ abstract class AppLocalizations {
   String
       get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance;
 
-  /// No description provided for @txtteamLeader.
+  /// Team leader card title
   ///
   /// In en, this message translates to:
   /// **'Team Leader'**
   String get txtteamLeader;
 
-  /// No description provided for @txtassignedTeamLeader.
+  /// Assigned team leader sheet title
   ///
   /// In en, this message translates to:
   /// **'Assigned Team Leader'**
@@ -1743,7 +1983,7 @@ abstract class AppLocalizations {
   /// **'PICKUP PHOTOS'**
   String get txtpickupPhotos;
 
-  /// No description provided for @txtbackToDashboard.
+  /// Back to dashboard button label
   ///
   /// In en, this message translates to:
   /// **'Back to Dashboard'**
@@ -1923,12 +2163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Guarantor Phone'**
   String get txtguarantorPhone;
-
-  /// No description provided for @txtverify.
-  ///
-  /// In en, this message translates to:
-  /// **'Verify'**
-  String get txtverify;
 
   /// No description provided for @txtphoneVerified.
   ///
@@ -2507,10 +2741,10 @@ abstract class AppLocalizations {
   String
       get txtthisWillClearYourLocalTransactionHistoryThisActionCannotBeUndone;
 
-  /// No description provided for @txtsecurityDeposit.
+  /// Security deposit row label
   ///
   /// In en, this message translates to:
-  /// **'SECURITY DEPOSIT'**
+  /// **'Security Deposit'**
   String get txtsecurityDeposit;
 
   /// No description provided for @txtelectricVehicleRentalService.
@@ -2543,19 +2777,19 @@ abstract class AppLocalizations {
   /// **'Go Back?'**
   String get txtgoBack;
 
-  /// No description provided for @txtcurrentSubscription.
+  /// Plan card header
   ///
   /// In en, this message translates to:
   /// **'CURRENT SUBSCRIPTION'**
   String get txtcurrentSubscription;
 
-  /// No description provided for @txttimeRemaining.
+  /// Time remaining box label
   ///
   /// In en, this message translates to:
   /// **'TIME REMAINING'**
   String get txttimeRemaining;
 
-  /// No description provided for @txtnextRecharge.
+  /// Next recharge box label
   ///
   /// In en, this message translates to:
   /// **'NEXT RECHARGE'**
@@ -2567,13 +2801,13 @@ abstract class AppLocalizations {
   /// **'Share your code with friends'**
   String get txtshareYourCodeWithFriends;
 
-  /// No description provided for @txtyourCode.
+  /// Your code uppercase label
   ///
   /// In en, this message translates to:
   /// **'YOUR CODE'**
   String get txtyourCode;
 
-  /// No description provided for @txtchangeTl.
+  /// Change TL button label
   ///
   /// In en, this message translates to:
   /// **'Change TL'**
@@ -3075,6 +3309,30 @@ abstract class AppLocalizations {
   /// **'Dark Mode'**
   String get settings_darkMode;
 
+  /// Appearance (theme) selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settings_appearance;
+
+  /// Option to follow the device system theme / locale
+  ///
+  /// In en, this message translates to:
+  /// **'Follow System'**
+  String get settings_followSystem;
+
+  /// Light theme option
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settings_themeLight;
+
+  /// Dark theme option
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settings_themeDark;
+
   /// Support section header
   ///
   /// In en, this message translates to:
@@ -3135,6 +3393,12 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get settings_delete;
 
+  /// Default reason recorded when a rider requests account deletion
+  ///
+  /// In en, this message translates to:
+  /// **'Requested from app settings'**
+  String get settings_deleteReason;
+
   /// Snackbar message when delete is not available
   ///
   /// In en, this message translates to:
@@ -3158,6 +3422,1105 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Coming soon'**
   String get settings_comingSoon;
+
+  /// Full name input label
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get txtfullName;
+
+  /// Full name placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter full name'**
+  String get txtenterFullName;
+
+  /// Date of birth label
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get txtdateOfBirth;
+
+  /// Email address label
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get txtemailAddress;
+
+  /// Email address placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter email address'**
+  String get txtenterEmailAddress;
+
+  /// Father's name label
+  ///
+  /// In en, this message translates to:
+  /// **'Father\'s Name'**
+  String get txtfathersName;
+
+  /// Father's name placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter father\'s name'**
+  String get txtenterFathersName;
+
+  /// Mother's name label
+  ///
+  /// In en, this message translates to:
+  /// **'Mother\'s Name'**
+  String get txtmothersName;
+
+  /// Mother's name placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter mother\'s name'**
+  String get txtenterMothersName;
+
+  /// Current address label
+  ///
+  /// In en, this message translates to:
+  /// **'Current Address'**
+  String get txtcurrentAddress;
+
+  /// Current address placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your full address'**
+  String get txtenterYourFullAddress;
+
+  /// Aadhaar front card label
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Card\n(Front)'**
+  String get txtaadhaarFront;
+
+  /// Aadhaar back card label
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Card\n(Back)'**
+  String get txtaadhaarBack;
+
+  /// PAN card label
+  ///
+  /// In en, this message translates to:
+  /// **'PAN Card'**
+  String get txtpanCard;
+
+  /// Bank name label
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Name'**
+  String get txtbankName;
+
+  /// Bank account number label
+  ///
+  /// In en, this message translates to:
+  /// **'Account Number'**
+  String get txtaccountNumber;
+
+  /// Bank IFSC code label
+  ///
+  /// In en, this message translates to:
+  /// **'IFSC Code'**
+  String get txtifscCode;
+
+  /// Document guidelines subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Clear photos only. Max 5MB each.'**
+  String get txtclearPhotosOnly;
+
+  /// Rider profile screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Rider Profile'**
+  String get txtriderProfile;
+
+  /// Rider profile screen subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your details to finish onboarding'**
+  String get txtcompleteDetailsSubtitle;
+
+  /// Confirm and proceed button label
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Proceed'**
+  String get txtconfirmAndProceed;
+
+  /// KYC confirmation disclaimer
+  ///
+  /// In en, this message translates to:
+  /// **'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING'**
+  String get txtensureAllDetailsAccurate;
+
+  /// Live camera hint for rider selfie
+  ///
+  /// In en, this message translates to:
+  /// **'Live camera capture required for KYC verification'**
+  String get txtselfieLiveCameraHint;
+
+  /// Offline mode draft indicator banner
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline — your draft is saved locally. Connect to internet to submit.'**
+  String get txtofflineDraftBanner;
+
+  /// Document preview modal title
+  ///
+  /// In en, this message translates to:
+  /// **'Document Preview'**
+  String get txtdocumentPreview;
+
+  /// Retake photo action
+  ///
+  /// In en, this message translates to:
+  /// **'Retake Photo'**
+  String get txtretakePhoto;
+
+  /// Keep photo action
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Photo'**
+  String get txtkeepPhoto;
+
+  /// Uploaded status badge
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get txtuploaded;
+
+  /// Permissions screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get txtpermissionsTitle;
+
+  /// Permissions screen subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Please allow the following permissions to ensure safety and functionality.'**
+  String get txtpermissionsSubtitle;
+
+  /// Location permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get txtlocationPermName;
+
+  /// Location permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Track rides and find nearby vehicles'**
+  String get txtlocationPermDesc;
+
+  /// Notifications permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get txtnotificationsPermName;
+
+  /// Notifications permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Receive important updates and alerts'**
+  String get txtnotificationsPermDesc;
+
+  /// Battery optimization permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Battery Optimization'**
+  String get txtbatteryPermName;
+
+  /// Battery optimization permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Allow the app to run reliably in the background.'**
+  String get txtbatteryPermDesc;
+
+  /// Camera permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get txtcameraPermName;
+
+  /// Camera permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Document upload and QR scanning'**
+  String get txtcameraPermDesc;
+
+  /// Phone state permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Phone State'**
+  String get txtphonePermName;
+
+  /// Phone state permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Phone state (for safety call detection)'**
+  String get txtphonePermDesc;
+
+  /// Phone state permission tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.'**
+  String get txtphonePermTooltip;
+
+  /// Contacts permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get txtcontactsPermName;
+
+  /// Contacts permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Access contacts for emergency SOS and referrals'**
+  String get txtcontactsPermDesc;
+
+  /// Microphone permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone'**
+  String get txtmicPermName;
+
+  /// Microphone permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Required for audio recording and verification'**
+  String get txtmicPermDesc;
+
+  /// Device admin permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Device Admin'**
+  String get txtdeviceAdminPermName;
+
+  /// Device admin permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Required for fleet security and remote lock features'**
+  String get txtdeviceAdminPermDesc;
+
+  /// Precise location warning snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Precise location is required. Please enable it in Settings.'**
+  String get txtpreciseLocationRequired;
+
+  /// KYC preflight header title
+  ///
+  /// In en, this message translates to:
+  /// **'Before You Begin'**
+  String get txtbeforeYouBegin;
+
+  /// KYC preflight header subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Quick KYC verification (~3 mins)'**
+  String get txtquickKycSubtitle;
+
+  /// KYC preflight checklist prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Please have these ready:'**
+  String get txtpleaseHaveReady;
+
+  /// Aadhaar card checklist title
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Card'**
+  String get txtaadhaarCard;
+
+  /// Aadhaar card checklist subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Front and back photo or E-Aadhaar PDF'**
+  String get txtaadhaarCardDesc;
+
+  /// PAN card checklist subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'For tax and identity verification'**
+  String get txtpanCardDesc;
+
+  /// Time estimate checklist title
+  ///
+  /// In en, this message translates to:
+  /// **'3 Minutes of Time'**
+  String get txtthreeMinutesTime;
+
+  /// Time estimate checklist subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Fast automated verification'**
+  String get txtfastAutomatedVerification;
+
+  /// KYC preflight ready button
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m Ready'**
+  String get txtimReady;
+
+  /// KYC preflight skip button
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll do this later'**
+  String get txtillDoThisLater;
+
+  /// Legal docs syncing indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing latest documents…'**
+  String get txtsyncingLatestDocs;
+
+  /// Legal agreement checkbox prefix text
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and agree to the '**
+  String get txtlegalAgreeCheckboxPrefix;
+
+  /// Electronic signature label
+  ///
+  /// In en, this message translates to:
+  /// **'(Electronic Signature)'**
+  String get txtelectronicSignature;
+
+  /// Legal support help text prefix
+  ///
+  /// In en, this message translates to:
+  /// **'If you have any questions about our policies, please contact our support team at '**
+  String get txtlegalHelpText;
+
+  /// Legal support help text middle connector
+  ///
+  /// In en, this message translates to:
+  /// **' or call '**
+  String get txtorCall;
+
+  /// OTP resend prompt uppercase text
+  ///
+  /// In en, this message translates to:
+  /// **'DIDN\'T RECEIVE THE CODE?'**
+  String get txtdidntReceiveCode;
+
+  /// OTP resend button active label
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Code'**
+  String get txtresendCode;
+
+  /// OTP resend button countdown label
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String txtresendIn(int seconds);
+
+  /// OTP verify button loading state label
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying…'**
+  String get txtverifying;
+
+  /// OTP verify button active label
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Proceed'**
+  String get txtverifyAndProceed;
+
+  /// Morning greeting on dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Good Morning'**
+  String get txtgreetingMorning;
+
+  /// Afternoon greeting on dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Good Afternoon'**
+  String get txtgreetingAfternoon;
+
+  /// Evening greeting on dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Good Evening'**
+  String get txtgreetingEvening;
+
+  /// Fallback rider name
+  ///
+  /// In en, this message translates to:
+  /// **'Rider'**
+  String get txtguestRider;
+
+  /// Cached data banner on dashboard
+  ///
+  /// In en, this message translates to:
+  /// **'Showing cached data'**
+  String get txtshowingCachedData;
+
+  /// Empty dashboard message
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get txtnoDataAvailable;
+
+  /// Badge when vehicle is not yet assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Pending Assignment'**
+  String get txtvehiclePendingAssignment;
+
+  /// No active plan label
+  ///
+  /// In en, this message translates to:
+  /// **'NO PLAN'**
+  String get txtnoPlan;
+
+  /// Weekly plan uppercase title
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY PAYMENT'**
+  String get txtweeklyPayment;
+
+  /// Daily plan uppercase title
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY PAYMENT'**
+  String get txtdailyPayment;
+
+  /// Monthly plan uppercase title
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY PAYMENT'**
+  String get txtmonthlyPayment;
+
+  /// Expired plan status label
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get txtexpired;
+
+  /// Expires today plan status label
+  ///
+  /// In en, this message translates to:
+  /// **'Expires Today'**
+  String get txtexpiresToday;
+
+  /// Days remaining count label
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Days'**
+  String txtdaysCount(int count);
+
+  /// Wallet card total balance label
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL BALANCE'**
+  String get txttotalBalance;
+
+  /// Wallet card available balance label
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE BALANCE'**
+  String get txtavailableBalance;
+
+  /// Streak progress label
+  ///
+  /// In en, this message translates to:
+  /// **'{current}/{total} Days'**
+  String txtstreakDays(int current, int total);
+
+  /// Minimum recharge disclaimer
+  ///
+  /// In en, this message translates to:
+  /// **'A minimum recharge of ₹{amount} is required to proceed further.'**
+  String txtminRechargeNotice(String amount);
+
+  /// Low balance warning notice
+  ///
+  /// In en, this message translates to:
+  /// **'Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹{amount}.'**
+  String txtlowBalanceWarningNotice(int amount);
+
+  /// Top up wallet button label
+  ///
+  /// In en, this message translates to:
+  /// **'Top Up Wallet'**
+  String get txttopUpWalletAction;
+
+  /// Referral card subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Share your code with friends'**
+  String get txtshareCodeWithFriends;
+
+  /// Referral code copied snackbar text
+  ///
+  /// In en, this message translates to:
+  /// **'Referral code copied!'**
+  String get txtreferralCodeCopied;
+
+  /// Referral share invitation text
+  ///
+  /// In en, this message translates to:
+  /// **'Use my code {code} to join Voltium!'**
+  String txtshareReferralMessage(String code);
+
+  /// Referral share subject text
+  ///
+  /// In en, this message translates to:
+  /// **'Join Voltium'**
+  String get txtjoinVoltiumSubject;
+
+  /// View details link
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get txtviewDetailsAction;
+
+  /// Fallback text when resource is unassigned
+  ///
+  /// In en, this message translates to:
+  /// **'Not assigned'**
+  String get txtnotAssigned;
+
+  /// Assigned TL subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned TL'**
+  String get txtassignedTlBadge;
+
+  /// Notice when TL is not yet assigned
+  ///
+  /// In en, this message translates to:
+  /// **'Your hub will assign a team leader shortly'**
+  String get txttlPendingNotice;
+
+  /// No contact number warning snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'No contact number available for your Team Leader.'**
+  String get txtnoContactNumberTl;
+
+  /// Dialer error snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the phone dialer. Please try again.'**
+  String get txtcouldNotOpenDialer;
+
+  /// Scooter return banner title
+  ///
+  /// In en, this message translates to:
+  /// **'Scooter Submission\nRequired'**
+  String get txtscooterSubmissionRequired;
+
+  /// Pending return fallback date label
+  ///
+  /// In en, this message translates to:
+  /// **'Pending return submission'**
+  String get txtpendingReturnSubmission;
+
+  /// Submission date label
+  ///
+  /// In en, this message translates to:
+  /// **'Submission Date: {date}'**
+  String txtsubmissionDatePrefix(String date);
+
+  /// Hub name label
+  ///
+  /// In en, this message translates to:
+  /// **'Hub Name: {hub}'**
+  String txthubNamePrefix(String hub);
+
+  /// Designated hub fallback
+  ///
+  /// In en, this message translates to:
+  /// **'Designated Hub'**
+  String get txtdesignatedHub;
+
+  /// Upcoming rent debit header
+  ///
+  /// In en, this message translates to:
+  /// **'UPCOMING RENT DEBIT'**
+  String get txtupcomingRentDebit;
+
+  /// Rent prompt card title
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up before tomorrow 6 AM'**
+  String get txttopUpBeforeTomorrow6am;
+
+  /// Rent debit notice with shortfall
+  ///
+  /// In en, this message translates to:
+  /// **'Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).'**
+  String txtrentDebitNoticeShortfall(
+      String rent, String balance, String shortfall);
+
+  /// Rent debit notice with sufficient balance
+  ///
+  /// In en, this message translates to:
+  /// **'Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.'**
+  String txtrentDebitNoticeSufficient(String rent, String balance);
+
+  /// Top up button label with amount
+  ///
+  /// In en, this message translates to:
+  /// **'Top up ₹{amount}'**
+  String txttopUpAmountAction(String amount);
+
+  /// Change team leader dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Change Team Leader'**
+  String get txtchangeTeamLeaderTitle;
+
+  /// Change TL reason prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.'**
+  String get txtchangeTlReasonPrompt;
+
+  /// Enter reason placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your reason here...'**
+  String get txtenterReasonHint;
+
+  /// Reason validation message
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide a detailed reason (at least 5 characters)'**
+  String get txtprovideDetailedReason;
+
+  /// TL change submitted snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Your TL change request has been submitted for approval'**
+  String get txttlChangeSubmitted;
+
+  /// Failed to submit request snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit request: {error}'**
+  String txtfailedToSubmitRequest(String error);
+
+  /// Subscription sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Subscription'**
+  String get txtmanageSubscriptionTitle;
+
+  /// Subscription sheet subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.'**
+  String get txtmanageSubscriptionSubtitle;
+
+  /// Active status badge label
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get txtactiveBadge;
+
+  /// Per day cadence
+  ///
+  /// In en, this message translates to:
+  /// **'/ day'**
+  String get txtperDay;
+
+  /// Per week cadence
+  ///
+  /// In en, this message translates to:
+  /// **'/ week'**
+  String get txtperWeek;
+
+  /// Per month cadence
+  ///
+  /// In en, this message translates to:
+  /// **'/ month'**
+  String get txtperMonth;
+
+  /// Request plan change button
+  ///
+  /// In en, this message translates to:
+  /// **'Request Plan Change'**
+  String get txtrequestPlanChangeButton;
+
+  /// End rental button
+  ///
+  /// In en, this message translates to:
+  /// **'End Rental'**
+  String get txtendRentalButton;
+
+  /// Change intent of use button
+  ///
+  /// In en, this message translates to:
+  /// **'Change Intent of Use'**
+  String get txtchangeIntentButton;
+
+  /// Change intent button with current intent
+  ///
+  /// In en, this message translates to:
+  /// **'Change Intent: {intent}'**
+  String txtchangeIntentPrefix(String intent);
+
+  /// Step X of Y label
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String txtstepXofY(int current, int total);
+
+  /// Capture vehicle view label
+  ///
+  /// In en, this message translates to:
+  /// **'Capture {view} of Vehicle'**
+  String txtcaptureViewOfVehicle(String view);
+
+  /// Return photo instruction
+  ///
+  /// In en, this message translates to:
+  /// **'Ensure the photo is clear and well-lit for faster approval.'**
+  String get txtensureClearPhotoPrompt;
+
+  /// Capture photo button
+  ///
+  /// In en, this message translates to:
+  /// **'Capture Photo'**
+  String get txtcapturePhotoBtn;
+
+  /// Cancel return process button
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Return Process'**
+  String get txtcancelReturnProcessBtn;
+
+  /// Uploading photos progress dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading photos & submitting request...'**
+  String get txtuploadingPhotosSubmitting;
+
+  /// Do not close app notice
+  ///
+  /// In en, this message translates to:
+  /// **'Please do not close the app.'**
+  String get txtdoNotCloseApp;
+
+  /// Return request submitted dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Return Request Submitted'**
+  String get txtreturnRequestSubmittedTitle;
+
+  /// Return request submitted dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.'**
+  String get txtreturnRequestSubmittedBody;
+
+  /// Great button label
+  ///
+  /// In en, this message translates to:
+  /// **'Great!'**
+  String get txtgreatBtn;
+
+  /// Failed to submit return snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit return request. Please try again.'**
+  String get txtfailedToSubmitReturn;
+
+  /// Left side vehicle view
+  ///
+  /// In en, this message translates to:
+  /// **'Left Side'**
+  String get txtleftSide;
+
+  /// Right side vehicle view
+  ///
+  /// In en, this message translates to:
+  /// **'Right Side'**
+  String get txtrightSide;
+
+  /// Front view vehicle view
+  ///
+  /// In en, this message translates to:
+  /// **'Front View'**
+  String get txtfrontView;
+
+  /// Speedometer vehicle view
+  ///
+  /// In en, this message translates to:
+  /// **'Speedometer'**
+  String get txtspeedometer;
+
+  /// Personal use intent option
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Use'**
+  String get txtpersonalUse;
+
+  /// E-commerce delivery intent option
+  ///
+  /// In en, this message translates to:
+  /// **'E-commerce Delivery'**
+  String get txtecommerceDelivery;
+
+  /// Food delivery intent option
+  ///
+  /// In en, this message translates to:
+  /// **'Food Delivery'**
+  String get txtfoodDelivery;
+
+  /// Other intent option
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get txtother;
+
+  /// Rental details screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Rental Details'**
+  String get txtrentalDetailsTitle;
+
+  /// Current plan section header
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT PLAN'**
+  String get txtcurrentPlanSection;
+
+  /// No active plan label
+  ///
+  /// In en, this message translates to:
+  /// **'No Active Plan'**
+  String get txtnoActivePlan;
+
+  /// Per cycle cadence
+  ///
+  /// In en, this message translates to:
+  /// **' / cycle'**
+  String get txtperCycle;
+
+  /// Rental information section header
+  ///
+  /// In en, this message translates to:
+  /// **'Rental Information'**
+  String get txtrentalInformation;
+
+  /// Start date row label
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get txtstartDate;
+
+  /// End date row label
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get txtendDate;
+
+  /// Payment streak row label
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Streak'**
+  String get txtpaymentStreak;
+
+  /// Change plan button label
+  ///
+  /// In en, this message translates to:
+  /// **'Change Plan'**
+  String get txtchangePlan;
+
+  /// Pickup Hub label
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup Hub'**
+  String get txtpickupHub;
+
+  /// Intent updated success toast
+  ///
+  /// In en, this message translates to:
+  /// **'Intent updated successfully'**
+  String get txtintentUpdatedSuccess;
+
+  /// Failed to update intent toast
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update intent: {error}'**
+  String txtfailedToUpdateIntent(String error);
+
+  /// Team leader info card description
+  ///
+  /// In en, this message translates to:
+  /// **'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.'**
+  String get txtteamLeaderInfoDescription;
+
+  /// Request Team Leader change button label
+  ///
+  /// In en, this message translates to:
+  /// **'Request Team Leader change'**
+  String get txtrequestTlChange;
+
+  /// Select Team Leader placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Select Team Leader'**
+  String get txtselectTeamLeader;
+
+  /// Call button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get txtcall;
+
+  /// Not provided fallback string
+  ///
+  /// In en, this message translates to:
+  /// **'Not provided'**
+  String get txtnotProvided;
+
+  /// Emergency contact row title
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contact'**
+  String get txtemergencyContact;
+
+  /// KYC status card header
+  ///
+  /// In en, this message translates to:
+  /// **'KYC STATUS'**
+  String get txtkycStatusTitle;
+
+  /// Guarantor status card header
+  ///
+  /// In en, this message translates to:
+  /// **'GUARANTOR'**
+  String get txtguarantorStatusTitle;
+
+  /// Vehicle row title
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get txtvehicleTitle;
+
+  /// Address row title
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get txtaddress;
+
+  /// Under review status string
+  ///
+  /// In en, this message translates to:
+  /// **'Under Review'**
+  String get txtunderReview;
+
+  /// Phone field label
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get txtphone;
+
+  /// Security profile status title
+  ///
+  /// In en, this message translates to:
+  /// **'Verified & Secure'**
+  String get txtverifiedAndSecure;
+
+  /// Verified documents description
+  ///
+  /// In en, this message translates to:
+  /// **'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'**
+  String get txtidentityGuarantorVerifiedDesc;
+
+  /// Verification in progress documents description
+  ///
+  /// In en, this message translates to:
+  /// **'Your verification is in progress. Some documents may still be under review by our safety team.'**
+  String get txtverificationInProgressDesc;
+
+  /// Rider documents section header
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR DOCUMENTS'**
+  String get txtyourDocuments;
+
+  /// Guarantor documents section header
+  ///
+  /// In en, this message translates to:
+  /// **'GUARANTOR\'S DOCUMENTS'**
+  String get txtguarantorDocuments;
+
+  /// Category files count badge
+  ///
+  /// In en, this message translates to:
+  /// **'{count} FILES'**
+  String txtfilesCount(int count);
+
+  /// Aadhaar Card Front label
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Card (Front)'**
+  String get txtaadhaarCardFront;
+
+  /// Aadhaar Card Back label
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Card (Back)'**
+  String get txtaadhaarCardBack;
+
+  /// PAN Card label
+  ///
+  /// In en, this message translates to:
+  /// **'PAN Card'**
+  String get txtpanCardLabel;
+
+  /// Guarantor Aadhaar Front label
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor\'s Aadhaar (Front)'**
+  String get txtguarantorAadhaarFront;
+
+  /// Guarantor Aadhaar Back label
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor\'s Aadhaar (Back)'**
+  String get txtguarantorAadhaarBack;
+
+  /// Guarantor PAN Card label
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor\'s PAN Card'**
+  String get txtguarantorPanCard;
+
+  /// Guarantor Verification Video label
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Video'**
+  String get txtverificationVideo;
+
+  /// Guarantor Signature label
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor\'s Signature'**
+  String get txtguarantorSignatureDoc;
+
+  /// Document verified and active status subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Verified & Active'**
+  String get txtverifiedAndActive;
+
+  /// Open external document viewer button label
+  ///
+  /// In en, this message translates to:
+  /// **'Open External'**
+  String get txtopenExternal;
 }
 
 class _AppLocalizationsDelegate

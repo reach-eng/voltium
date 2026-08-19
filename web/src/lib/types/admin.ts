@@ -1,52 +1,129 @@
-/**
- * Admin panel shared types — STUB.
- *
- * The proper consolidated Rider interface is part of Phase 7 Q2 follow-up
- * (Ticket #1 in FOLLOWUP_TICKETS). For now, export a permissive shape
- * that satisfies the existing admin dialog's field access patterns
- * (60+ fields combined from Rider + child tables).
- *
- * Per-screen `interface Rider { ... }` was previously duplicated in
- * 6 admin screens. To unblock the typecheck while the proper extraction
- * ships, this stub matches the original `interface Rider { [key: string]: any }`
- * pattern but with the strict field access preserved for the most-used fields.
- */
+import { RiderLifecycleStatus, KycStatus } from '@prisma/client';
+
+export { RiderLifecycleStatus, KycStatus };
+export type RiderLifecycleStage = RiderLifecycleStatus;
 
 export interface Rider {
   id: string;
+  riderId?: string;
   fullName: string;
   email: string | null;
   phone: string;
+  lifecycleStatus?: RiderLifecycleStatus | string;
+  state?: string;
+  accountStatus?: string;
+  kycStatus?: KycStatus | string;
+  walletBalance?: number;
+  securityDeposit?: number;
+  advanceRentPaid?: boolean;
+  depositStatus?: string;
+  paymentStreak?: number;
+  guarantorName?: string | null;
+  guarantorPhone?: string | null;
+  sharedGuarantorWith?: Array<{ id: string; name: string; phone: string }> | string[] | null;
+  activeVehicle?: string | null;
+  activeVehicleModel?: string | null;
+  pickedUpAt?: string | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  dob?: string | null;
+  fatherName?: string | null;
+  motherName?: string | null;
+  intent?: string | null;
+  emergencyContact?: string | null;
+  currentAddress?: string | null;
+  panCard?: string | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  ifscCode?: string | null;
+  returnPending?: boolean;
+  tlChangeRequested?: boolean;
+  tlChangeReason?: string | null;
+  teamLeader?: string | null;
+  assignedTlName?: string | null;
+  assignedTlPhone?: string | null;
+  referredBy?: string | null;
+  pickupHub?: string | null;
+  preferredShift?: string | null;
+  deliveryId?: string | null;
+  pickupPhotoWithVehicle?: string | null;
+  pickupPhotoFront?: string | null;
+  pickupPhotoBack?: string | null;
+  pickupPhotoLeft?: string | null;
+  pickupPhotoRight?: string | null;
+  registrationDone?: boolean;
+  registrationDoneAt?: string | Date | null;
+  depositDone?: boolean;
+  depositDoneAt?: string | Date | null;
+  kycDone?: boolean;
+  kycDoneAt?: string | Date | null;
+  planDone?: boolean;
+  planDoneAt?: string | Date | null;
+  pickupDone?: boolean;
+  kycRejectionReason?: string | null;
+  profilePhoto?: string | null;
+  riderPhoto?: string | null;
+  riderVideo?: string | null;
+  signature?: string | null;
+  aadhaarFront?: string | null;
+  aadhaarBack?: string | null;
+  locationGranted?: boolean;
+  batteryGranted?: boolean;
+  contactsGranted?: boolean;
+  callLogsGranted?: boolean;
+  micGranted?: boolean;
+  cameraGranted?: boolean;
+  phoneGranted?: boolean;
+  isAdminLocked?: boolean;
+  isUninstallBlocked?: boolean;
+  isLocationMandatory?: boolean;
+  isAppsControlRestricted?: boolean;
+  assignedVehicle?: any;
+  kycProfile?: any;
+  wallet?: any;
+  leases?: any[];
   [key: string]: any;
 }
 
-export type KycStatus =
-  | 'NOT_STARTED'
-  | 'PENDING'
-  | 'SUBMITTED'
-  | 'INFO_REQUIRED'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'VERIFIED';
-
-export type RiderLifecycleStage =
-  | 'NEW'
-  | 'ONBOARDING'
-  | 'ACTIVE'
-  | 'RETURN_PENDING'
-  | 'CLOSED';
-
 export interface RiderEditForm {
   id?: string;
+  riderId?: string;
   fullName: string;
   email: string;
   phone: string;
-  fatherName: string;
-  motherName: string;
-  dob: string;
-  intent: string;
-  emergencyContact: string;
-  currentAddress: string;
-  lifecycleStatus: string;
+  fatherName?: string;
+  motherName?: string;
+  dob?: string;
+  intent?: string;
+  emergencyContact?: string;
+  currentAddress?: string;
+  lifecycleStatus?: string;
+  walletBalance?: number;
+  securityDeposit?: number;
+  depositStatus?: string;
+  activeVehicle?: string;
+  activeVehicleModel?: string;
+  panCard?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  teamLeader?: string;
+  assignedTlName?: string;
+  assignedTlPhone?: string;
+  referredBy?: string;
+  pickupHub?: string;
+  preferredShift?: string;
+  deliveryId?: string;
+  profilePhoto?: string;
+  riderPhoto?: string;
+  riderVideo?: string;
+  signature?: string;
+  aadhaarFront?: string;
+  aadhaarBack?: string;
+  registrationDone?: boolean;
+  depositDone?: boolean;
+  kycDone?: boolean;
+  planDone?: boolean;
+  pickupDone?: boolean;
   [key: string]: any;
 }

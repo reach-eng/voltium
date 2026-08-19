@@ -27,7 +27,7 @@ async function main() {
       name: 'Dev Admin',
       role: 'SUPER_ADMIN',
       isActive: true,
-      permissions: JSON.stringify([
+      permissions: [
         'riders_view',
         'riders_create',
         'riders_update',
@@ -78,7 +78,7 @@ async function main() {
         'riders_manage',
         'fleet_manage',
         'impersonate_riders',
-      ]),
+      ],
     },
   });
 

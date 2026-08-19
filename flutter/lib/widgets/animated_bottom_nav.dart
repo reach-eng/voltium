@@ -96,41 +96,43 @@ class _AppBottomNavState extends State<AppBottomNav>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return SlideTransition(
-      position: _slideAnim,
-      child: FadeTransition(
-        opacity: _fadeAnim,
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              height: 80 + MediaQuery.of(context).padding.bottom,
-              decoration: BoxDecoration(
-                // glass: card 95% opacity
-                color: colors.card.withValues(alpha: 0.95),
-                border: const Border(
-                  top: BorderSide(color: AppColors.outlineVariant, width: 1),
+    return RepaintBoundary(
+      child: SlideTransition(
+        position: _slideAnim,
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                height: 80 + MediaQuery.of(context).padding.bottom,
+                decoration: BoxDecoration(
+                  // glass: card 95% opacity
+                  color: colors.card.withValues(alpha: 0.95),
+                  border: Border(
+                    top: BorderSide(color: colors.outlineVariant, width: 1),
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 80,
-                  child: Row(
-                    children: List.generate(_tabs.length, (index) {
-                      return _NavButton(
-                        key: widget.tabKeys != null &&
-                                index < widget.tabKeys!.length
-                            ? widget.tabKeys![index]
-                            : null,
-                        tab: _tabs[index],
-                        isActive: index == widget.currentIndex,
-                        hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
-                        onTap: () {
-                          widget.onTap(index);
-                        },
-                      );
-                    }),
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    height: 80,
+                    child: Row(
+                      children: List.generate(_tabs.length, (index) {
+                        return _NavButton(
+                          key: widget.tabKeys != null &&
+                                  index < widget.tabKeys!.length
+                              ? widget.tabKeys![index]
+                              : null,
+                          tab: _tabs[index],
+                          isActive: index == widget.currentIndex,
+                          hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
+                          onTap: () {
+                            widget.onTap(index);
+                          },
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ),
@@ -212,7 +214,9 @@ class _NavButtonState extends State<_NavButton>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    const activeColor = AppColors.primary;
+    final activeColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.primaryLight
+        : AppColors.primary;
     final inactiveColor = colors.onSurfaceVariant;
     final iconColor = widget.isActive ? activeColor : inactiveColor;
     final labelColor = widget.isActive ? colors.onSurface : inactiveColor;

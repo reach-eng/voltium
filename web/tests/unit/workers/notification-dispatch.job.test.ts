@@ -39,7 +39,9 @@ describe('Notification Dispatch Job', () => {
     });
 
     expect(result.delivered).toBe(true);
-    expect(result.channel).toBe('fcm');
+    // The dispatcher now also persists the in-app Notification row — the
+    // honest channel is fcm+in-app (the FCM push is the primary path).
+    expect(result.channel).toBe('fcm+in-app');
     expect(notificationService.notifyKycStatusChange).toHaveBeenCalledWith(riderId, 'APPROVED');
   });
 
@@ -106,5 +108,60 @@ describe('Notification Dispatch Job', () => {
 
     expect(result.delivered).toBe(false);
     expect(result.warning).toBe('no FCM token');
+  });
+
+  // REGRESSION (typed sweep 2026-08-16): the job used to write `type:
+  // 'KYC_APPROVED'` / `body` / `channel` / `payload` — none of which exist
+  // on the Notification model (type is the NotificationType enum, the body
+  // column is `message`). Every such create threw at runtime and was
+  // swallowed by the try/catch, so in-app notifications were silently
+  // never persisted. Assert the row actually lands with a valid enum type
+  // and the correct column.
+  it('persists KYC_APPROVED in-app row with SYSTEM enum type and message column', async () => {
+    const riderId = uuidv4();
+    await testDb.rider.create({
+      data: {
+        id: riderId,
+        riderId: uuidv4(),
+        referralCode: uuidv4().slice(0, 8),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      },
+    });
+
+    const result = await notificationDispatchJob.process({
+      id: '7',
+      payload: { type: 'KYC_APPROVED', riderId, title: 'Verified', body: 'KYC passed' },
+    });
+
+    expect(result.delivered).toBe(true);
+    const rows = await testDb.notification.findMany({ where: { riderId } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].type).toBe('SYSTEM');
+    expect(rows[0].title).toBe('Verified');
+    expect(rows[0].message).toBe('KYC passed');
+  });
+
+  it('persists WALLET_TOPUP_APPROVED in-app row with PAYMENT enum type', async () => {
+    const riderId = uuidv4();
+    await testDb.rider.create({
+      data: {
+        id: riderId,
+        riderId: uuidv4(),
+        referralCode: uuidv4().slice(0, 8),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      },
+    });
+
+    const result = await notificationDispatchJob.process({
+      id: '8',
+      payload: { type: 'WALLET_TOPUP_APPROVED', riderId, title: 'Top-up', body: '₹500 added' },
+    });
+
+    expect(result.delivered).toBe(true);
+    const rows = await testDb.notification.findMany({ where: { riderId } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].type).toBe('PAYMENT');
+    expect(rows[0].title).toBe('Top-up');
+    expect(rows[0].message).toBe('₹500 added');
   });
 });

@@ -12,31 +12,91 @@ interface CacheEntry<T> {
 }
 
 /**
- * In-Memory LRU Cache with Promise Deduplication.
- *
- * @warn Single-process scope only. In multi-pod PM2 or clustered environments,
- * cache invalidations do NOT propagate across processes. Only use for idempotent,
- * short-lived, or read-mostly static data (e.g. system configs, app settings).
- * Do NOT use for mutable user state or balance accounting.
+ * Enterprise In-Memory LRU Cache with:
+ * - Namespace bucket indexing for O(1)/O(K) pattern invalidation
+ * - Single-flight Promise deduplication (thundering-herd protection)
+ * - Stale-While-Revalidate (SWR) background revalidation
+ * - Active TTL eviction / sliding sweeper for dead-key reclamation
+ * - Rich telemetry (hit rate, evictions, expired purges, namespace counts)
  */
-class MemoryCache<T> {
+export class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
+  private namespaces = new Map<string, Set<string>>();
   private maxSize = 500;
   private ttl = 60 * 1000;
   private pending = new Map<string, Promise<T | null>>();
   private hits = 0;
   private misses = 0;
   private evictions = 0;
+  private expiredPurged = 0;
+  private sweepTimer: NodeJS.Timeout | null = null;
+
+  constructor(options?: { maxSize?: number; ttlMs?: number; enableAutoSweep?: boolean }) {
+    if (options?.maxSize) this.maxSize = options.maxSize;
+    if (options?.ttlMs) this.ttl = options.ttlMs;
+
+    if (options?.enableAutoSweep !== false && typeof setInterval !== 'undefined') {
+      this.sweepTimer = setInterval(() => {
+        this.purgeExpired();
+      }, 60 * 1000);
+      if (this.sweepTimer && typeof this.sweepTimer === 'object' && 'unref' in this.sweepTimer) {
+        this.sweepTimer.unref();
+      }
+    }
+  }
+
+  private extractPrefixes(key: string): string[] {
+    const prefixes: string[] = [];
+    const parts = key.split(':');
+    let current = '';
+    for (let i = 0; i < parts.length - 1; i++) {
+      current = current ? `${current}:${parts[i]}` : parts[i];
+      prefixes.push(current);
+    }
+    if (prefixes.length === 0 && parts.length > 0) {
+      prefixes.push(parts[0]);
+    }
+    return prefixes;
+  }
+
+  private indexKey(key: string): void {
+    const prefixes = this.extractPrefixes(key);
+    for (const prefix of prefixes) {
+      let bucket = this.namespaces.get(prefix);
+      if (!bucket) {
+        bucket = new Set<string>();
+        this.namespaces.set(prefix, bucket);
+      }
+      bucket.add(key);
+    }
+  }
+
+  private deindexKey(key: string): void {
+    const prefixes = this.extractPrefixes(key);
+    for (const prefix of prefixes) {
+      const bucket = this.namespaces.get(prefix);
+      if (bucket) {
+        bucket.delete(key);
+        if (bucket.size === 0) {
+          this.namespaces.delete(prefix);
+        }
+      }
+    }
+  }
 
   set(key: string, data: T, ttlMs?: number, staleMs?: number): void {
     if (this.cache.has(key)) {
       this.cache.delete(key);
-    } else if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      if (firstKey) {
-        this.cache.delete(firstKey);
-        this.evictions++;
+    } else {
+      if (this.cache.size >= this.maxSize) {
+        const firstKey = this.cache.keys().next().value;
+        if (firstKey) {
+          this.cache.delete(firstKey);
+          this.deindexKey(firstKey);
+          this.evictions++;
+        }
       }
+      this.indexKey(key);
     }
 
     const now = Date.now();
@@ -58,12 +118,15 @@ class MemoryCache<T> {
 
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
+      this.deindexKey(key);
       this.misses++;
+      this.expiredPurged++;
       return null;
     }
 
     if (entry.version !== CACHE_VERSION) {
       this.cache.delete(key);
+      this.deindexKey(key);
       this.misses++;
       return null;
     }
@@ -88,7 +151,12 @@ class MemoryCache<T> {
   /**
    * Get or compute — deduplicates concurrent calls for the same key.
    */
-  async getOrSet(key: string, fetcher: () => Promise<T | null>, ttlMs?: number): Promise<T | null> {
+  async getOrSet(
+    key: string,
+    fetcher: () => Promise<T | null>,
+    ttlMs?: number,
+    staleMs?: number
+  ): Promise<T | null> {
     const cached = this.get(key);
     if (cached !== null) return cached;
 
@@ -97,7 +165,7 @@ class MemoryCache<T> {
 
     const promise = fetcher()
       .then((data) => {
-        if (data !== null) this.set(key, data, ttlMs);
+        if (data !== null && data !== undefined) this.set(key, data, ttlMs, staleMs);
         return data;
       })
       .finally(() => {
@@ -125,7 +193,7 @@ class MemoryCache<T> {
       if (this.isStale(key) && !this.pending.has(key)) {
         const revalidate = fetcher()
           .then((data) => {
-            if (data !== null) this.set(key, data, ttlMs, staleMs);
+            if (data !== null && data !== undefined) this.set(key, data, ttlMs, staleMs);
             return data;
           })
           .finally(() => {
@@ -136,8 +204,8 @@ class MemoryCache<T> {
       return cached;
     }
 
-    // No cache hit — fall through to a blocking fetch
-    return this.getOrSet(key, fetcher, ttlMs);
+    // No cache hit — fall through to a blocking fetch with stale window preserved
+    return this.getOrSet(key, fetcher, ttlMs, staleMs);
   }
 
   has(key: string): boolean {
@@ -146,34 +214,87 @@ class MemoryCache<T> {
 
   delete(key: string): void {
     this.cache.delete(key);
+    this.deindexKey(key);
     this.pending.delete(key);
   }
 
   clear(): void {
     this.cache.clear();
+    this.namespaces.clear();
     this.pending.clear();
   }
 
+  /**
+   * Active TTL eviction sweep. Drops all dead keys from memory.
+   */
+  purgeExpired(): number {
+    const now = Date.now();
+    let purged = 0;
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiresAt) {
+        this.cache.delete(key);
+        this.deindexKey(key);
+        purged++;
+      }
+    }
+    this.expiredPurged += purged;
+    return purged;
+  }
+
+  /**
+   * Fast pattern invalidation with O(K) namespace bucket lookup
+   * when pattern is a wildcard prefix like `rider:*` or `admin:deposits:*`.
+   */
   invalidatePattern(pattern: string | RegExp): number {
     let deleted = 0;
-    let regex: RegExp;
 
+    if (typeof pattern === 'string' && pattern.endsWith(':*')) {
+      const prefix = pattern.slice(0, -2);
+      const bucket = this.namespaces.get(prefix);
+      if (bucket) {
+        const keysToDelete = Array.from(bucket);
+        for (const key of keysToDelete) {
+          this.cache.delete(key);
+          this.deindexKey(key);
+          deleted++;
+        }
+        logger.info('[Cache] Fast namespace invalidated', { prefix, deleted });
+        return deleted;
+      }
+    }
+
+    if (pattern === '*' || pattern === 'admin:*' || pattern === 'rider:*') {
+      const prefix = typeof pattern === 'string' ? pattern.replace(':*', '') : '';
+      if (prefix && this.namespaces.has(prefix)) {
+        const bucket = this.namespaces.get(prefix)!;
+        const keysToDelete = Array.from(bucket);
+        for (const key of keysToDelete) {
+          this.cache.delete(key);
+          this.deindexKey(key);
+          deleted++;
+        }
+        logger.info('[Cache] Fast namespace invalidated', { prefix, deleted });
+        return deleted;
+      }
+    }
+
+    let regex: RegExp;
     if (pattern instanceof RegExp) {
       regex = pattern;
     } else {
-      // Escape regex-special characters before replacing wildcards
       const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
       regex = new RegExp(escaped);
     }
 
-    for (const key of this.cache.keys()) {
+    for (const key of Array.from(this.cache.keys())) {
       if (regex.test(key)) {
         this.cache.delete(key);
+        this.deindexKey(key);
         deleted++;
       }
     }
 
-    logger.info('[Cache] Invalidated', { pattern: pattern.toString(), deleted });
+    logger.info('[Cache] Pattern invalidated', { pattern: pattern.toString(), deleted });
     return deleted;
   }
 
@@ -184,9 +305,11 @@ class MemoryCache<T> {
       maxSize: this.maxSize,
       version: CACHE_VERSION,
       keys: Array.from(this.cache.keys()),
+      namespaces: Array.from(this.namespaces.keys()),
       hits: this.hits,
       misses: this.misses,
       evictions: this.evictions,
+      expiredPurged: this.expiredPurged,
       hitRate: total > 0 ? this.hits / total : 0,
     };
   }
@@ -195,10 +318,18 @@ class MemoryCache<T> {
     this.hits = 0;
     this.misses = 0;
     this.evictions = 0;
+    this.expiredPurged = 0;
   }
 
   getVersion(): string {
     return CACHE_VERSION;
+  }
+
+  dispose(): void {
+    if (this.sweepTimer) {
+      clearInterval(this.sweepTimer);
+      this.sweepTimer = null;
+    }
   }
 }
 

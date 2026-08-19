@@ -9,6 +9,8 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 
 /// Enhanced WalletScreen widget tests covering:
 /// - Header with title and refresh button
@@ -48,12 +50,37 @@ class _TestAppProvider extends AppProvider {
       );
 }
 
+/// WalletScreen consumes `riderProvider` / `walletProvider` directly (Riverpod
+/// migration), so those must be overridden too — otherwise the real notifiers
+/// build a null rider and the screen shows the skeleton.
+class _StaticRiderNotifier extends RiderNotifier {
+  @override
+  RiderState build() => RiderState(
+        rider: const RiderModel(
+          riderId: 'test',
+          name: 'Test Rider',
+          phone: '1234567890',
+          walletBalance: 1000,
+          depositStatus: DepositStatus.notSubmitted,
+        ),
+        riderId: 'test',
+        dataState: DataState.fresh,
+      );
+}
+
+class _StaticWalletNotifier extends WalletNotifier {
+  @override
+  WalletState build() => const WalletState(transactions: []);
+}
+
 Widget buildTestApp({AppProvider? provider}) {
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      localeProviderRef.overrideWith(() => LocaleProvider()),
+      themeProviderRef.overrideWith(() => ThemeProvider()),
       appProvider.overrideWith((ref) => provider ?? _TestAppProvider()),
+      riderProvider.overrideWith(() => _StaticRiderNotifier()),
+      walletProvider.overrideWith(() => _StaticWalletNotifier()),
     ],
     child: const MaterialApp(home: WalletScreen()),
   );

@@ -1,4 +1,6 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
+import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { OutboxService, OutboxEventTypes } from '../outbox';
@@ -12,15 +14,15 @@ interface ReferralRewardResult {
 }
 
 export const referralRewardJob = {
-  async process(job: any): Promise<ReferralRewardResult> {
+  async process(job: QueueJob): Promise<ReferralRewardResult> {
     logger.info('[ReferralRewardJob] Starting', { jobId: job.id, payload: job.payload });
 
     const result: ReferralRewardResult = { referredRiders: 0, rewardsCredited: 0, errors: 0 };
 
     // Find riders who were referred but haven't had rewards processed yet
     // This runs on-demand when a new rider signs up with a referral code
-    const referredRiderId = job.payload?.referredRiderId;
-    const referrerCode = job.payload?.referralCode;
+    const referredRiderId = job.payload?.referredRiderId as string | undefined;
+    const referrerCode = job.payload?.referralCode as string | undefined;
 
     if (!referredRiderId || !referrerCode) {
       logger.warn('[ReferralRewardJob] Missing payload fields', { payload: job.payload });
@@ -62,7 +64,7 @@ export const referralRewardJob = {
     const idempotencyKey = `referral:${referrer.id}:${referredRiderId}`;
 
     try {
-      await db.$transaction(async (tx: any) => {
+      await db.$transaction(async (tx) => {
         const txn = await tx.transaction.create({
           data: {
             riderId: referrer.id,
@@ -97,24 +99,12 @@ export const referralRewardJob = {
 
       createAuditLog({
         actorId: 'system',
+        actorType: 'SYSTEM',
         action: 'CREATE',
         entity: 'rider',
         entityId: referrer.id,
-        details: { amountPaise: REWARD_AMOUNT_PAISE, referredRiderId },
+        details: JSON.stringify({ amountPaise: REWARD_AMOUNT_PAISE, referredRiderId }),
       }).catch(() => {});
-
-      // PR-75: referral reward is interactive.
-      await OutboxService.emit(
-        OutboxEventTypes.REFERRAL_REWARD,
-        {
-          referrerId: referrer.id,
-          amountPaise: REWARD_AMOUNT_PAISE,
-          referredRiderId,
-        },
-        3,
-        undefined,
-        'interactive'
-      ).catch(() => {});
 
       logger.info('[ReferralRewardJob] Reward credited', {
         referrerId: referrer.id,

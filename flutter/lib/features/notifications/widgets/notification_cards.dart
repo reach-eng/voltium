@@ -59,7 +59,7 @@ class NotificationCard extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +88,7 @@ class NotificationCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         message,
                         style: GoogleFonts.plusJakartaSans(

@@ -1,0 +1,74 @@
+# TEST-STRATEGY-AUDIT T-P2-3 (2026-08-08): pre-commit hook config
+# for lefthook (https://github.com/evilmartians/lefthook). The
+# current CI pipeline runs the full test suite on every PR, which
+# has a multi-minute feedback loop on a typo. A pre-commit hook
+# catches the cheap failures (lint, typecheck) BEFORE push.
+#
+# Install lefthook: `brew install lefthook` (macOS) or download from
+# https://github.com/evilmartians/lefthook/releases
+# Then: `lefthook install` (one-time, in repo root)
+#
+# The hook does NOT run the full test suite (too slow for
+# pre-commit). It runs the lint + trivial-tests linter + the
+# changed-file typecheck. CI still runs the full suite.
+
+min_version: 1.6.0
+
+pre-commit:
+  parallel: true
+  commands:
+    web-lint:
+      glob_filter: "web/src/**/*.ts"
+      run: |
+        cd web
+        npx eslint {staged_files}
+      stage_fixed: true
+
+    flutter-lint:
+      glob_filter: "flutter/lib/**/*.dart"
+      run: |
+        cd flutter
+        flutter analyze --no-fatal-warnings {staged_files}
+      stage_fixed: true
+
+    lint-no-trivial-tests:
+      glob_filter: |
+        web/tests/**/*.{ts,tsx}
+        flutter/test/**/*.dart
+        flutter/integration_test/**/*.dart
+      run: |
+        cd web
+        node scripts/lint-no-trivial-tests.js
+
+    api-coverage-gap:
+      glob_filter: "web/src/contracts/openapi.json"
+      run: |
+        cd web
+        node scripts/check-api-coverage.js
+
+    check-no-skip:
+      # T-P2-4: alert when a new it.skip / test.skip / .skip is added.
+      # Comment out the run line if you genuinely need to skip a test
+      # and add a justification to the test file.
+      glob_filter: |
+        web/tests/**/*.test.ts
+        flutter/test/**/*.dart
+        flutter/integration_test/**/*.dart
+      run: |
+        echo "::warning::A new it.skip / test.skip may have been added in this commit. " \
+          "If intentional, document the reason in the test file and update this hook."
+      fail: false  # advisory only — does not fail the commit
+
+    check-no-only:
+      # T-P2-6: alert when .only() / .todo() is used. These should
+      # never reach main.
+      glob_filter: |
+        web/tests/**/*.test.ts
+        flutter/test/**/*.dart
+        flutter/integration_test/**/*.dart
+      run: |
+        if grep -rE '\.(only|todo)\b' {staged_files}; then
+          echo "::error::Found .only() or .todo() in a test file. These should never be merged."
+          exit 1
+        fi
+      fail: true

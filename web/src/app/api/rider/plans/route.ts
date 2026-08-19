@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
       return errors.validation(validation.error!);
     }
 
-    const { planId } = validation.data;
+    const { planId, advanceRentPaid } = validation.data;
+    const isAdvanceRent = typeof advanceRentPaid === 'boolean' ? advanceRentPaid : (advanceRentPaid ? true : false);
 
-    const result = await planUseCases.subscribeToPlan(riderDbId, planId);
+    const result = await planUseCases.subscribeToPlan(riderDbId, planId, isAdvanceRent);
     return success(result, `Subscribed to ${result.planName} plan`);
   } catch (err) {
     if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INSUFFICIENT_BALANCE') {

@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/language_toggle.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
 import 'profile_detail_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
@@ -26,15 +29,26 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 /// Menu screen (formerly "Profile" tab).
 /// Shows a compact rider header and a list of navigation links.
 /// Detailed profile information lives in [ProfileDetailScreen].
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.screen('profile_menu_screen');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: colors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: _buildAppBar(context),
       body: Consumer(
         builder: (context, innerRef, _) {
@@ -69,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
 
                   // ── Menu sections ─────────────────────────────────────────
-                  _SectionLabel(l10n.menu_account),
+                  _SectionLabel(l10n?.menu_account ?? 'ACCOUNT'),
                   const SizedBox(height: 12),
 
                   // Profile (opens full detail screen)
@@ -80,10 +94,13 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.person_outline,
                       activeIcon: Icons.person,
                       iconColor: AppColors.primary,
-                      iconBgColor: AppColors.of(context).primarySurface,
-                      title: l10n.menu_profile,
-                      onTap: () => AppNavigator.push(
-                          context, const ProfileDetailScreen()),
+                      iconBgColor: colors.primarySurface,
+                      title: l10n?.menu_profile ?? 'Profile',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'profile'});
+                        AppNavigator.push(context, const ProfileDetailScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -95,15 +112,18 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.contact_page_outlined,
                       activeIcon: Icons.contact_page,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.of(context).successLight,
-                      title: l10n.menu_myDocuments,
-                      onTap: () =>
-                          AppNavigator.push(context, const MyDocumentsScreen()),
+                      iconBgColor: colors.successSurface,
+                      title: l10n?.menu_myDocuments ?? 'My Documents',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'documents'});
+                        AppNavigator.push(context, const MyDocumentsScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  _SectionLabel(l10n.menu_rewardsMore),
+                  _SectionLabel(l10n?.menu_rewardsMore ?? 'REWARDS & MORE'),
                   const SizedBox(height: 12),
 
                   FadeUpWidget(
@@ -113,10 +133,13 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.card_giftcard_outlined,
                       activeIcon: Icons.card_giftcard,
                       iconColor: AppColors.accentPurple,
-                      iconBgColor: AppColors.accentPurpleSurface,
-                      title: l10n.menu_rewards,
-                      onTap: () =>
-                          AppNavigator.push(context, const RewardsScreen()),
+                      iconBgColor: colors.primarySurface,
+                      title: l10n?.menu_rewards ?? 'Rewards',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'rewards'});
+                        AppNavigator.push(context, const RewardsScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -128,15 +151,18 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.people_outline,
                       activeIcon: Icons.people,
                       iconColor: AppColors.warning,
-                      iconBgColor: AppColors.warningSurface,
-                      title: l10n.menu_referralProgram,
-                      onTap: () =>
-                          AppNavigator.push(context, const ReferralScreen()),
+                      iconBgColor: colors.warningSurface,
+                      title: l10n?.menu_referralProgram ?? 'Referral Program',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'referral'});
+                        AppNavigator.push(context, const ReferralScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  _SectionLabel(l10n.menu_general),
+                  _SectionLabel(l10n?.menu_general ?? 'GENERAL'),
                   const SizedBox(height: 12),
 
                   FadeUpWidget(
@@ -146,10 +172,15 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.route_outlined,
                       activeIcon: Icons.route,
                       iconColor: AppColors.primary,
-                      iconBgColor: AppColors.of(context).primarySurface,
-                      title: l10n.menu_workflowServices,
-                      onTap: () => AppNavigator.push(
-                          context, const RiderWorkflowHubScreen()),
+                      iconBgColor: colors.primarySurface,
+                      title:
+                          l10n?.menu_workflowServices ?? 'Workflow & Services',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'workflows'});
+                        AppNavigator.push(
+                            context, const RiderWorkflowHubScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -160,11 +191,14 @@ class ProfileScreen extends ConsumerWidget {
                       key: const Key('appSettingsLink'),
                       icon: Icons.tune_outlined,
                       activeIcon: Icons.tune,
-                      iconColor: AppColors.successDark,
-                      iconBgColor: AppColors.of(context).successLight,
-                      title: l10n.menu_appSettings,
-                      onTap: () =>
-                          AppNavigator.push(context, const SettingsScreen()),
+                      iconColor: colors.onSurfaceVariant,
+                      iconBgColor: colors.iconBackground,
+                      title: l10n?.menu_appSettings ?? 'App Settings',
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'settings'});
+                        AppNavigator.push(context, const SettingsScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -175,15 +209,21 @@ class ProfileScreen extends ConsumerWidget {
                       key: const Key('languageLink'),
                       icon: Icons.language,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.of(context).successLight,
-                      title: l10n.menu_language,
+                      iconBgColor: colors.successSurface,
+                      title: l10n?.menu_language ?? 'Language',
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            currentLocale == 'hi'
-                                ? l10n.settings_hindi
-                                : l10n.settings_english,
+                            localeProv.isFollowingSystem
+                                ? (l10n?.settings_followSystem ??
+                                    'Follow system')
+                                : (l10n != null
+                                    ? LocaleNotifier.displayNameFor(
+                                        localeProv.locale, l10n)
+                                    : (currentLocale == 'hi'
+                                        ? 'हिंदी'
+                                        : 'English')),
                             style: GoogleFonts.plusJakartaSans(
                               color: colors.onSurfaceMuted,
                               fontSize: 14,
@@ -194,7 +234,11 @@ class ProfileScreen extends ConsumerWidget {
                               color: colors.outline, size: 20),
                         ],
                       ),
-                      onTap: () => _showLanguageDialog(context, ref),
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'language'});
+                        _showLanguageDialog(context, ref);
+                      },
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -202,8 +246,12 @@ class ProfileScreen extends ConsumerWidget {
                   FadeUpWidget(
                     delay: 360,
                     child: ProfileEmergencySosTile(
-                      onTap: () => AppNavigator.push(
-                          context, const EmergencySOSScreen()),
+                      onTap: () {
+                        PostHogService.capture('profile_menu_item_clicked',
+                            properties: {'item': 'emergency_sos'});
+                        AppNavigator.push(
+                            context, const EmergencySOSScreen());
+                      },
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -218,16 +266,16 @@ class ProfileScreen extends ConsumerWidget {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return AppBar(
-      backgroundColor: colors.iconBackground,
+      backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
       centerTitle: false,
       titleSpacing: 20,
       title: Text(
-        l10n.menu_title,
+        l10n?.menu_title ?? 'Menu',
         style: AppTypography.headingMedium
             .copyWith(color: colors.onSurface, letterSpacing: -0.5),
       ),
@@ -252,9 +300,11 @@ class _SectionLabel extends StatelessWidget {
     final colors = AppColors.of(context);
     return Text(
       label,
-      style: AppTypography.bodySmall
-          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-          .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.2),
+      style: AppTypography.bodySmall.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: colors.onSurfaceVariant,
+      ),
     );
   }
 }
@@ -265,8 +315,9 @@ class _CompactRiderHeader extends StatelessWidget {
   const _CompactRiderHeader({this.rider});
 
   String? _getAvatarUrl() {
-    if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+    if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty) {
       return null;
+    }
     if (rider!.profilePhoto!.startsWith('http')) return rider!.profilePhoto;
     final baseUrl = ApiClient().baseUrl;
     return '$baseUrl/api/files/${rider!.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
@@ -275,6 +326,7 @@ class _CompactRiderHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final avatarUrl = _getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
@@ -285,12 +337,16 @@ class _CompactRiderHeader extends StatelessWidget {
         kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
     return InkWell(
-      onTap: () => AppNavigator.push(context, const ProfileDetailScreen()),
+      onTap: () {
+        HapticService.light();
+        AppNavigator.push(context, const ProfileDetailScreen());
+      },
       borderRadius: BorderRadius.circular(AppRadius.radiusModal),
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -309,7 +365,7 @@ class _CompactRiderHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isVerified ? AppColors.success : AppColors.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 3),
+                border: Border.all(color: colors.card, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
@@ -356,9 +412,8 @@ class _CompactRiderHeader extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          rider?.name ?? 'Rider',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 17,
+                          rider?.name ?? (l10n?.txtguestRider ?? 'Rider'),
+                          style: AppTypography.titleMedium.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colors.onSurface,
                           ),
@@ -386,7 +441,7 @@ class _CompactRiderHeader extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
+                        'KYC: ${kycStatusName == 'SUBMITTED' ? (l10n?.txtunderReview ?? 'Under Review') : _capitalize(kycStatusName.toLowerCase())}',
                         style: AppTypography.bodySmall
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(

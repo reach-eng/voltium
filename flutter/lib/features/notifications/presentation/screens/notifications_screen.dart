@@ -7,6 +7,7 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 import 'notification_preferences_screen.dart';
 
@@ -189,6 +190,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                               await showDialog<bool>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
+                                              backgroundColor: colors.surface,
                                               title: const Text(
                                                 'Delete Notification',
                                               ),
@@ -234,31 +236,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                               .deleteNotification(
                                                   filtered[index].id);
                                           if (!ok && context.mounted) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                    'Failed to delete notification'),
-                                                duration: Duration(seconds: 2),
-                                              ),
+                                            Toast.error(
+                                              context,
+                                              'Failed to delete notification',
                                             );
                                           }
                                           return ok;
                                         },
                                         onDismissed: (direction) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              // LANGUAGE-AUDIT (2026-08-16)
-                                              // #5: hardcoded English
-                                              // SnackBar. Localised via
-                                              // `txtnotificationDeleted`.
-                                              content: Text(
-                                                  AppLocalizations.of(context)!
-                                                      .txtnotificationDeleted),
-                                              duration:
-                                                  const Duration(seconds: 2),
-                                            ),
+                                          Toast.info(
+                                            context,
+                                            AppLocalizations.of(context)!
+                                                .txtnotificationDeleted,
                                           );
                                         },
                                         child: RepaintBoundary(
@@ -336,14 +325,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   ),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Text(
                 'Notifications',
                 style: AppTypography.headingSmall
                     .copyWith(color: colors.onSurface),
               ),
               if (unreadCount > 0) ...[
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -395,7 +384,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   child: Container(
                     padding: const EdgeInsets.all(Spacing.md2),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.card,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -487,7 +476,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                         color:
                             isSelected ? Colors.white : colors.onSurfaceVariant,
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         _getTabLabel(tab),
                         style: AppTypography.labelMedium.copyWith(
@@ -532,12 +521,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               color: AppColors.primary.withValues(alpha: 0.15),
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
             'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
             style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             "You're all caught up!",
             style: GoogleFonts.plusJakartaSans(
@@ -605,13 +594,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: colors.card, width: 2),
                       ),
                     ),
                   ),
               ],
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,7 +626,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       ),
                     ],
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     notif.title,
                     style: GoogleFonts.plusJakartaSans(
@@ -647,7 +636,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       color: colors.onSurface,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     notif.message,
                     style: GoogleFonts.plusJakartaSans(
@@ -680,7 +669,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.currency_rupee,
         color: AppColors.success,
-        bgColor: AppColors.of(context).successLight,
+        bgColor: colors.successLight,
         label: 'Payment'
       );
     }
@@ -690,7 +679,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.shield_outlined,
         color: AppColors.accentPurple,
-        bgColor: AppColors.accentPurpleSurface,
+        bgColor: AppColors.accentPurple.withValues(alpha: 0.15),
         label: 'KYC'
       );
     }
@@ -702,7 +691,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.build_outlined,
         color: AppColors.primary,
-        bgColor: AppColors.of(context).primarySurface,
+        bgColor: colors.primarySurface,
         label: 'Maintenance'
       );
     }
@@ -713,13 +702,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.campaign_outlined,
         color: AppColors.accentPurple,
-        bgColor: AppColors.accentPurpleSurface,
+        bgColor: AppColors.accentPurple.withValues(alpha: 0.15),
         label: 'Announcement'
       );
     }
     return (
       icon: Icons.notifications_outlined,
-      color: AppColors.of(context).onSurfaceVariant,
+      color: colors.onSurfaceVariant,
       bgColor: colors.iconBackground,
       label: 'General'
     );

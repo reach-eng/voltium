@@ -13,12 +13,35 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/models/reward_model.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import '../../../../utils/app_logger.dart';
+
+@immutable
+class RewardItem {
+  final String id;
+  final String title;
+  final int points;
+  final String createdAt;
+
+  const RewardItem({
+    required this.id,
+    required this.title,
+    required this.points,
+    required this.createdAt,
+  });
+
+  factory RewardItem.fromJson(Map<String, dynamic> json) {
+    return RewardItem(
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      points: json['points'] as int? ?? 0,
+      createdAt: json['createdAt'] as String? ?? '',
+    );
+  }
+}
 
 @immutable
 class EngagementState {
@@ -174,18 +197,85 @@ class EngagementNotifier extends Notifier<EngagementState> {
       unreadCount: (state.unreadCount - 1).clamp(0, 999),
     );
     if (!AppConstants.isTestMode) {
-      _api.post('/api/rider/notifications', body: {'notificationId': id});
+      _api.put('/api/rider/notifications', body: {'notificationId': id});
     }
   }
 
-  void markAllNotificationsRead() {
+  /// PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-5): delete one notification
+  /// server-side (DELETE /api/rider/notifications?id=...) and remove it from
+  /// state only on success. Returns true when the row was deleted.
+  Future<bool> deleteNotification(String id) async {
+    AppNotification? target;
+    for (final n in state.notifications) {
+      if (n.id == id) {
+        target = n;
+        break;
+      }
+    }
+    final wasUnread = target?.isRead == false;
+
+    if (AppConstants.isTestMode) {
+      final next = [...state.notifications]..removeWhere((n) => n.id == id);
+      state = state.copyWith(
+        notifications: next,
+        unreadCount: (state.unreadCount - (wasUnread ? 1 : 0)).clamp(0, 999),
+      );
+      return true;
+    }
+
+    try {
+      await _api.delete('/api/rider/notifications?id=$id');
+      final next = [...state.notifications]..removeWhere((n) => n.id == id);
+      state = state.copyWith(
+        notifications: next,
+        unreadCount: (state.unreadCount - (wasUnread ? 1 : 0)).clamp(0, 999),
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _markAllInFlight = false;
+
+  // PR-VER-2026-08-07 (SUPPORT P0-5): the previous version re-fired the
+  // PUT on every tap (rapid taps → N concurrent PUTs) and could race an
+  // in-flight per-notification markRead. Guard with an in-flight flag and
+  // await the call so local state is applied once.
+  Future<void> markAllNotificationsRead() async {
+    if (_markAllInFlight) return;
+    _markAllInFlight = true;
     state = state.copyWith(
       notifications:
           state.notifications.map((n) => n.copyWith(isRead: true)).toList(),
       unreadCount: 0,
     );
+    try {
+      if (!AppConstants.isTestMode) {
+        await _api.put('/api/rider/notifications', body: {});
+      }
+    } catch (_) {
+      // Best-effort — local read state is already applied.
+    } finally {
+      _markAllInFlight = false;
+    }
+  }
+
+  Future<void> clearReadNotifications() async {
+    final readIds =
+        state.notifications.where((n) => n.isRead).map((n) => n.id).toList();
+    if (readIds.isEmpty) return;
+
+    final unreadOnly = state.notifications.where((n) => !n.isRead).toList();
+    state = state.copyWith(notifications: unreadOnly);
+
     if (!AppConstants.isTestMode) {
-      _api.post('/api/rider/notifications', body: {});
+      try {
+        await Future.wait(readIds
+            .map((id) => _api.delete('/api/rider/notifications?id=$id')));
+      } catch (e) {
+        appDebug('Failed to delete read notifications: $e');
+      }
     }
   }
 

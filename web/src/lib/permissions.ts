@@ -101,3 +101,30 @@ export function getPermissionsForRole(role: string): Permission[] {
     (PERMISSIONS[perm] as readonly string[]).includes(adminRole)
   );
 }
+
+/**
+ * Parse an admin's permissions column into a string[].
+ *
+ * The DB column stores a JSON string (e.g. `'["riders_view"]'`); older
+ * rows/tests may hold an already-parsed array. Any other input yields []
+ * (P0-6: replaces the fragile try/catch + dead-branch logic in getMe).
+ */
+export function parsePermissions(raw: string | string[] | null | undefined): string[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((p): p is string => typeof p === 'string');
+  }
+  if (typeof raw !== 'string' || raw.length === 0) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((p): p is string => typeof p === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Serialize a permissions array back into the DB column format. */
+export function serializePermissions(permissions: string[]): string {
+  return JSON.stringify(Array.isArray(permissions) ? permissions : []);
+}

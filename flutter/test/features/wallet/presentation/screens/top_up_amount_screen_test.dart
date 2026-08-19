@@ -1,0 +1,92 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/screens/top_up_amount_screen.dart';
+import 'package:voltium_rider/models/rider_model.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+
+class _SeededRiderNotifier extends RiderNotifier {
+  _SeededRiderNotifier(this._seed);
+  final RiderModel _seed;
+
+  @override
+  RiderState build() => RiderState(
+        rider: _seed,
+        riderId: _seed.riderId.isNotEmpty ? _seed.riderId : _seed.id,
+        phone: _seed.phone,
+        dataState: DataState.fresh,
+        hasFetchedOnce: true,
+      );
+}
+
+void main() {
+  Widget buildTestHost({
+    Function(int)? onProceed,
+    VoidCallback? onBack,
+    int? initialAmount,
+  }) {
+    return ProviderScope(
+      overrides: [
+        riderProvider.overrideWith(() => _SeededRiderNotifier(
+              const RiderModel(
+                id: 'rider_123',
+                riderId: 'rider_123',
+                name: 'Test Rider',
+                phone: '9999999999',
+                lifecycleStatus: 'ACTIVE',
+              ),
+            )),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: TopUpAmountScreen(
+          onProceed: onProceed,
+          onBack: onBack,
+          initialAmount: initialAmount ?? 1000,
+        ),
+      ),
+    );
+  }
+
+  group('TopUpAmountScreen Tests', () {
+    testWidgets('renders initial amount in text field and quick amount chips', (tester) async {
+      await tester.pumpWidget(buildTestHost(initialAmount: 1500));
+      await tester.pumpAndSettle();
+
+      expect(find.text('1500'), findsWidgets);
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('invokes onBack when back button is pressed', (tester) async {
+      bool backCalled = false;
+      await tester.pumpWidget(buildTestHost(onBack: () => backCalled = true));
+      await tester.pumpAndSettle();
+
+      final backButton = find.byType(IconButton).first;
+      await tester.tap(backButton);
+      await tester.pumpAndSettle();
+
+      expect(backCalled, isTrue);
+    });
+
+    testWidgets('invokes onProceed with selected amount when proceed is tapped', (tester) async {
+      int? proceededAmount;
+      await tester.pumpWidget(buildTestHost(
+        initialAmount: 2000,
+        onProceed: (amount) => proceededAmount = amount,
+      ));
+      await tester.pumpAndSettle();
+
+      // Tap the Proceed / Top Up button
+      final proceedButton = find.byType(ElevatedButton);
+      expect(proceedButton, findsOneWidget);
+
+      await tester.tap(proceedButton);
+      await tester.pumpAndSettle();
+
+      expect(proceededAmount, equals(2000));
+    });
+  });
+}

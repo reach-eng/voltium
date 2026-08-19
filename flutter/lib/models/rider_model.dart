@@ -3,7 +3,7 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'deposit_record.dart';
 import 'rider_lifecycle_stage.dart';
-import '../utils/app_constants.dart';
+import 'upcoming_rent_prompt.dart';
 import '../utils/lifecycle_rank.dart';
 
 part 'rider_model.g.dart';
@@ -132,7 +132,14 @@ class RiderModel {
   final DateTime? lastDeviceViolationAt;
   final int deviceViolationCount;
   final String? currentPlan;
+  final String? currentPlanId;
   final double? currentPlanPrice;
+  // PR-RUPEES-2026-08-08: the current plan's security deposit in
+  // **rupees** (server-joined via `currentPlanRef.securityDepositInPaise`
+  // and converted to rupees at the API boundary). Replaces the
+  // hardcoded `AppConstants.planSecurityDepositRupees` map. Was
+  // `currentPlanSecurityDepositInPaise` (int) before this PR.
+  final double? currentPlanSecurityDepositInRupees;
   final DateTime? planStartDate;
   final DateTime? planEndDate;
   final bool advanceRentPaid;
@@ -143,10 +150,16 @@ class RiderModel {
   final String? vehicleModel;
   final String? pickupHub;
   final String? teamLeader;
+  final String? teamLeaderPhone;
   final String? emergencyContact;
   final String? intent;
   final DateTime? submissionDate;
   final bool returnPending;
+  // LANGUAGE-AUDIT (2026-08-16) #6: BCP-47 language tag for the
+  // rider's chosen language. NULL means "follow system". Mirrored
+  // from the server's `Rider.preferredLocale` column on every
+  // profile fetch and on every `LocaleNotifier.setLocale()` call.
+  final String? preferredLocale;
   final String? pickupPhotoFront;
   final String? pickupPhotoBack;
   final String? pickupPhotoLeft;
@@ -171,6 +184,9 @@ class RiderModel {
   // ── Referral & Rewards ───────────────────────────────────────────────────────
   final String? referralCode;
   final int totalRewardPoints;
+
+  // ── Proactive Rent Prompt ──────────────────────────────────────────────────
+  final UpcomingRentPrompt? upcomingRentPrompt;
 
   // ── Timestamps ──────────────────────────────────────────────────────────
   final DateTime? createdAt;
@@ -228,7 +244,9 @@ class RiderModel {
     this.lastDeviceViolationAt,
     this.deviceViolationCount = 0,
     this.currentPlan,
+    this.currentPlanId,
     this.currentPlanPrice,
+    this.currentPlanSecurityDepositInRupees,
     this.planStartDate,
     this.planEndDate,
     this.advanceRentPaid = false,
@@ -237,6 +255,7 @@ class RiderModel {
     this.vehicleModel,
     this.pickupHub,
     this.teamLeader,
+    this.teamLeaderPhone,
     this.emergencyContact,
     this.registrationDone = false,
     this.depositDone = false,
@@ -249,11 +268,13 @@ class RiderModel {
     this.isNewRider = false,
     this.referralCode,
     this.totalRewardPoints = 0,
+    this.upcomingRentPrompt,
     this.createdAt,
     this.updatedAt,
     this.intent,
     this.submissionDate,
     this.returnPending = false,
+    this.preferredLocale,
     this.pickupPhotoFront,
     this.pickupPhotoBack,
     this.pickupPhotoLeft,
@@ -274,14 +295,67 @@ class RiderModel {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is RiderModel &&
-        other.id == id &&
-        other.updatedAt == updatedAt;
+    if (other is! RiderModel) return false;
+    // PR-AUDIT-FIX 2026-08-12: equality must include the fields that
+    // drive routing and screen rebuilds — not just `id` and `updatedAt`.
+    //
+    // The bug: hangTight's auto-redirect watches `rider.pickupDone`
+    // via `ref.watch(riderProvider.select((p) => p.rider))`. The
+    // select uses this `==` to decide whether to re-fire. If the API
+    // returned two responses that share id+updatedAt but differ in
+    // pickupDone/lifecycleStatus (which can happen when the server
+    // cache serves a pre-activation response for one or two polls
+    // after admin flips the rider to ACTIVE), the watch saw them as
+    // equal and never re-fired. The rider stayed stuck on hangTight
+    // for the full cache TTL plus however long it took for a real
+    // updatedAt bump to land.
+    //
+    // The fix: include `lifecycleStatus` and `pickupDone` in the
+    // equality contract. These are the two fields the routing layer
+    // cares about (lifecycle gate reads lifecycleStatus, hangTight
+    // reads pickupDone). Other fields (pickup photos, plan choice,
+    // KYC sub-fields) can be ignored because they don't drive
+    // screen-level state transitions.
+    //
+    // PR-ONBOARDING-FLOW-2026-08-13: extend the contract to also
+    // include `kycStatus` and `depositStatus`. A rider on HangTight
+    // (rank 10) whose KYC or deposit is approved by admin in another
+    // tab needs the status row on the HangTight screen to flip
+    // immediately — the rider watches this screen for an hour or
+    // more waiting for admin to flip them to ACTIVE, and seeing
+    // "KYC under review" after admin has approved it is confusing.
+    // Including these two fields in equality ensures the watch
+    // re-fires on KYC / deposit transitions even when the rider's
+    // `updatedAt` doesn't bump (e.g., when only `kycDoneAt` is set
+    // PR-AUDIT-FIX 2026-08-17 (HT-P1-1): include assignedVehicle,
+    // guarantorStatus, and planStatus so changes made by admin
+    // immediately re-render HangTightScreen and other selective listeners.
+    return other.id == id &&
+        other.updatedAt == updatedAt &&
+        other.lifecycleStatus == lifecycleStatus &&
+        other.pickupDone == pickupDone &&
+        other.kycStatus == kycStatus &&
+        other.depositStatus == depositStatus &&
+        other.assignedVehicle == assignedVehicle &&
+        other.guarantorStatus == guarantorStatus &&
+        other.planStatus == planStatus;
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hashAll([id, updatedAt]);
+  int get hashCode => Object.hashAll(
+        [
+          id,
+          updatedAt,
+          lifecycleStatus,
+          pickupDone,
+          kycStatus,
+          depositStatus,
+          assignedVehicle,
+          guarantorStatus,
+          planStatus,
+        ],
+      );
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
@@ -324,7 +398,9 @@ class RiderModel {
     int? paymentStreak,
     String? planStatus,
     String? currentPlan,
+    String? currentPlanId,
     double? currentPlanPrice,
+    double? currentPlanSecurityDepositInRupees,
     DateTime? planStartDate,
     DateTime? planEndDate,
     String? rentalStatus,
@@ -332,6 +408,7 @@ class RiderModel {
     String? vehicleModel,
     String? pickupHub,
     String? teamLeader,
+    String? teamLeaderPhone,
     String? emergencyContact,
     bool? registrationDone,
     bool? depositDone,
@@ -347,6 +424,7 @@ class RiderModel {
     String? intent,
     DateTime? submissionDate,
     bool? returnPending,
+    String? preferredLocale,
     String? bankPassbook,
     String? guarantorPhoto,
     String? guarantorAddress,
@@ -392,7 +470,10 @@ class RiderModel {
       paymentStreak: paymentStreak ?? this.paymentStreak,
       planStatus: planStatus ?? this.planStatus,
       currentPlan: currentPlan ?? this.currentPlan,
+      currentPlanId: currentPlanId ?? this.currentPlanId,
       currentPlanPrice: currentPlanPrice ?? this.currentPlanPrice,
+      currentPlanSecurityDepositInRupees: currentPlanSecurityDepositInRupees ??
+          this.currentPlanSecurityDepositInRupees,
       planStartDate: planStartDate ?? this.planStartDate,
       planEndDate: planEndDate ?? this.planEndDate,
       rentalStatus: rentalStatus ?? this.rentalStatus,
@@ -400,6 +481,7 @@ class RiderModel {
       vehicleModel: vehicleModel ?? this.vehicleModel,
       pickupHub: pickupHub ?? this.pickupHub,
       teamLeader: teamLeader ?? this.teamLeader,
+      teamLeaderPhone: teamLeaderPhone ?? this.teamLeaderPhone,
       emergencyContact: emergencyContact ?? this.emergencyContact,
       registrationDone: registrationDone ?? this.registrationDone,
       depositDone: depositDone ?? this.depositDone,
@@ -415,6 +497,7 @@ class RiderModel {
       intent: intent ?? this.intent,
       submissionDate: submissionDate ?? this.submissionDate,
       returnPending: returnPending ?? this.returnPending,
+      preferredLocale: preferredLocale ?? this.preferredLocale,
       pickupPhotoFront: pickupPhotoFront,
       pickupPhotoBack: pickupPhotoBack,
       pickupPhotoLeft: pickupPhotoLeft,
@@ -430,12 +513,6 @@ class RiderModel {
     );
   }
 
-  /// Returns (rentalPrice, securityDeposit) fallback values for the current plan.
-  (double, double) get _planFallbacks => (
-        AppConstants.getPlanPrice(currentPlan),
-        AppConstants.getPlanSecurityDeposit(currentPlan),
-      );
-
   /// Helper to get the price of the active rental plan. Ideally this should come
   /// down from the backend, but mapped here for client logic.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -444,11 +521,18 @@ class RiderModel {
     if (currentPlanPrice != null && currentPlanPrice! > 0) {
       return currentPlanPrice!;
     }
-    return _planFallbacks.$1;
+    return 0.0;
   }
 
+  /// PR-RUPEES-2026-08-08: the security deposit for the active rental
+  /// plan, in **rupees**. Reads from `currentPlanSecurityDepositInRupees`
+  /// (server-joined via `currentPlanRef`); returns 0.0 when no plan is
+  /// active. Replaces the hardcoded
+  /// `AppConstants.planSecurityDepositRupees` map.
   @JsonKey(includeFromJson: false, includeToJson: false)
-  double get activeRentalPlanSecurityDeposit => _planFallbacks.$2;
+  double get activeRentalPlanSecurityDeposit {
+    return currentPlanSecurityDepositInRupees ?? 0.0;
+  }
 
   // ── Derived Lifecycle & Progress Status Getters ─────────────────────────
 
@@ -458,27 +542,39 @@ class RiderModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool get isRegistrationDone =>
       registrationDone ||
-      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 3);
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 2);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycApproved =>
+      kycDone ||
+      kycStatus == KycStatus.approved ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 10);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositDone =>
+      depositDone ||
+      depositStatus == DepositStatus.approved ||
+      (securityDeposit > 0) ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 10);
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool get isPlanDone =>
       planDone ||
       (currentPlan?.isNotEmpty ?? false) ||
-      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 4);
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 9);
 
   @JsonKey(includeFromJson: false, includeToJson: false)
-  bool get isDepositDone =>
-      depositDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 6);
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  bool get isKycApproved =>
-      kycDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 8);
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  // PR-ONBOARDING-FLOW-2026-08-13: pickupDone threshold bumped from
+  // rank >= 10 to rank >= 11 to match the server-side computation
+  // (flatten-rider.ts). PICKUP_SCHEDULED (rank 10) means the rider
+  // has submitted the pickup form but is still waiting for admin
+  // approval on the hangTight screen — `pickupDone` should NOT be
+  // true at this rank, otherwise the hangTight auto-redirect fires
+  // immediately and the rider skips the admin-approval wait.
   bool get isPickupDone =>
       pickupDone ||
       (assignedVehicle?.isNotEmpty ?? false) ||
-      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 9);
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 11);
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool get isKycRejected => kycStatus == KycStatus.rejected;
@@ -527,10 +623,18 @@ class RiderModel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   bool get isReadyForPickup => isDepositDone && isKycApproved && !isPickupDone;
 
-  /// Calculate the required payment amount (plan price + security deposit).
-  double requiredPaymentAmount(double walletMinTopup) =>
-      (activeRentalPlanPrice > 0 ? activeRentalPlanPrice : walletMinTopup) +
-      activeRentalPlanSecurityDeposit;
+  /// Calculate the required payment amount (security deposit + advance rent if advanceRentPaid is true, else security deposit).
+  double requiredPaymentAmount(double walletMinTopup) {
+    final secDeposit = activeRentalPlanSecurityDeposit;
+    final planPrice = activeRentalPlanPrice;
+
+    if (advanceRentPaid) {
+      return secDeposit + planPrice;
+    }
+    return secDeposit > 0
+        ? secDeposit
+        : (planPrice > 0 ? planPrice : walletMinTopup);
+  }
 
   // ── fromJson ────────────────────────────────────────────────────────────
 
@@ -587,7 +691,17 @@ class RiderModel {
           : null,
       deviceViolationCount: json['deviceViolationCount'] as int? ?? 0,
       currentPlan: json['currentPlan'] as String?,
-      currentPlanPrice: _toDouble(json['currentPlanPrice'], convertPaise: true),
+      currentPlanId: json['currentPlanId'] as String?,
+      currentPlanPrice: _toRupees(
+              json['currentPlanPriceInRupees'], json['currentPlanPrice']) ??
+          _toDouble(json['currentPlanPrice'], convertPaise: true),
+      // PR-RUPEES-2026-08-08: prefer the new rupees field, fall back
+      // to the legacy paise field for backwards-compat during the
+      // rollout window.
+      currentPlanSecurityDepositInRupees: _toRupees(
+        json['currentPlanSecurityDepositInRupees'],
+        json['currentPlanSecurityDepositInPaise'],
+      ),
       planStartDate: json['planStartDate'] != null
           ? DateTime.tryParse(json['planStartDate'] as String)
           : null,
@@ -599,6 +713,7 @@ class RiderModel {
       vehicleModel: json['vehicleModel'] as String?,
       pickupHub: json['pickupHub'] as String?,
       teamLeader: json['teamLeader'] as String?,
+      teamLeaderPhone: json['teamLeaderPhone'] as String?,
       emergencyContact: json['emergencyContact'] as String?,
       registrationDone: json['registrationDone'] as bool? ?? false,
       depositDone: json['depositDone'] as bool? ?? false,
@@ -629,6 +744,7 @@ class RiderModel {
           ? DateTime.tryParse(json['submissionDate'] as String)
           : null,
       returnPending: json['returnPending'] as bool? ?? false,
+      preferredLocale: json['preferredLocale'] as String?,
       advanceRentPaid: json['advanceRentPaid'] as bool? ?? false,
       pickupPhotoFront: json['pickupPhotoFront'] as String?,
       pickupPhotoBack: json['pickupPhotoBack'] as String?,
@@ -642,6 +758,10 @@ class RiderModel {
       carbonSaved: _toDouble(json['carbonSaved'] ?? 0.0),
       currentSpeed: _toDouble(json['currentSpeed'] ?? 0.0),
       batteryPercent: _toDouble(json['batteryPercent'] ?? 0.0),
+      upcomingRentPrompt: json['upcomingRentPrompt'] != null
+          ? UpcomingRentPrompt.fromJson(
+              json['upcomingRentPrompt'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -659,6 +779,7 @@ class RiderModel {
       'vehicleModel': vehicleModel,
       'pickupHub': pickupHub,
       'teamLeader': teamLeader,
+      'teamLeaderPhone': teamLeaderPhone,
       'emergencyContact': emergencyContact,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
@@ -668,6 +789,7 @@ class RiderModel {
       'name': name,
       'phone': phone,
       'intent': intent,
+      'preferredLocale': preferredLocale,
       'submissionDate': submissionDate?.toIso8601String(),
       'returnPending': returnPending,
       'registrationDone': registrationDone,
@@ -701,11 +823,15 @@ class RiderModel {
       walletBalance: _toDouble(cache['walletBalance']),
       securityDeposit: _toDouble(cache['securityDeposit']),
       currentPlan: cache['currentPlan'] as String?,
+      currentPlanId: cache['currentPlanId'] as String?,
       currentPlanPrice: _toDouble(cache['currentPlanPrice']),
+      currentPlanSecurityDepositInRupees:
+          cache['currentPlanSecurityDepositInRupees'] as double?,
       assignedVehicle: cache['assignedVehicle'] as String?,
       vehicleModel: cache['vehicleModel'] as String?,
       pickupHub: cache['pickupHub'] as String?,
       teamLeader: cache['teamLeader'] as String?,
+      teamLeaderPhone: cache['teamLeaderPhone'] as String?,
       paymentStreak: cache['paymentStreak'] as int? ?? 0,
       planStartDate: cache['planStartDate'] != null
           ? DateTime.tryParse(cache['planStartDate'] as String)
@@ -773,8 +899,29 @@ class RiderModel {
     } else {
       d = 0.0;
     }
-    // Backend stores monetary values in paise; convert to rupees.
+    // PR-RUPEES-2026-08-08: the `convertPaise` parameter is kept for
+    // backwards-compat with existing callers, but the API now
+    // returns rupees directly. New code should use the typed
+    // `_toRupees()` helper instead.
     return convertPaise ? d / 100 : d;
+  }
+
+  /// PR-RUPEES-2026-08-08: helper for the deposit-in-rupees migration.
+  /// Accepts the new `*InRupees` field as the primary source, with the
+  /// legacy `*InPaise` field as a fallback during the rollout. Returns
+  /// null when both are missing (caller treats as "no plan" / "no deposit").
+  static double? _toRupees(dynamic rupeesValue, dynamic paiseValue) {
+    if (rupeesValue is num) return rupeesValue.toDouble();
+    if (rupeesValue is String) {
+      final parsed = double.tryParse(rupeesValue);
+      if (parsed != null) return parsed;
+    }
+    if (paiseValue is num) return paiseValue.toDouble() / 100.0;
+    if (paiseValue is String) {
+      final parsed = int.tryParse(paiseValue);
+      if (parsed != null) return parsed / 100.0;
+    }
+    return null;
   }
 
   static DateTime? _parseDate(dynamic value) {

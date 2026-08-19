@@ -22,6 +22,7 @@ class SyncBanner extends ConsumerWidget {
 
     if (isOnline && pendingCount == 0) return const SizedBox.shrink();
 
+    final colors = AppColors.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -30,13 +31,13 @@ class SyncBanner extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: isOnline
-            ? AppColors.of(context).successLight
-            : AppColors.of(context).surfaceBright,
+            ? colors.successLight
+            : colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isOnline
-              ? AppColors.of(context).successLight
-              : AppColors.outlineVariant,
+              ? colors.successLight
+              : colors.outlineVariant,
         ),
       ),
       child: Row(
@@ -45,10 +46,12 @@ class SyncBanner extends ConsumerWidget {
             isOnline ? Icons.check_circle_outline : Icons.wifi_off_outlined,
             size: 20,
             color: isOnline
-                ? AppColors.success
-                : AppColors.of(context).onSurfaceVariant,
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? colors.successLightForeground
+                    : AppColors.success)
+                : colors.onSurfaceVariant,
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,8 +63,8 @@ class SyncBanner extends ConsumerWidget {
                       .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(
                           color: isOnline
-                              ? AppColors.successDark
-                              : AppColors.of(context).onSurface),
+                              ? colors.successLightForeground
+                              : colors.onSurface),
                 ),
                 Text(
                   pendingCount > 0
@@ -70,8 +73,8 @@ class SyncBanner extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: isOnline
-                        ? AppColors.success
-                        : AppColors.of(context).onSurfaceVariant,
+                        ? colors.successLightForeground
+                        : colors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -82,15 +85,15 @@ class SyncBanner extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? AppColors.of(context).successLight
-                    : AppColors.of(context).iconBackground,
+                    ? colors.successLight
+                    : colors.card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 '$pendingCount',
                 style: AppTypography.labelSmall.copyWith(
                     color:
-                        isOnline ? AppColors.successDark : AppColors.slate600),
+                        isOnline ? colors.successLightForeground : colors.onSurfaceVariant),
               ),
             ),
         ],
@@ -113,6 +116,8 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
   Widget build(BuildContext context) {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     if (rider == null) return const SizedBox.shrink();
+
+    final colors = AppColors.of(context);
 
     // Mirroring web's getSuspensionReasons logic
     final List<_Reason> reasons = [];
@@ -172,14 +177,18 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
     final topReason = reasons.first;
     final isCritical = topReason.severity == _Severity.critical;
 
+    final bannerBg = isCritical ? colors.errorLight : colors.warningLight;
+    final bannerFg = isCritical ? colors.errorLightForeground : colors.warningLightForeground;
+    final bannerBorder = isCritical
+        ? colors.error.withValues(alpha: 0.3)
+        : colors.warning.withValues(alpha: 0.3);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isCritical ? AppColors.errorSurface : AppColors.warningSurface,
+        color: bannerBg,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isCritical ? AppColors.errorBorder : AppColors.warningBorder,
-        ),
+        border: Border.all(color: bannerBorder),
       ),
       child: Column(
         children: [
@@ -187,23 +196,20 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
             onTap: () => setState(() => _expanded = !_expanded),
             leading: Icon(
               isCritical ? Icons.error_outline : Icons.warning_amber_outlined,
-              color: isCritical ? AppColors.error : AppColors.warning,
+              color: bannerFg,
             ),
             title: Text(
               'Action Required',
               style: AppTypography.bodyMedium
                   .copyWith(fontWeight: FontWeight.w600)
-                  .copyWith(
-                    color:
-                        isCritical ? AppColors.errorDark : AppColors.onSurface,
-                  ),
+                  .copyWith(color: bannerFg),
             ),
             subtitle: Text(
               topReason.title +
                   (reasons.length > 1 ? ' + ${reasons.length - 1} more' : ''),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: isCritical ? AppColors.error : AppColors.warningDark,
+                color: bannerFg.withValues(alpha: 0.9),
               ),
             ),
             trailing: Row(
@@ -214,24 +220,19 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isCritical
-                          ? AppColors.of(context).errorLight
-                          : AppColors.of(context).warningLight,
+                      color: bannerBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${reasons.length}',
                       style: AppTypography.labelSmall
                           .copyWith(fontSize: 10)
-                          .copyWith(
-                              color: isCritical
-                                  ? AppColors.errorDark
-                                  : AppColors.warningDark),
+                          .copyWith(color: bannerFg),
                     ),
                   ),
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: isCritical ? AppColors.errorDark : AppColors.onSurface,
+                  color: bannerFg,
                 ),
               ],
             ),
@@ -255,10 +256,10 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                                 shape: BoxShape.circle,
                                 color: r.severity == _Severity.critical
                                     ? AppColors.error
-                                    : AppColors.warningDark,
+                                    : AppColors.warning,
                               ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,14 +267,16 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                                   Text(
                                     r.title,
                                     style: AppTypography.bodyMedium.copyWith(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.onSurface,
+                                    ),
                                   ),
                                   Text(
                                     r.description,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
-                                      color: Colors.black54,
+                                      color: colors.onSurfaceVariant,
                                     ),
                                   ),
                                 ],

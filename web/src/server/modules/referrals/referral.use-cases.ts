@@ -5,6 +5,7 @@
  */
 
 import { db } from '@/lib/db';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
@@ -12,7 +13,14 @@ import { createAuditLog } from '@/lib/audit-log';
 import { getCachedResponse, cacheResponse } from '@/lib/cache';
 import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 
-const REWARD_PER_REFERRAL = 500;
+export async function getReferralBonusRupees(): Promise<number> {
+  const cached = getCachedResponse<string>('setting:referralBonus');
+  if (cached) return parseInt(cached, 10) / 100;
+  const setting = await db.systemSetting.findFirst({ where: { key: 'referralBonus' } });
+  const paise = parseInt(setting?.value || '20000', 10);
+  cacheResponse('setting:referralBonus', String(paise), 60);
+  return paise / 100;
+}
 
 interface RefereeRow {
   riderId: string;
@@ -94,7 +102,7 @@ export const referralUseCases = {
     // paths race (e.g. admin clicks reconcile while the job is running).
     const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
 
-    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await db.$transaction(async (tx) => {
       const wallet = await tx.wallet.findUnique({
         where: { riderId: referrer.id },
         select: { id: true },
@@ -178,26 +186,11 @@ export const referralUseCases = {
     });
 
     const { maskPhone } = await import('@/lib/pii');
-    const detailedReferrals = referrals.map((ref: any) => {
-      const lifecycleRank: Record<string, number> = {
-        NEW: 0,
-        PHONE_VERIFIED: 1,
-        PROFILE_SUBMITTED: 2,
-        KYC_SUBMITTED: 3,
-        KYC_APPROVED: 4,
-        GUARANTOR_SUBMITTED: 5,
-        GUARANTOR_APPROVED: 6,
-        DEPOSIT_PENDING: 7,
-        DEPOSIT_APPROVED: 8,
-        PLAN_SELECTED: 9,
-        PICKUP_SCHEDULED: 10,
-        ACTIVE: 11,
-        SUSPENDED: 12,
-        RETURN_PENDING: 13,
-        CLOSED: 14,
-      };
-      const rank = lifecycleRank[ref.lifecycleStatus] ?? 0;
-      const isActive = rank >= 11;
+    const bonusRupees = await getReferralBonusRupees();
+    const detailedReferrals = referrals.map((ref) => {
+      // P1-12: shared lifecycle ranking (single source of truth).
+      const rank = lifecycleRankOf(ref.lifecycleStatus);
+      const isActive = rank === 11;
       return {
         id: ref.id,
         riderId: ref.riderId,
@@ -208,14 +201,14 @@ export const referralUseCases = {
         rentalStatus: rank >= 10 ? 'ACTIVE' : 'NONE',
         paymentStatus: rank >= 9 ? 'Paid & Active' : 'Payment Pending',
         photo: ref.kycProfile?.profilePhoto || null,
-        earned: isActive ? REWARD_PER_REFERRAL : 0,
-        potential: !isActive ? REWARD_PER_REFERRAL : 0,
+        earned: isActive ? bonusRupees : 0,
+        potential: !isActive ? bonusRupees : 0,
         joinedAt: ref.createdAt,
       };
     });
 
-    const totalEarned = detailedReferrals.reduce((sum: any, r: any) => sum + r.earned, 0);
-    const potentialEarnings = detailedReferrals.reduce((sum: any, r: any) => sum + r.potential, 0);
+    const totalEarned = detailedReferrals.reduce((sum, r) => sum + r.earned, 0);
+    const potentialEarnings = detailedReferrals.reduce((sum, r) => sum + r.potential, 0);
 
     return {
       referralCode: rider.referralCode,
@@ -243,7 +236,7 @@ export const referralUseCases = {
       take: 100,
     });
     const { maskPhone } = await import('@/lib/pii');
-    const formattedReferredUsers = referredUsers.map((u: any) => ({
+    const formattedReferredUsers = referredUsers.map((u) => ({
       name: u.fullName || 'Unknown',
       phone: maskPhone(u.phone),
       kycStatus: u.kycProfile?.status || 'PENDING',
@@ -323,27 +316,12 @@ export const referralUseCases = {
       referrerMap.set(r.referralCode, r);
     }
 
+    const bonusRupees = await getReferralBonusRupees();
     const data = referees.map((referee: RefereeRow) => {
       const referrer = referee.referredBy ? referrerMap.get(referee.referredBy) : undefined;
-      const lifecycleRank: Record<string, number> = {
-        NEW: 0,
-        PHONE_VERIFIED: 1,
-        PROFILE_SUBMITTED: 2,
-        KYC_SUBMITTED: 3,
-        KYC_APPROVED: 4,
-        GUARANTOR_SUBMITTED: 5,
-        GUARANTOR_APPROVED: 6,
-        DEPOSIT_PENDING: 7,
-        DEPOSIT_APPROVED: 8,
-        PLAN_SELECTED: 9,
-        PICKUP_SCHEDULED: 10,
-        ACTIVE: 11,
-        SUSPENDED: 12,
-        RETURN_PENDING: 13,
-        CLOSED: 14,
-      };
-      const rank = lifecycleRank[referee.lifecycleStatus] ?? 0;
-      const isActive = rank >= 11;
+      // P1-12: shared lifecycle ranking (single source of truth).
+      const rank = lifecycleRankOf(referee.lifecycleStatus);
+      const isActive = rank === 11;
       return {
         refereeId: referee.riderId,
         refereeName: referee.fullName || 'Unknown',
@@ -352,7 +330,7 @@ export const referralUseCases = {
         referredAt: referee.createdAt,
         referrerName: referrer ? referrer.fullName || 'Unknown' : 'Unknown Referrer',
         referrerCode: referrer?.referralCode || referee.referredBy || '',
-        earningForReferrer: isActive ? 500 : 0,
+        earningForReferrer: isActive ? bonusRupees : 0,
       };
     });
 
@@ -377,7 +355,7 @@ export const referralUseCases = {
       summary: {
         totalLeads: allLeads,
         activeRiders,
-        totalEarnings: activeRiders * 500,
+        totalEarnings: activeRiders * bonusRupees,
       },
     };
   },

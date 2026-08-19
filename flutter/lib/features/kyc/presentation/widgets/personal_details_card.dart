@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -41,8 +42,14 @@ class PersonalDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final formattedPhone = phone.length >= 10
-        ? '+91 ${phone.substring(0, 5)} ${phone.substring(5)}'
+    final l10n = AppLocalizations.of(context);
+
+    final cleanDigits = phone.replaceAll(RegExp(r'\D'), '');
+    final tenDigits = cleanDigits.length >= 10
+        ? cleanDigits.substring(cleanDigits.length - 10)
+        : cleanDigits;
+    final formattedPhone = tenDigits.length == 10
+        ? '+91 ${tenDigits.substring(0, 5)} ${tenDigits.substring(5)}'
         : phone;
 
     return Container(
@@ -64,15 +71,15 @@ class PersonalDetailsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Personal Details',
+            l10n?.txtpersonalDetails ?? 'Personal Details',
             style: AppTypography.titleSmall
                 .copyWith(color: colors.onSurface, letterSpacing: -0.2),
           ),
           const SizedBox(height: 24),
           _buildTextField(
             context,
-            'Full Name',
-            'Enter full name',
+            l10n?.txtfullName ?? 'Full Name',
+            l10n?.txtenterFullName ?? 'Enter full name',
             nameController,
             key: const Key('fullNameField'),
             enabled: nameEnabled,
@@ -80,8 +87,8 @@ class PersonalDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           _buildDateField(
             context,
-            'Date of Birth',
-            'DD-MM-YYYY',
+            l10n?.txtdateOfBirth ?? 'Date of Birth',
+            'YYYY-MM-DD',
             dobController,
             onSelectDob,
             enabled: dobEnabled,
@@ -89,19 +96,23 @@ class PersonalDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           _buildTextField(
             context,
-            'Email Address',
-            'Enter email address',
+            l10n?.txtemailAddress ?? 'Email Address',
+            l10n?.txtenterEmailAddress ?? 'Enter email address',
             emailController,
             key: const Key('emailField'),
             enabled: emailEnabled,
           ),
           const SizedBox(height: 12),
-          _buildPhoneField(context, formattedPhone),
+          _buildPhoneField(
+            context,
+            l10n?.txtphoneNumber.toUpperCase() ?? 'PHONE NUMBER',
+            formattedPhone,
+          ),
           const SizedBox(height: 12),
           _buildTextField(
             context,
-            "Father's Name",
-            "Enter father's name",
+            l10n?.txtfathersName ?? "Father's Name",
+            l10n?.txtenterFathersName ?? "Enter father's name",
             fatherNameController,
             key: const Key('fatherNameField'),
             enabled: fatherNameEnabled,
@@ -109,8 +120,8 @@ class PersonalDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           _buildTextField(
             context,
-            "Mother's Name",
-            "Enter mother's name",
+            l10n?.txtmothersName ?? "Mother's Name",
+            l10n?.txtenterMothersName ?? "Enter mother's name",
             motherNameController,
             key: const Key('motherNameField'),
             enabled: motherNameEnabled,
@@ -118,8 +129,8 @@ class PersonalDetailsCard extends StatelessWidget {
           const SizedBox(height: 12),
           _buildTextArea(
             context,
-            'Current Address',
-            'Enter your full address',
+            l10n?.txtcurrentAddress ?? 'Current Address',
+            l10n?.txtenterYourFullAddress ?? 'Enter your full address',
             addressController,
             enabled: addressEnabled,
           ),
@@ -141,7 +152,7 @@ class PersonalDetailsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildInputLabel(context, label.toUpperCase()),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           key: key,
           controller: controller,
@@ -188,7 +199,7 @@ class PersonalDetailsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildInputLabel(context, label.toUpperCase()),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: enabled ? onTap : null,
           child: AbsorbPointer(
@@ -233,13 +244,17 @@ class PersonalDetailsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPhoneField(BuildContext context, String phone) {
+  Widget _buildPhoneField(
+    BuildContext context,
+    String phoneLabel,
+    String phone,
+  ) {
     final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(context, 'PHONE NUMBER'),
-        SizedBox(height: 8),
+        buildInputLabel(context, phoneLabel),
+        const SizedBox(height: 8),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -250,7 +265,7 @@ class PersonalDetailsCard extends StatelessWidget {
           child: Row(
             children: [
               Icon(Icons.phone, size: 18, color: colors.onSurfaceMuted),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 phone,
                 style: AppTypography.bodyMedium
@@ -275,7 +290,7 @@ class PersonalDetailsCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildInputLabel(context, label.toUpperCase()),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           maxLines: 3,

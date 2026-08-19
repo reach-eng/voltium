@@ -96,6 +96,14 @@ ALL_TESTS=(
   "$TEST_DIR/38_kyc_notification_flow_test.dart"
   "$TEST_DIR/39_vehicle_return_workflow_test.dart"
   "$TEST_DIR/40_exhaustive_ui_traversal_test.dart"
+  "$TEST_DIR/41_realtime_onboarding_to_active_dashboard_test.dart"
+  "$TEST_DIR/42_adversarial_error_paths_test.dart"
+  "$TEST_DIR/43_debug_login_test.dart"
+  "$TEST_DIR/44_full_onboarding_to_dashboard_test.dart"
+  "$TEST_DIR/45_guarantor_form_test.dart"
+  "$TEST_DIR/46_pickup_screen_test.dart"
+  "$TEST_DIR/47_admin_approval_wait_test.dart"
+  "$TEST_DIR/48_emergency_sos_test.dart"
 )
 
 run_test() {

@@ -5,6 +5,8 @@ import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 
 class StatusTile extends StatelessWidget {
   final String title;
@@ -116,7 +118,12 @@ class QuickLinkItem extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          onTap: onTap,
+          onTap: onTap != null
+              ? () {
+                  HapticService.light();
+                  onTap!();
+                }
+              : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
@@ -383,17 +390,22 @@ class ProfileEmergencySosTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.errorSurface,
+        color: colors.errorSurface,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: AppColors.errorBorder),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          onTap: onTap,
+          onTap: () {
+            HapticService.light();
+            onTap();
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
@@ -402,7 +414,7 @@ class ProfileEmergencySosTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.of(context).errorLight,
+                    color: colors.iconBackground,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -411,10 +423,10 @@ class ProfileEmergencySosTile extends StatelessWidget {
                     size: 22,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Emergency SOS',
+                    l10n?.txtemergencySos ?? 'Emergency SOS',
                     style: AppTypography.titleSmall
                         .copyWith(color: AppColors.error),
                   ),
@@ -488,6 +500,8 @@ class ProfileQuickLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         FadeUpWidget(
@@ -495,9 +509,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('editProfileLink'),
             icon: Icons.edit_outlined,
-            iconColor: AppColors.info, // blue-500
-            iconBgColor: AppColors.of(context).primarySurface, // blue-50
-            title: 'Edit Profile',
+            iconColor: AppColors.info,
+            iconBgColor: colors.primarySurface,
+            title: l10n?.txteditProfile ?? 'Edit Profile',
             onTap: onEditProfileTap,
           ),
         ),
@@ -507,9 +521,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('myDocumentsLink'),
             icon: Icons.contact_page_outlined,
-            iconColor: AppColors.success, // emerald-500
-            iconBgColor: AppColors.of(context).successLight, // emerald-50
-            title: 'My Documents',
+            iconColor: AppColors.success,
+            iconBgColor: colors.successSurface,
+            title: l10n?.menu_myDocuments ?? 'My Documents',
             onTap: onMyDocumentsTap,
           ),
         ),
@@ -519,9 +533,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('rewardsLink'),
             icon: Icons.card_giftcard_outlined,
-            iconColor: AppColors.accentPurple, // violet-500
-            iconBgColor: AppColors.accentPurpleSurface, // violet-50
-            title: 'Rewards',
+            iconColor: AppColors.accentPurple,
+            iconBgColor: colors.primarySurface,
+            title: l10n?.menu_rewards ?? 'Rewards',
             onTap: onRewardsTap,
           ),
         ),
@@ -531,9 +545,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('referralLink'),
             icon: Icons.people_outline,
-            iconColor: AppColors.warning, // amber-500
-            iconBgColor: AppColors.warningSurface, // amber-50
-            title: 'Referral Program',
+            iconColor: AppColors.warning,
+            iconBgColor: colors.warningSurface,
+            title: l10n?.menu_referralProgram ?? 'Referral Program',
             onTap: onReferralTap,
           ),
         ),
@@ -543,9 +557,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('appSettingsLink'),
             icon: Icons.settings_outlined,
-            iconColor: AppColors.of(context).onSurfaceVariant, // slate-500
-            iconBgColor: AppColors.of(context).iconBackground, // slate-100
-            title: 'App settings',
+            iconColor: colors.onSurfaceVariant,
+            iconBgColor: colors.iconBackground,
+            title: l10n?.menu_appSettings ?? 'App settings',
             onTap: onAppSettingsTap,
           ),
         ),
@@ -556,8 +570,8 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('workflowHubLink'),
             icon: Icons.route_outlined,
             iconColor: AppColors.primary,
-            iconBgColor: AppColors.of(context).primarySurface,
-            title: 'Workflow & Services',
+            iconBgColor: colors.primarySurface,
+            title: l10n?.menu_workflowServices ?? 'Workflow & Services',
             onTap: onWorkflowHubTap,
           ),
         ),
@@ -568,8 +582,8 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('feedbackLink'),
             icon: Icons.rate_review_outlined,
             iconColor: AppColors.accentPurple,
-            iconBgColor: AppColors.accentPurpleSurface,
-            title: 'Feedback',
+            iconBgColor: colors.primarySurface,
+            title: l10n?.settings_feedback ?? 'Feedback',
             onTap: onFeedbackTap,
           ),
         ),
@@ -579,9 +593,9 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('legalLink'),
             icon: Icons.gavel_outlined,
-            iconColor: AppColors.successDark, // teal-700
-            iconBgColor: AppColors.of(context).successLight, // teal-50
-            title: 'Legal',
+            iconColor: AppColors.successDark,
+            iconBgColor: colors.successSurface,
+            title: l10n?.settings_legal ?? 'Legal',
             onTap: onLegalTap,
           ),
         ),

@@ -19,8 +19,8 @@ class _TestAppProvider extends AppProvider {
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      localeProviderRef.overrideWith(() => LocaleProvider()),
+      themeProviderRef.overrideWith(() => ThemeProvider()),
       appProvider.overrideWith((ref) => _TestAppProvider()),
     ],
     child: const MaterialApp(home: RiderWorkflowHubScreen()),

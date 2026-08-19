@@ -25,6 +25,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
     final photo = photos[photoKey];
     final hasPhoto = photo != null;
 
+    final colors = AppColors.of(context);
     return GestureDetector(
       key: Key('photoSlot_$photoKey'),
       onTap: () {
@@ -37,12 +38,12 @@ class EndRentalPhotoGrid extends StatelessWidget {
       child: Container(
         height: 110,
         decoration: BoxDecoration(
-          color: hasPhoto ? Colors.black : AppColors.of(context).surfaceBright,
+          color: hasPhoto ? Colors.black : colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: hasPhoto
                 ? AppColors.success
-                : AppColors.of(context).borderSubtle,
+                : colors.outlineVariant,
             width: hasPhoto ? 2 : 1.5,
           ),
         ),
@@ -58,11 +59,11 @@ class EndRentalPhotoGrid extends StatelessWidget {
                 )
               else if (hasPhoto && photo.path == 'mock_photo.png')
                 Container(
-                  color: AppColors.of(context).successLight,
-                  child: const Center(
+                  color: colors.successLight,
+                  child: Center(
                     child: Icon(
                       Icons.check_circle_rounded,
-                      color: AppColors.successDark,
+                      color: colors.successLightForeground,
                       size: 32,
                     ),
                   ),
@@ -74,7 +75,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
                     Icon(
                       icon,
                       size: 28,
-                      color: AppColors.slate400,
+                      color: colors.onSurfaceMuted,
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -82,7 +83,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.slate600,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -90,7 +91,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
                       'Tap to capture',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
-                        color: AppColors.slate400,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                   ],

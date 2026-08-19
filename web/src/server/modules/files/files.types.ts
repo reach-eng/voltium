@@ -7,7 +7,14 @@ export type FileCategory =
   | 'pickup_verification'
   | 'RETURN_PHOTO'
   | 'TOPUP_PROOF'
-  | 'vehicle_return';
+  | 'vehicle_return'
+  // PR-ONBOARDING-FLOW-2026-08-12: security-deposit proof uploaded from
+  // the rider app's new deposit workflow (between choosePlan and
+  // pickupHub). Stored as a separate category from `payment_proof` so
+  // the admin panel can filter "deposit proof" submissions distinctly
+  // from top-up / wallet-load proofs. Mime + size rules mirror
+  // `payment_proof` (jpeg / png / pdf up to 5MB).
+  | 'security_deposit';
 
 export enum FileOwnerType {
   RIDER = 'RIDER',
@@ -86,6 +93,14 @@ export const FILE_UPLOAD_RULES: Record<
     allowedMimeTypes: ['image/jpeg', 'image/png'],
     maxSizeBytes: 10 * 1024 * 1024,
   },
+  // PR-ONBOARDING-FLOW-2026-08-12: mirrors payment_proof — a security
+  // deposit proof is functionally a payment proof, but the dedicated
+  // category lets the admin panel separate "deposit review" from
+  // "wallet top-up review".
+  security_deposit: {
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+    maxSizeBytes: 5 * 1024 * 1024,
+  },
 };
 
 export const FILE_PURPOSE_MAP: Record<FileCategory, string> = {
@@ -98,4 +113,5 @@ export const FILE_PURPOSE_MAP: Record<FileCategory, string> = {
   RETURN_PHOTO: 'RETURN_PHOTO',
   TOPUP_PROOF: 'TOPUP_PROOF',
   vehicle_return: 'vehicle_return',
+  security_deposit: 'security_deposit',
 };

@@ -74,13 +74,18 @@ class _AnimatedCounterState extends State<AnimatedCounter>
 }
 
 class AnimatedCurrency extends StatelessWidget {
-  final int amountInPaise;
+  /// PR-RUPEES-2026-08-08: the value is now in **rupees** (decimal).
+  /// Renamed from `amountInPaise` (int) → `amountInRupees` (double).
+  /// The animation still ticks on integer rupees (no paise); the
+  /// decimal portion is rendered statically next to the animated
+  /// integer part for visual continuity.
+  final double amountInRupees;
   final TextStyle? style;
   final bool showSign;
 
   const AnimatedCurrency({
     super.key,
-    required this.amountInPaise,
+    required this.amountInRupees,
     this.style,
     this.showSign = false,
   });
@@ -91,10 +96,29 @@ class AnimatedCurrency extends StatelessWidget {
     final defaultStyle =
         style ?? AppTypography.headingMedium.copyWith(color: colors.onSurface);
 
-    return AnimatedCounter(
-      endValue: amountInPaise ~/ 100,
-      prefix: '₹',
-      style: defaultStyle,
+    final rupeesInt = amountInRupees.truncate();
+    final paiseDecimal =
+        ((amountInRupees - rupeesInt) * 100).round().toString().padLeft(2, '0');
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        AnimatedCounter(
+          endValue: rupeesInt,
+          prefix: showSign && amountInRupees > 0 ? '+₹' : '₹',
+          style: defaultStyle,
+        ),
+        if (paiseDecimal != '00') ...[
+          Text(
+            '.$paiseDecimal',
+            style: defaultStyle.copyWith(
+              fontSize: (defaultStyle.fontSize ?? 16) * 0.6,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

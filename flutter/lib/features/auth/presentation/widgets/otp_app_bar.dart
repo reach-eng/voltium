@@ -18,6 +18,7 @@ class OtpAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Stack(
@@ -35,18 +36,18 @@ class OtpAppBar extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: colors.card.withValues(alpha: 0.8),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        color: colors.outline.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
-                      boxShadow: AppShadows.glass,
+                      boxShadow: AppShadows.card,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back,
                       size: 20,
-                      color: AppColors.onSurface,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -57,7 +58,7 @@ class OtpAppBar extends StatelessWidget {
             'Voltium',
             style: AppTypography.titleMedium.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.onSurface,
+              color: colors.onSurface,
               letterSpacing: 1.5,
             ),
           ),

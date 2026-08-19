@@ -112,8 +112,10 @@ describe('Return Workflow Integration', () => {
     expect([200, 400, 500]).toContain(status);
   });
 
-  // 7. Return individual photo URLs accepted
-  it('7. Return with individual photo fields is accepted', async () => {
+  // 7. PR-VER-2026-08-06 (RENTAL P0-1): the schema is unified to ONE
+  // canonical shape (`returnPhotos`). The old 4 named photo fields are no
+  // longer accepted — they fail schema validation with 422.
+  it('7. Return with individual photo fields is rejected (422)', async () => {
     const phone = generateRandomPhone();
     const { token } = await riderLogin(phone);
 
@@ -129,7 +131,29 @@ describe('Return Workflow Integration', () => {
       },
     });
 
-    expect([200, 400, 500]).toContain(status);
+    expect(status).toBe(422);
+  });
+
+  // 7b. The legacy `photoUrls` array alias is also gone — only `returnPhotos`.
+  it('7b. Return with photoUrls alias is rejected (422)', async () => {
+    const phone = generateRandomPhone();
+    const { token } = await riderLogin(phone);
+
+    const { status } = await api('/api/rider/rental/return', {
+      method: 'POST',
+      token,
+      json: {
+        photoUrls: [
+          'uploads/left.jpg',
+          'uploads/right.jpg',
+          'uploads/front.jpg',
+          'uploads/speedo.jpg',
+        ],
+        reason: 'Return completed',
+      },
+    });
+
+    expect(status).toBe(422);
   });
 
   // 8. Admin cannot submit return on behalf of rider via this endpoint

@@ -162,23 +162,51 @@ void main() {
           () => repository.verifyOtp('9876543210', '123456'), throwsException);
     });
 
-    // logout tests
-    test('logout clears session from storage', () async {
-      when(() => mockStorage.clearSession()).thenAnswer((_) async {});
+    // logout tests — PR-VER-2026-08-06 (AUTH P0-1/P1-4): logout now calls
+    // POST /api/auth/logout (best-effort) then wipes only session credentials
+    // via clearSessionCredentials(), preserving the FCM command secret.
+    test('logout posts to server and clears session credentials', () async {
+      when(() =>
+              mockApiClient.post('/api/auth/logout', body: any(named: 'body')))
+          .thenAnswer((_) async => <String, dynamic>{});
+      when(() => mockStorage.clearSessionCredentials())
+          .thenAnswer((_) async {});
       await repository.logout();
-      verify(() => mockStorage.clearSession()).called(1);
+      verify(() =>
+              mockApiClient.post('/api/auth/logout', body: any(named: 'body')))
+          .called(1);
+      verify(() => mockStorage.clearSessionCredentials()).called(1);
     });
 
     test('logout handles storage exception', () async {
-      when(() => mockStorage.clearSession())
+      when(() =>
+              mockApiClient.post('/api/auth/logout', body: any(named: 'body')))
+          .thenAnswer((_) async => <String, dynamic>{});
+      when(() => mockStorage.clearSessionCredentials())
           .thenThrow(Exception('Storage error'));
       expect(() => repository.logout(), throwsException);
     });
 
-    test('logout delegates strictly to storage clearSession', () async {
-      when(() => mockStorage.clearSession()).thenAnswer((_) async {});
+    test('logout swallows server failure but still clears credentials',
+        () async {
+      when(() =>
+              mockApiClient.post('/api/auth/logout', body: any(named: 'body')))
+          .thenThrow(Exception('Network down'));
+      when(() => mockStorage.clearSessionCredentials())
+          .thenAnswer((_) async {});
       await repository.logout();
-      verify(() => mockApiClient.storage).called(1);
+      verify(() => mockStorage.clearSessionCredentials()).called(1);
+    });
+
+    test('logout never wipes the full keychain (FCM secret preserved)',
+        () async {
+      when(() =>
+              mockApiClient.post('/api/auth/logout', body: any(named: 'body')))
+          .thenAnswer((_) async => <String, dynamic>{});
+      when(() => mockStorage.clearSessionCredentials())
+          .thenAnswer((_) async {});
+      await repository.logout();
+      verifyNever(() => mockStorage.clearAll());
     });
   });
 }

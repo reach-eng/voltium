@@ -37,6 +37,12 @@ export const transactionService = {
 
   /**
    * Creates an audit log entry for a transaction action.
+   *
+   * P1-15 (financial audit): the old `.catch(err => logger.error(err))`
+   * swallowed audit failures with no context — by the time this runs, the
+   * wallet mutation and status claim have already committed, so a dropped
+   * entry leaves the audit trail lying. Failures are now logged at error
+   * level with the full action context so ops can backfill.
    */
   async logAction(params: {
     actorId: string;
@@ -44,15 +50,22 @@ export const transactionService = {
     transactionId: string;
     details?: Record<string, unknown>;
   }) {
-    await createAuditLog({
-      actorId: params.actorId,
-      action: params.action,
-      entity: 'transaction',
-      entityId: params.transactionId,
-      details: params.details ?? {},
-    }).catch((err) => {
-      logger.error('[TransactionService] Audit log failed', err);
-    });
+    try {
+      await createAuditLog({
+        actorId: params.actorId,
+        action: params.action,
+        entity: 'transaction',
+        entityId: params.transactionId,
+        details: params.details ?? {},
+      });
+    } catch (err) {
+      logger.error('[TransactionService] Audit log failed — backfill required', {
+        error: err instanceof Error ? err.message : String(err),
+        action: params.action,
+        transactionId: params.transactionId,
+        actorId: params.actorId,
+      });
+    }
   },
 };
 

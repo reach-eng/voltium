@@ -74,7 +74,12 @@ export function usePaymentGateways() {
           throw new Error(json.error?.message || `Failed to update ${field}`);
         }
         setGateways((prev) =>
-          prev.map((item) => (item.id === gateway.id ? { ...item, [field]: value } : item)),
+          prev.map((item) => {
+            if (field === 'isActive' && value === true) {
+              return { ...item, isActive: item.id === gateway.id };
+            }
+            return item.id === gateway.id ? { ...item, [field]: value } : item;
+          }),
         );
         return true;
       } catch (err: any) {
@@ -111,11 +116,63 @@ export function usePaymentGateways() {
     [],
   );
 
+  /**
+   * POST create a new gateway.
+   */
+  const createGateway = useCallback(
+    async (data: Partial<PaymentGateway>): Promise<boolean> => {
+      try {
+        const res = await fetch('/api/admin/payment-gateways', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error?.message || 'Failed to create payment gateway');
+        }
+        toast.success('Payment gateway added successfully');
+        await fetchGateways();
+        return true;
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to create payment gateway');
+        return false;
+      }
+    },
+    [fetchGateways],
+  );
+
+  /**
+   * DELETE a gateway by ID.
+   */
+  const deleteGateway = useCallback(
+    async (gatewayId: string): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/admin/payment-gateways/${gatewayId}`, {
+          method: 'DELETE',
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error?.message || 'Failed to delete gateway');
+        }
+        toast.success('Payment gateway deleted');
+        setGateways((prev) => prev.filter((gw) => gw.id !== gatewayId));
+        return true;
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to delete gateway');
+        return false;
+      }
+    },
+    [],
+  );
+
   return {
     gateways,
     loading,
     fetchGateways,
     patchGateway,
     patchGatewayFields,
+    createGateway,
+    deleteGateway,
   };
 }

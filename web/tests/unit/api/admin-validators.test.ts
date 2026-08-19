@@ -149,7 +149,7 @@ describe('createAdminSchema', () => {
       createAdminSchema.safeParse({
         name: 'Ada',
         email: 'ada@voltium.app',
-        password: 'correcthorse',
+        password: 'CorrectHorse1!',  // meets PasswordComplexitySchema (upper+digit+special)
       }).success
     ).toBe(true);
   });
@@ -158,7 +158,7 @@ describe('createAdminSchema', () => {
       createAdminSchema.safeParse({
         name: 'Ada',
         email: 'ada@voltium.app',
-        password: 'correcthorse',
+        password: 'CorrectHorse1!',  // valid password; rejection is due to unknown field
         isSuperAdmin: true,
       }).success
     ).toBe(false);

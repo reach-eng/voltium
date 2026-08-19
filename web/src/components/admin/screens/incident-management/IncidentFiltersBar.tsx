@@ -23,6 +23,8 @@ interface IncidentFiltersBarProps {
   setStatusFilter: (val: string) => void;
   typeFilter: string;
   setTypeFilter: (val: string) => void;
+  severityFilter: string;
+  setSeverityFilter: (val: string) => void;
   search: string;
   setSearch: (val: string) => void;
   incidentTypes: string[];
@@ -40,6 +42,8 @@ export function IncidentFiltersBar({
   setStatusFilter,
   typeFilter,
   setTypeFilter,
+  severityFilter,
+  setSeverityFilter,
   search,
   setSearch,
   incidentTypes,
@@ -156,6 +160,18 @@ export function IncidentFiltersBar({
                 {t}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={severityFilter} onValueChange={setSeverityFilter}>
+          <SelectTrigger className="w-[160px] h-9">
+            <SelectValue placeholder="All Severities" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Severities</SelectItem>
+            <SelectItem value="CRITICAL">Critical</SelectItem>
+            <SelectItem value="HIGH">High</SelectItem>
+            <SelectItem value="MEDIUM">Medium</SelectItem>
+            <SelectItem value="LOW">Low</SelectItem>
           </SelectContent>
         </Select>
         <div className="relative flex-1 max-w-sm ml-auto">

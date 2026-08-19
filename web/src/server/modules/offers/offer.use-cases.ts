@@ -3,10 +3,29 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 
 export const offerUseCases = {
-  async listAdmin(page: number, limit: number) {
+  async listAdmin(page: number, limit: number, search?: string | null) {
+    // PR-9 (2026-08-06 fix plan): server-side search on the offers screen.
+    const where = search?.trim()
+      ? {
+          OR: [
+            { title: { contains: search.trim(), mode: 'insensitive' as const } },
+            {
+              description: {
+                contains: search.trim(),
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
+        }
+      : undefined;
     const [offers, total] = await Promise.all([
-      db.offer.findMany({ orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),
-      db.offer.count(),
+      db.offer.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.offer.count({ where }),
     ]);
     return { offers, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   },
@@ -71,6 +90,7 @@ export const offerUseCases = {
     return db.offer.findMany({
       where: { isActive: true, isSponsored: true, validUntil: { gte: now } },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   },
 };

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
-import { getAdminId } from '@/lib/get-session';
+import { getAdminSession } from '@/lib/get-session';
 import { errors, success } from '@/lib/api-response';
 import fs from 'fs';
 import path from 'path';
@@ -31,16 +31,17 @@ export interface DrDrillResponse {
 
 export async function POST(req: Request) {
   try {
-    const adminId = await getAdminId(req);
-    if (!adminId) {
+    const session = await getAdminSession(req);
+    if (!session) {
       return errors.unauthorized();
     }
 
-    const canRunDrill = await hasPermission(adminId, 'DATA_MANAGEMENT');
+    const canRunDrill = hasPermission(session, 'DATA_MANAGEMENT');
     if (!canRunDrill) {
       return errors.forbidden('Permission DATA_MANAGEMENT required to run DR drills');
     }
 
+    const adminId = session.adminId ?? session.riderDbId ?? 'unknown';
     logger.info('[DR-Drill] Starting automated Disaster Recovery Drill', { adminId });
     const steps: DrDrillStepResult[] = [];
     const drillId = `dr_drill_${Date.now()}`;
@@ -128,7 +129,7 @@ export async function POST(req: Request) {
     // Step 4: Backup Integrity & Checksum Record
     const step4Start = Date.now();
     try {
-      const latestBackup = await db.backupRecord.findFirst({
+      const latestBackup = await db.backupJob.findFirst({
         orderBy: { createdAt: 'desc' },
       });
       const passed = !!latestBackup && latestBackup.status === 'COMPLETED';

@@ -26,12 +26,17 @@ class ConnectivityService {
   Timer? _debounceTimer;
 
   void _updateConnectionStatus(List<ConnectivityResult> results) {
+    // Reflect the latest known state immediately — callers checking
+    // `isConnected` right after init()/checkConnection() must not see the
+    // stale default. The 1.5s debounce below only smooths the STREAM
+    // emission (no flapping for transient blips), not the getter.
+    final nextConnected =
+        results.isNotEmpty && !results.contains(ConnectivityResult.none);
+    final wasConnected = _isConnected;
+    _isConnected = nextConnected;
+
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-      final wasConnected = _isConnected;
-      _isConnected =
-          results.isNotEmpty && !results.contains(ConnectivityResult.none);
-
       if (wasConnected != _isConnected) {
         _connectionController.add(_isConnected);
       }

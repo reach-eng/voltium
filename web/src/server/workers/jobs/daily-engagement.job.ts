@@ -159,7 +159,7 @@ export function msUntilNext0600IST(now: Date = clock.now()): number {
     Date.UTC(istYear, istMonth - 1, istDay, istHour, istMinute, istSecond);
   const today0600IstMs = Date.UTC(istYear, istMonth - 1, istDay, 6, 0, 0);
   let target = today0600IstMs;
-  if (nowIstMs >= today0600IstMs + 60_000) {
+  if (nowIstMs > today0600IstMs) {
     // Already past 06:00 IST — schedule for tomorrow
     target = Date.UTC(istYear, istMonth - 1, istDay + 1, 6, 0, 0);
   }

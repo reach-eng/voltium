@@ -166,6 +166,14 @@ class AppTypography {
   // ── 6. Specialized Controls & Utility ──────────────────────────────────
 
   /// Uppercase Overline: 10px, w800, +1.0 tracking. Category overlines.
+  ///
+  /// **Deprecated (DS-3b, 2026-08-04):** Zero active call-sites found outside tests.
+  /// Use `labelSmall.copyWith(letterSpacing: 1.0, fontWeight: FontWeight.w800)` instead.
+  /// Will be removed in DS-4.0 once all callers are migrated.
+  @Deprecated(
+    'Use labelSmall.copyWith(letterSpacing: 1.0, fontWeight: FontWeight.w800). '
+    'Will be removed in DS-4.0.',
+  )
   static const TextStyle overline = TextStyle(
     fontFamily: fontFamily,
     fontSize: 10,
@@ -191,6 +199,14 @@ class AppTypography {
   // ── 7. Monospace / Code ────────────────────────────────────────────────
 
   /// Code Medium: 14px, w500, JetBrains Mono. OTP digits, verification codes, wallet refs.
+  ///
+  /// **Deprecated (DS-3b, 2026-08-04):** Zero active call-sites found outside tests.
+  /// Use `codeLarge` (16px/w600) or `otpDigit` (24px/w700) instead.
+  /// Will be removed in DS-4.0 once all callers are migrated.
+  @Deprecated(
+    'Use codeLarge or otpDigit instead. '
+    'Will be removed in DS-4.0.',
+  )
   static const TextStyle codeMedium = TextStyle(
     fontFamily: monoFontFamily,
     fontSize: 14,

@@ -2,16 +2,24 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
+// AUDIT-FIX 2026-08-13 (M4-3): feedback_screen import removed —
+// the "Rate Us" snackbar hijack is gone. Feedback is opt-in via
+// the support center, not pushed via snackbar.
+//
+// import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 
 import 'top_up_amount_screen.dart';
 import 'top_up_proof_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/core/network/api_error_messages.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 class TopUpFlow extends ConsumerStatefulWidget {
-  const TopUpFlow({super.key});
+  final int? initialAmount;
+  const TopUpFlow({super.key, this.initialAmount});
 
   @override
   ConsumerState<TopUpFlow> createState() => _TopUpFlowState();
@@ -20,9 +28,17 @@ class TopUpFlow extends ConsumerStatefulWidget {
 class _TopUpFlowState extends ConsumerState<TopUpFlow> {
   final PageController _pageController = PageController();
 
-  int _amount = 2000;
+  late int _amount;
   File? _proofImage;
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _amount = (widget.initialAmount != null && widget.initialAmount! > 0)
+        ? widget.initialAmount!
+        : 2000;
+  }
 
   void _nextPage() {
     _pageController.nextPage(
@@ -84,11 +100,24 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
               onImageSelected: (img) => setState(() => _proofImage = img),
               onSubmit: (img, method, upiRef) async {
                 setState(() => _proofImage = img);
+                final riderState = ref.read(riderProvider);
+                final rId = riderState.riderId ??
+                    riderState.rider?.id ??
+                    riderState.rider?.riderId;
+                if (rId == null || rId.isEmpty) {
+                  if (context.mounted) {
+                    Toast.info(
+                      context,
+                      'Rider profile is initializing. Please try again in a moment.',
+                    );
+                  }
+                  return;
+                }
                 final wProvider = ref.read(walletProvider.notifier);
 
                 try {
                   await wProvider.topUpWallet(
-                    riderId: ref.read(riderProvider).riderId!,
+                    riderId: rId,
                     amount: _amount.toDouble(),
                     method: method ?? 'CASH',
                     upiRef: upiRef,
@@ -108,6 +137,10 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                         'has_proof_image': (_proofImage != null).toString(),
                         'is_deposit': isDeposit.toString(),
                       });
+                  PostHogService.capture('top_up_completed', properties: {
+                    'amount': _amount.toString(),
+                    'is_deposit': isDeposit.toString(),
+                  });
                   if (isDeposit) {
                     PostHogService.capture('deposit_submitted', properties: {
                       'amount': _amount.toString(),
@@ -116,28 +149,15 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   if (context.mounted) {
                     final nav = Navigator.of(context);
                     nav.pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            const Text('Top-up proof submitted successfully!'),
-                        action: SnackBarAction(
-                          label: 'Rate Us',
-                          textColor: Colors.white,
-                          onPressed: () {
-                            nav.push(MaterialPageRoute(
-                              builder: (ctx) => FeedbackScreen(
-                                  onSubmit: () => Navigator.pop(ctx)),
-                            ));
-                          },
-                        ),
-                      ),
+                    Toast.success(
+                      context,
+                      AppLocalizations.of(context)!
+                          .txttopUpProofSubmittedSuccessfully,
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed: $e')),
-                    );
+                    Toast.error(context, safeErrorMessage(e, 'top-up'));
                   }
                 }
               },

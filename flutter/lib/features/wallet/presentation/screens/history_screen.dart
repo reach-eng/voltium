@@ -110,9 +110,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final filtered = _filteredTx(transactions);
     final credits = _totalCredits(transactions);
     final debits = _totalDebits(transactions);
+    final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -263,11 +264,12 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildSummaryItem(String label, String value, Color color) {
+    final colors = AppColors.of(context);
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: AppShadows.card,
         ),
@@ -278,11 +280,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
                 letterSpacing: 1.0,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               value,
               style: AppTypography.bodyMedium
@@ -296,19 +298,27 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildSearchBar() {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.card,
       ),
       child: TextFormField(
         onChanged: (val) => setState(() => _searchQuery = val),
-        style: GoogleFonts.plusJakartaSans(fontSize: 14),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          color: colors.onSurface,
+        ),
         decoration: InputDecoration(
           hintText: 'Search transactions...',
+          hintStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            color: colors.onSurfaceMuted,
+          ),
           prefixIcon:
-              const Icon(Icons.search, size: 18, color: AppColors.outline),
+              Icon(Icons.search, size: 18, color: colors.onSurfaceMuted),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
@@ -357,27 +367,30 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildInfoHint() {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.of(context).primarySurface,
+        color: colors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.of(context).infoLight),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.receipt_long_outlined,
             size: 14,
-            color: AppColors.info,
+            color: AppColors.primary,
           ),
-          SizedBox(width: 8),
-          Text(
-            'Tap any transaction to see the full fee breakdown',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Tap any transaction to see the full fee breakdown',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: colors.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -393,10 +406,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         ? tx.createdAt!.toIso8601String().substring(0, 10)
         : '';
     final id = tx.id ?? '';
+    final colors = AppColors.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.card,
         border: isExpanded
@@ -418,17 +432,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     height: 40,
                     decoration: BoxDecoration(
                       color: isCredit
-                          ? AppColors.of(context).successLight
-                          : AppColors.errorSurface,
+                          ? colors.successLight
+                          : colors.errorLight,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
-                      color: isCredit ? AppColors.success : AppColors.error,
+                      color: isCredit ? colors.successLightForeground : colors.errorLightForeground,
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,29 +450,29 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                         Text(
                           tx.description ?? tx.purpose ?? 'Transaction',
                           style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.of(context).onSurfaceMuted),
+                              color: colors.onSurface),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             Text(
                               date,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: AppColors.onSurfaceVariant,
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               '|',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: AppColors.outline,
+                                color: colors.outlineVariant,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               status,
                               style: AppTypography.labelSmall.copyWith(
@@ -466,7 +480,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                                           status == 'APPROVED' ||
                                           status == 'COMPLETED'
                                       ? AppColors.success
-                                      : AppColors.warningDark),
+                                      : AppColors.warning),
                             ),
                           ],
                         ),
@@ -481,9 +495,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             : Icons.remove_circle_outline,
                         size: 14,
                         color:
-                            isCredit ? AppColors.success : AppColors.errorDark,
+                            isCredit ? AppColors.success : colors.onSurfaceVariant,
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                       Text(
                         '₹${amount.toInt()}',
                         style: AppTypography.bodyMedium
@@ -491,7 +505,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             .copyWith(
                                 color: isCredit
                                     ? AppColors.success
-                                    : AppColors.errorDark),
+                                    : colors.onSurface),
                       ),
                     ],
                   ),
@@ -507,12 +521,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   Widget _buildBreakdown(TransactionModel tx) {
     final breakdowns = tx.breakdowns;
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colors.surface,
         border:
-            Border(top: BorderSide(color: AppColors.of(context).surfaceSubtle)),
+            Border(top: BorderSide(color: colors.outlineVariant)),
       ),
       padding: Spacing.paddingMd,
       child: Column(
@@ -525,7 +540,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 tx.description!,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
-                  color: AppColors.onSurfaceVariant,
+                  color: colors.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -538,13 +553,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               Text(
                 'TOTAL CHARGED',
                 style: AppTypography.overline
-                    .copyWith(color: AppColors.onSurfaceVariant),
+                    .copyWith(color: colors.onSurfaceVariant),
               ),
               Text(
                 '₹${tx.amount.toInt()}',
                 style: AppTypography.bodyMedium
                     .copyWith(fontWeight: FontWeight.w800)
-                    .copyWith(color: AppColors.of(context).onSurfaceMuted),
+                    .copyWith(color: colors.onSurface),
               ),
             ],
           ),
@@ -554,30 +569,31 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildBreakdownItem(TransactionBreakdown b) {
+    final colors = AppColors.of(context);
     final type = b.type.name.toUpperCase();
     final label = b.label;
     final amount = b.amount;
 
-    Color color = AppColors.of(context).onSurfaceMuted;
-    Color bg = AppColors.of(context).surfaceSubtle;
+    Color color = colors.onSurfaceMuted;
+    Color bg = colors.surface;
     String prefix = '';
 
     if (type == 'TAX') {
-      color = AppColors.warningDark;
-      bg = AppColors.warningSurface;
+      color = colors.warningLightForeground;
+      bg = colors.warningLight;
     }
     if (type == 'DISCOUNT') {
-      color = AppColors.successDark;
-      bg = AppColors.of(context).successLight;
+      color = colors.successLightForeground;
+      bg = colors.successLight;
       prefix = '-';
     }
     if (type == 'PENALTY') {
-      color = AppColors.errorDark;
-      bg = AppColors.errorSurface;
+      color = colors.errorLightForeground;
+      bg = colors.errorLight;
     }
     if (type == 'ADJUSTMENT') {
-      color = AppColors.primaryDark;
-      bg = AppColors.of(context).primarySurface;
+      color = AppColors.primary;
+      bg = colors.primarySurface;
     }
 
     return Padding(
@@ -600,11 +616,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                       .copyWith(color: color),
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 label,
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.of(context).onSurfaceMuted),
+                    .copyWith(color: colors.onSurface),
               ),
             ],
           ),

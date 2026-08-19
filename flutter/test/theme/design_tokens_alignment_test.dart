@@ -94,7 +94,10 @@ List<_TierSpec> _parseAppTypography(File file) {
 
   final declRe = RegExp(r'static const TextStyle (\w+) = TextStyle\(');
   final sizeRe = RegExp(r'^\s*fontSize:\s*(\d+)');
-  final weightRe = RegExp(r'FontWeight\.w(\d+)');
+  // Anchored to the property line (like sizeRe/familyRe) so `FontWeight.w800`
+  // mentions inside doc comments (e.g. the deprecated `overline` migration
+  // hint) can never corrupt the value of the PREVIOUS tier (labelSmall).
+  final weightRe = RegExp(r'^\s*fontWeight:\s*FontWeight\.w(\d+)');
   final familyRe = RegExp(r'^\s*fontFamily:\s*(\w+)');
 
   for (final raw in lines) {

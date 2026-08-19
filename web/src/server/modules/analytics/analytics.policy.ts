@@ -11,6 +11,7 @@ export const analyticsPolicy = {
     const allowedRoles: string[] = [
       AdminRole.SUPER_ADMIN,
       AdminRole.OPERATIONS_ADMIN,
+      AdminRole.FINANCE_ADMIN,
       AdminRole.HUB_MANAGER,
       AdminRole.FLEET_MANAGER,
     ];

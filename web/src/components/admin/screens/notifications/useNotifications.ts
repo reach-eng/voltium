@@ -109,7 +109,13 @@ export function useNotifications() {
       } else {
         body.riderId = form.riderId;
       }
-      const res = await fetch('/api/admin/notifications', {
+      // P0-9 (2026-08-05 ops audit): the API requires an explicit ?confirm=true
+      // for broadcasts — the dialog already asks "are you sure?" before this
+      // submit runs, so append it for sendToAll only.
+      const url = sendToAll
+        ? '/api/admin/notifications?confirm=true'
+        : '/api/admin/notifications';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

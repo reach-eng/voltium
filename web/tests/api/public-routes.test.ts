@@ -29,13 +29,13 @@ describe('Public Routes', () => {
     expect(status).toBeGreaterThanOrEqual(400); 
   });
 
-  it('GET /api/pricing - returns pricing if implemented', async () => {
-    const { status, body } = await api('/api/pricing', { method: 'GET' });
-    if (status === 200) {
-      expect(body.success).toBe(true);
-    } else {
-      expect(status).toBe(404);
-    }
+  it('GET /api/pricing - requires rider auth (P0-7 ops audit)', async () => {
+    // P0-7 (2026-08-05 ops audit): the endpoint was unauthenticated and
+    // leaked per-hub utilization / surge multipliers / fleet counts. It is
+    // now gated behind requireRiderSession — an unauthenticated call must
+    // NOT return pricing data.
+    const { status } = await api('/api/pricing', { method: 'GET' });
+    expect([401, 403]).toContain(status);
   });
 
   it('GET /api/search - handles search query', async () => {

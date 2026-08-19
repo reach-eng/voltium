@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Camera } from 'lucide-react';
 import type { KycRider } from './types';
 
@@ -40,6 +42,8 @@ export function MediaPreview({
   label: string;
   type?: 'image' | 'video';
 }) {
+  const [open, setOpen] = useState(false);
+
   if (!src)
     return (
       <div className="aspect-video bg-muted/30 border border-dashed rounded-2xl flex flex-col items-center justify-center text-muted-foreground opacity-40">
@@ -48,33 +52,60 @@ export function MediaPreview({
       </div>
     );
   return (
-    <div className="space-y-2">
-      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
-        {label}
-      </Label>
-      <div className="aspect-video rounded-2xl border bg-black overflow-hidden relative group shadow-sm">
-        {type === 'image' ? (
-          <img
-            src={src}
-            alt={label}
-            loading="lazy"
-            decoding="async"
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <video src={src} controls className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="rounded-xl h-8 text-[10px] font-bold"
-            onClick={() => window.open(src, '_blank')}
-          >
-            View Full
-          </Button>
+    <>
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+          {label}
+        </Label>
+        <div
+          className="aspect-video rounded-2xl border bg-black overflow-hidden relative group shadow-sm cursor-pointer"
+          onClick={() => setOpen(true)}
+        >
+          {type === 'image' ? (
+            <img
+              src={src}
+              alt={label}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <video src={src} controls className="w-full h-full object-cover" />
+          )}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="rounded-xl h-8 text-[10px] font-bold"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+              }}
+            >
+              View Full
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-6">
+          <DialogHeader className="shrink-0 pb-2">
+            <DialogTitle className="text-lg font-bold">{label}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto min-h-0 flex items-center justify-center p-2 bg-black/5 rounded-xl border">
+            {type === 'image' ? (
+              <img
+                src={src}
+                alt={label}
+                className="max-w-full max-h-full object-contain rounded-lg shadow-md"
+              />
+            ) : (
+              <video src={src} controls className="max-w-full max-h-full rounded-lg" />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

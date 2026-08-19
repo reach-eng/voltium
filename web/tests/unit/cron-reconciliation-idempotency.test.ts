@@ -27,12 +27,17 @@ vi.mock('@/lib/cron-auth', () => ({
 const findUniqueMock = vi.fn();
 const runMock = vi.fn();
 const recordMock = vi.fn();
+const persistMock = vi.fn();
 const formatDateMock = vi.fn(() => '04-08-2026');
 
 vi.mock('@/server/workers/jobs/wallet-reconciliation.job', () => ({
   checkReconciliationToday: findUniqueMock,
   runWalletReconciliation: runMock,
   recordReconciliation: recordMock,
+  // P0-5: the cron route now persists the daily report row FIRST (it feeds
+  // the pre-check + admin Jobs history). Mocked so these tests keep asserting
+  // the route's race semantics without a live DB.
+  persistReconciliationReport: persistMock,
 }));
 
 vi.mock('@/lib/date-utils', () => ({
@@ -59,6 +64,7 @@ describe('GET /api/cron/reconciliation — PR-90 (API N10) idempotency', () => {
     findUniqueMock.mockReset();
     runMock.mockReset();
     recordMock.mockReset();
+    persistMock.mockReset();
     formatDateMock.mockReset();
     formatDateMock.mockReturnValue('04-08-2026');
   });
@@ -97,6 +103,7 @@ describe('GET /api/cron/reconciliation — PR-90 (API N10) idempotency', () => {
       driftedRiders: [],
     });
     recordMock.mockResolvedValue(undefined);
+    persistMock.mockResolvedValue(undefined);
 
     const res = await callGet();
     expect(res.status).toBe(200);
@@ -104,6 +111,12 @@ describe('GET /api/cron/reconciliation — PR-90 (API N10) idempotency', () => {
     expect(body.data.reportDate).toBe('04-08-2026');
     expect(body.data.totalWallets).toBe(50);
     expect(runMock).toHaveBeenCalledTimes(1);
+    // P0-5: the daily report row is persisted before the audit entry.
+    expect(persistMock).toHaveBeenCalledTimes(1);
+    expect(persistMock).toHaveBeenCalledWith(
+      expect.objectContaining({ totalWallets: 50 }),
+      '04-08-2026'
+    );
     expect(recordMock).toHaveBeenCalledTimes(1);
   });
 
@@ -129,7 +142,10 @@ describe('GET /api/cron/reconciliation — PR-90 (API N10) idempotency', () => {
     });
     const p2002 = new Error('Unique constraint failed on the fields: (`reportDate`)');
     (p2002 as any).code = 'P2002';
-    recordMock.mockRejectedValue(p2002);
+    // The race is decided by whichever write hits the unique index first —
+    // here persistReconciliationReport loses it (P0-5, same P2002 semantics
+    // the audit record write used to own).
+    persistMock.mockRejectedValue(p2002);
 
     const res = await callGet();
     expect(res.status).toBe(200);

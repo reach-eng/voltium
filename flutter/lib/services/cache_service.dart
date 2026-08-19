@@ -141,16 +141,63 @@ class CacheService {
     return _prefs?.getString(_keyLocale);
   }
 
-  // ════════════════════════════════════════════════════════════════════════
-  //  Theme
-  // ════════════════════════════════════════════════════════════════════════
-
-  Future<void> setDarkMode(bool isDark) async {
-    await _prefs?.setBool(_keyTheme, isDark);
+  /// Clear the persisted locale so the app re-derives it from the system
+  /// locale on the next launch (used by "Follow System").
+  Future<void> clearLocale() async {
+    await _prefs?.remove(_keyLocale);
   }
 
+  // ════════════════════════════════════════════════════════════════════════
+  //  Theme (tri-state: 'system' | 'light' | 'dark')
+  // ════════════════════════════════════════════════════════════════════════
+
+  /// Stored theme preference codes. The absence of any stored value means
+  /// "follow the OS brightness".
+  static const String themePreferenceSystem = 'system';
+  static const String themePreferenceLight = 'light';
+  static const String themePreferenceDark = 'dark';
+
+  /// Persist the tri-state theme preference under the existing
+  /// `volt_theme` key (now a string; the legacy boolean value is migrated
+  /// transparently on read via [getThemePreference]).
+  Future<void> setThemePreference(String mode) async {
+    await _prefs?.setString(_keyTheme, mode);
+  }
+
+  /// **Synchronous** – returns `'system'`, `'light'`, `'dark'`, or `null`
+  /// when the rider has never chosen (the app then follows the OS
+  /// brightness). Migrates a pre-tri-state boolean `volt_theme` value on
+  /// read: `true` → `'dark'`, `false` → `'light'`.
+  String? getThemePreference() {
+    // Read the raw value: `getString`/`getBool` throw a type-cast error on
+    // a mismatched stored type, so use the untyped getter and branch on the
+    // actual stored type (needed to migrate legacy bool values).
+    final raw = _prefs?.get(_keyTheme);
+    if (raw is String &&
+        (raw == themePreferenceSystem ||
+            raw == themePreferenceLight ||
+            raw == themePreferenceDark)) {
+      return raw;
+    }
+    // Legacy boolean (pre tri-state): true → dark, false → light.
+    if (raw is bool) {
+      return raw ? themePreferenceDark : themePreferenceLight;
+    }
+    return null;
+  }
+
+  /// Backwards-compat two-state persistence.
+  Future<void> setDarkMode(bool isDark) async {
+    await setThemePreference(
+        isDark ? themePreferenceDark : themePreferenceLight);
+  }
+
+  /// Backwards-compat two-state read. Returns `null` when the rider has
+  /// never chosen (i.e. following the system).
   bool? getDarkMode() {
-    return _prefs?.getBool(_keyTheme);
+    final pref = getThemePreference();
+    if (pref == null) return null;
+    return pref == themePreferenceDark;
   }
 
   // ════════════════════════════════════════════════════════════════════════
@@ -191,6 +238,16 @@ class CacheService {
 
   Future<void> remove(String key) async {
     await _prefs?.remove(key);
+  }
+
+  /// Persist a boolean preference (e.g. `legal_accepted_v1`).
+  Future<void> setBool(String key, bool value) async {
+    await _prefs?.setBool(key, value);
+  }
+
+  /// **Synchronous** read of a boolean preference; `null` when unset.
+  bool? getBool(String key) {
+    return _prefs?.getBool(key);
   }
 
   /// Wipes **all** SharedPreferences entries (use with caution).

@@ -10,7 +10,14 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireAdmin();
     if (!session) return adminUnauthorized();
-    if (!hasPermission(session.adminRole || '', 'team_leaders_manage')) return adminForbidden();
+    // PR-1 (2026-08-06 fix plan): `tl_manage` is a legacy duplicate key
+    // (same roles as `team_leaders_manage`). Use the canonical key, with a
+    // legacy fallback so admins whose stored permission column still lists
+    // `tl_manage` keep access (explicit adminPermissions win in hasPermission).
+    const canManage =
+      hasPermission(session.adminRole || '', 'team_leaders_manage') ||
+      hasPermission(session.adminRole || '', 'tl_manage');
+    if (!canManage) return adminForbidden();
 
     const body = await req.json();
     const validation = validateBody(teamLeaderBulkActionSchema, body);

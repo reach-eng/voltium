@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PERMISSION_DESCRIPTORS } from '@/lib/permissions';
+import { AdminRole, ADMIN_ROLE_LABELS } from '@/server/modules/admin/admin.types';
 import type { AdminForm } from './types';
 
 interface AdminUserDialogProps {
@@ -80,15 +81,11 @@ export function AdminUserDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SUPER_ADMIN">Super Admin (All Access)</SelectItem>
-                    <SelectItem value="ADMIN">Admin (Full Operational)</SelectItem>
-                    <SelectItem value="OPERATIONS_ADMIN">
-                      Operations Admin
-                    </SelectItem>
-                    <SelectItem value="FLEET_MANAGER">Fleet Manager</SelectItem>
-                    <SelectItem value="SUPPORT_LEAD">Support Lead</SelectItem>
-                    <SelectItem value="FINANCE_ADMIN">Finance Admin</SelectItem>
-                    <SelectItem value="VIEWER">Viewer (Read-only)</SelectItem>
+                    {Object.values(AdminRole).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {ADMIN_ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

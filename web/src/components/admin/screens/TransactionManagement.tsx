@@ -2,12 +2,13 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import WalletDepositManagement from './WalletDepositManagement';
+import PaymentGatewayManagement from './PaymentGatewayManagement';
 import { AdminErrorBoundary } from '../error-boundary';
 import {
   useTransactions,
   TransactionFiltersBar,
   TransactionTable,
-  TransactionDetailSheet,
+  TransactionDetailDialog,
   ConfirmActionDialog,
   BulkRejectDialog,
   DeductWalletModal,
@@ -28,7 +29,7 @@ export default function TransactionManagement() {
       <div className="flex flex-col gap-1 mb-2">
         <h2 className="text-2xl font-bold tracking-tight">Finance</h2>
         <p className="text-muted-foreground text-sm">
-          Manage payments, top-ups, wallet balances, and security deposits.
+          Manage payments, top-ups, wallet balances, security deposits, and payment gateways.
         </p>
       </div>
 
@@ -39,6 +40,9 @@ export default function TransactionManagement() {
           </TabsTrigger>
           <TabsTrigger value="wallet" className="text-xs px-5 font-semibold">
             Wallet &amp; Deposits
+          </TabsTrigger>
+          <TabsTrigger value="payment-gateway" className="text-xs px-5 font-semibold">
+            Payment Gateway
           </TabsTrigger>
         </TabsList>
 
@@ -81,8 +85,8 @@ export default function TransactionManagement() {
               setPage={txState.setPage}
             />
 
-            {/* Transaction Detail Sheet */}
-            <TransactionDetailSheet
+            {/* Transaction Detail Dialog */}
+            <TransactionDetailDialog
               selectedTx={txState.selectedTx}
               onClose={() => txState.setSelectedTx(null)}
             />
@@ -145,6 +149,10 @@ export default function TransactionManagement() {
 
         <TabsContent value="wallet">
           <WalletDepositManagement />
+        </TabsContent>
+
+        <TabsContent value="payment-gateway">
+          <PaymentGatewayManagement />
         </TabsContent>
       </Tabs>
     </AdminErrorBoundary>

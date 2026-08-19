@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { restoreService } from '@/server/modules/data-management/restore/restore.service';
-import { backupRepository } from '@/server/modules/data-management/backup/backup.repository';
-import { backupService } from '@/server/modules/data-management/backup/backup.service';
-import { backupLockService } from '@/server/modules/data-management/backup/backup-lock.service';
+import { backupRepository } from '@/server/modules/data-management/backup.repository';
+import { backupService } from '@/server/modules/data-management/backup.service';
 import { db } from '@/lib/db';
 import * as shell from '@/lib/shell';
 import { existsSync } from 'fs';
 
-vi.mock('@/server/modules/data-management/backup/backup.repository', () => ({
+// restore.service imports the canonical modules at the data-management root
+// (the `backup/` subdir files are re-exports). Mock those exact paths.
+vi.mock('@/server/modules/data-management/backup.repository', () => ({
   backupRepository: {
     getBackupJob: vi.fn(),
     createRestoreJob: vi.fn(),
@@ -15,15 +16,10 @@ vi.mock('@/server/modules/data-management/backup/backup.repository', () => ({
   },
 }));
 
-vi.mock('@/server/modules/data-management/backup/backup.service', () => ({
+vi.mock('@/server/modules/data-management/backup.service', () => ({
   backupService: {
     verifyBackup: vi.fn(),
     createBackup: vi.fn().mockResolvedValue(null),
-  },
-}));
-
-vi.mock('@/server/modules/data-management/backup/backup-lock.service', () => ({
-  backupLockService: {
     setBackupLock: vi.fn().mockResolvedValue(null),
   },
 }));
@@ -34,6 +30,10 @@ vi.mock('@/lib/db', () => ({
       findUnique: vi.fn(),
       upsert: vi.fn(),
       update: vi.fn(),
+    },
+    // Post-restore smoke query (restore.service step 6b).
+    rider: {
+      count: vi.fn().mockResolvedValue(0),
     },
   },
 }));
@@ -144,7 +144,7 @@ describe('Restore Safety Tests', () => {
       expect(backupService.createBackup).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'PRE_RESTORE' })
       );
-      expect(backupLockService.setBackupLock).toHaveBeenCalledWith(true);
+      expect(backupService.setBackupLock).toHaveBeenCalledWith(true);
       expect(db.systemSetting.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ create: expect.objectContaining({ key: 'MAINTENANCE_MODE', value: 'true' }) })
       );

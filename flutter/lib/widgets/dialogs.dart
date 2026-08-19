@@ -65,25 +65,3 @@ Future<bool> showDiscardChangesDialog(BuildContext context) async {
     isDestructive: true,
   );
 }
-
-/// @deprecated Use [Toast] from `utils/toast.dart` instead.
-///
-///   Toast.success(context, msg)
-///   Toast.error(context, msg)
-///   Toast.info(context, msg)
-@Deprecated('Use Toast from utils/toast.dart instead')
-Future<void> showSuccessSnackBar(BuildContext context, String message) async {
-  throw UnimplementedError('Migrate to Toast.success()');
-}
-
-/// @deprecated Use [Toast] from `utils/toast.dart` instead.
-@Deprecated('Use Toast from utils/toast.dart instead')
-Future<void> showErrorSnackBar(BuildContext context, String message) async {
-  throw UnimplementedError('Migrate to Toast.error()');
-}
-
-/// @deprecated Use [Toast] from `utils/toast.dart` instead.
-@Deprecated('Use Toast from utils/toast.dart instead')
-Future<void> showInfoSnackBar(BuildContext context, String message) async {
-  throw UnimplementedError('Migrate to Toast.info()');
-}

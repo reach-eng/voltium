@@ -13,6 +13,7 @@ import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/features/guarantor/presentation/widgets/guarantor_onboarding_widgets.dart';
@@ -20,7 +21,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
-
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -537,11 +538,9 @@ class _GuarantorOnboardingScreenState
           });
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP sent to guarantor phone'),
-            backgroundColor: AppColors.success,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtotpSentToGuarantorPhone,
         );
         // Dev-mode only: auto-fill the OTP the server echoes. Guarded by
         // kDebugMode so a misconfigured production server can never leak
@@ -606,11 +605,9 @@ class _GuarantorOnboardingScreenState
             .read(guarantorOnboardingNotifierProvider.notifier)
             .setPhoneVerified(true, phone, receipt);
         _saveCache();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Phone verified successfully'),
-            backgroundColor: AppColors.success,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtphoneVerifiedSuccessfully,
         );
       }
     } catch (e) {
@@ -624,9 +621,8 @@ class _GuarantorOnboardingScreenState
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.error),
-    );
+    if (!mounted) return;
+    Toast.error(context, msg);
   }
 
   Future<void> _handleSubmit() async {
@@ -867,9 +863,8 @@ class _GuarantorOnboardingScreenState
     return Container(
       width: 40,
       height: 2,
-      color: isCompleted
-          ? AppColors.primary
-          : AppColors.of(context).borderSubtle,
+      color:
+          isCompleted ? AppColors.primary : AppColors.of(context).borderSubtle,
     );
   }
 
@@ -1077,35 +1072,33 @@ class _GuarantorOnboardingScreenState
 }
 
 /// Explicit legal-liability banner displayed above the guarantor form.
-///
-/// Bug 25: previously the screen had no explanation of what a
-/// guarantor is or what liability they take on. A user could tap
-/// "Complete" without realising the guarantor is taking on real
-/// financial liability. This banner is a short, scannable disclosure
-/// that names the risk and points to the full terms.
-class _GuarantorLiabilityBanner extends ConsumerWidget {
+class _GuarantorLiabilityBanner extends StatelessWidget {
   const _GuarantorLiabilityBanner();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       key: const Key('guarantorLiabilityBanner'),
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.of(context).warningLight,
+        color: colors.warningLight,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.warning, width: 1),
+        border: Border.all(
+          color: colors.warning.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
-            color: AppColors.warningDark,
+            color: colors.warningLightForeground,
             size: 24,
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1114,9 +1107,9 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
                   'Your guarantor takes on real financial liability',
                   style: AppTypography.bodyMedium
                       .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
-                      .copyWith(color: AppColors.onSurface),
+                      .copyWith(color: colors.warningLightForeground),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'By submitting this form, your guarantor becomes jointly '
                   'responsible for all rental charges, damages, and penalties '
@@ -1124,7 +1117,7 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
                   'Agreement in the Legal section for the full terms.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.onSurface,
+                    color: colors.warningLightForeground.withValues(alpha: 0.9),
                     height: 1.4,
                   ),
                 ),

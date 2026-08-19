@@ -40,7 +40,10 @@ void main() {
     });
 
     test('computeTimeRemaining handles null correctly', () {
-      expect(DateHelpers.computeTimeRemaining(null), '7d 0h');
+      // No end date — no time remaining to show (same em-dash as
+      // computeNextRecharge). The old '7d 0h' expectation implied a fake
+      // default plan, which lied to the rider.
+      expect(DateHelpers.computeTimeRemaining(null), '—');
     });
 
     test('computeTimeRemaining calculates remaining time', () {

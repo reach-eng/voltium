@@ -104,8 +104,9 @@ export function useBulkMessaging() {
     if (createOpen) calculateRecipients();
   }, [calculateRecipients, createOpen]);
 
-  const handleCreate = useCallback(async () => {
-    if (!form.title || !form.message) return;
+  const [confirmAllOpen, setConfirmAllOpen] = useState(false);
+
+  const executeSend = useCallback(async (isImmediateAll: boolean) => {
     setSending(true);
     try {
       const body: Record<string, unknown> = {
@@ -119,13 +120,17 @@ export function useBulkMessaging() {
         body.scheduledAt = new Date(form.scheduledAt).toISOString();
       }
 
-      const res = await fetch('/api/admin/announcements', {
+      const url = isImmediateAll
+        ? '/api/admin/announcements?confirm=true'
+        : '/api/admin/announcements';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (res.ok) {
         setCreateOpen(false);
+        setConfirmAllOpen(false);
         setForm({ ...EMPTY_ANNOUNCEMENT_FORM });
         fetchAnnouncements();
       }
@@ -135,6 +140,20 @@ export function useBulkMessaging() {
       setSending(false);
     }
   }, [form, fetchAnnouncements]);
+
+  const handleCreate = useCallback(async () => {
+    if (!form.title || !form.message) return;
+    const isImmediateAll = !form.schedule && form.targetAudience === 'ALL';
+    if (isImmediateAll) {
+      setConfirmAllOpen(true);
+      return;
+    }
+    await executeSend(false);
+  }, [form, executeSend]);
+
+  const confirmSendAll = useCallback(async () => {
+    await executeSend(true);
+  }, [executeSend]);
 
   const toggleTargetId = useCallback((id: string) => {
     setForm((prev) => ({
@@ -174,6 +193,9 @@ export function useBulkMessaging() {
     recipientCount,
     handleCreate,
     toggleTargetId,
+    confirmAllOpen,
+    setConfirmAllOpen,
+    confirmSendAll,
     // detail dialog
     detailOpen,
     setDetailOpen,

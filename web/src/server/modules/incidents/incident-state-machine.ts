@@ -1,11 +1,18 @@
-export type IncidentStatus = 'REPORTED' | 'INVESTIGATING' | 'RESOLVED' | 'CLOSED' | 'DISMISSED';
+export type IncidentStatus =
+  | 'OPEN'
+  | 'REPORTED'
+  | 'INVESTIGATING'
+  | 'RESOLVED'
+  | 'CLOSED'
+  | 'DISMISSED';
 
 const ALLOWED_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
-  REPORTED: ['INVESTIGATING', 'RESOLVED', 'DISMISSED'],
-  INVESTIGATING: ['RESOLVED', 'CLOSED', 'DISMISSED'],
-  RESOLVED: ['CLOSED', 'INVESTIGATING'],
-  CLOSED: [],
-  DISMISSED: [],
+  OPEN: ['INVESTIGATING', 'RESOLVED', 'CLOSED', 'DISMISSED'],
+  REPORTED: ['OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED', 'DISMISSED'],
+  INVESTIGATING: ['OPEN', 'RESOLVED', 'CLOSED', 'DISMISSED'],
+  RESOLVED: ['OPEN', 'INVESTIGATING', 'CLOSED'],
+  CLOSED: ['OPEN', 'INVESTIGATING'],
+  DISMISSED: ['OPEN', 'INVESTIGATING'],
 };
 
 export function validateIncidentTransition(from: IncidentStatus, to: IncidentStatus): boolean {

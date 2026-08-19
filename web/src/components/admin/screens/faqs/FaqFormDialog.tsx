@@ -76,7 +76,7 @@ export function FaqFormDialog({
               <Input
                 type="number"
                 value={form.order}
-                onChange={(e) => setForm({ ...form, order: Number(e.target.value) })}
+                onChange={(e) => setForm({ ...form, order: parseInt(e.target.value, 10) || 0 })}
               />
             </div>
           </div>

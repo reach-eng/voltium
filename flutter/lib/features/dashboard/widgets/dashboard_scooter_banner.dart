@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+
 /// Scooter submission required banner widget.
 class ScooterSubmissionBanner extends StatelessWidget {
   final String? submissionDate;
@@ -45,9 +47,16 @@ class ScooterSubmissionBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final String formattedDate = submissionDate != null
         ? _formatDate(DateTime.parse(submissionDate!))
-        : 'Friday, Oct 27, 2023';
+        : (l10n?.txtpendingReturnSubmission ?? 'Friday, Oct 27, 2023');
+
+    final String hub = (pickupHub == null ||
+            pickupHub!.isEmpty ||
+            pickupHub == 'Not Assigned')
+        ? (l10n != null ? l10n.txtdesignatedHub : 'New Delhi Central')
+        : pickupHub!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -100,26 +109,31 @@ class ScooterSubmissionBanner extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Scooter Submission\nRequired',
+                          l10n?.txtscooterSubmissionRequired ??
+                              'Scooter Submission\nRequired',
                           style: AppTypography.titleMedium
                               .copyWith(color: colors.onSurface, height: 1.3),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          'Submission Date: $formattedDate',
+                          l10n != null
+                              ? l10n.txtsubmissionDatePrefix(formattedDate)
+                              : 'Submission Date: $formattedDate',
                           style: AppTypography.bodyMedium
                               .copyWith(fontSize: 13)
                               .copyWith(color: colors.onSurface),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'Hub Name: ${(pickupHub == null || pickupHub!.isEmpty || pickupHub == 'Not Assigned') ? 'New Delhi Central' : pickupHub!}',
+                          l10n != null
+                              ? l10n.txthubNamePrefix(hub)
+                              : 'Hub Name: $hub',
                           style: AppTypography.bodyMedium
                               .copyWith(fontSize: 13)
                               .copyWith(color: colors.onSurface),

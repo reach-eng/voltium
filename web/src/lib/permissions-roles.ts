@@ -52,6 +52,11 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   // Rentals
   rentals_pickup_inspection: ['OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
   rentals_return_inspection: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  // P2.10 (2026-08-05 rentals/vehicles/hubs audit): booking on behalf of a
+  // locked-out rider is a support/ops capability. Ops + support + hub/fleet
+  // managers can create a rental; TEAM_LEADER is excluded (field staff book
+  // via pickup inspection, not on-behalf creation).
+  rentals_book: ['OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER'],
 
   // Hubs
   hubs_manage: ['OPERATIONS_ADMIN', 'HUB_MANAGER'],
@@ -67,6 +72,9 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   transactions_reject: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
   transactions_manage: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
   finance_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
+  // P0-4 (financial audit): reconciliation is a money-integrity operation —
+  // only ops + finance roles may trigger it (READ_ONLY is excluded).
+  finance_reconcile: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
   payment_gateways_manage: ['FINANCE_ADMIN'],
   plans_manage: ['OPERATIONS_ADMIN'],
   plans_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'READ_ONLY'],
@@ -97,6 +105,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   data_management_test: [],
 
   // Incidents & Shifts
+  ops_read: ['OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER', 'SUPER_ADMIN'],
   incidents_manage: ['OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER'],
   shifts_manage: ['OPERATIONS_ADMIN', 'HUB_MANAGER'],
 
@@ -104,14 +113,20 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   admins_manage: [],
   tl_manage: ['OPERATIONS_ADMIN'],
   team_leaders_manage: ['OPERATIONS_ADMIN'],
-  settings_manage: [],
-  legal_manage: [],
+  // System settings are SUPER_ADMIN-only (the route additionally requires
+  // `session.adminRole === 'SUPER_ADMIN'` for writes). Granting it to
+  // OPERATIONS_ADMIN here broke the rbac.test contract.
+  settings_manage: ['SUPER_ADMIN'],
+  legal_manage: ['OPERATIONS_ADMIN'],
   offers_manage: ['OPERATIONS_ADMIN'],
+  jobs_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
   jobs_run: ['OPERATIONS_ADMIN'],
 
   // Analytics & System
   analytics_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
-  audit_view: ['OPERATIONS_ADMIN', 'READ_ONLY'],
+  // P0-2 (2026-08-05 ops audit): READ_ONLY dropped — audit logs contain
+  // actor graph + rider entityIds (spear-phishing intel). Only ops/finance.
+  audit_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
   audit_cleanup: [],
   health_view: ['OPERATIONS_ADMIN', 'READ_ONLY'],
 } as const;

@@ -29,12 +29,14 @@ import 'package:flutter_test/flutter_test.dart';
 //   - non-context call sites in `notification_model.dart` and
 //     `streak_celebration_bar.dart` (intentionally out of scope)
 const Set<String> allowedKeepSet = {
+  'accentPurpleSurface', // migrated to ThemeColors / alpha
   'amberIcon',
   'amberIconSurface',
+  'borderDefault',
   'borderSubtle', // see PR2 note above
   'dangerText',
   'errorLight', // see PR2 note above
-  'errorRose', // see PR2 note above
+  'errorSurface', // migrated to ThemeColors.errorLight
   'infoLight', // see PR2 note above
   'onSurfaceMuted', // legacy back-compat (0xFF737785); ThemeColors variant is the canonical muted text color
   'orangeAccent',
@@ -50,12 +52,12 @@ const Set<String> allowedKeepSet = {
   'royalBlueTint',
   'skySpark',
   'skySparkSurface',
-  'slate800', // see PR2 note above
   'successBorderLight',
   'successLight', // see PR2 note above
   'successOutline',
   'successTint',
   'surfaceBright', // see PR2 note above; used in `app_theme.dart` ColorScheme
+  'surfaceHover',
   'surfaceSubtle', // see PR2 note above
   'tealIcon',
   'tealIconSurface',

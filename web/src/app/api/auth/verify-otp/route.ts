@@ -127,8 +127,18 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : String(err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
     logger.error('[POST /api/auth/verify-otp] error', { error: redactPii(errorMessage) });
+    if (
+      errorMessage.includes('Invalid OTP') ||
+      errorMessage.includes('No OTP found') ||
+      errorMessage.includes('expired') ||
+      errorMessage.includes('failed attempts')
+    ) {
+      const response = errors.unauthorized(errorMessage, { correlationId: redactPii(correlationId) });
+      response.headers.set('Api-Version', API_VERSION);
+      return response;
+    }
     const response = errors.internal(
       'Verification failed. Please check your connection or try again.',
       { correlationId: redactPii(correlationId) }

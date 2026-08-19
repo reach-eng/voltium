@@ -18,6 +18,19 @@ export const notificationService = {
     data: Record<string, string> = {}
   ) {
     try {
+      const VALID_ENUM_TYPES = new Set(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SOS', 'SYSTEM', 'BIRTHDAY_WISH']);
+      const TYPE_MAP: Record<string, 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' | 'BIRTHDAY_WISH'> = {
+        KYC_UPDATE: 'SYSTEM',
+        SUPPORT_REPLY: 'INFO',
+        PAYMENT_DUE: 'PAYMENT',
+        REWARD: 'PROMOTION',
+        SHIFT_REMINDER: 'SYSTEM',
+      };
+      const rawUpper = (type || 'INFO').toUpperCase();
+      const sanitizedType = VALID_ENUM_TYPES.has(rawUpper)
+        ? (rawUpper as any)
+        : (TYPE_MAP[rawUpper] || 'INFO');
+
       // 1 & 2. Save notification to DB and fetch rider FCM token concurrently in single parallel round-trip
       const [_, rider] = await Promise.all([
         db.notification.create({
@@ -25,7 +38,7 @@ export const notificationService = {
             riderId,
             title,
             message,
-            type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+            type: sanitizedType,
           },
         }),
         db.rider.findUnique({

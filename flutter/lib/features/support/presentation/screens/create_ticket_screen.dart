@@ -3,11 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_checklist_screen.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 import 'package:voltium_rider/core/network/file_category.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -51,7 +53,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       final image =
           File('${Directory.systemTemp.path}/mock_ticket_attachment.png');
       setState(() {
-        if (_attachmentFiles.length < _maxAttachments) _attachmentFiles.add(image);
+        if (_attachmentFiles.length < _maxAttachments)
+          _attachmentFiles.add(image);
       });
       return;
     }
@@ -69,10 +72,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
   Future<void> _showAttachmentSourceSheet() async {
     if (_attachmentFiles.length >= _maxAttachments) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Up to $_maxAttachments photos per ticket'),
-        ),
+      Toast.warning(
+        context,
+        AppLocalizations.of(context)!
+            .txtupToNPhotosPerTicket(_maxAttachments.toString()),
       );
       return;
     }
@@ -91,11 +94,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       // files endpoint is idempotent on duplicate uploads).
       final repo = ref.read(filesRepositoryProvider);
       final uploadedUrls = await Future.wait(
-        _attachmentFiles.map((f) => repo.uploadFile(f, FileCategory.supportAttachment)),
+        _attachmentFiles
+            .map((f) => repo.uploadFile(f, FileCategory.supportAttachment)),
       );
-      final attachmentsCsv = uploadedUrls
-          .where((u) => u.isNotEmpty)
-          .join(',');
+      final attachmentsCsv = uploadedUrls.where((u) => u.isNotEmpty).join(',');
       await ref.read(supportProvider.notifier).createTicket(
             category: _selectedCategory,
             subject: _subjectController.text.trim(),
@@ -112,11 +114,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         // Capture navigator before pop so we can push after
         final nav = Navigator.of(context);
         nav.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ticket created successfully'),
-            backgroundColor: AppColors.success,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtticketCreatedSuccessfully,
         );
         // Show checklist after ticket creation
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -127,11 +127,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create ticket: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!
+              .txtfailedToCreateTicket(e.toString()),
         );
       }
     } finally {
@@ -143,19 +142,20 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon: Icon(Icons.arrow_back, color: colors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Create Ticket',
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.onSurface,
+            color: colors.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -171,13 +171,13 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 Text(
                   'How can we help you?',
                   style: AppTypography.headingMedium
-                      .copyWith(color: AppColors.onSurface),
+                      .copyWith(color: colors.onSurface),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Please fill out the form below to create a support ticket.',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurfaceVariant,
+                    color: colors.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -187,27 +187,27 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 Text(
                   'Category',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurface,
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.card,
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.outlineVariant),
+                    border: Border.all(color: colors.outlineVariant),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedCategory,
                       isExpanded: true,
-                      dropdownColor: Colors.white,
-                      icon: const Icon(Icons.keyboard_arrow_down,
-                          color: AppColors.onSurfaceVariant),
+                      dropdownColor: colors.card,
+                      icon: Icon(Icons.keyboard_arrow_down,
+                          color: colors.onSurfaceVariant),
                       style: GoogleFonts.plusJakartaSans(
-                          color: AppColors.onSurface),
+                          color: colors.onSurface),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() => _selectedCategory = newValue);
@@ -232,21 +232,21 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 Text(
                   'Subject',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurface,
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _subjectController,
                   style:
-                      GoogleFonts.plusJakartaSans(color: AppColors.onSurface),
+                      GoogleFonts.plusJakartaSans(color: colors.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Brief summary of the issue',
                     hintStyle: GoogleFonts.plusJakartaSans(
-                        color: AppColors.onSurfaceDisabled),
+                        color: colors.onSurfaceMuted),
                     filled: true,
-                    fillColor: AppColors.of(context).iconBackground,
+                    fillColor: colors.iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
@@ -278,22 +278,22 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 Text(
                   'Message',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurface,
+                    color: colors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _messageController,
                   style:
-                      GoogleFonts.plusJakartaSans(color: AppColors.onSurface),
+                      GoogleFonts.plusJakartaSans(color: colors.onSurface),
                   maxLines: 6,
                   decoration: InputDecoration(
                     hintText: 'Describe your issue in detail...',
                     hintStyle: GoogleFonts.plusJakartaSans(
-                        color: AppColors.onSurfaceDisabled),
+                        color: colors.onSurfaceMuted),
                     filled: true,
-                    fillColor: AppColors.of(context).iconBackground,
+                    fillColor: colors.iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
@@ -328,7 +328,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     Text(
                       'Photos (optional, up to $_maxAttachments)',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.onSurface,
+                        color: colors.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -336,7 +336,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     Text(
                       '${_attachmentFiles.length}/$_maxAttachments',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceMuted,
+                        color: colors.onSurfaceMuted,
                         fontSize: 13,
                       ),
                     ),
@@ -351,9 +351,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.card,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: AppColors.outlineVariant),
+                      border: Border.all(color: colors.outlineVariant),
                     ),
                     child: _attachmentFiles.isEmpty
                         ? Column(
@@ -367,12 +367,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                               Text(
                                 'Add photos',
                                 style: AppTypography.labelLarge
-                                    .copyWith(color: AppColors.onSurface),
+                                    .copyWith(color: colors.onSurface),
                               ),
                               Text(
                                 'Attach evidence for the issue (camera or gallery)',
                                 style: GoogleFonts.plusJakartaSans(
-                                  color: AppColors.of(context).onSurfaceMuted,
+                                  color: colors.onSurfaceMuted,
                                   fontSize: 13,
                                 ),
                               ),
@@ -384,7 +384,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                for (var i = 0; i < _attachmentFiles.length; i++)
+                                for (var i = 0;
+                                    i < _attachmentFiles.length;
+                                    i++)
                                   Stack(
                                     children: [
                                       ClipRRect(
@@ -415,8 +417,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                                             child: const Icon(Icons.close,
                                                 size: 16, color: Colors.white),
                                           ),
-                                          onPressed: () => setState(
-                                              () => _attachmentFiles.removeAt(i)),
+                                          onPressed: () => setState(() =>
+                                              _attachmentFiles.removeAt(i)),
                                         ),
                                       ),
                                     ],
@@ -429,12 +431,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                                       width: 64,
                                       height: 64,
                                       decoration: BoxDecoration(
-                                        color: AppColors.of(context)
-                                            .iconBackground,
+                                        color: colors.iconBackground,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                            color:
-                                                AppColors.outlineVariant),
+                                            color: colors.outlineVariant),
                                       ),
                                       child: const Icon(
                                         Icons.add_a_photo_outlined,

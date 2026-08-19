@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/admin/dr-drill/route';
 import { db } from '@/lib/db';
 import { hasPermission } from '@/lib/auth';
-import { getAdminId } from '@/lib/get-session';
+import { getAdminSession } from '@/lib/get-session';
 import { createAuditLog } from '@/lib/audit-log';
 
 vi.mock('@/lib/db', () => ({
@@ -11,18 +11,27 @@ vi.mock('@/lib/db', () => ({
     outboxEvent: {
       count: vi.fn().mockResolvedValue(5),
     },
-    backupRecord: {
+    backupJob: {
       findFirst: vi.fn().mockResolvedValue({ id: 'bkp_1', status: 'COMPLETED' }),
     },
   },
 }));
 
+// hasPermission is synchronous in production (permissions.ts) — mock it
+// sync, otherwise the route's `if (!canRunDrill)` sees a truthy Promise.
 vi.mock('@/lib/auth', () => ({
-  hasPermission: vi.fn().mockResolvedValue(true),
+  hasPermission: vi.fn().mockReturnValue(true),
 }));
 
+// The route authenticates via the full admin session (getAdminSession) —
+// richer than the legacy getAdminId (401/403/500 split).
 vi.mock('@/lib/get-session', () => ({
-  getAdminId: vi.fn().mockResolvedValue('admin_123'),
+  getAdminSession: vi.fn().mockResolvedValue({
+    adminId: 'admin_123',
+    riderDbId: 'admin_123',
+    role: 'admin',
+    adminRole: 'SUPER_ADMIN',
+  }),
 }));
 
 vi.mock('@/lib/audit-log', () => ({
@@ -64,7 +73,7 @@ describe('DR Drill Runner API (POST /api/admin/dr-drill)', () => {
   });
 
   it('returns 401 Unauthorized if admin is not authenticated', async () => {
-    vi.mocked(getAdminId).mockResolvedValueOnce(null);
+    vi.mocked(getAdminSession).mockResolvedValueOnce(null);
 
     const req = new Request('http://localhost:8081/api/admin/dr-drill', {
       method: 'POST',
@@ -75,7 +84,7 @@ describe('DR Drill Runner API (POST /api/admin/dr-drill)', () => {
   });
 
   it('returns 403 Forbidden if admin lacks DATA_MANAGEMENT permission', async () => {
-    vi.mocked(hasPermission).mockResolvedValueOnce(false);
+    vi.mocked(hasPermission).mockReturnValueOnce(false);
 
     const req = new Request('http://localhost:8081/api/admin/dr-drill', {
       method: 'POST',

@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
 
     const response = success(
       {
+        // PR-52 (GDPR): `exists` removed from the send-otp response —
+        // account-existence is never leaked to the client.
         otp: result.otp,
       },
       'OTP requested successfully and is being delivered',

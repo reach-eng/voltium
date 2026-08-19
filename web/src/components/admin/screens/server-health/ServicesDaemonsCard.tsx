@@ -54,7 +54,15 @@ export function ServicesDaemonsCard({ health }: ServicesDaemonsCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t">
           <span className="text-sm font-medium">Caddy Reverse Proxy</span>
-          <Badge className="bg-emerald-600 text-white">ACTIVE</Badge>
+          <Badge
+            className={
+              health.caddyStatus === 'Active'
+                ? 'bg-emerald-600 text-white'
+                : 'bg-destructive text-white'
+            }
+          >
+            {health.caddyStatus ? health.caddyStatus.toUpperCase() : 'OFFLINE'}
+          </Badge>
         </div>
       </CardContent>
     </Card>

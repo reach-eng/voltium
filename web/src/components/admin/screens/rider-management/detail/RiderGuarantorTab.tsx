@@ -142,7 +142,7 @@ export function RiderGuarantorTab({
         <Button
           variant="ghost"
           size="sm"
-          className="text-red-500 hover:text-red-600 dark:text-red-400 hover:bg-red-50 h-8 px-3"
+          className="text-red-500 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 px-3"
           onClick={handleClearGuarantor}
         >
           <Trash2 className="w-3 h-3 mr-1" /> Clear Guarantor

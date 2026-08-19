@@ -1,0 +1,2123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voltium Rider — Onboarding Flow Mockup</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #0053c1;
+        --primary-50: #e8f0fc;
+        --primary-100: #c5d8f5;
+        --slate-900: #0f172a;
+        --slate-700: #334155;
+        --slate-600: #475569;
+        --slate-500: #64748b;
+        --slate-400: #94a3b8;
+        --slate-300: #cbd5e1;
+        --slate-200: #e2e8f0;
+        --slate-100: #f1f5f9;
+        --slate-50: #f7f9fb;
+        --emerald-500: #10b981;
+        --emerald-50: #ecfdf5;
+        --amber-500: #f59e0b;
+        --amber-50: #fffbeb;
+        --rose-500: #ef4444;
+        --rose-50: #fef2f2;
+        --info: #3b82f6;
+        --info-50: #eff6ff;
+        --bg: #f3f5f9;
+        --card: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+        --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+        --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.18);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+        --radius-2xl: 32px;
+        --radius-full: 9999px;
+        --t-fast: 160ms;
+        --t-base: 220ms;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--slate-900);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      button { font-family: inherit; }
+      input, select, textarea { font-family: inherit; }
+
+      /* ===== Layout shell ===== */
+      .app {
+        display: grid;
+        grid-template-columns: 280px 1fr 320px;
+        gap: 0;
+        min-height: 100vh;
+      }
+
+      /* ===== Left rail (screen list) ===== */
+      .rail {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 22px 18px;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .rail .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+      .rail .brand .logo {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: var(--primary);
+        display: grid; place-items: center;
+        color: white;
+        font-weight: 800;
+        box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.25);
+      }
+      .rail .brand .name {
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: -0.2px;
+      }
+      .rail .brand .sub {
+        font-size: 11px;
+        color: #94a3b8;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .rail .group-label {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #64748b;
+        margin: 14px 6px 8px;
+      }
+      .rail .step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        color: #cbd5e1;
+        font-size: 13px;
+        font-weight: 600;
+        transition: background var(--t-fast), color var(--t-fast);
+        user-select: none;
+      }
+      .rail .step:hover { background: rgba(255,255,255,0.05); color: white; }
+      .rail .step.active {
+        background: rgba(0, 83, 193, 0.25);
+        color: white;
+        box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+      }
+      .rail .step .num {
+        width: 22px; height: 22px;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.07);
+        display: grid; place-items: center;
+        font-size: 11px;
+        font-weight: 800;
+        color: #94a3b8;
+        flex-shrink: 0;
+      }
+      .rail .step.active .num { background: var(--primary); color: white; }
+      .rail .step .label { line-height: 1.25; }
+      .rail .step .label small { display:block; font-weight: 500; color: #94a3b8; font-size: 11px; margin-top: 1px; }
+      .rail .step.active .label small { color: #cbd5e1; }
+      .rail .foot {
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.5;
+      }
+
+      /* ===== Center stage ===== */
+      .stage {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 32px 24px 60px;
+        background: var(--bg);
+        position: relative;
+      }
+      .stage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 460px;
+        margin-bottom: 18px;
+      }
+      .stage-header .crumb {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--slate-500);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      .stage-header .progress {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--slate-500);
+      }
+      .progress-bar {
+        width: 100%;
+        max-width: 460px;
+        height: 6px;
+        background: var(--slate-200);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        margin-bottom: 26px;
+      }
+      .progress-bar .fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary) 0%, #3b82f6 100%);
+        border-radius: var(--radius-full);
+        transition: width var(--t-base);
+      }
+
+      /* Phone */
+      .phone {
+        width: 380px;
+        height: 800px;
+        background: #0b1220;
+        border-radius: 46px;
+        padding: 12px;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+      }
+      .phone-inner {
+        position: relative;
+        width: 100%; height: 100%;
+        background: var(--slate-50);
+        border-radius: 36px;
+        overflow: hidden;
+      }
+      .notch {
+        position: absolute;
+        top: 8px; left: 50%;
+        transform: translateX(-50%);
+        width: 110px; height: 28px;
+        background: #0b1220;
+        border-radius: 999px;
+        z-index: 10;
+      }
+      .status-bar {
+        height: 44px;
+        padding: 14px 24px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--slate-900);
+        background: transparent;
+      }
+      .status-bar .right { display:flex; align-items:center; gap: 6px; }
+      .status-bar .dot { width: 14px; height: 8px; border: 1.4px solid var(--slate-900); border-radius: 2px; position: relative;}
+      .status-bar .dot::after {
+        content: ""; position: absolute; right: 0; top: 0; bottom: 0;
+        width: 70%; background: var(--slate-900); border-radius: 1px;
+      }
+      .status-bar .wifi { font-size: 11px; }
+
+      .screen {
+        position: absolute;
+        inset: 44px 0 0 0;
+        bottom: 0;
+        display: none;
+        flex-direction: column;
+        background: var(--slate-50);
+        overflow: hidden;
+      }
+      .screen.active { display: flex; }
+      .screen .scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 20px 110px;
+      }
+      .screen .scroll::-webkit-scrollbar { width: 0; }
+
+      .home-indicator {
+        position: absolute;
+        bottom: 8px; left: 50%;
+        transform: translateX(-50%);
+        width: 120px; height: 5px;
+        background: #0f172a;
+        border-radius: 999px;
+        opacity: 0.85;
+        z-index: 20;
+      }
+
+      /* ===== Right rail (annotations) ===== */
+      .notes {
+        padding: 32px 24px;
+        background: white;
+        border-left: 1px solid var(--slate-200);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+      }
+      .notes h3 {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+        color: var(--slate-500);
+        text-transform: uppercase;
+        margin: 0 0 8px;
+      }
+      .notes h2 {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 6px;
+        letter-spacing: -0.4px;
+      }
+      .notes .desc {
+        color: var(--slate-600);
+        font-size: 14px;
+        line-height: 1.55;
+        margin: 0 0 18px;
+      }
+      .notes .meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+      .notes .meta .cell {
+        background: var(--slate-50);
+        border: 1px solid var(--slate-200);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .notes .meta .cell small {
+        display: block;
+        font-size: 10px;
+        color: var(--slate-500);
+        text-transform: uppercase;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        margin-bottom: 2px;
+      }
+      .notes .meta .cell strong { font-size: 13px; color: var(--slate-900); font-weight: 700; }
+      .notes .changes {
+        background: var(--primary-50);
+        border: 1px solid var(--primary-100);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 18px;
+      }
+      .notes .changes h4 {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--primary);
+        margin: 0 0 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .notes .changes ul { padding-left: 18px; margin: 0; color: var(--slate-700); font-size: 13px; line-height: 1.55; }
+      .notes .changes li + li { margin-top: 4px; }
+      .notes .controls {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .notes .controls button {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid var(--slate-200);
+        background: white;
+        color: var(--slate-700);
+        transition: background var(--t-fast), color var(--t-fast);
+      }
+      .notes .controls button:hover { background: var(--slate-100); }
+      .notes .controls button.primary {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 6px 18px rgba(0, 83, 193, 0.3);
+      }
+      .notes .controls button.primary:hover { background: #004ab0; }
+      .notes .controls button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      /* ====== Shared screen components ====== */
+      .app-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 4px 8px;
+      }
+      .icon-btn {
+        width: 40px; height: 40px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.7);
+        backdrop-filter: blur(8px);
+        display: grid; place-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(255,255,255,0.6);
+        cursor: pointer;
+        color: var(--slate-700);
+        transition: transform var(--t-fast);
+      }
+      .icon-btn:hover { transform: scale(1.05); }
+      .icon-btn svg { width: 18px; height: 18px; }
+      .icon-btn.primary { background: var(--primary); color: white; border-color: transparent; }
+
+      .title-lg {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin: 0 0 4px;
+        color: var(--slate-900);
+      }
+      .title-md {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        margin: 0 0 4px;
+        color: var(--slate-900);
+      }
+      .subtitle {
+        color: var(--slate-500);
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.5;
+        margin: 0;
+      }
+      .text-center { text-align: center; }
+
+      .field {
+        background: white;
+        border: 1px solid var(--slate-200);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: var(--shadow-sm);
+        transition: border var(--t-fast);
+      }
+      .field:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.12); }
+      .field input {
+        flex: 1; border: 0; outline: 0; background: transparent;
+        font-size: 14px; font-weight: 600; color: var(--slate-900);
+      }
+      .field input::placeholder { color: var(--slate-400); font-weight: 500; }
+      .field .prefix { font-size: 14px; font-weight: 700; color: var(--slate-700); padding-right: 8px; border-right: 1px solid var(--slate-200); }
+      .field-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--slate-700);
+        margin-bottom: 6px;
+        display: block;
+      }
+
+      .cta {
+        width: 100%;
+        height: 52px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(180deg, #0061d6 0%, #0053c1 100%);
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        border: 0;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0, 83, 193, 0.32);
+        transition: transform var(--t-fast), box-shadow var(--t-fast);
+      }
+      .cta:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(0, 83, 193, 0.4); }
+      .cta.secondary {
+        background: white; color: var(--primary);
+        border: 1.5px solid var(--primary-100);
+        box-shadow: none;
+      }
+      .cta:disabled { opacity: 0.5; cursor: not-allowed; }
+      .cta-row { display: flex; gap: 10px; }
+      .cta-row .cta { flex: 1; }
+
+      .bottom-cta {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        padding: 16px 20px 28px;
+        background: linear-gradient(180deg, rgba(247, 249, 251, 0) 0%, var(--slate-50) 30%);
+        z-index: 5;
+      }
+
+      .card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-100);
+        padding: 16px;
+      }
+
+      .chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--primary-50);
+        color: var(--primary);
+      }
+      .chip.green { background: var(--emerald-50); color: var(--emerald-500); }
+      .chip.amber { background: var(--amber-50); color: var(--amber-500); }
+      .chip.slate { background: var(--slate-100); color: var(--slate-700); }
+
+      /* ====== Screen 1: Splash ====== */
+      .splash {
+        background: white;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .splash .glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 35%, rgba(0, 83, 193, 0.18) 0%, transparent 55%);
+        pointer-events: none;
+      }
+      .splash .logo {
+        width: 96px; height: 96px;
+        background: var(--primary);
+        border-radius: 28px;
+        display: grid; place-items: center;
+        color: white;
+        font-size: 42px;
+        font-weight: 800;
+        box-shadow: 0 18px 50px rgba(0, 83, 193, 0.35);
+        margin-bottom: 22px;
+        position: relative;
+        z-index: 1;
+      }
+      .splash .logo svg { width: 50px; height: 50px; }
+      .splash .word {
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        color: var(--slate-900);
+        position: relative;
+        z-index: 1;
+      }
+      .splash .tag {
+        margin-top: 4px;
+        color: var(--slate-500);
+        font-size: 14px;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+      }
+      .splash .bar {
+        position: absolute;
+        bottom: 80px; left: 50%;
+        transform: translateX(-50%);
+        width: 180px; height: 4px;
+        background: var(--slate-100);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .splash .bar::after {
+        content: "";
+        position: absolute; inset: 0 60% 0 0;
+        background: var(--primary);
+        border-radius: 4px;
+        animation: slide 1.6s ease-in-out infinite;
+      }
+      @keyframes slide {
+        0% { right: 100%; }
+        50% { right: 0%; }
+        100% { right: 100%; }
+      }
+      .splash .legal {
+        position: absolute; bottom: 24px; left: 0; right: 0;
+        font-size: 11px; color: var(--slate-400);
+        text-align: center;
+        z-index: 1;
+      }
+
+      /* ====== Screen 2: Permissions ====== */
+      .perm-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+      .perm {
+        display: flex; align-items: center; gap: 12px;
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-100);
+      }
+      .perm .icon {
+        width: 40px; height: 40px;
+        border-radius: 12px;
+        background: var(--primary-50);
+        color: var(--primary);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+      }
+      .perm .icon svg { width: 22px; height: 22px; }
+      .perm .body { flex: 1; min-width: 0; }
+      .perm .name { font-size: 14px; font-weight: 700; color: var(--slate-900); }
+      .perm .desc { font-size: 12px; color: var(--slate-500); margin-top: 2px; line-height: 1.4; }
+      .perm .badge {
+        font-size: 10px; font-weight: 800;
+        padding: 3px 7px; border-radius: 999px;
+        background: var(--slate-100); color: var(--slate-500);
+        letter-spacing: 0.4px;
+      }
+      .perm .badge.req { background: var(--rose-50); color: var(--rose-500); }
+      .perm .badge.opt { background: var(--emerald-50); color: var(--emerald-500); }
+      .perm .check {
+        width: 26px; height: 26px;
+        border-radius: 8px;
+        border: 2px solid var(--slate-200);
+        display: grid; place-items: center;
+        color: white;
+        background: white;
+      }
+      .perm .check.on {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      .perm .check.on::after {
+        content: "";
+        width: 12px; height: 6px;
+        border-left: 2px solid white;
+        border-bottom: 2px solid white;
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+
+      /* ====== Screen 3: Legal ====== */
+      .shield-wrap {
+        width: 72px; height: 72px;
+        margin: 18px auto 14px;
+        background: linear-gradient(135deg, var(--primary-50) 0%, white 100%);
+        border-radius: var(--radius-lg);
+        display: grid; place-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--primary-100);
+      }
+      .shield-wrap svg { width: 36px; height: 36px; color: var(--primary); }
+      .legal-doc {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        margin-top: 10px;
+        border: 1px solid var(--slate-100);
+        overflow: hidden;
+      }
+      .legal-doc .head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px;
+        cursor: pointer;
+      }
+      .legal-doc .head .name { font-weight: 700; font-size: 14px; }
+      .legal-doc .head .name small { display: block; color: var(--slate-500); font-size: 11px; font-weight: 500; margin-top: 1px;}
+      .legal-doc .head .chev { color: var(--slate-500); transition: transform var(--t-fast); }
+      .legal-doc.open .head .chev { transform: rotate(180deg); }
+      .legal-doc .body {
+        display: none;
+        padding: 0 16px 14px;
+        color: var(--slate-600);
+        font-size: 12px;
+        line-height: 1.55;
+        border-top: 1px solid var(--slate-100);
+        padding-top: 10px;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .legal-doc.open .body { display: block; }
+      .accept-row {
+        margin-top: 16px;
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 14px;
+        background: white;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--slate-100);
+        box-shadow: var(--shadow-sm);
+      }
+      .accept-row .check {
+        width: 22px; height: 22px;
+        border-radius: 7px;
+        border: 2px solid var(--slate-300);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+      .accept-row .check.on {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+      .accept-row .check.on::after {
+        content: "";
+        width: 10px; height: 5px;
+        border-left: 2px solid white;
+        border-bottom: 2px solid white;
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+      .accept-row span { font-size: 13px; font-weight: 600; color: var(--slate-900); }
+
+      /* ====== Screen 4: Welcome / Mobile ====== */
+      .welcome-hero {
+        background: linear-gradient(180deg, var(--primary) 0%, #0066d9 100%);
+        margin: -12px -20px 18px;
+        padding: 38px 24px 70px;
+        color: white;
+        position: relative;
+        border-radius: 0 0 32px 32px;
+        text-align: left;
+      }
+      .welcome-hero .badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.15);
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 18px;
+      }
+      .welcome-hero h1 {
+        font-size: 26px;
+        font-weight: 800;
+        margin: 0 0 6px;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+      }
+      .welcome-hero p {
+        font-size: 13px; opacity: 0.85; margin: 0;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+      .welcome-hero .ring {
+        position: absolute;
+        bottom: -36px; right: -36px;
+        width: 140px; height: 140px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+      }
+      .flag-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: white;
+        padding: 8px 14px 8px 8px;
+        border-radius: 999px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-200);
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--slate-900);
+      }
+      .flag-pill .flag {
+        width: 22px; height: 16px;
+        border-radius: 3px;
+        background: linear-gradient(180deg, #ff9933 0%, #ff9933 33%, #ffffff 33%, #ffffff 66%, #138808 66%);
+        position: relative;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 1px var(--slate-200);
+      }
+      .flag-pill .flag::after {
+        content: "";
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 4px; height: 4px;
+        background: #1d4ed8;
+        border-radius: 50%;
+      }
+      .input-card {
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 4px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--slate-100);
+        display: flex; align-items: center;
+      }
+      .input-card .prefix {
+        padding: 12px 14px;
+        color: var(--slate-500);
+        font-weight: 700;
+        font-size: 14px;
+        border-right: 1px solid var(--slate-200);
+      }
+      .input-card input {
+        flex: 1;
+        border: 0; outline: 0; padding: 12px 14px;
+        font-size: 16px; font-weight: 700; color: var(--slate-900);
+        letter-spacing: 0.5px;
+      }
+      .link {
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .helper {
+        text-align: center;
+        margin-top: 18px;
+        color: var(--slate-500);
+        font-size: 12px;
+      }
+      .helper a { color: var(--primary); font-weight: 700; }
+
+      /* ====== Screen 5: OTP ====== */
+      .otp-row {
+        display: flex; gap: 8px; justify-content: center; margin: 22px 0 12px;
+      }
+      .otp-box {
+        width: 46px; height: 56px;
+        border-radius: var(--radius-md);
+        background: white;
+        border: 2px solid var(--slate-200);
+        display: grid; place-items: center;
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--slate-900);
+        box-shadow: var(--shadow-sm);
+        font-family: "JetBrains Mono", monospace;
+        position: relative;
+      }
+      .otp-box.active { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.12); }
+      .otp-box::after {
+        content: "";
+        width: 2px; height: 24px;
+        background: var(--primary);
+        position: absolute;
+        opacity: 0;
+      }
+      .otp-box.active::after { opacity: 1; animation: blink 1s infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .resend {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 12px;
+        color: var(--slate-500);
+      }
+      .resend .timer { color: var(--primary); font-weight: 700; }
+      .phone-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--primary-50);
+        padding: 4px 10px;
+        border-radius: 999px;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      /* ====== Screen 6: Intent of use ====== */
+      .intent-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        border: 2px solid var(--slate-100);
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: border var(--t-fast), transform var(--t-fast);
+        box-shadow: var(--shadow-sm);
+      }
+      .intent-card:hover { border-color: var(--primary-100); }
+      .intent-card.sel { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.1); }
+      .intent-card .icon {
+        width: 52px; height: 52px;
+        border-radius: var(--radius-md);
+        background: var(--primary);
+        color: white;
+        display: grid; place-items: center;
+        flex-shrink: 0;
+      }
+      .intent-card .icon.alt { background: var(--slate-100); color: var(--primary); }
+      .intent-card .icon svg { width: 26px; height: 26px; }
+      .intent-card .body h3 { margin: 0 0 4px; font-size: 15px; font-weight: 800; }
+      .intent-card .body p { margin: 0; color: var(--slate-500); font-size: 12px; line-height: 1.45; }
+      .info-banner {
+        margin-top: 14px;
+        padding: 12px 14px;
+        background: var(--info-50);
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-md);
+        display: flex; gap: 10px;
+        color: #1e40af;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .info-banner svg { width: 18px; height: 18px; flex-shrink: 0; color: #3b82f6; }
+
+      /* ====== Screen 7 & 8: Rider / Guarantor forms ====== */
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+      .form-group { margin-bottom: 12px; }
+      .step-progress {
+        display: flex; align-items: center; gap: 6px;
+        margin: 4px 0 18px;
+      }
+      .step-progress .seg {
+        flex: 1; height: 4px;
+        background: var(--slate-200);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .step-progress .seg.done { background: var(--primary); }
+      .step-progress .seg.active { background: linear-gradient(90deg, var(--primary) 60%, var(--slate-200) 60%); }
+      .step-tag {
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--primary);
+        margin-bottom: 6px;
+      }
+      .form-title {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.4px;
+        margin: 0 0 4px;
+        color: var(--slate-900);
+      }
+      .upload-area {
+        border: 2px dashed var(--slate-200);
+        background: white;
+        border-radius: var(--radius-md);
+        padding: 18px;
+        text-align: center;
+        color: var(--slate-500);
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .upload-area svg { display: block; margin: 0 auto 6px; width: 28px; height: 28px; color: var(--primary); }
+      .uploaded {
+        background: var(--emerald-50);
+        color: var(--emerald-500);
+        border: 1px solid #a7f3d0;
+        padding: 10px 12px;
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        font-weight: 700;
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 8px;
+      }
+
+      /* ====== Screen 9: Choose plan ====== */
+      .plan-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        border: 2px solid var(--slate-100);
+        margin-bottom: 12px;
+        position: relative;
+        box-shadow: var(--shadow-sm);
+        transition: border var(--t-fast);
+        cursor: pointer;
+      }
+      .plan-card.sel { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.08); }
+      .plan-card .ribbon {
+        position: absolute; top: -10px; right: 16px;
+        background: var(--primary); color: white;
+        font-size: 10px; font-weight: 800; letter-spacing: 0.6px;
+        padding: 4px 10px; border-radius: 999px;
+        text-transform: uppercase;
+      }
+      .plan-card .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;}
+      .plan-card .head h3 { margin: 0; font-size: 16px; font-weight: 800;}
+      .plan-card .head .price { font-size: 22px; font-weight: 800; color: var(--slate-900); }
+      .plan-card .head .price small { font-size: 11px; color: var(--slate-500); font-weight: 600; }
+      .plan-card ul { margin: 8px 0 0; padding: 0; list-style: none; }
+      .plan-card ul li {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: var(--slate-600);
+        padding: 4px 0;
+      }
+      .plan-card ul li svg { width: 14px; height: 14px; color: var(--emerald-500); }
+
+      /* ====== Screen 10: Wallet top-up ====== */
+      .balance-card {
+        background: linear-gradient(135deg, #0053c1 0%, #1d4ed8 100%);
+        color: white;
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 18px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 28px rgba(0, 83, 193, 0.3);
+      }
+      .balance-card .label { font-size: 12px; opacity: 0.85; font-weight: 600; }
+      .balance-card .amt { font-size: 32px; font-weight: 800; margin-top: 4px; letter-spacing: -0.5px; }
+      .balance-card .ring {
+        position: absolute; right: -40px; top: -40px;
+        width: 140px; height: 140px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+      }
+      .amt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 8px; }
+      .amt-chip {
+        background: white;
+        border: 2px solid var(--slate-100);
+        border-radius: var(--radius-md);
+        padding: 14px 8px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 800;
+        color: var(--slate-900);
+        font-size: 14px;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--t-fast);
+      }
+      .amt-chip .sub { display: block; font-size: 10px; color: var(--slate-500); font-weight: 600; margin-top: 2px;}
+      .amt-chip.sel { border-color: var(--primary); background: var(--primary-50); color: var(--primary); }
+      .amt-chip.sel .sub { color: var(--primary); }
+      .pay-row {
+        background: white;
+        border: 1.5px solid var(--slate-100);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 8px;
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+      }
+      .pay-row.sel { border-color: var(--primary); background: var(--primary-50); }
+      .pay-row .icon {
+        width: 32px; height: 32px;
+        background: var(--slate-50);
+        border-radius: 8px;
+        display: grid; place-items: center;
+        font-size: 14px; font-weight: 800;
+        color: var(--slate-700);
+      }
+      .pay-row .body { flex: 1; font-size: 13px; font-weight: 700; }
+      .pay-row .body small { display: block; color: var(--slate-500); font-size: 11px; font-weight: 500; }
+      .pay-row .radio {
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--slate-300);
+      }
+      .pay-row.sel .radio { border-color: var(--primary); background: var(--primary); box-shadow: inset 0 0 0 3px white; }
+
+      /* ====== Screen 11: Pickup form ====== */
+      .stepper {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 18px;
+      }
+      .stepper .dot {
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: var(--slate-200);
+        color: var(--slate-500);
+        font-size: 11px; font-weight: 800;
+        display: grid; place-items: center;
+      }
+      .stepper .dot.done { background: var(--emerald-500); color: white; }
+      .stepper .dot.curr { background: var(--primary); color: white; box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.2); }
+      .stepper .line { flex: 1; height: 2px; background: var(--slate-200); border-radius: 999px;}
+      .stepper .line.done { background: var(--emerald-500); }
+      .photo-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;}
+      .photo-slot {
+        aspect-ratio: 1;
+        background: white;
+        border: 2px dashed var(--slate-200);
+        border-radius: var(--radius-md);
+        display: grid; place-items: center;
+        color: var(--slate-400);
+        cursor: pointer;
+        position: relative;
+      }
+      .photo-slot svg { width: 22px; height: 22px; }
+      .photo-slot .x {
+        position: absolute; top: 4px; right: 4px;
+        width: 18px; height: 18px;
+        background: var(--rose-500); color: white;
+        border-radius: 50%;
+        display: grid; place-items: center;
+        font-size: 11px; font-weight: 800;
+      }
+      .photo-slot.has { border: 0; background: var(--primary-50); color: var(--primary); }
+      .photo-slot.has svg { color: var(--primary); }
+
+      /* ====== Screen 12: Wait for confirmation ====== */
+      .wait-hero {
+        text-align: center;
+        padding: 22px 12px 8px;
+      }
+      .pulse {
+        position: relative;
+        width: 96px; height: 96px;
+        margin: 0 auto 18px;
+      }
+      .pulse .ring {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        border: 3px solid var(--primary);
+        opacity: 0.4;
+        animation: ring 1.8s ease-out infinite;
+      }
+      .pulse .ring.r2 { animation-delay: 0.6s; }
+      .pulse .ring.r3 { animation-delay: 1.2s; }
+      @keyframes ring {
+        0% { transform: scale(0.6); opacity: 0.7; }
+        100% { transform: scale(1.4); opacity: 0; }
+      }
+      .pulse .core {
+        position: absolute; inset: 16px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: grid; place-items: center;
+        color: white;
+        box-shadow: 0 12px 30px rgba(0, 83, 193, 0.35);
+      }
+      .pulse .core svg { width: 32px; height: 32px; }
+      .checklist {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+        margin-top: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-100);
+      }
+      .checklist .row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--slate-100);
+      }
+      .checklist .row:last-child { border-bottom: 0; }
+      .checklist .ic {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        background: var(--amber-50);
+        color: var(--amber-500);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+      }
+      .checklist .ic.ok { background: var(--emerald-50); color: var(--emerald-500); }
+      .checklist .ic svg { width: 18px; height: 18px; }
+      .checklist .body { flex: 1; min-width: 0; }
+      .checklist .body .name { font-size: 13px; font-weight: 700; color: var(--slate-900); }
+      .checklist .body .status { font-size: 11px; color: var(--slate-500); font-weight: 600; margin-top: 1px; }
+
+      /* ====== Screen 13: Active dashboard ====== */
+      .dash-hero {
+        background: linear-gradient(180deg, var(--primary) 0%, #0066d9 100%);
+        margin: -12px -20px 16px;
+        padding: 22px 20px 70px;
+        color: white;
+        border-radius: 0 0 28px 28px;
+        position: relative;
+      }
+      .dash-hero .greet { font-size: 12px; opacity: 0.85; font-weight: 600; }
+      .dash-hero .name { font-size: 22px; font-weight: 800; margin-top: 2px; letter-spacing: -0.3px; }
+      .dash-hero .actions {
+        position: absolute; top: 18px; right: 18px;
+        display: flex; gap: 8px;
+      }
+      .dash-hero .actions .icon-btn { background: rgba(255,255,255,0.18); border: 0; color: white; }
+      .dash-hero .actions .icon-btn .dot {
+        position: absolute; top: 8px; right: 8px;
+        width: 8px; height: 8px; background: #f59e0b;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+      }
+      .kyc-banner {
+        background: var(--emerald-50);
+        color: var(--emerald-500);
+        border: 1px solid #a7f3d0;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px;
+        margin-top: 10px;
+      }
+      .dash-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        margin-top: -50px;
+        position: relative;
+        z-index: 2;
+      }
+      .dash-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--slate-100);
+      }
+      .dash-card .label { font-size: 11px; color: var(--slate-500); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;}
+      .dash-card .amt { font-size: 22px; font-weight: 800; margin-top: 4px; color: var(--slate-900); letter-spacing: -0.3px; }
+      .dash-card .ic {
+        width: 32px; height: 32px;
+        background: var(--primary-50);
+        color: var(--primary);
+        border-radius: 8px;
+        display: grid; place-items: center;
+        margin-bottom: 8px;
+      }
+      .dash-card .ic svg { width: 18px; height: 18px; }
+      .dash-card .delta { font-size: 11px; color: var(--emerald-500); font-weight: 700; margin-top: 4px; }
+      .dash-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        margin-top: 12px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--slate-100);
+      }
+      .dash-section .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .dash-section .head h4 { margin: 0; font-size: 14px; font-weight: 800;}
+      .dash-section .head a { font-size: 12px; color: var(--primary); font-weight: 700; }
+      .ref-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 0;
+        border-top: 1px solid var(--slate-100);
+      }
+      .ref-row:first-of-type { border-top: 0;}
+      .ref-row .ic {
+        width: 32px; height: 32px;
+        background: var(--primary-50);
+        color: var(--primary);
+        border-radius: 8px;
+        display: grid; place-items: center;
+      }
+      .ref-row .ic svg { width: 16px; height: 16px; }
+      .ref-row .body { flex: 1; min-width: 0; }
+      .ref-row .body .name { font-size: 13px; font-weight: 700; }
+      .ref-row .body .status { font-size: 11px; color: var(--slate-500); font-weight: 500; }
+      .ref-row .amt { font-size: 13px; font-weight: 800; color: var(--emerald-500); }
+
+      .bottom-nav {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        background: white;
+        border-top: 1px solid var(--slate-100);
+        padding: 8px 0 18px;
+        display: flex; justify-content: space-around;
+        z-index: 5;
+        box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.05);
+      }
+      .bottom-nav .item {
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        color: var(--slate-400);
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .bottom-nav .item.active { color: var(--primary); }
+      .bottom-nav .item svg { width: 22px; height: 22px; }
+
+      /* utility */
+      .row { display: flex; align-items: center; gap: 8px; }
+      .gap-12 { gap: 12px; }
+      .mt-8 { margin-top: 8px; }
+      .mt-12 { margin-top: 12px; }
+      .mt-16 { margin-top: 16px; }
+      .mt-20 { margin-top: 20px; }
+
+      .section-label {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--slate-500);
+        margin: 4px 0 10px;
+      }
+
+      /* tiny chart bars */
+      .chart {
+        display: flex; align-items: end; gap: 6px; height: 60px; margin-top: 8px;
+      }
+      .chart .b {
+        flex: 1; background: var(--primary-50); border-radius: 4px 4px 0 0;
+        position: relative;
+      }
+      .chart .b.hi { background: var(--primary); }
+      .chart .b::after {
+        content: attr(data-d);
+        position: absolute; bottom: -16px; left: 0; right: 0; text-align: center;
+        font-size: 9px; color: var(--slate-400); font-weight: 700;
+      }
+
+      @media (max-width: 1100px) {
+        .app { grid-template-columns: 240px 1fr; }
+        .notes { display: none; }
+      }
+      @media (max-width: 720px) {
+        .app { grid-template-columns: 1fr; }
+        .rail { position: relative; height: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- LEFT RAIL -->
+      <aside class="rail">
+        <div class="brand">
+          <div class="logo">V</div>
+          <div>
+            <div class="name">Voltium Rider</div>
+            <div class="sub">Onboarding Mockup</div>
+          </div>
+        </div>
+        <div class="group-label">Onboarding flow</div>
+        <div class="step" data-target="s1"><div class="num">1</div><div class="label">Splash<small>logo & loader</small></div></div>
+        <div class="step" data-target="s2"><div class="num">2</div><div class="label">Permissions<small>7 toggles</small></div></div>
+        <div class="step" data-target="s3"><div class="num">3</div><div class="label">Legal<small>terms + privacy</small></div></div>
+        <div class="step" data-target="s4"><div class="num">4</div><div class="label">Welcome / Mobile<small>phone entry</small></div></div>
+        <div class="step" data-target="s5"><div class="num">5</div><div class="label">OTP<small>6-digit verify</small></div></div>
+        <div class="step" data-target="s6"><div class="num">6</div><div class="label">Intent of use<small>delivery / personal</small></div></div>
+        <div class="step" data-target="s7"><div class="num">7</div><div class="label">Rider onboarding<small>profile + KYC docs</small></div></div>
+        <div class="step" data-target="s8"><div class="num">8</div><div class="label">Guarantor<small>guarantor details</small></div></div>
+        <div class="step" data-target="s9"><div class="num">9</div><div class="label">Choose plan<small>Daily / Weekly / Monthly</small></div></div>
+        <div class="step" data-target="s10"><div class="num">10</div><div class="label">Wallet top-up<small>min ₹999</small></div></div>
+        <div class="step" data-target="s11"><div class="num">11</div><div class="label">Pickup form<small>vehicle + TL + photos</small></div></div>
+        <div class="step" data-target="s12"><div class="num">12</div><div class="label">Wait for confirmation<small>KYC + wallet approval</small></div></div>
+        <div class="step" data-target="s13"><div class="num">13</div><div class="label">Active dashboard<small>rider is live</small></div></div>
+        <div class="foot">
+          Tap any step on the left, or use the arrows in the side panel to walk through the full flow.
+        </div>
+      </aside>
+
+      <!-- CENTER STAGE -->
+      <main class="stage">
+        <div class="stage-header">
+          <div class="crumb" id="crumb">Splash</div>
+          <div class="progress" id="progress">Step 1 of 13</div>
+        </div>
+        <div class="progress-bar"><div class="fill" id="progressFill" style="width: 7.7%"></div></div>
+
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="right">
+                <span class="wifi">●●●</span>
+                <span class="dot"></span>
+              </span>
+            </div>
+
+            <!-- SCREEN 1: SPLASH -->
+            <section class="screen splash active" id="s1">
+              <div class="glow"></div>
+              <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+              </div>
+              <div class="word">Voltium</div>
+              <div class="tag">Ride electric. Earn smarter.</div>
+              <div class="bar"></div>
+              <div class="legal">© 2026 Voltium Mobility</div>
+            </section>
+
+            <!-- SCREEN 2: PERMISSIONS -->
+            <section class="screen" id="s2">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" title="Back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 2 / 13</div>
+                </div>
+                <h1 class="title-lg">We need a few permissions</h1>
+                <p class="subtitle">Required to run the app smoothly. You can change these anytime in settings.</p>
+
+                <div class="perm-list">
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                    <div class="body"><div class="name">Location</div><div class="desc">Track rides and find nearby vehicles</div></div>
+                    <div class="badge req">Required</div>
+                    <div class="check on"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></div>
+                    <div class="body"><div class="name">Notifications</div><div class="desc">Receive important updates and alerts</div></div>
+                    <div class="badge req">Required</div>
+                    <div class="check on"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+                    <div class="body"><div class="name">Camera</div><div class="desc">Document upload and QR scanning</div></div>
+                    <div class="badge req">Required</div>
+                    <div class="check on"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                    <div class="body"><div class="name">Battery optimization</div><div class="desc">Allow the app to run reliably in the background</div></div>
+                    <div class="badge opt">Optional</div>
+                    <div class="check"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13 1.05.37 2.07.72 3.06a2 2 0 01-.45 2.11L8.09 10.91a16 16 0 006 6l2.02-1.29a2 2 0 012.11-.45c.99.35 2.01.59 3.06.72A2 2 0 0122 16.92z"/></svg></div>
+                    <div class="body"><div class="name">Phone state</div><div class="desc">For safety call detection</div></div>
+                    <div class="badge opt">Optional</div>
+                    <div class="check"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+                    <div class="body"><div class="name">Contacts</div><div class="desc">Access contacts for emergency SOS and referrals</div></div>
+                    <div class="badge opt">Optional</div>
+                    <div class="check"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+                    <div class="body"><div class="name">Microphone</div><div class="desc">Used for in-app voice support</div></div>
+                    <div class="badge opt">Optional</div>
+                    <div class="check"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s3')">Continue</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 3: LEGAL -->
+            <section class="screen" id="s3">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s2')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 3 / 13</div>
+                </div>
+                <div class="shield-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                </div>
+                <h1 class="title-lg text-center">Agree to Terms</h1>
+                <p class="subtitle text-center">Please review and accept our legal documents to continue.</p>
+
+                <div class="legal-doc open" id="ld-tos">
+                  <div class="head" onclick="toggleDoc('ld-tos')">
+                    <div class="name">Terms of Service<small>Last updated 12 Aug 2026</small></div>
+                    <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg></div>
+                  </div>
+                  <div class="body">By using Voltium, you agree to ride electric vehicles in accordance with Indian traffic laws. Riders must hold a valid driving licence, follow our community guidelines, and accept the rental agreement terms. The full Terms of Service document is loaded from the admin panel; the on-device copy is shown here for offline review.</div>
+                </div>
+                <div class="legal-doc" id="ld-pp">
+                  <div class="head" onclick="toggleDoc('ld-pp')">
+                    <div class="name">Privacy Policy<small>Last updated 12 Aug 2026</small></div>
+                    <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg></div>
+                  </div>
+                  <div class="body">Voltium collects minimal data — phone, KYC, ride telemetry — to operate the service. We never sell your data. KYC documents are encrypted at rest and only accessed by verified admins for approval.</div>
+                </div>
+
+                <div class="accept-row" onclick="toggleAccept(this)">
+                  <div class="check on"></div>
+                  <span>I have read and agree to the Terms of Service and Privacy Policy.</span>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s4')">Continue</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 4: WELCOME / MOBILE -->
+            <section class="screen" id="s4">
+              <div class="welcome-hero">
+                <div class="badge">⚡ Welcome to Voltium</div>
+                <h1>Let's get you<br/>on the road.</h1>
+                <p>Enter your mobile number — we'll send a one-time password to verify it's you.</p>
+                <div class="ring"></div>
+              </div>
+              <div class="scroll" style="padding-top: 4px;">
+                <div class="app-bar" style="margin-bottom: 8px;">
+                  <div class="icon-btn" onclick="go('s3')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 4 / 13</div>
+                </div>
+                <label class="field-label">Mobile number</label>
+                <div class="input-card">
+                  <div class="flag-pill" style="border:0; box-shadow:none; padding: 6px 10px 6px 4px;">
+                    <div class="flag"></div>
+                    <span>+91</span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                  <input type="tel" value="98765 43210" placeholder="Enter mobile number" />
+                </div>
+                <div class="helper">By continuing, you agree to our <a>Terms</a> & <a>Privacy Policy</a></div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s5')">Send OTP</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 5: OTP -->
+            <section class="screen" id="s5">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s4')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 5 / 13</div>
+                </div>
+                <h1 class="title-lg">Verify your number</h1>
+                <p class="subtitle">We've sent a 6-digit code to <span class="phone-pill">+91 98765 43210</span>. Enter it below to continue.</p>
+
+                <div class="otp-row">
+                  <div class="otp-box">4</div>
+                  <div class="otp-box">2</div>
+                  <div class="otp-box">7</div>
+                  <div class="otp-box active">8</div>
+                  <div class="otp-box"></div>
+                  <div class="otp-box"></div>
+                </div>
+                <div class="resend">Didn't get the code? <span class="timer">Resend in 0:23</span></div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s6')">Verify &amp; continue</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 6: INTENT OF USE -->
+            <section class="screen" id="s6">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s5')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 6 / 13</div>
+                </div>
+                <h1 class="title-lg text-center">How will you use<br/><span style="color: var(--primary);">Voltium</span>?</h1>
+                <p class="subtitle text-center" style="margin-bottom: 16px;">Select your primary usage to help us customize your experience and support.</p>
+
+                <div class="intent-card sel" onclick="selectIntent(this)">
+                  <div class="icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div class="body">
+                    <h3>Deliver with us</h3>
+                    <p>Rent an EV for logistics, delivery, or commercial needs. Includes hub support.</p>
+                  </div>
+                </div>
+                <div class="intent-card" onclick="selectIntent(this)">
+                  <div class="icon alt">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 01-2-2V9a2 2 0 012-2h2l2-3h6l2 3h2a2 2 0 012 2v6a2 2 0 01-2 2M5 17v3h14v-3"/><circle cx="7.5" cy="14" r="1.5"/><circle cx="16.5" cy="14" r="1.5"/></svg>
+                  </div>
+                  <div class="body">
+                    <h3>Personal usage</h3>
+                    <p>Daily commutes, weekend trips, or general city riding.</p>
+                  </div>
+                </div>
+
+                <div class="info-banner">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <div>You can change this anytime from your profile. KYC requirements may vary based on your selection.</div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s7')">Continue</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 7: RIDER ONBOARDING -->
+            <section class="screen" id="s7">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s6')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 7 / 13</div>
+                </div>
+                <div class="step-progress">
+                  <div class="seg done"></div>
+                  <div class="seg active"></div>
+                  <div class="seg"></div>
+                </div>
+                <div class="step-tag">Rider details</div>
+                <h1 class="form-title">Tell us about you</h1>
+                <p class="subtitle">We need a few details to set up your rider profile.</p>
+
+                <div class="mt-16">
+                  <div class="form-row">
+                    <div>
+                      <label class="field-label">First name</label>
+                      <div class="field"><input value="Arjun" placeholder="First name" /></div>
+                    </div>
+                    <div>
+                      <label class="field-label">Last name</label>
+                      <div class="field"><input value="Sharma" placeholder="Last name" /></div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Email</label>
+                    <div class="field">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      <input value="arjun.sharma@example.com" placeholder="you@email.com" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Father's name</label>
+                    <div class="field"><input value="Rajesh Sharma" placeholder="Father's name" /></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Mother's name</label>
+                    <div class="field"><input value="Sunita Sharma" placeholder="Mother's name" /></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Driving licence number</label>
+                    <div class="field"><input value="DL-0420110143" placeholder="DL number" /></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Driving licence (front &amp; back)</label>
+                    <div class="upload-area">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Tap to upload photos
+                    </div>
+                    <div class="uploaded">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      dl_front.jpg uploaded
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s8')">Save &amp; continue</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 8: GUARANTOR -->
+            <section class="screen" id="s8">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s7')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 8 / 13</div>
+                </div>
+                <div class="step-progress">
+                  <div class="seg done"></div>
+                  <div class="seg done"></div>
+                  <div class="seg active"></div>
+                </div>
+                <div class="step-tag">Guarantor details</div>
+                <h1 class="form-title">Add a guarantor</h1>
+                <p class="subtitle">A family member or close contact who vouches for you. They won't be contacted unless needed.</p>
+
+                <div class="mt-16">
+                  <div class="form-group">
+                    <label class="field-label">Guarantor full name</label>
+                    <div class="field"><input value="Rajesh Sharma" placeholder="Full name" /></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Mobile number</label>
+                    <div class="field">
+                      <span class="prefix">+91</span>
+                      <input value="99887 76543" placeholder="Mobile number" />
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div>
+                      <label class="field-label">Father's name</label>
+                      <div class="field"><input value="Madan Sharma" placeholder="Father's name" /></div>
+                    </div>
+                    <div>
+                      <label class="field-label">Mother's name</label>
+                      <div class="field"><input value="Lata Sharma" placeholder="Mother's name" /></div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Relationship</label>
+                    <div class="field">
+                      <span style="flex:1; font-weight: 600; color: var(--slate-900);">Father</span>
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Guarantor ID proof</label>
+                    <div class="upload-area">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Upload Aadhaar / PAN
+                    </div>
+                  </div>
+                  <div class="accept-row" onclick="toggleAccept(this)">
+                    <div class="check on"></div>
+                    <span>My guarantor has consented to be on this application.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s9')">Continue to plans</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 9: CHOOSE PLAN -->
+            <section class="screen" id="s9">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s8')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 9 / 13</div>
+                </div>
+                <h1 class="title-lg">Choose a rental plan</h1>
+                <p class="subtitle">Switch or cancel anytime. Billed weekly or monthly.</p>
+
+                <div class="mt-16">
+                  <div class="plan-card" onclick="selectPlan(this)">
+                    <div class="head">
+                      <h3>Daily</h3>
+                      <div class="price">₹299 <small>/ day</small></div>
+                    </div>
+                    <ul>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Flexible 24-hour access</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>100 km included</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Hub pick-up &amp; drop</li>
+                    </ul>
+                  </div>
+                  <div class="plan-card sel" onclick="selectPlan(this)">
+                    <div class="ribbon">Popular</div>
+                    <div class="head">
+                      <h3>Weekly</h3>
+                      <div class="price">₹1,799 <small>/ week</small></div>
+                    </div>
+                    <ul>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Save 14% vs daily</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>700 km + free swap</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>24/7 roadside support</li>
+                    </ul>
+                  </div>
+                  <div class="plan-card" onclick="selectPlan(this)">
+                    <div class="head">
+                      <h3>Monthly</h3>
+                      <div class="price">₹5,999 <small>/ month</small></div>
+                    </div>
+                    <ul>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Save 30% vs daily</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>3,000 km + 2 free swaps</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Priority hub allocation</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s10')">Continue to wallet</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 10: WALLET TOP-UP -->
+            <section class="screen" id="s10">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s9')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 10 / 13</div>
+                </div>
+                <h1 class="title-lg">Top up your wallet</h1>
+                <p class="subtitle">A minimum top-up of <strong>₹999</strong> is required before pickup. This covers deposits and rental fees.</p>
+
+                <div class="balance-card mt-16">
+                  <div class="ring"></div>
+                  <div class="label">Current balance</div>
+                  <div class="amt">₹0.00</div>
+                  <div class="chip" style="background: rgba(255,255,255,0.18); color: white; margin-top: 6px;">Min required: ₹999</div>
+                </div>
+
+                <div class="section-label">Choose an amount</div>
+                <div class="amt-grid">
+                  <div class="amt-chip" onclick="pickAmt(this)">₹999<span class="sub">Min</span></div>
+                  <div class="amt-chip sel" onclick="pickAmt(this)">₹1,999<span class="sub">+ 1% bonus</span></div>
+                  <div class="amt-chip" onclick="pickAmt(this)">₹4,999<span class="sub">+ 3% bonus</span></div>
+                </div>
+                <div class="field mt-12">
+                  <span style="font-weight: 800; color: var(--slate-700);">₹</span>
+                  <input value="1,999" placeholder="Or enter custom amount" />
+                </div>
+
+                <div class="section-label mt-20">Pay with</div>
+                <div class="pay-row sel" onclick="selectPay(this)">
+                  <div class="icon">U</div>
+                  <div class="body">UPI <small>PhonePe, GPay, Paytm</small></div>
+                  <div class="radio"></div>
+                </div>
+                <div class="pay-row" onclick="selectPay(this)">
+                  <div class="icon" style="color: #f59e0b;">C</div>
+                  <div class="body">Card <small>Debit / Credit</small></div>
+                  <div class="radio"></div>
+                </div>
+                <div class="pay-row" onclick="selectPay(this)">
+                  <div class="icon" style="color: #10b981;">N</div>
+                  <div class="body">Netbanking <small>All major banks</small></div>
+                  <div class="radio"></div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s11')">Pay ₹1,999 securely</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 11: PICKUP FORM -->
+            <section class="screen" id="s11">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s10')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 11 / 13</div>
+                </div>
+                <h1 class="title-lg">Vehicle pickup</h1>
+                <p class="subtitle">Complete these at the hub on pickup day.</p>
+
+                <div class="stepper mt-16">
+                  <div class="dot done">1</div>
+                  <div class="line done"></div>
+                  <div class="dot curr">2</div>
+                  <div class="line"></div>
+                  <div class="dot">3</div>
+                </div>
+                <div class="step-tag">Step 2 of 3</div>
+                <h2 class="form-title">Team leader details</h2>
+
+                <div class="mt-12">
+                  <div class="form-group">
+                    <label class="field-label">Team leader name</label>
+                    <div class="field"><input value="Vikram Iyer" placeholder="Full name" /></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Hub location</label>
+                    <div class="field">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <input value="Indiranagar Hub, Bengaluru" placeholder="Hub name" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Pickup date &amp; time</label>
+                    <div class="field">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <input value="Fri, 15 Aug · 10:00 AM" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="field-label">Vehicle photos</label>
+                    <p class="subtitle" style="font-size: 11px; margin-bottom: 6px;">Front, back, left, right, odometer, damage (if any)</p>
+                    <div class="photo-row">
+                      <div class="photo-slot has">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <div class="x">×</div>
+                      </div>
+                      <div class="photo-slot has">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <div class="x">×</div>
+                      </div>
+                      <div class="photo-slot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </div>
+                      <div class="photo-slot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </div>
+                      <div class="photo-slot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </div>
+                      <div class="photo-slot">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s12')">Submit pickup</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 12: WAIT FOR CONFIRMATION -->
+            <section class="screen" id="s12">
+              <div class="scroll">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s11')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="chip">Step 12 / 13</div>
+                </div>
+                <div class="wait-hero">
+                  <div class="pulse">
+                    <div class="ring"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="core">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                  </div>
+                  <h1 class="title-lg">Hang tight, Arjun!</h1>
+                  <p class="subtitle">We're verifying your details. This usually takes a few minutes — we'll notify you as soon as you're approved.</p>
+                </div>
+
+                <div class="checklist">
+                  <div class="row">
+                    <div class="ic">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="body">
+                      <div class="name">KYC documents</div>
+                      <div class="status">In review · ETA 5–10 min</div>
+                    </div>
+                    <span class="chip amber">Pending</span>
+                  </div>
+                  <div class="row">
+                    <div class="ic">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div class="body">
+                      <div class="name">Wallet top-up</div>
+                      <div class="status">Awaiting payment confirmation</div>
+                    </div>
+                    <span class="chip amber">Pending</span>
+                  </div>
+                  <div class="row">
+                    <div class="ic ok">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="body">
+                      <div class="name">Profile &amp; guarantor</div>
+                      <div class="status">Verified</div>
+                    </div>
+                    <span class="chip green">Done</span>
+                  </div>
+                  <div class="row">
+                    <div class="ic ok">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="body">
+                      <div class="name">Rental plan</div>
+                      <div class="status">Weekly plan selected</div>
+                    </div>
+                    <span class="chip green">Done</span>
+                  </div>
+                </div>
+
+                <div class="info-banner mt-16">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+                  <div>You'll be moved to the active dashboard automatically once both KYC and wallet top-up are approved. No need to refresh.</div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta secondary" onclick="go('s13')">Preview dashboard</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 13: ACTIVE DASHBOARD -->
+            <section class="screen" id="s13">
+              <div class="dash-hero">
+                <div class="actions">
+                  <div class="icon-btn" style="position: relative;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+                    <div class="dot"></div>
+                  </div>
+                  <div class="icon-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                  </div>
+                </div>
+                <div class="greet">Good morning,</div>
+                <div class="name">Arjun Sharma</div>
+                <div class="kyc-banner">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  KYC Approved · Active rider
+                </div>
+              </div>
+              <div class="scroll" style="padding-top: 0;">
+                <div class="dash-grid">
+                  <div class="dash-card">
+                    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 010-4h14v4"/><path d="M3 5v14a2 2 0 002 2h16v-5"/><path d="M18 12a2 2 0 000 4h4v-4z"/></svg></div>
+                    <div class="label">Wallet</div>
+                    <div class="amt">₹1,847</div>
+                    <div class="delta">+ ₹1,999 this week</div>
+                  </div>
+                  <div class="dash-card">
+                    <div class="ic" style="background: var(--emerald-50); color: var(--emerald-500);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                    <div class="label">Earnings today</div>
+                    <div class="amt">₹428</div>
+                    <div class="delta">+12% vs yesterday</div>
+                  </div>
+                </div>
+
+                <div class="dash-section">
+                  <div class="head"><h4>Weekly activity</h4><a>View details</a></div>
+                  <div class="chart">
+                    <div class="b" data-d="Mon" style="height: 30%"></div>
+                    <div class="b" data-d="Tue" style="height: 55%"></div>
+                    <div class="b" data-d="Wed" style="height: 42%"></div>
+                    <div class="b" data-d="Thu" style="height: 70%"></div>
+                    <div class="b" data-d="Fri" style="height: 48%"></div>
+                    <div class="b hi" data-d="Sat" style="height: 92%"></div>
+                    <div class="b" data-d="Sun" style="height: 0%"></div>
+                  </div>
+                </div>
+
+                <div class="dash-section">
+                  <div class="head"><h4>Referrals</h4><a>Invite</a></div>
+                  <div class="ref-row">
+                    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                    <div class="body"><div class="name">Priya Verma</div><div class="status">Joined · 3 days ago</div></div>
+                    <div class="amt">+ ₹200</div>
+                  </div>
+                  <div class="ref-row">
+                    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                    <div class="body"><div class="name">Rohit Kumar</div><div class="status">Signed up</div></div>
+                    <div class="chip slate">Pending</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <div class="item active">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  Home
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                  Rides
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  Wallet
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Profile
+                </div>
+              </div>
+            </section>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT RAIL: ANNOTATIONS -->
+      <aside class="notes" id="notes">
+        <h3 id="notesGroup">01 · Entry</h3>
+        <h2 id="notesTitle">Splash screen</h2>
+        <p class="desc" id="notesDesc">Brand reveal on cold launch. Centered Voltium mark, the "Ride electric. Earn smarter." tagline and a progress bar that runs once. Returning users with a valid session see a 300ms beat instead — see PR-VER-2026-08-07.</p>
+
+        <div class="meta">
+          <div class="cell"><small>File</small><strong>splash_screen.dart</strong></div>
+          <div class="cell"><small>Key</small><strong>splashView</strong></div>
+          <div class="cell"><small>Duration</small><strong>~3s (cold)</strong></div>
+          <div class="cell"><small>Auto-advances</small><strong>Yes</strong></div>
+        </div>
+
+        <div class="changes">
+          <h4>What this screen does</h4>
+          <ul id="changesList">
+            <li>Shows the Voltium logo, name and tagline.</li>
+            <li>Precaches assets in didChangeDependencies.</li>
+            <li>Checks for a stored session and short-circuits for returning users.</li>
+            <li>Fires PostHog <code>splash_viewed</code> for analytics.</li>
+          </ul>
+        </div>
+
+        <div class="controls">
+          <button id="btnPrev" onclick="prev()">← Back</button>
+          <button class="primary" id="btnNext" onclick="next()">Next →</button>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      // ===== Screen metadata =====
+      const meta = {
+        s1:  { group: "01 · Entry",        title: "Splash screen",          desc: "Brand reveal on cold launch. Centered Voltium mark, the 'Ride electric. Earn smarter.' tagline and a progress bar that runs once. Returning users with a valid session see a 300ms beat instead — see PR-VER-2026-08-07.", changes: ["Shows the Voltium logo, name and tagline.", "Precaches assets in didChangeDependencies.", "Checks for a stored session and short-circuits for returning users.", "Fires PostHog splash_viewed for analytics."] },
+        s2:  { group: "01 · Entry",        title: "Permissions",             desc: "Seven permission tiles — Location, Notifications and Camera are required; Battery, Phone state, Contacts and Microphone are optional. The CTA enables only when required permissions are granted.", changes: ["Three required toggles gate onboarding.", "Four optional toggles can be flipped later in Settings.", "Each tile has a contextual icon and short description."] },
+        s3:  { group: "01 · Entry",        title: "Legal consent",           desc: "Shield icon, expandable Terms of Service and Privacy Policy, and a custom checkbox. The Continue CTA is disabled until both docs are reviewed and accepted.", changes: ["Docs are loaded from /api/rider/legal with SWR cache.", "JSON fallback keeps the gate functional offline.", "Custom 24×24 checkbox with spring animation on check."] },
+        s4:  { group: "02 · Authentication", title: "Welcome & mobile",      desc: "Branded hero with welcome message and a phone input. India +91 prefix is the default; the country picker is reachable from the flag pill. Send OTP triggers the verification flow.", changes: ["Phone validation matches the backend regex.", "Continue is disabled until 10 digits are entered.", "Already-logged-in users skip this step."] },
+        s5:  { group: "02 · Authentication", title: "OTP verification",      desc: "Six separate OTP boxes with auto-advance, paste support, and a JetBrains Mono font. Resend is locked for 30s after the first send. Verify auto-fires when the last digit lands.", changes: ["Auto-verifies on 6th digit.", "Resend cooldown protects against abuse.", "Wrong code shows inline error and clears the row."] },
+        s6:  { group: "03 · KYC",          title: "Intent of use",           desc: "Single choice between Deliver with us (commercial / hub-supported) and Personal usage (commuter). The selection is sent with the profile via PUT /api/rider/profile and steers subsequent KYC requirements.", changes: ["Two-card picker, no long-form explanation.", "Info banner reminds the rider they can change this later.", "Double-tap guard added in PR-ONBOARDING-2026-08-11."] },
+        s7:  { group: "03 · KYC",          title: "Rider onboarding",        desc: "Three-part form: rider details, KYC documents (DL front & back), and a final declaration. Divided into a 3-step progress bar at the top; this view is step 2.", changes: ["Step 1 of 3 — rider details.", "Fields: name, email, parents' names, driving licence.", "DL upload area is the first piece of the KYC bundle."] },
+        s8:  { group: "03 · KYC",          title: "Guarantor onboarding",    desc: "Same form pattern for the guarantor. We capture name, mobile, parents' names, relationship and an ID proof. The guarantor must consent before submit (declaration checkbox).", changes: ["Step 3 of 3 — guarantor.", "Relationship is a pre-defined enum.", "Declaration checkbox is required to enable Continue."] },
+        s9:  { group: "04 · Plan & wallet", title: "Choose a rental plan",   desc: "Three plans — Daily, Weekly, Monthly. The selected plan is stored and billed via the wallet. Plan duration is enforced server-side: DAILY=1, WEEKLY=7, MONTHLY=30.", changes: ["Plan is fetched from /api/rider/plans on mount.", "Pre-selects the rider's current plan if returning.", "Continue advances to wallet top-up."] },
+        s10: { group: "04 · Plan & wallet", title: "Wallet top-up",          desc: "Current balance card on top, three quick-pick amounts, custom amount input, and three payment methods (UPI / Card / Netbanking). The minimum top-up is ₹999 — same as the wallet policy in admin.", changes: ["Quick-picks show bonus percentage.", "UPI is preselected.", "Pay button shows the amount being charged."] },
+        s11: { group: "05 · Pickup",       title: "Pickup form",             desc: "Three-step pickup at the hub: vehicle handover → team-leader details → photo capture. This view is step 2 — TL name, hub, date/time and the start of the photo grid.", changes: ["Stepper shows progress across the 3 steps.", "Six photo slots (front, back, left, right, odometer, damage).", "Submitted pickup unlocks the wait-for-confirmation screen."] },
+        s12: { group: "06 · Approval gate", title: "Wait for confirmation",  desc: "Static holding screen. It stays in place while the backend approves KYC and confirms the wallet top-up. The page transitions automatically to the active dashboard once both are approved — no manual refresh needed.", changes: ["Pulsing check icon and live checklist of pending items.", "Profile & guarantor + rental plan are already done.", "Transitions to dashboard on KYC + wallet approval."] },
+        s13: { group: "07 · Active",       title: "Active dashboard",        desc: "The rider is live. Wallet balance, today's earnings, weekly activity chart, and a referral widget. Bottom nav has Home, Rides, Wallet, Profile. KYC banner confirms approval.", changes: ["KYC-approved badge in the header.", "Wallet card shows the post-top-up balance.", "Bottom nav: Home, Rides, Wallet, Profile."] }
+      };
+      const order = ["s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","s12","s13"];
+      let current = "s1";
+
+      function go(id) {
+        document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        current = id;
+        sync();
+      }
+      function next() {
+        const i = order.indexOf(current);
+        if (i < order.length - 1) go(order[i+1]);
+      }
+      function prev() {
+        const i = order.indexOf(current);
+        if (i > 0) go(order[i-1]);
+      }
+      function sync() {
+        const m = meta[current];
+        document.getElementById("notesGroup").textContent = m.group;
+        document.getElementById("notesTitle").textContent = m.title;
+        document.getElementById("notesDesc").textContent = m.desc;
+        document.getElementById("crumb").textContent = m.title;
+        const i = order.indexOf(current);
+        document.getElementById("progress").textContent = `Step ${i+1} of ${order.length}`;
+        document.getElementById("progressFill").style.width = `${((i+1)/order.length)*100}%`;
+        const list = document.getElementById("changesList");
+        list.innerHTML = "";
+        m.changes.forEach(c => { const li = document.createElement("li"); li.textContent = c; list.appendChild(li); });
+
+        document.querySelectorAll(".rail .step").forEach(el => el.classList.remove("active"));
+        document.querySelector(`.rail .step[data-target="${current}"]`).classList.add("active");
+
+        document.getElementById("btnPrev").disabled = i === 0;
+        document.getElementById("btnNext").disabled = i === order.length - 1;
+      }
+
+      // wire up rail clicks
+      document.querySelectorAll(".rail .step").forEach(el => {
+        el.addEventListener("click", () => go(el.dataset.target));
+      });
+
+      // keyboard nav
+      document.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight") next();
+        if (e.key === "ArrowLeft") prev();
+      });
+
+      // helpers
+      function toggleDoc(id) { document.getElementById(id).classList.toggle("open"); }
+      function toggleAccept(row) { row.querySelector(".check").classList.toggle("on"); }
+      function selectIntent(card) {
+        card.parentElement.querySelectorAll(".intent-card").forEach(c => c.classList.remove("sel"));
+        card.classList.add("sel");
+      }
+      function selectPlan(card) {
+        card.parentElement.querySelectorAll(".plan-card").forEach(c => c.classList.remove("sel"));
+        card.classList.add("sel");
+      }
+      function pickAmt(chip) {
+        chip.parentElement.querySelectorAll(".amt-chip").forEach(c => c.classList.remove("sel"));
+        chip.classList.add("sel");
+      }
+      function selectPay(row) {
+        row.parentElement.querySelectorAll(".pay-row").forEach(c => c.classList.remove("sel"));
+        row.classList.add("sel");
+      }
+
+      // initial
+      sync();
+    </script>
+  </body>
+</html>

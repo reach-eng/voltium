@@ -28,24 +28,14 @@ void main() {
   });
 
   group('WalletRepositoryImpl', () {
-    test('getWallet calls getRiderDashboard', () async {
-      when(() => mockVoltiumApiClient.getRiderDashboard())
-          .thenAnswer((_) async => {'riderId': 'r123', 'balanceInPaise': 5000});
-
-      final result = await repository.getWallet('r123');
-
-      expect(result.riderId, 'r123');
-      expect(result.balanceInPaise, 5000);
-      verify(() => mockVoltiumApiClient.getRiderDashboard()).called(1);
-    });
-
     test('submitTopup calls postTransactionTopup', () async {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenAnswer((_) async => api.TopupResponse(id: 'topup123'));
 
       const request = TopupRequest(
         riderId: 'r123',
-        amount: 500,
+        // PR-RUPEES-2026-08-08: rupees-shaped field, value in rupees.
+        amountInRupees: 500,
         method: 'UPI',
         upiRef: 'REF123',
       );
@@ -68,7 +58,7 @@ void main() {
 
       const request = TopupRequest(
         riderId: 'r123',
-        amount: 500,
+        amountInRupees: 500,
         method: 'UPI',
       );
 
@@ -94,14 +84,6 @@ void main() {
       expect(result.length, 2);
       expect(result[0].id, 'tx1');
       expect(result[1].id, 'tx2');
-    });
-
-    test('deleteTransactionHistory calls delete on api client', () async {
-      when(() => mockApiClient.delete(any())).thenAnswer((_) async => {});
-
-      await repository.deleteTransactionHistory('r123');
-
-      verify(() => mockApiClient.delete('/api/transaction/history')).called(1);
     });
   });
 }

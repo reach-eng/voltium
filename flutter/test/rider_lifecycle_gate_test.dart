@@ -43,10 +43,17 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
     });
 
-    test('rider with intent but KYC not done -> preDashboard', () {
+    test(
+        'PR-ONBOARDING-FLOW-2026-08-12: GUARANTOR_APPROVED (rank 6) → choosePlan',
+        () {
+      // PR-ONBOARDING-FLOW-2026-08-12: in the new active path, rank 6
+      // (GUARANTOR_APPROVED) advances to plan selection — the rider
+      // can pick a plan while the guarantor is being reviewed. The
+      // older flow's pre-dashboard wait is no longer in the active
+      // path.
       final rider =
           makeRider(kycDone: false, lifecycleStatus: 'GUARANTOR_APPROVED');
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.choosePlan);
     });
 
     test('rider with KYC done but guarantor pending → guarantorForm', () {
@@ -58,13 +65,18 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
-    test('rider with all done but no pickup -> preDashboard', () {
+    test('PR-ONBOARDING-FLOW-2026-08-12: KYC_APPROVED (rank 4) → guarantorForm',
+        () {
+      // PR-ONBOARDING-FLOW-2026-08-12: in the new active path, rank 4
+      // (KYC_APPROVED) advances to the guarantor form — KYC review
+      // and guarantor filling run in parallel. The older flow's
+      // pre-dashboard wait is no longer in the active path.
       final rider = makeRider(
         kycDone: true,
         guarantorStatus: GuarantorStatus.approved,
         lifecycleStatus: 'KYC_APPROVED',
       );
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
     test('rider with pickup done → dashboard', () {

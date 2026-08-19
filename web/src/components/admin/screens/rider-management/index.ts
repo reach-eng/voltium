@@ -19,8 +19,7 @@ export { RiderDetailDialog } from './RiderDetailDialog';
 export { RiderTable } from './RiderTable';
 export { useRiders, type RidersHook } from './useRiders';
 export {
-  getKycBadge,
-  getStateBadge,
+
   KYC_FILTERS,
   RIDER_PERMISSIONS,
   STATE_FILTERS,
@@ -31,4 +30,5 @@ export {
   type RiderState,
   type KycStatus,
 } from './types';
+export { getKycBadge, getStateBadge } from './helpers';
 export { downloadSelectedRiderCsv, buildSelectedRiderCsv } from './exportSelectedRiders';

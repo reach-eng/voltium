@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
@@ -15,6 +16,7 @@ import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/form_validators.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -98,7 +100,8 @@ class UserOnboardingNotifier extends Notifier<UserOnboardingState> {
 
   void reset() => state = const UserOnboardingState();
 
-  void setStep(int step) => state = state.copyWith(currentStep: step.clamp(1, 3));
+  void setStep(int step) =>
+      state = state.copyWith(currentStep: step.clamp(1, 3));
   void nextStep() =>
       state = state.copyWith(currentStep: (state.currentStep + 1).clamp(1, 3));
   void prevStep() =>
@@ -311,13 +314,21 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   Future<void> _selectDob() async {
     final now = DateTime.now();
-    final defaultInitial =
+    DateTime initialDate =
         DateTime(now.year - 25, now.month, now.day).isAfter(now)
             ? DateTime(now.year - 25, 1, 1)
             : DateTime(now.year - 25, now.month, now.day);
+    if (_dobController.text.trim().isNotEmpty) {
+      final parsed = DateTime.tryParse(_dobController.text.trim());
+      if (parsed != null &&
+          parsed.isAfter(DateTime(1940)) &&
+          parsed.isBefore(now)) {
+        initialDate = parsed;
+      }
+    }
     final date = await showDatePicker(
       context: context,
-      initialDate: defaultInitial,
+      initialDate: initialDate,
       firstDate: DateTime(1940),
       lastDate: now,
     );
@@ -350,8 +361,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   void _showDocumentSourceDialog(String type) {
     final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
     showModalBottomSheet(
       context: context,
+      backgroundColor: colors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -361,7 +374,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-                title: Text(l10n?.txttakeAPhoto ?? 'Take a Photo'),
+                title: Text(
+                  l10n?.txttakeAPhoto ?? 'Take a Photo',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.onSurface),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickDocument(type, true);
@@ -370,7 +387,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
               ListTile(
                 leading:
                     const Icon(Icons.photo_library, color: AppColors.primary),
-                title: Text(l10n?.txtchooseFromGallery ?? 'Choose from Gallery'),
+                title: Text(
+                  l10n?.txtchooseFromGallery ?? 'Choose from Gallery',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.onSurface),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickDocument(type, false);
@@ -415,11 +436,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   void _showBankDetailsDialog() {
     final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
     final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n?.txtbankDetails ?? 'Bank Details'),
+        backgroundColor: colors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        ),
+        title: Text(
+          l10n?.txtbankDetails ?? 'Bank Details',
+          style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
+        ),
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
@@ -428,28 +457,98 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
               children: [
                 TextFormField(
                   controller: _bankNameController,
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: l10n?.txtbankName ?? 'Bank Name',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                        color: colors.onSurfaceMuted),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                    ),
+                    filled: true,
+                    fillColor: colors.iconBackground,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: const BorderSide(
+                          color: AppColors.primary, width: 2),
+                    ),
                   ),
                   textCapitalization: TextCapitalization.words,
                   validator: (v) => FormValidators.required(v, 'Bank name'),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _bankAccountController,
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: l10n?.txtaccountNumber ?? 'Account Number',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                        color: colors.onSurfaceMuted),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                    ),
+                    filled: true,
+                    fillColor: colors.iconBackground,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: const BorderSide(
+                          color: AppColors.primary, width: 2),
+                    ),
                   ),
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: FormValidators.bankAccount,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextFormField(
                   controller: _bankIfscController,
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
                     labelText: l10n?.txtifscCode ?? 'IFSC Code',
+                    labelStyle: GoogleFonts.plusJakartaSans(
+                        color: colors.onSurfaceMuted),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                      color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                    ),
+                    filled: true,
+                    fillColor: colors.iconBackground,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide: const BorderSide(
+                          color: AppColors.primary, width: 2),
+                    ),
                   ),
                   textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  ],
                   validator: FormValidators.ifsc,
                 ),
               ],
@@ -459,17 +558,29 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n?.txtclose ?? 'Close'),
+            child: Text(
+              l10n?.txtclose ?? 'Close',
+              style: AppTypography.labelLarge
+                  .copyWith(color: colors.onSurfaceVariant),
+            ),
           ),
           TextButton(
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 Navigator.pop(ctx);
+                _bankIfscController.text =
+                    _bankIfscController.text.trim().toUpperCase();
                 _saveCache();
                 if (mounted) setState(() {});
               }
             },
-            child: Text(l10n?.txtsave ?? 'Save'),
+            child: Text(
+              l10n?.txtsave ?? 'Save',
+              style: AppTypography.labelLarge.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -477,9 +588,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.error),
-    );
+    if (!mounted) return;
+    Toast.error(context, msg);
   }
 
   Future<void> _handleNext() async {
@@ -546,24 +656,24 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       } else {
         final Map<String, dynamic> tasks = {};
         if (state.aadhaarFrontPath != null) {
-          tasks['Aadhaar Front'] = () => _kycRepository!
-              .uploadDocument(File(state.aadhaarFrontPath!), FileCategory.kycDocument);
+          tasks['Aadhaar Front'] = () => _kycRepository!.uploadDocument(
+              File(state.aadhaarFrontPath!), FileCategory.kycDocument);
         }
         if (state.aadhaarBackPath != null) {
-          tasks['Aadhaar Back'] = () => _kycRepository!
-              .uploadDocument(File(state.aadhaarBackPath!), FileCategory.kycDocument);
+          tasks['Aadhaar Back'] = () => _kycRepository!.uploadDocument(
+              File(state.aadhaarBackPath!), FileCategory.kycDocument);
         }
         if (state.panPath != null) {
           tasks['PAN'] = () => _kycRepository!
               .uploadDocument(File(state.panPath!), FileCategory.kycDocument);
         }
         if (state.selfiePath != null) {
-          tasks['Selfie'] = () => _kycRepository!
-              .uploadDocument(File(state.selfiePath!), FileCategory.profilePhoto);
+          tasks['Selfie'] = () => _kycRepository!.uploadDocument(
+              File(state.selfiePath!), FileCategory.profilePhoto);
         }
         if (state.signaturePath != null) {
-          tasks['Signature'] = () => _kycRepository!
-              .uploadDocument(File(state.signaturePath!), FileCategory.kycDocument);
+          tasks['Signature'] = () => _kycRepository!.uploadDocument(
+              File(state.signaturePath!), FileCategory.kycDocument);
         }
 
         int completed = 0;
@@ -616,15 +726,15 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       try {
         await _kycRepository!.updateProfile(
           riderId: riderId,
-          name: _nameController.text,
-          email: _emailController.text,
-          address: _addressController.text,
-          dob: _dobController.text,
-          fatherName: _fatherNameController.text,
-          motherName: _motherNameController.text,
-          bankName: _bankNameController.text,
-          accountNumber: _bankAccountController.text,
-          ifscCode: _bankIfscController.text,
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim(),
+          dob: _dobController.text.trim(),
+          fatherName: _fatherNameController.text.trim(),
+          motherName: _motherNameController.text.trim(),
+          bankName: _bankNameController.text.trim(),
+          accountNumber: _bankAccountController.text.trim(),
+          ifscCode: _bankIfscController.text.trim().toUpperCase(),
           aadhaarFrontUrl: aadhaarFrontUrl,
           aadhaarBackUrl: aadhaarBackUrl,
           panUrl: panUrl,
@@ -760,10 +870,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: AppTypography.bodySmall
-            .copyWith(fontWeight: FontWeight.w600)
-            .copyWith(
-                color: isActive ? Colors.white : AppColors.onSurfaceVariant),
+        style: AppTypography.bodySmall.copyWith(
+          fontWeight: FontWeight.w600,
+          color:
+              isActive ? Colors.white : AppColors.of(context).onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -867,7 +978,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                         l10n?.txtofflineDraftBanner ??
                             "You're offline — your draft is saved locally. Connect to internet to submit.",
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.onSurface,
+                          color: colors.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

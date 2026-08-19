@@ -77,9 +77,14 @@ export function ConfirmActionDialog({
                             setCreditWallet(e.target.checked);
                             if (e.target.checked)
                               setWalletCreditAmount(
-                                confirmAction?.tx.amount
-                                  ? Math.round(confirmAction.tx.amount / 100)
-                                  : 0,
+                                // PR-6 (FINANCE P0-5): tx.amount is in paise; walletCreditAmount
+                                // is in rupees. The backend multiplies rupees by 100 when
+                                // applying the credit, so we must NOT pre-divide.
+                                // Previously this divided by 100, which silently 100x'd
+                                // the under-credit for a security-deposit review (e.g. a
+                                // ₹2000 deposit was prefilled as ₹20 rupees, then sent
+                                // as ₹20 rupees → server applied ₹20 paise = ₹0.20).
+                                (confirmAction?.tx.amount || 0),
                               );
                           }}
                           className="w-4 h-4 rounded border-gray-300"
@@ -120,7 +125,7 @@ export function ConfirmActionDialog({
                   </p>
                   <textarea
                     className="w-full p-2 border rounded-md text-sm text-foreground bg-background"
-                    placeholder="Rejection reason..."
+                    placeholder="Rejection reason (required, min 10 chars)..."
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
                   />
@@ -135,7 +140,7 @@ export function ConfirmActionDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleAction}
-            disabled={actionLoading}
+            disabled={actionLoading || (confirmAction?.action === 'reject' && rejectionReason.trim().length < 10)}
             className={
               confirmAction?.action === 'reject'
                 ? 'bg-rose-600 hover:bg-rose-700'
@@ -178,7 +183,7 @@ export function BulkRejectDialog({
         </DialogHeader>
         <div className="space-y-3 py-2">
           <Label className="text-xs font-semibold">
-            Rejection Reason (Optional)
+            Rejection Reason (Required, min 10 chars)
           </Label>
           <textarea
             className="w-full p-2.5 border rounded-lg text-sm bg-background text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
@@ -199,7 +204,7 @@ export function BulkRejectDialog({
           <Button
             variant="destructive"
             onClick={onConfirm}
-            disabled={bulkLoading}
+            disabled={bulkLoading || bulkRejectReason.trim().length < 10}
           >
             {bulkLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -237,6 +242,13 @@ export function DeductWalletModal({
   deductLoading,
   onDeduct,
 }: DeductWalletModalProps) {
+  const isDeductValid =
+    !deductLoading &&
+    Boolean(deductRiderId) &&
+    Boolean(deductAmount) &&
+    Number(deductAmount) > 0 &&
+    deductReason.trim().length >= 10;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -267,10 +279,15 @@ export function DeductWalletModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Reason for Deduction</Label>
+            <Label className="text-xs font-semibold">
+              Reason for Deduction{' '}
+              <span className="text-[11px] text-muted-foreground font-normal">
+                (minimum 10 characters)
+              </span>
+            </Label>
             <textarea
               className="w-full p-2.5 border rounded-lg text-sm bg-background text-foreground focus:ring-1 focus:ring-primary focus:outline-none"
-              placeholder="Enter details/reason for this deduction..."
+              placeholder="Enter details/reason for this deduction (at least 10 characters)..."
               value={deductReason}
               onChange={(e) => setDeductReason(e.target.value)}
               rows={3}
@@ -285,7 +302,7 @@ export function DeductWalletModal({
           <Button
             variant="destructive"
             onClick={onDeduct}
-            disabled={deductLoading}
+            disabled={!isDeductValid}
           >
             {deductLoading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

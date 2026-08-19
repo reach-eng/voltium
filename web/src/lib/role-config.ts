@@ -16,12 +16,12 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'hubs', label: 'Hubs', icon: 'MapPin', permission: 'hubs_manage' },
   { id: 'transactions', label: 'Finance', icon: 'ArrowLeftRight', permission: 'transactions_view' },
   { id: 'tickets', label: 'Support', icon: 'MessageSquare', permission: 'tickets_view' },
-  { id: 'incidents', label: 'Incidents & Fines', icon: 'AlertOctagon', permission: 'tickets_view' },
-  { id: 'team-leaders', label: 'Team Leaders', icon: 'UserCog', permission: 'tl_manage' },
+  { id: 'incidents', label: 'Incidents & Fines', icon: 'AlertOctagon', permission: 'incidents_manage' },
+  { id: 'team-leaders', label: 'Team Leaders', icon: 'UserCog', permission: 'team_leaders_manage' },
   { id: 'operations', label: 'Operations', icon: 'Activity', permission: 'analytics_view' },
 
   { id: 'fleet-map', label: 'Fleet Map', icon: 'Map', permission: 'vehicles_view' },
-  { id: 'shifts', label: 'Shifts', icon: 'Clock', permission: 'tl_manage' },
+  { id: 'shifts', label: 'Shifts', icon: 'Clock', permission: 'shifts_manage' },
   { id: 'rider-scoring', label: 'Rider Scoring', icon: 'Target', permission: 'analytics_view' },
   { id: 'notifications', label: 'Messaging', icon: 'Bell', permission: 'notifications_manage' },
   { id: 'offers', label: 'Offers & Coupons', icon: 'Sparkles', permission: 'offers_manage' },
@@ -54,6 +54,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     icon: 'Settings2',
     permission: 'settings_manage',
   },
+
   { id: 'settings', label: 'System Settings', icon: 'Settings', permission: 'settings_manage' },
   {
     id: 'server-health',

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/models/support_model.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import '../../../../utils/app_logger.dart';
@@ -141,7 +142,7 @@ class RaiseTicketCard extends StatelessWidget {
                 key: const Key('issueTypeDropdown'),
                 isExpanded: true,
                 value: selectedCategory,
-                dropdownColor: AppColors.of(context).onSurface,
+                dropdownColor: AppColors.of(context).card,
                 icon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white70,
@@ -153,7 +154,13 @@ class RaiseTicketCard extends StatelessWidget {
                   if (value != null) onCategoryChanged(value);
                 },
                 items: categoryMap.entries.map((e) {
-                  return DropdownMenuItem(value: e.value, child: Text(e.key));
+                  return DropdownMenuItem(
+                    value: e.value,
+                    child: Text(
+                      e.key,
+                      style: TextStyle(color: AppColors.of(context).onSurface),
+                    ),
+                  );
                 }).toList(),
               ),
             ),
@@ -193,13 +200,9 @@ class RaiseTicketCard extends StatelessWidget {
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.mic_none, color: Colors.white70),
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Voice input: Speak now (feature coming soon)',
-                          ),
-                          backgroundColor: AppColors.primary,
-                        ),
+                      Toast.info(
+                        context,
+                        'Voice input: Speak now (feature coming soon)',
                       );
                     },
                   ),
@@ -207,7 +210,7 @@ class RaiseTicketCard extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'ATTACH PHOTOS (MAX 5)',
             style: AppTypography.bodySmall
@@ -279,7 +282,7 @@ class RaiseTicketCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           ElevatedButton(
             key: const Key('raiseTicketButton'),
             onPressed: isSubmitting ? null : onSubmit,
@@ -375,7 +378,7 @@ class TicketListItem extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +395,7 @@ class TicketListItem extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -413,7 +416,7 @@ class TicketListItem extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(
@@ -421,7 +424,7 @@ class TicketListItem extends StatelessWidget {
                           size: 10,
                           color: AppColors.slate400,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           '${ticket.createdAt.day} ${_getMonth(ticket.createdAt.month)}',
                           style: GoogleFonts.plusJakartaSans(
@@ -429,7 +432,7 @@ class TicketListItem extends StatelessWidget {
                             color: AppColors.of(context).onSurfaceVariant,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           '• ${ticket.ticketId}',
                           style: GoogleFonts.ibmPlexMono(
@@ -445,7 +448,7 @@ class TicketListItem extends StatelessWidget {
             ],
           ),
           ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               ticket.message,
               style: GoogleFonts.plusJakartaSans(

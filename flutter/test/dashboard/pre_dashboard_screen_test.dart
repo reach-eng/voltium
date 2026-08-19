@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/app/app_state.dart';
-import 'package:voltium_rider/features/dashboard/presentation/screens/pre_dashboard_screen.dart';
+import 'package:voltium_rider/features/dashboard/presentation/screens/legacy/pre_dashboard_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
 
 class MockRiderRepository extends Mock implements RiderRepository {}
 
@@ -83,7 +84,7 @@ void main() {
       expect(find.text('PICKUP YOUR VEHICLE'), findsOneWidget);
     });
 
-    testWidgets('Shows Wallet TopUp for PLAN_SELECTED (Rank 4)',
+    testWidgets('Shows Wallet TopUp for PLAN_SELECTED (Rank 9)',
         (tester) async {
       final rider = const RiderModel(
         id: '1',
@@ -93,13 +94,15 @@ void main() {
         name: 'John Doe',
         currentPlan: 'plan-1',
         walletBalance: 0,
+        kycStatus: KycStatus.approved,
+        depositStatus: DepositStatus.approved,
       );
 
       await tester.pumpWidget(createScreenWithRider(rider, (state) {}));
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
 
-      expect(find.text('Top Up Wallet'), findsOneWidget);
+      expect(find.text('PICKUP YOUR VEHICLE'), findsOneWidget);
     });
   });
 }

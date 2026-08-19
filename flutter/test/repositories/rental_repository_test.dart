@@ -16,13 +16,15 @@ void main() {
   });
 
   group('RentalRepositoryImpl', () {
-    test('fetchHubs calls getAdminHubs', () async {
-      when(() => mockApiClient.getAdminHubs())
-          .thenAnswer((_) async => ListHubsResponse(hubs: []));
+    test('fetchHubs calls getRiderHubs', () async {
+      // The impl delegates to the rider-facing getRiderHubs (raw Map), not
+      // the admin-typed getAdminHubs.
+      when(() => mockApiClient.getRiderHubs())
+          .thenAnswer((_) async => {'hubs': <dynamic>[]});
 
       final result = await repository.fetchHubs();
       expect(result['hubs'], isEmpty);
-      verify(() => mockApiClient.getAdminHubs()).called(1);
+      verify(() => mockApiClient.getRiderHubs()).called(1);
     });
 
     test('fetchVehicles calls getVehicles', () async {

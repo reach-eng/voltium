@@ -1,13 +1,5 @@
 import { cachedPrismaQuery, invalidateCache } from './cache';
-
-/**
- * Enterprise-grade LRU entity cache helpers with Event-Driven Mutation Invalidation (Phase 1).
- * Reduces Postgres load by caching frequent rider, vehicle, and hub reads.
- *
- * TTLs are per-entity (see CACHE_TTLS). Sensitive / fast-changing entities
- * (e.g. wallet) are intentionally not cached here — keep them out of the
- * cache layer entirely to avoid stale balance reads.
- */
+import { PostgresCacheBus } from './postgres-cache-bus';
 
 export const CACHE_TTLS = {
   rider: 30,
@@ -108,27 +100,32 @@ export function invalidateRiderCache(riderId: string): void {
   invalidateCache(`rider:status:${key}`);
   invalidateCache(`rider:profile:${key}`);
   revalidateEntityTag(`rider:${key}`);
+  PostgresCacheBus.publish(`rider:*`).catch(() => {});
 }
 
 export function invalidateRiderPhoneCache(phone: string): void {
   invalidateCache(`rider:phone:${phone}`);
   revalidateEntityTag(`rider:phone:${phone}`);
+  PostgresCacheBus.publish(`rider:phone:${phone}`).catch(() => {});
 }
 
 export function invalidateVehicleCache(vehicleId: string): void {
   invalidateCache(`vehicle:id:${vehicleId}`);
   revalidateEntityTag(`vehicle:${vehicleId}`);
+  PostgresCacheBus.publish(`vehicle:*`).catch(() => {});
 }
 
 export function invalidateHubCache(hubId: string): void {
   invalidateCache(`hub:id:${hubId}`);
   revalidateEntityTag(`hub:${hubId}`);
+  PostgresCacheBus.publish(`hub:*`).catch(() => {});
 }
 
 export function invalidateAllEntityCaches(): void {
   invalidateCache('rider:*');
   invalidateCache('vehicle:*');
   invalidateCache('hub:*');
+  PostgresCacheBus.publish('*').catch(() => {});
 }
 
 /**

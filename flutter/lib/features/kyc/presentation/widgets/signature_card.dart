@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -18,6 +19,8 @@ class SignatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Opacity(
@@ -41,17 +44,18 @@ class SignatureCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Digital Signature',
+                l10n?.txtdigitalSignature ?? 'Digital Signature',
                 style: AppTypography.titleSmall
                     .copyWith(color: colors.onSurface, letterSpacing: -0.2),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Sign below to authorize documentation.',
+                l10n?.txtsignBelowToAuthorizeDocumentation ??
+                    'Sign below to authorize documentation.',
                 style: GoogleFonts.plusJakartaSans(
                     fontSize: 12, color: colors.onSurfaceMuted),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               GestureDetector(
                 key: const Key('signatureTile'),
                 onTap: enabled ? onTap : null,
@@ -74,8 +78,9 @@ class SignatureCard extends StatelessWidget {
                       Center(
                         child: Text(
                           signatureUploaded
-                              ? 'Signature Captured'
-                              : 'Tap to draw signature',
+                              ? (l10n?.txtverified ?? 'Signature Captured')
+                              : (l10n?.txtdrawSignature ??
+                                  'Tap to draw signature'),
                           style: AppTypography.bodyMedium
                               .copyWith(fontWeight: FontWeight.w600)
                               .copyWith(

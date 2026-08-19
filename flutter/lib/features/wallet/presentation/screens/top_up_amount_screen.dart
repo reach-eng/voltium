@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -123,6 +124,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   void _selectQuickAmount(int amount) {
     HapticFeedback.lightImpact();
+    FocusScope.of(context).unfocus();
     setState(() {
       _selectedAmount = amount;
       _customAmountCtrl.text = amount.toString();
@@ -146,6 +148,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         ? (secDeposit + rentPrice)
         : (secDeposit > 0 ? secDeposit : rentPrice);
 
+    final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
@@ -170,9 +173,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  // DARK-MODE-AUDIT 2026-08-14 P0-7: same
-                  // `slate800` issue.
-                  color: AppColors.of(context).onSurface,
+                  color: colors.onSurface,
                 ),
               ),
             ],
@@ -184,15 +185,17 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Security Deposit',
-                      style:
-                          TextStyle(fontSize: 13, color: AppColors.slate600)),
+                  // T-66: hardcoded English fee-row label.
+                  // Localised via the existing
+                  // `wallet_securityDeposit` ARB key.
+                  Text(AppLocalizations.of(context)!.wallet_securityDeposit,
+                      style: TextStyle(
+                          fontSize: 13, color: colors.onSurfaceMuted)),
                   Text('₹$secDeposit',
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
-                          color: AppColors.of(context).onSurface)),
+                          color: colors.onSurface)),
                 ],
               ),
             ),
@@ -202,15 +205,17 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Advance Rental Plan Fee',
-                      style:
-                          TextStyle(fontSize: 13, color: AppColors.slate600)),
+                  // T-66: hardcoded English fee-row label.
+                  // Localised via the new
+                  // `txtadvanceRentalPlanFee` ARB key.
+                  Text(AppLocalizations.of(context)!.txtadvanceRentalPlanFee,
+                      style: TextStyle(
+                          fontSize: 13, color: colors.onSurfaceMuted)),
                   Text('₹$rentPrice',
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
-                          color: AppColors.of(context).onSurface)),
+                          color: colors.onSurface)),
                 ],
               ),
             ),
@@ -241,11 +246,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   @override
   Widget build(BuildContext context) {
-    // DARK-MODE-AUDIT 2026-08-14 P0-4: the previous version used
-    // the static `AppColors.surface` (light). In dark mode the
-    // scaffold stayed light. Read from the theme extension.
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.of(context).surface,
+      backgroundColor: colors.surface,
       extendBody: true, // For glass bottom nav
       body: Column(
         children: [
@@ -263,12 +266,13 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                       padding: const EdgeInsets.symmetric(
                           vertical: 32, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.card,
                         borderRadius:
                             BorderRadius.circular(AppRadius.radiusModal),
                         boxShadow: AppShadows.glass,
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5)),
+                            color:
+                                colors.outlineVariant.withValues(alpha: 0.5)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -281,11 +285,11 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.of(context).onSurfaceVariant,
+                                color: colors.onSurfaceVariant,
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           IntrinsicWidth(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(minWidth: 50),
@@ -301,12 +305,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 56,
                                   fontWeight: FontWeight.w800,
-                                  // DARK-MODE-AUDIT 2026-08-14
-                                  // P0-7: the big rupee-amount
-                                  // text. Same `slate800`
-                                  // disappearing-in-dark
-                                  // issue.
-                                  color: AppColors.of(context).onSurface,
+                                  color: colors.onSurface,
                                   letterSpacing: -2,
                                 ),
                                 decoration: const InputDecoration(
@@ -353,7 +352,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                             decoration: BoxDecoration(
                               gradient:
                                   isSelected ? AppGradients.primary : null,
-                              color: isSelected ? null : Colors.white,
+                              color: isSelected ? null : colors.card,
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                               boxShadow: isSelected
                                   ? AppShadows.primaryButton
@@ -361,7 +360,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.transparent
-                                    : AppColors.outlineVariant
+                                    : colors.outlineVariant
                                         .withValues(alpha: 0.5),
                                 width: 1,
                               ),
@@ -372,7 +371,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                 style: AppTypography.titleMedium.copyWith(
                                     color: isSelected
                                         ? Colors.white
-                                        : AppColors.slate600),
+                                        : colors.onSurfaceMuted),
                               ),
                             ),
                           ),
@@ -395,7 +394,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                             Text(
                               'Current Balance: ₹${currentBalance.toInt()}',
                               style: AppTypography.bodyMedium
-                                  .copyWith(color: AppColors.slate600),
+                                  .copyWith(color: colors.onSurfaceMuted),
                             ),
                             Text(
                               'Min Required: ₹$_requiredMinAmount',
@@ -421,10 +420,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             padding: EdgeInsets.fromLTRB(
                 20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: colors.card.withValues(alpha: 0.8),
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: colors.outlineVariant.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -484,7 +483,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               const SizedBox(width: 32),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -497,7 +496,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'Enter Amount',
             style: AppTypography.displayMedium
@@ -509,6 +508,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   }
 
   Widget _buildProceedButton() {
+    final colors = AppColors.of(context);
     return GestureDetector(
       key: const Key('proceedToPaymentButton'),
       onTap: _canProceed
@@ -524,7 +524,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         height: 60,
         decoration: BoxDecoration(
           gradient: _canProceed ? AppGradients.primary : null,
-          color: _canProceed ? null : AppColors.outlineVariant,
+          color: _canProceed ? null : colors.outlineVariant,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: _canProceed
               ? [
@@ -550,7 +550,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                       .copyWith(
                           letterSpacing: 0.5,
                           color:
-                              _canProceed ? Colors.white : AppColors.slate400),
+                              _canProceed ? Colors.white : colors.onSurfaceMuted),
                 ),
               ),
               if (_canProceed)

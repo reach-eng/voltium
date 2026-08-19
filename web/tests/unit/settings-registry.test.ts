@@ -74,6 +74,12 @@ describe('SETTING_REGISTRY structure', () => {
       'emailNotifications',
       'smsNotifications',
       'gpsFetchIntervalMins',
+      'maxRentalDays',
+      'penaltyCapDays',
+      'maxWalletBalance',
+      'loyaltyPointsPerRupee',
+      'supportEmail',
+      'supportPhone',
     ]) {
       expect(keys).toContain(expected);
     }
@@ -125,12 +131,12 @@ describe('Derived indexes', () => {
     expect(new Set(registry.PUBLIC_SETTING_KEYS)).toEqual(new Set(expected));
   });
 
-  it('PUBLIC_SETTING_KEYS is exposed to the rider app (no POLICY or NOTIFICATION keys)', () => {
-    // Sanity: ensure no obviously-sensitive keys are public
-    for (const key of registry.PUBLIC_SETTING_KEYS) {
-      const meta = registry.SETTINGS_BY_KEY.get(key);
-      expect(meta?.category).not.toBe('NOTIFICATION');
-    }
+  it('PUBLIC_SETTING_KEYS is exposed to the rider app (excludes private settings)', () => {
+    // Sanity: ensure private settings are not exposed
+    expect(registry.PUBLIC_SETTING_KEYS).not.toContain('autoApproveKYC');
+    expect(registry.PUBLIC_SETTING_KEYS).not.toContain('gracePeriodHours');
+    expect(registry.PUBLIC_SETTING_KEYS).not.toContain('emailNotifications');
+    expect(registry.PUBLIC_SETTING_KEYS).not.toContain('smsNotifications');
   });
 });
 

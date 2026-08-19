@@ -12,11 +12,13 @@
  */
 
 import { db } from '@/lib/db';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { walletRepository } from './wallet.repository';
 import { walletLedgerService } from './wallet-ledger.service';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
+import { WalletServiceError } from './wallet.errors';
 // PR-81: removed `import { randomUUID }` — no longer used after
 // the 5-min-bucket idempotency key landed.
 import { logger } from '@/lib/logger';
@@ -32,12 +34,13 @@ export const walletUseCases = {
     if (!wallet) return null;
 
     const pendingTxns = await walletRepository.getTransactions(riderDbId, 100);
+    // Typed sweep (2026-08-16): the `Transaction` model stores paise in
+    // `amountInPaise` — the old `t.amount` annotations were a silent
+    // `undefined` (masked by `any`) and would have under-counted pending
+    // top-ups in the wallet card.
     const pendingTopups = pendingTxns
-      .filter(
-        (t: { status: string; type: string; amount: number }) =>
-          t.status === 'PENDING' && t.type === 'CREDIT'
-      )
-      .reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);
+      .filter((t) => t.status === 'PENDING' && t.type === 'CREDIT')
+      .reduce((sum, t) => sum + t.amountInPaise, 0);
 
     return {
       riderId: wallet.riderId,
@@ -56,6 +59,8 @@ export const walletUseCases = {
       proofUrl?: string;
       upiRef?: string;
       idempotencyKey?: string;
+      gatewayStatus?: 'SUCCESS' | 'FAILURE' | 'PENDING';
+      mdrAmount?: number;
     }
   ) {
     const rider = await db.rider.findUnique({
@@ -64,25 +69,20 @@ export const walletUseCases = {
     });
     if (!rider) throw new Error('Rider not found');
 
-    const lifecycleRank: Record<string, number> = {
-      NEW: 0,
-      PHONE_VERIFIED: 1,
-      PROFILE_SUBMITTED: 2,
-      KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4,
-      GUARANTOR_SUBMITTED: 5,
-      GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7,
-      DEPOSIT_APPROVED: 8,
-      PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10,
-      ACTIVE: 11,
-      SUSPENDED: 12,
-      RETURN_PENDING: 13,
-      CLOSED: 14,
-    };
-    const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
-    const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
+    // P1-12: shared lifecycle ranking (single source of truth).
+    // PR-ONBOARDING-FLOW-2026-08-13: threshold bumped from `rank < 8`
+    // to `rank < 10`. The old threshold only forced SECURITY_DEPOSIT
+    // for riders below DEPOSIT_APPROVED (rank 8). Active-path riders
+    // are at PLAN_SELECTED (rank 9) when they submit the security
+    // deposit — they have already selected a plan and are past the
+    // old DEPOSIT_APPROVED milestone. With `rank < 8`, their deposit
+    // was misrouted to TOP_UP (wallet credited instead of security-
+    // deposit ledger, no deposit record created). With `rank < 10`,
+    // any rider below PICKUP_SCHEDULED who submits a deposit is
+    // treated as a security-deposit payment. ACTIVE riders (rank 11+)
+    // who submit a deposit are treated as a regular wallet top-up.
+    const rank = lifecycleRankOf(rider.lifecycleStatus);
+    const finalPurpose = rank < 10 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
 
     let idempotencyKey = metadata?.idempotencyKey;
     if (!idempotencyKey) {
@@ -103,12 +103,63 @@ export const walletUseCases = {
 
     const existingTxn = await walletRepository.findTransactionByKey(idempotencyKey);
     if (existingTxn) {
-      logger.info('[WalletUseCases] Idempotent replay', {
-        riderId: riderDbId,
-        txnId: existingTxn.id,
-        idempotencyKey,
-      });
-      return existingTxn;
+      if (existingTxn.status === 'PENDING' &&
+          (existingTxn.amountInPaise !== amountPaise || existingTxn.purpose !== finalPurpose)) {
+        // PR-ONBOARDING-FLOW-2026-08-13: a rider who taps "Change amount"
+        // on the Enter Amount screen and re-submits with a different
+        // value used to get a hard `WalletServiceError`. The active path
+        // exposes this clearly: the rider is on the Enter Amount
+        // screen, picks ₹500, advances to topUpProof, hits Back, picks
+        // ₹1,000, re-submits — the second call collides on the 5-min
+        // bucket. The old behavior stranded the rider. The new
+        // behavior: mark the stale PENDING as CANCELLED, then create
+        // the new transaction. The old row stays in the ledger for
+        // audit (never deleted); the wallet balance is unchanged
+        // because the stale row was PENDING and never credited.
+        await db.$transaction(async (tx) => {
+          await tx.transaction.update({
+            where: { id: existingTxn.id },
+            data: {
+              status: 'CANCELLED',
+              description: `${existingTxn.description} (superseded by a different amount within the 5-min window)`,
+            },
+          });
+          await OutboxService.emit(
+            OutboxEventTypes.WALLET_TOPUP_REJECTED,
+            {
+              riderId: riderDbId,
+              transactionId: existingTxn.id,
+              amountPaise: existingTxn.amountInPaise,
+              reason: 'superseded_by_new_amount',
+            },
+            3,
+            tx
+          );
+        });
+        logger.info('[WalletUseCases] Superseded stale pending transaction', {
+          riderId: riderDbId,
+          oldTxnId: existingTxn.id,
+          oldAmountPaise: existingTxn.amountInPaise,
+          newAmountPaise: amountPaise,
+          idempotencyKey,
+        });
+        // Fall through to create the new transaction below.
+      } else if (existingTxn.status === 'PENDING') {
+        // Same amount, same purpose — idempotent replay.
+        logger.info('[WalletUseCases] Idempotent replay', {
+          riderId: riderDbId,
+          txnId: existingTxn.id,
+          idempotencyKey,
+        });
+        return existingTxn;
+      } else {
+        // Already approved/rejected/cancelled — the rider is retrying
+        // against a finalized row. Tell them instead of silently
+        // double-charging.
+        throw new WalletServiceError(
+          `A ${existingTxn.status.toLowerCase()} transaction for this 5-minute window already exists. Please wait ${Math.max(1, Math.ceil((300_000 - (Date.now() % 300_000)) / 60_000))} minutes or contact support.`
+        );
+      }
     }
 
     const isTestRider =
@@ -117,20 +168,31 @@ export const walletUseCases = {
       process.env.TEST_MODE === 'true' &&
       TEST_PHONES.includes(rider.phone);
 
+    const isInstantPayment = method === 'INSTANT';
+    const isInstantSuccess = isInstantPayment && (metadata?.gatewayStatus === 'SUCCESS' || metadata?.gatewayStatus === undefined);
+    const isInstantFailure = isInstantPayment && metadata?.gatewayStatus === 'FAILURE';
+
+    let initialStatus: TransactionStatus = TransactionStatus.PENDING;
+    if (isTestRider || isInstantSuccess) {
+      initialStatus = TransactionStatus.APPROVED;
+    } else if (isInstantFailure) {
+      initialStatus = TransactionStatus.REJECTED;
+    }
+
     const transaction = await walletRepository.createTransaction({
       riderId: riderDbId,
       type: TransactionType.CREDIT,
       amountInPaise: amountPaise,
       purpose: finalPurpose as TransactionPurpose,
       method,
-      status: isTestRider ? TransactionStatus.APPROVED : TransactionStatus.PENDING,
+      status: initialStatus,
       proofUrl: metadata?.proofUrl,
       upiRef: metadata?.upiRef,
       idempotencyKey,
       description: `${finalPurpose === 'SECURITY_DEPOSIT' ? 'Security Deposit' : 'Wallet Top-up'} of ₹${(amountPaise / 100).toFixed(2)}`,
     });
 
-    if (isTestRider) {
+    if (isTestRider || isInstantSuccess) {
       await this._autoApproveTestTopup(riderDbId, transaction.id, amountPaise, finalPurpose);
     }
 
@@ -142,8 +204,31 @@ export const walletUseCases = {
           transactionId: transaction.id,
           amountInPaise: amountPaise,
         });
+        // PR-AUDIT 2026-08-12 (H3): include PLAN_SELECTED in the lifecycle
+        // bump. The active path puts the rider at PLAN_SELECTED (rank 9)
+        // when they submit the security deposit. Without this, a rider who
+        // kills the app mid-deposit and re-launches is still at rank 9
+        // → the lifecycle gate re-routes them to `topUpAmount` → they
+        // submit a SECOND SECURITY_DEPOSIT transaction. Bumping to
+        // DEPOSIT_PENDING (rank 7) lets the gate's depositDone check
+        // (see rider_lifecycle_gate.dart H3 branch) skip the duplicate
+        // request.
         await db.rider.updateMany({
-          where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_APPROVED'] } },
+          where: {
+            id: riderDbId,
+            lifecycleStatus: {
+              in: [
+                'NEW',
+                'PHONE_VERIFIED',
+                'PROFILE_SUBMITTED',
+                'KYC_SUBMITTED',
+                'KYC_APPROVED',
+                'GUARANTOR_SUBMITTED',
+                'GUARANTOR_APPROVED',
+                'PLAN_SELECTED',
+              ],
+            },
+          },
           data: { lifecycleStatus: 'DEPOSIT_PENDING' },
         });
         invalidateRiderCache(riderDbId);
@@ -168,7 +253,7 @@ export const walletUseCases = {
     amountPaise: number,
     purpose: string
   ) {
-    await db.$transaction(async (tx: any) => {
+    await db.$transaction(async (tx) => {
       let wallet = await tx.wallet.findUnique({
         where: { riderId: riderDbId },
         select: { id: true },
@@ -230,12 +315,12 @@ export const walletUseCases = {
 
     const idempotencyKey = `approve:${transactionId}`;
 
-    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    await db.$transaction(async (tx) => {
       if (txn.purpose === 'SECURITY_DEPOSIT') {
         await walletLedgerService.creditSecurityDeposit(
           {
             riderId: txn.riderId,
-            amountInPaise: txn.amount,
+            amountInPaise: txn.amountInPaise,
             txnId: txn.id,
             actorId: adminId,
             note: `Admin approved security deposit`,
@@ -246,7 +331,7 @@ export const walletUseCases = {
         await walletLedgerService.credit(
           {
             riderId: txn.riderId,
-            amountInPaise: txn.amount,
+            amountInPaise: txn.amountInPaise,
             category: 'TOP_UP',
             txnId: txn.id,
             idempotencyKey,
@@ -277,7 +362,7 @@ export const walletUseCases = {
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
         riderId: txn.riderId,
         transactionId,
-        amountPaise: txn.amount,
+        amountPaise: txn.amountInPaise,
       }, 3, tx);
     });
 
@@ -286,13 +371,13 @@ export const walletUseCases = {
       action: 'wallet.approve_topup',
       entity: 'transaction',
       entityId: transactionId,
-      details: { riderId: txn.riderId, amountPaise: txn.amount },
+      details: { riderId: txn.riderId, amountPaise: txn.amountInPaise },
     });
 
     await notificationService.createAndSend(
       txn.riderId,
       'Top-up Approved ✅',
-      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} has been approved.`,
+      `Your top-up of ₹${(txn.amountInPaise / 100).toFixed(2)} has been approved.`,
       'PAYMENT',
       { screen: 'WALLET' }
     );
@@ -300,7 +385,7 @@ export const walletUseCases = {
     logger.info('[WalletUseCases] Topup approved', {
       transactionId,
       adminId,
-      amountPaise: txn.amount,
+      amountPaise: txn.amountInPaise,
     });
   },
 
@@ -311,12 +396,12 @@ export const walletUseCases = {
       throw new Error(`Transaction ${transactionId} is already ${txn.status}`);
     }
 
-    await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      await (walletRepository as any).updateTransactionStatus(transactionId, 'REJECTED', adminId, tx);
+    await db.$transaction(async (tx) => {
+      await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
         riderId: txn.riderId,
         transactionId,
-        amountPaise: txn.amount,
+        amountPaise: txn.amountInPaise,
         reason,
       }, 3, tx);
     });
@@ -326,13 +411,13 @@ export const walletUseCases = {
       action: 'wallet.reject_topup',
       entity: 'transaction',
       entityId: transactionId,
-      details: { riderId: txn.riderId, amountPaise: txn.amount, reason },
+      details: { riderId: txn.riderId, amountPaise: txn.amountInPaise, reason },
     });
 
     await notificationService.createAndSend(
       txn.riderId,
       'Top-up Rejected ❌',
-      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} was rejected: ${reason}`,
+      `Your top-up of ₹${(txn.amountInPaise / 100).toFixed(2)} was rejected: ${reason}`,
       'PAYMENT',
       { screen: 'WALLET' }
     );
@@ -350,7 +435,7 @@ export const walletUseCases = {
     const result = await walletLedgerService.reverse({
       riderId: txn.riderId,
       originalTxnId: transactionId,
-      originalAmount: txn.amount,
+      originalAmount: txn.amountInPaise,
       originalType: txn.type as 'CREDIT' | 'DEBIT',
       actorId: adminId,
       reason,
@@ -361,7 +446,7 @@ export const walletUseCases = {
       action: 'wallet.reverse',
       entity: 'transaction',
       entityId: transactionId,
-      details: { riderId: txn.riderId, amountPaise: txn.amount, reason },
+      details: { riderId: txn.riderId, amountPaise: txn.amountInPaise, reason },
     });
 
     return result;

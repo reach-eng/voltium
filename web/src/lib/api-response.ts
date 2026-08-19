@@ -187,8 +187,8 @@ export function success<T = unknown>(
   if (message !== undefined) body.message = message;
   if (pagination !== undefined) body.pagination = pagination;
 
-  const jsonString = JSON.stringify(body);
-  const etag = options?.etag !== false ? generateETag(jsonString) : undefined;
+  const contentForETag = JSON.stringify({ data, message, pagination });
+  const etag = options?.etag !== false ? generateETag(contentForETag) : undefined;
 
   if (etag && options?.ifNoneMatch && options.ifNoneMatch === etag) {
     const headers = new Headers();

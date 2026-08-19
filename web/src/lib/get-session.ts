@@ -148,7 +148,10 @@ export async function getAdminId(request?: Request): Promise<string | null> {
   if (process.env.APP_ENV !== 'production' && request) {
     try {
       const url = new URL(request.url);
-      if (url.pathname.includes('/impersonate')) {
+      // P2-20: EXACT path match only. The old `pathname.includes('/impersonate')`
+      // substring check let a request to any path containing the word (e.g.
+      // /api/admin/impersonate-test) spoof an admin id via x-admin-id.
+      if (url.pathname === '/api/admin/impersonate') {
         const headerId = request.headers.get('x-admin-id');
         if (headerId) return headerId;
       }

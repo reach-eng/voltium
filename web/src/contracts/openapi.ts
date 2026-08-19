@@ -394,13 +394,6 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Login successful, session cookie set' } },
         },
       },
-      '/api/admin/auth/auto-login': {
-        post: {
-          tags: ['Auth'],
-          summary: 'Dev-only auto-login (disabled in production)',
-          responses: { '200': { description: 'Auto-login successful' } },
-        },
-      },
       '/api/admin/auth/me': {
         get: {
           tags: ['Auth'],
@@ -802,14 +795,10 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Earning added' } },
         },
       },
-      '/api/rider/offers': {
-        get: {
-          tags: ['Rider Profile'],
-          summary: 'Fetch rental offers',
-          security: [{ riderSession: [] }],
-          responses: { '200': { description: 'Offer list' } },
-        },
-      },
+      // PR-6 (2026-08-06 fix-plan; 14th audit P0-2): /api/rider/offers was
+      // deleted — getRiderOffers() had zero production callers and the route
+      // had no rider filter/limit. Promotions feature deferred until a product
+      // decision; tracked in docs/FOLLOWUP_TICKETS.md.
       '/api/rider/plans': {
         get: {
           tags: ['Rentals'],
@@ -963,26 +952,6 @@ function buildSpec(): OpenApiSpec {
             },
           ],
           responses: { '200': { description: 'Shifts list' } },
-        },
-      },
-      '/api/support/chat': {
-        get: {
-          tags: ['Support'],
-          summary: 'Fetch support chat messages',
-          security: [{ riderSession: [] }],
-          responses: { '200': { description: 'Chat message list' } },
-        },
-        post: {
-          tags: ['Support'],
-          summary: 'Send chat message',
-          security: [{ riderSession: [] }],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': { schema: { properties: { message: { type: 'string' } } } },
-            },
-          },
-          responses: { '200': { description: 'Message sent' } },
         },
       },
       '/api/support/faqs': {
@@ -2255,7 +2224,10 @@ function buildSpec(): OpenApiSpec {
                 'PARTIALLY_REFUNDED',
               ],
             },
-            amountInPaise: { type: 'number' },
+            // PR-RUPEES-2026-08-08: the API exposes money in **rupees**
+            // (decimal) to clients. The DB still stores paise, but the
+            // boundary is converted via `lib/api-money.ts:toRupeesResponse`.
+            amountInRupees: { type: 'number', format: 'double' },
           },
         },
         SubmitDepositRequest: {

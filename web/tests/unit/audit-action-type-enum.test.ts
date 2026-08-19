@@ -1,16 +1,20 @@
 /**
- * PR-P3.4 / Ticket #12 — AuditActionType enum has SUSPEND and BULK_UPDATE.
+ * 2026-08-05 ops audit (discovery) — AuditLog.action is TEXT, not an enum.
  *
- * Per `docs/AUDIT_DATABASE.md §16` and `docs/DB_REMEDIATION_PLAN.md PR-4-A`:
- * Add `SUSPEND` and `BULK_UPDATE` to the `AuditActionType` enum so that
- * `rider.suspend` and `rider.bulk_update_status` don't get bucketed into
- * the generic `UPDATE` action.
+ * History:
+ *   - PR-P3.4 / Ticket #12: SUSPEND + BULK_UPDATE were added to the
+ *     `AuditActionType` enum (docs/AUDIT_DATABASE.md §16).
+ *   - 2026-08-04 financial audit (P3-10): SECURITY_EVENT added because the
+ *     `security.<type>` dot-strings failed the enum.
+ *   - 2026-08-05 ops audit: the enum itself was the root cause. The code
+ *     writes 90+ distinct dot-string actions (transaction.approve,
+ *     wallet.approve_topup, tl.create, notification.send_all, ...) that were
+ *     NEVER enum members, so nearly every audit write silently failed Prisma
+ *     validation and was dropped — gutting the SOC2 trail. The column is now
+ *     TEXT (migration 20260811000000) and the enum is deleted.
  *
- * Re-verification on 2026-07-30: both values ARE present in
- * `web/prisma/schema.prisma:1319-1320`. Ticket #12 is closed.
- *
- * This test prevents accidental regressions: if someone deletes an
- * enum value during a refactor, the test catches it.
+ * This test prevents regressions: if someone reintroduces an enum column on
+ * AuditLog.action, the dot-string actions stop persisting again.
  *
  * Run: npx vitest run tests/unit/audit-action-type-enum.test.ts
  */
@@ -20,8 +24,12 @@ import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 const SCHEMA_PATH = resolve(__dirname, '../../prisma/schema.prisma');
+const MIGRATION_PATH = resolve(
+  __dirname,
+  '../../prisma/migrations/20260811000000_audit_action_text/migration.sql'
+);
 
-describe('Ticket #12: AuditActionType enum has SUSPEND and BULK_UPDATE', () => {
+describe('Ticket #12 superseded: AuditLog.action is TEXT (dot-strings persist)', () => {
   const schema = existsSync(SCHEMA_PATH) ? readFileSync(SCHEMA_PATH, 'utf-8') : '';
 
   it('schema file exists', () => {
@@ -29,65 +37,31 @@ describe('Ticket #12: AuditActionType enum has SUSPEND and BULK_UPDATE', () => {
     expect(schema.length).toBeGreaterThan(1000);
   });
 
-  it('AuditActionType enum is defined', () => {
-    expect(schema).toMatch(/enum\s+AuditActionType\s*\{/);
+  it('AuditLog.action is a TEXT column, not an enum type', () => {
+    const modelMatch = schema.match(/model\s+AuditLog\s*\{([^}]+)\}/);
+    expect(modelMatch).toBeTruthy();
+    const body = modelMatch![1];
+    expect(body).toMatch(/action\s+String\s+@db\.Text/);
+    expect(body).not.toMatch(/action\s+AuditActionType/);
   });
 
-  it('SUSPEND is a value in AuditActionType', () => {
-    const enumMatch = schema.match(
-      /enum\s+AuditActionType\s*\{([^}]+)\}/
+  it('the AuditActionType enum no longer exists in the schema', () => {
+    expect(schema).not.toMatch(/enum\s+AuditActionType\s*\{/);
+  });
+
+  it('the TEXT migration exists and casts the column', () => {
+    expect(existsSync(MIGRATION_PATH)).toBe(true);
+    const migration = readFileSync(MIGRATION_PATH, 'utf-8');
+    expect(migration).toMatch(/ALTER TABLE "audit_logs" ALTER COLUMN "action" TYPE TEXT/i);
+    expect(migration).toMatch(/DROP TYPE IF EXISTS "AuditActionType"/i);
+  });
+
+  it('createAuditLog does not cast action to an enum type (raw string persists)', () => {
+    const auditLogSrc = readFileSync(
+      resolve(__dirname, '../../src/lib/audit-log.ts'),
+      'utf-8'
     );
-    expect(enumMatch).toBeTruthy();
-    expect(enumMatch![1]).toMatch(/^\s+SUSPEND\s*$/m);
-  });
-
-  it('BULK_UPDATE is a value in AuditActionType', () => {
-    const enumMatch = schema.match(
-      /enum\s+AuditActionType\s*\{([^}]+)\}/
-    );
-    expect(enumMatch).toBeTruthy();
-    expect(enumMatch![1]).toMatch(/^\s+BULK_UPDATE\s*$/m);
-  });
-
-  it('the original 14 values are still present (no refactor regression)', () => {
-    const enumMatch = schema.match(
-      /enum\s+AuditActionType\s*\{([^}]+)\}/
-    );
-    expect(enumMatch).toBeTruthy();
-    const body = enumMatch![1];
-    for (const value of [
-      'LOGIN',
-      'LOGOUT',
-      'CREATE',
-      'UPDATE',
-      'DELETE',
-      'APPROVE',
-      'REJECT',
-      'REFUND',
-      'VIEW',
-      'EXPORT',
-      'PERMISSION_CHANGE',
-      'ROLE_CHANGE',
-      'SYSTEM_CONFIG',
-      'SYSTEM_JOB',
-    ]) {
-      expect(body).toContain(`  ${value}`);
-    }
-  });
-
-  it('total enum values: 16 (14 original + SUSPEND + BULK_UPDATE)', () => {
-    const enumMatch = schema.match(
-      /enum\s+AuditActionType\s*\{([^}]+)\}/
-    );
-    expect(enumMatch).toBeTruthy();
-    const values = enumMatch![1]
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => /^[A-Z_]+$/.test(l));
-    expect(values.length).toBe(16);
-  });
-
-  it('AuditLog.action field uses the AuditActionType enum', () => {
-    expect(schema).toMatch(/action\s+AuditActionType/);
+    expect(auditLogSrc).not.toMatch(/AuditActionType/);
+    expect(auditLogSrc).toMatch(/action:\s*params\.action,/);
   });
 });

@@ -14,8 +14,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          localeProviderRef.overrideWith((ref) => LocaleProvider()),
-          themeProviderRef.overrideWith((ref) => ThemeProvider()),
+          localeProviderRef.overrideWith(() => LocaleProvider()),
+          themeProviderRef.overrideWith(() => ThemeProvider()),
         ],
         child: const MaterialApp(
           localizationsDelegates: [

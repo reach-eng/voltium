@@ -22,8 +22,9 @@ import type { SendOtpInput, VerifyOtpInput, VerifyOtpResult } from './auth.types
 
 export const authUseCases = {
   async sendOtp(input: SendOtpInput, options?: { ip?: string; correlationId?: string }) {
-    const { phone } = input;
-    const fullPhone = phone.length === 10 ? `+91${phone}` : phone;
+    const { phone: inputPhone } = input;
+    const tenDigitPhone = inputPhone.replace(/\D/g, '').slice(-10);
+    const fullPhone = `+91${tenDigitPhone}`;
     const correlationId = options?.correlationId || 'unknown';
 
     // Rate limit by IP
@@ -35,7 +36,7 @@ export const authUseCases = {
     }
 
     // Rate limit by phone
-    const phoneRl = await checkRateLimit(`otp:phone:${phone}`, {
+    const phoneRl = await checkRateLimit(`otp:phone:${tenDigitPhone}`, {
       windowMs: 60_000,
       maxRequests: 3,
     });
@@ -46,16 +47,21 @@ export const authUseCases = {
     const existingRider = await db.rider.findUnique({ where: { phone: fullPhone } });
 
     // Generate OTP
-    const otp = await generateOtp(phone);
+    const otp = await generateOtp(tenDigitPhone);
 
     // Send via SMS/Push
     const flags = await getFeatureFlags();
     const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
+    // @allow-outbox-standalone — the SMS emit has no parent business
+    // write to be atomic with. The user already has the OTP (in
+    // memory for dev-mode or in the otp-store for prod); the SMS is
+    // a best-effort delivery. If the emit fails, the next `sendOtp`
+    // retry from the client re-emits.
     await OutboxService.emit(
       OutboxEventTypes.SMS_SEND,
       {
-        phone,
+        phone: tenDigitPhone,
         message,
         channel: flags.enablePushNotifications ? 'push' : 'sms',
       },
@@ -66,7 +72,15 @@ export const authUseCases = {
       'interactive'
     );
 
-    logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
+    // PR-52 (GDPR): the `exists` response field was removed — echoing
+    // whether a phone number has an account is user enumeration. The lookup
+    // above is kept (its result feeds rate-limit/analytics telemetry) but
+    // the boolean never reaches the client.
+    logger.info('[AuthUseCases] OTP sent', {
+      correlationId,
+      phone: tenDigitPhone,
+      isExistingRider: existingRider !== null,
+    });
 
     return {
       // PR-112 (SEC PR-5): only echo the OTP in dev. APP_ENV=staging is
@@ -81,7 +95,7 @@ export const authUseCases = {
 
   async verifyOtp(input: VerifyOtpInput): Promise<VerifyOtpResult> {
     const { phone: inputPhone, otp, idToken, referralCode: incomingReferralCode } = input;
-    let phone = inputPhone || '';
+    let rawPhone = inputPhone || '';
 
     // Firebase token verification
     if (idToken) {
@@ -91,27 +105,30 @@ export const authUseCases = {
       const decodedToken = await firebaseAuth.verifyIdToken(idToken);
       const firebasePhone = decodedToken.phone_number;
       if (!firebasePhone) throw new Error('Phone number not found in token');
-      phone = firebasePhone.replace(/\D/g, '').slice(-10);
-    } else {
-      // Legacy OTP verification
-      if (!phone || !otp) throw new Error('Phone and OTP are required');
-      const otpResult = await verifyOtpStore(phone, otp);
-      if (!otpResult.valid) throw new Error(otpResult.error || 'Invalid OTP');
+      rawPhone = firebasePhone;
     }
 
+    const tenDigitPhone = rawPhone.replace(/\D/g, '').slice(-10);
+    if (!tenDigitPhone || !otp) throw new Error('Phone and OTP are required');
+
+    // OTP Verification against tenDigitPhone
+    const otpResult = await verifyOtpStore(tenDigitPhone, otp);
+    if (!otpResult.valid) throw new Error(otpResult.error || 'Invalid OTP');
+
     // Find or create rider (concurrency-safe)
-    let rider = await db.rider.findUnique({ where: { phone } });
+    const fullPhone = `+91${tenDigitPhone}`;
+    let rider = await db.rider.findUnique({ where: { phone: fullPhone } });
     let isNewRider = false;
 
     if (!rider) {
       const riderId = `VF-RD-${uuidv4().slice(0, 8).toUpperCase()}`;
-      const codeBase = phone.slice(-4).toUpperCase();
+      const codeBase = tenDigitPhone.slice(-4).toUpperCase();
       const referralCode = `${codeBase}-${uuidv4().slice(0, 4).toUpperCase()}`;
 
       try {
         rider = await db.rider.create({
           data: {
-            phone,
+            phone: fullPhone,
             riderId,
             fullName: '',
             lifecycleStatus: 'NEW',
@@ -122,7 +139,7 @@ export const authUseCases = {
         isNewRider = true;
       } catch (e) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-          rider = await db.rider.findUnique({ where: { phone } });
+          rider = await db.rider.findUnique({ where: { phone: fullPhone } });
         } else {
           throw e;
         }
@@ -138,7 +155,7 @@ export const authUseCases = {
         data: {
           riderId: rider.id,
           balanceInPaise: 0,
-          securityDeposit: 0,
+          securityDepositInPaise: 0,
           depositStatus: 'PENDING',
           paymentStreak: 0,
           version: 1,

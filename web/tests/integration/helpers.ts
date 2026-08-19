@@ -1,4 +1,5 @@
 import { expect } from 'vitest';
+import { adminLoginTo } from '../admin-auth-helper';
 
 export const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:8081';
 
@@ -47,24 +48,13 @@ export async function api(
 }
 
 /**
- * Admin login helper: returns the session cookie
+ * Admin login helper: returns the session cookie.
+ *
+ * P0-2: the auto-login backdoor is gone — this logs in through
+ * /api/admin/auth/login with the same credentials the seeders create.
  */
 export async function adminLogin(): Promise<string> {
-  const { status, body, headers } = await api('/api/admin/auth/auto-login', {
-    method: 'POST',
-    json: {},
-  });
-
-  expect(status).toBe(200);
-  expect(body.success).toBe(true);
-
-  const setCookie = headers.get('set-cookie');
-  if (!setCookie) {
-    throw new Error('No set-cookie header in admin login response');
-  }
-
-  // Parse the cookie to keep only the token cookie part
-  return setCookie.split(';')[0];
+  return adminLoginTo(BASE_URL);
 }
 
 /**

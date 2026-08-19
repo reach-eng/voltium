@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
@@ -46,7 +47,7 @@ function computeShiftTimes(
 /**
  * Attach parsed parts to a shift object for the response.
  */
-function attachParts(shift: any) {
+function attachParts(shift: { parts: string | null }) {
   return {
     ...shift,
     parts: parseParts(shift.parts),
@@ -89,7 +90,7 @@ export const shiftUseCases = {
     for (const bc of bookingCounts) {
       countMap.set(bc.shiftId, bc._count.id);
     }
-    const shiftsData = shifts.map((shift: any) => {
+    const shiftsData = shifts.map((shift) => {
       const currentBookings = countMap.get(shift.id) ?? 0;
       return {
         id: shift.id,
@@ -107,7 +108,7 @@ export const shiftUseCases = {
   },
 
   async listShifts(search?: string, activeOnly?: boolean) {
-    const where: any = {};
+    const where: Prisma.ShiftWhereInput = {};
     if (activeOnly) where.isActive = true;
     if (search) {
       where.OR = [{ name: { contains: search, mode: 'insensitive' as const } }];
@@ -120,22 +121,22 @@ export const shiftUseCases = {
     return shifts.map(attachParts);
   },
 
-  async createShift(data: any, actorId: string) {
+  async createShift(data: Record<string, unknown>, actorId: string) {
     const { parts: inputParts, ...rest } = data;
     const { partsJson, startTime, endTime } = computeShiftTimes(
-      inputParts,
-      rest.startTime,
-      rest.endTime
+      inputParts as ShiftPart[] | undefined | null,
+      rest.startTime as string | undefined,
+      rest.endTime as string | undefined
     );
-    const createData: any = {
-      ...rest,
+    const createData: Prisma.ShiftCreateInput = {
+      ...(rest as Prisma.ShiftCreateInput),
       startTime,
       endTime,
     };
     if (partsJson) {
       createData.parts = partsJson;
     }
-    const shift = await db.shift.create({ data: createData as any });
+    const shift = await db.shift.create({ data: createData });
     createAuditLog({
       actorId,
       action: 'shift.create',
@@ -146,22 +147,22 @@ export const shiftUseCases = {
     return attachParts(shift);
   },
 
-  async updateShift(id: string, data: any, actorId: string) {
+  async updateShift(id: string, data: Record<string, unknown>, actorId: string) {
     const { parts: inputParts, ...rest } = data;
-    const updateData: any = { ...rest };
+    const updateData: Prisma.ShiftUpdateInput = { ...(rest as Prisma.ShiftUpdateInput) };
 
     if (inputParts !== undefined) {
       const { partsJson, startTime, endTime } = computeShiftTimes(
-        inputParts,
-        rest.startTime,
-        rest.endTime
+        inputParts as ShiftPart[] | undefined | null,
+        rest.startTime as string | undefined,
+        rest.endTime as string | undefined
       );
       updateData.startTime = startTime;
       updateData.endTime = endTime;
       updateData.parts = partsJson;
     }
 
-    const shift = await db.shift.update({ where: { id }, data: updateData as any });
+    const shift = await db.shift.update({ where: { id }, data: updateData });
     createAuditLog({
       actorId,
       action: 'shift.update',

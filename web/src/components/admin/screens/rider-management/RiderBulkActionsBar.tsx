@@ -50,7 +50,7 @@ export function RiderBulkActionsBar({
         className="h-10 text-xs px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
         disabled={bulkLoading}
         onClick={onApprove}
-        title="Approve (Ctrl+K)"
+        title="Approve selected riders"
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
@@ -65,7 +65,7 @@ export function RiderBulkActionsBar({
         className="h-10 text-xs px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
         disabled={bulkLoading}
         onClick={onSuspend}
-        title="Suspend (Ctrl+R)"
+        title="Suspend selected riders"
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
@@ -100,7 +100,7 @@ export function RiderBulkActionsBar({
             className="h-10 text-xs px-3 hover:bg-muted/10 transition-all duration-200"
             disabled={bulkLoading}
             onClick={onUndo}
-            title="Undo (Ctrl+Z)"
+            title="Undo last action"
           >
             <Undo2 className="w-4 h-4 mr-1.5" /> Undo
           </Button>

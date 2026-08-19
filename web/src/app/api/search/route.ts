@@ -16,7 +16,13 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { logger } from '@/lib/logger';
 import { db } from '@/lib/db';
+import { toRupeesResponse } from '@/lib/api-money';
 
+// PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-2): this route is deliberately
+// ADMIN-ONLY (requireAdmin + analytics_view). The rider app has no search
+// endpoint by design — audit briefs claiming riders can "search" here are
+// wrong and should not be re-created as a rider-accessible surface without a
+// product decision. The admin panel search bar is the only caller.
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
@@ -61,7 +67,7 @@ export async function GET(req: NextRequest) {
         where: {
           OR: [
             { subject: { contains: q, mode: 'insensitive' } },
-            { description: { contains: q, mode: 'insensitive' } },
+            { message: { contains: q, mode: 'insensitive' } },
             { ticketId: { contains: q, mode: 'insensitive' } },
           ],
         },
@@ -85,13 +91,13 @@ export async function GET(req: NextRequest) {
           OR: [
             { vehicleNumber: { contains: q, mode: 'insensitive' } },
             { model: { contains: q, mode: 'insensitive' } },
-            { maker: { contains: q, mode: 'insensitive' } },
+            { licensePlate: { contains: q, mode: 'insensitive' } },
           ],
         },
         select: {
           id: true,
           vehicleNumber: true,
-          maker: true,
+          licensePlate: true,
           model: true,
           status: true,
           batteryLevel: true,
@@ -105,13 +111,13 @@ export async function GET(req: NextRequest) {
     if (entities.includes('transactions')) {
       results.transactions = await db.transaction.findMany({
         where: {
-          OR: [{ description: { contains: q, mode: 'insensitive' } }, { type: { contains: q, mode: 'insensitive' } }],
+          OR: [{ description: { contains: q, mode: 'insensitive' } }, { reason: { contains: q, mode: 'insensitive' } }],
         },
         select: {
           id: true,
-          txnId: true,
+          description: true,
           type: true,
-          amount: true,
+          amountInPaise: true,
           status: true,
           purpose: true,
           createdAt: true,
@@ -121,11 +127,11 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return success({
+    return success(toRupeesResponse({
       query: q,
       total: Object.values(results).reduce((sum, arr) => sum + arr.length, 0),
       results,
-    });
+    }));
   } catch (err: unknown) {
     logger.error('[Search] GET failed', { error: (err instanceof Error ? err.message : String(err)) });
     return errors.internal('Search failed');

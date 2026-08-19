@@ -73,8 +73,8 @@ export function TransactionFiltersBar({
 
       {/* Tab Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="bg-muted/30 p-1">
+        <Tabs value={tab} onValueChange={setTab} className="overflow-x-auto max-w-full">
+          <TabsList className="bg-muted/30 p-1 min-w-max">
             <TabsTrigger value="all" className="h-10 px-4 text-xs">
               All
             </TabsTrigger>
@@ -117,6 +117,7 @@ export function TransactionFiltersBar({
           <Input
             type="date"
             value={endDate}
+            min={startDate || undefined}
             onChange={(e) => setEndDate(e.target.value)}
             className="h-11 w-40 text-sm rounded-xl"
           />

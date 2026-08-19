@@ -50,3 +50,10 @@ class GuarantorFormValidator {
     return missing;
   }
 }
+
+/// Parses the server's verify-phone verdict (audit #7 P0-2). The API returns
+/// `{ verified: bool }` at the top level or nested under `data`; a wrong OTP
+/// is `{ verified: false, message: ... }`. The UI must not mark the phone
+/// verified unless the server confirms it.
+bool verifyPhoneResponseVerified(Map<String, dynamic> response) =>
+    response['data']?['verified'] == true || response['verified'] == true;

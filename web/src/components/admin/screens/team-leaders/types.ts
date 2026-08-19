@@ -9,6 +9,8 @@ export interface TeamLeader {
   name: string;
   phone: string;
   email: string | null;
+  hubId?: string | null;
+  hub?: { id: string; name: string } | null;
   isActive: boolean;
   createdAt: string;
   riderCount?: number;
@@ -18,6 +20,7 @@ export interface TeamLeaderFormState {
   name: string;
   phone: string;
   email: string;
+  hubId?: string | null;
   isActive: boolean;
 }
 
@@ -25,6 +28,7 @@ export const EMPTY_LEADER_FORM: TeamLeaderFormState = {
   name: '',
   phone: '',
   email: '',
+  hubId: null,
   isActive: true,
 };
 

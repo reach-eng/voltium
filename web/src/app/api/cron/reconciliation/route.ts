@@ -5,9 +5,11 @@ import { requireCronAuth } from '@/lib/cron-auth';
 import {
   runWalletReconciliation,
   recordReconciliation,
+  persistReconciliationReport,
   checkReconciliationToday,
 } from '@/server/workers/jobs/wallet-reconciliation.job';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
@@ -31,10 +33,25 @@ export async function GET(req: NextRequest) {
     const result = await runWalletReconciliation();
     try {
       // PR-90 (API N10): the unique index on `reportDate` makes the
-      // inner write race-safe. If two cron ticks fire concurrently
+      // inner writes race-safe. If two cron ticks fire concurrently
       // and the second tick loses the race, Prisma throws P2002 and
       // we fall through to the catch below.
+      //
+      // P0-5: persist the daily report row FIRST — it feeds the admin
+      // Background Jobs screen's reconHistory AND the next tick's
+      // pre-check. Before the unification the cron path only wrote the
+      // audit entry, so the pre-check never matched and every tick ran
+      // the full reconciliation.
+      await persistReconciliationReport(result, today);
       await recordReconciliation(result);
+      await OutboxService.emit(OutboxEventTypes.WALLET_RECONCILIATION, {
+        trigger: 'cron',
+        reportDate: today,
+        totalWallets: result.totalWallets,
+        drifted: result.drifted,
+      }).catch((err) => {
+        logger.warn('[Reconciliation] WALLET_RECONCILIATION outbox emit failed (non-blocking)', { err });
+      });
     } catch (writeErr) {
       // PR-90 (API N10): race-safe write. If two cron ticks fire
       // concurrently, the second tick will hit the unique index on

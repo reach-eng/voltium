@@ -152,16 +152,16 @@ class ApprovalMatrixWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: step.isDone
-              ? AppColors.of(context).successLight
+              ? colors.successLight
               : step.isRejected
-                  ? AppColors.errorSurface
-                  : AppColors.of(context).surfaceBright,
+                  ? colors.errorLight
+                  : colors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: step.isDone
-                ? AppColors.of(context).successLight
+                ? colors.successLight
                 : step.isRejected
-                    ? AppColors.errorBorder
+                    ? colors.error.withValues(alpha: 0.3)
                     : Colors.transparent,
           ),
         ),

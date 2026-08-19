@@ -1,46 +1,16 @@
+/**
+ * GET /api/rider/guarantor — Get guarantor status
+ *
+ * Guarantor data is submitted via PUT /api/rider/profile (UpdateProfileRequest
+ * guarantorXxx fields). The POST /api/rider/guarantor route was removed
+ * (PR-3, audit 2026-08-05-rider-onboarding) because it had 0 production callers.
+ */
+
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { validateBody, submitGuarantorSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { guarantorUseCases } from '@/server/modules/guarantors/guarantor.use-cases';
-
-function errorName(err: unknown): string {
-  return err instanceof Error ? err.name : '';
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await requireRiderSession(request);
-    if (session instanceof Response) return session;
-    const riderDbId = session.riderDbId;
-
-    const body = await request.json();
-    const validation = validateBody(submitGuarantorSchema, body);
-    if (!validation.success) {
-      return errors.validation(validation.error);
-    }
-
-    const guarantor = await guarantorUseCases.submitGuarantor(riderDbId, validation.data);
-
-    await guarantorUseCases.autoVerifyIfTestMode(riderDbId);
-
-    return success(
-      {
-        id: guarantor.id,
-        riderId: guarantor.riderId,
-        guarantorStatus: guarantor.status,
-      },
-      'Guarantor submitted successfully'
-    );
-  } catch (err: unknown) {
-    if (errorName(err) === 'GuarantorStateError') {
-      return errors.conflict((err instanceof Error ? err.message : String(err)));
-    }
-    logger.error('[POST /api/rider/guarantor]', err);
-    return errors.internal('Failed to submit guarantor');
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,7 +40,14 @@ export async function GET(request: NextRequest) {
       phone: result.phone,
       fatherName: result.fatherName,
       motherName: result.motherName,
-      rejectionReason: (result as any).rejectionReason,
+      address: result.address,
+      aadhaarFront: result.aadhaarFront,
+      aadhaarBack: result.aadhaarBack,
+      pan: result.pan,
+      video: result.video,
+      signature: result.signature,
+      photo: result.photo,
+      rejectionReason: 'rejectionReason' in result ? (result as { rejectionReason: string | null }).rejectionReason : null,
     });
   } catch (err) {
     logger.error('[GET /api/rider/guarantor]', err);

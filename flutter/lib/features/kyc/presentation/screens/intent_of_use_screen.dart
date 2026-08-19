@@ -8,6 +8,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 enum IntentType { delivery, personal }
@@ -49,7 +50,8 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
         ),
         title: Text(
           'Intent of Use',
-          style: AppTypography.titleMedium.copyWith(color: AppColors.onSurface),
+          style: AppTypography.titleMedium
+              .copyWith(color: AppColors.of(context).onSurface),
         ),
         centerTitle: false,
         titleSpacing: 0,
@@ -69,7 +71,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                       textAlign: TextAlign.center,
                       text: TextSpan(
                         style: AppTypography.headingMedium.copyWith(
-                            color: AppColors.onSurface,
+                            color: AppColors.of(context).onSurface,
                             height: 1.1,
                             letterSpacing: -0.5),
                         children: [
@@ -83,12 +85,12 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'Select your primary usage to help us customize your experience and support.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.onSurfaceVariant,
+                        color: AppColors.of(context).onSurfaceVariant,
                         fontSize: 15,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
@@ -117,7 +119,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                       description:
                           'Daily commutes, weekend trips, or general city riding.',
                       iconData: Icons.directions_car,
-                      iconBgColor: AppColors.outlineVariant,
+                      iconBgColor: AppColors.of(context).primarySurface,
                       iconColor: AppColors.primary,
                     ),
                     const SizedBox(height: 32),
@@ -126,28 +128,27 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                     Container(
                       padding: Spacing.paddingMd,
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.primaryLight, // Soft blue tint container
+                        color: AppColors.of(context).primarySurface,
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.primaryLight,
+                          color: AppColors.primary.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info,
                             color: AppColors.primary,
                             size: 20,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Switching between types is possible later through account settings, though commercial access may require additional verification.',
                               style: GoogleFonts.plusJakartaSans(
-                                color: AppColors.onSurfaceVariant,
+                                color: AppColors.of(context).onSurfaceVariant,
                                 fontSize: 13,
                                 height: 1.4,
                               ),
@@ -168,14 +169,13 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 left: 24,
                 right: 24,
                 bottom: 24,
-                top: 16,
               ),
               child: SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 52,
                 child: ElevatedButton(
                   key: const Key('confirmIntentButton'),
-                  onPressed: (_selectedIntent == null || _isSubmitting)
+                  onPressed: _selectedIntent == null || _isSubmitting
                       ? null
                       : () async {
                           // ONBOARDING-AUDIT 2026-08-14 P1-4:
@@ -194,13 +194,10 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                           final provider = ref.read(riderProvider.notifier);
                           final riderId = ref.watch(riderProvider).riderId ??
                               ref.watch(riderProvider).rider?.id;
-                          final messenger = ScaffoldMessenger.of(context);
                           if (riderId == null) {
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Rider session not ready. Please try again.'),
-                              ),
+                            Toast.info(
+                              context,
+                              'Rider session not ready. Please try again.',
                             );
                             return;
                           }
@@ -218,12 +215,12 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                             widget.onNext?.call();
                           } catch (_) {
                             if (!mounted) return;
-                            messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Couldn\'t save your selection. Please try again.'),
-                              ),
-                            );
+                            if (context.mounted) {
+                              Toast.error(
+                                context,
+                                'Couldn\'t save your selection. Please try again.',
+                              );
+                            }
                             return;
                           } finally {
                             if (mounted) {
@@ -233,7 +230,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: AppColors.primaryLight,
+                    disabledBackgroundColor: AppColors.of(context).outlineVariant,
                     foregroundColor: Colors.white,
                     disabledForegroundColor: Colors.white70,
                     elevation: 0,
@@ -274,6 +271,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
     required Color iconBgColor,
     required Color iconColor,
   }) {
+    final colors = AppColors.of(context);
     final isSelected = _selectedIntent == type;
 
     return GestureDetector(
@@ -287,10 +285,10 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : colors.card,
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? AppColors.primary : colors.outlineVariant,
             width: 2,
           ),
           boxShadow: [
@@ -328,15 +326,15 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                   Text(
                     title,
                     style: AppTypography.titleMedium.copyWith(
-                        color: isSelected ? Colors.white : AppColors.onSurface),
+                        color: isSelected ? Colors.white : colors.onSurface),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     description,
                     style: GoogleFonts.plusJakartaSans(
                       color: isSelected
                           ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.onSurfaceVariant,
+                          : colors.onSurfaceVariant,
                       fontSize: 14,
                       height: 1.4,
                     ),
@@ -354,7 +352,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 shape: BoxShape.circle,
                 color: isSelected ? Colors.white : null,
                 border: Border.all(
-                  color: isSelected ? Colors.white : AppColors.outline,
+                  color: isSelected ? Colors.white : colors.outlineVariant,
                   width: isSelected ? 6 : 2,
                 ),
               ),

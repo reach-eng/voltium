@@ -106,7 +106,7 @@ export function RiderTable({
             <TableBody>
               {riders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-64 text-center">
+                  <TableCell colSpan={9} className="h-64 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                       <AlertTriangle className="w-8 h-8 opacity-20" />
                       <p>No riders found</p>

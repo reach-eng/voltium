@@ -4,7 +4,7 @@ import { CheckCircle2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TabsContent } from '@/components/ui/tabs';
-import { DetailGroup } from '../helpers';
+import { DetailGroup, STATE_FILTERS } from '../helpers';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { Rider, RiderEditForm } from '@/lib/types/admin';
 
@@ -105,7 +105,7 @@ export function RiderJourneyTab({
               isEditing={isEditing}
               field="lifecycleStatus"
               type="select"
-              options={['NEW', 'KYC_SUBMITTED', 'ACTIVE', 'SUSPENDED', 'CLOSED']}
+              options={[...STATE_FILTERS]}
               onEdit={(v) => setEditForm({ ...editForm, lifecycleStatus: v })}
             />
           </div>

@@ -69,7 +69,7 @@ export async function recordSecretRotation(key: string, value: string): Promise<
   }
   await db.systemSetting.upsert({
     where: { key },
-    create: { key, value, updatedAt: new Date() },
+    create: { key, value, updatedAt: new Date(), category: 'SECURITY', valueType: 'STRING' },
     update: { value, updatedAt: new Date() },
   });
 }
@@ -80,7 +80,7 @@ export async function bootstrapRotationRecords(): Promise<void> {
     if (!existing) {
       await db.systemSetting.upsert({
         where: { key },
-        create: { key, value: 'initial', updatedAt: new Date() },
+        create: { key, value: 'initial', updatedAt: new Date(), category: 'SECURITY', valueType: 'STRING' },
         update: {},
       });
     }

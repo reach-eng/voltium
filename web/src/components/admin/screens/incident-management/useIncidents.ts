@@ -42,7 +42,7 @@ export function useIncidents() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
 
-  const incidentTypes = ['ACCIDENT', 'THEFT', 'BREAKDOWN', 'DAMAGE', 'VIOLATION', 'OTHER'];
+  const incidentTypes = ['ACCIDENT', 'THEFT', 'BREAKDOWN', 'DAMAGE', 'OTHER'];
 
   const fetchIncidents = useCallback(async () => {
     setLoading(true);
@@ -108,7 +108,10 @@ export function useIncidents() {
   }, [createOpen]);
 
   async function handleCreate() {
-    if (!form.type || !form.title) return;
+    if (!form.type || form.title.trim().length < 3 || form.description.trim().length < 10) {
+      toast.error('Please provide a title (min 3 chars), type, and description (min 10 chars)');
+      return;
+    }
     setCreating(true);
     try {
       const body: Record<string, unknown> = {

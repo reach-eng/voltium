@@ -48,11 +48,6 @@ export function buildSecurityActionCopy(
           : 'Prevent the rider from force-stopping the app or clearing its data?',
       };
     }
-    case 'LOCK_DEVICE':
-      return {
-        title: 'Lock Device',
-        message: 'Are you sure you want to remotely lock this device?',
-      };
     case 'FACTORY_RESET':
       return {
         title: 'Emergency Wipe',

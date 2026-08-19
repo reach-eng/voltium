@@ -44,7 +44,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Text(
-            'Record a 5-sec video holding ID, saying "I agree to be the guarantor for [Rider Name]"',
+            'Record a short video (5 to 30 seconds) holding ID, saying "I agree to be the guarantor for [Rider Name]"',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               color: colors.onSurfaceMuted,

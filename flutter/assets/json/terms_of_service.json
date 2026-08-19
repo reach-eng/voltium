@@ -1,0 +1,39 @@
+{
+  "title": "Voltium Mobility — Terms of Service",
+  "version": "1.2.0",
+  "lastUpdated": "2026-08-01",
+  "sections": [
+    {
+      "heading": "1. Acceptance of Terms",
+      "body": "By downloading, accessing, or using the Voltium Electric Mobility mobile application, vehicle rental services, or battery swapping network, you agree to be bound by these Terms of Service. If you do not agree to these terms, you must not use our services."
+    },
+    {
+      "heading": "2. Rider Qualification & Identity Verification",
+      "body": "To rent a Voltium EV, riders must be at least 18 years of age, possess a valid Aadhaar/PAN identity card, submit a verified guarantor profile, and pass mandatory identity verification (KYC). Voltium reserves the right to reject any onboarding application without assigning cause."
+    },
+    {
+      "heading": "3. Rental Subscriptions, Charges & Billing Cycles",
+      "body": "Rental subscription plans (Daily, Weekly, Monthly) are billed in advance according to the duration specified at subscription. All subscription charges, security deposits, and top-up payments are non-refundable unless explicitly permitted under our Refund Policy."
+    },
+    {
+      "heading": "4. Vehicle Usage & Restrictions",
+      "body": "Riders must operate Voltium EVs in compliance with all local traffic laws and Motor Vehicle Act regulations. Sub-leasing, illegal transport, overloading beyond vehicle payload specifications, or unauthorized modifications to motor/battery hardware are strictly prohibited."
+    },
+    {
+      "heading": "5. Remote Telemetry & Device Lock Enforcement",
+      "body": "Voltium vehicles are equipped with GPS telemetry and remote immobilizers. In the event of rent default, unauthorized geographical departure, or safety violations, Voltium reserves the right to remotely lock the vehicle after prior notification."
+    },
+    {
+      "heading": "6. Maintenance & Damage Liability",
+      "body": "Riders are responsible for routine vehicle care during their active lease. Any physical damage resulting from accidents, negligence, or unauthorized repairs will be billed to the rider or deducted from the security deposit."
+    },
+    {
+      "heading": "7. Privacy & DPDP Compliance",
+      "body": "Voltium processes personal data, location telemetry, and identity documents in strict compliance with the Digital Personal Data Protection (DPDP) Act 2023. Riders may manage permissions and request account deletion via app settings."
+    },
+    {
+      "heading": "8. Termination & Account Deletion",
+      "body": "Riders may terminate their account upon returning all leased vehicles, clearing outstanding balances, and requesting account deletion. Voltium may terminate service immediately upon breach of safety or payment terms."
+    }
+  ]
+}

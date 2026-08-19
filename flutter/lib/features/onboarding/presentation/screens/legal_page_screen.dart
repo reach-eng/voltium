@@ -33,8 +33,9 @@ class LegalPageScreen extends ConsumerStatefulWidget {
   /// Optional type filter. When null, shows every document.
   /// When set, shows only the matching section (terms-only = ['terms'], etc.).
   final LegalDocumentType? documentType;
+  final VoidCallback? onBack;
 
-  const LegalPageScreen({super.key, this.documentType});
+  const LegalPageScreen({super.key, this.documentType, this.onBack});
 
   @override
   ConsumerState<LegalPageScreen> createState() => _LegalPageScreenState();
@@ -324,13 +325,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            AppLocalizations.of(context)?.txtsignedBy ?? 'SIGNED BY',
+                                            AppLocalizations.of(context)
+                                                    ?.txtsignedBy ??
+                                                'SIGNED BY',
                                             style: AppTypography.bodySmall
                                                 .copyWith(
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: 1.2)
                                                 .copyWith(
-                                                    color: AppColors.of(context).onSurfaceVariant,
+                                                    color: AppColors.of(context)
+                                                        .onSurfaceVariant,
                                                     letterSpacing: 1.2),
                                           ),
                                           const SizedBox(height: 2),
@@ -352,13 +356,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          AppLocalizations.of(context)?.txtdate ?? 'DATE',
+                                          AppLocalizations.of(context)
+                                                  ?.txtdate ??
+                                              'DATE',
                                           style: AppTypography.bodySmall
                                               .copyWith(
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 1.2)
                                               .copyWith(
-                                                  color: AppColors.of(context).onSurfaceVariant,
+                                                  color: AppColors.of(context)
+                                                      .onSurfaceVariant,
                                                   letterSpacing: 1.2),
                                         ),
                                         const SizedBox(height: 2),
@@ -390,7 +397,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.lg),
                                   border: Border.all(
-                                    color: AppColors.of(context).outline.withValues(alpha: 0.2),
+                                    color: AppColors.of(context)
+                                        .outline
+                                        .withValues(alpha: 0.2),
                                     style: BorderStyle.solid,
                                     width: 1,
                                   ),
@@ -443,7 +452,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                               AppRadius.md),
                                           border: Border.all(
                                             color: AppColors.of(context)
-                                                .outline.withValues(alpha: 0.2),
+                                                .outline
+                                                .withValues(alpha: 0.2),
                                           ),
                                           boxShadow: AppShadows.card,
                                         ),
@@ -454,10 +464,10 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           fit: BoxFit.cover,
                                           memCacheWidth: 96,
                                           memCacheHeight: 96,
-                                          errorWidget: (_, __, ___) =>
-                                              Icon(
+                                          errorWidget: (_, __, ___) => Icon(
                                             Icons.person,
-                                            color: AppColors.of(context).onSurfaceVariant,
+                                            color: AppColors.of(context)
+                                                .onSurfaceVariant,
                                             size: 20,
                                           ),
                                         ),
@@ -494,7 +504,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                         'Your acceptance is recorded. To request a signed copy, email $_kSupportEmail.',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
-                                          color: AppColors.of(context).onSurfaceVariant,
+                                          color: AppColors.of(context)
+                                              .onSurfaceVariant,
                                           height: 1.5,
                                         ),
                                       ),
@@ -516,7 +527,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                       if (index < _visibleSections.length - 1)
                         Container(
                           height: 1,
-                          color: AppColors.of(context).outline.withValues(alpha: 0.2),
+                          color: AppColors.of(context)
+                              .outline
+                              .withValues(alpha: 0.2),
                         ),
                     ],
                   );
@@ -532,7 +545,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
               decoration: BoxDecoration(
                 color: AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: AppColors.of(context).outline.withValues(alpha: 0.2)),
+                border: Border.all(
+                    color:
+                        AppColors.of(context).outline.withValues(alpha: 0.2)),
                 boxShadow: AppShadows.card,
               ),
               child: Column(
@@ -557,7 +572,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                       ),
                       children: [
                         TextSpan(
-                          text: AppLocalizations.of(context)?.txtlegalHelpText ??
+                          text: AppLocalizations.of(context)
+                                  ?.txtlegalHelpText ??
                               'If you have any questions about our policies, please contact our support team at ',
                         ),
                         TextSpan(
@@ -568,7 +584,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                           ),
                         ),
                         TextSpan(
-                          text: AppLocalizations.of(context)?.txtorCall ?? ' or call ',
+                          text: AppLocalizations.of(context)?.txtorCall ??
+                              ' or call ',
                         ),
                         TextSpan(
                           text: _kSupportPhone,
@@ -621,37 +638,17 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
       backgroundColor: AppColors.of(context).surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leadingWidth: 68,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 20.0),
-        child: UnconstrainedBox(
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.of(context).card.withValues(alpha: 0.8),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.of(context).outline.withValues(alpha: 0.2)),
-              boxShadow: AppShadows.card,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.full),
-                onTap: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: Icon(
-                  Icons.arrow_back,
-                  color: AppColors.of(context).onSurface,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back,
+            color: AppColors.of(context).onSurface, size: 20),
+        tooltip: AppLocalizations.of(context)?.txtback ?? 'Back',
+        onPressed: () {
+          if (widget.onBack != null) {
+            widget.onBack!();
+          } else if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        },
       ),
       title: Text(
         title,
@@ -661,7 +658,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     );
   }
 
-  Widget _buildElectronicSignaturePlaceholder(BuildContext context, String name) {
+  Widget _buildElectronicSignaturePlaceholder(
+      BuildContext context, String name) {
     final l10n = AppLocalizations.of(context);
     return Row(
       children: [
@@ -671,7 +669,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
           child: Text(
             '$name ${l10n?.txtelectronicSignature ?? "(Electronic Signature)"}',
             style: AppTypography.bodySmall.copyWith(
-                fontStyle: FontStyle.italic, color: AppColors.of(context).onSurfaceVariant),
+                fontStyle: FontStyle.italic,
+                color: AppColors.of(context).onSurfaceVariant),
             overflow: TextOverflow.ellipsis,
           ),
         ),

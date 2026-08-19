@@ -3,6 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
+import { toRupeesResponse } from '@/lib/api-money';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     const dashboard = await riderUseCases.getDashboard(riderDbId);
     if (!dashboard) return errors.notFound('Rider not found');
 
-    return success(dashboard, 'Dashboard data fetched');
+    return success(toRupeesResponse(dashboard), 'Dashboard data fetched');
   } catch (err) {
     logger.error('[GET /api/rider/dashboard] Unhandled error:', err);
     return errors.internal('Failed to fetch dashboard data');

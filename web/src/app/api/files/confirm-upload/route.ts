@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     const riderSession = await requireRiderSession(request);
     const adminSession = await requireAdmin();
 
-    if (!riderSession && !adminSession) {
+    const isRider = riderSession && !(riderSession instanceof Response);
+    if (!isRider && !adminSession) {
       return errors.unauthorized('Authentication required');
     }
 
@@ -21,20 +22,29 @@ export async function POST(request: NextRequest) {
       return errors.validation(validation.error);
     }
 
+    const actor = isRider
+      ? { role: 'rider', riderDbId: riderSession.riderDbId }
+      : { role: 'admin', adminId: adminSession?.adminId };
+
     const data = validation.data;
     const result = await fileUseCases.confirmUpload(
       data.fileRecordId,
       data.sizeBytes,
-      data.checksum as string | undefined
+      data.checksum as string | undefined,
+      actor
     );
 
     return success(result, 'File upload confirmed');
   } catch (err: unknown) {
-    if ((err instanceof Error ? err.message : String(err))?.includes('not found')) {
-      return errors.notFound((err instanceof Error ? err.message : String(err)));
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('Forbidden')) {
+      return errors.forbidden(msg);
     }
-    if ((err instanceof Error ? err.message : String(err))?.includes('Upload the file first')) {
-      return errors.badRequest((err instanceof Error ? err.message : String(err)));
+    if (msg.includes('not found')) {
+      return errors.notFound(msg);
+    }
+    if (msg.includes('Upload the file first')) {
+      return errors.badRequest(msg);
     }
     return errors.internal('Failed to confirm file upload');
   }

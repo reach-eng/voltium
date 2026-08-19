@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/form_validators.dart';
 
@@ -17,6 +17,7 @@ class GuarantorDetailsCard extends StatelessWidget {
   final bool isSendingOtp;
   final bool isOtpSent;
   final bool isVerifyingOtp;
+  final int resendCooldown;
   final VoidCallback onSendOtp;
   final VoidCallback onVerifyOtp;
   final VoidCallback onSelectDob;
@@ -34,6 +35,7 @@ class GuarantorDetailsCard extends StatelessWidget {
     required this.isSendingOtp,
     required this.isOtpSent,
     required this.isVerifyingOtp,
+    this.resendCooldown = 0,
     required this.onSendOtp,
     required this.onVerifyOtp,
     required this.onSelectDob,
@@ -74,12 +76,15 @@ class GuarantorDetailsCard extends StatelessWidget {
             'Enter guarantor\'s full name',
             nameController,
             key: const Key('guarantorFullNameField'),
+            validator: (v) => (v == null || v.trim().length < 2)
+                ? 'Enter a valid name (at least 2 characters)'
+                : null,
           ),
           const SizedBox(height: 12),
           _buildDateField(
             context,
             'Date of Birth',
-            'DD-MM-YYYY',
+            'YYYY-MM-DD',
             dobController,
             onSelectDob,
           ),
@@ -92,6 +97,8 @@ class GuarantorDetailsCard extends StatelessWidget {
             'Enter father\'s name',
             fatherNameController,
             key: const Key('guarantorFatherNameField'),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter father\'s name' : null,
           ),
           const SizedBox(height: 12),
           _buildTextField(
@@ -100,6 +107,8 @@ class GuarantorDetailsCard extends StatelessWidget {
             'Enter mother\'s name',
             motherNameController,
             key: const Key('guarantorMotherNameField'),
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter mother\'s name' : null,
           ),
           const SizedBox(height: 12),
           _buildTextArea(
@@ -107,6 +116,8 @@ class GuarantorDetailsCard extends StatelessWidget {
             'Current Address',
             'Enter full address',
             addressController,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter full address' : null,
           ),
         ],
       ),
@@ -119,6 +130,7 @@ class GuarantorDetailsCard extends StatelessWidget {
     String hint,
     TextEditingController controller, {
     Key? key,
+    String? Function(String?)? validator,
   }) {
     final colors = AppColors.of(context);
     return Column(
@@ -129,6 +141,7 @@ class GuarantorDetailsCard extends StatelessWidget {
         TextFormField(
           key: key,
           controller: controller,
+          validator: validator,
           style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           decoration: InputDecoration(
             hintText: hint,
@@ -152,6 +165,14 @@ class GuarantorDetailsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide:
                   const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: const BorderSide(color: AppColors.error, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
           ),
         ),
@@ -272,7 +293,12 @@ class GuarantorDetailsCard extends StatelessWidget {
                 height: 52,
                 child: ElevatedButton(
                   key: const Key('sendOtpButton'),
-                  onPressed: isSendingOtp || phoneController.text.length < 10
+                  onPressed: isSendingOtp ||
+                          resendCooldown > 0 ||
+                          phoneController.text
+                                  .replaceAll(RegExp(r'\D'), '')
+                                  .length <
+                              10
                       ? null
                       : onSendOtp,
                   style: ElevatedButton.styleFrom(
@@ -294,7 +320,9 @@ class GuarantorDetailsCard extends StatelessWidget {
                           ),
                         )
                       : Text(
-                          isOtpSent ? 'RESEND' : 'SEND OTP',
+                          resendCooldown > 0
+                              ? '${resendCooldown}s'
+                              : (isOtpSent ? 'RESEND' : 'SEND OTP'),
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -376,8 +404,9 @@ class GuarantorDetailsCard extends StatelessWidget {
     BuildContext context,
     String label,
     String hint,
-    TextEditingController controller,
-  ) {
+    TextEditingController controller, {
+    String? Function(String?)? validator,
+  }) {
     final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,6 +416,7 @@ class GuarantorDetailsCard extends StatelessWidget {
         TextFormField(
           key: const Key('guarantorAddressField'),
           controller: controller,
+          validator: validator,
           maxLines: 3,
           style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           decoration: InputDecoration(
@@ -411,6 +441,14 @@ class GuarantorDetailsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide:
                   const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: const BorderSide(color: AppColors.error, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
           ),
         ),

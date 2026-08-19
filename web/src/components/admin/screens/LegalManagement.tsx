@@ -13,11 +13,23 @@ import {
   EyeOff,
   Shield,
   DollarSign,
-  ScrollText,
   FileSignature,
+  AlertTriangle,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { formatDateDDMMYYYY } from '@/lib/date-utils';
+import { LEGAL_DOCUMENT_TYPES } from '@/lib/validators/admin';
 
 interface LegalDoc {
   id: string;
@@ -27,12 +39,16 @@ interface LegalDoc {
   updatedAt: string;
 }
 
-const DOC_TYPES: { key: string; label: string; icon: any }[] = [
-  { key: 'terms', label: 'Terms of Service', icon: Shield },
-  { key: 'privacy', label: 'Privacy Policy', icon: EyeOff },
-  { key: 'refund', label: 'Refund Policy', icon: DollarSign },
-  { key: 'lease', label: 'Lease Agreement', icon: FileSignature },
-];
+// P2-2: single source of truth imported from validators/admin.ts — the same
+// 4 types the Zod enum enforces server-side. Adding a 5th document type is a
+// one-file change instead of three.
+const DOC_TYPES = LEGAL_DOCUMENT_TYPES.map((d) => ({
+  ...d,
+  icon: d.key === 'terms' ? Shield : d.key === 'refund' ? DollarSign : FileSignature,
+}));
+
+const EMPTY_STATE_COPY =
+  'This document has no content yet. Use the Edit view to add the first version.';
 
 export default function LegalManagement() {
   const [documents, setDocuments] = useState<Record<string, LegalDoc>>({});
@@ -40,13 +56,19 @@ export default function LegalManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('terms');
-  const [previewing, setPreviewing] = useState(false);
+  // P2-3: preview was a single boolean shared across all tabs — toggling
+  // Preview on Terms also put Privacy into preview mode. Now per-type.
+  const [previewing, setPreviewing] = useState<string | null>(null);
+  const [pendingSave, setPendingSave] = useState<string | null>(null);
 
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/admin/legal');
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error('Failed to load legal documents');
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         const map: Record<string, LegalDoc> = {};
@@ -67,20 +89,32 @@ export default function LegalManagement() {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const saveDocument = async (type: string) => {
+  // P1-4: the old saveDocument ignored res.ok — a 403/500 silently discarded
+  // the edit and the UI showed success. Now the response is checked, failures
+  // toast, and saves go through a confirmation dialog (an accidental save
+  // permanently overwrites the previous version, even with revision history).
+  const doSave = async (type: string) => {
     try {
       setSaving(type);
       const docType = DOC_TYPES.find((d) => d.key === type);
-      await fetch('/api/admin/legal', {
+      const res = await fetch('/api/admin/legal', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type,
-          title: docType?.label || type,
+          // P2-4: `title` dropped — it was always docType.label in the UI, and
+          // the server computes it from LEGAL_DOCUMENT_TYPES anyway. One less
+          // source of truth for document titles.
           content: contents[type] || '',
         }),
       });
-      fetchDocuments();
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error || `Failed to save ${docType?.label || type}`);
+        return;
+      }
+      toast.success(`${docType?.label || type} saved`);
+      await fetchDocuments();
     } finally {
       setSaving(null);
     }
@@ -89,9 +123,6 @@ export default function LegalManagement() {
   const updateContent = (type: string, content: string) => {
     setContents((prev) => ({ ...prev, [type]: content }));
   };
-
-  const formatDate = (d: string) =>
-    formatDateDDMMYYYY(d);
 
   return (
     <div className="space-y-6">
@@ -112,79 +143,114 @@ export default function LegalManagement() {
           })}
         </TabsList>
 
-        {DOC_TYPES.map((dt) => (
-          <TabsContent key={dt.key} value={dt.key} className="mt-4">
-            <div className="bg-card rounded-xl border border-border/50 shadow-sm p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">{dt.label}</h3>
-                </div>
-                <div className="flex items-center gap-3">
-                  {documents[dt.key] && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      Last updated: {formatDate(documents[dt.key].updatedAt)}
-                    </div>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                    onClick={() => setPreviewing(!previewing)}
-                  >
-                    {previewing ? (
-                      <EyeOff className="h-3.5 w-3.5 mr-1" />
-                    ) : (
-                      <Eye className="h-3.5 w-3.5 mr-1" />
+        {DOC_TYPES.map((dt) => {
+          const isPreviewing = previewing === dt.key;
+          return (
+            <TabsContent key={dt.key} value={dt.key} className="mt-4">
+              <div className="bg-card rounded-xl border border-border/50 shadow-sm p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-semibold">{dt.label}</h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {documents[dt.key] && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        Last updated: {formatDateDDMMYYYY(documents[dt.key].updatedAt)}
+                      </div>
                     )}
-                    {previewing ? 'Edit' : 'Preview'}
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => setPreviewing(isPreviewing ? null : dt.key)}
+                    >
+                      {isPreviewing ? (
+                        <EyeOff className="h-3.5 w-3.5 mr-1" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      {isPreviewing ? 'Edit' : 'Preview'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              {loading ? (
-                <div className="space-y-4 animate-in fade-in duration-500">
-                  <Skeleton className="h-8 w-48" />
-                  <Skeleton className="h-[300px] w-full rounded-xl" />
-                </div>
-              ) : (
-                <>
-                  {previewing ? (
-                    <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap border rounded-xl p-4 bg-muted/30 min-h-[300px] text-sm">
-                      {contents[dt.key] || 'No content yet.'}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label>Content (Markdown / Plain Text)</Label>
-                      <Textarea
-                        value={contents[dt.key] || ''}
-                        onChange={(e) => updateContent(dt.key, e.target.value)}
-                        rows={20}
-                        className="font-mono text-sm"
-                        placeholder="Enter document content here..."
-                      />
-                    </div>
-                  )}
-                  {!previewing && (
-                    <div className="flex justify-end">
-                      <Button onClick={() => saveDocument(dt.key)} disabled={saving === dt.key}>
-                        {saving === dt.key ? (
-                          <>Saving...</>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-1" /> Save {dt.label}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </TabsContent>
-        ))}
+                {loading ? (
+                  <div className="space-y-4 animate-in fade-in duration-500">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-[300px] w-full rounded-xl" />
+                  </div>
+                ) : (
+                  <>
+                    {isPreviewing ? (
+                      <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap border rounded-xl p-4 bg-muted/30 min-h-[300px] text-sm">
+                        {contents[dt.key] || EMPTY_STATE_COPY}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label>Content (Plain Text)</Label>
+                        <Textarea
+                          value={contents[dt.key] || ''}
+                          onChange={(e) => updateContent(dt.key, e.target.value)}
+                          rows={20}
+                          className="font-mono text-sm"
+                          placeholder="Enter document content here..."
+                        />
+                      </div>
+                    )}
+                    {!isPreviewing && (
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => setPendingSave(dt.key)}
+                          disabled={saving === dt.key}
+                        >
+                          {saving === dt.key ? (
+                            <>Saving...</>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-1" /> Save {dt.label}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </TabsContent>
+          );
+        })}
       </Tabs>
+
+      <AlertDialog open={pendingSave !== null} onOpenChange={(open) => !open && setPendingSave(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              Save {DOC_TYPES.find((d) => d.key === pendingSave)?.label}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The current version will be replaced permanently. The previous
+              version is kept in the document revision history for audit, but
+              the live rider-facing document updates immediately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingSave) {
+                  void doSave(pendingSave);
+                }
+                setPendingSave(null);
+              }}
+            >
+              Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

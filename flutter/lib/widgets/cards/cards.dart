@@ -220,3 +220,63 @@ class GradientCard extends StatelessWidget {
     );
   }
 }
+
+/// Standardized card container component (PR-FLUTTER-2).
+///
+/// Encapsulates brightness-aware card background, border, radius, and optional shadow/tap.
+class AppCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final VoidCallback? onTap;
+  final BorderRadius? borderRadius;
+  final Color? color;
+  final Border? border;
+  final List<BoxShadow>? boxShadow;
+
+  const AppCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.margin,
+    this.onTap,
+    this.borderRadius,
+    this.color,
+    this.border,
+    this.boxShadow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final cardRadius = borderRadius ?? BorderRadius.circular(AppRadius.lg);
+    final cardBorder =
+        border ?? Border.all(color: colors.outlineVariant.withValues(alpha: 0.5));
+    final cardColor = color ?? colors.card;
+
+    Widget content = Container(
+      margin: margin,
+      padding: padding ?? Spacing.paddingMd,
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: cardRadius,
+        border: cardBorder,
+        boxShadow: boxShadow,
+      ),
+      child: child,
+    );
+
+    if (onTap != null) {
+      content = Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: cardRadius,
+          onTap: onTap,
+          child: content,
+        ),
+      );
+    }
+
+    return content;
+  }
+}

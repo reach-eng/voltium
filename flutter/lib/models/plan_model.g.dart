@@ -11,6 +11,7 @@ PlanModel _$PlanModelFromJson(Map<String, dynamic> json) => PlanModel(
       name: json['name'] as String,
       description: json['description'] as String?,
       price: (json['price'] as num).toDouble(),
+      securityDeposit: (json['securityDeposit'] as num?)?.toDouble() ?? 0.0,
       durationDays: (json['durationDays'] as num).toInt(),
       features: (json['features'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -24,6 +25,7 @@ Map<String, dynamic> _$PlanModelToJson(PlanModel instance) => <String, dynamic>{
       'name': instance.name,
       'description': instance.description,
       'price': instance.price,
+      'securityDeposit': instance.securityDeposit,
       'durationDays': instance.durationDays,
       'features': instance.features,
       'category': instance.category,

@@ -296,4 +296,11 @@ describe('rate limit configs', () => {
     expect(UPLOAD_RATE_LIMIT.windowMs).toBe(60 * 1000);
     expect(UPLOAD_RATE_LIMIT.maxRequests).toBe(10);
   });
+
+  it('SENSITIVE_ACTION_RATE_LIMIT fails CLOSED on DB outage (P2-18)', async () => {
+    const { SENSITIVE_ACTION_RATE_LIMIT } = await import('@/lib/rate-limit');
+    expect(SENSITIVE_ACTION_RATE_LIMIT.failClosed).toBe(true);
+    // Strict cap only in prod/staging (this file stubs APP_ENV=production)
+    expect(SENSITIVE_ACTION_RATE_LIMIT.maxRequests).toBe(10);
+  });
 });

@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../utils/app_logger.dart';
 
 class SignaturePadScreen extends StatefulWidget {
@@ -63,19 +64,21 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close, color: colors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Draw Signature',
+          l10n?.txtdrawSignature ?? 'Draw Signature',
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.onSurface,
+            color: colors.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -83,14 +86,14 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
           TextButton(
             onPressed: _clear,
             child: Text(
-              'Clear',
+              l10n?.txtclear ?? 'Clear',
               style: GoogleFonts.plusJakartaSans(color: AppColors.primary),
             ),
           ),
           TextButton(
             onPressed: _save,
             child: Text(
-              'Save',
+              l10n?.txtsave ?? 'Save',
               style: GoogleFonts.plusJakartaSans(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
@@ -109,9 +112,11 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border:
-                        Border.all(color: AppColors.of(context).borderSubtle),
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(
+                      color: colors.outlineVariant,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Stack(
                     children: [
@@ -158,5 +163,6 @@ class _SignaturePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SignaturePainter old) => true;
+  bool shouldRepaint(covariant _SignaturePainter old) =>
+      old.points.length != points.length;
 }

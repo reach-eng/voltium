@@ -5,9 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, RefreshCw, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface RentalPlan {
   id: string;
@@ -24,6 +34,8 @@ export default function PlanManagement() {
   const [plans, setPlans] = useState<RentalPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [planToDelete, setPlanToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchPlans();
@@ -65,25 +77,27 @@ export default function PlanManagement() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!planToDelete) return;
+    setDeleting(true);
     try {
       const res = await fetch(`/api/admin/plans`, { 
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id: planToDelete.id })
       });
       const json = await res.json();
       if (json.success) {
-        setPlans((prev) => prev.filter((p) => p.id !== id));
+        setPlans((prev) => prev.filter((p) => p.id !== planToDelete.id));
         toast.success('Plan deleted successfully');
+        setPlanToDelete(null);
       } else {
         toast.error(json.error || 'Failed to delete plan');
       }
     } catch {
       toast.error('Failed to delete plan');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -210,7 +224,7 @@ export default function PlanManagement() {
                     variant="outline"
                     size="icon"
                     className="h-11 w-11 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/15"
-                    onClick={() => handleDelete(plan.id, plan.name)}
+                    onClick={() => setPlanToDelete({ id: plan.id, name: plan.name })}
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
@@ -220,6 +234,34 @@ export default function PlanManagement() {
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!planToDelete} onOpenChange={() => setPlanToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Rental Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>"{planToDelete?.name}"</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...
+                </>
+              ) : (
+                'Delete Plan'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

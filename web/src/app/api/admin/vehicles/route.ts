@@ -2,7 +2,8 @@ import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createVehicleSchema, updateVehicleSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
+import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
@@ -30,7 +31,11 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const status = url.searchParams.get('status') || '';
     const hubId = url.searchParams.get('hubId') || '';
-    const { page, limit } = parsePaginationParams(url);
+    // DEEP-AUDIT D-P1-1: parsePositiveInt clamps to a finite int ≥ 1, so
+    // ?page=abc returns 1 instead of NaN (which previously crashed Prisma's
+    // skip/take).
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const cacheKey = [
       'admin:vehicles',
@@ -144,22 +149,20 @@ export async function DELETE(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return errors.badRequest('Vehicle ID is required');
 
-    const vehicle = await vehicleUseCases.getVehicle(id);
-    if (vehicle) {
-      await vehicleUseCases.updateVehicle(id, { status: 'RETIRED' });
-      invalidateCache('admin:*');
-      await createAuditLog({
-        actorId: session.adminId || session.riderDbId || 'system',
-        action: 'vehicle.delete',
-        entity: 'vehicle',
-        entityId: id,
-        details: { vehicleNumber: (vehicle as any).vehicleNumber, vehicleId: (vehicle as any).vehicleId },
-      }).catch(() => {});
-    }
-
-    return success(null, 'Vehicle deleted');
+    // P1.7/P3.15: retireVehicle 404s on an unknown id and 409s on an active
+    // lease — the old code silently returned 200 with no write for a typo'd id.
+    await vehicleUseCases.retireVehicle(id, session.adminId || session.riderDbId || 'system');
+    invalidateCache('admin:*');
+    invalidateCache('admin:vehicles:*');
+    invalidateCache('vehicles_list:*');
+    return success(null, 'Vehicle retired');
   } catch (error) {
-    logger.error('Delete vehicle error:', error);
-    return errors.internal('Failed to delete vehicle');
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('VEHICLE_NOT_FOUND')) return errors.notFound('Vehicle not found');
+    if (message.includes('VEHICLE_HAS_ACTIVE_LEASE')) {
+      return errors.conflict('Vehicle is on an active rental and cannot be retired');
+    }
+    logger.error('Retire vehicle error:', error);
+    return errors.internal('Failed to retire vehicle');
   }
 }

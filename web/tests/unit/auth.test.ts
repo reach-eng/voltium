@@ -1,6 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// P0-5 (audit #1): verifySessionToken now reads the admin row UNcached and
+// fail-closed — a token for a missing admin row is rejected (return null).
+// These are JWT-logic unit tests, so the version lookup is mocked: a rider
+// at tokenVersion 1 and an active SUPER_ADMIN at tokenVersion 1.
+vi.mock('@/lib/db', () => ({
+  db: {
+    rider: { findUnique: async () => ({ tokenVersion: 1 }) },
+    admin: {
+      findUnique: async () => ({
+        tokenVersion: 1,
+        isActive: true,
+        role: 'SUPER_ADMIN',
+        permissions: null,
+      }),
+    },
+  },
+}));
+
 import {
   createSessionToken,
+  createRefreshToken,
   verifySessionToken,
   hasPermission,
   getPermissionsForRole,
@@ -338,7 +358,11 @@ describe('getPermissionsForRole', () => {
     // separate file, so the iteration order of the underlying object is no
     // longer guaranteed to match the test's preferred order. The set
     // semantics are what matter for the security policy.
-    expect(new Set(perms)).toEqual(new Set(['data_management_view', 'audit_view', 'plans_view', 'health_view']));
+    //
+    // P0-2 (2026-08-05 ops audit): READ_ONLY lost audit_view — audit logs
+    // contain the actor graph + rider entityIds (spear-phishing intel) and
+    // were previously readable by any admin.
+    expect(new Set(perms)).toEqual(new Set(['data_management_view', 'plans_view', 'health_view']));
   });
 
   it('TEAM_LEADER has expected permissions', () => {
@@ -386,6 +410,35 @@ describe('getPermissionsForRole', () => {
       const perms = getPermissionsForRole(role);
       expect(Array.isArray(perms)).toBe(true);
     }
+  });
+});
+
+describe('token type marker (P0-3 / P0-9)', () => {
+  it('refresh tokens verify with type=refresh; access tokens have no type', async () => {
+    const refresh = await createRefreshToken(validPayload);
+    const decodedRefresh = await verifySessionToken(refresh);
+    expect(decodedRefresh?.type).toBe('refresh');
+
+    const access = await createSessionToken(validPayload);
+    const decodedAccess = await verifySessionToken(access);
+    expect(decodedAccess?.type).toBeUndefined();
+  });
+
+  it('embeds tokenVersion in the JWT payload', async () => {
+    const token = await createSessionToken({ ...validPayload, tokenVersion: 7 });
+    const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+    expect(payload.tokenVersion).toBe(7);
+
+    const refresh = await createRefreshToken({ ...validPayload, tokenVersion: 9 });
+    const refreshPayload = JSON.parse(Buffer.from(refresh.split('.')[1], 'base64url').toString());
+    expect(refreshPayload.tokenVersion).toBe(9);
+    expect(refreshPayload.type).toBe('refresh');
+  });
+
+  it('verification exposes the signed tokenVersion', async () => {
+    const token = await createSessionToken(validPayload); // tokenVersion defaults to 1
+    const decoded = await verifySessionToken(token);
+    expect(decoded?.tokenVersion).toBe(1);
   });
 });
 

@@ -1,42 +1,11 @@
-/// Wallet domain entity representing the rider's wallet state.
-class WalletEntity {
-  final String riderId;
-  final int balanceInPaise;
-  final int securityDeposit;
-  final String depositStatus;
-  final int paymentStreak;
-  final int pendingTopupsInPaise;
-
-  const WalletEntity({
-    this.riderId = '',
-    this.balanceInPaise = 0,
-    this.securityDeposit = 0,
-    this.depositStatus = 'PENDING',
-    this.paymentStreak = 0,
-    this.pendingTopupsInPaise = 0,
-  });
-
-  double get balanceInRupees => balanceInPaise / 100;
-  double get securityDepositInRupees => securityDeposit / 100;
-
-  bool get isLowBalance => balanceInPaise < 5000; // Below ₹50
-
-  factory WalletEntity.fromJson(Map<String, dynamic> json) {
-    return WalletEntity(
-      riderId: json['riderId'] as String? ?? '',
-      balanceInPaise: json['balanceInPaise'] as int? ?? 0,
-      securityDeposit: json['securityDeposit'] as int? ?? 0,
-      depositStatus: json['depositStatus'] as String? ?? 'PENDING',
-      paymentStreak: json['paymentStreak'] as int? ?? 0,
-      pendingTopupsInPaise: json['pendingTopups'] as int? ?? 0,
-    );
-  }
-}
-
 /// Top-up request entity.
+///
+/// All Voltium users are based in India. The API accepts and returns
+/// money in **rupees** (decimal). The Flutter app never deals in
+/// paise; the conversion to paise happens server-side on insert.
 class TopupRequest {
   final String riderId;
-  final double amount;
+  final double amountInRupees;
   final String method;
   final String? upiRef;
   final String? proofUrl;
@@ -44,7 +13,7 @@ class TopupRequest {
 
   const TopupRequest({
     required this.riderId,
-    required this.amount,
+    required this.amountInRupees,
     required this.method,
     this.upiRef,
     this.proofUrl,
@@ -53,7 +22,8 @@ class TopupRequest {
 
   Map<String, dynamic> toJson() => {
         'riderId': riderId,
-        'amount': amount,
+        // The API contract is rupees — no /100 here. See PR-RUPEES-2026-08-08.
+        'amount': amountInRupees,
         'method': method,
         if (upiRef != null) 'upiRef': upiRef,
         if (proofUrl != null) 'proofUrl': proofUrl,
@@ -62,9 +32,13 @@ class TopupRequest {
 }
 
 /// Transaction history entry.
+///
+/// All amounts are in **rupees** as received from the API. The DB
+/// still stores paise; the conversion happens at the API boundary.
+/// See PR-RUPEES-2026-08-08.
 class TransactionEntity {
   final String id;
-  final int amountInPaise;
+  final double amountInRupees;
   final String type;
   final String purpose;
   final String status;
@@ -72,21 +46,35 @@ class TransactionEntity {
 
   const TransactionEntity({
     required this.id,
-    this.amountInPaise = 0,
+    this.amountInRupees = 0,
     this.type = 'CREDIT',
     this.purpose = '',
     this.status = 'PENDING',
     required this.createdAt,
   });
 
-  double get amountInRupees => amountInPaise / 100;
   bool get isCredit => type == 'CREDIT';
 
   factory TransactionEntity.fromJson(Map<String, dynamic> json) {
-    final rawAmount = (json['amount'] as num?)?.toDouble() ?? 0.0;
+    // The API returns `amount` in rupees (and the deprecated
+    // `amountInPaise` for legacy clients — preferred `amountInRupees`
+    // when present). We prefer the rupees-shaped fields and fall
+    // back to the legacy paise field if needed.
+    double rupees = 0.0;
+    final inRupees = json['amountInRupees'];
+    final amount = json['amount'];
+    final inPaise = json['amountInPaise'];
+    if (inRupees is num) {
+      rupees = inRupees.toDouble();
+    } else if (amount is num) {
+      rupees = amount.toDouble();
+    } else if (inPaise is num) {
+      rupees = inPaise.toDouble() / 100.0;
+    }
+
     return TransactionEntity(
       id: json['id'] as String? ?? '',
-      amountInPaise: (rawAmount.abs() * 100).toInt(),
+      amountInRupees: rupees.abs(),
       type: json['type'] as String? ?? 'CREDIT',
       purpose: json['purpose'] as String? ?? '',
       status: json['status'] as String? ?? 'PENDING',

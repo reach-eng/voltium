@@ -79,10 +79,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
     });
 
     try {
-      final response = await VoltiumApiService().post(
-        '/api/rider/device/verify-lock',
-        body: {'password': password},
-      );
+      final response = await VoltiumApiService().verifyLockPassword(password);
 
       final successVal = response['success'] as bool? ?? false;
       final data = response['data'] as Map<String, dynamic>?;

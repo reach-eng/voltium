@@ -38,7 +38,7 @@ const MIN_PHOTOS = 2;
 export interface CompletePickupVerificationInput {
   vehicleId: string;
   hubId?: string;
-  teamLeader?: string;
+  teamLeaderId?: string;
   emergencyContact?: string;
   pickupPhotoFront?: string;
   pickupPhotoBack?: string;
@@ -72,7 +72,7 @@ export async function completePickupVerification(
     );
   }
 
-  // ── Precondition 2: rider exists + is in PICKUP_SCHEDULED state ──────
+  // ── Precondition 2: rider exists + is in valid pre-active pickup state ──────
   const rider = await db.rider.findUnique({
     where: { id: riderDbId },
     select: { id: true, riderId: true, lifecycleStatus: true },
@@ -81,9 +81,15 @@ export async function completePickupVerification(
     throw new PickupVerificationError('Rider not found', 'RIDER_NOT_FOUND');
   }
 
-  if (rider.lifecycleStatus !== 'PICKUP_SCHEDULED') {
+  const ALLOWED_PICKUP_STATUSES = new Set([
+    'PICKUP_SCHEDULED',
+    'PLAN_SELECTED',
+    'DEPOSIT_APPROVED',
+    'KYC_APPROVED',
+  ]);
+  if (!ALLOWED_PICKUP_STATUSES.has(rider.lifecycleStatus)) {
     throw new PickupVerificationError(
-      `Cannot complete pickup verification: rider lifecycleStatus is "${rider.lifecycleStatus}", expected "PICKUP_SCHEDULED".`,
+      `Cannot complete pickup verification: rider lifecycleStatus is "${rider.lifecycleStatus}", expected one of [PICKUP_SCHEDULED, PLAN_SELECTED, DEPOSIT_APPROVED, KYC_APPROVED].`,
       'INVALID_STATE'
     );
   }
@@ -95,7 +101,7 @@ export async function completePickupVerification(
   const result = await rentalUseCases.syncPickup(riderDbId, {
     vehicleId: input.vehicleId,
     hubId: input.hubId,
-    teamLeader: input.teamLeader,
+    teamLeaderId: input.teamLeaderId,
     emergencyContact: input.emergencyContact,
     pickupPhotoFront: input.pickupPhotoFront,
     pickupPhotoBack: input.pickupPhotoBack,
@@ -116,7 +122,7 @@ export async function completePickupVerification(
     details: {
       vehicleId: input.vehicleId,
       hubId: input.hubId,
-      teamLeader: input.teamLeader,
+      teamLeaderId: input.teamLeaderId,
       photoCount,
     },
   }).catch((err) => {

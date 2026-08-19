@@ -61,8 +61,9 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -106,6 +107,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
   }
 
   Widget _buildTextSection() {
+    final colors = AppColors.of(context);
     return FadeTransition(
       opacity:
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.5, 0.8)),
@@ -113,16 +115,16 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
         children: [
           Text(
             'Payment Submitted',
-            style: AppTypography.headingMedium
-                .copyWith(color: AppColors.of(context).onSurfaceMuted),
+            style:
+                AppTypography.headingMedium.copyWith(color: colors.onSurface),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
-                color: AppColors.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
                 height: 1.6,
               ),
               children: [
@@ -132,7 +134,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.of(context).onSurfaceMuted,
+                    color: colors.onSurface,
                   ),
                 ),
                 TextSpan(
@@ -165,16 +167,16 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.of(context).warningLight,
+                color: colors.warningLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.access_time,
-                color: AppColors.warningDark,
+                color: colors.warningLightForeground,
                 size: 20,
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,14 +184,14 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   Text(
                     'Verification in Progress',
                     style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.of(context).onSurfaceMuted),
+                        .copyWith(color: colors.onSurface),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Estimated time: Within 24 hours',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
-                      color: AppColors.onSurfaceVariant,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -202,26 +204,27 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
   }
 
   Widget _buildInfoNote() {
+    final colors = AppColors.of(context);
     return FadeTransition(
       opacity:
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.7, 1.0)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.of(context).primarySurface,
+          color: colors.primarySurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.info_outline, color: AppColors.primary, size: 16),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Balance will update after admin approval. You\'ll receive a notification once it\'s done.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: AppColors.onSurfaceVariant,
+                  color: colors.onSurfaceVariant,
                   height: 1.5,
                 ),
               ),

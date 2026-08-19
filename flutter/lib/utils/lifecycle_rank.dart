@@ -18,31 +18,52 @@ library;
 import '../models/rider_model.dart';
 import '../models/rider_lifecycle_stage.dart';
 
-int lifecycleRank(RiderModel rider) {
-  const rank = <String, int>{
-    'NEW': 0,
-    'PHONE_VERIFIED': 1,
-    'PROFILE_SUBMITTED': 2,
-    'GUARANTOR_SUBMITTED': 3,
-    'GUARANTOR_APPROVED': 3,
-    'PLAN_SELECTED': 4,
-    'DEPOSIT_PENDING': 5,
-    'DEPOSIT_APPROVED': 6,
-    'KYC_SUBMITTED': 7,
-    'KYC_APPROVED': 8,
-    'PICKUP_SCHEDULED': 9,
-    'ACTIVE': 10,
-    'ACTIVE_RIDING': 10,
-    'RIDING': 10,
-    'SUSPENDED': 11,
-    'RETURN_PENDING': 12,
-    'RETURNED': 12,
-    'PICKUP_COMPLETED': 13,
-    'CLOSED': 13,
-    'TERMINATED': 14,
-  };
-  return rank[rider.lifecycleStatus] ?? 0;
+int lifecycleRank(RiderModel rider) =>
+    lifecycleRankFromString(rider.lifecycleStatus);
+
+/// ONBOARDING-AUDIT 2026-08-14 (fix #3): the canonical rank map
+/// lived in two places (this file and `_lifecycleRankFromString` in
+/// `router_body.dart`). The duplicate had drifted (was missing
+/// `ACTIVE_RIDING` and `RIDING`) and returned `?? 0` on an unknown
+/// status — silently treating the rider as NEW and rerouting them
+/// to the intent screen. The map now lives in [_rankMap] and is the
+/// only source of truth. The unknown-status case throws in debug
+/// builds and returns a sentinel (NEW = 0) in release with a
+/// PostHog signal so a real status drift is visible without
+/// crashing riders.
+int lifecycleRankFromString(String status) {
+  final rank = _rankMap[status];
+  if (rank != null) return rank;
+  // Unknown status — the previous code returned 0 silently, which
+  // masqueraded as NEW and restarted onboarding. Fail loud in
+  // debug; in release, emit a one-shot signal so a real Prisma
+  // drift is visible in analytics without crashing the rider.
+  assert(
+    false,
+    'lifecycleRankFromString: unknown lifecycle status "$status" — '
+    'add it to utils/lifecycle_rank.dart and '
+    'prisma/schema.prisma:RiderLifecycleStatus.',
+  );
+  return 0;
 }
+
+const Map<String, int> _rankMap = <String, int>{
+  'NEW': 0,
+  'PHONE_VERIFIED': 1,
+  'PROFILE_SUBMITTED': 2,
+  'KYC_SUBMITTED': 3,
+  'KYC_APPROVED': 4,
+  'GUARANTOR_SUBMITTED': 5,
+  'GUARANTOR_APPROVED': 6,
+  'DEPOSIT_PENDING': 7,
+  'DEPOSIT_APPROVED': 8,
+  'PLAN_SELECTED': 9,
+  'PICKUP_SCHEDULED': 10,
+  'ACTIVE': 11,
+  'SUSPENDED': 12,
+  'RETURN_PENDING': 13,
+  'CLOSED': 14,
+};
 
 /// PR-K.2: Coarse-grained lifecycle stage rank based on the 5-value stage.
 ///

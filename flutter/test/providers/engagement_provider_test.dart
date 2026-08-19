@@ -53,6 +53,33 @@ void main() {
     }
   });
 
+  // PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-5): swipe-to-delete must
+  // remove the row locally (test mode = local-only branch) and decrement
+  // the unread count only when the deleted row was unread.
+  test('deleteNotification removes the row and fixes unread count', () async {
+    notifier.initEngagementData();
+
+    final before = readState();
+    final unreadBefore = before.notifications.where((n) => !n.isRead).length;
+    final unreadId = before.notifications.firstWhere((n) => !n.isRead).id;
+
+    final ok = await notifier.deleteNotification(unreadId);
+    expect(ok, isTrue);
+
+    final after = readState();
+    expect(after.notifications.any((n) => n.id == unreadId), isFalse);
+    expect(after.unreadCount, unreadBefore - 1);
+  });
+
+  test('deleteNotification is a no-op for unknown ids', () async {
+    notifier.initEngagementData();
+
+    final before = readState();
+    final ok = await notifier.deleteNotification('does-not-exist');
+    expect(ok, isTrue); // no-op still reports success locally
+    expect(readState().notifications.length, before.notifications.length);
+  });
+
   test('logout clears all data', () {
     notifier.initEngagementData();
 

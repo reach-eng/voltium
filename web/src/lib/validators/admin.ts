@@ -11,6 +11,7 @@
  *    (see `updateSystemSettingSchema` below; API N2 fix).
  */
 import { z } from 'zod';
+import { PasswordComplexitySchema } from '@/server/modules/admin/admin.schemas';
 
 // ==================== DATA DELETION (orphan) ====================
 // These schemas are defined for forward compatibility with a
@@ -97,8 +98,12 @@ export const createAdminSchema = z
   .object({
     name: z.string().min(1, 'name is required').max(200),
     email: z.string().email('email is required'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    role: z.enum(ADMIN_ROLES).optional(),
+    password: PasswordComplexitySchema,
+    // P2-22 (2026-08-05 ops audit): the schema previously had no default and
+    // the ROUTE applied `?? 'READ_ONLY'` — two sources of truth that
+    // disagreed. The default lives here now; the route consumes the validated
+    // value as-is.
+    role: z.enum(ADMIN_ROLES).optional().default('READ_ONLY'),
     permissions: z.array(z.string()).optional(),
   })
   .strict();
@@ -108,7 +113,13 @@ export const updateAdminSchema = z
     id: z.string().min(1, 'id is required'),
     name: z.string().min(1).max(200).optional(),
     email: z.string().email().optional(),
-    password: z.string().min(8, 'Password must be at least 8 characters').optional(),
+    password: PasswordComplexitySchema.optional(),
+    // P0-3 (2026-08-05 ops audit): required when changing `password`. The
+    // route verifies it against the ACTOR's own hash (re-authentication), not
+    // the target's — verifying the target's password would deadlock password
+    // recovery (only the target knows it) and let one admin reset another's
+    // password only with the victim's cooperation.
+    currentPassword: z.string().min(8, 'currentPassword must be at least 8 characters').optional(),
     role: z.enum(ADMIN_ROLES).optional(),
     permissions: z.array(z.string()).optional(),
     isActive: z.boolean().optional(),
@@ -148,7 +159,11 @@ export const updateFeatureFlagSchema = z
 export const updateSystemSettingSchema = z
   .object({
     key: z.string().min(1, 'key is required'),
-    value: z.string(),
+    // P0-8 (2026-08-05 ops audit): value was unbounded z.string() — an admin
+    // could set a secret (e.g. JWT_SECRET) to '' and destroy it. Non-empty
+    // is enforced here; the route's [CONFIGURED] guard handles the
+    // "unchanged placeholder" case separately.
+    value: z.string().min(1, 'Value cannot be empty'),
   })
   .strict();
 
@@ -178,14 +193,23 @@ export const updateFaqAdminSchema = z
   })
   .strict();
 
-// ==================== ADMIN - LEGAL UPDATE (new, strict wrap) ====================
-// `updateLegalSchema` already exists in `validators.ts` (non-strict
-// because the Flutter client sends some metadata fields). For the
-// admin PUT mutation we need a strict allowlist. Re-defined here so
-// the test file has one canonical location.
+// ==================== ADMIN - LEGAL UPDATE (strict) ====================
+// P2-2 (2026-08-05 legal/device audit): the 4 legal document types were
+// defined in THREE places (UI DOC_TYPES, the Zod enum, the free-form Prisma
+// string). LEGAL_DOCUMENT_TYPES is now the single source of truth — imported
+// by the UI, the schema, and the use-case's default-title fallback.
+export const LEGAL_DOCUMENT_TYPES = [
+  { key: 'terms', label: 'Terms of Service' },
+  { key: 'privacy', label: 'Privacy Policy' },
+  { key: 'refund', label: 'Refund Policy' },
+  { key: 'lease', label: 'Lease Agreement' },
+] as const;
+
+export const LEGAL_DOCUMENT_KEYS = LEGAL_DOCUMENT_TYPES.map((d) => d.key);
+
 export const updateLegalAdminSchema = z
   .object({
-    type: z.enum(['terms', 'privacy', 'refund', 'lease']),
+    type: z.enum(LEGAL_DOCUMENT_KEYS as [string, ...string[]]),
     title: z.string().max(200).optional(),
     content: z.string().min(1, 'content is required').max(100000),
   })
@@ -206,6 +230,13 @@ const ADMIN_SETTING_KEYS = [
   'gracePeriodHours',
   'emailNotifications',
   'smsNotifications',
+  'gpsFetchIntervalMins',
+  'maxRentalDays',
+  'penaltyCapDays',
+  'maxWalletBalance',
+  'loyaltyPointsPerRupee',
+  'supportEmail',
+  'supportPhone',
 ] as const;
 
 export const updateSettingsAdminSchema = z
@@ -220,3 +251,76 @@ export const updateSettingsAdminSchema = z
       ),
     { message: `Invalid setting key. Allowed: ${ADMIN_SETTING_KEYS.join(', ')}` }
   );
+
+// ==================== ADMIN - TICKETS (P1-10/P1-12, 2026-08-05 ops audit) ===
+// The tickets route previously read body fields directly with NO Zod
+// validation — `status: 'banana'` sailed through to the DB and an empty
+// subject created a blank ticket. `updateTicketSchema` exists in
+// `validators.ts` (rider-facing), but it allows `assignedTo: null` only via
+// nullable — the admin UI unassigns a ticket by sending `assignedTo: null`.
+// These strict schemas are the admin-route contract.
+export const createAdminTicketSchema = z
+  .object({
+    riderDbId: z.string().min(1, 'riderDbId is required'),
+    category: z
+      .enum(['TECHNICAL', 'PAYMENT', 'VEHICLE', 'GENERAL', 'TROUBLESHOOTER', 'BATTERY'])
+      .optional()
+      .default('GENERAL'),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional().default('LOW'),
+    // P1-12: an empty-string subject previously passed (`!subject` is false
+    // for ''). min(1) rejects it while keeping short admin-typed subjects
+    // valid (the rider schema uses min(5) — the admin form is less strict).
+    subject: z.string().min(1, 'Subject cannot be empty').max(200),
+    message: z.string().min(1, 'Message cannot be empty').max(5000),
+  })
+  .strict();
+
+export const updateAdminTicketSchema = z
+  .object({
+    id: z.string().min(1, 'id is required'),
+    status: z
+      .enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED'])
+      .optional(),
+    priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+    // assignedTo may be null (unassign) or a string (assign).
+    assignedTo: z.string().min(1).nullable().optional(),
+  })
+  .strict();
+
+// ==================== ADMIN - BOOK RENTAL ON BEHALF (P2.10) ================
+// P2.10 (2026-08-05 rentals/vehicles/hubs audit): the admin panel had no way
+// to create a lease for a rider — bookRental/syncPickup were rider-side only,
+// so a locked-out rider calling support could not be helped. This strict
+// schema is the on-behalf booking contract. It mirrors the rider bookRental
+// input (vehicleId/shiftId/leaseDate/startTime) plus the pickup-completion
+// fields from syncPickup so one call can take a rider from PLAN_SELECTED to
+// ACTIVE. `.strict()` rejects unknown keys (API N1 house rule).
+export const adminBookRentalOnBehalfSchema = z
+  .object({
+    // Rider is addressed by public riderId OR internal db id — resolved by
+    // the route via the same OR lookup as the riders/[id] GET route.
+    riderId: z.string().min(1, 'riderId is required'),
+    vehicleId: z.string().min(1, 'vehicleId is required'),
+    shiftId: z.string().min(1, 'shiftId is required'),
+    leaseDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'leaseDate must be in YYYY-MM-DD format'),
+    startTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/, 'startTime must be in HH:mm format'),
+    // When true, the route chains completePickupVerification (syncPickup's
+    // photo-precondition wrapper) so the rider ends up ACTIVE in one call.
+    completePickup: z.boolean().optional().default(false),
+    // Optional syncPickup fields (required only when completePickup=true).
+    hubId: z.string().optional(),
+    teamLeaderId: z.string().optional(),
+    emergencyContact: z.string().optional(),
+    pickupPhotoFront: z.string().optional(),
+    pickupPhotoBack: z.string().optional(),
+    pickupPhotoLeft: z.string().optional(),
+    pickupPhotoRight: z.string().optional(),
+    pickupPhotoWithVehicle: z.string().optional(),
+    // Support note, persisted to the audit log.
+    reason: z.string().max(500).optional(),
+  })
+  .strict();

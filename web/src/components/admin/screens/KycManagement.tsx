@@ -7,7 +7,7 @@ import {
   KycFiltersBar,
   KycBulkActionsBar,
   KycTable,
-  KycDetailSheet,
+  KycDetailDialog,
   KycDialogs,
 } from './kyc-management';
 
@@ -32,9 +32,7 @@ function KycManagementTab() {
         <KycBulkActionsBar
           selectedIds={kyc.selectedIds}
           bulkLoading={kyc.bulkLoading}
-          handleBulkAction={kyc.handleBulkAction}
-          lastAction={kyc.lastAction}
-          handleUndo={kyc.handleUndo}
+          setBulkConfirmAction={kyc.setBulkConfirmAction}
         />
 
         <KycTable
@@ -48,7 +46,7 @@ function KycManagementTab() {
           setConfirmAction={kyc.setConfirmAction}
         />
 
-        <KycDetailSheet
+        <KycDetailDialog
           selectedRider={kyc.selectedRider}
           setSelectedRider={kyc.setSelectedRider}
         />
@@ -60,6 +58,13 @@ function KycManagementTab() {
           setRejectionReason={kyc.setRejectionReason}
           handleKycAction={kyc.handleKycAction}
           actionLoading={kyc.actionLoading}
+          selectedCount={kyc.selectedIds.size}
+          bulkConfirmAction={kyc.bulkConfirmAction}
+          setBulkConfirmAction={kyc.setBulkConfirmAction}
+          bulkRejectionReason={kyc.bulkRejectionReason}
+          setBulkRejectionReason={kyc.setBulkRejectionReason}
+          handleBulkAction={kyc.handleBulkAction}
+          bulkLoading={kyc.bulkLoading}
           showUndoToast={kyc.showUndoToast}
           setShowUndoToast={kyc.setShowUndoToast}
           lastAction={kyc.lastAction}

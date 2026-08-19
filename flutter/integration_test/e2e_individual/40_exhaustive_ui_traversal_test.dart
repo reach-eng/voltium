@@ -136,12 +136,16 @@ void main() {
       await tester.tap(settingsLink);
       await settle(tester);
 
-      // Toggle Theme
-      final themeToggle = app.settings.darkModeSwitch;
-      if (themeToggle.evaluate().isNotEmpty) {
-        await tester.tap(themeToggle);
+      // Toggle Theme (tri-state: pick Dark, then return to Follow System)
+      final themeOption = app.settings.themeOption;
+      if (themeOption.evaluate().isNotEmpty) {
+        await tester.tap(themeOption);
         await settle(tester);
-        await tester.tap(themeToggle); // toggle back
+        await tester.tap(app.settings.themeDarkRadio);
+        await settle(tester);
+        await tester.tap(themeOption);
+        await settle(tester);
+        await tester.tap(app.settings.themeSystemRadio);
         await settle(tester);
       }
       await goBack(tester);

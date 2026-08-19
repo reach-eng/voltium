@@ -19,20 +19,24 @@ class TopUpRequestSentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final record = rider.depositRecord;
     final isRejected = record?.status == DepositStatus.rejected;
     final statusText = isRejected ? 'Rejected' : 'Awaiting Admin Approval';
-    final statusColor = isRejected ? AppColors.error : AppColors.warning;
+    final statusColor = isRejected
+        ? (isDark ? colors.errorLightForeground : AppColors.error)
+        : (isDark ? colors.warningLightForeground : AppColors.warningDark);
     final statusBg =
-        isRejected ? AppColors.errorSurface : AppColors.warningSurface;
+        isRejected ? colors.errorLight : colors.warningLight;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        border: Border.all(color: colors.outlineVariant),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowSoftColor,
@@ -50,8 +54,7 @@ class TopUpRequestSentCard extends StatelessWidget {
               Text(
                 'Top-up Request',
                 style: AppTypography.titleSmall
-                    // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
-                    .copyWith(color: AppColors.of(context).onSurface),
+                    .copyWith(color: colors.onSurface),
               ),
               Container(
                 padding:
@@ -68,25 +71,25 @@ class TopUpRequestSentCard extends StatelessWidget {
             ],
           ),
           if (isRejected && record?.rejectionReason != null) ...[
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.errorSurface,
+                color: colors.errorLight,
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 border:
-                    Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                    Border.all(color: colors.error.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline,
-                      color: AppColors.error, size: 16),
-                  SizedBox(width: 8),
+                  Icon(Icons.error_outline,
+                      color: isDark ? colors.errorLightForeground : AppColors.error, size: 16),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Reason: ${record!.rejectionReason}',
                       style: AppTypography.bodySmall
-                          .copyWith(color: AppColors.error),
+                          .copyWith(color: isDark ? colors.errorLightForeground : AppColors.error),
                     ),
                   ),
                 ],

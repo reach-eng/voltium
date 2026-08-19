@@ -8,6 +8,10 @@ class EditProfileTextField extends StatelessWidget {
   final TextEditingController controller;
   final IconData icon;
   final TextInputType keyboardType;
+  final bool readOnly;
+  final Widget? suffixIcon;
+  final String? helperText;
+  final String? Function(String?)? validator;
 
   const EditProfileTextField({
     super.key,
@@ -15,10 +19,15 @@ class EditProfileTextField extends StatelessWidget {
     required this.controller,
     required this.icon,
     this.keyboardType = TextInputType.text,
+    this.readOnly = false,
+    this.suffixIcon,
+    this.helperText,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -28,32 +37,59 @@ class EditProfileTextField extends StatelessWidget {
             label,
             style: AppTypography.bodySmall
                 .copyWith(fontWeight: FontWeight.w800)
-                .copyWith(color: AppColors.slate500),
+                .copyWith(color: colors.onSurfaceMuted),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          validator: validator,
           style: AppTypography.bodyLarge
               .copyWith(fontWeight: FontWeight.w600)
-              .copyWith(color: AppColors.slate800),
+              .copyWith(
+                color: readOnly ? colors.onSurfaceMuted : colors.onSurface,
+              ),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
+            prefixIcon: Icon(
+              icon,
+              color: readOnly ? colors.outlineVariant : colors.onSurfaceVariant,
+              size: 18,
+            ),
+            suffixIcon: suffixIcon,
+            helperText: helperText,
+            helperStyle: AppTypography.bodySmall.copyWith(
+              color: colors.onSurfaceMuted,
+              fontSize: 11,
+            ),
             filled: true,
-            fillColor:
-                AppColors.iconBackground, // AppColors.slate100 equivalent
+            fillColor: readOnly ? colors.surface : colors.card,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              borderSide: BorderSide(
+                color: readOnly ? colors.outlineVariant : AppColors.primary,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: const BorderSide(
+                color: AppColors.error,
+                width: 1.5,
+              ),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -80,6 +116,7 @@ class EditProfileDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -89,20 +126,20 @@ class EditProfileDateField extends StatelessWidget {
             label,
             style: AppTypography.bodySmall
                 .copyWith(fontWeight: FontWeight.w800)
-                .copyWith(color: AppColors.slate500),
+                .copyWith(color: colors.onSurfaceMuted),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           readOnly: true,
           style: AppTypography.bodyLarge
               .copyWith(fontWeight: FontWeight.w600)
-              .copyWith(color: AppColors.slate800),
+              .copyWith(color: colors.onSurface),
           decoration: InputDecoration(
-            prefixIcon: const Icon(
+            prefixIcon: Icon(
               Icons.calendar_today_outlined,
-              color: AppColors.slate400,
+              color: colors.onSurfaceVariant,
               size: 18,
             ),
             suffixIcon: const Icon(
@@ -111,15 +148,18 @@ class EditProfileDateField extends StatelessWidget {
               size: 18,
             ),
             filled: true,
-            fillColor:
-                AppColors.iconBackground, // AppColors.slate100 equivalent
+            fillColor: colors.card,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -130,6 +170,7 @@ class EditProfileDateField extends StatelessWidget {
               vertical: 16,
             ),
             hintText: 'YYYY-MM-DD',
+            hintStyle: TextStyle(color: colors.onSurfaceMuted),
           ),
           onTap: onTap,
         ),
@@ -145,13 +186,14 @@ class EditProfileSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
         style: AppTypography.bodySmall
             .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-            .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
+            .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
       ),
     );
   }
@@ -176,7 +218,7 @@ class EditProfileAdminNote extends StatelessWidget {
           SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Profile changes require admin approval before becoming active.',
+              'Most profile changes require admin approval before becoming active. Emergency contact is updated immediately.',
               style: GoogleFonts.plusJakartaSans(
                 color: AppColors.warningDark,
                 fontSize: 13,

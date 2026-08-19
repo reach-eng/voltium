@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
+// Widget moved out of the flat lib/widgets/ dir (PR-DS cleanup) — the
+// old path is a deleted shim.
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_scooter_banner.dart';
 import '../../../helpers/golden_test_helper.dart';
 
 void main() {

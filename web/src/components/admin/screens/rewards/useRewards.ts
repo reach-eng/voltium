@@ -57,11 +57,13 @@ export function useRewards() {
 
       const res = await fetch(`/api/admin/rewards?${params}`);
       if (res.status === 403) {
-        // Silently handle — admin lacks rewards_manage permission
+        toast.error('You do not have permission to access rewards management');
+        setRewards([]);
         return;
       }
       if (!res.ok) {
         logger.error('Failed to fetch rewards', { status: res.status });
+        toast.error('Failed to load rewards data');
         return;
       }
       const json = await res.json();
@@ -130,12 +132,29 @@ export function useRewards() {
         setShowForm(false);
         fetchRewards();
       } else {
-        toast.error(json.message || 'Failed to award points');
+        toast.error(json.message || json.error || 'Failed to award points');
       }
     } catch {
-      toast.error('An error occurred');
+      toast.error('An error occurred while awarding points');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRevokeReward = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/rewards?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        toast.success('Reward points revoked successfully');
+        fetchRewards();
+      } else {
+        toast.error(json.error?.message || json.error || 'Failed to revoke points');
+      }
+    } catch {
+      toast.error('Failed to revoke reward points');
     }
   };
 
@@ -164,6 +183,7 @@ export function useRewards() {
     showForm,
     setShowForm,
     handleAwardPoints,
+    handleRevokeReward,
     // revalidation
     fetchRewards,
   };

@@ -30,43 +30,67 @@ class PostHogService {
 
   static Future<void> capture(String eventName,
       {Map<String, Object>? properties}) async {
-    await Posthog().capture(
-      eventName: eventName,
-      properties: _scrubProperties(properties),
-    );
+    try {
+      await Posthog().capture(
+        eventName: eventName,
+        properties: _scrubProperties(properties),
+      );
+    } catch (e) {
+      // ONBOARDING-AUDIT 2026-08-14 P3-1: still fire-and-forget (a
+      // missing key / plugin error / test environment must never
+      // crash the UI flow — audit #7 hardening), but now we log the
+      // failure in debug mode so silent config drift is visible.
+      appDebug('[PostHog.capture] failed for $eventName: $e');
+    }
   }
 
   static Future<void> screen(String screenName,
       {Map<String, Object>? properties}) async {
-    await Posthog().screen(
-      screenName: screenName,
-      properties: _scrubProperties(properties),
-    );
+    try {
+      await Posthog().screen(
+        screenName: screenName,
+        properties: _scrubProperties(properties),
+      );
+    } catch (e) {
+      appDebug('[PostHog.screen] failed for $screenName: $e');
+    }
   }
 
   static Future<void> identify(String userId,
       {Map<String, Object>? properties}) async {
-    await Posthog().identify(
-      userId: userId,
-      userProperties: _scrubProperties(properties),
-    );
+    try {
+      await Posthog().identify(
+        userId: userId,
+        userProperties: _scrubProperties(properties),
+      );
+    } catch (e) {
+      appDebug('[PostHog.identify] failed for $userId: $e');
+    }
   }
 
   static Future<void> reset() async {
-    await Posthog().reset();
+    try {
+      await Posthog().reset();
+    } catch (e) {
+      appDebug('[PostHog.reset] failed: $e');
+    }
   }
 
   static Future<void> captureError(dynamic error, StackTrace? stack,
       {String? reason}) async {
-    await Posthog().capture(
-      eventName: 'fatal_error',
-      properties: <String, Object>{
-        'error_type': error.runtimeType.toString(),
-        'error_message': error.toString(),
-        if (reason != null) 'reason': reason,
-        if (stack != null) 'stack': stack.toString(),
-      },
-    );
+    try {
+      await Posthog().capture(
+        eventName: 'fatal_error',
+        properties: <String, Object>{
+          'error_type': error.runtimeType.toString(),
+          'error_message': error.toString(),
+          if (reason != null) 'reason': reason,
+          if (stack != null) 'stack': stack.toString(),
+        },
+      );
+    } catch (e) {
+      appDebug('[PostHog.captureError] failed: $e');
+    }
   }
 
   // PII Scrubbing

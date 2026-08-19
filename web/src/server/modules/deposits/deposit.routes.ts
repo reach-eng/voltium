@@ -30,8 +30,7 @@ export async function POST_submit(request: NextRequest) {
 
   const result = await depositUseCases.submitDeposit(
     session.riderDbId,
-    validation.data.amount,
-    validation.data.proofUrl
+    validation.data.amount
   );
   return success(result, 'Deposit submitted for verification');
 }

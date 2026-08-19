@@ -7,7 +7,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
-
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -98,24 +98,15 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-            // English SnackBar. Localised via the existing
-            // `txtpleaseLogInAgain` ARB key.
-            SnackBar(
-              content: Text(AppLocalizations.of(context)!.txtpleaseLogInAgain),
-            ),
+          Toast.error(
+            context,
+            AppLocalizations.of(context)!.txtpleaseLogInAgain,
           );
         }
         return;
       }
       final hubId = ref.watch(riderProvider).rider?.pickupHub ?? '';
       final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
-      // PR-47 (WALLET P1-1): use the live `securityDeposit` from the
-      // backend-provided `PlanModel` instead of the
-      // `AppConstants.planSecurityDepositRupees` hardcoded map. The
-      // backend `plan.use-cases.ts:57, 74, 131, 170, 201` already
-      // includes `securityDeposit` (in rupees) in the plan response.
       final securityDeposit = selectedPlan.securityDeposit;
       await VoltiumApiService().subscribePlan(
         hubId: hubId,
@@ -139,11 +130,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         if (e is ApiException) {
           errorMessage = e.message;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-          ),
-        );
+        Toast.error(context, errorMessage);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -188,7 +175,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.white.withValues(alpha: 0.2)
-            : AppColors.accentPurpleSurface,
+            : AppColors.accentPurple.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -237,11 +224,11 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     // the LIGHT slate-50. In dark mode the scaffold stayed
     // light even when the rest of the app was dark. The
     // `surfaceBright` token has no dark variant in `ThemeColors`,
-    // so we route through the brightness-aware `surface` token
-    // (the difference between the two in light mode is one
-    // digit of luminance — visually indistinguishable).
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.of(context).surface,
+      backgroundColor: colors.surface,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -257,10 +244,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchPlans,
-                        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-                        // English button label. Localised via the
-                        // existing `txtretry` ARB key.
-                        child: Text(AppLocalizations.of(context)!.txtretry),
+                        child: Text(l10n?.txtretry ?? 'Retry'),
                       ),
                     ],
                   ),
@@ -282,17 +266,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: colors.card,
                                     borderRadius:
                                         BorderRadius.circular(AppRadius.md),
                                     border: Border.all(
-                                      color: AppColors.outlineVariant,
+                                      color: colors.outlineVariant,
                                     ),
                                   ),
                                   child: Icon(
                                     Icons.arrow_back_ios_new,
                                     size: 18,
-                                    color: AppColors.of(context).onSurface,
+                                    color: colors.onSurface,
                                   ),
                                 ),
                               ),
@@ -302,7 +286,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                               child: Text(
                                 'Select a new plan',
                                 style: AppTypography.headingMedium.copyWith(
-                                    color: AppColors.of(context).onSurface,
+                                    color: colors.onSurface,
                                     letterSpacing: -0.5),
                               ),
                             ),
@@ -315,7 +299,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                           'Choose the rental duration that best fits your needs. You can change this at any time.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
-                            color: AppColors.of(context).onSurfaceVariant,
+                            color: colors.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -346,7 +330,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             return GestureDetector(
                               key: Key('planCard_$index'),
                               onTap: () =>
-                                  setState(() => _selectedPlanId = plan.id),
+                                   setState(() => _selectedPlanId = plan.id),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeInOut,
@@ -354,13 +338,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : Colors.white,
+                                      : colors.card,
                                   borderRadius: BorderRadius.circular(
                                       AppRadius.radiusModal),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.transparent
-                                        : AppColors.outlineVariant,
+                                        : colors.outlineVariant,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
@@ -460,9 +444,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                             fontSize: 16,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            color: const Color(
-                                                              0xFF0F172A,
-                                                            ),
+                                                            color:
+                                                                colors.onSurface,
                                                           ),
                                                         ),
                                                       ),
@@ -499,9 +482,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
-                                                      color: const Color(
-                                                        0xFFCBD5E1,
-                                                      ),
+                                                      color:
+                                                          colors.outlineVariant,
                                                       width: 2,
                                                     ),
                                                   ),
@@ -510,7 +492,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                       ),
                                       if (plan.description?.isNotEmpty ==
                                           true) ...[
-                                        SizedBox(height: 6),
+                                        const SizedBox(height: 6),
                                         Text(
                                           plan.description ?? '',
                                           style: GoogleFonts.plusJakartaSans(
@@ -518,8 +500,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             color: isSelected
                                                 ? Colors.white
                                                     .withValues(alpha: 0.8)
-                                                : AppColors.of(context)
-                                                    .onSurfaceVariant,
+                                                : colors.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -540,9 +521,9 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                 color: isSelected
                                                     ? Colors.white
                                                         .withValues(alpha: 0.9)
-                                                    : AppColors.slate400,
+                                                    : colors.onSurfaceMuted,
                                               ),
-                                              SizedBox(width: 12),
+                                              const SizedBox(width: 12),
                                               Expanded(
                                                 child: Text(
                                                   feature,
@@ -553,9 +534,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.9)
-                                                        : const Color(
-                                                            0xFF475569,
-                                                          ),
+                                                        : colors.onSurfaceVariant,
                                                     height: 1.4,
                                                   ),
                                                 ),
@@ -570,8 +549,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         color: isSelected
                                             ? Colors.white
                                                 .withValues(alpha: 0.15)
-                                            : AppColors.of(context)
-                                                .iconBackground,
+                                            : colors.outlineVariant,
                                         height: 1,
                                       ),
                                       const SizedBox(height: 16),
@@ -587,7 +565,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                 fontWeight: FontWeight.w800,
                                                 color: isSelected
                                                     ? Colors.white
-                                                    : AppColors.slate900,
+                                                    : colors.onSurface,
                                               ),
                                             ),
                                             TextSpan(
@@ -602,8 +580,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.7)
-                                                        : AppColors.of(context)
-                                                            .onSurfaceVariant,
+                                                        : colors.onSurfaceVariant,
                                                   ),
                                             ),
                                           ],
@@ -620,7 +597,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                       Container(
                         padding: Spacing.paddingLg,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.card,
+                          border: Border(
+                            top: BorderSide(
+                              color: colors.outlineVariant,
+                              width: 1,
+                            ),
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.05),
@@ -658,8 +641,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             .copyWith(
                                                 fontWeight: FontWeight.w800)
                                             .copyWith(
-                                              color: AppColors.of(context)
-                                                  .onSurface,
+                                              color: colors.onSurface,
                                             ),
                                       ),
                                     ),
@@ -675,7 +657,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                       : _subscribe,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
-                                disabledBackgroundColor: AppColors.borderMedium,
+                                disabledBackgroundColor: colors.outlineVariant,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(

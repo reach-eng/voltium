@@ -44,8 +44,24 @@ describe('Notifications Integration Workflow', () => {
     expect(sendRes.body.data.id).toBeDefined();
   });
 
-  it('3. Admin can broadcast a notification to all riders', async () => {
-    const broadcastRes = await api('/api/admin/notifications', {
+  it('3. Admin broadcast requires ?confirm=true and returns 202 (P0-1/P0-9)', async () => {
+    // P0-1/P0-9 (2026-08-05 ops audit): sendToAll is now rate-limited
+    // (3/hr/admin), requires ?confirm=true, and is async — the route emits
+    // an outbox event and returns 202 Accepted instead of running 100k
+    // inserts synchronously.
+    const noConfirm = await api('/api/admin/notifications', {
+      method: 'POST',
+      cookie: adminCookie,
+      json: {
+        sendToAll: true,
+        title: 'System Maintenance',
+        message: 'Scheduled backup tonight.',
+        type: 'ALERT',
+      },
+    });
+    expect(noConfirm.status).toBe(400);
+
+    const broadcastRes = await api('/api/admin/notifications?confirm=true', {
       method: 'POST',
       cookie: adminCookie,
       json: {
@@ -56,7 +72,7 @@ describe('Notifications Integration Workflow', () => {
       },
     });
 
-    expect([200, 201]).toContain(broadcastRes.status);
+    expect([202]).toContain(broadcastRes.status);
     expect(broadcastRes.body.success).toBe(true);
   });
 

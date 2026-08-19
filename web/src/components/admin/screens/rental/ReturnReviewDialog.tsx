@@ -66,7 +66,7 @@ export function ReturnReviewDialog({
                           src={url}
                           alt={photo.label}
                           className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform"
-                          onClick={() => window.open(url, '_blank')}
+                          onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
                         />
                       ) : (
                         <Camera className="w-8 h-8 text-muted-foreground/20" />

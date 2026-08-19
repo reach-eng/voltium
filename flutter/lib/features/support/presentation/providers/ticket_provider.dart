@@ -4,7 +4,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
 import 'package:voltium_rider/features/support/data/repository_impl.dart';
 
-enum TicketFilter { all, open, assigned, inProgress, closed }
+enum TicketFilter { all, open, assigned, inProgress, resolved, closed }
 
 class TicketState {
   final bool isLoading;
@@ -42,7 +42,7 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   @override
   TicketState build() {
     Future.microtask(() => fetchTickets());
-    return TicketState();
+    return TicketState(isLoading: true);
   }
 
   Future<void> fetchTickets() async {
@@ -67,6 +67,10 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   void setFilter(TicketFilter newFilter) {
     state = state.copyWith(filter: newFilter);
   }
+
+  /// Reset ticket state on logout so the next rider never sees the
+  /// previous rider's tickets (audit #4 P0-1).
+  void reset() => state = TicketState();
 }
 
 final supportTicketsProvider =

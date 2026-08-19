@@ -40,7 +40,10 @@ void logError(String message, {dynamic error, StackTrace? stackTrace}) {
 ///
 /// Flutter's `debugPrint` always prints in release mode (it just strips
 /// assertion info). For a privacy-and-noise conscious app, this wrapper
-/// routes every call through the structured logger with a `DEBUG` tag.
+/// suppresses debug output entirely outside debug builds. It delegates to
+/// `debugPrint` (NOT `_logger`) so output stays overridable in tests and
+/// respects the framework's throttling; structured error paths use the
+/// `appLog` family / `logError` instead.
 ///
 /// Existing call sites can keep their `debugPrint(...)` syntax by adding
 /// `import 'package:voltium_rider/utils/app_logger.dart' show appDebug;`
@@ -48,6 +51,6 @@ void logError(String message, {dynamic error, StackTrace? stackTrace}) {
 /// prefer the structured `appLog` family.
 void appDebug(String? message, {String? tag}) {
   if (kDebugMode) {
-    _logger.d(tag != null ? '[$tag] $message' : message);
+    debugPrint(tag != null ? '[$tag] $message' : message);
   }
 }

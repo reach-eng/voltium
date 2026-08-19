@@ -15,7 +15,7 @@ export { createTicketSchema, updateTicketSchema, ticketReplySchema, chatMessageS
 export const supportQuerySchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
   category: z.string().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });

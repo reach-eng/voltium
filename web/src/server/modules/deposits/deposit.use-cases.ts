@@ -7,10 +7,12 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { depositRepository } from './deposit.repository';
 import { depositLedgerService } from './deposit-ledger.service';
 import { logger } from '@/lib/logger';
 import { paiseToRupees } from '@/lib/flatten-rider';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import type { DepositReview } from './deposit.types';
 
 export const depositUseCases = {
@@ -18,27 +20,29 @@ export const depositUseCases = {
     return depositRepository.findByRiderId(riderDbId);
   },
 
-  async submitDeposit(riderDbId: string, amount: number, proofUrl: string) {
+  async submitDeposit(riderDbId: string, amount: number) {
     const MIN_DEPOSIT_PAISE = 50000;
     if (amount < MIN_DEPOSIT_PAISE) {
       throw new Error(`Minimum deposit amount is ₹${MIN_DEPOSIT_PAISE / 100}`);
     }
-    return depositRepository.submitDeposit(riderDbId, amount, proofUrl);
+    return depositRepository.submitDeposit(riderDbId, amount);
   },
 
   async reviewDeposit(riderDbId: string, reviewerId: string, review: DepositReview) {
     switch (review.action) {
       case 'APPROVE': {
+        // PR-ONBOARDING-2026-08-11 (audit 2.17): wallet credit + rider
+        // lifecycle update were two separate writes, with the wallet
+        // credit committed before the rider update. The underlying
+        // `approveDeposit` lib function (called via the ledger service)
+        // already wraps the credit + lifecycle bump + DepositRecord
+        // update + linked Transaction approval in a single
+        // `db.$transaction` (see `lib/services/deposit-service.ts`).
+        // The use-case was running an additional (no-op) outer
+        // transaction on top; call the ledger service directly.
         await depositLedgerService.approve({
           riderId: riderDbId,
           adminId: reviewerId,
-        });
-        await db.rider.updateMany({
-          where: {
-            id: riderDbId,
-            lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] },
-          },
-          data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
         });
         break;
       }
@@ -99,18 +103,19 @@ export const depositUseCases = {
   }) {
     const { status, riderId, startDate, endDate, page, limit } = filters;
 
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
+    const where: Prisma.DepositRecordWhereInput = {};
+    if (status) where.status = status as Prisma.DepositRecordWhereInput['status'];
     if (riderId) where.riderId = riderId;
     if (startDate || endDate) {
-      (where as any).createdAt = {};
-      if (startDate) (where as any).createdAt.gte = new Date(startDate);
-      if (endDate) (where as any).createdAt.lte = new Date(`${endDate}T23:59:59.999Z`);
+      where.createdAt = {
+        ...(startDate ? { gte: new Date(startDate) } : {}),
+        ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
+      };
     }
 
     const [records, total] = await depositRepository.findAllPaginated({ where, page, limit });
 
-    const formatted = (records as any[]).map((r) => ({
+    const formatted = records.map((r) => ({
       ...r,
       amountInPaise: undefined,
       amount: paiseToRupees(r.amountInPaise),

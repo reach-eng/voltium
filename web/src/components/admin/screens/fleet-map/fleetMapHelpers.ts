@@ -20,9 +20,17 @@ export function getBatteryColor(level: number | null) {
 
 /** Derives a 3-state status string from the rider's lifecycle. */
 export function getRiderStatus(rider: FleetRider): RiderStatus {
-  if (rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED') return 'offline';
-  if (rider.lifecycleStatus === 'ACTIVE') return 'active';
-  if (rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED') {
+  const status = rider.lifecycleStatus;
+  if (status === 'ACTIVE' || status === 'RETURN_PENDING') {
+    return 'active';
+  }
+  if (
+    status === 'KYC_APPROVED' ||
+    status === 'GUARANTOR_APPROVED' ||
+    status === 'DEPOSIT_APPROVED' ||
+    status === 'PLAN_SELECTED' ||
+    status === 'PICKUP_SCHEDULED'
+  ) {
     return 'idle';
   }
   return 'offline';

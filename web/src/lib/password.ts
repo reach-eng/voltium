@@ -9,6 +9,7 @@
  */
 
 import * as argon2 from 'argon2';
+import { logger } from './logger';
 
 const ARGON2_OPTIONS: argon2.Options & { raw?: boolean } = {
   type: argon2.argon2id,
@@ -51,7 +52,16 @@ export async function verifyPassword(
         valid,
         needsRehash: valid && (await argon2.needsRehash(hashedPassword, ARGON2_OPTIONS)),
       };
-    } catch {
+    } catch (err) {
+      // P2-16: a corrupted/malformed argon2 hash throws instead of returning
+      // false. Swallowing it made corrupt rows look like "wrong password" —
+      // log it so operators can spot the data problem (and tell it apart from
+      // a genuine auth failure). Still reports invalid so we never leak a
+      // hash-format oracle to callers.
+      logger.error('[Password] argon2.verify failed (corrupted hash?)', {
+        error: err instanceof Error ? err.message : String(err),
+        format: hashedPassword.split('$')[1] ?? 'unknown',
+      });
       return { valid: false, needsRehash: false };
     }
   }

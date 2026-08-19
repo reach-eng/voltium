@@ -16,7 +16,10 @@ export const depositRepository = {
     });
   },
 
-  async submitDeposit(riderDbId: string, amount: number, proofUrl: string) {
+  async submitDeposit(riderDbId: string, amount: number) {
+    // PR-ONBOARDING-2026-08-11 (audit 2.18): proofUrl parameter removed.
+    // The column never existed on DepositRecord; the proof rides on the
+    // linked Transaction row.
     const existing = await db.depositRecord.findUnique({
       where: { riderId: riderDbId },
       select: { status: true },

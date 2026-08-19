@@ -20,11 +20,10 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const { mockDb, mockAuditLog, mockSanitize } = vi.hoisted(() => {
+const { mockDb, mockAuditLog } = vi.hoisted(() => {
   const mockDb: any = {};
   const mockAuditLog = vi.fn(() => Promise.resolve());
-  const mockSanitize = vi.fn((s: string) => s);
-  return { mockDb, mockAuditLog, mockSanitize };
+  return { mockDb, mockAuditLog };
 });
 
 vi.mock('@/lib/db', () => ({ db: mockDb }));
@@ -33,9 +32,6 @@ vi.mock('@/lib/logger', () => ({
 }));
 vi.mock('@/lib/audit-log', () => ({
   createAuditLog: mockAuditLog,
-}));
-vi.mock('@/lib/sanitize', () => ({
-  sanitizeHtml: mockSanitize,
 }));
 
 // ---------------------------------------------------------------------------
@@ -50,6 +46,20 @@ describe('legal (thin module) — smoke tests (#22.1)', () => {
       findMany: vi.fn(),
       upsert: vi.fn(),
     };
+    mockDb.legalDocumentRevision = {
+      create: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
+    };
+    // P1-2 (2026-08-05 legal/device audit): upsert now writes the doc AND a
+    // revision row inside a $transaction (skipped when content is unchanged),
+    // and no longer sanitizes HTML (P1-3) — the rider app renders legal
+    // content as plain text.
+    mockDb.$transaction = vi.fn(async (fn: (tx: any) => Promise<unknown>) =>
+      fn({
+        legalDocument: mockDb.legalDocument,
+        legalDocumentRevision: mockDb.legalDocumentRevision,
+      })
+    );
   });
 
   it('list() returns documents ordered by type', async () => {
@@ -63,11 +73,21 @@ describe('legal (thin module) — smoke tests (#22.1)', () => {
     expect(mockDb.legalDocument.findMany).toHaveBeenCalledWith({ orderBy: { type: 'asc' } });
   });
 
-  it('upsert() calls sanitize and audit log', async () => {
-    mockDb.legalDocument.upsert.mockResolvedValue({ id: 'd1', type: 'TERMS' });
+  it('upsert() writes a revision and audit log (no sanitize — P1-2/P1-3)', async () => {
+    mockDb.legalDocument.upsert.mockResolvedValue({ id: 'd1', type: 'TERMS', title: 'Terms' });
+    mockDb.legalDocumentRevision.create.mockResolvedValue({});
     await legalUseCases.upsert({ type: 'TERMS', content: 'raw html' }, 'admin-1');
-    expect(mockSanitize).toHaveBeenCalledWith('raw html');
     expect(mockDb.legalDocument.upsert).toHaveBeenCalled();
+    // Revision row written inside the transaction
+    expect(mockDb.legalDocumentRevision.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          legalDocumentId: 'd1',
+          createdBy: 'admin-1',
+          contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      })
+    );
     // Audit log is fire-and-forget, give it a tick
     await new Promise((r) => setTimeout(r, 0));
     expect(mockAuditLog).toHaveBeenCalledWith(

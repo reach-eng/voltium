@@ -277,6 +277,13 @@ model Rider {
   // uses it to distinguish "purged" (purgedAt set) from "pending"
   // (deletedAt set, purgedAt null).
   purgedAt                DateTime?
+  // LANGUAGE-AUDIT (2026-08-16) #6: rider's chosen language as a
+  // BCP-47 language tag (`en`, `hi`). NULL means "follow system".
+  // Mirrored on every `LocaleNotifier.setLocale()` from the mobile
+  // app via PUT /api/rider/profile. The shared-prefs copy on the
+  // device is the source of truth for offline startup; the server
+  // copy is the source of truth for cross-device sync.
+  preferredLocale         String?
   currentPlanPrice        Int?
   pickupPhotoFront        String?
   pickupPhotoBack         String?

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import type { Prisma } from '@prisma/client';
+import { Prisma, FileOwnerType, FileVisibility, FileStatus } from '@prisma/client';
 import type { FileCategory } from './files.types';
 
 export const fileRepository = {
@@ -18,7 +18,7 @@ export const fileRepository = {
   }) {
     return db.fileRecord.create({
       data: {
-        ownerType: data.ownerType as any,
+        ownerType: data.ownerType as FileOwnerType,
         ownerId: data.ownerId,
         purpose: data.purpose,
         storageKey: data.storageKey,
@@ -26,7 +26,7 @@ export const fileRepository = {
         mimeType: data.mimeType,
         sizeBytes: data.sizeBytes,
         checksum: data.checksum,
-        visibility: (data.visibility as any) || 'PRIVATE',
+        visibility: (data.visibility as FileVisibility) || FileVisibility.PRIVATE,
         status: 'PENDING_UPLOAD',
         metadata: data.metadata,
       },
@@ -57,7 +57,7 @@ export const fileRepository = {
     return db.fileRecord.update({
       where: { id },
       data: {
-        status: status as any,
+        status: status as FileStatus,
         ...(reviewedBy ? { reviewedBy, reviewedAt: new Date() } : {}),
       },
     });
@@ -65,7 +65,7 @@ export const fileRepository = {
 
   async getFilesByOwner(ownerType: string, ownerId: string) {
     return db.fileRecord.findMany({
-      where: { ownerType: ownerType as any, ownerId },
+      where: { ownerType: ownerType as FileOwnerType, ownerId },
       orderBy: { createdAt: 'desc' },
     });
   },

@@ -1,0 +1,20 @@
+﻿00:00 +0: loading D:/voltium/flutter/test/core/i18n_no_new_dead_keys_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: No screen renders hardcoded English Text() literals (audit-#5 guard)
+00:03 +0 -1: No screen renders hardcoded English Text() literals (audit-#5 guard) [E]
+  Found 5 hardcoded Text() literals in presentation screens (threshold 1). First 30:
+    features/device_compliance/presentation/screens/emergency_sos_screen.dart:425: "${AppLocalizations.of(context)!.txtcancel} (5s)"
+    features/wallet/presentation/screens/top_up_amount_screen.dart:194: "₹$secDeposit"
+    features/wallet/presentation/screens/top_up_amount_screen.dart:214: "₹$rentPrice"
+    features/wallet/presentation/screens/top_up_proof_screen.dart:949: "₹${widget.amount}"
+    features/wallet/presentation/screens/top_up_proof_screen.dart:988: "₹$total"
+  
+  Either move them to the ARB (preferred) or raise the threshold with a one-line comment explaining why.
+  package:matcher                                  fail
+  test\core\i18n_no_new_dead_keys_test.dart 140:7  main.<fn>
+  
+00:03 +0 -1: (tearDownAll)
+00:03 +0 -1: Some tests failed.
+
+Failing tests:
+  D:/voltium/flutter/test/core/i18n_no_new_dead_keys_test.dart: No screen renders hardcoded English Text() literals (audit-#5 guard)

@@ -1,6 +1,7 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -21,6 +22,8 @@ class SelfieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -45,11 +48,20 @@ class SelfieCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Rider Photo',
+                l10n?.txttakeSelfie ?? 'Rider Photo',
                 style: AppTypography.titleSmall
                     .copyWith(color: colors.onSurface, letterSpacing: -0.2),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 4),
+              Text(
+                l10n?.txtselfieLiveCameraHint ??
+                    'Live camera capture required for KYC verification',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: colors.onSurfaceMuted,
+                ),
+              ),
+              const SizedBox(height: 20),
               if (selfieUploaded && selfiePath != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -83,16 +95,17 @@ class SelfieCard extends StatelessWidget {
                           size: 28,
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Text(
-                        'Take Rider Photo',
+                        l10n?.txttakeRiderPhoto ?? 'Take Rider Photo',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurfaceMuted),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Tap to capture your photo',
+                        l10n?.txttapToCaptureYourPhoto ??
+                            'Tap to capture your photo',
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             color:
@@ -102,7 +115,7 @@ class SelfieCard extends StatelessWidget {
                   ),
                 ),
               if (selfieUploaded) ...[
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -116,12 +129,13 @@ class SelfieCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.check, color: AppColors.success, size: 14),
-                          SizedBox(width: 4),
+                          const Icon(Icons.check,
+                              color: AppColors.success, size: 14),
+                          const SizedBox(width: 4),
                           Text(
-                            'Photo Captured',
+                            l10n?.txtphotoCaptured ?? 'Photo Captured',
                             style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.onSurface),
+                                .copyWith(color: colors.onSurface),
                           ),
                         ],
                       ),

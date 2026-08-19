@@ -4,6 +4,7 @@ import { validateBody, recalculateScoreSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { scoreUseCases } from '@/server/modules/scores/score.use-cases';
 
 export async function GET(req: NextRequest) {
@@ -16,8 +17,8 @@ export async function GET(req: NextRequest) {
     const riskLevel = url.searchParams.get('riskLevel') || '';
     const minScore = url.searchParams.get('minScore');
     const search = url.searchParams.get('search') || '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await scoreUseCases.list({
       riskLevel,

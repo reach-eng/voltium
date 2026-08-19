@@ -1,0 +1,71 @@
+name: Test Hygiene Lint (PR)
+
+# TEST-STRATEGY-AUDIT T-P2-4 + T-P2-6 (2026-08-08): two cheap
+# greps that catch test-hygiene regressions at PR time.
+#
+# T-P2-4: alert when a new it.skip / test.skip is added. The audit
+# found 3 it.skip calls in the web suite that were silently
+# disabled because of test-isolation bugs. A PR-time alert forces
+# a conscious decision to either fix the underlying test or
+# document why the skip is acceptable.
+#
+# T-P2-6: fail the PR when .only() / .todo() is found. These
+# narrow the test set in dev but should never reach main. The
+# CI step is a hard fail (exit 1) so a PR that introduces one
+# is blocked at the gate.
+#
+# Both greps are advisory-only / low-cost; they don't run any
+# tests. Triggered on PR open + every push to a PR.
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-hygiene:
+    name: Test hygiene (no it.skip / .only / .todo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check for new it.skip / test.skip / testWidgets.skip
+        # T-P2-4: advisory only. The skip may be legitimate (e.g.,
+        # the original it.skip is acceptable per the team's policy).
+        # The output lists new occurrences so the reviewer can
+        # spot-check.
+        run: |
+          NEW_SKIPS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            xargs -r grep -E '\b(it|test|testWidgets)\.skip\b' 2>/dev/null || true)
+          if [ -n "$NEW_SKIPS" ]; then
+            echo "::warning::New it.skip / test.skip / testWidgets.skip found:"
+            echo "$NEW_SKIPS"
+            echo ""
+            echo "If this is intentional, document the reason inline. " \
+              "Otherwise consider fixing the underlying test failure " \
+              "(see tests/_setup/per-file-schema.ts for the " \
+              "shared-DB-pool workaround)."
+          else
+            echo "OK — no new it.skip / test.skip / testWidgets.skip."
+          fi
+
+      - name: Check for .only / .todo
+        # T-P2-6: hard fail. .only() narrows the test set in dev
+        # and should never be committed. .todo() marks a test as
+        # pending — also a merge blocker.
+        run: |
+          ONLY_OR_TODO=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | \
+            xargs -r grep -E '\b(it|test|testWidgets|describe|context|group)\.(only|todo)\b' 2>/dev/null || true)
+          if [ -n "$ONLY_OR_TODO" ]; then
+            echo "::error::Found .only() or .todo() in test files:"
+            echo "$ONLY_OR_TODO"
+            echo ""
+            echo "These should never be merged. Either remove the .only() " \
+              "or .todo() or move the test to a personal scratch file."
+            exit 1
+          fi
+          echo "OK — no .only() / .todo() in test files."

@@ -27,5 +27,5 @@ export interface ServerHealth {
   pm2Status: string;
   pm2StatusBadge: 'ONLINE' | 'DEGRADED' | '—';
   // Proxy
-  caddyStatus: 'Active' | '—';
+  caddyStatus: 'Active' | 'Offline' | '—';
 }

@@ -14,19 +14,26 @@ export const incidentUseCases = {
     limit?: number;
   }) {
     const { status, type, severity, search, page = 1, limit = 20 } = params;
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (type) where.type = type;
-    if (severity) where.severity = severity;
+    const searchWhere: Prisma.IncidentWhereInput = {};
+    if (type) searchWhere.type = type as Prisma.IncidentWhereInput['type'];
+    if (severity) searchWhere.severity = severity as Prisma.IncidentWhereInput['severity'];
     if (search) {
-      (where as any).OR = [
-        { incidentId: { contains: search, mode: 'insensitive' } },
-        { title: { contains: search, mode: 'insensitive' } },
-        { rider: { fullName: { contains: search, mode: 'insensitive' } } },
+      const trimmed = search.trim();
+      searchWhere.OR = [
+        { incidentId: { contains: trimmed, mode: 'insensitive' } },
+        { title: { contains: trimmed, mode: 'insensitive' } },
+        { description: { contains: trimmed, mode: 'insensitive' } },
+        { rider: { fullName: { contains: trimmed, mode: 'insensitive' } } },
+        { rider: { phone: { contains: trimmed } } },
+        { vehicle: { vehicleNumber: { contains: trimmed, mode: 'insensitive' } } },
       ];
     }
+    const where: Prisma.IncidentWhereInput = {
+      ...searchWhere,
+      ...(status ? { status: status as Prisma.IncidentWhereInput['status'] } : {}),
+    };
 
-    const [incidents, total] = await Promise.all([
+    const [incidents, total, openCount, investigatingCount, resolvedCount, closedCount] = await Promise.all([
       db.incident.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -38,9 +45,13 @@ export const incidentUseCases = {
         take: limit,
       }),
       db.incident.count({ where }),
+      db.incident.count({ where: { ...searchWhere, status: 'OPEN' } }),
+      db.incident.count({ where: { ...searchWhere, status: 'INVESTIGATING' } }),
+      db.incident.count({ where: { ...searchWhere, status: 'RESOLVED' } }),
+      db.incident.count({ where: { ...searchWhere, status: 'CLOSED' } }),
     ]);
 
-    const formatted = (incidents as any[]).map((i) => ({
+    const formatted = incidents.map((i) => ({
       id: i.id,
       incidentId: i.incidentId,
       riderId: i.riderId,
@@ -63,6 +74,13 @@ export const incidentUseCases = {
 
     return {
       incidents: formatted,
+      statusCounts: {
+        all: openCount + investigatingCount + resolvedCount + closedCount,
+        OPEN: openCount,
+        INVESTIGATING: investigatingCount,
+        RESOLVED: resolvedCount,
+        CLOSED: closedCount,
+      },
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   },

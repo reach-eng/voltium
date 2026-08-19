@@ -187,3 +187,27 @@ flutter/Inter_*.ttf
 
 
 .qoder/
+
+# ── Hygiene: debug artifacts that must never be committed ─────────────────────
+
+# Windows shell redirect artefact ("echo foo > nul" creates a literal file)
+**/nul
+
+# Loose screenshot dumps from ADB / flutter_driver sessions
+flutter/*.png
+flutter/*.jpg
+
+# Ad-hoc debug / one-shot scripts left in web root
+web/*.archived
+web/.archived/
+web/cookie.txt
+web/check-*.js
+web/fix-*.js
+web/invalidate-*.js
+web/verify-*.js
+
+# Temporary working directories
+.tmp/
+.trash/
+.deprecated/
+.freebuff/

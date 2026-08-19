@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { validateBody, sendOtpSchema } from '@/lib/validators';
 import { verifyOtp } from '@/lib/otp-store';
+import { issueVerifyReceipt } from '@/lib/verify-receipt';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
@@ -55,7 +56,14 @@ export async function POST(request: NextRequest) {
       return errors.unauthorized(otpResult.error || 'Invalid OTP');
     }
 
-    return success({ verified: true }, 'Phone verified successfully');
+    // PR-PICKUP-OTP: issue a short-lived HMAC-signed receipt so downstream
+    // flows (e.g. pickup emergency contact) can prove server-side that this
+    // number was OTP-verified — the gate stops being client-only. TTL is
+    // 15 minutes; the pickup route validates phone + expiry on submit.
+    return success(
+      { verified: true, receipt: issueVerifyReceipt(phone) },
+      'Phone verified successfully'
+    );
   } catch (err) {
     logger.error('[POST /api/auth/verify-phone]', redactPii(err));
     return errors.internal('Verification failed');

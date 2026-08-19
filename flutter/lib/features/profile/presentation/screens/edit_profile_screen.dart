@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/date_formatters.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -27,6 +29,8 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -34,13 +38,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _motherNameController;
   late TextEditingController _dobController;
   late TextEditingController _addressController;
-
   late TextEditingController _emergencyContactController;
 
   late TextEditingController _gNameController;
   late TextEditingController _gPhoneController;
   late TextEditingController _gAddressController;
   late TextEditingController _gOtpController;
+
+  // Initial field tracking for dirty check (P0-2 / P1-3)
+  String _initialName = '';
+  String _initialEmail = '';
+  String _initialFatherName = '';
+  String _initialMotherName = '';
+  String _initialDob = '';
+  String _initialAddress = '';
+  String _initialEmergencyContact = '';
+  String _initialGName = '';
+  String _initialGPhone = '';
+  String _initialGAddress = '';
 
   XFile? _profileImage;
 
@@ -50,7 +65,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isGOtpSent = false;
   bool _isGPhoneVerified = false;
   bool _isSaving = false;
+  bool _isSaved = false;
   String? _originalGPhone;
+
+  // OTP Resend Cooldown (P1-5)
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
+
+  bool get _isDirty {
+    if (_profileImage != null) return true;
+    if (_nameController.text != _initialName) return true;
+    if (_emailController.text != _initialEmail) return true;
+    if (_fatherNameController.text != _initialFatherName) return true;
+    if (_motherNameController.text != _initialMotherName) return true;
+    if (_dobController.text != _initialDob) return true;
+    if (_addressController.text != _initialAddress) return true;
+    if (_emergencyContactController.text != _initialEmergencyContact)
+      return true;
+    if (_gNameController.text != _initialGName) return true;
+    if (_gPhoneController.text != _initialGPhone) return true;
+    if (_gAddressController.text != _initialGAddress) return true;
+    return false;
+  }
 
   Future<void> _pickImage() async {
     try {
@@ -69,17 +105,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via
-          // `txtfailedToCapturePhoto` ARB key.
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.txtfailedToCapturePhoto),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txtfailedToCapturePhoto,
         );
       }
+    }
+  }
+
+  void _onFieldChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -87,55 +123,79 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     final rider = ref.read(riderProvider).rider;
-    _nameController = TextEditingController(text: rider?.name ?? '');
-    _emailController = TextEditingController(text: rider?.email ?? '');
-    final rawPhone = rider?.phone ?? '';
-    final cleanPhoneDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
-    final tenDigitPhone = cleanPhoneDigits.length >= 10
-        ? cleanPhoneDigits.substring(cleanPhoneDigits.length - 10)
-        : cleanPhoneDigits;
-    _phoneController = TextEditingController(text: tenDigitPhone);
-    _fatherNameController =
-        TextEditingController(text: rider?.fatherName ?? '');
-    _motherNameController =
-        TextEditingController(text: rider?.motherName ?? '');
-    final dob = rider?.dob;
-    // PR-A: the server expects ISO yyyy-MM-dd. The old dd-MM-yyyy here made
-    // an untouched DOB fail validation on save (audit #5 P0-3).
+
+    _initialName = rider?.name ?? '';
+    _initialEmail = rider?.email ?? '';
+    _initialFatherName = rider?.fatherName ?? '';
+    _initialMotherName = rider?.motherName ?? '';
+    _initialDob = rider?.dob ?? '';
+    _initialAddress = rider?.currentAddress ?? '';
+    _initialEmergencyContact = rider?.emergencyContact ?? '';
+    _initialGName = rider?.guarantorName ?? '';
+    _initialGPhone = rider?.guarantorPhone ?? '';
+    _initialGAddress = rider?.guarantorAddress ?? '';
+
+    _nameController = TextEditingController(text: _initialName);
+    _emailController = TextEditingController(text: _initialEmail);
+    _fatherNameController = TextEditingController(text: _initialFatherName);
+    _motherNameController = TextEditingController(text: _initialMotherName);
     _dobController = TextEditingController(
-      text: dob != null ? formatDobForApi(dob) : '',
+      text: _initialDob.isNotEmpty ? formatDateForDisplay(_initialDob) : '',
     );
-    _addressController =
-        TextEditingController(text: rider?.currentAddress ?? '');
+    _addressController = TextEditingController(text: _initialAddress);
     _emergencyContactController =
-        TextEditingController(text: rider?.emergencyContact ?? '');
-
-    _gNameController = TextEditingController(text: rider?.guarantorName ?? '');
-    _gPhoneController =
-        TextEditingController(text: rider?.guarantorPhone ?? '');
-    _gAddressController =
-        TextEditingController(text: rider?.guarantorAddress ?? '');
+        TextEditingController(text: _initialEmergencyContact);
+    _gNameController = TextEditingController(text: _initialGName);
+    _gPhoneController = TextEditingController(text: _initialGPhone);
+    _gAddressController = TextEditingController(text: _initialGAddress);
     _gOtpController = TextEditingController();
-    _originalGPhone = rider?.guarantorPhone ?? '';
-    // If guarantor phone already exists, it's already verified
-    _isGPhoneVerified = (rider?.guarantorPhone ?? '').isNotEmpty;
 
-    _gPhoneController.addListener(() {
-      final currentClean = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
-      final origClean = _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
-      if (_isGPhoneVerified && currentClean != origClean) {
-        setState(() {
-          _isGPhoneVerified = false;
-          _isGOtpSent = false;
-        });
-      }
-    });
+    _isGPhoneVerified = _initialGPhone.isNotEmpty;
+
+    // PR-AUDIT-2026-08-16 §4.1: register listener on all controllers so
+    // that `_isDirty` recalculates immediately on any keystroke and the
+    // top-app-bar Save action button enables / disables dynamically.
+    final controllers = <TextEditingController>[
+      _nameController,
+      _emailController,
+      _fatherNameController,
+      _motherNameController,
+      _dobController,
+      _addressController,
+      _emergencyContactController,
+      _gNameController,
+      _gPhoneController,
+      _gAddressController,
+      _gOtpController,
+    ];
+    for (final c in controllers) {
+      c.addListener(_onFieldChanged);
+    }
   }
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
+  void _startCooldown() {
+    _resendCooldown = 30;
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_resendCooldown > 0) {
+          _resendCooldown--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _cooldownTimer?.cancel();
     for (var controller in [
       _nameController,
       _emailController,
@@ -156,31 +216,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _sendGuarantorOtp() async {
+    if (_resendCooldown > 0) return;
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     if (phone.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-        // English SnackBar. Localised via the new
-        // `txtenterAValid10DigitNumber` ARB key.
-        SnackBar(
-          content:
-              Text(AppLocalizations.of(context)!.txtenterAValid10DigitNumber),
-          backgroundColor: AppColors.error,
-        ),
+      Toast.error(
+        context,
+        AppLocalizations.of(context)!.txtenterAValid10DigitNumber,
       );
       return;
     }
     final rider = ref.read(riderProvider).rider;
     if (phone == rider?.phone) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-        // English SnackBar. Localised via
-        // `txtguarantorPhoneCannotBeTheSameAsYourPhone`.
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!
-              .txtguarantorPhoneCannotBeTheSameAsYourPhone),
-          backgroundColor: AppColors.error,
-        ),
+      Toast.error(
+        context,
+        AppLocalizations.of(context)!
+            .txtguarantorPhoneCannotBeTheSameAsYourPhone,
       );
       return;
     }
@@ -195,19 +245,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _isSendingGOtp = false;
           _isGOtpSent = true;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via
-          // `txtotpSentToGuarantorPhone`.
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.txtotpSentToGuarantorPhone),
-            backgroundColor: AppColors.success,
-          ),
+        _startCooldown();
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtotpSentToGuarantorPhone,
         );
-        // Dev-mode only: never autofill an echoed OTP in production
-        // builds even if the server leaks it (audit #7 P0-5).
-        if (kDebugMode) {
+        // Dev / test mode only: autofill echoed OTP
+        if (kDebugMode && const String.fromEnvironment('TEST_MODE') == 'true') {
           final devOtp = result['data']?['otp']?.toString();
           if (devOtp != null && devOtp.length == 6) {
             _gOtpController.text = devOtp;
@@ -217,14 +261,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSendingGOtp = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via
-          // `txtfailedToSendOtp`.
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.txtfailedToSendOtp),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txtfailedToSendOtp,
         );
       }
     }
@@ -232,14 +271,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _verifyGuarantorOtp() async {
     if (_gOtpController.text.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-        // English SnackBar. Localised via the new
-        // `txtenterThe6DigitOtp` ARB key.
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.txtenterThe6DigitOtp),
-          backgroundColor: AppColors.error,
-        ),
+      Toast.error(
+        context,
+        AppLocalizations.of(context)!.txtenterThe6DigitOtp,
       );
       return;
     }
@@ -253,12 +287,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!verified) {
         if (mounted) {
           setState(() => _isVerifyingGOtp = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  response['data']?['message']?.toString() ?? 'Invalid OTP'),
-              backgroundColor: AppColors.error,
-            ),
+          Toast.error(
+            context,
+            response['data']?['message']?.toString() ??
+                AppLocalizations.of(context)!.txtinvalidOtp,
           );
         }
         return;
@@ -269,27 +301,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _isGPhoneVerified = true;
           _isGOtpSent = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via
-          // `txtguarantorPhoneVerified`.
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.txtguarantorPhoneVerified),
-            backgroundColor: AppColors.success,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtguarantorPhoneVerified,
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isVerifyingGOtp = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via `txtinvalidOtp`.
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.txtinvalidOtp),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txtinvalidOtp,
         );
       }
     }
@@ -300,13 +322,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final rider = ref.watch(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     if (_gPhoneController.text.trim().isNotEmpty && !_isGPhoneVerified) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Please verify the new guarantor phone number before saving.'),
-          backgroundColor: AppColors.error,
-        ),
+      Toast.error(
+        context,
+        'Please verify the new guarantor phone number before saving.',
       );
       return;
     }
@@ -325,16 +348,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await VoltiumApiService().updateProfile(
         riderId: rider.riderId,
         data: {
-          'fullName': _nameController.text,
-          'email': _emailController.text,
-          'fatherName': _fatherNameController.text,
-          'motherName': _motherNameController.text,
+          'fullName': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'fatherName': _fatherNameController.text.trim(),
+          'motherName': _motherNameController.text.trim(),
           'dob': _dobController.text.isNotEmpty ? _dobController.text : null,
-          'currentAddress': _addressController.text,
-          'emergencyContact': _emergencyContactController.text,
-          'guarantorName': _gNameController.text,
-          'guarantorPhone': _gPhoneController.text,
-          'guarantorAddress': _gAddressController.text,
+          'currentAddress': _addressController.text.trim(),
+          'emergencyContact': _emergencyContactController.text.trim(),
+          'guarantorName': _gNameController.text.trim(),
+          'guarantorPhone': _gPhoneController.text.trim(),
+          'guarantorAddress': _gAddressController.text.trim(),
+          // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
           if (uploadedPhotoUrl != null) 'profilePhoto': uploadedPhotoUrl,
           if (uploadedPhotoUrl != null) 'riderPhoto': uploadedPhotoUrl,
         },
@@ -343,16 +367,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await provider.refreshFromApi();
 
       if (mounted) {
+        _isSaved = true;
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-          // English SnackBar. Localised via
-          // `txtprofileUpdatedSuccessfully`.
-          SnackBar(
-            content: Text(
-                AppLocalizations.of(context)!.txtprofileUpdatedSuccessfully),
-            backgroundColor: AppColors.success,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtprofileUpdatedSuccessfully,
         );
         Navigator.pop(context);
       }
@@ -361,246 +380,351 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         setState(() => _isSaving = false);
         final rawMsg =
             e.toString().replaceAll(RegExp(r'^(Exception:\s*|Error:\s*)'), '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              rawMsg.isNotEmpty && !rawMsg.contains('XMLHttpRequest')
-                  ? rawMsg
-                  : 'Failed to update profile. Please try again.',
-            ),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          rawMsg.isNotEmpty && !rawMsg.contains('XMLHttpRequest')
+              ? rawMsg
+              : 'Failed to update profile. Please try again.',
         );
       }
     }
   }
 
+  Future<bool> _showDiscardDialog(BuildContext ctx) async {
+    final colors = AppColors.of(ctx);
+    final discard = await showDialog<bool>(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: colors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        ),
+        title: Text(
+          'Discard changes?',
+          style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
+        ),
+        content: Text(
+          'You have unsaved changes. Are you sure you want to discard them and exit?',
+          style:
+              AppTypography.bodyMedium.copyWith(color: colors.onSurfaceMuted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(
+              'Keep Editing',
+              style: TextStyle(color: colors.onSurfaceVariant),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            // T-66: hardcoded English button label. Localised
+            // via the new `txtdiscard` ARB key.
+            child: Text(AppLocalizations.of(context)!.txtdiscard),
+          ),
+        ],
+      ),
+    );
+    if (discard == true && ctx.mounted) {
+      _isSaved = true;
+      Navigator.pop(ctx);
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: Stack(
-        children: [
-          _buildMeshBackground(),
-          SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 16,
-                    ),
-                    child: Column(
-                      children: [
-                        FadeUpWidget(delay: 0, child: _buildAvatarSection()),
-                        const SizedBox(height: 32),
-                        FadeUpWidget(
-                          delay: 100,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const EditProfileSectionHeader(
-                                title: 'PERSONAL INFORMATION',
-                              ),
-                              EditProfileTextField(
-                                key: const Key('editFullNameField'),
-                                label: 'Full Name',
-                                controller: _nameController,
-                                icon: Icons.person_outline,
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editPhoneField'),
-                                label: 'Phone Number',
-                                controller: _phoneController,
-                                icon: Icons.phone_outlined,
-                                keyboardType: TextInputType.phone,
-                                readOnly: true,
-                                suffixIcon: Icon(
-                                  Icons.lock_outline,
-                                  size: 16,
-                                  color: colors.outlineVariant,
-                                ),
-                                helperText:
-                                    'Primary phone is verified and cannot be edited directly.',
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editEmailField'),
-                                label: 'Email Address',
-                                controller: _emailController,
-                                icon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editFatherNameField'),
-                                label: 'Father\'s Name',
-                                controller: _fatherNameController,
-                                icon: Icons.family_restroom_outlined,
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editMotherNameField'),
-                                label: 'Mother\'s Name',
-                                controller: _motherNameController,
-                                icon: Icons.family_restroom_outlined,
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileDateField(
-                                key: const Key('editDobField'),
-                                label: 'Date of Birth',
-                                controller: _dobController,
-                                onTap: () async {
-                                  final firstDate = DateTime(1940);
-                                  final lastDate = DateTime.now().subtract(
-                                    const Duration(days: 18 * 365),
-                                  );
-                                  final parsed = (_dobController.text.isNotEmpty
-                                          ? DateTime.tryParse(
-                                              _dobController.text)
-                                          : null) ??
-                                      DateTime(2000, 1, 1);
-                                  final initialDate = parsed.isBefore(firstDate)
-                                      ? firstDate
-                                      : (parsed.isAfter(lastDate)
-                                          ? lastDate
-                                          : parsed);
+    final l10n = AppLocalizations.of(context)!;
 
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: initialDate,
-                                    firstDate: firstDate,
-                                    lastDate: lastDate,
-                                  );
-                                  if (picked != null) {
-                                    setState(() {
-                                      _dobController.text =
-                                          '${picked.year}-${_twoDigits(picked.month)}-${_twoDigits(picked.day)}';
-                                    });
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editAddressField'),
-                                label: 'Current Address',
-                                controller: _addressController,
-                                icon: Icons.home_outlined,
-                              ),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editEmergencyContactField'),
-                                label: 'Emergency Contact Number',
-                                controller: _emergencyContactController,
-                                icon: Icons.emergency_outlined,
-                                keyboardType: TextInputType.phone,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 4, top: 4),
-                                child: Text(
-                                  // PR-48 (PROFILE Pass3 #3): the audit
-                                  // flagged this as misleading copy. The
-                                  // emergency contact is part of the
-                                  // standard profile update — it's saved
-                                  // immediately via the same PUT as the
-                                  // rest of the form (no separate admin
-                                  // review). The hint now reflects the
-                                  // actual behavior: "used to contact you
-                                  // in case of an emergency" so riders
-                                  // know what to put here.
-                                  'Used to contact you in case of an emergency.',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    color:
-                                        AppColors.of(context).onSurfaceVariant,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        FadeUpWidget(
-                          delay: 300,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const EditProfileSectionHeader(
-                                title: 'GUARANTOR DETAILS',
-                              ),
-                              EditProfileTextField(
-                                key: const Key('editGuarantorNameField'),
-                                label: 'Guarantor Name',
-                                controller: _gNameController,
-                                icon: Icons.shield_outlined,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildGuarantorPhoneField(),
-                              const SizedBox(height: 16),
-                              EditProfileTextField(
-                                key: const Key('editGuarantorAddressField'),
-                                label: 'Guarantor Address',
-                                controller: _gAddressController,
-                                icon: Icons.home_outlined,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        const FadeUpWidget(
-                          delay: 500,
-                          child: EditProfileAdminNote(),
-                        ),
-                        SizedBox(height: 32),
-                        FadeUpWidget(
-                          delay: 600,
-                          child: ElevatedButton(
-                            key: const Key('submitProfileButton'),
-                            onPressed: _isSaving ? null : _saveProfile,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    AppRadius.radiusModal),
-                              ),
-                              elevation: 8,
-                              shadowColor:
-                                  AppColors.primary.withValues(alpha: 0.4),
-                            ),
-                            child: _isSaving
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    'SUBMIT FOR APPROVAL',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return PopScope(
+      canPop: !_isDirty || _isSaved,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _showDiscardDialog(context);
+      },
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        appBar: AppBar(
+          backgroundColor: colors.surface,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: colors.onSurface),
+            onPressed: () async {
+              if (!_isDirty || _isSaved) {
+                Navigator.maybePop(context);
+              } else {
+                await _showDiscardDialog(context);
+              }
+            },
           ),
-        ],
+          title: Text(
+            l10n.txteditProfile,
+            style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
+          ),
+        ),
+        body: Stack(
+          children: [
+            _buildMeshBackground(),
+            SafeArea(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        child: Column(
+                          children: [
+                            FadeUpWidget(
+                                delay: 0, child: _buildAvatarSection()),
+                            const SizedBox(height: 32),
+                            FadeUpWidget(
+                              delay: 100,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const EditProfileSectionHeader(
+                                    title: 'PERSONAL INFORMATION',
+                                  ),
+                                  EditProfileTextField(
+                                    key: const Key('editFullNameField'),
+                                    label: 'Full Name',
+                                    controller: _nameController,
+                                    icon: Icons.person_outline,
+                                    validator: (v) {
+                                      if (v == null || v.trim().length < 2) {
+                                        return 'Enter a valid name (at least 2 characters)';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editPhoneField'),
+                                    label: 'Phone Number',
+                                    controller: _phoneController,
+                                    icon: Icons.phone_outlined,
+                                    keyboardType: TextInputType.phone,
+                                    readOnly: true,
+                                    suffixIcon: Icon(
+                                      Icons.lock_outline,
+                                      size: 16,
+                                      color: colors.outlineVariant,
+                                    ),
+                                    helperText:
+                                        'Primary phone is verified and cannot be edited directly.',
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editEmailField'),
+                                    label: 'Email Address',
+                                    controller: _emailController,
+                                    icon: Icons.email_outlined,
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (v) {
+                                      if (v != null &&
+                                          v.trim().isNotEmpty &&
+                                          !RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$')
+                                              .hasMatch(v.trim())) {
+                                        return 'Enter a valid email address';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editFatherNameField'),
+                                    label: 'Father\'s Name',
+                                    controller: _fatherNameController,
+                                    icon: Icons.family_restroom_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editMotherNameField'),
+                                    label: 'Mother\'s Name',
+                                    controller: _motherNameController,
+                                    icon: Icons.family_restroom_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileDateField(
+                                    key: const Key('editDobField'),
+                                    label: 'Date of Birth',
+                                    controller: _dobController,
+                                    onTap: () async {
+                                      final firstDate = DateTime(1940);
+                                      final lastDate = DateTime.now().subtract(
+                                        const Duration(days: 18 * 365),
+                                      );
+                                      final parsed =
+                                          (_dobController.text.isNotEmpty
+                                                  ? DateTime.tryParse(
+                                                      _dobController.text)
+                                                  : null) ??
+                                              DateTime(2000, 1, 1);
+                                      final initialDate =
+                                          parsed.isBefore(firstDate)
+                                              ? firstDate
+                                              : (parsed.isAfter(lastDate)
+                                                  ? lastDate
+                                                  : parsed);
+
+                                      final picked = await showDatePicker(
+                                        context: context,
+                                        initialDate: initialDate,
+                                        firstDate: firstDate,
+                                        lastDate: lastDate,
+                                      );
+                                      if (picked != null) {
+                                        setState(() {
+                                          _dobController.text =
+                                              '${picked.year}-${_twoDigits(picked.month)}-${_twoDigits(picked.day)}';
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editAddressField'),
+                                    label: 'Current Address',
+                                    controller: _addressController,
+                                    icon: Icons.home_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editEmergencyContactField'),
+                                    label: 'Emergency Contact Number',
+                                    controller: _emergencyContactController,
+                                    icon: Icons.emergency_outlined,
+                                    keyboardType: TextInputType.phone,
+                                    validator: (v) {
+                                      final clean =
+                                          v?.replaceAll(RegExp(r'\D'), '') ??
+                                              '';
+                                      if (clean.isNotEmpty &&
+                                          clean.length != 10) {
+                                        return 'Emergency contact must be 10 digits';
+                                      }
+                                      final rider =
+                                          ref.read(riderProvider).rider;
+                                      final riderPhone = rider != null
+                                          ? rider.phone
+                                              .replaceAll(RegExp(r'\D'), '')
+                                          : '';
+                                      if (clean.isNotEmpty &&
+                                          clean == riderPhone) {
+                                        return 'Emergency contact cannot be your own number';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(left: 4, top: 4),
+                                    child: Text(
+                                      'Used to contact you in case of an emergency.',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        color: AppColors.of(context)
+                                            .onSurfaceVariant,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            FadeUpWidget(
+                              delay: 300,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const EditProfileSectionHeader(
+                                    title: 'GUARANTOR DETAILS',
+                                  ),
+                                  EditProfileTextField(
+                                    key: const Key('editGuarantorNameField'),
+                                    label: 'Guarantor Name',
+                                    controller: _gNameController,
+                                    icon: Icons.shield_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildGuarantorPhoneField(),
+                                  const SizedBox(height: 16),
+                                  EditProfileTextField(
+                                    key: const Key('editGuarantorAddressField'),
+                                    label: 'Guarantor Address',
+                                    controller: _gAddressController,
+                                    icon: Icons.home_outlined,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            const FadeUpWidget(
+                              delay: 500,
+                              child: EditProfileAdminNote(),
+                            ),
+                            const SizedBox(height: 32),
+                            FadeUpWidget(
+                              delay: 600,
+                              child: ElevatedButton(
+                                key: const Key('submitProfileButton'),
+                                onPressed: (_isSaving || !_isDirty)
+                                    ? null
+                                    : _saveProfile,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor:
+                                      AppColors.primary.withValues(alpha: 0.4),
+                                  disabledForegroundColor:
+                                      Colors.white.withValues(alpha: 0.6),
+                                  minimumSize: const Size(double.infinity, 56),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        AppRadius.radiusModal),
+                                  ),
+                                  elevation: _isDirty ? 8 : 0,
+                                  shadowColor:
+                                      AppColors.primary.withValues(alpha: 0.4),
+                                ),
+                                child: _isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Text(
+                                        'SUBMIT FOR APPROVAL',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 48),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -622,56 +746,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              padding: const EdgeInsets.all(Spacing.md2),
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors.outlineVariant.withValues(alpha: 0.5),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.arrow_back,
-                size: 18,
-                color: colors.onSurface,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'Edit Profile',
-            style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAvatarSection() {
     final colors = AppColors.of(context);
     final rider = ref.watch(riderProvider).rider;
     String? getAvatarUrl() {
-      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty) {
+      final photo = rider?.profilePhoto;
+      if (photo == null || photo.isEmpty) {
         return null;
       }
-      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
+      if (photo.startsWith('http')) return photo;
       final baseUrl = ApiClient().baseUrl;
-      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+      return '$baseUrl/api/files/${photo.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
     final avatarUrl = getAvatarUrl();
@@ -834,7 +919,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: _isSendingGOtp ? null : _sendGuarantorOtp,
+                  onPressed: (_isSendingGOtp || _resendCooldown > 0)
+                      ? null
+                      : _sendGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     disabledBackgroundColor: AppColors.primaryLightBlue,
@@ -853,7 +940,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                         )
                       : Text(
-                          _isGOtpSent ? 'Resend' : 'Send OTP',
+                          _resendCooldown > 0
+                              ? '${_resendCooldown}s'
+                              : (_isGOtpSent ? 'Resend' : 'Send OTP'),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,

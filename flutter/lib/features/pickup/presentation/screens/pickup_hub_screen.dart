@@ -17,6 +17,7 @@ import 'package:voltium_rider/features/pickup/presentation/widgets/pickup_widget
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -542,68 +543,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   // ── Toasts ─────────────────────────────────────────────────────────────────
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                msg,
-                style: AppTypography.bodyMedium
-                    .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
-                    .copyWith(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    Toast.error(context, msg);
   }
 
   void _showSuccess(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                msg,
-                style: AppTypography.bodyMedium
-                    .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
-                    .copyWith(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md)),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    Toast.success(context, msg);
   }
 
   Future<void> _sendEmergencyOtp() async {
@@ -781,7 +726,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         _selectedHubId!,
         _selectedVehicleId!,
         _selectedTeamLeader,
-        _emergencyContactController.text.replaceAll(RegExp(r'\\D'), ''),
+        _emergencyContactController.text.replaceAll(RegExp(r'\D'), ''),
         _photos['front']!.photoUrl,
         _photos['back']!.photoUrl,
         _photos['left']!.photoUrl,

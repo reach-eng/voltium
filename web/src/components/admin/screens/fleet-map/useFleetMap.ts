@@ -71,6 +71,8 @@ export function useFleetMap() {
   }, [fetchData]);
 
   useEffect(() => {
+    // Note: FLEET_POLL_INTERVAL_MS is configured to align with the 5s server cache TTL behavior,
+    // ensuring we don't over-fetch while still getting fresh data as soon as the cache expires.
     intervalRef.current = setInterval(() => fetchData(true), FLEET_POLL_INTERVAL_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);

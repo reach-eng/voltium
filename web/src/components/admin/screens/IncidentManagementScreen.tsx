@@ -5,7 +5,7 @@ import {
   useIncidents,
   IncidentFiltersBar,
   IncidentTable,
-  IncidentDetailSheet,
+  IncidentDetailDialog,
   CreateIncidentDialog,
 } from './incident-management';
 
@@ -26,6 +26,8 @@ export default function IncidentManagementScreen() {
           setStatusFilter={incidentState.setStatusFilter}
           typeFilter={incidentState.typeFilter}
           setTypeFilter={incidentState.setTypeFilter}
+          severityFilter={incidentState.severityFilter}
+          setSeverityFilter={incidentState.setSeverityFilter}
           search={incidentState.search}
           setSearch={incidentState.setSearch}
           incidentTypes={incidentState.incidentTypes}
@@ -62,8 +64,8 @@ export default function IncidentManagementScreen() {
           onCreate={incidentState.handleCreate}
         />
 
-        {/* Detail View Sheet */}
-        <IncidentDetailSheet
+        {/* Detail View Dialog */}
+        <IncidentDetailDialog
           open={incidentState.detailOpen}
           onOpenChange={incidentState.setDetailOpen}
           selectedIncident={incidentState.selectedIncident}

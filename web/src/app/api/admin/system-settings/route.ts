@@ -28,6 +28,12 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     return errors.unauthorized('Unauthorized');
   }
 
+  // P2-15: the GET previously had NO permission check — any admin (including
+  // READ_ONLY) could read which secrets are configured. Align with the PUT.
+  if (!hasPermission(session, 'settings_manage')) {
+    return errors.forbidden('Forbidden: settings_manage permission required');
+  }
+
   // Fetch editable settings from DB
   const systemSettings = await db.systemSetting.findMany({
     orderBy: [{ category: 'asc' }, { key: 'asc' }],
@@ -57,20 +63,30 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   }
 
   // Build read-only status from env
-  const readOnly = {
+  const readOnly: Record<string, string> = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     APP_ENV: process.env.APP_ENV || 'development',
     DATA_MODE: process.env.DATA_MODE || 'local_laptop',
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER || 'local',
-    DATABASE_HOST: (process.env.DATABASE_URL || '').includes('localhost') ? 'localhost' : 'remote',
     ENABLE_TEST_OTP: process.env.ENABLE_TEST_OTP === 'true' ? 'enabled' : 'disabled',
     ENABLE_DEV_ADMIN_LOGIN: process.env.ENABLE_DEV_ADMIN_LOGIN === 'true' ? 'enabled' : 'disabled',
-    DATABASE_URL_CONFIGURED: process.env.DATABASE_URL ? 'true' : 'false',
-    JWT_SECRET_CONFIGURED: process.env.JWT_SECRET ? 'true' : 'false',
-    SESSION_SECRET_CONFIGURED: process.env.SESSION_SECRET ? 'true' : 'false',
   };
 
-  return withCacheHeaders(success({ editable, readOnly }), 60);
+  // P2-15/P2-16: "which secrets are configured" and "is the DB local or
+  // remote" are infrastructure fingerprints — useful to a SUPER_ADMIN
+  // debugging the box, useless (and leaky) to everyone else.
+  if (session.adminRole === 'SUPER_ADMIN') {
+    readOnly.DATABASE_HOST = (process.env.DATABASE_URL || '').includes('localhost')
+      ? 'localhost'
+      : 'remote';
+    readOnly.DATABASE_URL_CONFIGURED = process.env.DATABASE_URL ? 'true' : 'false';
+    readOnly.JWT_SECRET_CONFIGURED = process.env.JWT_SECRET ? 'true' : 'false';
+    readOnly.SESSION_SECRET_CONFIGURED = process.env.SESSION_SECRET ? 'true' : 'false';
+  }
+
+  // P3-15: config pages must never serve stale data — the browser cache made
+  // a PUT invisible for up to 60s. Zero cache here.
+  return withCacheHeaders(success({ editable, readOnly }), 0);
 });
 
 export const PUT = withApiHandler(async (request: NextRequest) => {
@@ -84,8 +100,8 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   // role name lives in session.adminRole). Use hasPermission() which
   // resolves the right field and respects the policy matrix in
   // permissions-roles.ts.
-  if (!hasPermission(session, 'settings_manage')) {
-    return errors.forbidden('Forbidden: settings_manage permission required');
+  if (!hasPermission(session, 'settings_manage') || session.adminRole !== 'SUPER_ADMIN') {
+    return errors.forbidden('Forbidden: Super Admin privileges required');
   }
 
   const body = await request.json();
@@ -108,7 +124,12 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   // Guard: if setting is a secret and value hasn't changed, skip update
   // This prevents saving the masked placeholder "[CONFIGURED]" as the actual value
   if (existing.isSecret && value === '[CONFIGURED]') {
-    return success({ key, value }, 'unchanged');
+    // P2-17: tell the admin the request was a no-op — the old 'unchanged'
+    // message looked like a silent success and invited re-submits.
+    return success(
+      { key, value },
+      'Setting unchanged — it is already configured'
+    );
   }
 
   // Update the setting

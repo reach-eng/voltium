@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/widgets/pending_uploads_pill.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -51,6 +53,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     final proceed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.of(context).card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -114,7 +117,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
+            // T-66: hardcoded English button label. Localised
+            // via the existing `txtcancel` ARB key.
+            child: Text(AppLocalizations.of(context)!.txtcancel,
                 style:
                     TextStyle(color: AppColors.of(context).onSurfaceVariant)),
           ),
@@ -127,8 +132,13 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
-            child: const Text('Proceed',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            // T-66: hardcoded English button label. Localised
+            // via the existing `txtproceedToPayment` ARB key
+            // (the closest semantic match — the rider proceeds
+            // to the payment step).
+            child: Text(
+                AppLocalizations.of(context)!.txtproceedToPayment,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -376,6 +386,10 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   _buildAmountCard(),
                   const SizedBox(height: 16),
                   _buildPaymentMethodSelector(),
+                  if (_selectedPaymentMode == PaymentMode.upi) ...[
+                    const SizedBox(height: 16),
+                    _buildUpiDetailsCard(),
+                  ],
                   if (_selectedPaymentMode == PaymentMode.instant) ...[
                     const SizedBox(height: 16),
                     _buildInstantBreakdownCard(),
@@ -462,7 +476,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               const PendingUploadsPill(),
             ],
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -475,7 +489,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'Upload Proof',
             style: AppTypography.displayMedium
@@ -486,11 +500,177 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     );
   }
 
-  Widget _buildAmountCard() {
+  Widget _buildUpiDetailsCard() {
+    final colors = AppColors.of(context);
+    const companyUpiId = 'payments.voltium@icici';
+
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+        border: Border.all(
+          color: AppColors.primaryLight.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.qr_code_2_rounded,
+                  color: AppColors.primaryLight,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pay via UPI',
+                      style: AppTypography.titleSmall
+                          .copyWith(color: colors.onSurface),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Transfer to Voltium official UPI ID',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: colors.onSurfaceMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // UPI ID copy box
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VOLTIUM UPI ID',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: colors.onSurfaceMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      SelectableText(
+                        companyUpiId,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  key: const Key('copyUpiIdButton'),
+                  onPressed: () {
+                    Clipboard.setData(const ClipboardData(text: companyUpiId));
+                    HapticFeedback.lightImpact();
+                    Toast.success(
+                      context,
+                      AppLocalizations.of(context)!
+                          .txtupiIdCopiedToClipboard,
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  color: AppColors.primaryLight,
+                  tooltip: 'Copy UPI ID',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // UPI Reference / UTR Number input
+          Text(
+            'UPI Reference / UTR Number',
+            style: AppTypography.labelMedium.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            key: const Key('upiRefField'),
+            controller: _upiRefCtrl,
+            keyboardType: TextInputType.text,
+            textCapitalization: TextCapitalization.characters,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+              LengthLimitingTextInputFormatter(22),
+            ],
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter 12-digit UTR / Ref (optional)',
+              hintStyle: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: colors.onSurfaceMuted,
+              ),
+              prefixIcon: Icon(
+                Icons.tag_rounded,
+                size: 18,
+                color: colors.onSurfaceMuted,
+              ),
+              filled: true,
+              fillColor: colors.surface,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide(color: colors.outlineVariant),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide:
+                    const BorderSide(color: AppColors.primaryLight, width: 1.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountCard() {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
       ),
@@ -505,10 +685,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 style: AppTypography.bodySmall
                     .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(
-                        color: AppColors.of(context).onSurfaceVariant,
-                        letterSpacing: 0.5),
+                        color: colors.onSurfaceVariant, letterSpacing: 0.5),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                 style: GoogleFonts.plusJakartaSans(
@@ -559,7 +738,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               size: 20,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,7 +748,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   style: AppTypography.titleSmall
                       .copyWith(color: colors.onSurface),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
                   'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
                   style: GoogleFonts.plusJakartaSans(
@@ -609,7 +788,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   color: colors.onSurface,
                   size: 20,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Upload Photo Proof',
@@ -621,7 +800,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   TextButton(
                     key: const Key('changeProofButton'),
                     onPressed: _showImageSourceSheet,
-                    child: const Text('Change Photo'),
+                    // T-66: hardcoded English button label. Localised
+                    // via the existing `txtchangePhoto` ARB key.
+                    child: Text(AppLocalizations.of(context)!.txtchangePhoto),
                   ),
               ],
             ),
@@ -631,9 +812,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 36),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.outlineVariant),
+                  border: Border.all(color: colors.outlineVariant),
                 ),
                 child: Column(
                   children: [
@@ -642,17 +823,17 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                       color: AppColors.primaryLight,
                       size: 34,
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(
                       'Tap to upload photo',
                       style: AppTypography.labelLarge
-                          .copyWith(color: AppColors.of(context).onSurface),
+                          .copyWith(color: colors.onSurface),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Camera or gallery',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceVariant,
+                        color: colors.onSurfaceVariant,
                         fontSize: 14,
                       ),
                     ),
@@ -754,7 +935,11 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Top-Up Amount (Added to Wallet)',
+              // T-66: hardcoded English receipt line. Localised
+              // via the new `txttopUpAmountAddedToWallet` ARB key.
+              Text(
+                  AppLocalizations.of(context)!
+                      .txttopUpAmountAddedToWallet,
                   style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
                       fontSize: 14)),
@@ -790,7 +975,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total Payable',
+              // T-66: hardcoded English receipt line. Localised
+              // via the new `txttotalPayable` ARB key.
+              Text(AppLocalizations.of(context)!.txttotalPayable,
                   style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       color: AppColors.of(context).onSurface,
@@ -808,10 +995,11 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   }
 
   Widget _buildNoteCard() {
+    final colors = AppColors.of(context);
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.warningSurface, // Pale yellow
+        color: colors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: RichText(
@@ -819,12 +1007,15 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             height: 1.5,
-            color: AppColors.onSurface, // Amber text color
+            color: colors.onSurfaceVariant,
           ),
           children: [
             TextSpan(
               text: 'Note: ',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                color: colors.onSurface,
+              ),
             ),
             const TextSpan(
               text:
@@ -843,6 +1034,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     final fee =
         isRiderBearer ? (widget.amount * (_extraFeePercent / 100)).round() : 0;
     final total = widget.amount + fee;
+    final colors = AppColors.of(context);
 
     return GestureDetector(
       onTap: canSubmit ? _submit : null,
@@ -852,7 +1044,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         height: 60,
         decoration: BoxDecoration(
           gradient: canSubmit ? AppGradients.primary : null,
-          color: canSubmit ? null : AppColors.outlineVariant,
+          color: canSubmit ? null : colors.outlineVariant,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: canSubmit
               ? [
@@ -876,11 +1068,11 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 )
               : Text(
                   isInstant
-                      ? 'Proceed to Instant Pay (₹$total)'
+                       ? 'Proceed to Instant Pay (₹$total)'
                       : 'Submit Proof',
                   style: AppTypography.titleSmall.copyWith(
                       letterSpacing: 0.5,
-                      color: canSubmit ? Colors.white : AppColors.slate400),
+                      color: canSubmit ? Colors.white : colors.onSurfaceMuted),
                 ),
         ),
       ),

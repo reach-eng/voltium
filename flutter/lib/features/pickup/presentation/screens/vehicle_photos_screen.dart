@@ -7,7 +7,8 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/pending_uploads_pill.dart';
 
 class VehiclePhotosScreen extends ConsumerWidget {
-  const VehiclePhotosScreen({super.key});
+  final VoidCallback? onBack;
+  const VehiclePhotosScreen({super.key, this.onBack});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,8 +24,10 @@ class VehiclePhotosScreen extends ConsumerWidget {
       {'label': 'Photo with Vehicle', 'url': rider?.pickupPhotoWithVehicle},
     ];
 
+    final colors = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -89,6 +92,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -97,19 +101,26 @@ class VehiclePhotosScreen extends ConsumerWidget {
           Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.maybePop(context),
+                onTap: () {
+                  if (onBack != null) {
+                    onBack!();
+                  } else if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: colors.card,
                     shape: BoxShape.circle,
+                    border: Border.all(color: colors.outlineVariant),
                     boxShadow: AppShadows.glass,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     size: 18,
-                    color: AppColors.onSurface,
+                    color: colors.onSurface,
                   ),
                 ),
               ),
@@ -118,7 +129,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
                 'Vehicle Photos',
                 style: AppTypography.titleLarge
                     .copyWith(fontSize: 21)
-                    .copyWith(color: AppColors.onSurface),
+                    .copyWith(color: colors.onSurface),
               ),
             ],
           ),
@@ -129,11 +140,13 @@ class VehiclePhotosScreen extends ConsumerWidget {
   }
 
   Widget _buildVehicleInfoCard(BuildContext context, String vehicle) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
         boxShadow: AppShadows.card,
       ),
       child: Row(
@@ -142,7 +155,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.of(context).primarySurface,
+              color: colors.primarySurface,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
@@ -151,7 +164,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
               size: 24,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,13 +172,13 @@ class VehiclePhotosScreen extends ConsumerWidget {
                 Text(
                   'ASSIGNED VEHICLE',
                   style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.onSurfaceVariant, letterSpacing: 1.0),
+                      color: colors.onSurfaceVariant, letterSpacing: 1.0),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   vehicle,
                   style: AppTypography.titleSmall
-                      .copyWith(color: AppColors.onSurface),
+                      .copyWith(color: colors.onSurface),
                 ),
               ],
             ),
@@ -177,6 +190,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
 
   Widget _buildPhotosGrid(
       BuildContext context, List<Map<String, dynamic>> photos) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -184,7 +198,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
           'PICKUP PHOTOS',
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w800)
-              .copyWith(color: AppColors.onSurface, letterSpacing: 1.2),
+              .copyWith(color: colors.onSurface, letterSpacing: 1.2),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -207,8 +221,9 @@ class VehiclePhotosScreen extends ConsumerWidget {
                   : null,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.of(context).iconBackground,
+                  color: colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: colors.outlineVariant),
                   image: url != null && url.isNotEmpty
                       ? DecorationImage(
                           image: ResizeImage(
@@ -224,9 +239,9 @@ class VehiclePhotosScreen extends ConsumerWidget {
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.camera_alt_outlined,
-                            color: AppColors.onSurfaceVariant,
+                            color: colors.onSurfaceMuted,
                             size: 32,
                           ),
                           const SizedBox(height: 8),
@@ -234,7 +249,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
                             label,
                             style: AppTypography.bodySmall
                                 .copyWith(fontWeight: FontWeight.w600)
-                                .copyWith(color: AppColors.onSurfaceVariant),
+                                .copyWith(color: colors.onSurfaceVariant),
                           ),
                         ],
                       )

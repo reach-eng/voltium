@@ -3,9 +3,11 @@ import { VehicleStatus, Prisma } from '@prisma/client';
 import { getCachedVehicle, invalidateVehicleCache } from '@/lib/server-cache';
 
 export const vehicleRepository = {
+  // P1.6: soft-deleted vehicles (deletedAt set) must never reappear in lists.
   async findAll(params?: { hubId?: string; status?: VehicleStatus }) {
     return db.vehicle.findMany({
       where: {
+        deletedAt: null,
         ...(params?.hubId ? { hubId: params.hubId } : {}),
         ...(params?.status ? { status: params.status } : {}),
       },
@@ -13,12 +15,23 @@ export const vehicleRepository = {
     });
   },
 
+  // P2.8: callers pass either the internal cuid OR the public `vehicleId`
+  // string — resolve both so the lookup succeeds regardless of which
+  // identifier the caller has (cache keys still key on the passed param,
+  // which only causes mild duplication, never wrong results).
   async findById(vehicleId: string) {
-    return getCachedVehicle(vehicleId, () => db.vehicle.findUnique({ where: { id: vehicleId } }));
+    return getCachedVehicle(vehicleId, () =>
+      db.vehicle.findFirst({
+        where: { OR: [{ id: vehicleId }, { vehicleId }], deletedAt: null },
+      })
+    );
   },
 
   async findByHubId(hubId: string) {
-    return db.vehicle.findMany({ where: { hubId }, orderBy: { vehicleNumber: 'asc' } });
+    return db.vehicle.findMany({
+      where: { hubId, deletedAt: null },
+      orderBy: { vehicleNumber: 'asc' },
+    });
   },
 
   async create(data: Prisma.VehicleCreateInput) {
@@ -87,8 +100,14 @@ export const vehicleRepository = {
     return result;
   },
 
+  // P1.6/P2.5: bulk delete was a HARD deleteMany while the single-delete path
+  // retired the vehicle — same action, opposite durability. Unify on soft
+  // delete: set deletedAt + RETIRED; every read path filters deletedAt: null.
   async bulkDelete(ids: string[]) {
-    const result = await db.vehicle.deleteMany({ where: { id: { in: ids } } });
+    const result = await db.vehicle.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), status: 'RETIRED' },
+    });
     for (const id of ids) invalidateVehicleCache(id);
     return result;
   },

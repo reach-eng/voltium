@@ -6,7 +6,7 @@ import 'dart:io';
 /// less than 44.0 dp (e.g. `width: 20`, `height: 20` inside GestureDetector).
 ///
 /// Ensures all tappable targets meet the minimum 44×44 dp accessibility rule.
-const int kTouchTargetViolationCeiling = 25;
+const int kTouchTargetViolationCeiling = 15;
 
 void main() {
   final libDir = Directory('lib');
@@ -31,11 +31,12 @@ void main() {
       if (line.contains('//')) continue;
       
       if (wrapperRegex.hasMatch(line)) {
-        // Check if next 5 lines contain an interactive widget call
+        // Check if next 5 lines contain an interactive widget as child
         final window = lines.skip(i).take(6).join(' ');
-        if (window.contains('GestureDetector') ||
-            window.contains('InkWell') ||
-            window.contains('IconButton')) {
+        if (window.contains('child: GestureDetector') ||
+            window.contains('child: InkWell') ||
+            window.contains('child: IconButton') ||
+            (window.contains('GestureDetector') && line.contains('child:'))) {
           violations++;
         }
       }

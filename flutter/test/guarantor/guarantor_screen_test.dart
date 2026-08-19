@@ -14,8 +14,8 @@ void main() {
   Widget buildTestApp({required Widget child}) {
     return ProviderScope(
       overrides: [
-        localeProviderRef.overrideWith((ref) => LocaleProvider()),
-        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+        localeProviderRef.overrideWith(() => LocaleProvider()),
+        themeProviderRef.overrideWith(() => ThemeProvider()),
         appProvider.overrideWith((ref) => AppProvider()),
       ],
       child: MaterialApp(

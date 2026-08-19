@@ -80,16 +80,25 @@ describe('rentalRepository', () => {
 
   describe('startRental', () => {
     it('transitions to ACTIVE and sets vehicle details', async () => {
+      // PR-P3.2: teamLeaderId is an FK column — the referenced TeamLeader
+      // row must exist or the write violates riders_teamLeaderId_fkey.
+      const tl = await testDb.teamLeader.create({
+        data: {
+          name: 'TL Alice',
+          phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        },
+      });
+
       await testDb.rider.update({
         where: { id: riderDbId },
         data: { lifecycleStatus: 'PLAN_SELECTED', currentPlan: planId },
       });
 
-      const rider = await rentalRepository.startRental(riderDbId, vehicleId, 'hub-1', 'leader-1');
+      const rider = await rentalRepository.startRental(riderDbId, vehicleId, 'hub-1', tl.id);
       expect(rider?.lifecycleStatus).toBe('ACTIVE');
       expect(rider?.vehicleId).toBe(vehicleId);
       expect(rider?.pickupHub).toBe('hub-1');
-      expect(rider?.teamLeader).toBe('leader-1');
+      expect(rider?.teamLeaderId).toBe(tl.id);
       expect(rider?.planStartDate).not.toBeNull();
     });
   });

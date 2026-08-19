@@ -28,6 +28,28 @@ export function useDashboard() {
   const [sosCount, setSosCount] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const fetchAdminNames = useCallback(async (logs: AuditLogEntry[]) => {
+    try {
+      const actorIds = Array.from(
+        new Set(logs.map((l) => l.actorId).filter((id): id is string => Boolean(id)))
+      );
+      if (actorIds.length === 0) return;
+
+      const res = await fetch(`/api/admin/admins/lookup?ids=${encodeURIComponent(actorIds.join(','))}`);
+      if (res.ok) {
+        const json = await res.json();
+        const admins = json.data || [];
+        const map = new Map<string, string>();
+        for (const a of admins) {
+          if (a.id && a.name) map.set(a.id, a.name);
+        }
+        setAdminNames(map);
+      }
+    } catch {
+      /* non-critical */
+    }
+  }, []);
+
   const fetchData = useCallback(async (isBackground = false) => {
     if (!isBackground) setRefreshing(true);
     try {
@@ -64,7 +86,9 @@ export function useDashboard() {
       }
       if (logsRes?.ok) {
         const logsJson = await logsRes.json();
-        setAuditLogs(Array.isArray(logsJson.data) ? logsJson.data : []);
+        const logs = Array.isArray(logsJson.data) ? logsJson.data : [];
+        setAuditLogs(logs);
+        fetchAdminNames(logs);
       }
       setLastUpdated(new Date());
     } catch (error) {
@@ -73,29 +97,11 @@ export function useDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
-
-  const fetchAdminNames = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/admins?limit=50');
-      if (res.ok) {
-        const json = await res.json();
-        const admins = json.data || [];
-        const map = new Map<string, string>();
-        for (const a of admins) {
-          if (a.id && a.name) map.set(a.id, a.name);
-        }
-        setAdminNames(map);
-      }
-    } catch {
-      /* non-critical */
-    }
-  }, []);
+  }, [fetchAdminNames]);
 
   useEffect(() => {
     fetchData();
-    fetchAdminNames();
-  }, [fetchData, fetchAdminNames]);
+  }, [fetchData]);
 
   useEffect(() => {
     intervalRef.current = setInterval(

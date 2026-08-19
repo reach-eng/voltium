@@ -15,8 +15,18 @@
 //   R4.4 — AuthRepositoryImpl.verifyOtp returns the new AppState
 //   R4.5 — PollingManager instances are scoped to specific states
 //
-// Until then, `lib/app/router.dart` continues to use the legacy
-// AuthState enum. Both will coexist during the migration window.
+// PR-ONBOARDING-FLOW-2026-08-13: until the migration above lands, this
+// sealed class is **documentational only**. The router in
+// `lib/app/router.dart` continues to use the legacy `AuthState` enum
+// and never calls `isAllowedTransition`. The transition matrix below
+// is the forward-looking guard that the R4 work will wire in; today
+// the only consumer is the unit tests in
+// `test/core/navigation/state_machine_transition_matrix_test.dart`.
+// The conversion helpers `appStateFromAuthState` and
+// `authStateFromAppState` are used by the `verifyOtp` flow to derive
+// the post-OTP target; the router does not round-trip through
+// `AppState` for live navigation. Both will coexist during the
+// migration window.
 
 import 'package:voltium_rider/app/app_state.dart';
 
@@ -79,6 +89,15 @@ class PreDashboard extends AppState {
   const PreDashboard();
 }
 
+// PR-ONBOARDING-FLOW-2026-08-11: async wait state in the new active
+// onboarding path. Returned when a rider is in PICKUP_SCHEDULED (rank
+// 10) but not yet ACTIVE — they have submitted the pickup form and are
+// waiting for admin to assign a vehicle and approve. Replaces the
+// synchronous pre-dashboard wait at the tail of the new flow.
+class HangTight extends AppState {
+  const HangTight();
+}
+
 class ActiveDashboard extends AppState {
   const ActiveDashboard();
 }
@@ -114,6 +133,7 @@ bool _isAllowed(AppState from, AppState to) {
         to is PermissionsGate ||
         to is AuthFlow ||
         to is PreDashboard ||
+        to is HangTight ||
         to is ActiveDashboard;
   }
 
@@ -133,20 +153,31 @@ bool _isAllowed(AppState from, AppState to) {
     return to is AuthFlow ||
         to is Onboarding ||
         to is PreDashboard ||
+        to is HangTight ||
         to is ActiveDashboard ||
         to is AccountClosed;
   }
 
-  // Onboarding: any sub-step is fine; advancing to PreDashboard is the
-  // happy path. Going back to AuthFlow is not allowed.
+  // Onboarding: any sub-step is fine; advancing to PreDashboard or
+  // HangTight is the happy path (older flow vs new active flow). Going
+  // back to AuthFlow is not allowed.
   if (from is Onboarding) {
-    return to is Onboarding || to is PreDashboard;
+    return to is Onboarding || to is PreDashboard || to is HangTight;
   }
 
   // Pre-dashboard: can advance to ActiveDashboard, or go BACK to
-  // Onboarding (user-cancelled-plan flow).
+  // Onboarding (user-cancelled-plan flow). HangTight is a sibling
+  // state (new flow's wait surface) — not a transition from pre-dash.
   if (from is PreDashboard) {
     return to is ActiveDashboard || to is Onboarding;
+  }
+
+  // PR-ONBOARDING-FLOW-2026-08-11: HangTight is the new flow's wait
+  // surface. Forward to ActiveDashboard when the rider becomes active;
+  // back to Onboarding on re-KYC / replacement; AccountClosed on admin
+  // termination. Polling pauses when leaving.
+  if (from is HangTight) {
+    return to is ActiveDashboard || to is Onboarding || to is AccountClosed;
   }
 
   // Active dashboard: can go to AccountClosed, or back to Onboarding
@@ -176,6 +207,7 @@ List<AppState> allowedNextStates(AppState from) {
     const Onboarding(OnboardingStep.deposit),
     const Onboarding(OnboardingStep.planSelect),
     const PreDashboard(),
+    const HangTight(),
     const ActiveDashboard(),
     const AccountClosed(),
   ];
@@ -198,10 +230,16 @@ AppState appStateFromAuthState(AuthState authState) {
     case AuthState.otp:
       return const AuthFlow(AuthStep.otpVerify);
     case AuthState.userForm:
+    case AuthState.kycPreflight:
       return const Onboarding(OnboardingStep.kycSubmit);
     case AuthState.guarantorForm:
       return const Onboarding(OnboardingStep.guarantor);
     case AuthState.choosePlan:
+    // PR-ONBOARDING-FLOW-2026-08-13: the Enter Amount screen
+    // (topUpAmount) is part of the planSelect onboarding sub-flow.
+    // The modern sealed-class state doesn't have a dedicated
+    // `deposit` step — the rider-facing UI maps to planSelect.
+    case AuthState.topUpAmount:
       return const Onboarding(OnboardingStep.planSelect);
     case AuthState.pickupHub:
     case AuthState.pickupVerification:
@@ -213,10 +251,15 @@ AppState appStateFromAuthState(AuthState authState) {
     case AuthState.intent:
     case AuthState.planSuccess:
     case AuthState.tlDetails:
+    case AuthState.rentalDetails:
     case AuthState.endRental:
     case AuthState.faq:
     case AuthState.vehiclePhotos:
-    case AuthState.topUpAmount:
+    // PR-ONBOARDING-FLOW-2026-08-13: topUpAmount is in the
+    // Onboarding(planSelect) case above (it's the Enter Amount
+    // screen in the active path). The remaining top-up screens
+    // (topUpUpi / topUpProof / topUpReceipt) are dashboard top-up
+    // sub-flows that map to PreDashboard as catch-all.
     case AuthState.topUpUpi:
     case AuthState.topUpProof:
     case AuthState.topUpReceipt:
@@ -224,6 +267,8 @@ AppState appStateFromAuthState(AuthState authState) {
     case AuthState.legalPage:
     case AuthState.myDocuments:
       return const PreDashboard();
+    case AuthState.hangTight:
+      return const HangTight();
     case AuthState.accountClosed:
       return const AccountClosed();
   }
@@ -239,9 +284,18 @@ AuthState authStateFromAppState(AppState appState) {
     AuthFlow(step: AuthStep.otpVerify) => AuthState.otp,
     Onboarding(step: OnboardingStep.kycSubmit) => AuthState.userForm,
     Onboarding(step: OnboardingStep.guarantor) => AuthState.guarantorForm,
-    Onboarding(step: OnboardingStep.planSelect) => AuthState.choosePlan,
+    // PR-ONBOARDING-FLOW-2026-08-13: the active path maps `planSelect`
+    // to the Enter Amount screen (topUpAmount), not the older
+    // `choosePlan` screen. The legacy `choosePlan` is preserved in
+    // the AuthState enum for any admin tool that still routes a
+    // rider there, but the modern state machine is the source of
+    // truth and uses `topUpAmount`. This makes the round-trip
+    // `topUpAmount → Onboarding(planSelect) → topUpAmount` consistent
+    // (previously it drifted to `choosePlan`).
+    Onboarding(step: OnboardingStep.planSelect) => AuthState.topUpAmount,
     Onboarding(step: OnboardingStep.deposit) => AuthState.pickupHub,
     PreDashboard() => AuthState.preDashboard,
+    HangTight() => AuthState.hangTight,
     ActiveDashboard() => AuthState.dashboard,
     AccountClosed() => AuthState.accountClosed,
   };

@@ -1,6 +1,9 @@
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -62,7 +65,9 @@ class EmergencyContactsScreen extends ConsumerWidget {
               onPressed: () => _showAddContactDialog(context, ref),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add),
-              label: const Text('Add Contact'),
+              // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded
+              // English FAB label. Localised via `txtaddContact`.
+              label: Text(AppLocalizations.of(context)!.txtaddContact),
             )
           : null,
     );
@@ -112,10 +117,14 @@ class EmergencyContactsScreen extends ConsumerWidget {
     final phoneController = TextEditingController();
     String relationship = 'Other';
 
+    // LANGUAGE-AUDIT (2026-08-16) #5: dialog title + button labels
+    // + form labels all use existing `txt*` ARB keys.
+    final l10n = AppLocalizations.of(context)!;
+
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Emergency Contact'),
+        title: Text(l10n.txtaddEmergencyContact),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -143,7 +152,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l10n.txtcancel),
           ),
           FilledButton(
             onPressed: () {
@@ -151,7 +160,12 @@ class EmergencyContactsScreen extends ConsumerWidget {
                   phoneController.text.isNotEmpty) {
                 ref.read(emergencyContactsService.notifier).addContact(
                       EmergencyContact(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        // PR-VER-2026-08-07 (EMERGENCY P1-2): two contacts added
+                        // within the same millisecond collided on the same id
+                        // (breaking remove/update targeting). Microsecond
+                        // timestamp + random suffix is unique per contact.
+                        id: '${DateTime.now().microsecondsSinceEpoch}'
+                            '-${Random().nextInt(1 << 32)}',
                         name: nameController.text,
                         phone: phoneController.text,
                         relationship: relationship,
@@ -160,7 +174,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Add'),
+            child: Text(l10n.txtadd),
           ),
         ],
       ),
@@ -249,13 +263,16 @@ class _ContactCard extends ConsumerWidget {
             PopupMenuButton(
               itemBuilder: (ctx) => [
                 if (!contact.isPrimary)
-                  const PopupMenuItem(
+                  // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded
+                  // English popup-menu labels. Localised via
+                  // `txtsetAsPrimary` / `txtdelete`.
+                  PopupMenuItem(
                     value: 'primary',
                     child: Row(
                       children: [
-                        Icon(Icons.star, size: 20),
-                        SizedBox(width: 8),
-                        Text('Set as Primary'),
+                        const Icon(Icons.star, size: 20),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.txtsetAsPrimary),
                       ],
                     ),
                   ),
@@ -266,7 +283,7 @@ class _ContactCard extends ConsumerWidget {
                       const Icon(Icons.delete,
                           color: AppColors.error, size: 20),
                       const SizedBox(width: 8),
-                      Text('Delete',
+                      Text(AppLocalizations.of(context)!.txtdelete,
                           style: GoogleFonts.plusJakartaSans(
                               color: AppColors.error)),
                     ],

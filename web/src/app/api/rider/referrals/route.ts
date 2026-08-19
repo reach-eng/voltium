@@ -11,7 +11,16 @@ export async function GET(req: NextRequest) {
     const riderDbId = auth.riderDbId;
 
     const result = await referralUseCases.getReferrals(riderDbId);
-    if (!result) return errors.notFound('Referral code not found for this rider');
+    if (!result) {
+      return success(
+        {
+          referralCode: null,
+          stats: { totalLeads: 0, activeRiders: 0, totalEarnings: 0 },
+          referrals: [],
+        },
+        'No referral data found'
+      );
+    }
 
     return success(result, 'Referral data fetched');
   } catch (err) {

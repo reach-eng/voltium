@@ -57,16 +57,20 @@ export async function POST(request: NextRequest) {
       return errors.tooManyRequests('Too many unlock attempts. Try again in a minute.');
     }
 
+    // P0-1 (2026-08-05 legal/device audit): the Prisma model has
+    // `lockPasswordHash`, not `lockPassword`. The old select returned
+    // `undefined` for every rider, so the `!rider.lockPassword` guard was
+    // always true — locked riders could NEVER unlock their devices.
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { lockPassword: true },
+      select: { lockPasswordHash: true },
     });
 
-    if (!rider || !rider.lockPassword) {
+    if (!rider || !rider.lockPasswordHash) {
       return success({ success: false }, 'Lock password is not configured');
     }
 
-    const { valid } = await verifyPassword(password, rider.lockPassword);
+    const { valid } = await verifyPassword(password, rider.lockPasswordHash);
 
     await logSecurityEvent({
       type: 'rider.verify_lock_password',

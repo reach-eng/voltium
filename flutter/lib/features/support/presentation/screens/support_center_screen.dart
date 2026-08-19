@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'create_ticket_screen.dart';
 import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
@@ -30,7 +31,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final dataState = ref.watch(riderProvider.select((p) => p.dataState));
     final tlName = rider?.teamLeader;
-    final tlPhone = rider?.emergencyContact;
+    final tlPhone = rider?.teamLeaderPhone ?? rider?.emergencyContact;
     final isLoading = rider == null &&
         (dataState == DataState.initial || dataState == DataState.loading);
 
@@ -171,20 +172,20 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                             children: [
                               const Icon(Icons.headset_mic,
                                   size: 48, color: AppColors.primary),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               Text(
                                 'Contact Support',
                                 style: AppTypography.titleMedium
                                     .copyWith(color: colors.onSurface),
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               Text(
                                 'Our team is here to help you with any issues.',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.plusJakartaSans(
                                     color: colors.onSurfaceMuted),
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton(
@@ -206,7 +207,12 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                                           BorderRadius.circular(AppRadius.md),
                                     ),
                                   ),
-                                  child: Text('Create Ticket',
+                                  // T-66: hardcoded English "Create
+                                  // Ticket" CTA. Localised via the new
+                                  // `txtcreateTicket` ARB key.
+                                  child: Text(
+                                      AppLocalizations.of(context)!
+                                          .txtcreateTicket,
                                       style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.bold)),
                                 ),
@@ -298,14 +304,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: AppColors.primary, size: 18),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(label,
                   style: AppTypography.bodyMedium
                       .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
-                      // DARK-MODE-AUDIT 2026-08-14 P0-7:
-                      // `AppColors.of(context).onSurface` is identical to the
-                      // dark card surface — text disappears in
-                      // dark mode. Read from the theme extension.
                       .copyWith(color: AppColors.of(context).onSurface)),
             ],
           ),
@@ -323,11 +325,13 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     required Color color,
     VoidCallback? onTap,
   }) {
+    final colors = AppColors.of(context);
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -347,17 +351,18 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             ),
             child: Icon(icon, color: color, size: 22),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
                     style: AppTypography.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600)),
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(color: colors.onSurface)),
                 Text(subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceVariant,
+                        color: colors.onSurfaceVariant,
                         fontSize: 12)),
               ],
             ),
@@ -377,7 +382,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(actionIcon, color: color, size: 16),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(actionLabel,
                         style:
                             AppTypography.labelMedium.copyWith(color: color)),
@@ -420,7 +425,7 @@ class RecentTicketsContainer extends ConsumerWidget {
             'Recent Tickets',
             style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -433,7 +438,7 @@ class RecentTicketsContainer extends ConsumerWidget {
                       style: AppTypography.labelMedium.copyWith(
                           color: ticketState.filter == filter
                               ? Colors.white
-                              : AppColors.of(context).onSurfaceVariant),
+                              : colors.onSurfaceVariant),
                     ),
                     selected: ticketState.filter == filter,
                     selectedColor: AppColors.primary,
@@ -475,17 +480,18 @@ class RecentTicketsContainer extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold),
+                        fontWeight: FontWeight.bold,
+                        color: colors.onSurface),
                   ),
                   subtitle: Text(
                     'Status: ${ticket.status.name.toUpperCase()}',
                     style: GoogleFonts.plusJakartaSans(
                       color: ticket.status.name.toLowerCase() == 'closed'
-                          ? AppColors.onSurfaceVariant
+                          ? colors.onSurfaceVariant
                           : AppColors.primary,
                     ),
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(Icons.chevron_right, color: colors.onSurfaceVariant),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

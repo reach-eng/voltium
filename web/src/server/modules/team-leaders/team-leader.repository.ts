@@ -1,27 +1,35 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const teamLeaderRepository = {
   async findAllPaginated(params: {
     search?: string | null;
     isActive?: string | null;
+    hubId?: string | null;
     page: number;
     limit: number;
   }) {
-    const { search, isActive, page, limit } = params;
-    const where: any = {};
+    const { search, isActive, hubId, page, limit } = params;
+    const where: Prisma.TeamLeaderWhereInput = { deletedAt: null };
     if (isActive === 'ACTIVE') where.isActive = true;
     if (isActive === 'INACTIVE') where.isActive = false;
+    if (hubId && hubId !== 'ALL') where.hubId = hubId;
     if (search) {
+      const trimmed = search.trim();
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: trimmed, mode: 'insensitive' } },
+        { phone: { contains: trimmed, mode: 'insensitive' } },
+        { email: { contains: trimmed, mode: 'insensitive' } },
+        { hub: { name: { contains: trimmed, mode: 'insensitive' } } },
       ];
     }
 
     const [leaders, total] = await Promise.all([
       db.teamLeader.findMany({
         where,
+        include: {
+          hub: { select: { id: true, name: true } },
+        },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -29,18 +37,18 @@ export const teamLeaderRepository = {
       db.teamLeader.count({ where }),
     ]);
 
-    const leaderIds = leaders.map((l: any) => l.id);
-    const riderCountGroups: Array<{ teamLeader: string; _count: number }> =
+    const leaderIds = leaders.map((l) => l.id);
+    const riderCountGroups: Array<{ teamLeaderId: string; _count: number }> =
       leaderIds.length > 0
         ? ((await db.rider.groupBy({
-            by: ['teamLeader'],
-            where: { teamLeader: { in: leaderIds, not: null } },
+            by: ['teamLeaderId'],
+            where: { teamLeaderId: { in: leaderIds, not: null } },
             _count: true,
-          })) as unknown as Array<{ teamLeader: string; _count: number }>)
+          })) as unknown as Array<{ teamLeaderId: string; _count: number }>)
         : [];
-    const riderCountMap = new Map(riderCountGroups.map((g: any) => [g.teamLeader, g._count]));
+    const riderCountMap = new Map(riderCountGroups.map((g) => [g.teamLeaderId, g._count]));
 
-    const formatted = leaders.map((l: any) => ({
+    const formatted = leaders.map((l) => ({
       ...l,
       riderCount: riderCountMap.get(l.id) || 0,
     }));
@@ -51,16 +59,23 @@ export const teamLeaderRepository = {
     };
   },
 
-  async create(data: Record<string, unknown>) {
-    return db.teamLeader.create({ data: data as any });
+  async findById(id: string) {
+    return db.teamLeader.findUnique({ where: { id } });
   },
 
-  async update(id: string, data: Record<string, unknown>) {
-    return db.teamLeader.update({ where: { id }, data: data as any });
+  async create(data: Prisma.TeamLeaderCreateInput) {
+    return db.teamLeader.create({ data });
+  },
+
+  async update(id: string, data: Prisma.TeamLeaderUpdateInput) {
+    return db.teamLeader.update({ where: { id }, data });
   },
 
   async delete(id: string) {
-    return db.teamLeader.delete({ where: { id } });
+    return db.teamLeader.update({ 
+      where: { id }, 
+      data: { isActive: false, deletedAt: new Date() } 
+    });
   },
 
   async bulkActivate(ids: string[]) {
@@ -80,7 +95,10 @@ export const teamLeaderRepository = {
   },
 
   async bulkDelete(ids: string[]) {
-    const result = await db.teamLeader.deleteMany({ where: { id: { in: ids } } });
+    const result = await db.teamLeader.updateMany({ 
+      where: { id: { in: ids } },
+      data: { isActive: false, deletedAt: new Date() }
+    });
     return result.count;
   },
 };

@@ -91,12 +91,14 @@ class DateHelpers {
   static String computeTimeRemaining(DateTime? planEndDate) {
     if (planEndDate != null) {
       final remaining = planEndDate.difference(DateTime.now());
+      if (remaining.isNegative) return 'Expired';
       if (remaining.inDays > 0) {
         return '${remaining.inDays}d ${remaining.inHours % 24}h';
       }
       if (remaining.inHours > 0) return '${remaining.inHours}h';
+      return '<1h';
     }
-    return '7d 0h';
+    return '—';
   }
 
   /// Computes next recharge display like "24 Oct".

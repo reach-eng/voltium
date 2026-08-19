@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
@@ -84,10 +85,10 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
                 ),
                 child: Center(
                   child: widget.isLoading
-                      ? const Row(
+                      ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            SizedBox(
+                            const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
@@ -95,10 +96,14 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
                                 strokeWidth: 2,
                               ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
+                            // LANGUAGE-AUDIT (2026-08-16) #5: was a
+                            // hardcoded "Sending…" string. Localised
+                            // via `txtloginSendingButton`.
                             Text(
-                              'Sending…',
-                              style: TextStyle(
+                              AppLocalizations.of(context)!
+                                  .txtloginSendingButton,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
@@ -107,7 +112,10 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
                           ],
                         )
                       : Text(
-                          'Enter',
+                          // LANGUAGE-AUDIT (2026-08-16) #5: was a
+                          // hardcoded "Enter" string. Localised via
+                          // `txtloginEnterButton`.
+                          AppLocalizations.of(context)!.txtloginEnterButton,
                           style: AppTypography.labelLarge
                               .copyWith(fontWeight: FontWeight.w700)
                               .copyWith(color: Colors.white),

@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Mail, Pencil, Phone, Trash2, UserCircle, Users } from 'lucide-react';
+import { Loader2, Mail, MapPin, Pencil, Phone, Trash2, UserCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPhone } from '@/lib/utils';
@@ -64,12 +64,20 @@ export function TeamLeaderCard({
               >
                 {leader.name}
               </CardTitle>
-              <Badge
-                variant="outline"
-                className={`mt-1 text-[10px] font-bold ${statusBadgeClass(leader.isActive)}`}
-              >
-                {leader.isActive ? 'Active' : 'Inactive'}
-              </Badge>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-bold ${statusBadgeClass(leader.isActive)}`}
+                >
+                  {leader.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+                {leader.hub?.name && (
+                  <Badge variant="secondary" className="text-[10px] font-medium gap-1">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {leader.hub.name}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -84,6 +92,12 @@ export function TeamLeaderCard({
             <div className="flex items-center gap-2 text-muted-foreground">
               <Mail className="h-3.5 w-3.5" />
               <span>{leader.email}</span>
+            </div>
+          )}
+          {leader.hub?.name && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" />
+              <span>{leader.hub.name}</span>
             </div>
           )}
           <div className="flex items-center gap-2 text-muted-foreground">

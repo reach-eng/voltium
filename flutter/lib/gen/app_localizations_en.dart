@@ -624,6 +624,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtemergencySos => 'Emergency SOS';
 
   @override
+  String get txtsosAlertTriggeredDialing =>
+      'SOS Alert Triggered! Dialing emergency services (112)...';
+
+  @override
   String get txttakeAPhoto => 'Take a Photo';
 
   @override
@@ -681,6 +685,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtunableToOpenDocument => 'Unable to open document';
+
+  @override
+  String get txtreferAndEarn => 'Refer & Earn';
+
+  @override
+  String get txtrefresh => 'Refresh';
+
+  @override
+  String txtfailedToUploadProof(String error) {
+    return 'Failed to upload proof: $error';
+  }
+
+  @override
+  String get txtpleaseUploadPaymentProof =>
+      'Please upload a payment proof before submitting.';
+
+  @override
+  String txtfailedToSubmitDeposit(String error) {
+    return 'Failed to submit deposit: $error';
+  }
+
+  @override
+  String get txtdiscard => 'Discard';
+
+  @override
+  String get txtremovePhoto => 'Remove Photo';
+
+  @override
+  String txtupToNPhotosPerTicket(String count) {
+    return 'Up to $count photos per ticket';
+  }
+
+  @override
+  String get txtticketCreatedSuccessfully => 'Ticket created successfully';
+
+  @override
+  String txtfailedToCreateTicket(String error) {
+    return 'Failed to create ticket: $error';
+  }
+
+  @override
+  String txtfailedToSubmitFeedback(String error) {
+    return 'Failed to submit feedback: $error';
+  }
+
+  @override
+  String get txtcreateTicket => 'Create Ticket';
+
+  @override
+  String txtcallNumberForEmergencyAssistance(String number) {
+    return 'Call $number for emergency assistance?';
+  }
+
+  @override
+  String get txtadvanceRentalPlanFee => 'Advance Rental Plan Fee';
+
+  @override
+  String get txttopUpProofSubmittedSuccessfully =>
+      'Top-up proof submitted successfully!';
+
+  @override
+  String get txtupiIdCopiedToClipboard => 'UPI ID copied to clipboard';
+
+  @override
+  String get txttopUpAmountAddedToWallet => 'Top-Up Amount (Added to Wallet)';
+
+  @override
+  String get txttotalPayable => 'Total Payable';
+
+  @override
+  String get txtchangeLockPassword => 'Change Lock Password';
+
+  @override
+  String get txtlockPassword => 'Lock Password';
+
+  @override
+  String get txtlockPasswordSubtitle =>
+      'Enter your device lock password to verify security configuration.';
+
+  @override
+  String get txtlockPasswordVerifyFailed => 'Lock password verification failed';
+
+  @override
+  String get txtverify => 'Verify';
+
+  @override
+  String get txtenterAValid10DigitNumber => 'Enter a valid 10-digit number';
+
+  @override
+  String get txtenterThe6DigitOtp => 'Enter the 6-digit OTP';
 
   @override
   String get txtmyDocuments => 'My Documents';
@@ -850,6 +944,49 @@ class AppLocalizationsEn extends AppLocalizations {
       'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!';
 
   @override
+  String get txtsplashTagline => 'Electric scooter rentals';
+
+  @override
+  String get txtloginWelcomeSubtitle =>
+      'Enter the registered phone number to login or enter a new number to create another account.';
+
+  @override
+  String get txtloginLegalIntro => 'By signing in, you agree to our';
+
+  @override
+  String get txtloginReferralHint => 'Referral Code (Optional)';
+
+  @override
+  String get txtloginSecureOtpNote => 'A secure OTP will be sent';
+
+  @override
+  String get txtloginEnterButton => 'Enter';
+
+  @override
+  String get txtloginSendingButton => 'Sending…';
+
+  @override
+  String get txtloginNetworkError => 'Network error. Please try again.';
+
+  @override
+  String get txtotpVerifyTitle => 'Verify OTP';
+
+  @override
+  String get txtotpWelcomeBack => 'Welcome Back!';
+
+  @override
+  String get txtotpSignupSubtitle => 'Enter the 6-digit code sent to ';
+
+  @override
+  String get txtotpLoginSubtitle => 'Enter the code to login to your account ';
+
+  @override
+  String get txtotpVerifyFailed => 'Failed to verify OTP. Please try again.';
+
+  @override
+  String get txtotpResendError => 'Error resending OTP';
+
+  @override
   String get txtgoToDashboard => 'Go to Dashboard';
 
   @override
@@ -991,9 +1128,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtguarantorPhone => 'Guarantor Phone';
-
-  @override
-  String get txtverify => 'Verify';
 
   @override
   String get txtphoneVerified => 'Phone verified';
@@ -1301,7 +1435,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'This will clear your local transaction history. This action cannot be undone.';
 
   @override
-  String get txtsecurityDeposit => 'SECURITY DEPOSIT';
+  String get txtsecurityDeposit => 'Security Deposit';
 
   @override
   String get txtelectricVehicleRentalService =>
@@ -1594,6 +1728,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_darkMode => 'Dark Mode';
 
   @override
+  String get settings_appearance => 'Appearance';
+
+  @override
+  String get settings_followSystem => 'Follow System';
+
+  @override
+  String get settings_themeLight => 'Light';
+
+  @override
+  String get settings_themeDark => 'Dark';
+
+  @override
   String get settings_supportLegal => 'SUPPORT & LEGAL';
 
   @override
@@ -1625,6 +1771,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_delete => 'Delete';
 
   @override
+  String get settings_deleteReason => 'Requested from app settings';
+
+  @override
   String get settings_deleteNotAvailable =>
       'Account deletion is not yet available. Please contact support.';
 
@@ -1636,4 +1785,612 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings_comingSoon => 'Coming soon';
+
+  @override
+  String get txtfullName => 'Full Name';
+
+  @override
+  String get txtenterFullName => 'Enter full name';
+
+  @override
+  String get txtdateOfBirth => 'Date of Birth';
+
+  @override
+  String get txtemailAddress => 'Email Address';
+
+  @override
+  String get txtenterEmailAddress => 'Enter email address';
+
+  @override
+  String get txtfathersName => 'Father\'s Name';
+
+  @override
+  String get txtenterFathersName => 'Enter father\'s name';
+
+  @override
+  String get txtmothersName => 'Mother\'s Name';
+
+  @override
+  String get txtenterMothersName => 'Enter mother\'s name';
+
+  @override
+  String get txtcurrentAddress => 'Current Address';
+
+  @override
+  String get txtenterYourFullAddress => 'Enter your full address';
+
+  @override
+  String get txtaadhaarFront => 'Aadhaar Card\n(Front)';
+
+  @override
+  String get txtaadhaarBack => 'Aadhaar Card\n(Back)';
+
+  @override
+  String get txtpanCard => 'PAN Card';
+
+  @override
+  String get txtbankName => 'Bank Name';
+
+  @override
+  String get txtaccountNumber => 'Account Number';
+
+  @override
+  String get txtifscCode => 'IFSC Code';
+
+  @override
+  String get txtclearPhotosOnly => 'Clear photos only. Max 5MB each.';
+
+  @override
+  String get txtriderProfile => 'Rider Profile';
+
+  @override
+  String get txtcompleteDetailsSubtitle =>
+      'Complete your details to finish onboarding';
+
+  @override
+  String get txtconfirmAndProceed => 'Confirm & Proceed';
+
+  @override
+  String get txtensureAllDetailsAccurate =>
+      'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING';
+
+  @override
+  String get txtselfieLiveCameraHint =>
+      'Live camera capture required for KYC verification';
+
+  @override
+  String get txtofflineDraftBanner =>
+      'You\'re offline — your draft is saved locally. Connect to internet to submit.';
+
+  @override
+  String get txtdocumentPreview => 'Document Preview';
+
+  @override
+  String get txtretakePhoto => 'Retake Photo';
+
+  @override
+  String get txtkeepPhoto => 'Keep Photo';
+
+  @override
+  String get txtuploaded => 'Uploaded';
+
+  @override
+  String get txtpermissionsTitle => 'Permissions';
+
+  @override
+  String get txtpermissionsSubtitle =>
+      'Please allow the following permissions to ensure safety and functionality.';
+
+  @override
+  String get txtlocationPermName => 'Location';
+
+  @override
+  String get txtlocationPermDesc => 'Track rides and find nearby vehicles';
+
+  @override
+  String get txtnotificationsPermName => 'Notifications';
+
+  @override
+  String get txtnotificationsPermDesc => 'Receive important updates and alerts';
+
+  @override
+  String get txtbatteryPermName => 'Battery Optimization';
+
+  @override
+  String get txtbatteryPermDesc =>
+      'Allow the app to run reliably in the background.';
+
+  @override
+  String get txtcameraPermName => 'Camera';
+
+  @override
+  String get txtcameraPermDesc => 'Document upload and QR scanning';
+
+  @override
+  String get txtphonePermName => 'Phone State';
+
+  @override
+  String get txtphonePermDesc => 'Phone state (for safety call detection)';
+
+  @override
+  String get txtphonePermTooltip =>
+      'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.';
+
+  @override
+  String get txtcontactsPermName => 'Contacts';
+
+  @override
+  String get txtcontactsPermDesc =>
+      'Access contacts for emergency SOS and referrals';
+
+  @override
+  String get txtmicPermName => 'Microphone';
+
+  @override
+  String get txtmicPermDesc => 'Required for audio recording and verification';
+
+  @override
+  String get txtdeviceAdminPermName => 'Device Admin';
+
+  @override
+  String get txtdeviceAdminPermDesc =>
+      'Required for fleet security and remote lock features';
+
+  @override
+  String get txtpreciseLocationRequired =>
+      'Precise location is required. Please enable it in Settings.';
+
+  @override
+  String get txtbeforeYouBegin => 'Before You Begin';
+
+  @override
+  String get txtquickKycSubtitle => 'Quick KYC verification (~3 mins)';
+
+  @override
+  String get txtpleaseHaveReady => 'Please have these ready:';
+
+  @override
+  String get txtaadhaarCard => 'Aadhaar Card';
+
+  @override
+  String get txtaadhaarCardDesc => 'Front and back photo or E-Aadhaar PDF';
+
+  @override
+  String get txtpanCardDesc => 'For tax and identity verification';
+
+  @override
+  String get txtthreeMinutesTime => '3 Minutes of Time';
+
+  @override
+  String get txtfastAutomatedVerification => 'Fast automated verification';
+
+  @override
+  String get txtimReady => 'I\'m Ready';
+
+  @override
+  String get txtillDoThisLater => 'I\'ll do this later';
+
+  @override
+  String get txtsyncingLatestDocs => 'Syncing latest documents…';
+
+  @override
+  String get txtlegalAgreeCheckboxPrefix => 'I have read and agree to the ';
+
+  @override
+  String get txtelectronicSignature => '(Electronic Signature)';
+
+  @override
+  String get txtlegalHelpText =>
+      'If you have any questions about our policies, please contact our support team at ';
+
+  @override
+  String get txtorCall => ' or call ';
+
+  @override
+  String get txtdidntReceiveCode => 'DIDN\'T RECEIVE THE CODE?';
+
+  @override
+  String get txtresendCode => 'Resend Code';
+
+  @override
+  String txtresendIn(int seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get txtverifying => 'Verifying…';
+
+  @override
+  String get txtverifyAndProceed => 'Verify & Proceed';
+
+  @override
+  String get txtgreetingMorning => 'Good Morning';
+
+  @override
+  String get txtgreetingAfternoon => 'Good Afternoon';
+
+  @override
+  String get txtgreetingEvening => 'Good Evening';
+
+  @override
+  String get txtguestRider => 'Rider';
+
+  @override
+  String get txtshowingCachedData => 'Showing cached data';
+
+  @override
+  String get txtnoDataAvailable => 'No data available';
+
+  @override
+  String get txtvehiclePendingAssignment => 'Vehicle Pending Assignment';
+
+  @override
+  String get txtnoPlan => 'NO PLAN';
+
+  @override
+  String get txtweeklyPayment => 'WEEKLY PAYMENT';
+
+  @override
+  String get txtdailyPayment => 'DAILY PAYMENT';
+
+  @override
+  String get txtmonthlyPayment => 'MONTHLY PAYMENT';
+
+  @override
+  String get txtexpired => 'Expired';
+
+  @override
+  String get txtexpiresToday => 'Expires Today';
+
+  @override
+  String txtdaysCount(int count) {
+    return '$count Days';
+  }
+
+  @override
+  String get txttotalBalance => 'TOTAL BALANCE';
+
+  @override
+  String get txtavailableBalance => 'AVAILABLE BALANCE';
+
+  @override
+  String txtstreakDays(int current, int total) {
+    return '$current/$total Days';
+  }
+
+  @override
+  String txtminRechargeNotice(String amount) {
+    return 'A minimum recharge of ₹$amount is required to proceed further.';
+  }
+
+  @override
+  String txtlowBalanceWarningNotice(int amount) {
+    return 'Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹$amount.';
+  }
+
+  @override
+  String get txttopUpWalletAction => 'Top Up Wallet';
+
+  @override
+  String get txtshareCodeWithFriends => 'Share your code with friends';
+
+  @override
+  String get txtreferralCodeCopied => 'Referral code copied!';
+
+  @override
+  String txtshareReferralMessage(String code) {
+    return 'Use my code $code to join Voltium!';
+  }
+
+  @override
+  String get txtjoinVoltiumSubject => 'Join Voltium';
+
+  @override
+  String get txtviewDetailsAction => 'View Details';
+
+  @override
+  String get txtnotAssigned => 'Not assigned';
+
+  @override
+  String get txtassignedTlBadge => 'Assigned TL';
+
+  @override
+  String get txttlPendingNotice => 'Your hub will assign a team leader shortly';
+
+  @override
+  String get txtnoContactNumberTl =>
+      'No contact number available for your Team Leader.';
+
+  @override
+  String get txtcouldNotOpenDialer =>
+      'Could not open the phone dialer. Please try again.';
+
+  @override
+  String get txtscooterSubmissionRequired => 'Scooter Submission\nRequired';
+
+  @override
+  String get txtpendingReturnSubmission => 'Pending return submission';
+
+  @override
+  String txtsubmissionDatePrefix(String date) {
+    return 'Submission Date: $date';
+  }
+
+  @override
+  String txthubNamePrefix(String hub) {
+    return 'Hub Name: $hub';
+  }
+
+  @override
+  String get txtdesignatedHub => 'Designated Hub';
+
+  @override
+  String get txtupcomingRentDebit => 'UPCOMING RENT DEBIT';
+
+  @override
+  String get txttopUpBeforeTomorrow6am => 'Top-up before tomorrow 6 AM';
+
+  @override
+  String txtrentDebitNoticeShortfall(
+      String rent, String balance, String shortfall) {
+    return 'Rent of ₹$rent will be debited automatically. Your current wallet balance is ₹$balance (shortfall: ₹$shortfall).';
+  }
+
+  @override
+  String txtrentDebitNoticeSufficient(String rent, String balance) {
+    return 'Rent of ₹$rent will be debited tomorrow 6 AM. Wallet balance ₹$balance is sufficient.';
+  }
+
+  @override
+  String txttopUpAmountAction(String amount) {
+    return 'Top up ₹$amount';
+  }
+
+  @override
+  String get txtchangeTeamLeaderTitle => 'Change Team Leader';
+
+  @override
+  String get txtchangeTlReasonPrompt =>
+      'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.';
+
+  @override
+  String get txtenterReasonHint => 'Enter your reason here...';
+
+  @override
+  String get txtprovideDetailedReason =>
+      'Please provide a detailed reason (at least 5 characters)';
+
+  @override
+  String get txttlChangeSubmitted =>
+      'Your TL change request has been submitted for approval';
+
+  @override
+  String txtfailedToSubmitRequest(String error) {
+    return 'Failed to submit request: $error';
+  }
+
+  @override
+  String get txtmanageSubscriptionTitle => 'Manage Subscription';
+
+  @override
+  String get txtmanageSubscriptionSubtitle =>
+      'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.';
+
+  @override
+  String get txtactiveBadge => 'Active';
+
+  @override
+  String get txtperDay => '/ day';
+
+  @override
+  String get txtperWeek => '/ week';
+
+  @override
+  String get txtperMonth => '/ month';
+
+  @override
+  String get txtrequestPlanChangeButton => 'Request Plan Change';
+
+  @override
+  String get txtendRentalButton => 'End Rental';
+
+  @override
+  String get txtchangeIntentButton => 'Change Intent of Use';
+
+  @override
+  String txtchangeIntentPrefix(String intent) {
+    return 'Change Intent: $intent';
+  }
+
+  @override
+  String txtstepXofY(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String txtcaptureViewOfVehicle(String view) {
+    return 'Capture $view of Vehicle';
+  }
+
+  @override
+  String get txtensureClearPhotoPrompt =>
+      'Ensure the photo is clear and well-lit for faster approval.';
+
+  @override
+  String get txtcapturePhotoBtn => 'Capture Photo';
+
+  @override
+  String get txtcancelReturnProcessBtn => 'Cancel Return Process';
+
+  @override
+  String get txtuploadingPhotosSubmitting =>
+      'Uploading photos & submitting request...';
+
+  @override
+  String get txtdoNotCloseApp => 'Please do not close the app.';
+
+  @override
+  String get txtreturnRequestSubmittedTitle => 'Return Request Submitted';
+
+  @override
+  String get txtreturnRequestSubmittedBody =>
+      'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.';
+
+  @override
+  String get txtgreatBtn => 'Great!';
+
+  @override
+  String get txtfailedToSubmitReturn =>
+      'Failed to submit return request. Please try again.';
+
+  @override
+  String get txtleftSide => 'Left Side';
+
+  @override
+  String get txtrightSide => 'Right Side';
+
+  @override
+  String get txtfrontView => 'Front View';
+
+  @override
+  String get txtspeedometer => 'Speedometer';
+
+  @override
+  String get txtpersonalUse => 'Personal Use';
+
+  @override
+  String get txtecommerceDelivery => 'E-commerce Delivery';
+
+  @override
+  String get txtfoodDelivery => 'Food Delivery';
+
+  @override
+  String get txtother => 'Other';
+
+  @override
+  String get txtrentalDetailsTitle => 'Rental Details';
+
+  @override
+  String get txtcurrentPlanSection => 'CURRENT PLAN';
+
+  @override
+  String get txtnoActivePlan => 'No Active Plan';
+
+  @override
+  String get txtperCycle => ' / cycle';
+
+  @override
+  String get txtrentalInformation => 'Rental Information';
+
+  @override
+  String get txtstartDate => 'Start Date';
+
+  @override
+  String get txtendDate => 'End Date';
+
+  @override
+  String get txtpaymentStreak => 'Payment Streak';
+
+  @override
+  String get txtchangePlan => 'Change Plan';
+
+  @override
+  String get txtpickupHub => 'Pickup Hub';
+
+  @override
+  String get txtintentUpdatedSuccess => 'Intent updated successfully';
+
+  @override
+  String txtfailedToUpdateIntent(String error) {
+    return 'Failed to update intent: $error';
+  }
+
+  @override
+  String get txtteamLeaderInfoDescription =>
+      'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.';
+
+  @override
+  String get txtrequestTlChange => 'Request Team Leader change';
+
+  @override
+  String get txtselectTeamLeader => 'Select Team Leader';
+
+  @override
+  String get txtcall => 'Call';
+
+  @override
+  String get txtnotProvided => 'Not provided';
+
+  @override
+  String get txtemergencyContact => 'Emergency Contact';
+
+  @override
+  String get txtkycStatusTitle => 'KYC STATUS';
+
+  @override
+  String get txtguarantorStatusTitle => 'GUARANTOR';
+
+  @override
+  String get txtvehicleTitle => 'Vehicle';
+
+  @override
+  String get txtaddress => 'Address';
+
+  @override
+  String get txtunderReview => 'Under Review';
+
+  @override
+  String get txtphone => 'Phone';
+
+  @override
+  String get txtverifiedAndSecure => 'Verified & Secure';
+
+  @override
+  String get txtidentityGuarantorVerifiedDesc =>
+      'Your identity and guarantor information have been verified. You can view or download copies of your documents below.';
+
+  @override
+  String get txtverificationInProgressDesc =>
+      'Your verification is in progress. Some documents may still be under review by our safety team.';
+
+  @override
+  String get txtyourDocuments => 'YOUR DOCUMENTS';
+
+  @override
+  String get txtguarantorDocuments => 'GUARANTOR\'S DOCUMENTS';
+
+  @override
+  String txtfilesCount(int count) {
+    return '$count FILES';
+  }
+
+  @override
+  String get txtaadhaarCardFront => 'Aadhaar Card (Front)';
+
+  @override
+  String get txtaadhaarCardBack => 'Aadhaar Card (Back)';
+
+  @override
+  String get txtpanCardLabel => 'PAN Card';
+
+  @override
+  String get txtguarantorAadhaarFront => 'Guarantor\'s Aadhaar (Front)';
+
+  @override
+  String get txtguarantorAadhaarBack => 'Guarantor\'s Aadhaar (Back)';
+
+  @override
+  String get txtguarantorPanCard => 'Guarantor\'s PAN Card';
+
+  @override
+  String get txtverificationVideo => 'Verification Video';
+
+  @override
+  String get txtguarantorSignatureDoc => 'Guarantor\'s Signature';
+
+  @override
+  String get txtverifiedAndActive => 'Verified & Active';
+
+  @override
+  String get txtopenExternal => 'Open External';
 }

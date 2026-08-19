@@ -10,7 +10,7 @@ import { logger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit-log';
 import { backupRepository } from './backup.repository';
 import { backupService } from './backup.service';
-import { existsSync, mkdirSync, renameSync } from 'fs';
+import { existsSync, mkdirSync, renameSync, rmSync } from 'fs';
 import { join } from 'path';
 import { restoreDatabase, extractArchive, runMigrations } from '@/lib/shell';
 
@@ -25,7 +25,7 @@ async function getSystemSettingValue(key: string, fallback: string): Promise<str
   }
 }
 
-async function setMaintenanceMode(enabled: boolean, message?: string): Promise<void> {
+export async function setMaintenanceMode(enabled: boolean, message?: string): Promise<void> {
   await Promise.all([
     db.systemSetting.upsert({
       where: { key: 'MAINTENANCE_MODE' },
@@ -99,6 +99,12 @@ export const restoreService = {
     // Acquire backup lock — prevents scheduled backups from running during restore
     await backupService.setBackupLock(true);
 
+    // PR-7 (2026-08-06 fix-plan, 6th audit P0): track the pre-restore backup so
+    // a mid-restore failure cannot silently orphan it. On failure the catch
+    // block marks it ORPHANED_BY_FAILED_RESTORE:<restoreJobId> and emits an
+    // audit entry; the orphan-backup-cleanup worker purges it after 7 days.
+    let preRestoreBackupId: string | null = null;
+
     try {
       await createAuditLog({
         actorId: adminId,
@@ -111,11 +117,14 @@ export const restoreService = {
 
       // 1. Create pre-restore backup
       logger.info('[RestoreService] Creating pre-restore backup');
-      await backupService.createBackup({
+      const preRestoreBackup = await backupService.createBackup({
         type: 'PRE_RESTORE',
         adminId,
         notes: `Pre-restore backup before restoring from ${backupJobId}`,
       });
+      // Defensive: createBackup may resolve without a row id in some paths —
+      // an untracked backup is only a missed orphan flag, never a crash.
+      preRestoreBackupId = preRestoreBackup?.id ?? null;
 
       // 2. Validate backup again just before restore
       const verification = await backupService.verifyBackup(backupJobId);
@@ -136,8 +145,8 @@ export const restoreService = {
         const dbUrl = process.env.DATABASE_URL || '';
         try {
           restoreDatabase(dbUrl, job.databasePath);
-        } catch (dbErr: any) {
-          throw new Error(`Database restore failed: ${dbErr.message}`);
+        } catch (dbErr: unknown) {
+          throw new Error(`Database restore failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
         }
       }
 
@@ -150,20 +159,22 @@ export const restoreService = {
           process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads')
         );
 
-        // Move current uploads to temp
         const backupRoot = await getSystemSettingValue(
           'BACKUP_ROOT',
           process.env.BACKUP_ROOT || join(process.cwd(), 'data', 'backups')
         );
         const tempDir = join(backupRoot, 'restore-temp', Date.now().toString());
+
+        let tempUploadsMoved = false;
+        let tempUploads: string | null = null;
         if (existsSync(uploadsRoot)) {
           mkdirSync(tempDir, { recursive: true });
+          tempUploads = join(tempDir, 'uploads');
           try {
-            // Use renameSync for cross-platform directory move
-            const tempUploads = join(tempDir, 'uploads');
             renameSync(uploadsRoot, tempUploads);
-          } catch {
-            logger.warn('[RestoreService] Could not move current uploads to temp');
+            tempUploadsMoved = true;
+          } catch (renameErr: unknown) {
+            throw new Error(`Cannot proceed with restore: current uploads directory is locked (${renameErr instanceof Error ? renameErr.message : String(renameErr)})`);
           }
         }
 
@@ -171,8 +182,8 @@ export const restoreService = {
         mkdirSync(uploadsRoot, { recursive: true });
         try {
           extractArchive(job.filesPath, uploadsRoot);
-        } catch (fileErr: any) {
-          throw new Error(`Uploads restore failed: ${fileErr.message}`);
+        } catch (fileErr: unknown) {
+          throw new Error(`Uploads restore failed: ${fileErr instanceof Error ? fileErr.message : String(fileErr)}`);
         }
       }
 
@@ -180,10 +191,15 @@ export const restoreService = {
       logger.info('[RestoreService] Running database migrations');
       try {
         runMigrations(process.cwd());
-      } catch (migrateErr: any) {
-        logger.warn('[RestoreService] Migration after restore had issues', {
-          error: migrateErr.message,
-        });
+      } catch (migrateErr: unknown) {
+        throw new Error(`Database migration after restore failed: ${migrateErr instanceof Error ? migrateErr.message : String(migrateErr)}`);
+      }
+
+      // 6b. Smoke test query to confirm DB queryability post-restore
+      try {
+        await db.rider.count();
+      } catch (smokeErr: unknown) {
+        throw new Error(`Post-restore DB smoke query failed: ${smokeErr instanceof Error ? smokeErr.message : String(smokeErr)}`);
       }
 
       // 7. Disable maintenance mode and release backup lock
@@ -220,6 +236,33 @@ export const restoreService = {
         errorMessage: (err instanceof Error ? err.message : String(err)),
         completedAt: new Date(),
       });
+
+      // PR-7: a pre-restore backup that survived past this point is orphaned —
+      // the failure happened after it was taken, so it is the only recent
+      // snapshot of the pre-restore state. Flag it for the cleanup worker
+      // (which purges ORPHANED_BY_FAILED_RESTORE backups after 7 days) and
+      // surface it in the audit trail so the operator knows the safety
+      // snapshot exists.
+      if (preRestoreBackupId) {
+        try {
+          await backupRepository.updateBackupJob(preRestoreBackupId, {
+            errorMessage: `ORPHANED_BY_FAILED_RESTORE:${restoreJob.id}`,
+          });
+        } catch (flagErr) {
+          logger.error('[RestoreService] Failed to mark pre-restore backup as orphaned', {
+            backupId: preRestoreBackupId,
+            error: flagErr instanceof Error ? flagErr.message : String(flagErr),
+          });
+        }
+        await createAuditLog({
+          actorId: adminId,
+          actorType: 'ADMIN',
+          action: 'restore.orphaned_pre_restore_backup',
+          entity: 'BackupJob',
+          entityId: preRestoreBackupId,
+          details: { restoreJobId: restoreJob.id, error: (err instanceof Error ? err.message : String(err)) },
+        });
+      }
 
       // Release backup lock and disable maintenance mode on failure
       await backupService.setBackupLock(false).catch(() => {});

@@ -29,6 +29,7 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { invalidateRiderCache } from '@/lib/server-cache';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { RentalReturnError } from './errors';
 
 const MIN_PHOTOS = 4;
@@ -113,7 +114,7 @@ export async function submitReturn(
   }
 
   // ── Atomic: create VehicleReturn row + transition rider to RETURN_PENDING ──
-  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+  const result = await db.$transaction(async (tx) => {
     const vehicleReturn = await tx.vehicleReturn.create({
       data: {
         riderId: riderDbId,
@@ -147,7 +148,16 @@ export async function submitReturn(
 
   invalidateRiderCache(riderDbId);
 
-  // ── Audit log (non-blocking — createAuditLog swallows non-critical failures) ──
+  // ── Outbox Event & Audit log ──
+  await OutboxService.emit(OutboxEventTypes.RENT_PAID, {
+    riderId: riderDbId,
+    leaseId: result.returnId,
+    amountInPaise: 0,
+    periodNo: 1,
+  }).catch((err) => {
+    logger.warn('[submitReturn] RENT_PAID outbox emit failed (non-blocking)', { err });
+  });
+
   await createAuditLog({
     actorId: riderDbId,
     actorType: 'RIDER',

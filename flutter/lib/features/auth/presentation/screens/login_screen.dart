@@ -4,11 +4,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.dart';
@@ -92,15 +94,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Future<void> _handleLogin() async {
     if (_isLoading) return;
 
-    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    final error = PhoneValidator.validate(digits);
+    final error = PhoneValidator.validate(_phoneController.text);
     if (error != null) {
+      Toast.error(context, error);
       setState(() {});
       return;
     }
 
+    final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+
     setState(() => _isLoading = true);
-    PostHogService.capture('phone_entered', properties: {
+    await PostHogService.capture('phone_entered', properties: {
       'is_sign_up': widget.isSignUp.toString(),
     });
     try {
@@ -109,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             digits,
             referralCode: referralCode.isNotEmpty ? referralCode : null,
           );
-      PostHogService.capture('otp_requested', properties: {
+      await PostHogService.capture('otp_requested', properties: {
         'has_referral': (referralCode.isNotEmpty).toString(),
         'is_sign_up': widget.isSignUp.toString(),
       });
@@ -121,16 +125,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       appDebug('[LoginScreen] Error in sendOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
-        String errorMsg = 'Network error. Please try again.';
+        String errorMsg = AppLocalizations.of(context)?.txtloginNetworkError ??
+            'Unable to send OTP. Please check your network connection.';
         if (e is ApiException) {
           errorMsg = e.message;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Toast.error(context, errorMsg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -140,7 +140,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.of(context).surface,
       body: Stack(
         children: [
           _buildAmbientGlow(),
@@ -270,7 +270,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 const SizedBox(height: 8),
                 ExcludeSemantics(
                   child: Text(
-                    'Electric scooter rentals made simple.',
+                    // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded
+                    // English tagline. Localised via the existing
+                    // `txtsplashTagline` ARB key (the splash and the
+                    // login screen share the same tagline, so a
+                    // single key serves both).
+                    AppLocalizations.of(context)?.txtsplashTagline ??
+                        'Electric scooter rentals',
                     style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.onSurfaceVariant, height: 1.4),
                   ),
@@ -303,13 +309,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome',
+                AppLocalizations.of(context)?.txtwelcome ?? 'Welcome',
                 style: AppTypography.headingSmall
                     .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
               Text(
-                'Enter the registered phone number to login or enter a new number to create another account.',
+                AppLocalizations.of(context)?.txtloginWelcomeSubtitle ??
+                    'Enter your mobile number to get started with seamless electric mobility.',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.onSurfaceVariant,
                   height: 1.6,

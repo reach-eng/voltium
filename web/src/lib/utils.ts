@@ -13,8 +13,21 @@ export function cn(...inputs: ClassValue[]): string {
  * Create class string with explicit deduplication
  * Use when you need deterministic ordering
  */
+/**
+ * Create class string with explicit deduplication
+ * Use when you need deterministic ordering
+ */
 export function cnd(...inputs: (string | undefined | null | false)[]): string {
   return twMerge(inputs as string[]);
+}
+
+export function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 10) {
+    return `${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
+  }
+  return phone;
 }
 
 /**

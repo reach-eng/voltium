@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const earningRepository = {
   async findAllPaginated(params: {
@@ -10,11 +11,14 @@ export const earningRepository = {
     limit: number;
   }) {
     const { search, platform, startDate, endDate, page, limit } = params;
-    const where: Record<string, unknown> = {};
+    const where: Prisma.RiderEarningWhereInput = {};
 
     if (search) {
-      (where as any).rider = {
-        OR: [{ fullName: { contains: search } }, { riderId: { contains: search } }],
+      where.rider = {
+        OR: [
+          { fullName: { contains: search, mode: 'insensitive' } },
+          { riderId: { contains: search, mode: 'insensitive' } },
+        ],
       };
     }
 
@@ -23,10 +27,10 @@ export const earningRepository = {
     }
 
     if (startDate || endDate) {
-      const dateFilter: Record<string, Date> = {};
-      if (startDate) dateFilter.gte = new Date(startDate);
-      if (endDate) dateFilter.lte = new Date(`${endDate}T23:59:59.999Z`);
-      (where as any).date = dateFilter;
+      where.date = {
+        ...(startDate ? { gte: new Date(startDate) } : {}),
+        ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
+      };
     }
 
     const [earnings, total, aggregate] = await Promise.all([
@@ -39,7 +43,7 @@ export const earningRepository = {
           id: true,
           date: true,
           platform: true,
-          amount: true,
+          amountInPaise: true,
           trips: true,
           distance: true,
           hoursOnline: true,
@@ -51,19 +55,54 @@ export const earningRepository = {
       db.riderEarning.count({ where }),
       db.riderEarning.aggregate({
         where,
-        _sum: { amount: true, trips: true },
-        _avg: { amount: true },
+        _sum: { amountInPaise: true, trips: true },
+        _avg: { amountInPaise: true },
       }),
     ]);
 
+    // Typed sweep (2026-08-16): the schema column is `amountInPaise`.
+    // Historical convention stores the rupee value in that column, and the
+    // admin UI contract expects `amount` on each row — map it back so the
+    // response shape is unchanged.
+    const rows = earnings.map((e) => {
+      const { amountInPaise, ...rest } = e;
+      return { ...rest, amount: amountInPaise };
+    });
+
     return {
-      earnings,
+      earnings: rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       summary: {
-        totalAmount: aggregate._sum.amount ?? 0,
-        totalTrips: aggregate._sum.trips ?? 0,
-        averageAmount: aggregate._avg.amount ?? 0,
+        totalAmount: aggregate._sum?.amountInPaise ?? 0,
+        totalTrips: aggregate._sum?.trips ?? 0,
+        averageAmount: aggregate._avg?.amountInPaise ?? 0,
       },
     };
+  },
+
+  async create(data: {
+    riderId: string;
+    date: Date;
+    platform: string;
+    amount: number;
+    trips?: number;
+    distance?: number;
+    hoursOnline?: number;
+    notes?: string;
+  }) {
+    return db.riderEarning.create({
+      data: {
+        riderId: data.riderId,
+        date: data.date,
+        platform: data.platform,
+        // Typed sweep: schema column is `amountInPaise`; the input contract
+        // keeps the rupee value (historical convention, see findAllPaginated).
+        amountInPaise: data.amount,
+        trips: data.trips ?? 0,
+        distance: data.distance ?? 0,
+        hoursOnline: data.hoursOnline ?? 0,
+        notes: data.notes,
+      },
+    });
   },
 };

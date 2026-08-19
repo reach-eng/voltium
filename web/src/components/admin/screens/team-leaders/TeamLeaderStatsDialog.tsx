@@ -39,7 +39,7 @@ function StatTile({ label, value, bgClass, borderClass, valueClass }: StatTilePr
 }
 
 function formatRupees(balance: number): string {
-  return `₹${(balance / 100).toFixed(2)}`;
+  return `₹${Number(balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function getBalanceClass(rider: {

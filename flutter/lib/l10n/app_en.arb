@@ -731,6 +731,10 @@
   "txtsetAsPrimary": "Set as Primary",
   "txtdelete": "Delete",
   "txtemergencySos": "Emergency SOS",
+  "txtsosAlertTriggeredDialing": "SOS Alert Triggered! Dialing emergency services (112)...",
+  "@txtsosAlertTriggeredDialing": {
+    "description": "SnackBar shown after the rider triggers Emergency SOS"
+  },
   "txttakeAPhoto": "Take a Photo",
   "txtchooseFromGallery": "Choose from Gallery",
   "txtotpSentToGuarantorPhone": "OTP sent to guarantor phone",
@@ -750,6 +754,124 @@
   "txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely": "We need a few more details to set up your fleet profile securely.",
   "txtfinishSetup": "FINISH SETUP",
   "txtunableToOpenDocument": "Unable to open document",
+  "txtreferAndEarn": "Refer & Earn",
+  "@txtreferAndEarn": {
+    "description": "AppBar title of the referral screen (Refer & Earn)"
+  },
+  "txtrefresh": "Refresh",
+  "@txtrefresh": {
+    "description": "Generic Refresh button label (used in error/retry states)"
+  },
+  "txtfailedToUploadProof": "Failed to upload proof: {error}",
+  "@txtfailedToUploadProof": {
+    "description": "SnackBar shown when a top-up/deposit proof photo upload fails. {error} is the underlying exception message.",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "txtpleaseUploadPaymentProof": "Please upload a payment proof before submitting.",
+  "@txtpleaseUploadPaymentProof": {
+    "description": "SnackBar shown when the rider tries to submit a deposit without a proof photo attached"
+  },
+  "txtfailedToSubmitDeposit": "Failed to submit deposit: {error}",
+  "@txtfailedToSubmitDeposit": {
+    "description": "SnackBar shown when the deposit submission fails. {error} is the underlying exception message.",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "txtdiscard": "Discard",
+  "@txtdiscard": {
+    "description": "Discard button label (e.g. when leaving an unsaved edit profile screen)"
+  },
+  "txtremovePhoto": "Remove Photo",
+  "@txtremovePhoto": {
+    "description": "Button to remove a captured/attached photo in the end-rental flow"
+  },
+  "txtupToNPhotosPerTicket": "Up to {count} photos per ticket",
+  "@txtupToNPhotosPerTicket": {
+    "description": "Helper text in the create-ticket form, showing the per-ticket photo limit. {count} is the integer limit.",
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "txtticketCreatedSuccessfully": "Ticket created successfully",
+  "@txtticketCreatedSuccessfully": {
+    "description": "SnackBar shown after a support ticket is created"
+  },
+  "txtfailedToCreateTicket": "Failed to create ticket: {error}",
+  "@txtfailedToCreateTicket": {
+    "description": "SnackBar shown when a support ticket submission fails. {error} is the underlying exception message.",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "txtfailedToSubmitFeedback": "Failed to submit feedback: {error}",
+  "@txtfailedToSubmitFeedback": {
+    "description": "SnackBar shown when the feedback form submission fails. {error} is the underlying exception message.",
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "txtcreateTicket": "Create Ticket",
+  "@txtcreateTicket": {
+    "description": "Button/CTA label for creating a new support ticket"
+  },
+  "txtcallNumberForEmergencyAssistance": "Call {number} for emergency assistance?",
+  "@txtcallNumberForEmergencyAssistance": {
+    "description": "Confirmation dialog message before launching the emergency call. {number} is the SOS phone number.",
+    "placeholders": {
+      "number": { "type": "String" }
+    }
+  },
+  "txtadvanceRentalPlanFee": "Advance Rental Plan Fee",
+  "@txtadvanceRentalPlanFee": {
+    "description": "Label in the top-up flow breakdown for the optional advance rental fee"
+  },
+  "txttopUpProofSubmittedSuccessfully": "Top-up proof submitted successfully!",
+  "txtupiIdCopiedToClipboard": "UPI ID copied to clipboard",
+  "@txtupiIdCopiedToClipboard": {
+    "description": "SnackBar shown when the rider copies the UPI ID for offline payment"
+  },
+  "txttopUpAmountAddedToWallet": "Top-Up Amount (Added to Wallet)",
+  "@txttopUpAmountAddedToWallet": {
+    "description": "Receipt line label — the top-up amount that gets added to the rider's wallet balance"
+  },
+  "txttotalPayable": "Total Payable",
+  "@txttotalPayable": {
+    "description": "Receipt line label — the final total the rider pays (top-up + plan fee + deposit)"
+  },
+  "@txttopUpProofSubmittedSuccessfully": {
+    "description": "SnackBar shown after the rider submits a top-up/deposit proof photo"
+  },
+  "txtchangeLockPassword": "Change Lock Password",
+  "@txtchangeLockPassword": {
+    "description": "Settings → tile + dialog title for the lock-password verification flow"
+  },
+  "txtlockPassword": "Lock Password",
+  "@txtlockPassword": {
+    "description": "TextField label inside the lock-password verification dialog"
+  },
+  "txtlockPasswordSubtitle": "Enter your device lock password to verify security configuration.",
+  "@txtlockPasswordSubtitle": {
+    "description": "Body text of the lock-password verification dialog"
+  },
+  "txtlockPasswordVerifyFailed": "Lock password verification failed",
+  "@txtlockPasswordVerifyFailed": {
+    "description": "SnackBar shown when the lock-password verification request throws"
+  },
+  "txtverify": "Verify",
+  "@txtverify": {
+    "description": "Submit-button label on the lock-password verification dialog"
+  },
+  "txtenterAValid10DigitNumber": "Enter a valid 10-digit number",
+  "@txtenterAValid10DigitNumber": {
+    "description": "EditProfile screen SnackBar when guarantor phone is too short"
+  },
+  "txtenterThe6DigitOtp": "Enter the 6-digit OTP",
+  "@txtenterThe6DigitOtp": {
+    "description": "EditProfile screen SnackBar when the OTP input isn't 6 digits yet"
+  },
   "txtmyDocuments": "My Documents",
   "txtsecurityProfile": "SECURITY PROFILE",
   "txtnoDocumentsSubmittedYet": "No documents submitted yet",
@@ -803,6 +925,62 @@
   "txtconnectingToGrid": "CONNECTING TO GRID",
   "txtretry": "Retry",
   "txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide": "Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!",
+  "txtsplashTagline": "Electric scooter rentals",
+  "@txtsplashTagline": {
+    "description": "Splash screen tagline below the brand name"
+  },
+  "txtloginWelcomeSubtitle": "Enter the registered phone number to login or enter a new number to create another account.",
+  "@txtloginWelcomeSubtitle": {
+    "description": "Login screen welcome-section body text"
+  },
+  "txtloginLegalIntro": "By signing in, you agree to our",
+  "@txtloginLegalIntro": {
+    "description": "Login screen footer intro line above the Terms/Privacy links"
+  },
+  "txtloginReferralHint": "Referral Code (Optional)",
+  "@txtloginReferralHint": {
+    "description": "Phone-entry widget referral-code field hint"
+  },
+  "txtloginSecureOtpNote": "A secure OTP will be sent",
+  "@txtloginSecureOtpNote": {
+    "description": "Phone-entry widget OTP note shown below the inputs"
+  },
+  "txtloginEnterButton": "Enter",
+  "@txtloginEnterButton": {
+    "description": "Login screen primary submit button (sends OTP)"
+  },
+  "txtloginSendingButton": "Sending…",
+  "@txtloginSendingButton": {
+    "description": "Login screen submit-button label while the OTP request is in flight"
+  },
+  "txtloginNetworkError": "Network error. Please try again.",
+  "@txtloginNetworkError": {
+    "description": "Login screen SnackBar when the OTP send request fails on a non-API error (e.g. socket)"
+  },
+  "txtotpVerifyTitle": "Verify OTP",
+  "@txtotpVerifyTitle": {
+    "description": "OTP screen title shown for new riders"
+  },
+  "txtotpWelcomeBack": "Welcome Back!",
+  "@txtotpWelcomeBack": {
+    "description": "OTP screen title shown for returning riders"
+  },
+  "txtotpSignupSubtitle": "Enter the 6-digit code sent to ",
+  "@txtotpSignupSubtitle": {
+    "description": "OTP screen subtitle for new riders, followed by the phone number in primary blue"
+  },
+  "txtotpLoginSubtitle": "Enter the code to login to your account ",
+  "@txtotpLoginSubtitle": {
+    "description": "OTP screen subtitle for returning riders, followed by the phone number in primary blue"
+  },
+  "txtotpVerifyFailed": "Failed to verify OTP. Please try again.",
+  "@txtotpVerifyFailed": {
+    "description": "OTP screen SnackBar when the verify request fails on a non-API error"
+  },
+  "txtotpResendError": "Error resending OTP",
+  "@txtotpResendError": {
+    "description": "OTP screen SnackBar when the resend request fails"
+  },
   "txtgoToDashboard": "Go to Dashboard",
   "txtpleaseLogInAgain": "Please log in again.",
   "txtfailedToCompletePickupPleaseTryAgain": "Failed to complete pickup. Please try again.",
@@ -1084,6 +1262,22 @@
   "@settings_darkMode": {
     "description": "Dark mode toggle label"
   },
+  "settings_appearance": "Appearance",
+  "@settings_appearance": {
+    "description": "Appearance (theme) selector label"
+  },
+  "settings_followSystem": "Follow System",
+  "@settings_followSystem": {
+    "description": "Option to follow the device system theme / locale"
+  },
+  "settings_themeLight": "Light",
+  "@settings_themeLight": {
+    "description": "Light theme option"
+  },
+  "settings_themeDark": "Dark",
+  "@settings_themeDark": {
+    "description": "Dark theme option"
+  },
   "settings_supportLegal": "SUPPORT & LEGAL",
   "@settings_supportLegal": {
     "description": "Support section header"
@@ -1124,6 +1318,10 @@
   "@settings_delete": {
     "description": "Delete button label in confirmation dialog"
   },
+  "settings_deleteReason": "Requested from app settings",
+  "@settings_deleteReason": {
+    "description": "Default reason recorded when a rider requests account deletion"
+  },
   "settings_deleteNotAvailable": "Account deletion is not yet available. Please contact support.",
   "@settings_deleteNotAvailable": {
     "description": "Snackbar message when delete is not available"
@@ -1139,5 +1337,465 @@
   "settings_comingSoon": "Coming soon",
   "@settings_comingSoon": {
     "description": "Generic coming-soon snackbar title"
-  }
+  },
+  "txtfullName": "Full Name",
+  "@txtfullName": { "description": "Full name input label" },
+  "txtenterFullName": "Enter full name",
+  "@txtenterFullName": { "description": "Full name placeholder" },
+  "txtdateOfBirth": "Date of Birth",
+  "@txtdateOfBirth": { "description": "Date of birth label" },
+  "txtemailAddress": "Email Address",
+  "@txtemailAddress": { "description": "Email address label" },
+  "txtenterEmailAddress": "Enter email address",
+  "@txtenterEmailAddress": { "description": "Email address placeholder" },
+  "txtfathersName": "Father's Name",
+  "@txtfathersName": { "description": "Father's name label" },
+  "txtenterFathersName": "Enter father's name",
+  "@txtenterFathersName": { "description": "Father's name placeholder" },
+  "txtmothersName": "Mother's Name",
+  "@txtmothersName": { "description": "Mother's name label" },
+  "txtenterMothersName": "Enter mother's name",
+  "@txtenterMothersName": { "description": "Mother's name placeholder" },
+  "txtcurrentAddress": "Current Address",
+  "@txtcurrentAddress": { "description": "Current address label" },
+  "txtenterYourFullAddress": "Enter your full address",
+  "@txtenterYourFullAddress": { "description": "Current address placeholder" },
+  "txtaadhaarFront": "Aadhaar Card\n(Front)",
+  "@txtaadhaarFront": { "description": "Aadhaar front card label" },
+  "txtaadhaarBack": "Aadhaar Card\n(Back)",
+  "@txtaadhaarBack": { "description": "Aadhaar back card label" },
+  "txtpanCard": "PAN Card",
+  "@txtpanCard": { "description": "PAN card label" },
+  "txtbankName": "Bank Name",
+  "@txtbankName": { "description": "Bank name label" },
+  "txtaccountNumber": "Account Number",
+  "@txtaccountNumber": { "description": "Bank account number label" },
+  "txtifscCode": "IFSC Code",
+  "@txtifscCode": { "description": "Bank IFSC code label" },
+  "txttakeAPhoto": "Take a Photo",
+  "@txttakeAPhoto": { "description": "Take a photo sheet action" },
+  "txtchooseFromGallery": "Choose from Gallery",
+  "@txtchooseFromGallery": { "description": "Choose from gallery sheet action" },
+  "txtclearPhotosOnly": "Clear photos only. Max 5MB each.",
+  "@txtclearPhotosOnly": { "description": "Document guidelines subtitle" },
+  "txtriderProfile": "Rider Profile",
+  "@txtriderProfile": { "description": "Rider profile screen title" },
+  "txtcompleteDetailsSubtitle": "Complete your details to finish onboarding",
+  "@txtcompleteDetailsSubtitle": { "description": "Rider profile screen subtitle" },
+  "txtconfirmAndProceed": "Confirm & Proceed",
+  "@txtconfirmAndProceed": { "description": "Confirm and proceed button label" },
+  "txtensureAllDetailsAccurate": "ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING",
+  "@txtensureAllDetailsAccurate": { "description": "KYC confirmation disclaimer" },
+  "txtselfieLiveCameraHint": "Live camera capture required for KYC verification",
+  "@txtselfieLiveCameraHint": { "description": "Live camera hint for rider selfie" },
+  "txtofflineDraftBanner": "You're offline — your draft is saved locally. Connect to internet to submit.",
+  "@txtofflineDraftBanner": { "description": "Offline mode draft indicator banner" },
+  "txtdocumentPreview": "Document Preview",
+  "@txtdocumentPreview": { "description": "Document preview modal title" },
+  "txtretakePhoto": "Retake Photo",
+  "@txtretakePhoto": { "description": "Retake photo action" },
+  "txtkeepPhoto": "Keep Photo",
+  "@txtkeepPhoto": { "description": "Keep photo action" },
+  "txtuploaded": "Uploaded",
+  "@txtuploaded": { "description": "Uploaded status badge" },
+  "txtpermissionsTitle": "Permissions",
+  "@txtpermissionsTitle": { "description": "Permissions screen title" },
+  "txtpermissionsSubtitle": "Please allow the following permissions to ensure safety and functionality.",
+  "@txtpermissionsSubtitle": { "description": "Permissions screen subtitle" },
+  "txtlocationPermName": "Location",
+  "@txtlocationPermName": { "description": "Location permission tile name" },
+  "txtlocationPermDesc": "Track rides and find nearby vehicles",
+  "@txtlocationPermDesc": { "description": "Location permission tile description" },
+  "txtnotificationsPermName": "Notifications",
+  "@txtnotificationsPermName": { "description": "Notifications permission tile name" },
+  "txtnotificationsPermDesc": "Receive important updates and alerts",
+  "@txtnotificationsPermDesc": { "description": "Notifications permission tile description" },
+  "txtbatteryPermName": "Battery Optimization",
+  "@txtbatteryPermName": { "description": "Battery optimization permission tile name" },
+  "txtbatteryPermDesc": "Allow the app to run reliably in the background.",
+  "@txtbatteryPermDesc": { "description": "Battery optimization permission tile description" },
+  "txtcameraPermName": "Camera",
+  "@txtcameraPermName": { "description": "Camera permission tile name" },
+  "txtcameraPermDesc": "Document upload and QR scanning",
+  "@txtcameraPermDesc": { "description": "Camera permission tile description" },
+  "txtphonePermName": "Phone State",
+  "@txtphonePermName": { "description": "Phone state permission tile name" },
+  "txtphonePermDesc": "Phone state (for safety call detection)",
+  "@txtphonePermDesc": { "description": "Phone state permission tile description" },
+  "txtphonePermTooltip": "Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.",
+  "@txtphonePermTooltip": { "description": "Phone state permission tooltip" },
+  "txtcontactsPermName": "Contacts",
+  "@txtcontactsPermName": { "description": "Contacts permission tile name" },
+  "txtcontactsPermDesc": "Access contacts for emergency SOS and referrals",
+  "@txtcontactsPermDesc": { "description": "Contacts permission tile description" },
+  "txtmicPermName": "Microphone",
+  "@txtmicPermName": { "description": "Microphone permission tile name" },
+  "txtmicPermDesc": "Required for audio recording and verification",
+  "@txtmicPermDesc": { "description": "Microphone permission tile description" },
+  "txtdeviceAdminPermName": "Device Admin",
+  "@txtdeviceAdminPermName": { "description": "Device admin permission tile name" },
+  "txtdeviceAdminPermDesc": "Required for fleet security and remote lock features",
+  "@txtdeviceAdminPermDesc": { "description": "Device admin permission tile description" },
+  "txtpreciseLocationRequired": "Precise location is required. Please enable it in Settings.",
+  "@txtpreciseLocationRequired": { "description": "Precise location warning snackbar" },
+  "txtbeforeYouBegin": "Before You Begin",
+  "@txtbeforeYouBegin": { "description": "KYC preflight header title" },
+  "txtquickKycSubtitle": "Quick KYC verification (~3 mins)",
+  "@txtquickKycSubtitle": { "description": "KYC preflight header subtitle" },
+  "txtpleaseHaveReady": "Please have these ready:",
+  "@txtpleaseHaveReady": { "description": "KYC preflight checklist prompt" },
+  "txtaadhaarCard": "Aadhaar Card",
+  "@txtaadhaarCard": { "description": "Aadhaar card checklist title" },
+  "txtaadhaarCardDesc": "Front and back photo or E-Aadhaar PDF",
+  "@txtaadhaarCardDesc": { "description": "Aadhaar card checklist subtitle" },
+  "txtpanCardDesc": "For tax and identity verification",
+  "@txtpanCardDesc": { "description": "PAN card checklist subtitle" },
+  "txtthreeMinutesTime": "3 Minutes of Time",
+  "@txtthreeMinutesTime": { "description": "Time estimate checklist title" },
+  "txtfastAutomatedVerification": "Fast automated verification",
+  "@txtfastAutomatedVerification": { "description": "Time estimate checklist subtitle" },
+  "txtimReady": "I'm Ready",
+  "@txtimReady": { "description": "KYC preflight ready button" },
+  "txtillDoThisLater": "I'll do this later",
+  "@txtillDoThisLater": { "description": "KYC preflight skip button" },
+  "txtsyncingLatestDocs": "Syncing latest documents…",
+  "@txtsyncingLatestDocs": { "description": "Legal docs syncing indicator" },
+  "txtlegalAgreeCheckboxPrefix": "I have read and agree to the ",
+  "@txtlegalAgreeCheckboxPrefix": { "description": "Legal agreement checkbox prefix text" },
+  "txtelectronicSignature": "(Electronic Signature)",
+  "@txtelectronicSignature": { "description": "Electronic signature label" },
+  "txtlegalHelpText": "If you have any questions about our policies, please contact our support team at ",
+  "@txtlegalHelpText": { "description": "Legal support help text prefix" },
+  "txtorCall": " or call ",
+  "@txtorCall": { "description": "Legal support help text middle connector" },
+  "txtdidntReceiveCode": "DIDN'T RECEIVE THE CODE?",
+  "@txtdidntReceiveCode": { "description": "OTP resend prompt uppercase text" },
+  "txtresendCode": "Resend Code",
+  "@txtresendCode": { "description": "OTP resend button active label" },
+  "txtresendIn": "Resend in {seconds}s",
+  "@txtresendIn": {
+    "description": "OTP resend button countdown label",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "txtverifying": "Verifying…",
+  "@txtverifying": { "description": "OTP verify button loading state label" },
+  "txtverifyAndProceed": "Verify & Proceed",
+  "@txtverifyAndProceed": { "description": "OTP verify button active label" },
+  "txtgreetingMorning": "Good Morning",
+  "@txtgreetingMorning": { "description": "Morning greeting on dashboard" },
+  "txtgreetingAfternoon": "Good Afternoon",
+  "@txtgreetingAfternoon": { "description": "Afternoon greeting on dashboard" },
+  "txtgreetingEvening": "Good Evening",
+  "@txtgreetingEvening": { "description": "Evening greeting on dashboard" },
+  "txtguestRider": "Rider",
+  "@txtguestRider": { "description": "Fallback rider name" },
+  "txtshowingCachedData": "Showing cached data",
+  "@txtshowingCachedData": { "description": "Cached data banner on dashboard" },
+  "txtnoDataAvailable": "No data available",
+  "@txtnoDataAvailable": { "description": "Empty dashboard message" },
+  "txtvehiclePendingAssignment": "Vehicle Pending Assignment",
+  "@txtvehiclePendingAssignment": { "description": "Badge when vehicle is not yet assigned" },
+  "txtcurrentSubscription": "CURRENT SUBSCRIPTION",
+  "@txtcurrentSubscription": { "description": "Plan card header" },
+  "txtnoPlan": "NO PLAN",
+  "@txtnoPlan": { "description": "No active plan label" },
+  "txtweeklyPayment": "WEEKLY PAYMENT",
+  "@txtweeklyPayment": { "description": "Weekly plan uppercase title" },
+  "txtdailyPayment": "DAILY PAYMENT",
+  "@txtdailyPayment": { "description": "Daily plan uppercase title" },
+  "txtmonthlyPayment": "MONTHLY PAYMENT",
+  "@txtmonthlyPayment": { "description": "Monthly plan uppercase title" },
+  "txttimeRemaining": "TIME REMAINING",
+  "@txttimeRemaining": { "description": "Time remaining box label" },
+  "txtnextRecharge": "NEXT RECHARGE",
+  "@txtnextRecharge": { "description": "Next recharge box label" },
+  "txtexpired": "Expired",
+  "@txtexpired": { "description": "Expired plan status label" },
+  "txtexpiresToday": "Expires Today",
+  "@txtexpiresToday": { "description": "Expires today plan status label" },
+  "txtdaysCount": "{count} Days",
+  "@txtdaysCount": {
+    "description": "Days remaining count label",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "txttotalBalance": "TOTAL BALANCE",
+  "@txttotalBalance": { "description": "Wallet card total balance label" },
+  "txtavailableBalance": "AVAILABLE BALANCE",
+  "@txtavailableBalance": { "description": "Wallet card available balance label" },
+  "txtstreakDays": "{current}/{total} Days",
+  "@txtstreakDays": {
+    "description": "Streak progress label",
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "txtminRechargeNotice": "A minimum recharge of ₹{amount} is required to proceed further.",
+  "@txtminRechargeNotice": {
+    "description": "Minimum recharge disclaimer",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹{amount}.",
+  "@txtlowBalanceWarningNotice": {
+    "description": "Low balance warning notice",
+    "placeholders": { "amount": { "type": "int" } }
+  },
+  "txttopUpWalletAction": "Top Up Wallet",
+  "@txttopUpWalletAction": { "description": "Top up wallet button label" },
+  "txtreferAndEarn": "Refer & Earn",
+  "@txtreferAndEarn": { "description": "Referral card title" },
+  "txtshareCodeWithFriends": "Share your code with friends",
+  "@txtshareCodeWithFriends": { "description": "Referral card subtitle" },
+  "txtyourCode": "YOUR CODE",
+  "@txtyourCode": { "description": "Your code uppercase label" },
+  "txtreferralCodeCopied": "Referral code copied!",
+  "@txtreferralCodeCopied": { "description": "Referral code copied snackbar text" },
+  "txtshareReferralMessage": "Use my code {code} to join Voltium!",
+  "@txtshareReferralMessage": {
+    "description": "Referral share invitation text",
+    "placeholders": { "code": { "type": "String" } }
+  },
+  "txtjoinVoltiumSubject": "Join Voltium",
+  "@txtjoinVoltiumSubject": { "description": "Referral share subject text" },
+  "txtteamLeader": "Team Leader",
+  "@txtteamLeader": { "description": "Team leader card title" },
+  "txtviewDetailsAction": "View Details",
+  "@txtviewDetailsAction": { "description": "View details link" },
+  "txtnotAssigned": "Not assigned",
+  "@txtnotAssigned": { "description": "Fallback text when resource is unassigned" },
+  "txtassignedTlBadge": "Assigned TL",
+  "@txtassignedTlBadge": { "description": "Assigned TL subtitle" },
+  "txttlPendingNotice": "Your hub will assign a team leader shortly",
+  "@txttlPendingNotice": { "description": "Notice when TL is not yet assigned" },
+  "txtnoContactNumberTl": "No contact number available for your Team Leader.",
+  "@txtnoContactNumberTl": { "description": "No contact number warning snackbar" },
+  "txtcouldNotOpenDialer": "Could not open the phone dialer. Please try again.",
+  "@txtcouldNotOpenDialer": { "description": "Dialer error snackbar" },
+  "txtscooterSubmissionRequired": "Scooter Submission\nRequired",
+  "@txtscooterSubmissionRequired": { "description": "Scooter return banner title" },
+  "txtpendingReturnSubmission": "Pending return submission",
+  "@txtpendingReturnSubmission": { "description": "Pending return fallback date label" },
+  "txtsubmissionDatePrefix": "Submission Date: {date}",
+  "@txtsubmissionDatePrefix": {
+    "description": "Submission date label",
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "txthubNamePrefix": "Hub Name: {hub}",
+  "@txthubNamePrefix": {
+    "description": "Hub name label",
+    "placeholders": { "hub": { "type": "String" } }
+  },
+  "txtdesignatedHub": "Designated Hub",
+  "@txtdesignatedHub": { "description": "Designated hub fallback" },
+  "txtupcomingRentDebit": "UPCOMING RENT DEBIT",
+  "@txtupcomingRentDebit": { "description": "Upcoming rent debit header" },
+  "txttopUpBeforeTomorrow6am": "Top-up before tomorrow 6 AM",
+  "@txttopUpBeforeTomorrow6am": { "description": "Rent prompt card title" },
+  "txtrentDebitNoticeShortfall": "Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).",
+  "@txtrentDebitNoticeShortfall": {
+    "description": "Rent debit notice with shortfall",
+    "placeholders": {
+      "rent": { "type": "String" },
+      "balance": { "type": "String" },
+      "shortfall": { "type": "String" }
+    }
+  },
+  "txtrentDebitNoticeSufficient": "Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.",
+  "@txtrentDebitNoticeSufficient": {
+    "description": "Rent debit notice with sufficient balance",
+    "placeholders": {
+      "rent": { "type": "String" },
+      "balance": { "type": "String" }
+    }
+  },
+  "txttopUpAmountAction": "Top up ₹{amount}",
+  "@txttopUpAmountAction": {
+    "description": "Top up button label with amount",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "txtassignedTeamLeader": "Assigned Team Leader",
+  "@txtassignedTeamLeader": { "description": "Assigned team leader sheet title" },
+  "txtchangeTl": "Change TL",
+  "@txtchangeTl": { "description": "Change TL button label" },
+  "txtclose": "Close",
+  "@txtclose": { "description": "Close button label" },
+  "txtchangeTeamLeaderTitle": "Change Team Leader",
+  "@txtchangeTeamLeaderTitle": { "description": "Change team leader dialog title" },
+  "txtchangeTlReasonPrompt": "Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.",
+  "@txtchangeTlReasonPrompt": { "description": "Change TL reason prompt" },
+  "txtenterReasonHint": "Enter your reason here...",
+  "@txtenterReasonHint": { "description": "Enter reason placeholder" },
+  "txtprovideDetailedReason": "Please provide a detailed reason (at least 5 characters)",
+  "@txtprovideDetailedReason": { "description": "Reason validation message" },
+  "txttlChangeSubmitted": "Your TL change request has been submitted for approval",
+  "@txttlChangeSubmitted": { "description": "TL change submitted snackbar" },
+  "txtfailedToSubmitRequest": "Failed to submit request: {error}",
+  "@txtfailedToSubmitRequest": {
+    "description": "Failed to submit request snackbar",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "txtmanageSubscriptionTitle": "Manage Subscription",
+  "@txtmanageSubscriptionTitle": { "description": "Subscription sheet title" },
+  "txtmanageSubscriptionSubtitle": "View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.",
+  "@txtmanageSubscriptionSubtitle": { "description": "Subscription sheet subtitle" },
+  "txtactiveBadge": "Active",
+  "@txtactiveBadge": { "description": "Active status badge label" },
+  "txtperDay": "/ day",
+  "@txtperDay": { "description": "Per day cadence" },
+  "txtperWeek": "/ week",
+  "@txtperWeek": { "description": "Per week cadence" },
+  "txtperMonth": "/ month",
+  "@txtperMonth": { "description": "Per month cadence" },
+  "txtrequestPlanChangeButton": "Request Plan Change",
+  "@txtrequestPlanChangeButton": { "description": "Request plan change button" },
+  "txtendRentalButton": "End Rental",
+  "@txtendRentalButton": { "description": "End rental button" },
+  "txtchangeIntentButton": "Change Intent of Use",
+  "@txtchangeIntentButton": { "description": "Change intent of use button" },
+  "txtchangeIntentPrefix": "Change Intent: {intent}",
+  "@txtchangeIntentPrefix": {
+    "description": "Change intent button with current intent",
+    "placeholders": { "intent": { "type": "String" } }
+  },
+  "txtstepXofY": "Step {current} of {total}",
+  "@txtstepXofY": {
+    "description": "Step X of Y label",
+    "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
+  },
+  "txtcaptureViewOfVehicle": "Capture {view} of Vehicle",
+  "@txtcaptureViewOfVehicle": {
+    "description": "Capture vehicle view label",
+    "placeholders": { "view": { "type": "String" } }
+  },
+  "txtensureClearPhotoPrompt": "Ensure the photo is clear and well-lit for faster approval.",
+  "@txtensureClearPhotoPrompt": { "description": "Return photo instruction" },
+  "txtcapturePhotoBtn": "Capture Photo",
+  "@txtcapturePhotoBtn": { "description": "Capture photo button" },
+  "txtcancelReturnProcessBtn": "Cancel Return Process",
+  "@txtcancelReturnProcessBtn": { "description": "Cancel return process button" },
+  "txtuploadingPhotosSubmitting": "Uploading photos & submitting request...",
+  "@txtuploadingPhotosSubmitting": { "description": "Uploading photos progress dialog title" },
+  "txtdoNotCloseApp": "Please do not close the app.",
+  "@txtdoNotCloseApp": { "description": "Do not close app notice" },
+  "txtreturnRequestSubmittedTitle": "Return Request Submitted",
+  "@txtreturnRequestSubmittedTitle": { "description": "Return request submitted dialog title" },
+  "txtreturnRequestSubmittedBody": "Your vehicle return request is pending approval. Our hub manager will verify your submission soon.",
+  "@txtreturnRequestSubmittedBody": { "description": "Return request submitted dialog body" },
+  "txtgreatBtn": "Great!",
+  "@txtgreatBtn": { "description": "Great button label" },
+  "txtfailedToSubmitReturn": "Failed to submit return request. Please try again.",
+  "@txtfailedToSubmitReturn": { "description": "Failed to submit return snackbar" },
+  "txtleftSide": "Left Side",
+  "@txtleftSide": { "description": "Left side vehicle view" },
+  "txtrightSide": "Right Side",
+  "@txtrightSide": { "description": "Right side vehicle view" },
+  "txtfrontView": "Front View",
+  "@txtfrontView": { "description": "Front view vehicle view" },
+  "txtspeedometer": "Speedometer",
+  "@txtspeedometer": { "description": "Speedometer vehicle view" },
+  "txtintentOfUse": "Intent of Use",
+  "@txtintentOfUse": { "description": "Intent of use dialog title" },
+  "txtpersonalUse": "Personal Use",
+  "@txtpersonalUse": { "description": "Personal use intent option" },
+  "txtecommerceDelivery": "E-commerce Delivery",
+  "@txtecommerceDelivery": { "description": "E-commerce delivery intent option" },
+  "txtfoodDelivery": "Food Delivery",
+  "@txtfoodDelivery": { "description": "Food delivery intent option" },
+  "txtother": "Other",
+  "@txtother": { "description": "Other intent option" },
+  "txtrentalDetailsTitle": "Rental Details",
+  "@txtrentalDetailsTitle": { "description": "Rental details screen title" },
+  "txtcurrentPlanSection": "CURRENT PLAN",
+  "@txtcurrentPlanSection": { "description": "Current plan section header" },
+  "txtnoActivePlan": "No Active Plan",
+  "@txtnoActivePlan": { "description": "No active plan label" },
+  "txtperCycle": " / cycle",
+  "@txtperCycle": { "description": "Per cycle cadence" },
+  "txtrentalInformation": "Rental Information",
+  "@txtrentalInformation": { "description": "Rental information section header" },
+  "txtstartDate": "Start Date",
+  "@txtstartDate": { "description": "Start date row label" },
+  "txtendDate": "End Date",
+  "@txtendDate": { "description": "End date row label" },
+  "txtsecurityDeposit": "Security Deposit",
+  "@txtsecurityDeposit": { "description": "Security deposit row label" },
+  "txtpaymentStreak": "Payment Streak",
+  "@txtpaymentStreak": { "description": "Payment streak row label" },
+  "txtchangePlan": "Change Plan",
+  "@txtchangePlan": { "description": "Change plan button label" },
+  "txtpickupHub": "Pickup Hub",
+  "@txtpickupHub": { "description": "Pickup Hub label" },
+  "txtintentUpdatedSuccess": "Intent updated successfully",
+  "@txtintentUpdatedSuccess": { "description": "Intent updated success toast" },
+  "txtfailedToUpdateIntent": "Failed to update intent: {error}",
+  "@txtfailedToUpdateIntent": {
+    "description": "Failed to update intent toast",
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "txtteamLeaderInfoDescription": "Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.",
+  "@txtteamLeaderInfoDescription": { "description": "Team leader info card description" },
+  "txtrequestTlChange": "Request Team Leader change",
+  "@txtrequestTlChange": { "description": "Request Team Leader change button label" },
+  "txtbackToDashboard": "Back to Dashboard",
+  "@txtbackToDashboard": { "description": "Back to dashboard button label" },
+  "txtselectTeamLeader": "Select Team Leader",
+  "@txtselectTeamLeader": { "description": "Select Team Leader placeholder" },
+  "txtcall": "Call",
+  "@txtcall": { "description": "Call button tooltip" },
+  "txtnotProvided": "Not provided",
+  "@txtnotProvided": { "description": "Not provided fallback string" },
+  "txtemergencyContact": "Emergency Contact",
+  "@txtemergencyContact": { "description": "Emergency contact row title" },
+  "txtkycStatusTitle": "KYC STATUS",
+  "@txtkycStatusTitle": { "description": "KYC status card header" },
+  "txtguarantorStatusTitle": "GUARANTOR",
+  "@txtguarantorStatusTitle": { "description": "Guarantor status card header" },
+  "txtvehicleTitle": "Vehicle",
+  "@txtvehicleTitle": { "description": "Vehicle row title" },
+  "txtaddress": "Address",
+  "@txtaddress": { "description": "Address row title" },
+  "txtunderReview": "Under Review",
+  "@txtunderReview": { "description": "Under review status string" },
+  "txtphone": "Phone",
+  "@txtphone": { "description": "Phone field label" },
+  "txtverifiedAndSecure": "Verified & Secure",
+  "@txtverifiedAndSecure": { "description": "Security profile status title" },
+  "txtidentityGuarantorVerifiedDesc": "Your identity and guarantor information have been verified. You can view or download copies of your documents below.",
+  "@txtidentityGuarantorVerifiedDesc": { "description": "Verified documents description" },
+  "txtverificationInProgressDesc": "Your verification is in progress. Some documents may still be under review by our safety team.",
+  "@txtverificationInProgressDesc": { "description": "Verification in progress documents description" },
+  "txtyourDocuments": "YOUR DOCUMENTS",
+  "@txtyourDocuments": { "description": "Rider documents section header" },
+  "txtguarantorDocuments": "GUARANTOR'S DOCUMENTS",
+  "@txtguarantorDocuments": { "description": "Guarantor documents section header" },
+  "txtfilesCount": "{count} FILES",
+  "@txtfilesCount": {
+    "description": "Category files count badge",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "txtaadhaarCardFront": "Aadhaar Card (Front)",
+  "@txtaadhaarCardFront": { "description": "Aadhaar Card Front label" },
+  "txtaadhaarCardBack": "Aadhaar Card (Back)",
+  "@txtaadhaarCardBack": { "description": "Aadhaar Card Back label" },
+  "txtpanCardLabel": "PAN Card",
+  "@txtpanCardLabel": { "description": "PAN Card label" },
+  "txtdigitalSignature": "Digital Signature",
+  "@txtdigitalSignature": { "description": "Digital Signature document label" },
+  "txtguarantorAadhaarFront": "Guarantor's Aadhaar (Front)",
+  "@txtguarantorAadhaarFront": { "description": "Guarantor Aadhaar Front label" },
+  "txtguarantorAadhaarBack": "Guarantor's Aadhaar (Back)",
+  "@txtguarantorAadhaarBack": { "description": "Guarantor Aadhaar Back label" },
+  "txtguarantorPanCard": "Guarantor's PAN Card",
+  "@txtguarantorPanCard": { "description": "Guarantor PAN Card label" },
+  "txtverificationVideo": "Verification Video",
+  "@txtverificationVideo": { "description": "Guarantor Verification Video label" },
+  "txtguarantorSignatureDoc": "Guarantor's Signature",
+  "@txtguarantorSignatureDoc": { "description": "Guarantor Signature label" },
+  "txtverifiedAndActive": "Verified & Active",
+  "@txtverifiedAndActive": { "description": "Document verified and active status subtitle" },
+  "txtopenExternal": "Open External",
+  "@txtopenExternal": { "description": "Open external document viewer button label" }
 }

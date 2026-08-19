@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
@@ -13,16 +15,30 @@ import 'edit_profile_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Shows the rider's full profile details:
 /// avatar card, personal details, KYC/Guarantor status, guarantor card,
 /// and an Edit Profile entry.
-class ProfileDetailScreen extends ConsumerWidget {
+class ProfileDetailScreen extends ConsumerStatefulWidget {
   const ProfileDetailScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileDetailScreen> createState() =>
+      _ProfileDetailScreenState();
+}
+
+class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.screen('profile_detail_screen');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final rider = ref.watch(riderProvider.select((p) => p.rider));
 
     return Scaffold(
@@ -42,12 +58,14 @@ class ProfileDetailScreen extends ConsumerWidget {
             FadeUpWidget(
               delay: 80,
               child: _EditProfileTile(
-                onTap: () =>
-                    AppNavigator.push(context, const EditProfileScreen()),
+                onTap: () {
+                  HapticService.light();
+                  AppNavigator.push(context, const EditProfileScreen());
+                },
               ),
             ),
             const SizedBox(height: 24),
-            const _SectionLabel('PERSONAL DETAILS'),
+            _SectionLabel(l10n?.txtpersonalDetails ?? 'PERSONAL DETAILS'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 150,
@@ -56,11 +74,11 @@ class ProfileDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             FadeUpWidget(
               delay: 220,
-              child: _buildStatusBentos(rider),
+              child: _buildStatusBentos(context, rider),
             ),
             if (rider?.guarantorName != null) ...[
               const SizedBox(height: 24),
-              const _SectionLabel('GUARANTOR DETAILS'),
+              _SectionLabel(l10n?.txtguarantorDetails ?? 'GUARANTOR DETAILS'),
               const SizedBox(height: 12),
               FadeUpWidget(
                 delay: 280,
@@ -76,50 +94,21 @@ class ProfileDetailScreen extends ConsumerWidget {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return AppBar(
       backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leadingWidth: 68,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 20.0),
-        child: UnconstrainedBox(
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colors.card,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: 0.5),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadius.full),
-                onTap: () {
-                  if (Navigator.canPop(context)) Navigator.pop(context);
-                },
-                child: Icon(
-                  Icons.arrow_back,
-                  color: colors.onSurface,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: colors.onSurface, size: 20),
+        tooltip: l10n?.txtback ?? 'Back',
+        onPressed: () {
+          HapticService.light();
+          Navigator.maybePop(context);
+        },
       ),
       title: Text(
-        'Profile',
+        l10n?.txtprofile ?? 'Profile',
         style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
       ),
     );
@@ -127,6 +116,7 @@ class ProfileDetailScreen extends ConsumerWidget {
 
   Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     String? getAvatarUrl() {
       if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty) {
         return null;
@@ -172,7 +162,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: isVerified ? AppColors.success : AppColors.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
+                  border: Border.all(color: colors.card, width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -218,7 +208,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isVerified ? AppColors.success : AppColors.warning,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
+                    border: Border.all(color: colors.card, width: 2),
                   ),
                   child: Icon(
                     isVerified ? Icons.check : Icons.access_time_filled,
@@ -231,16 +221,14 @@ class ProfileDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            rider?.name ?? 'Test Rider',
+            rider?.name ?? (l10n?.txtguestRider ?? 'Rider'),
             style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: isVerified
-                  ? AppColors.of(context).successLight
-                  : AppColors.warningSurface,
+              color: isVerified ? colors.successSurface : colors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               border: Border.all(
                 color: isVerified
@@ -258,7 +246,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
+                  'KYC: ${kycStatusName == 'SUBMITTED' ? (l10n?.txtunderReview ?? 'Under Review') : _capitalize(kycStatusName.toLowerCase())}',
                   style: AppTypography.bodyMedium
                       .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
                       .copyWith(
@@ -276,7 +264,9 @@ class ProfileDetailScreen extends ConsumerWidget {
 
   Widget _buildPersonalDetailsCard(BuildContext context, RiderModel? rider) {
     final colors = AppColors.of(context);
-    String dobFormatted = 'Not provided';
+    final l10n = AppLocalizations.of(context);
+    final notProvided = l10n?.txtnotProvided ?? 'Not provided';
+    String dobFormatted = notProvided;
     if (rider?.dob != null) {
       dobFormatted = DateFormat('dd MMM yyyy').format(rider!.dob!);
     }
@@ -301,57 +291,58 @@ class ProfileDetailScreen extends ConsumerWidget {
         children: [
           ProfileDetailRow(
             icon: Icons.person_outline,
-            title: 'Name',
-            value: rider?.name ?? 'Not provided',
+            title: l10n?.txtfullName ?? 'Name',
+            value: rider?.name ?? notProvided,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.email_outlined,
-            title: 'Email',
-            value: rider?.email ?? 'Not provided',
+            title: l10n?.txtemailAddress ?? 'Email',
+            value: rider?.email ?? notProvided,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.phone_outlined,
-            title: 'Phone',
-            value: rider?.phone ?? 'Not provided',
+            title: l10n?.txtphone ?? 'Phone',
+            value: rider?.phone ?? notProvided,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.calendar_today_outlined,
-            title: 'Date of Birth',
+            title: l10n?.txtdateOfBirth ?? 'Date of Birth',
             value: dobFormatted,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.person_outline,
-            title: "Father's Name",
-            value: rider?.fatherName ?? 'Not provided',
+            title: l10n?.txtfathersName ?? "Father's Name",
+            value: rider?.fatherName ?? notProvided,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.person_outline,
-            title: "Mother's Name",
-            value: rider?.motherName ?? 'Not provided',
+            title: l10n?.txtmothersName ?? "Mother's Name",
+            value: rider?.motherName ?? notProvided,
           ),
           const CustomDivider(),
           ProfileDetailRow(
             icon: Icons.home_outlined,
-            title: 'Address',
-            value: rider?.currentAddress ?? 'Not provided',
+            title: l10n?.txtaddress ?? 'Address',
+            value: rider?.currentAddress ?? notProvided,
           ),
           const CustomDivider(),
           GestureDetector(
             onTap: () {
               final phone = rider?.emergencyContact;
               if (phone != null && phone.isNotEmpty) {
+                HapticService.light();
                 launchUrl(Uri.parse('tel:$phone'));
               }
             },
             child: ProfileDetailRow(
               icon: Icons.phone_android_outlined,
-              title: 'Emergency Contact',
-              value: rider?.emergencyContact ?? 'Not provided',
+              title: l10n?.txtemergencyContact ?? 'Emergency Contact',
+              value: rider?.emergencyContact ?? notProvided,
             ),
           ),
           if (rider?.assignedVehicle != null &&
@@ -360,7 +351,7 @@ class ProfileDetailScreen extends ConsumerWidget {
             const CustomDivider(),
             ProfileDetailRow(
               icon: Icons.directions_car_outlined,
-              title: 'Vehicle',
+              title: l10n?.txtvehicleTitle ?? 'Vehicle',
               value: [
                 rider.assignedVehicle,
                 if (rider.vehicleModel != null &&
@@ -375,7 +366,7 @@ class ProfileDetailScreen extends ConsumerWidget {
             const CustomDivider(),
             ProfileDetailRow(
               icon: Icons.supervisor_account_outlined,
-              title: 'Team Leader',
+              title: l10n?.txtteamLeader ?? 'Team Leader',
               value: rider.teamLeader!,
             ),
           ],
@@ -384,21 +375,29 @@ class ProfileDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusBentos(RiderModel? rider) {
+  Widget _buildStatusBentos(BuildContext context, RiderModel? rider) {
+    final l10n = AppLocalizations.of(context);
     final rawStatus = rider?.kycStatus.name ?? 'Pending';
-    final String kycStatus =
-        rawStatus == 'submitted' ? 'Under Review' : _capitalize(rawStatus);
+    final String kycStatus = rawStatus == 'submitted'
+        ? (l10n?.txtunderReview ?? 'Under Review')
+        : _capitalize(rawStatus);
     final String guarantorStatus =
         _capitalize(rider?.guarantorStatus.name ?? 'Pending');
 
     return Row(
       children: [
         Expanded(
-          child: StatusTile(title: 'KYC STATUS', status: kycStatus),
+          child: StatusTile(
+            title: l10n?.txtkycStatusTitle ?? 'KYC STATUS',
+            status: kycStatus,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: StatusTile(title: 'GUARANTOR', status: guarantorStatus),
+          child: StatusTile(
+            title: l10n?.txtguarantorStatusTitle ?? 'GUARANTOR',
+            status: guarantorStatus,
+          ),
         ),
       ],
     );
@@ -419,9 +418,11 @@ class _SectionLabel extends StatelessWidget {
     final colors = AppColors.of(context);
     return Text(
       label,
-      style: AppTypography.bodySmall
-          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-          .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
+      style: AppTypography.bodySmall.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: colors.onSurfaceMuted,
+      ),
     );
   }
 }
@@ -433,6 +434,7 @@ class _EditProfileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
@@ -462,7 +464,7 @@ class _EditProfileTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.of(context).primarySurface,
+                    color: colors.primarySurface,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.edit_outlined,
@@ -471,7 +473,7 @@ class _EditProfileTile extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Edit Profile',
+                    l10n?.txteditProfile ?? 'Edit Profile',
                     style: AppTypography.labelLarge
                         .copyWith(fontWeight: FontWeight.w700)
                         .copyWith(color: colors.onSurface),

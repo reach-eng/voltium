@@ -69,13 +69,20 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
 
   // Write to audit log table for persistence
   try {
+    // P3-10 (financial audit): the old `security.${type}` action is NOT a
+    // member of the AuditActionType enum (migration 20260809000000 adds
+    // SECURITY_EVENT) — every write failed Prisma validation and was dropped,
+    // so drift/suspension/balance events never reached the audit table. Use
+    // the generic SECURITY_EVENT member and carry the specific kind in
+    // details.eventType.
     await createAuditLog({
       actorId: actorId || 'SYSTEM',
       actorType: actorType || 'SYSTEM',
-      action: `security.${type}`,
+      action: 'SECURITY_EVENT',
       entity: 'securityEvent',
       entityId: undefined,
       details: JSON.stringify({
+        eventType: type,
         severity,
         ...sanitizedDetails,
         ip,

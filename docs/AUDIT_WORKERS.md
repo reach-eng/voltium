@@ -88,7 +88,8 @@ Plus a **reaper loop** (every 5 min) that reclaims stuck PROCESSING events.
 | `DEPOSIT_REFUNDED` | none | same |
 | `NOTIFICATION_SEND` | `notificationDispatchJob` | ✓ |
 | `SMS_SEND` | inline `sendSms` | ✓ |
-| `ANNOUNCEMENT_DISPATCH` | none | **P0 — orphaned, no consumer** |
+| `ANNOUNCEMENT_DISPATCH` | none (deprecated — superseded by `ANNOUNCEMENT_BROADCAST`, PR-4) | **P0 — orphaned, no consumer** |
+| `ANNOUNCEMENT_BROADCAST` | `announcementBroadcastJob` | ✓ (PR-4, 2026-08-06 fix-plan) |
 | `DAILY_ENGAGEMENT` | `dailyEngagementJob` | ✓ |
 | `REFERRAL_SIGNUP` | none | **P0 — orphaned** |
 | `REFERRAL_REWARD` | `referralRewardJob` | ✓ |

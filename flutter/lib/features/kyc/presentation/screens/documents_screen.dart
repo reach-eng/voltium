@@ -1,45 +1,197 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:universal_io/io.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/config/app_config.dart';
-import 'package:voltium_rider/widgets/fade_up_widget.dart';
-import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
-import 'package:voltium_rider/utils/app_navigator.dart';
-import 'package:voltium_rider/services/document_local_cache.dart';
-import 'package:universal_io/io.dart';
-import '../../../../theme/app_theme.dart';
-
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/services/document_local_cache.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/widgets/fade_up_widget.dart';
 
-class MyDocumentsScreen extends ConsumerWidget {
-  const MyDocumentsScreen({super.key});
+class MyDocumentsScreen extends ConsumerStatefulWidget {
+  final VoidCallback? onBack;
+  const MyDocumentsScreen({super.key, this.onBack});
 
-  Future<void> _viewDocument(BuildContext context, String? url,
-      {String? cacheKey}) async {
+  @override
+  ConsumerState<MyDocumentsScreen> createState() => _MyDocumentsScreenState();
+}
+
+class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.screen('my_documents_screen');
+  }
+
+  void _showDocumentPreviewModal(
+    BuildContext context, {
+    required String title,
+    required String localPath,
+  }) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: colors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+          ),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTypography.titleSmall.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () {
+                        HapticService.light();
+                        Navigator.pop(ctx);
+                      },
+                      color: colors.onSurfaceMuted,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 360),
+                    color: Colors.black,
+                    child: InteractiveViewer(
+                      minScale: 0.8,
+                      maxScale: 3.0,
+                      child: Image.file(
+                        File(localPath),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          HapticService.light();
+                          Navigator.pop(ctx);
+                          final uri = Uri.file(localPath);
+                          try {
+                            await launchUrl(uri,
+                                mode: LaunchMode.externalApplication);
+                          } catch (_) {}
+                        },
+                        icon: const Icon(Icons.open_in_new, size: 16),
+                        label: Text(l10n?.txtopenExternal ?? 'Open External'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colors.onSurface,
+                          side: BorderSide(color: colors.outlineVariant),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticService.light();
+                          Navigator.pop(ctx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        child: Text(l10n?.txtclose ?? 'Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _viewDocument(
+    BuildContext context,
+    String? url, {
+    required String title,
+    String? cacheKey,
+    bool isVideo = false,
+  }) async {
+    HapticService.light();
+    PostHogService.capture('document_viewed', properties: {
+      'title': title,
+      'is_video': isVideo,
+      'has_cache_key': cacheKey != null,
+    });
+
     if (url == null || url.isEmpty) return;
 
-    // Prefer local cached file if available (from onboarding upload).
+    // 1. Prefer local cached file if available (from onboarding upload).
     if (cacheKey != null) {
       final localPath = await DocumentLocalCache.get(cacheKey);
       if (localPath != null && File(localPath).existsSync()) {
+        final lower = localPath.toLowerCase();
+        final isImage = lower.endsWith('.jpg') ||
+            lower.endsWith('.jpeg') ||
+            lower.endsWith('.png') ||
+            lower.endsWith('.webp');
+
+        if (isImage && context.mounted) {
+          _showDocumentPreviewModal(
+            context,
+            title: title,
+            localPath: localPath,
+          );
+          return;
+        }
+
         final uri = Uri.file(localPath);
         try {
-          // CONSOLIDATED-FIX-2026-08-16 §4.10: prefer the
-          // LaunchUrlException catch over the canLaunchUrl pre-check
-          // (deprecated in Flutter 4.x — the pre-check can race with the
-          // actual launch on slow devices).
           await launchUrl(uri, mode: LaunchMode.externalApplication);
           return;
         } catch (_) {
-          // Fall through to the network download below.
+          // Fall through to network download below.
         }
       }
     }
 
-    // Fallback to network download.
+    // 2. Fallback to network download.
     String fullUrl = url;
     if (!url.startsWith('http')) {
       final baseUrl = AppConfig.apiBaseUrl;
@@ -51,66 +203,40 @@ class MyDocumentsScreen extends ConsumerWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded English
-          // SnackBar. Localised via the existing
-          // `txtunableToOpenDocument` ARB key.
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.txtunableToOpenDocument),
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)?.txtunableToOpenDocument ??
+              'Unable to open document',
         );
       }
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: AppBar(
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: UnconstrainedBox(
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: colors.outlineVariant.withValues(alpha: 0.5),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: colors.onSurface,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: colors.onSurface, size: 20),
+          tooltip: AppLocalizations.of(context)?.txtback ?? 'Back',
+          onPressed: () {
+            HapticService.light();
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
         title: Text(
-          'My Documents',
+          l10n?.txtmyDocuments ?? 'My Documents',
           style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
         ),
         centerTitle: false,
@@ -133,7 +259,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 delay: 100,
                 child: _buildCategoryHeader(
                   context,
-                  'YOUR DOCUMENTS',
+                  l10n?.txtyourDocuments ?? 'YOUR DOCUMENTS',
                   _countDocs([
                     rider?.aadhaarFront,
                     rider?.aadhaarBack,
@@ -147,25 +273,25 @@ class MyDocumentsScreen extends ConsumerWidget {
                 context,
                 [
                   _DocModel(
-                    label: 'Aadhaar Card (Front)',
+                    label: l10n?.txtaadhaarCardFront ?? 'Aadhaar Card (Front)',
                     url: rider?.aadhaarFront,
                     icon: Icons.description_outlined,
                     cacheKey: 'aadhaarFront',
                   ),
                   _DocModel(
-                    label: 'Aadhaar Card (Back)',
+                    label: l10n?.txtaadhaarCardBack ?? 'Aadhaar Card (Back)',
                     url: rider?.aadhaarBack,
                     icon: Icons.description_outlined,
                     cacheKey: 'aadhaarBack',
                   ),
                   _DocModel(
-                    label: 'PAN Card',
+                    label: l10n?.txtpanCardLabel ?? 'PAN Card',
                     url: rider?.panCard,
                     icon: Icons.badge_outlined,
                     cacheKey: 'panCard',
                   ),
                   _DocModel(
-                    label: 'Digital Signature',
+                    label: l10n?.txtdigitalSignature ?? 'Digital Signature',
                     url: rider?.signature,
                     icon: Icons.gesture_outlined,
                     cacheKey: 'signature',
@@ -178,7 +304,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 delay: 400,
                 child: _buildCategoryHeader(
                   context,
-                  "GUARANTOR'S DOCUMENTS",
+                  l10n?.txtguarantorDocuments ?? "GUARANTOR'S DOCUMENTS",
                   _countDocs([
                     rider?.guarantorAadhaarFront,
                     rider?.guarantorAadhaarBack,
@@ -193,32 +319,36 @@ class MyDocumentsScreen extends ConsumerWidget {
                 context,
                 [
                   _DocModel(
-                    label: "Guarantor's Aadhaar (Front)",
+                    label: l10n?.txtguarantorAadhaarFront ??
+                        "Guarantor's Aadhaar (Front)",
                     url: rider?.guarantorAadhaarFront,
                     icon: Icons.shield_outlined,
                     cacheKey: 'guarantorAadhaarFront',
                   ),
                   _DocModel(
-                    label: "Guarantor's Aadhaar (Back)",
+                    label: l10n?.txtguarantorAadhaarBack ??
+                        "Guarantor's Aadhaar (Back)",
                     url: rider?.guarantorAadhaarBack,
                     icon: Icons.shield_outlined,
                     cacheKey: 'guarantorAadhaarBack',
                   ),
                   _DocModel(
-                    label: "Guarantor's PAN Card",
+                    label: l10n?.txtguarantorPanCard ?? "Guarantor's PAN Card",
                     url: rider?.guarantorPan,
                     icon: Icons.contact_mail_outlined,
                     cacheKey: 'guarantorPan',
                   ),
                   _DocModel(
-                    label: "Verification Video",
+                    label:
+                        l10n?.txtverificationVideo ?? "Verification Video",
                     url: rider?.guarantorVideo,
                     icon: Icons.videocam_outlined,
                     isVideo: true,
                     cacheKey: 'guarantorVideo',
                   ),
                   _DocModel(
-                    label: "Guarantor's Signature",
+                    label: l10n?.txtguarantorSignatureDoc ??
+                        "Guarantor's Signature",
                     url: rider?.guarantorSignature,
                     icon: Icons.gesture_outlined,
                     cacheKey: 'guarantorSignature',
@@ -245,6 +375,7 @@ class MyDocumentsScreen extends ConsumerWidget {
 
   Widget _buildVerificationStatusCard(BuildContext context, String status) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
     return Container(
@@ -275,12 +406,12 @@ class MyDocumentsScreen extends ConsumerWidget {
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.of(context).successLight,
+                      color: colors.successLight,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.shield_outlined,
-                      color: AppColors.success,
+                      color: colors.success,
                       size: 20,
                     ),
                   ),
@@ -289,20 +420,23 @@ class MyDocumentsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'SECURITY PROFILE',
-                        style: AppTypography.bodySmall
-                            .copyWith(
-                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
-                            .copyWith(
-                                color: colors.onSurfaceMuted,
-                                letterSpacing: 1.2),
+                        l10n?.txtsecurityProfile ?? 'SECURITY PROFILE',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                          color: colors.onSurfaceMuted,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Verified & Secure',
-                        style: AppTypography.bodyMedium
-                            .copyWith(fontWeight: FontWeight.w600)
-                            .copyWith(color: colors.onSurface),
+                        isApproved
+                            ? (l10n?.txtverifiedAndSecure ??
+                                'Verified & Secure')
+                            : (l10n?.txtunderReview ?? 'Under Review'),
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.onSurface,
+                        ),
                       ),
                     ],
                   ),
@@ -312,7 +446,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.of(context).successLight,
+                  color: colors.successLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -320,7 +454,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                   widthFactor: isApproved ? 1.0 : 0.6,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      color: colors.success,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -331,10 +465,14 @@ class MyDocumentsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             isApproved
-                ? 'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'
-                : 'Your verification is in progress. Some documents may still be under review by our safety team.',
-            style: AppTypography.bodySmall
-                .copyWith(color: colors.onSurfaceMuted, height: 1.5),
+                ? (l10n?.txtidentityGuarantorVerifiedDesc ??
+                    'Your identity and guarantor information have been verified. You can view or download copies of your documents below.')
+                : (l10n?.txtverificationInProgressDesc ??
+                    'Your verification is in progress. Some documents may still be under review by our safety team.'),
+            style: AppTypography.bodySmall.copyWith(
+              color: colors.onSurfaceMuted,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -343,13 +481,16 @@ class MyDocumentsScreen extends ConsumerWidget {
 
   Widget _buildCategoryHeader(BuildContext context, String title, int count) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Text(
           title,
-          style: AppTypography.bodySmall
-              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-              .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
+          style: AppTypography.labelSmall.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            color: colors.onSurfaceMuted,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -360,10 +501,12 @@ class MyDocumentsScreen extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          '$count FILES',
-          style: AppTypography.bodySmall
-              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-              .copyWith(color: AppColors.primary),
+          l10n?.txtfilesCount(count) ?? '$count FILES',
+          style: AppTypography.labelSmall.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            color: AppColors.primary,
+          ),
         ),
       ],
     );
@@ -375,6 +518,7 @@ class MyDocumentsScreen extends ConsumerWidget {
     int baseDelay,
   ) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final filtered = docs.where((d) => d.url != null).toList();
     if (filtered.isEmpty) {
       return Container(
@@ -389,9 +533,8 @@ class MyDocumentsScreen extends ConsumerWidget {
         ),
         child: Center(
           child: Text(
-            'No documents submitted yet',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
+            l10n?.txtnoDocumentsSubmittedYet ?? 'No documents submitted yet',
+            style: AppTypography.bodySmall.copyWith(
               fontStyle: FontStyle.italic,
               color: colors.onSurfaceMuted,
             ),
@@ -415,9 +558,17 @@ class MyDocumentsScreen extends ConsumerWidget {
 
   Widget _buildDocItem(BuildContext context, _DocModel doc) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final bool isVideo = doc.isVideo;
+
     return InkWell(
-      onTap: () => _viewDocument(context, doc.url, cacheKey: doc.cacheKey),
+      onTap: () => _viewDocument(
+        context,
+        doc.url,
+        title: doc.label,
+        cacheKey: doc.cacheKey,
+        isVideo: isVideo,
+      ),
       borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         padding: Spacing.paddingMd,
@@ -441,14 +592,13 @@ class MyDocumentsScreen extends ConsumerWidget {
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color: isVideo
-                    ? AppColors.warningSurface
-                    : AppColors.of(context).primarySurface,
+                color: isVideo ? colors.warningLight : colors.primarySurface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Icon(
                 doc.icon,
-                color: isVideo ? AppColors.warningDark : AppColors.primary,
+                color:
+                    isVideo ? colors.warningLightForeground : AppColors.primary,
                 size: 22,
               ),
             ),
@@ -459,38 +609,28 @@ class MyDocumentsScreen extends ConsumerWidget {
                 children: [
                   Text(
                     doc.label,
-                    style: AppTypography.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(color: colors.onSurface),
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        'VERIFIED',
-                        style: AppTypography.bodySmall
-                            .copyWith(
-                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
-                            .copyWith(
-                                color: AppColors.success, letterSpacing: 1),
-                      ),
-                      const SizedBox(width: 6),
                       Container(
-                        height: 3,
-                        width: 3,
+                        height: 6,
+                        width: 6,
                         decoration: BoxDecoration(
-                          color: colors.outlineVariant,
+                          color: isVideo ? colors.warning : colors.success,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isVideo ? 'VIDEO' : 'IMAGE',
-                        style: AppTypography.bodySmall
-                            .copyWith(
-                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
-                            .copyWith(
-                                color: colors.onSurfaceMuted, letterSpacing: 1),
+                        l10n?.txtverifiedAndActive ?? 'Verified & Active',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: colors.onSurfaceMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -517,12 +657,15 @@ class MyDocumentsScreen extends ConsumerWidget {
   }
 
   Widget _buildSupportBanner(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.05),
+        color: colors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -537,39 +680,47 @@ class MyDocumentsScreen extends ConsumerWidget {
             child:
                 const Icon(Icons.info_outline, color: Colors.white, size: 20),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Having trouble with documents?',
-                  style: AppTypography.bodyMedium
-                      .copyWith(fontWeight: FontWeight.w600)
-                      .copyWith(color: AppColors.primary),
+                  l10n?.txthavingTroubleWithDocuments ??
+                      'Having trouble with documents?',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
-                  style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.primary, height: 1.5),
+                  l10n?.txtifYouSeeAnyIssuesWithYourVerifiedDocumentsOrNeedToUpdateThemPleaseRaiseASupportTicket ??
+                      'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colors.onSurfaceVariant,
+                    height: 1.5,
+                  ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 InkWell(
-                  onTap: () =>
-                      AppNavigator.push(context, const SupportCenterScreen()),
+                  onTap: () {
+                    HapticService.light();
+                    PostHogService.capture('documents_support_clicked');
+                    AppNavigator.push(context, const SupportCenterScreen());
+                  },
                   child: Row(
                     children: [
                       Text(
-                        'CONTACT SUPPORT',
-                        style: AppTypography.bodySmall
-                            .copyWith(
-                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
-                            .copyWith(
-                                color: AppColors.primary, letterSpacing: 1.2),
+                        l10n?.txtcontactSupport ?? 'CONTACT SUPPORT',
+                        style: AppTypography.labelSmall.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      SizedBox(width: 4),
-                      Icon(
+                      const SizedBox(width: 4),
+                      const Icon(
                         Icons.open_in_new,
                         color: AppColors.primary,
                         size: 14,

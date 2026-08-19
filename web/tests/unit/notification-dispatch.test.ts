@@ -55,7 +55,9 @@ describe('notificationDispatchJob (BLOCKER 1.4)', () => {
       payload: { type: 'KYC_APPROVED', riderId: 'rider-1' },
     });
     expect(result.delivered).toBe(true);
-    expect(result.channel).toBe('fcm');
+    // The dispatcher now also persists the in-app Notification row — the
+    // honest channel is fcm+in-app (the FCM push is the primary path).
+    expect(result.channel).toBe('fcm+in-app');
     expect(mockNotifyKycStatusChange).toHaveBeenCalledWith(
       'rider-1',
       'APPROVED'

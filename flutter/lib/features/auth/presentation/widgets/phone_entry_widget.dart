@@ -148,7 +148,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
               height: 56,
               decoration: BoxDecoration(
                 color: _phoneError != null
-                    ? AppColors.errorSurface
+                    ? AppColors.of(context).errorLight
                     : AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 border: Border.all(
@@ -296,6 +296,10 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     controller: _referralController,
                     focusNode: _referralFocusNode,
                     textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      LengthLimitingTextInputFormatter(12),
+                    ],
                     onTap: () {
                       _referralFocusNode.requestFocus();
                       SystemChannels.textInput.invokeMethod('TextInput.show');
@@ -313,7 +317,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                       // hardcoded English hint. Localised via
                       // `txtloginReferralHint`.
                       hintText:
-                          AppLocalizations.of(context)!.txtloginReferralHint,
+                          AppLocalizations.of(context)?.txtloginReferralHint ??
+                              'Referral code (optional)',
                       // ONBOARDING-AUDIT 2026-08-14 P1-5: the
                       // previous chain had a dead first call
                       // `.copyWith(color: AppColors.of(context).onSurfaceMuted)`
@@ -335,8 +340,6 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
   }
 
   Widget _buildOtpNote() {
-    // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded
-    // English note. Localised via `txtloginSecureOtpNote`.
     return Row(
       children: [
         Container(
@@ -349,7 +352,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
         ),
         const SizedBox(width: 8),
         Text(
-          AppLocalizations.of(context)!.txtloginSecureOtpNote,
+          AppLocalizations.of(context)?.txtloginSecureOtpNote ??
+              'SECURE 6-DIGIT OTP VERIFICATION',
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w800)
               .copyWith(letterSpacing: 1.2, color: AppColors.onSurfaceVariant),

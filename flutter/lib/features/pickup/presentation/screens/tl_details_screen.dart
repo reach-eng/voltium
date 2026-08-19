@@ -1,32 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
-import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
 
-class TlDetailsScreen extends ConsumerWidget {
-  const TlDetailsScreen({super.key});
+/// Full-screen view showing assigned Team Leader details, contact information,
+/// and change request flow.
+class TlDetailsScreen extends ConsumerStatefulWidget {
+  final VoidCallback? onBack;
+  const TlDetailsScreen({super.key, this.onBack});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TlDetailsScreen> createState() => _TlDetailsScreenState();
+}
+
+class _TlDetailsScreenState extends ConsumerState<TlDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.capture('team_leader_details_viewed');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final rider = ref.watch(riderProvider).rider;
-    final tlName = (rider?.teamLeader == null ||
-            rider!.teamLeader!.isEmpty ||
-            rider.teamLeader == 'Not Assigned')
-        ? 'Not assigned'
-        : rider.teamLeader!;
-    final tlPhone =
-        (rider?.emergencyContact == null || rider!.emergencyContact!.isEmpty)
-            ? ''
-            : rider.emergencyContact!;
+    final isUnassigned = rider?.teamLeader == null ||
+        rider!.teamLeader!.isEmpty ||
+        rider.teamLeader == 'Not Assigned';
+    final tlName =
+        isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : rider.teamLeader!;
+    final tlPhone = (rider?.teamLeaderPhone == null ||
+            rider!.teamLeaderPhone!.isEmpty)
+        ? ''
+        : rider.teamLeaderPhone!;
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -36,7 +53,7 @@ class TlDetailsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   children: [
-                    _buildTLProfileCard(context, tlName),
+                    _buildTLProfileCard(context, tlName, isUnassigned),
                     const SizedBox(height: 20),
                     if (tlPhone.isNotEmpty) _buildContactCard(context, tlPhone),
                     const SizedBox(height: 16),
@@ -54,45 +71,56 @@ class TlDetailsScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
           GestureDetector(
             key: const Key('backButton'),
-            onTap: () => Navigator.maybePop(context),
+            onTap: () {
+              HapticService.light();
+              if (widget.onBack != null) {
+                widget.onBack!();
+              } else if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: colors.card,
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: AppColors.onSurface,
+                color: colors.onSurface,
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Text(
-            'Team Leader',
+            l10n?.txtteamLeader ?? 'Team Leader',
             style: AppTypography.titleLarge
-                .copyWith(fontSize: 21)
-                .copyWith(color: AppColors.onSurface),
+                .copyWith(fontSize: 21, color: colors.onSurface),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTLProfileCard(BuildContext context, String name) {
+  Widget _buildTLProfileCard(
+      BuildContext context, String name, bool isUnassigned) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: Spacing.paddingLg,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.card,
       ),
@@ -100,58 +128,96 @@ class TlDetailsScreen extends ConsumerWidget {
         children: [
           CircleAvatar(
             radius: 48,
-            backgroundColor: AppColors.of(context).iconBackground,
-            child:
-                Icon(Icons.person, size: 48, color: AppColors.onSurfaceVariant),
+            backgroundColor: colors.iconBackground,
+            child: Icon(
+              Icons.person,
+              size: 48,
+              color: isUnassigned ? colors.onSurfaceMuted : colors.onSurfaceVariant,
+            ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             name,
-            style:
-                AppTypography.headingSmall.copyWith(color: AppColors.onSurface),
+            style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
+            textAlign: TextAlign.center,
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
-            'Assigned Team Leader',
+            l10n?.txtassignedTeamLeader ?? 'Assigned Team Leader',
             style: AppTypography.bodyMedium
-                .copyWith(fontSize: 13)
-                .copyWith(color: AppColors.onSurfaceVariant),
+                .copyWith(fontSize: 13, color: colors.onSurfaceVariant),
           ),
+          if (isUnassigned) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n?.txttlPendingNotice ??
+                  'Your hub will assign a team leader shortly',
+              style: AppTypography.bodySmall
+                  .copyWith(color: colors.onSurfaceMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildContactCard(BuildContext context, String phone) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.of(context).surfaceBright,
+        color: colors.surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
         children: [
           const Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               phone,
-              style:
-                  AppTypography.bodyLarge.copyWith(color: AppColors.onSurface),
+              style: AppTypography.bodyLarge.copyWith(color: colors.onSurface),
             ),
           ),
-          GestureDetector(
-            onTap: () async {
+          IconButton(
+            key: const Key('callTeamLeaderButton'),
+            tooltip: l10n?.txtcall ?? 'Call',
+            onPressed: () async {
+              HapticService.light();
+              PostHogService.capture('team_leader_call_clicked');
               final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+              if (sanitized.isEmpty) {
+                if (context.mounted) {
+                  Toast.warning(
+                    context,
+                    l10n?.txtnoContactNumberTl ??
+                        'No contact number available for your Team Leader.',
+                  );
+                }
+                return;
+              }
               final uri = Uri.parse('tel:$sanitized');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
+              try {
+                if (!await launchUrl(uri)) {
+                  throw Exception('Could not launch dialer');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Toast.error(
+                    context,
+                    l10n?.txtcouldNotOpenDialer ??
+                        'Could not open the phone dialer. Please try again.',
+                  );
+                }
               }
             },
-            child: Container(
+            icon: Container(
               padding: Spacing.paddingSm,
               decoration: BoxDecoration(
-                color: AppColors.of(context).successLight,
+                color: colors.successSurface,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(Icons.call, color: AppColors.success, size: 18),
@@ -163,23 +229,26 @@ class TlDetailsScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoCard(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.of(context).primarySurface,
+        color: colors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.of(context).infoLight),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: AppColors.primaryDark,
+              l10n?.txtteamLeaderInfoDescription ??
+                  'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.',
+              style: AppTypography.bodySmall.copyWith(
+                color: colors.onSurface,
                 height: 1.5,
               ),
             ),
@@ -190,25 +259,32 @@ class TlDetailsScreen extends ConsumerWidget {
   }
 
   Widget _buildActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         _buildActionBtn(
-          // PR-ONBOARDING-2026-08-11 (audit 1.8): the previous onTap popped the
-          // screen and showed a green "Request submitted to support team"
-          // snackbar without calling any API. Riders thought their TL-change
-          // request was submitted; it was not. Now routes to the support
-          // center so the rider can actually file a ticket.
-          label: 'Request Team Leader change',
+          label: l10n?.txtrequestTlChange ?? 'Request Team Leader change',
           icon: Icons.swap_horiz,
           color: AppColors.error,
-          onTap: () => AppNavigator.push(context, const SupportCenterScreen()),
+          onTap: () {
+            HapticService.light();
+            PostHogService.capture('team_leader_change_requested');
+            showChangeTLReasonSheet(context);
+          },
         ),
         const SizedBox(height: 12),
         _buildActionBtn(
-          label: 'Back to Dashboard',
+          label: l10n?.txtbackToDashboard ?? 'Back to Dashboard',
           icon: Icons.home_outlined,
           color: AppColors.primary,
-          onTap: () => Navigator.pop(context),
+          onTap: () {
+            HapticService.light();
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ],
     );
@@ -230,8 +306,8 @@ class TlDetailsScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 12,
+              color: color.withValues(alpha: 0.25),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -240,7 +316,7 @@ class TlDetailsScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 18, color: Colors.white),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               label,
               style: AppTypography.labelLarge.copyWith(color: Colors.white),

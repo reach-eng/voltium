@@ -25,18 +25,15 @@ class PlanHeaderCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.of(context).card,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
-                        color: AppColors.outlineVariant,
+                        color: AppColors.of(context).outlineVariant,
                       ),
                     ),
                     child: Icon(
                       Icons.arrow_back_ios_new,
                       size: 18,
-                      // DARK-MODE-AUDIT 2026-08-14 P0-7:
-                      // `slate800` is identical to the dark
-                      // card surface — disappears in dark mode.
                       color: AppColors.of(context).onSurface,
                     ),
                   ),

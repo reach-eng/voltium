@@ -1,50 +1,17 @@
 /**
- * POST /api/rider/kyc — Submit KYC documents
  * GET /api/rider/kyc — Get KYC status
  *
- * Thin route handlers: auth + parse + call use-case + respond.
- * Business logic lives in kycUseCases and kycRepository.
+ * KYC documents are submitted via PUT /api/rider/profile (UpdateProfileRequest).
+ * The POST /api/rider/kyc route was removed (PR-3, audit 2026-08-05-rider-onboarding)
+ * because it had 0 production callers — the Flutter KYC flow uses putRiderProfile.
  */
 
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { validateBody, submitKycSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
-
-function errorName(err: unknown): string {
-  return err instanceof Error ? err.name : '';
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await requireRiderSession(request);
-    if (session instanceof Response) return session;
-
-    const body = await request.json();
-    const validation = validateBody(submitKycSchema, body);
-    if (!validation.success) {
-      return errors.validation(validation.error);
-    }
-
-    const result = await kycUseCases.submitKyc(session.riderDbId, validation.data);
-    return success(
-      {
-        id: result.id,
-        riderId: result.riderId,
-        kycStatus: result.status,
-      },
-      'KYC submitted successfully'
-    );
-  } catch (err: unknown) {
-    if (errorName(err) === 'KycStateError') {
-      return errors.conflict((err instanceof Error ? err.message : String(err)));
-    }
-    logger.error('[POST /api/rider/kyc]', err);
-    return errors.internal('Failed to submit KYC');
-  }
-}
+import { maskAccountNumber } from '@/lib/pii';
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,6 +47,9 @@ export async function GET(request: NextRequest) {
       aadhaarBack: kycProfile.aadhaarBack,
       panCard: kycProfile.panCard,
       bankName: kycProfile.bankName,
+      // P1-S3: Mask bank account number in rider-facing KYC response
+      bankAccount: maskAccountNumber(kycProfile.accountNumber) || null,
+      bankIfsc: kycProfile.ifscCode ?? null,
       rejectionReason: kycProfile.rejectionReason,
     });
   } catch (err) {

@@ -1,13 +1,39 @@
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { sanitizeHtml } from '@/lib/sanitize';
+import { logger } from '@/lib/logger';
+import { AnnouncementStatus, RiderLifecycleStatus, Prisma } from '@prisma/client';
+import { OutboxService, OutboxEventTypes, emitWithCommit } from '@/server/workers/outbox';
+
+/**
+ * Resolve the recipient COUNT for an announcement audience without loading
+ * the ids (used by the create path, which only needs the count for
+ * totalRecipients + audit — keeps the request light at 10k+ riders).
+ */
+async function resolveRecipientCount(
+  targetAudience: string,
+  targetIds: string[]
+): Promise<number> {
+  if (targetAudience === 'ALL') {
+    return db.rider.count();
+  }
+  if (targetAudience === 'BY_HUB') {
+    return db.rider.count({ where: { pickupHub: { in: targetIds } } });
+  }
+  if (targetAudience === 'BY_STATUS') {
+    return db.rider.count({ where: { lifecycleStatus: { in: targetIds as RiderLifecycleStatus[] } } });
+  }
+  if (targetAudience === 'BY_PLAN') {
+    return db.rider.count({ where: { currentPlan: { in: targetIds } } });
+  }
+  return 0;
+}
 
 export const announcementUseCases = {
   async list(params: { status?: string; search?: string; page?: number; limit?: number }) {
     const { status, search, page = 1, limit = 20 } = params;
-    const where: any = {};
-    if (status) where.status = status;
+    const where: Prisma.AnnouncementWhereInput = {};
+    if (status) where.status = status as AnnouncementStatus;
     if (search) where.OR = [{ title: { contains: search } }, { message: { contains: search } }];
 
     const [announcements, total] = await Promise.all([
@@ -21,14 +47,16 @@ export const announcementUseCases = {
       db.announcement.count({ where }),
     ]);
 
-    const formatted = (announcements as any[]).map((a) => {
-      const delivered = a.deliveries?.filter((d: any) => d.status === 'DELIVERED').length || 0;
-      const read = a.deliveries?.filter((d: any) => d.status === 'READ').length || 0;
-      const failed = a.deliveries?.filter((d: any) => d.status === 'FAILED').length || 0;
+    const formatted = announcements.map((a) => {
+      const delivered = a.deliveries?.filter((d) => d.status === 'DELIVERED').length || 0;
+      const read = a.deliveries?.filter((d) => d.status === 'READ').length || 0;
+      const failed = a.deliveries?.filter((d) => d.status === 'FAILED').length || 0;
       // PR-P3.1: targetIds is now native Json. Prisma returns it as a parsed
       // value (or null when the column is null). Default to [] for the
       // admin UI which always wants an array.
-      const parsedTargetIds: string[] = Array.isArray(a.targetIds) ? a.targetIds : [];
+      const parsedTargetIds: string[] = Array.isArray(a.targetIds)
+        ? (a.targetIds as unknown as string[])
+        : [];
       return {
         id: a.id,
         title: a.title,
@@ -66,68 +94,44 @@ export const announcementUseCases = {
     },
     actorId: string
   ) {
-    let recipients: { id: string }[] = [];
-    if (data.targetAudience === 'ALL') {
-      recipients = await db.rider.findMany({ select: { id: true } });
-    } else if (data.targetAudience === 'BY_HUB') {
-      recipients = await db.rider.findMany({
-        where: { pickupHub: { in: data.targetIds } },
-        select: { id: true },
-      });
-    } else if (data.targetAudience === 'BY_STATUS') {
-      recipients = await db.rider.findMany({
-        where: { lifecycleStatus: { in: data.targetIds as any } },
-        select: { id: true },
-      });
-    } else if (data.targetAudience === 'BY_PLAN') {
-      recipients = await db.rider.findMany({
-        where: { currentPlan: { in: data.targetIds } },
-        select: { id: true },
-      });
-    }
+    // PR-4 (9th audit P0): the request no longer fans out to 10k+ riders inside
+    // a transaction (30-60s request, pool exhaustion, DoS vector). We persist
+    // the announcement row and emit ANNOUNCEMENT_BROADCAST; the background job
+    // re-derives recipients and runs the batched insert loop. The audit log
+    // still records the intended recipient count. Use a count query (not a
+    // findMany of every rider id) so the create stays light at 10k+ riders.
+    const recipientCount = await resolveRecipientCount(data.targetAudience, data.targetIds);
 
-    const status = data.scheduledAt ? 'SCHEDULED' : 'SENT';
+    // Explicit enum values keep the property literal (no widening to `string`)
+    // so Prisma's AnnouncementStatus input type accepts it.
+    const status: AnnouncementStatus =
+      data.scheduledAt ? AnnouncementStatus.SCHEDULED : AnnouncementStatus.SENT;
     const sentAt = data.scheduledAt ? null : new Date();
+    const announcementData = {
+      title: sanitizeHtml(data.title),
+      message: sanitizeHtml(data.message),
+      channel: data.channel,
+      targetAudience: data.targetAudience,
+      targetIds: data.targetIds,
+      scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
+      sentAt,
+      status,
+      totalRecipients: recipientCount,
+      createdBy: actorId,
+    };
 
-    const announcement = await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const created = await tx.announcement.create({
-        data: {
-          title: sanitizeHtml(data.title),
-          message: sanitizeHtml(data.message),
-          channel: data.channel,
-          targetAudience: data.targetAudience,
-          targetIds: data.targetIds,
-          scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
-          sentAt,
-          status,
-          totalRecipients: recipients.length,
-          createdBy: actorId,
-        },
-      });
-
-      if (recipients.length > 0 && !data.scheduledAt) {
-        const batchSize = 500;
-        for (let i = 0; i < recipients.length; i += batchSize) {
-          const batch = recipients.slice(i, i + batchSize);
-          await tx.announcementDelivery.createMany({
-            data: batch.map((r) => ({
-              announcementId: created.id,
-              riderId: r.id,
-              status: 'PENDING',
-            })),
-          });
-        }
-        await tx.notification.createMany({
-          data: recipients.map((r) => ({
-            riderId: r.id,
-            title: data.title,
-            message: data.message,
-            type: data.channel === 'PUSH' ? 'ALERT' : 'INFO',
-          })),
-        });
-      }
-      return created;
-    });
+    // Immediate sends with recipients: create the row + emit the outbox event
+    // atomically (emitWithCommit — a crash can never leave a SENT announcement
+    // with no event to fan it out). All other cases: plain create; the cron
+    // emits for scheduled rows when they're due.
+    const announcement =
+      recipientCount > 0 && !data.scheduledAt
+        ? await emitWithCommit(
+            OutboxEventTypes.ANNOUNCEMENT_BROADCAST,
+            async (tx) => tx.announcement.create({ data: announcementData }),
+            async (_tx, created) => ({ announcementId: created.id })
+          )
+        : await db.announcement.create({ data: announcementData });
 
     createAuditLog({
       actorId,
@@ -138,7 +142,7 @@ export const announcementUseCases = {
         title: data.title,
         channel: data.channel,
         targetAudience: data.targetAudience,
-        recipients: recipients.length,
+        recipients: recipientCount,
       },
     }).catch(() => {});
 
@@ -146,6 +150,60 @@ export const announcementUseCases = {
       id: announcement.id,
       status: announcement.status,
       totalRecipients: announcement.totalRecipients,
+      // PR-4: immediate sends are async — the route returns 202 Accepted and
+      // the background job does the fanout.
+      accepted: recipientCount > 0 && !data.scheduledAt,
     };
+  },
+
+  async processScheduledAnnouncements() {
+    const dueAnnouncements = await db.announcement.findMany({
+      where: {
+        status: 'SCHEDULED',
+        scheduledAt: { lte: new Date() },
+      },
+      select: { id: true, targetAudience: true, targetIds: true },
+    });
+
+    // PR-4: the cron no longer blocks on the fanout either — it emits an
+    // ANNOUNCEMENT_BROADCAST event per due announcement and the background
+    // job does the batched insert. status stays SCHEDULED until the job
+    // flips it to SENT after the fanout completes.
+    let processedCount = 0;
+    for (const ann of dueAnnouncements) {
+      const targetIds: string[] = Array.isArray(ann.targetIds)
+        ? (ann.targetIds as string[])
+        : [];
+      // PR-4 review fix: use a COUNT query, not a findMany of every rider id —
+      // the cron must stay light at 10k+ riders (the exact DoS pressure PR-4
+      // set out to remove from the request path).
+      const recipientCount = await resolveRecipientCount(ann.targetAudience, targetIds);
+      if (recipientCount === 0) {
+        // No recipients — nothing to fan out; mark sent so the cron doesn't
+        // re-emit forever.
+        await db.announcement.update({
+          where: { id: ann.id },
+          data: { status: 'SENT', sentAt: new Date(), totalRecipients: 0 },
+        });
+        processedCount++;
+        continue;
+      }
+      // PR-4 review fix: a failing emit is caught + logged so one bad row can't
+      // abort the rest of the cron loop. The row stays SCHEDULED (scheduledAt
+      // <= now), so the next cron tick re-attempts it (self-healing).
+      try {
+        await OutboxService.emit(OutboxEventTypes.ANNOUNCEMENT_BROADCAST, {
+          announcementId: ann.id,
+        });
+      } catch (err) {
+        logger.warn('[AnnouncementCron] outbox emit failed; retrying next tick', {
+          announcementId: ann.id,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+      processedCount++;
+    }
+
+    return { processedCount };
   },
 };

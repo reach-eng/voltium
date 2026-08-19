@@ -52,7 +52,7 @@ void main() {
           reason: 'lint_google_fonts_bypass.dart must exist at flutter/tool/');
     });
 
-    test('ceiling is set to current measured count (307)', () {
+    test('ceiling is set to current measured count (321)', () {
       // If the ceiling drifts, the ratchet will silently start failing or
       // silently pass. Pin it explicitly so reviewers see the value.
       final toolSrc =
@@ -61,8 +61,9 @@ void main() {
           RegExp(r'kGoogleFontsBypassCeiling\s*=\s*(\d+)').firstMatch(toolSrc);
       expect(match, isNotNull, reason: 'ceiling constant must be present');
       final ceiling = int.parse(match!.group(1)!);
-      expect(ceiling, equals(307),
-          reason: 'ceiling must equal the measured widget-bypass count');
+      expect(ceiling, equals(321),
+          reason:
+              'ceiling must equal the measured widget-bypass count (DS-3b 2026-08-04)');
     });
 
     test('ceiling is at least 1 and at most 1000 (sanity)', () {

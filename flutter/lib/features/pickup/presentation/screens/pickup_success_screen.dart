@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -68,7 +69,11 @@ class _PickupSuccessScreenState extends State<PickupSuccessScreen> {
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.primary,
                 ),
-                child: const Text('Go to Dashboard'),
+                // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+                // English button label. Localised via the
+                // existing `onboarding_goToDashboard` ARB key.
+                child: Text(
+                    AppLocalizations.of(context)!.onboarding_goToDashboard),
               ),
               const SizedBox(height: 32),
             ],

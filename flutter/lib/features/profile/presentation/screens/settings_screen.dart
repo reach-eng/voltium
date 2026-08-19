@@ -20,10 +20,12 @@ import 'package:voltium_rider/features/profile/presentation/widgets/profile_widg
 import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
-import 'package:voltium_rider/main.dart';
 import 'package:voltium_rider/widgets/dialogs.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 /// App Settings screen.
 ///
@@ -41,33 +43,47 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 /// - `deleteAccountButton` — the "Delete Account" row in the danger zone.
 /// - `cancelDeleteButton`  / `confirmDeleteButton` — buttons in the delete dialog.
 /// - `logoutButton`      — handled by `ProfileLogoutButton`.
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.screen('settings_screen');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeProv = ref.watch(themeProvider);
     final colors = AppColors.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isLoading = rider == null;
     final localeProv = ref.watch(localeProvider);
 
     return Scaffold(
-      backgroundColor: colors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         key: const Key('settingsAppBar'),
-        backgroundColor: colors.iconBackground,
+        backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
           key: const Key('backButton'),
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            HapticService.light();
+            Navigator.of(context).maybePop();
+          },
         ),
         title: Text(
-          l10n.settings_title,
+          l10n?.settings_title ?? 'Settings',
           style: AppTypography.titleLarge
               .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),
@@ -87,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Preferences ──────────────────────────────────────────────
-            _SectionLabel(l10n.settings_preferences),
+            _SectionLabel(l10n?.settings_preferences ?? 'Preferences'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 50,
@@ -96,7 +112,7 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.brightness_6_outlined,
                 iconColor: colors.onSurfaceVariant,
                 iconBgColor: colors.iconBackground,
-                title: l10n.settings_appearance,
+                title: l10n?.settings_appearance ?? 'Appearance',
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -121,14 +137,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Language & Region ───────────────────────────────────────
-            // LANGUAGE-AUDIT (2026-08-16) #4: was a hardcoded 'LANGUAGE'
-            // string, the only ALL-CAPS section label on the screen —
-            // every other section uses `l10n.settings_*Section` (or the
-            // existing styled `l10n.settings_*` keys) so the rider sees
-            // a localised Title-Case header in sync with the rest of
-            // the section. The `_SectionLabel` widget applies w800 +
-            // letterSpacing 1.2 — that's the only visual treatment.
-            _SectionLabel(l10n.settings_language),
+            _SectionLabel(l10n?.settings_language ?? 'Language'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 100,
@@ -136,21 +145,16 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('languageOption'),
                 icon: Icons.language,
                 iconColor: AppColors.success,
-                iconBgColor: AppColors.of(context).successLight,
-                title: l10n.menu_language,
+                iconBgColor: colors.successSurface,
+                title: l10n?.menu_language ?? 'Language',
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // LANGUAGE-AUDIT (2026-08-16) #11: was a hardcoded
-                    // `currentLocale == 'hi' ? l10n.settings_hindi :
-                    // l10n.settings_english` ternary. Now uses the
-                    // LocaleNotifier helper so a 3rd language shows
-                    // its own name without a code change here.
                     Text(
                       localeProv.isFollowingSystem
-                          ? l10n.settings_followSystem
+                          ? (l10n?.settings_followSystem ?? 'Follow system')
                           : LocaleNotifier.displayNameFor(
-                              localeProv.locale, l10n),
+                              localeProv.locale, l10n ?? AppLocalizations.of(context)!),
                       style: AppTypography.bodyMedium
                           .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: colors.onSurfaceMuted),
@@ -165,7 +169,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Security ─────────────────────────────────────────────────
-            _SectionLabel(l10n.settings_securitySection),
+            _SectionLabel(l10n?.settings_securitySection ?? 'Security'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 125,
@@ -173,8 +177,8 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('editProfileTile'),
                 icon: Icons.person_outline,
                 iconColor: AppColors.info,
-                iconBgColor: AppColors.of(context).primarySurface,
-                title: l10n.txteditProfile,
+                iconBgColor: colors.primarySurface,
+                title: l10n?.txteditProfile ?? 'Edit Profile',
                 onTap: () =>
                     AppNavigator.push(context, const EditProfileScreen()),
               ),
@@ -186,21 +190,15 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('changePasswordTile'),
                 icon: Icons.lock_outline,
                 iconColor: AppColors.warning,
-                iconBgColor: AppColors.of(context).warningLight,
-                // PR-VER-2026-08-07 (LEGAL_DEVICE P0-2 / PASS3): the tile opens
-                // the lock-password VERIFICATION step of a change flow — label
-                // it as what the rider is actually doing.
-                // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
-                // English. Localised via `txtchangeLockPassword`
-                // (new ARB key, see app_en.arb).
-                title: l10n.txtchangeLockPassword,
+                iconBgColor: colors.warningSurface,
+                title: l10n?.txtchangeLockPassword ?? 'Change Lock Password',
                 onTap: () => _showVerifyLockPasswordDialog(context),
               ),
             ),
             const SizedBox(height: 24),
 
             // ── Support & Legal ──────────────────────────────────────────
-            _SectionLabel(l10n.settings_supportLegal),
+            _SectionLabel(l10n?.settings_supportLegal ?? 'Support & Legal'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 175,
@@ -209,8 +207,8 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.rate_review_outlined,
                 activeIcon: Icons.rate_review,
                 iconColor: AppColors.accentPurple,
-                iconBgColor: AppColors.accentPurpleSurface,
-                title: l10n.settings_feedback,
+                iconBgColor: colors.primarySurface,
+                title: l10n?.settings_feedback ?? 'Feedback',
                 onTap: () => AppNavigator.push(context,
                     FeedbackScreen(onSubmit: () => Navigator.pop(context))),
               ),
@@ -222,8 +220,8 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('termsTile'),
                 icon: Icons.description_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.of(context).successLight,
-                title: l10n.settings_termsOfService,
+                iconBgColor: colors.successSurface,
+                title: l10n?.settings_termsOfService ?? 'Terms of Service',
                 onTap: () => AppNavigator.push(
                     context,
                     const LegalPageScreen(
@@ -237,8 +235,8 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('privacyTile'),
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.of(context).successLight,
-                title: l10n.settings_privacyPolicy,
+                iconBgColor: colors.successSurface,
+                title: l10n?.settings_privacyPolicy ?? 'Privacy Policy',
                 onTap: () => AppNavigator.push(
                     context,
                     const LegalPageScreen(
@@ -248,7 +246,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── About ────────────────────────────────────────────────────
-            _SectionLabel(l10n.settings_about),
+            _SectionLabel(l10n?.settings_about ?? 'About'),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 250,
@@ -257,7 +255,7 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.info_outline,
                 iconColor: colors.onSurfaceVariant,
                 iconBgColor: colors.iconBackground,
-                title: l10n.settings_appVersion,
+                title: l10n?.settings_appVersion ?? 'App version',
                 trailing: Text(
                   'v2.1.0',
                   style: AppTypography.bodyMedium
@@ -273,40 +271,30 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('rateUsTile'),
                 icon: Icons.star_outline,
                 iconColor: AppColors.warning,
-                iconBgColor: AppColors.of(context).warningLight,
-                title: l10n.settings_rateUs,
+                iconBgColor: colors.warningSurface,
+                title: l10n?.settings_rateUs ?? 'Rate us',
                 onTap: () async {
                   final url = Uri.parse(
                       'https://play.google.com/store/apps/details?id=com.voltium.rider');
-                  // CONSOLIDATED-FIX-2026-08-16 §4.10: LaunchUrlException
-                  // catch instead of deprecated canLaunchUrl pre-check.
                   try {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
-                  } catch (_) {
-                    // No-op — the rider sees no feedback, but the next
-                    // tap will retry. A snackbar is overkill for the
-                    // Rate-Us path (it's optional UX).
-                  }
+                  } catch (_) {}
                 },
               ),
             ),
             const SizedBox(height: 24),
 
             // ── Account / danger zone ───────────────────────────────────
-            _SectionLabel(l10n.settings_accountSection),
+            _SectionLabel(l10n?.settings_accountSection ?? 'Account'),
             const SizedBox(height: 12),
-            // PR-3 (2026-08-07 verification, Section 2): delete flow now
-            // records a real request via /api/rider/account/delete-request
-            // (audit log + rider marker) — the tile is safe to show in all
-            // builds (audit #6 P0-4 was resolved by the endpoint).
             FadeUpWidget(
               delay: 300,
               child: QuickLinkItem(
                 key: const Key('deleteAccountButton'),
                 icon: Icons.delete_outline,
                 iconColor: AppColors.error,
-                iconBgColor: AppColors.of(context).errorRose,
-                title: l10n.settings_deleteAccount,
+                iconBgColor: colors.errorSurface,
+                title: l10n?.settings_deleteAccount ?? 'Delete account',
                 onTap: () => _showDeleteAccountDialog(context),
               ),
             ),
@@ -319,15 +307,7 @@ class SettingsScreen extends ConsumerWidget {
                   if (confirmed == true && context.mounted) {
                     ref.read(riderProvider.notifier).logout();
                     if (context.mounted) {
-                      // Clear the whole stack so the back button can't
-                      // resurrect the logged-out rider's screens; the router
-                      // re-renders the splash/auth flow from app state.
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (_) => const AppShell(),
-                        ),
-                        (route) => false,
-                      );
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     }
                   }
                 },
@@ -350,7 +330,7 @@ class SettingsScreen extends ConsumerWidget {
     // `txtlockPasswordVerifyFailed`, `txtlockPasswordSubtitle`)
     // were added in this PR; `txtchangeLockPassword` is shared
     // with the tile label above.
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     showDialog(
       context: context,
@@ -360,13 +340,14 @@ class SettingsScreen extends ConsumerWidget {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: colors.surface,
-              title: Text(l10n.txtchangeLockPassword),
+              title: Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      l10n.txtlockPasswordSubtitle,
+                      l10n?.txtlockPasswordSubtitle ??
+                          'Enter your 4-digit lock password to verify your identity.',
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -374,7 +355,7 @@ class SettingsScreen extends ConsumerWidget {
                       controller: controller,
                       obscureText: true,
                       decoration: InputDecoration(
-                        labelText: l10n.txtlockPassword,
+                        labelText: l10n?.txtlockPassword ?? 'Lock Password',
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -384,7 +365,7 @@ class SettingsScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                  child: Text(l10n.txtcancel),
+                  child: Text(l10n?.txtcancel ?? 'Cancel'),
                 ),
                 ElevatedButton(
                   key: const Key('confirmVerifyLockButton'),
@@ -406,24 +387,19 @@ class SettingsScreen extends ConsumerWidget {
                                     ? 'Lock password verified successfully'
                                     : 'Verification failed');
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(msg),
-                                  backgroundColor: isSuccess
-                                      ? AppColors.success
-                                      : AppColors.error,
-                                ),
-                              );
+                              if (isSuccess) {
+                                Toast.success(context, msg);
+                              } else {
+                                Toast.error(context, msg);
+                              }
                             }
                           } catch (e) {
                             if (ctx.mounted) Navigator.pop(ctx);
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content:
-                                      Text(l10n.txtlockPasswordVerifyFailed),
-                                  backgroundColor: AppColors.error,
-                                ),
+                              Toast.error(
+                                context,
+                                l10n?.txtlockPasswordVerifyFailed ??
+                                    'Lock password verification failed',
                               );
                             }
                           }
@@ -434,7 +410,7 @@ class SettingsScreen extends ConsumerWidget {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(l10n.txtverify),
+                      : Text(l10n?.txtverify ?? 'Verify'),
                 ),
               ],
             );
@@ -450,18 +426,20 @@ class SettingsScreen extends ConsumerWidget {
 
   /// Tri-state theme picker (Follow System / Light / Dark).
   void _showThemeDialog(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final currentMode = ref.read(themeProvider).themeMode;
+    final colors = AppColors.of(context);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.settings_appearance),
+        backgroundColor: colors.surface,
+        title: Text(l10n?.settings_appearance ?? 'Appearance'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text(l10n.settings_followSystem),
+              title: Text(l10n?.settings_followSystem ?? 'Follow system'),
               leading: Radio<ThemeMode>(
                 key: const Key('themeSystemRadio'),
                 value: ThemeMode.system,
@@ -479,7 +457,7 @@ class SettingsScreen extends ConsumerWidget {
               },
             ),
             ListTile(
-              title: Text(l10n.settings_themeLight),
+              title: Text(l10n?.settings_themeLight ?? 'Light mode'),
               leading: Radio<ThemeMode>(
                 key: const Key('themeLightRadio'),
                 value: ThemeMode.light,
@@ -497,7 +475,7 @@ class SettingsScreen extends ConsumerWidget {
               },
             ),
             ListTile(
-              title: Text(l10n.settings_themeDark),
+              title: Text(l10n?.settings_themeDark ?? 'Dark mode'),
               leading: Radio<ThemeMode>(
                 key: const Key('themeDarkRadio'),
                 value: ThemeMode.dark,
@@ -518,25 +496,28 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  static String _themeModeLabel(ThemeState theme, AppLocalizations l10n) {
+  static String _themeModeLabel(ThemeState theme, AppLocalizations? l10n) {
     switch (theme.themeMode) {
       case ThemeMode.light:
-        return l10n.settings_themeLight;
+        return l10n?.settings_themeLight ?? 'Light mode';
       case ThemeMode.dark:
-        return l10n.settings_themeDark;
+        return l10n?.settings_themeDark ?? 'Dark mode';
       case ThemeMode.system:
-        return l10n.settings_followSystem;
+        return l10n?.settings_followSystem ?? 'Follow system';
     }
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.settings_deleteConfirmTitle),
+        backgroundColor: colors.surface,
+        title: Text(l10n?.settings_deleteConfirmTitle ?? 'Delete Account'),
         content: Text(
-          l10n.settings_deleteConfirmBody,
+          l10n?.settings_deleteConfirmBody ??
+              'Are you sure you want to delete your account? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -557,43 +538,31 @@ class SettingsScreen extends ConsumerWidget {
                 await VoltiumApiService().post(
                   '/api/rider/account/delete-request',
                   body: {
-                    'reason': l10n.settings_deleteReason,
+                    'reason': l10n?.settings_deleteReason ??
+                        'Rider requested account deletion',
                     'timestamp': DateTime.now().toIso8601String(),
                   },
                 );
               } catch (_) {
-                // Best-effort: the request is also recorded client-side only
-                // on success; on failure surface an error instead of a false
-                // success.
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Failed to submit deletion request. Please try again or contact support.',
-                      ),
-                      duration: Duration(seconds: 5),
-                      backgroundColor: AppColors.error,
-                    ),
+                  Toast.error(
+                    context,
+                    'Failed to submit deletion request. Please try again or contact support.',
                   );
                 }
                 return;
               }
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Account deletion request submitted successfully. An administrator will review and process it.',
-                    ),
-                    duration: Duration(seconds: 5),
-                    backgroundColor: AppColors.success,
-                  ),
+                Toast.success(
+                  context,
+                  'Account deletion request submitted successfully. An administrator will review and process it.',
                 );
               }
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
-            child: Text(l10n.settings_delete),
+            child: Text(l10n?.settings_delete ?? 'Delete'),
           ),
         ],
       ),
@@ -708,8 +677,8 @@ class _RiderIdentityCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: verified
-                  ? AppColors.of(context).successLight
-                  : AppColors.warningSurface,
+                  ? colors.successSurface
+                  : colors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(
                 color: verified
@@ -720,7 +689,7 @@ class _RiderIdentityCard extends StatelessWidget {
             child: Text(
               'KYC · $kyc',
               style: AppTypography.labelMedium.copyWith(
-                color: verified ? AppColors.successDark : AppColors.warningDark,
+                color: verified ? AppColors.success : AppColors.warningDark,
               ),
             ),
           ),
@@ -780,13 +749,14 @@ class _NotificationsTileState extends State<_NotificationsTile> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
     return QuickLinkItem(
       key: const Key('notificationsTile'),
       icon: Icons.notifications_outlined,
       iconColor: AppColors.primary,
-      iconBgColor: AppColors.of(context).primarySurface,
-      title: l10n.settings_notifications,
+      iconBgColor: colors.primarySurface,
+      title: l10n?.settings_notifications ?? 'Notifications',
       trailing: Switch.adaptive(
         key: const Key('notificationsSwitch'),
         value: _enabled,

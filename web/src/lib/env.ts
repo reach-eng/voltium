@@ -22,9 +22,34 @@ export const envSchema = z.object({
   // laptop setup friction-free. The runtime env() below rejects the
   // fallback when APP_ENV=production.
   FILE_UPLOAD_SECRET: z.string().min(32, 'FILE_UPLOAD_SECRET must be at least 32 characters').optional(),
+  // PR-PICKUP-OTP: dedicated HMAC secret for short-lived verify-phone
+  // receipts (issued on successful OTP verification, validated by
+  // POST /api/rider/sync/pickup so the emergency-contact gate is not
+  // client-only). Mirrors FILE_UPLOAD_SECRET: required in production,
+  // falls back to JWT_SECRET in non-prod for laptop-mode ergonomics.
+  VERIFY_RECEIPT_SECRET: z.string().min(32, 'VERIFY_RECEIPT_SECRET must be at least 32 characters').optional(),
+  // PR-PICKUP-OTP: when true, POST /api/rider/sync/pickup REJECTS a
+  // submission with an emergency contact that lacks a valid signed
+  // receipt. Default false (backward compatible) until the rider app
+  // ships the receipt; flip to true to enforce.
+  REQUIRE_EMERGENCY_CONTACT_RECEIPT: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
   CRON_SECRET: z.string().optional(),
   WORKER_SECRET: z.string().optional(),
+  // PR-152: dedicated secret for /api/internal/debug. Previously
+  // the route used CRON_SECRET (same as /api/cron/*), so a leaked
+  // cron secret exposed the debug surface too. Now they use
+  // distinct secrets.
+  DEBUG_SECRET: z.string().optional(),
+  // PR-152: internal API base URL used by SSRF-prone routes
+  // (workflow-coverage, internal/worker) to call back into our own
+  // API. Falls back to NEXT_PUBLIC_APP_URL but operators can override
+  // to point at the loopback (e.g. http://127.0.0.1:8081) so the
+  // request never leaves the host.
+  INTERNAL_API_URL: z.string().url().optional(),
 
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
@@ -158,6 +183,18 @@ if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 
     );
   }
 
+  // P1-8 (2026-08-05 legal/device audit): INTERNAL_API_URL was optional with
+  // a silent fallback to NEXT_PUBLIC_APP_URL — the server then health-checked
+  // its own public URL through Caddy/TLS. In production it must point at the
+  // loopback API (http://127.0.0.1:8081) so internal probes never leave the
+  // host. Fail fast at boot so the misconfiguration cannot be shipped.
+  if (!parsedEnv.INTERNAL_API_URL) {
+    throw new Error(
+      'Production architecture violation: INTERNAL_API_URL environment variable is required ' +
+      '(set to http://127.0.0.1:8081 so internal health probes stay on the loopback).'
+    );
+  }
+
   if (parsedEnv.DATA_MODE !== 'local_laptop') {
     throw new Error('Production architecture violation: DATA_MODE must be local_laptop.');
   }
@@ -224,6 +261,33 @@ if (isServer) {
       throw new Error(
         'Security violation: FILE_UPLOAD_SECRET must be set in production. ' +
         'Reusing JWT_SECRET for file upload tokens is not allowed.'
+      );
+    }
+
+    // PR-PICKUP-OTP: verify-phone receipts are a separate protocol from
+    // upload tokens and sessions — reuse would make one leaked HMAC
+    // recoverable across all three. Dedicated secret required in prod.
+    if (parsedEnv.APP_ENV === 'production' && !parsedEnv.VERIFY_RECEIPT_SECRET) {
+      throw new Error(
+        'Security violation: VERIFY_RECEIPT_SECRET must be set in production. ' +
+        'Reusing JWT_SECRET for verify receipts is not allowed.'
+      );
+    }
+
+    // PR-PICKUP-OTP (review): fail-closed — production MUST enforce the
+    // emergency-contact receipt. If the flag is left unset (default false
+    // = "validate-and-ignore"), the OTP gate silently ships OFF despite the
+    // secret being present, which would be the exact regression this
+    // feature exists to close. Operators flip the flag only after the
+    // receipt-capable rider build is installed (old builds 403 otherwise).
+    if (
+      parsedEnv.APP_ENV === 'production' &&
+      !parsedEnv.REQUIRE_EMERGENCY_CONTACT_RECEIPT
+    ) {
+      throw new Error(
+        'Security violation: REQUIRE_EMERGENCY_CONTACT_RECEIPT must be true ' +
+        'in production. The pickup emergency-contact OTP gate must be ' +
+        'server-enforced once the receipt-capable rider app is deployed.'
       );
     }
   }

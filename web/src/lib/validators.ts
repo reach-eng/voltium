@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 export const sendOtpSchema = z.object({
   phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+  // PR-VER-2026-08-06 (LOGIN_OTP_INTENT P0-1): the Flutter client now
+  // carries the referral code on send-otp (it used to be dropped before
+  // the request left the device). It is optional and only used as intent
+  // telemetry here — the authoritative capture happens at verify (rider
+  // creation) via `verifyOtpSchema.referralCode`.
+  referralCode: z.string().max(20).nullish(),
 });
 
 export const verifyOtpSchema = z
@@ -30,9 +36,20 @@ export const updateProfileSchema = z.object({
   emergencyContact: z.string().max(20).nullish(),
   dob: z
     .string()
-    .regex(/^\d{2}-\d{2}-\d{4}$/, 'DOB must be dd-mm-yyyy')
+    .regex(/^(\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/, 'DOB must be yyyy-mm-dd or dd-mm-yyyy')
     .nullish(),
   intent: z.string().nullish(),
+  // LANGUAGE-AUDIT (2026-08-16) #6: rider's preferred language.
+  // BCP-47 language tag, optional. We accept `en`, `hi`, or any
+  // future language added to `LocaleNotifier.supportedLanguages`
+  // on the mobile side. The server treats it as opaque — only the
+  // mobile client validates it against its own allowlist.
+  preferredLocale: z
+    .string()
+    .min(2)
+    .max(8)
+    .regex(/^[a-z]{2}(_[A-Z]{2})?$/, 'preferredLocale must be a BCP-47 tag')
+    .nullish(),
   // KYC Urls
   profilePhoto: z.string().nullish().or(z.literal('')),
   riderPhoto: z.string().nullish().or(z.literal('')),
@@ -52,7 +69,12 @@ export const updateProfileSchema = z.object({
   longitude: z.number().nullish(),
   // Guarantor Fields
   guarantorName: z.string().nullish(),
-  guarantorPhone: z.string().nullish(),
+  guarantorPhone: z
+    .string()
+    .regex(/^(\d{10})?$/, 'Guarantor phone must be 10 digits')
+    .nullish()
+    .or(z.literal('')),
+  guarantorPhoneReceipt: z.string().nullish(),
   guarantorRelation: z.string().nullish(),
   guarantorDob: z.string().nullish(),
   guarantorFatherName: z.string().nullish(),
@@ -73,60 +95,49 @@ export const updateProfileSchema = z.object({
   micGranted: z.boolean().nullish(),
   cameraGranted: z.boolean().nullish(),
   phoneGranted: z.boolean().nullish(),
-});
+}).strict();
 
-// ==================== KYC ====================
-export const submitKycSchema = z.object({
-  riderId: z.string().min(1),
-  aadhaarNumber: z.string().regex(/^\d{4}-\d{4}-\d{4}$/, 'Invalid Aadhaar format'),
-  panNumber: z.string().regex(/^[A-Z]{5}\d{4}[A-Z]$/, 'Invalid PAN format'),
-  bankName: z.string().min(1, 'Bank name required'),
-  bankAccount: z.string().regex(/^\d{8,18}$/, 'Invalid account number'),
-  bankIfsc: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC code format'),
-  aadhaarFront: z.string().optional().or(z.literal('')),
-  aadhaarBack: z.string().optional().or(z.literal('')),
-  panCard: z.string().optional().or(z.literal('')),
-  profilePhoto: z.string().optional().or(z.literal('')),
-  riderPhoto: z.string().url('Rider photo is required'),
-  riderVideo: z.string().url('Rider video is required'),
-  signature: z.string().optional().or(z.literal('')),
-});
 
-// ==================== GUARANTOR ====================
-export const submitGuarantorSchema = z.object({
-  riderId: z.string().min(1),
-  name: z.string().min(2, 'Name required'),
-  relation: z.string().min(2, 'Relation required'),
-  phone: z.string().regex(/^\d{10}$/, 'Invalid phone'),
-  dob: z
-    .string()
-    .regex(/^\d{2}-\d{2}-\d{4}$/, 'DOB must be dd-mm-yyyy')
-    .optional(),
-  fatherName: z.string().max(100).optional(),
-  motherName: z.string().max(100).optional(),
-  aadhaarFront: z.string().optional().or(z.literal('')),
-  aadhaarBack: z.string().optional().or(z.literal('')),
-  pan: z.string().optional().or(z.literal('')),
-  video: z.string().url('Video is required'),
-  signature: z.string().optional().or(z.literal('')),
-});
+
+// ==================== CONSENT ====================
+export const consentSchema = z.object({
+  // PR-VER-2026-08-07 (FLUTTER_CONSENT P1-1): the rider app records consent
+  // for every permission it requests — the enum must accept them all or the
+  // sync 400s. Adding values here is safe: the Consent model stores the type
+  // as a string and no consumer switches exhaustively over it.
+  consentType: z.enum([
+    'LOCATION',
+    'CONTACTS',
+    'CALL_LOGS',
+    'CAMERA',
+    'PHONE',
+    'MIC',
+    'BATTERY',
+    'NOTIFICATIONS',
+    'DEVICE_ADMIN',
+  ]),
+  granted: z.boolean(),
+  policyVersion: z.string().optional().default('public-beta-v1'),
+}).strict();
 
 // ==================== TRANSACTIONS ====================
 export const topUpSchema = z.object({
   riderId: z.string().min(1, 'Rider ID required').optional(),
   amount: z.number().positive('Amount must be positive').max(50000, 'Max ₹50,000 per top-up'),
   purpose: z.enum(['TOP_UP', 'SECURITY_DEPOSIT']),
-  method: z.enum(['UPI', 'CASH', 'CARD']),
+  method: z.enum(['UPI', 'CASH', 'CARD', 'INSTANT']),
   reason: z.string().max(200).optional(),
   upiRef: z.string().max(50).optional().nullable(),
-  proofUrl: z.string().min(1, 'Proof of payment is required'),
+  proofUrl: z.string().optional().nullable(),
+  gatewayStatus: z.enum(['SUCCESS', 'FAILURE', 'PENDING']).optional(),
+  mdrAmount: z.number().nonnegative().optional(),
 });
 
 // ==================== TICKETS ====================
 export const createTicketSchema = z.object({
   riderId: z.string().min(1),
   category: z.enum(['TECHNICAL', 'PAYMENT', 'VEHICLE', 'GENERAL', 'TROUBLESHOOTER', 'BATTERY']),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   subject: z.string().min(5, 'Subject must be at least 5 characters').max(200),
   message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
   attachments: z.union([z.string(), z.null(), z.undefined()]).optional(),
@@ -229,6 +240,11 @@ export const sendNotificationSchema = z.object({
   message: z.string().min(5).max(1000),
   type: z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE']).default('INFO'),
   riderIds: z.array(z.string()).optional(),
+  // P1-13/P2-11 (2026-08-05 ops audit): the legacy singular `riderId` was
+  // read straight off the raw body with no validation — a non-string value
+  // could reach the use-case. It's now schema-validated alongside the plural
+  // `riderIds` (both stay optional; the route enforces "one of them").
+  riderId: z.string().min(1).optional(),
   sendToAll: z.boolean().default(false),
 });
 
@@ -291,8 +307,9 @@ export const createTeamLeaderSchema = z.object({
   name: z.string().min(2, 'Name is required').max(100),
   phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
   email: z.string().email().optional().or(z.literal('')),
+  hubId: z.string().optional().nullable().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
-});
+}).strict();
 
 // ==================== ADMIN - TICKETS (UPDATE) ====================
 export const updateTicketSchema = z.object({
@@ -309,14 +326,10 @@ export const ticketReplySchema = z.object({
 });
 
 // ==================== ADMIN - LEGAL (UPSERT) ====================
-export const updateLegalSchema = z.object({
-  type: z.enum(
-    ['terms', 'privacy', 'refund', 'lease'],
-    'type must be one of: terms, privacy, refund, lease'
-  ),
-  title: z.string().max(200).optional(),
-  content: z.string().min(1, 'content is required').max(100000),
-});
+// P1-1 (2026-08-05 legal/device audit): the old non-strict `updateLegalSchema`
+// was deleted — the live route uses the strict `updateLegalAdminSchema` from
+// `validators/admin.ts` (the canonical admin-mutation file). Two parallel
+// schemas drifted before; one remains.
 
 // ==================== ADMIN - SETTINGS (UPSERT) ====================
 const VALID_SETTING_KEYS = [
@@ -347,17 +360,46 @@ export const updateSettingsSchema = z
   );
 
 // ==================== ADMIN - TRANSACTIONS ====================
-export const approveTransactionSchema = z.object({
-  id: z.string().min(1),
-  // REVERT is deprecated — use REVERSE (creates an offsetting ledger entry, terminal state)
-  action: z.enum(['APPROVE', 'REJECT', 'REVERSE']),
-  rejectionReason: z.string().max(200).optional(),
-  walletCreditAmount: z.number().positive().optional(),
-});
+
+// P0-1 (financial audit): a single admin action must never be able to credit
+// an unbounded amount. ₹1,00,000 per transaction is the business cap for a
+// deposit-approval bonus — enforced in the schema AND re-checked in the
+// use-case (the security boundary, for non-schema callers).
+export const MAX_ADMIN_BONUS_CREDIT_RUPEES = 100_000;
+
+export const approveTransactionSchema = z
+  .object({
+    id: z.string().min(1),
+    // REVERT is deprecated — use REVERSE (creates an offsetting ledger entry, terminal state)
+    action: z.enum(['APPROVE', 'REJECT', 'REVERSE']),
+    rejectionReason: z.string().max(200).optional(),
+    walletCreditAmount: z
+      .number()
+      .positive()
+      .max(
+        MAX_ADMIN_BONUS_CREDIT_RUPEES,
+        `Bonus credit cannot exceed ₹${MAX_ADMIN_BONUS_CREDIT_RUPEES.toLocaleString('en-IN')} per transaction`
+      )
+      .optional(),
+  })
+  .refine(
+    (data) =>
+      data.action !== 'REJECT' ||
+      (typeof data.rejectionReason === 'string' &&
+        data.rejectionReason.trim().length >= 10),
+    {
+      message:
+        'Rejection reason is required (minimum 10 characters) when rejecting a transaction',
+      path: ['rejectionReason'],
+    }
+  );
 
 // ==================== RIDER - PLANS ====================
 export const subscribePlanSchema = z.object({
   planId: z.string().min(1, 'Plan ID is required'),
+  hubId: z.string().optional(),
+  securityDeposit: z.number().optional(),
+  advanceRentPaid: z.union([z.boolean(), z.number()]).optional(),
 });
 
 // ==================== SYNC QUEUE ====================
@@ -382,13 +424,20 @@ export const chatMessageSchema = z.object({
 });
 
 // ==================== ADMIN RIDER ACTIONS ====================
+// P1-6/P1-13 (2026-08-05 legal/device audit): the action enum is the source
+// of truth for what actions exist. `LOCK_DEVICE` was removed — it was dead
+// (the route returned 400 unconditionally) and only invited bugs. `ENABLE_CAMERA`
+// stays: it has a live handler (the counterpart to DISABLE_CAMERA).
+// `SYNC_DEVICE_DATA` was missing entirely even though the admin UI sends it
+// (the Sync Data button) and the route has a live case for it — validation
+// used to reject every sync click with a 422. It is now an enum member.
 export const riderActionSchema = z.object({
   action: z.enum([
     'ASSIGN_PLAN',
     'COMPLETE_PICKUP',
     'END_RENTAL',
-    'LOCK_DEVICE',
     'FACTORY_RESET',
+    'SYNC_DEVICE_DATA',
     'DISABLE_CAMERA',
     'ENABLE_CAMERA',
     'ENFORCE_PASSCODE',
@@ -403,10 +452,25 @@ export const riderActionSchema = z.object({
   planId: z.string().optional(),
   vehicleId: z.string().optional(),
   hubId: z.string().optional(),
-  teamLeader: z.string().optional(),
+  teamLeaderId: z.string().optional(),
   password: z.string().optional(),
   enabled: z.boolean().optional(),
 });
+
+// P1.4 (2026-08-05 rentals/vehicles/hubs audit): the admin rentals PUT route
+// used String.includes('RETURN') on an uppercased body string — typo'd actions
+// fell into the wrong permission bucket. Actions are now a closed Zod enum so
+// invalid values 400 and the permission gate maps from the validated value.
+export const adminRentalActionSchema = z.enum([
+  'START',
+  'PICKUP_COMPLETE',
+  'MARK_OVERDUE',
+  'REQUEST_RETURN',
+  'APPROVE_RETURN',
+  'CLOSE',
+  'SUSPEND',
+]);
+export type AdminRentalAction = z.infer<typeof adminRentalActionSchema>;
 
 export const registerTokenSchema = z.object({
   fcmToken: z.string().min(1),
@@ -425,11 +489,23 @@ export const vehicleBulkActionSchema = z.object({
   value: z.string().optional(),
 });
 
-export const transactionBulkActionSchema = z.object({
-  ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
-  action: z.enum(['approve', 'reject']),
-  reason: z.string().optional(),
-});
+export const transactionBulkActionSchema = z
+  .object({
+    ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
+    action: z.enum(['approve', 'reject']),
+    reason: z.string().max(200, 'Reason must be at most 200 characters').optional(),
+    rejectionReason: z.string().max(200, 'Rejection reason must be at most 200 characters').optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.action === 'reject') {
+        const r = data.rejectionReason || data.reason;
+        return typeof r === 'string' && r.trim().length >= 10;
+      }
+      return true;
+    },
+    { message: 'Rejection reason is required (minimum 10 characters) when rejecting transactions', path: ['rejectionReason'] }
+  );
 
 export const ticketBulkActionSchema = z.object({
   ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
@@ -452,6 +528,12 @@ export const awardRewardSchema = z.object({
   riderDbId: z.string().min(1, 'Rider ID is required'),
   title: z.string().min(1, 'Title is required').max(100),
   points: z.number().int().min(1, 'Points must be positive'),
+});
+
+export const updateRewardSchema = z.object({
+  id: z.string().min(1, 'Reward ID is required'),
+  title: z.string().min(1).max(100).optional(),
+  points: z.number().int().min(1).optional(),
 });
 
 // ==================== WALLET TOPUP ====================
@@ -488,8 +570,8 @@ export const createIncidentSchema = z.object({
 });
 
 export const updateIncidentSchema = z.object({
-  id: z.string().min(1),
-  status: z.enum(['OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED']).optional(),
+  id: z.string().min(1).optional(),
+  status: z.enum(['REPORTED', 'OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED', 'DISMISSED']).optional(),
   assignedTo: z.string().optional(),
   resolution: z.string().optional(),
   insuranceClaim: z.boolean().optional(),

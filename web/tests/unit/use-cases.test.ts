@@ -82,6 +82,11 @@ const mockDb = {
   systemSetting: { findUnique: vi.fn() },
   $transaction: vi.fn(),
   supportTicket: { count: vi.fn() },
+  // PR-ONBOARDING-2026-08-11 (audit 2.7): audit log writes for KYC
+  // review actions read the previous KycProfile state via
+  // `db.kycProfile.findUnique` outside the transaction. The mock must
+  // include the table.
+  kycProfile: { findUnique: vi.fn() },
 };
 
 const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
@@ -102,6 +107,8 @@ vi.mock('@/server/modules/wallet/wallet-ledger.service', () => ({
 }));
 vi.mock('@/server/modules/rentals/rental.repository', () => ({
   rentalRepository: mockRentalRepository,
+  // P1.3: rental.use-cases now imports utcNowHHMM for UTC lease times.
+  utcNowHHMM: () => '00:00',
 }));
 vi.mock('@/server/modules/support/support.repository', () => ({
   supportRepository: mockSupportRepository,
@@ -384,11 +391,16 @@ describe('Wallet — Top-up', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('creates PENDING transaction for rider', async () => {
+    // PR-ONBOARDING-FLOW-2026-08-13: the rank<10 threshold (was <8) means
+    // a rank-8 rider (DEPOSIT_APPROVED) is now classified as
+    // SECURITY_DEPOSIT, not TOP_UP. To keep this test focused on the
+    // "rider at ACTIVE wants to add money" happy path, use a rank >= 10
+    // rider so the requested `purpose` flows through unchanged.
     mockDb.rider.findUnique.mockResolvedValue({
       id: 'rider-123',
       depositDone: true,
       phone: '9876543222',
-      lifecycleStatus: 'DEPOSIT_APPROVED',
+      lifecycleStatus: 'ACTIVE',
     });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
     mockWalletRepository.createTransaction.mockResolvedValue({
@@ -412,13 +424,20 @@ describe('Wallet — Top-up', () => {
   });
 
   it('returns existing transaction for idempotent replay', async () => {
+    // Same rank fix as above: a rank-8 rider is now SECURITY_DEPOSIT.
+    // The idempotent-replay branch compares the existing txn's purpose
+    // against `finalPurpose` (which is SECURITY_DEPOSIT for rank 8),
+    // so the test mock must match. Use rank >= 10 to keep the
+    // requested `purpose: TOP_UP` flowing through unchanged.
     mockDb.rider.findUnique.mockResolvedValue({
       id: 'rider-123',
       depositDone: true,
       phone: '9876543210',
-      lifecycleStatus: 'DEPOSIT_APPROVED',
+      lifecycleStatus: 'ACTIVE',
     });
-    const existingTxn = { id: 'txn-existing', status: 'PENDING' };
+    // The idempotent-replay guard also verifies amount/purpose consistency —
+    // the mocked existing row must match the request, or it is a conflict.
+    const existingTxn = { id: 'txn-existing', status: 'PENDING', amountInPaise: 50000, purpose: 'TOP_UP' };
     mockWalletRepository.findTransactionByKey.mockResolvedValue(existingTxn);
 
     const result = await walletUseCases.requestTopup('rider-123', 50000, 'TOP_UP', 'upi');
@@ -467,7 +486,7 @@ describe('Wallet — Approval', () => {
       id: 'txn-1',
       status: 'PENDING',
       riderId: 'rider-123',
-      amount: 50000,
+      amountInPaise: 50000,
       purpose: 'TOP_UP',
     });
     mockWalletLedgerService.credit.mockResolvedValue(undefined);
@@ -538,8 +557,7 @@ describe('Wallet — Approval', () => {
     expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith(
       'txn-1',
       'REJECTED',
-      'admin-1',
-      expect.anything()
+      'admin-1'
     );
     expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -570,8 +588,8 @@ describe('Wallet — Get Wallet', () => {
       balanceInPaise: 100000,
     });
     mockWalletRepository.getTransactions.mockResolvedValue([
-      { status: 'PENDING', type: 'CREDIT', amount: 50000 },
-      { status: 'APPROVED', type: 'CREDIT', amount: 30000 },
+      { status: 'PENDING', type: 'CREDIT', amountInPaise: 50000 },
+      { status: 'APPROVED', type: 'CREDIT', amountInPaise: 30000 },
     ]);
 
     const result = await walletUseCases.getWallet('rider-123');
@@ -630,7 +648,10 @@ describe('Rental — Book Rental', () => {
         }),
       },
       vehicle: {
-        update: vi.fn().mockResolvedValue(undefined),
+        // PR-ONBOARDING-2026-08-11 (audit 2.11 R3): vehicle flip now uses
+        // updateMany with a status guard instead of plain update.
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       rider: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -646,8 +667,10 @@ describe('Rental — Book Rental', () => {
     });
 
     expect(result.lease.status).toBe('BOOKED');
-    expect(mockTx.vehicle.update).toHaveBeenCalledWith({
-      where: { id: 'v-1' },
+    // PR-ONBOARDING-2026-08-11 (audit 2.11 R3): vehicle status flip now
+    // uses updateMany with a status guard.
+    expect(mockTx.vehicle.updateMany).toHaveBeenCalledWith({
+      where: { id: 'v-1', status: 'AVAILABLE' },
       data: { status: 'RESERVED' },
     });
   });
@@ -719,7 +742,7 @@ describe('Rental — Book Rental', () => {
 describe('Rental — Sync Pickup', () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it('completes pickup and activates account', async () => {
+  it('completes pickup and moves rider to PICKUP_SCHEDULED (active-path async-wait)', async () => {
     mockDb.rider.findUnique.mockResolvedValue({
       id: 'rider-123',
       vehicleId: null,
@@ -741,11 +764,26 @@ describe('Rental — Sync Pickup', () => {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       rider: {
-        update: vi.fn().mockResolvedValue({
+        // PR-ONBOARDING-2026-08-11 (audit 2.11 R5): syncPickup now uses
+        // updateMany with a lifecycle guard, not update. The mock must
+        // match.
+        update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({
           id: 'rider-123',
           pickupDone: true,
-          accountStatus: 'ACTIVE',
-          rentalStatus: 'ACTIVE',
+          // PR-ONBOARDING-FLOW-2026-08-12: the active path keeps the
+          // rider at PICKUP_SCHEDULED (rank 10) until admin flips
+          // them to ACTIVE. The test was previously asserting ACTIVE
+          // here — that is the older synchronous flow. The new
+          // flow's mock is `PICKUP_SCHEDULED` + `pickupHub` set on
+          // the rider row.
+          accountStatus: 'PRE_ACTIVE',
+          rentalStatus: 'NONE',
+          kycProfile: {},
+          wallet: {},
+          guarantor: {},
+          vehicleReturns: [],
         }),
       },
       rentalLease: {
@@ -758,11 +796,24 @@ describe('Rental — Sync Pickup', () => {
       vehicleId: 'v-1',
     });
 
-    expect(mockTx.rider.update).toHaveBeenCalledWith(
+    // PR-ONBOARDING-FLOW-2026-08-12: syncPickup now sets
+    // lifecycleStatus to PICKUP_SCHEDULED, not ACTIVE. Admin flips
+    // the rider to ACTIVE separately (HangTight waits for that
+    // transition). The allowlist is unchanged.
+    expect(mockTx.rider.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'rider-123' },
+        where: expect.objectContaining({
+          id: 'rider-123',
+          lifecycleStatus: expect.objectContaining({
+            in: expect.arrayContaining([
+              'PICKUP_SCHEDULED',
+              'ACTIVE',
+              'DEPOSIT_APPROVED',
+            ]),
+          }),
+        }),
         data: expect.objectContaining({
-          lifecycleStatus: 'ACTIVE',
+          lifecycleStatus: 'PICKUP_SCHEDULED',
           vehicleId: 'v-1',
         }),
       })

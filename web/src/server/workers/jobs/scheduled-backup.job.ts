@@ -1,10 +1,37 @@
 import { db } from '@/lib/db';
+import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { backupRepository } from '@/server/modules/data-management/backup.repository';
 import { scheduleService } from '@/server/modules/data-management/schedule/schedule.service';
-import { getFreeDiskBytes } from '@/server/modules/data-management/backup.service';
+import { backupService, getFreeDiskBytes } from '@/server/modules/data-management/backup.service';
 import { createAuditLog } from '@/lib/audit-log';
+
+/**
+ * P0-7 (ops audit): recompute the next run for a schedule whose `nextRunAt`
+ * was wiped (DR drill / schedule reset). Delegates to the canonical
+ * `scheduleService.calculateNextRun` — the helper the interrupted pass
+ * referenced as `computeNextRunAt` without ever defining.
+ *
+ * Falls back to next daily 02:00 for MANUAL/DISABLED/unparseable schedules so
+ * the schedule never stalls permanently.
+ */
+function computeNextRunAt(
+  frequency: string | null,
+  timeOfDay: string | null,
+  now: Date
+): Date {
+  const next = scheduleService.calculateNextRun({
+    frequency: frequency ?? undefined,
+    timeOfDay: timeOfDay ?? undefined,
+    baseDate: now,
+  });
+  if (next) return next;
+  const fallback = new Date(now);
+  fallback.setHours(2, 0, 0, 0);
+  if (fallback <= now) fallback.setDate(fallback.getDate() + 1);
+  return fallback;
+}
 
 export const scheduledBackupJob = {
   async checkAndRun(): Promise<{ ran: boolean; reason?: string }> {
@@ -53,7 +80,12 @@ export const scheduledBackupJob = {
 
       // Check if backup is due
       const now = clock.now();
-      if (schedule.nextRunAt && now < schedule.nextRunAt) {
+      if (!schedule.nextRunAt) {
+        // P0-7: DR drill / schedule reset wiped nextRunAt — re-initialize and proceed
+        const nextRunAt = computeNextRunAt(schedule.frequency, schedule.timeOfDay, now);
+        await backupRepository.markScheduleSuccess(schedule.id, now, nextRunAt);
+        logger.info('[ScheduledBackup] Re-initialized null nextRunAt', { nextRunAt: nextRunAt.toISOString() });
+      } else if (now < schedule.nextRunAt) {
         return {
           ran: false,
           reason: `Next backup scheduled at ${schedule.nextRunAt.toISOString()}`,
@@ -76,7 +108,7 @@ export const scheduledBackupJob = {
       });
 
       try {
-        await (scheduleService as any).runScheduledBackup({
+        await backupService.runScheduledBackup({
           id: schedule.id,
           frequency: schedule.frequency,
           includeDatabase: schedule.includeDatabase,
@@ -92,7 +124,7 @@ export const scheduledBackupJob = {
         });
 
         // Calculate next run time
-        const nextRunAt = scheduleService.calculateNextRun(schedule as any);
+        const nextRunAt = scheduleService.calculateNextRun(schedule);
         await backupRepository.markScheduleSuccess(
           schedule.id,
           clock.now(),
@@ -100,11 +132,25 @@ export const scheduledBackupJob = {
         );
 
         // Clear any previous failure alert
+        // PR-VER-2026-08-07 (CRON/DB): `category` became a required column on
+        // SystemSetting (settings-registry work) — the old create omitted it
+        // and crashed at runtime with a Prisma validation error.
         await db.systemSetting
           .upsert({
             where: { key: 'LAST_BACKUP_FAILURE' },
             update: { value: '' },
-            create: { key: 'LAST_BACKUP_FAILURE', value: '' },
+            create: { key: 'LAST_BACKUP_FAILURE', value: '', category: 'OPERATIONAL' },
+          })
+          .catch(() => {});
+
+        // PR-45 (CRON P0-4): clear the consecutive-failure counter on
+        // a successful backup so a one-off blip doesn't keep the
+        // Slack alert armed.
+        await db.systemSetting
+          .upsert({
+            where: { key: 'CONSECUTIVE_BACKUP_FAILURES' },
+            update: { value: '0' },
+            create: { key: 'CONSECUTIVE_BACKUP_FAILURES', value: '0', category: 'OPERATIONAL' },
           })
           .catch(() => {});
 
@@ -113,6 +159,52 @@ export const scheduledBackupJob = {
         const errorMsg = (backupErr instanceof Error ? backupErr.message : String(backupErr));
         logger.error('[ScheduledBackup] Backup execution failed', backupErr);
         await backupRepository.markScheduleFailure(schedule.id, errorMsg);
+
+        // PR-45 (CRON P0-4): on a failure, increment a per-process
+        // counter. When the counter crosses the threshold (3 in a
+        // row) we fire a Slack alert so the on-call engineer gets
+        // paged BEFORE the disk fills up or the schedule silently
+        // drifts. The counter resets on the next success.
+        const ALERT_THRESHOLD = 3;
+        try {
+          const counterRow = await db.systemSetting.findUnique({
+            where: { key: 'CONSECUTIVE_BACKUP_FAILURES' },
+          });
+          const previous = parseInt(counterRow?.value ?? '0', 10) || 0;
+          const next = previous + 1;
+          await db.systemSetting.upsert({
+            where: { key: 'CONSECUTIVE_BACKUP_FAILURES' },
+            update: { value: String(next) },
+            create: {
+              key: 'CONSECUTIVE_BACKUP_FAILURES',
+              value: String(next),
+              category: 'OPERATIONAL',
+            },
+          });
+          if (next >= ALERT_THRESHOLD && previous < ALERT_THRESHOLD) {
+            // Crossed the threshold for the first time in this streak —
+            // fire a Slack alert. Subsequent failures in the same
+            // streak are intentionally silent to avoid alert spam.
+            const { alerter } = await import('@/lib/alerter');
+            await alerter.send({
+              level: 'critical',
+              title: '🚨 Scheduled backup failing',
+              message:
+                `Scheduled backup has failed ${next} times in a row. ` +
+                `Last error: ${errorMsg.slice(0, 200)}`,
+              source: 'workers/jobs/scheduled-backup.job',
+            });
+            logger.warn(
+              '[ScheduledBackup] Slack alert fired — consecutive failures crossed threshold',
+              { consecutiveFailures: next },
+            );
+          }
+        } catch (alertErr) {
+          // The counter / alert path must never break the schedule —
+          // the failure is already recorded in `markScheduleFailure`.
+          logger.error('[ScheduledBackup] Failed to record/alert on failure', alertErr);
+        }
+
         return { ran: false, reason: `Backup execution failed: ${errorMsg}` };
       }
     } catch (err) {

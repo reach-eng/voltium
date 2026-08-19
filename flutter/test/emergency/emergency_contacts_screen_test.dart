@@ -8,7 +8,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [
-      emergencyContactsService.overrideWith((ref) => EmergencyContactsService())
+      emergencyContactsService.overrideWith(() => EmergencyContactsService())
     ],
     child: const MaterialApp(home: EmergencyContactsScreen()),
   );

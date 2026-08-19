@@ -50,6 +50,45 @@ void main() {
     expect(CacheService().getLocale(), 'en');
   });
 
+  test('first launch follows the system locale (isFollowingSystem true)', () {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    // Test env resolves the system locale to English.
+    expect(container.read(localeProvider).locale.languageCode, 'en');
+    expect(container.read(localeProvider).isFollowingSystem, isTrue);
+  });
+
+  test('explicit choice makes isFollowingSystem false', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(localeProvider.notifier);
+
+    // Default state is already English, so switch away first to avoid the
+    // no-op guard, then pin English explicitly.
+    await notifier.setHindi();
+    await notifier.setEnglish();
+
+    expect(container.read(localeProvider).isFollowingSystem, isFalse);
+    expect(CacheService().getLocale(), 'en');
+  });
+
+  test('setFollowSystem clears the persisted choice and re-derives', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(localeProvider.notifier);
+
+    await notifier.setHindi();
+    expect(container.read(localeProvider).isFollowingSystem, isFalse);
+    expect(CacheService().getLocale(), 'hi');
+
+    await notifier.setFollowSystem();
+
+    // No persisted code, system locale (English in the test env) re-derived.
+    expect(container.read(localeProvider).locale.languageCode, 'en');
+    expect(container.read(localeProvider).isFollowingSystem, isTrue);
+    expect(CacheService().getLocale(), isNull);
+  });
+
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {
     test('handles network error (5xx) gracefully', () async {
       // Ensure the mock API behaves exactly as expected for 5xx

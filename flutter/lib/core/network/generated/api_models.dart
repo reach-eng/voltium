@@ -4,19 +4,28 @@
 class SendOtpRequest {
   final String phone;
 
+  // PR-VER-2026-08-06 (LOGIN_OTP_INTENT P0-1): referralCode was silently
+  // dropped by AuthRepositoryImpl.sendOtp because this model had no field.
+  // The server accepts it (captured at rider creation on verify), so the
+  // client now carries it through.
+  final String? referralCode;
+
   SendOtpRequest({
     required this.phone,
+    this.referralCode,
   });
 
   factory SendOtpRequest.fromJson(Map<String, dynamic> json) {
     return SendOtpRequest(
       phone: json['phone'] as String,
+      referralCode: json['referralCode'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'phone': phone,
+      'referralCode': referralCode,
     };
   }
 }
@@ -280,6 +289,7 @@ class UpdateProfileRequest {
   final double? longitude;
   final String? guarantorName;
   final String? guarantorPhone;
+  final String? guarantorPhoneReceipt;
   final String? guarantorRelation;
   final String? guarantorDob;
   final String? guarantorFatherName;
@@ -327,6 +337,7 @@ class UpdateProfileRequest {
     this.longitude,
     this.guarantorName,
     this.guarantorPhone,
+    this.guarantorPhoneReceipt,
     this.guarantorRelation,
     this.guarantorDob,
     this.guarantorFatherName,
@@ -382,6 +393,7 @@ class UpdateProfileRequest {
           : null,
       guarantorName: json['guarantorName'] as String?,
       guarantorPhone: json['guarantorPhone'] as String?,
+      guarantorPhoneReceipt: json['guarantorPhoneReceipt'] as String?,
       guarantorRelation: json['guarantorRelation'] as String?,
       guarantorDob: json['guarantorDob'] as String?,
       guarantorFatherName: json['guarantorFatherName'] as String?,
@@ -432,6 +444,7 @@ class UpdateProfileRequest {
       'longitude': longitude,
       'guarantorName': guarantorName,
       'guarantorPhone': guarantorPhone,
+      'guarantorPhoneReceipt': guarantorPhoneReceipt,
       'guarantorRelation': guarantorRelation,
       'guarantorDob': guarantorDob,
       'guarantorFatherName': guarantorFatherName,
@@ -451,94 +464,6 @@ class UpdateProfileRequest {
       'micGranted': micGranted,
       'cameraGranted': cameraGranted,
       'phoneGranted': phoneGranted,
-    };
-  }
-}
-
-class SubmitKycRequest {
-  final String riderId;
-  final String aadhaarNumber;
-  final String panNumber;
-  final String bankName;
-  final String bankAccount;
-  final String bankIfsc;
-  final dynamic aadhaarFront;
-  final dynamic aadhaarBack;
-  final dynamic panCard;
-  final dynamic profilePhoto;
-  final dynamic signature;
-
-  SubmitKycRequest({
-    required this.riderId,
-    required this.aadhaarNumber,
-    required this.panNumber,
-    required this.bankName,
-    required this.bankAccount,
-    required this.bankIfsc,
-    this.aadhaarFront,
-    this.aadhaarBack,
-    this.panCard,
-    this.profilePhoto,
-    this.signature,
-  });
-
-  factory SubmitKycRequest.fromJson(Map<String, dynamic> json) {
-    return SubmitKycRequest(
-      riderId: json['riderId'] as String,
-      aadhaarNumber: json['aadhaarNumber'] as String,
-      panNumber: json['panNumber'] as String,
-      bankName: json['bankName'] as String,
-      bankAccount: json['bankAccount'] as String,
-      bankIfsc: json['bankIfsc'] as String,
-      aadhaarFront: json['aadhaarFront'],
-      aadhaarBack: json['aadhaarBack'],
-      panCard: json['panCard'],
-      profilePhoto: json['profilePhoto'],
-      signature: json['signature'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'riderId': riderId,
-      'aadhaarNumber': aadhaarNumber,
-      'panNumber': panNumber,
-      'bankName': bankName,
-      'bankAccount': bankAccount,
-      'bankIfsc': bankIfsc,
-      'aadhaarFront': aadhaarFront,
-      'aadhaarBack': aadhaarBack,
-      'panCard': panCard,
-      'profilePhoto': profilePhoto,
-      'signature': signature,
-    };
-  }
-}
-
-class SubmitKycResponse {
-  final String? id;
-  final String? riderId;
-  final String? kycStatus;
-
-  SubmitKycResponse({
-    this.id,
-    this.riderId,
-    this.kycStatus,
-  });
-
-  factory SubmitKycResponse.fromJson(Map<String, dynamic> json) {
-    return SubmitKycResponse(
-      id: json['id'] as String?,
-      riderId: json['riderId'] as String?,
-      kycStatus: json['kycStatus'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'riderId': riderId,
-      'kycStatus': kycStatus,
     };
   }
 }
@@ -1383,19 +1308,28 @@ class VerifyPhoneRequest {
 class VerifyPhoneResponse {
   final bool? verified;
 
+  // PR-PICKUP-OTP: the HMAC-signed receipt issued by /api/auth/verify-phone
+  // on successful OTP verification. The parser used to read only `verified`
+  // and silently dropped the receipt — which severed the server-side
+  // emergency-contact OTP gate (the pickup submit would never see a token).
+  final String? receipt;
+
   VerifyPhoneResponse({
     this.verified,
+    this.receipt,
   });
 
   factory VerifyPhoneResponse.fromJson(Map<String, dynamic> json) {
     return VerifyPhoneResponse(
       verified: json['verified'] as bool?,
+      receipt: json['receipt']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'verified': verified,
+      'receipt': receipt,
     };
   }
 }
@@ -2731,28 +2665,28 @@ class VehicleBulkActionRequest {
 }
 
 class VehicleReturnRequest {
-  final String riderId;
-  final List<String> photoUrls;
+  // PR-VER-2026-08-06 (RENTAL P0-1): canonical shape — `returnPhotos` only.
+  // The old `riderId`/`photoUrls` fields were dropped because the server
+  // resolves identity from the session and the wire contract is now one shape.
+  final List<String> returnPhotos;
   final String? reason;
 
   VehicleReturnRequest({
-    required this.riderId,
-    required this.photoUrls,
+    required this.returnPhotos,
     this.reason,
   });
 
   factory VehicleReturnRequest.fromJson(Map<String, dynamic> json) {
     return VehicleReturnRequest(
-      riderId: json['riderId'] as String,
-      photoUrls: (json['photoUrls'] as List).map((e) => e as String).toList(),
+      returnPhotos:
+          (json['returnPhotos'] as List).map((e) => e as String).toList(),
       reason: json['reason'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'riderId': riderId,
-      'photoUrls': photoUrls,
+      'returnPhotos': returnPhotos,
       'reason': reason,
     };
   }

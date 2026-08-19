@@ -8,11 +8,12 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
-
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ReferralScreen extends ConsumerStatefulWidget {
-  const ReferralScreen({super.key});
+  final VoidCallback? onBack;
+  const ReferralScreen({super.key, this.onBack});
 
   @override
   ConsumerState<ReferralScreen> createState() => _ReferralScreenState();
@@ -82,24 +83,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
     setState(() => _isCopied = true);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              SizedBox(width: 12),
-              Text(
-                'Referral code copied!',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md)),
-        ),
-      );
+      Toast.success(context, 'Referral code copied!');
     }
 
     Future.delayed(const Duration(seconds: 3), () {
@@ -129,34 +113,17 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
             style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
                 color: AppColors.of(context).onSurface)),
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: UnconstrainedBox(
-            child: GestureDetector(
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                child: Icon(Icons.arrow_back,
-                    color: AppColors.of(context).onSurface, size: 20),
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back,
+              color: AppColors.of(context).onSurface, size: 20),
+          tooltip: AppLocalizations.of(context)?.txtback ?? 'Back',
+          onPressed: () {
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -335,22 +302,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                         onTap: () {
                           HapticFeedback.lightImpact();
                           if (!hasValidCode) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Referral code generating...',
-                                  style: GoogleFonts.plusJakartaSans(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white),
-                                ),
-                                backgroundColor:
-                                    AppColors.of(context).onSurface,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(AppRadius.md)),
-                              ),
-                            );
+                            Toast.info(context, 'Referral code generating...');
                             return;
                           }
                           Share.share(

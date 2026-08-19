@@ -16,14 +16,26 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<SendOtpResult> sendOtp(String phone, {String? referralCode}) async {
-    final request = SendOtpRequest(phone: phone);
+    // PR-VER-2026-08-06 (LOGIN_OTP_INTENT P0-1): the referral code used to be
+    // dropped here — SendOtpRequest had no field, so signups with a code
+    // lost it before the request left the device. The server captures the
+    // code on verify (rider creation), so carry it through on send too.
+    final request = SendOtpRequest(
+      phone: phone,
+      referralCode: referralCode,
+    );
     final response = await _apiClient.postAuthSendOtp(request);
     return SendOtpResult(exists: response.exists ?? false);
   }
 
   @override
-  Future<VerifyOtpResult> verifyOtp(String phone, String otp) async {
-    final request = VerifyOtpRequest(phone: phone, otp: otp);
+  Future<VerifyOtpResult> verifyOtp(String phone, String otp,
+      {String? referralCode}) async {
+    final request = VerifyOtpRequest(
+      phone: phone,
+      otp: otp,
+      referralCode: referralCode,
+    );
     final response = await _apiClient.postAuthVerifyOtp(request);
 
     final token = response.token;
@@ -60,7 +72,29 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    // No explicit logout endpoint; clear session token client-side
-    await _client.storage.clearSession();
+    // PR-VER-2026-08-06 (AUTH P0-1): the old implementation was a local-only
+    // no-op. The web has POST /api/auth/logout — it invalidates the refresh
+    // token server-side and writes the `rider.logout` audit row (SOC2).
+    // Best-effort: an offline/failed logout must never block the user from
+    // leaving, so the local credential wipe below always runs.
+    try {
+      await _client.post('/api/auth/logout');
+    } catch (_) {
+      // Token may already be invalid — the server call is best-effort.
+    }
+    // Preserve the FCM command secret + device-lock state (AUTH P1-4).
+    await _client.storage.clearSessionCredentials();
+  }
+
+  @override
+  Future<void> forgetRefreshToken() async {
+    // DEEP-AUDIT D-P1-6 (2026-08-08): the local-only half of logout.
+    // Called by RiderLogoutOrchestrator when the network call to
+    // /api/auth/logout fails — the server-side session is still valid
+    // until the JWT TTL, but deleting the persisted refresh token
+    // closes the persistence-side hole. The session itself is gone
+    // with the app process exit; this just makes a stolen secure-
+    // storage copy worthless for refreshing.
+    await _client.storage.deleteRefreshToken();
   }
 }

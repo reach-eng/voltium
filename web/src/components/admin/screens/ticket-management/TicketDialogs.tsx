@@ -307,10 +307,11 @@ export function TicketDialogs({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="GENERAL">General</SelectItem>
-                    <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
-                    <SelectItem value="BILLING">Billing</SelectItem>
-                    <SelectItem value="ACCIDENT">Accident</SelectItem>
-                    <SelectItem value="APP_ISSUE">App Issue</SelectItem>
+                    <SelectItem value="TECHNICAL">Technical / App Issue</SelectItem>
+                    <SelectItem value="PAYMENT">Payment / Billing</SelectItem>
+                    <SelectItem value="VEHICLE">Vehicle / Maintenance</SelectItem>
+                    <SelectItem value="BATTERY">Battery / Charging</SelectItem>
+                    <SelectItem value="TROUBLESHOOTER">Troubleshooter</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

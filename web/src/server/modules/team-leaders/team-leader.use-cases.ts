@@ -1,81 +1,62 @@
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { teamLeaderRepository } from './team-leader.repository';
+import { Prisma } from '@prisma/client';
+
+const logTlAction = (actorId: string, action: string, id: string, details?: Record<string, unknown>) => {
+  createAuditLog({
+    actorId,
+    action,
+    entity: 'team_leader',
+    entityId: id,
+    details,
+  }).catch((e) => logger.error(`Audit log failed for ${action}`, e));
+};
 
 export const teamLeaderUseCases = {
   async list(params: {
     search?: string | null;
     isActive?: string | null;
+    hubId?: string | null;
     page: number;
     limit: number;
   }) {
     return teamLeaderRepository.findAllPaginated(params);
   },
 
-  async create(data: Record<string, unknown>, actorId: string) {
+  async create(data: Prisma.TeamLeaderCreateInput, actorId: string) {
     const teamLeader = await teamLeaderRepository.create(data);
-    createAuditLog({
-      actorId,
-      action: 'tl.create',
-      entity: 'team_leader',
-      entityId: teamLeader.id,
-      details: { name: data.name },
-    }).catch((e) => logger.error('Audit log failed for tl.create', e));
+    logTlAction(actorId, 'tl.create', teamLeader.id, { name: data.name });
     return teamLeader;
   },
 
-  async update(id: string, data: Record<string, unknown>, actorId: string) {
+  async update(id: string, data: Prisma.TeamLeaderUpdateInput, actorId: string) {
+    const before = await teamLeaderRepository.findById(id);
     const teamLeader = await teamLeaderRepository.update(id, data);
-    createAuditLog({
-      actorId,
-      action: 'tl.update',
-      entity: 'team_leader',
-      entityId: id,
-      details: data,
-    }).catch((e) => logger.error('Audit log failed for tl.update', e));
+    logTlAction(actorId, 'tl.update', id, { before, after: teamLeader });
     return teamLeader;
   },
 
   async delete(id: string, actorId: string) {
     await teamLeaderRepository.delete(id);
-    createAuditLog({ actorId, action: 'tl.delete', entity: 'team_leader', entityId: id }).catch(
-      (e) => logger.error('Audit log failed for tl.delete', e)
-    );
+    logTlAction(actorId, 'tl.delete', id);
   },
 
   async bulkActivate(ids: string[], actorId: string) {
     const count = await teamLeaderRepository.bulkActivate(ids);
-    createAuditLog({
-      actorId,
-      action: 'team_leader.bulk_activate',
-      entity: 'team_leader',
-      entityId: 'multiple',
-      details: { ids, count },
-    }).catch((e) => logger.error('Audit log failed for team_leader.bulk_activate', e));
+    logTlAction(actorId, 'team_leader.bulk_activate', 'multiple', { ids, count });
     return count;
   },
 
   async bulkDeactivate(ids: string[], actorId: string) {
     const count = await teamLeaderRepository.bulkDeactivate(ids);
-    createAuditLog({
-      actorId,
-      action: 'team_leader.bulk_deactivate',
-      entity: 'team_leader',
-      entityId: 'multiple',
-      details: { ids, count },
-    }).catch((e) => logger.error('Audit log failed for team_leader.bulk_deactivate', e));
+    logTlAction(actorId, 'team_leader.bulk_deactivate', 'multiple', { ids, count });
     return count;
   },
 
   async bulkDelete(ids: string[], actorId: string) {
     const count = await teamLeaderRepository.bulkDelete(ids);
-    createAuditLog({
-      actorId,
-      action: 'team_leader.bulk_delete',
-      entity: 'team_leader',
-      entityId: 'multiple',
-      details: { ids, count },
-    }).catch((e) => logger.error('Audit log failed for team_leader.bulk_delete', e));
+    logTlAction(actorId, 'team_leader.bulk_delete', 'multiple', { ids, count });
     return count;
   },
 };

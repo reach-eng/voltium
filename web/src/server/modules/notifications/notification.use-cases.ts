@@ -5,8 +5,10 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { notificationRepository } from './notification.repository';
 import { notificationService } from '@/lib/notification-service';
+import { fcmService } from '@/lib/fcm';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { getCachedRider } from '@/lib/server-cache';
@@ -41,6 +43,18 @@ export const notificationUseCases = {
     return notificationRepository.markAllRead(riderDbId);
   },
 
+  /**
+   * PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-5): delete one notification.
+   * Ownership-scoped — returns false if the row belongs to another rider.
+   */
+  async deleteNotification(notificationId: string, riderDbId: string) {
+    const deleted = await notificationRepository.deleteOwned(
+      notificationId,
+      riderDbId
+    );
+    return deleted.count > 0;
+  },
+
   async getUnreadCount(riderDbId: string) {
     return notificationRepository.getUnreadCount(riderDbId);
   },
@@ -60,8 +74,8 @@ export const notificationUseCases = {
     status?: string;
   }) {
     const { page = 1, limit = 20, search, type, status } = params;
-    const where: any = {};
-    if (type && type !== 'ALL') where.type = type;
+    const where: Prisma.NotificationWhereInput = {};
+    if (type && type !== 'ALL') where.type = type as Prisma.NotificationWhereInput['type'];
     if (status === 'READ') where.isRead = true;
     if (status === 'UNREAD') where.isRead = false;
     if (search) {
@@ -83,7 +97,7 @@ export const notificationUseCases = {
       db.notification.count({ where }),
     ]);
 
-    const formatted = (notifications as any[]).map((n: any) => ({
+    const formatted = notifications.map((n) => ({
       id: n.id,
       riderId: n.rider.riderId,
       riderName: n.rider.fullName || 'Unknown',
@@ -122,6 +136,17 @@ export const notificationUseCases = {
       },
     });
 
+    // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): the admin single-rider send used
+    // to stop at the DB row — the rider got an in-app notification but NO
+    // push, so admins' "Send" appeared to work while the device never rang.
+    // Now fire the FCM push too (best-effort, non-blocking; the in-app row
+    // is the source of truth if the token is missing/stale).
+    if (rider.fcmToken) {
+      fcmService
+        .sendPushNotification(rider.fcmToken, title, message, { screen: 'NOTIFICATIONS' })
+        .catch((e) => logger.warn('FCM push failed for admin notification', { riderId, err: e }));
+    }
+
     createAuditLog({
       actorId,
       action: 'notification.send',
@@ -134,24 +159,60 @@ export const notificationUseCases = {
 
   /**
    * Send notification to all riders in batches.
+   *
+   * P0-1/P0-9 (2026-08-05 ops audit): the route no longer calls this
+   * synchronously — it emits NOTIFICATION_BROADCAST and returns 202, and the
+   * background job calls this with `batchDelayMs` so the DB isn't hammered
+   * with back-to-back 500-row createMany calls (100k riders ≈ 200 round-trips
+   * in a tight loop). A failed batch now THROWS instead of being silently
+   * skipped (the old loop continued on failure and under-reported the count),
+   * so the job's retry semantics apply.
    */
-  async sendToAllRiders(title: string, message: string, type: string, actorId: string) {
+  async sendToAllRiders(
+    title: string,
+    message: string,
+    type: string,
+    actorId: string,
+    batchDelayMs = 0
+  ) {
     const BATCH_SIZE = 500;
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let skip = 0;
     let totalSent = 0;
     while (true) {
-      const batch = await db.rider.findMany({ select: { id: true }, skip, take: BATCH_SIZE });
+      const batch = await db.rider.findMany({
+        select: { id: true, fcmToken: true },
+        skip,
+        take: BATCH_SIZE,
+      });
       if (batch.length === 0) break;
       await db.notification.createMany({
-        data: batch.map((r: { id: string }) => ({
+        data: batch.map((r: { id: string; fcmToken: string | null }) => ({
           riderId: r.id,
           title,
           message,
           type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
         })),
       });
+      // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): the broadcast used to stop at
+      // the DB rows — riders got in-app notifications but NO push. Fire the
+      // FCM multicast for this batch best-effort; the in-app row remains the
+      // source of truth if a token is stale/missing.
+      const tokens = batch
+        .map((r: { id: string; fcmToken: string | null }) => r.fcmToken)
+        .filter((t: string | null): t is string =>
+          typeof t === 'string' && t.length > 0
+        );
+      if (tokens.length > 0) {
+        fcmService
+          .sendMulticast(tokens, { type: 'NOTIFICATION', screen: 'NOTIFICATIONS' }, 'high')
+          .catch((e: Error) =>
+            logger.warn('[notifications] FCM multicast failed for broadcast batch', { err: e })
+          );
+      }
       totalSent += batch.length;
       skip += BATCH_SIZE;
+      if (batchDelayMs > 0 && batch.length === BATCH_SIZE) await sleep(batchDelayMs);
     }
 
     createAuditLog({
@@ -181,6 +242,26 @@ export const notificationUseCases = {
         type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
       })),
     });
+    // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): same push gap as send-to-all —
+    // the admin "send to specific riders" flow created DB rows only. Fire
+    // FCM multicasts (500/batch) for any valid tokens, best-effort.
+    const riders = await db.rider.findMany({
+      where: { id: { in: riderIds } },
+      select: { fcmToken: true },
+    });
+    const tokens = riders
+      .map((r: { fcmToken: string | null }) => r.fcmToken)
+      .filter((t: string | null): t is string =>
+        typeof t === 'string' && t.length > 0
+      );
+    for (let i = 0; i < tokens.length; i += 500) {
+      const chunk = tokens.slice(i, i + 500);
+      fcmService
+        .sendMulticast(chunk, { type: 'NOTIFICATION', screen: 'NOTIFICATIONS' }, 'high')
+        .catch((e: Error) =>
+          logger.warn('[notifications] FCM multicast failed for specific-riders send', { err: e })
+        );
+    }
     createAuditLog({
       actorId,
       action: 'notification.send_batch',
@@ -218,15 +299,15 @@ export const notificationUseCases = {
     }
 
     // 2. Payment Reminders
-    const ridersToRemind = (await db.rider.findMany({
+    const ridersToRemind = await db.rider.findMany({
       where: { lifecycleStatus: 'ACTIVE', wallet: { balanceInPaise: { lt: 0 } } },
       include: { wallet: true },
-    })) as any;
+    });
 
     for (let i = 0; i < ridersToRemind.length; i += BATCH_SIZE) {
       const batch = ridersToRemind.slice(i, i + BATCH_SIZE);
       await Promise.all(
-        batch.map((rider: any) => {
+        batch.map((rider) => {
           if (rider.wallet) {
             return notificationService
               .notifyPaymentReminder(

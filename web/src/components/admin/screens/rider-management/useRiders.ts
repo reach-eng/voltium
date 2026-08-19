@@ -107,7 +107,7 @@ export function useRiders() {
       riders
         .filter((r) => selectedIds.has(r.id))
         .forEach((r) => {
-          previousStates[r.id] = { state: r.state, accountStatus: r.accountStatus };
+          previousStates[r.id] = { state: r.state ?? '', accountStatus: r.accountStatus ?? '' };
         });
 
       setBulkLoading(true);

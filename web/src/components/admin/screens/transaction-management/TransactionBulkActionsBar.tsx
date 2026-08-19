@@ -71,18 +71,25 @@ export function TransactionBulkActionsBar({
         className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
         onClick={() => {
           const header = 'ID,Rider,Phone,Type,Amount,Purpose,Status,Date';
+          const escapeCsv = (val: unknown) => {
+            const str = String(val ?? '');
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          };
           const rows = transactions
             .filter((tx) => selectedIds.has(tx.id))
             .map((tx) =>
               [
-                tx.id.substring(0, 8),
-                tx.rider?.fullName || tx.rider?.name || '',
-                tx.rider?.phone,
-                tx.type,
-                tx.amount,
-                tx.purpose,
-                tx.status,
-                tx.createdAt,
+                escapeCsv(tx.id.substring(0, 8)),
+                escapeCsv(tx.rider?.fullName || tx.rider?.name || ''),
+                escapeCsv(tx.rider?.phone || ''),
+                escapeCsv(tx.type),
+                escapeCsv(tx.amount),
+                escapeCsv(tx.purpose),
+                escapeCsv(tx.status),
+                escapeCsv(tx.createdAt),
               ].join(','),
             );
           const csv = [header, ...rows].join('\n');

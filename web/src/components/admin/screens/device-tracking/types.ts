@@ -27,7 +27,6 @@ export interface LocationPing {
 
 export interface DeviceRiderSettings {
   isAdminLocked: boolean;
-  lockPassword: string | null;
   isUninstallBlocked: boolean;
   isLocationMandatory: boolean;
   isAppsControlRestricted: boolean;
@@ -40,13 +39,15 @@ export interface DeviceData {
   rider?: DeviceRiderSettings;
 }
 
+// P1-13 (2026-08-05 legal/device audit): LOCK_DEVICE removed — the route
+// rejected it unconditionally, so the enum value was a footgun. Keep the
+// enum in lockstep with `riderActionSchema` in lib/validators.ts.
 export type SecurityAction =
   | 'ADMIN_LOCK'
   | 'UNLOCK_DEVICE'
   | 'PERSIST_APP'
   | 'ENFORCE_LOCATION'
   | 'RESTRICT_APPS_CONTROL'
-  | 'LOCK_DEVICE'
   | 'FACTORY_RESET'
   | 'DISABLE_CAMERA'
   | 'ENABLE_CAMERA'

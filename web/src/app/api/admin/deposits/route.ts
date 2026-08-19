@@ -5,7 +5,11 @@ import { hasPermission } from '@/lib/auth';
 import { parseDDMMYYYY } from '@/lib/date-utils';
 import { logAdminAction } from '@/server/modules/admin/admin.policy';
 import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { DepositStateError } from '@/lib/services/deposit-service';
+import { toRupeesResponse } from '@/lib/api-money';
+
+import { invalidateCache } from '@/lib/cache';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -25,8 +29,8 @@ export async function GET(req: NextRequest) {
     const endDate = endDateRaw
       ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
       : '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await depositUseCases.listDeposits({
       status,
@@ -37,7 +41,7 @@ export async function GET(req: NextRequest) {
       limit,
     });
 
-    return withCacheHeaders(success(result.records, undefined, 200, result.pagination), 5);
+    return withCacheHeaders(success(toRupeesResponse(result.records), undefined, 200, result.pagination), 5);
   } catch (err) {
     return errors.internal('Failed to fetch deposit records');
   }
@@ -65,6 +69,8 @@ export async function PUT(req: NextRequest) {
           entityId: riderId,
           details: { action },
         }).catch(() => {});
+        invalidateCache('admin:deposits:*');
+        invalidateCache('admin:*');
         return success({ riderId, status: 'APPROVED' }, 'Deposit approved');
 
       case 'REJECT':
@@ -80,6 +86,8 @@ export async function PUT(req: NextRequest) {
           entityId: riderId,
           details: { action, reason },
         }).catch(() => {});
+        invalidateCache('admin:deposits:*');
+        invalidateCache('admin:*');
         return success({ riderId, status: 'REJECTED' }, 'Deposit rejected');
 
       case 'REFUND':
@@ -95,6 +103,8 @@ export async function PUT(req: NextRequest) {
           entityId: riderId,
           details: { action, refundAmount },
         }).catch(() => {});
+        invalidateCache('admin:deposits:*');
+        invalidateCache('admin:*');
         return success({ riderId, status: 'REFUNDED' }, 'Deposit refunded');
 
       case 'FORFEIT':
@@ -107,6 +117,8 @@ export async function PUT(req: NextRequest) {
           entityId: riderId,
           details: { action, reason },
         }).catch(() => {});
+        invalidateCache('admin:deposits:*');
+        invalidateCache('admin:*');
         return success({ riderId, status: 'FORFEITED' }, 'Deposit forfeited');
 
       default:

@@ -186,30 +186,39 @@ void main() {
   });
 
   // ── activeRentalPlanPrice getter ─────────────────────────────────────────
+  // PR-47 (WALLET P1-1): the getter now reads the backend-joined
+  // `currentPlanPrice` (already converted from paise in fromJson) instead
+  // of the hardcoded AppConstants map — the server is the source of truth
+  // for plan pricing. Falls back to 0.0 when no price is available.
   group('RiderModel.activeRentalPlanPrice', () {
-    test('WEEKLY_MAX → 1500.0', () {
-      final m = _base().copyWith(currentPlan: 'WEEKLY_MAX');
+    test('returns backend currentPlanPrice when set', () {
+      final m = _base(currentPlanPrice: 1499.5);
+      expect(m.activeRentalPlanPrice, 1499.5);
+    });
+
+    test('returns plan price for WEEKLY_MAX plan', () {
+      final m = _base(currentPlan: 'WEEKLY_MAX', currentPlanPrice: 1500);
       expect(m.activeRentalPlanPrice, 1500.0);
     });
 
-    test('WEEKLY_BASIC → 1000.0', () {
-      final m = _base().copyWith(currentPlan: 'WEEKLY_BASIC');
+    test('returns plan price for WEEKLY_BASIC plan', () {
+      final m = _base(currentPlan: 'WEEKLY_BASIC', currentPlanPrice: 1000);
       expect(m.activeRentalPlanPrice, 1000.0);
     });
 
-    test('DAILY_FLEX → 250.0', () {
-      final m = _base().copyWith(currentPlan: 'DAILY_FLEX');
+    test('returns plan price for DAILY_FLEX plan', () {
+      final m = _base(currentPlan: 'DAILY_FLEX', currentPlanPrice: 250);
       expect(m.activeRentalPlanPrice, 250.0);
     });
 
-    test('null plan → default 1500.0', () {
-      final m = _base();
-      expect(m.activeRentalPlanPrice, 1500.0);
+    test('null price → 0.0 (no backend price yet)', () {
+      final m = _base(currentPlan: 'WEEKLY_MAX');
+      expect(m.activeRentalPlanPrice, 0.0);
     });
 
-    test('unknown plan → default 1500.0', () {
-      final m = _base().copyWith(currentPlan: 'CUSTOM_PLAN');
-      expect(m.activeRentalPlanPrice, 1500.0);
+    test('unknown plan with price still uses the backend price', () {
+      final m = _base(currentPlan: 'CUSTOM_PLAN', currentPlanPrice: 1200);
+      expect(m.activeRentalPlanPrice, 1200.0);
     });
   });
 

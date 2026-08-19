@@ -83,6 +83,15 @@ class SecureStorageService {
     return await _storage.read(key: _keyRefreshToken);
   }
 
+  /// DEEP-AUDIT D-P1-6 (2026-08-08): delete the persisted refresh
+  /// token without touching other session keys (auth_token, phone,
+  /// riderId) or device-level values (fcm_command_secret,
+  /// device_locked_by_admin). Used by AuthRepository.forgetRefreshToken
+  /// when the network logout call fails.
+  Future<void> deleteRefreshToken() async {
+    await _storage.delete(key: _keyRefreshToken);
+  }
+
   Future<void> setPhone(String phone) async {
     await _storage.write(key: _keyPhone, value: phone);
   }
@@ -111,7 +120,20 @@ class SecureStorageService {
     await _storage.deleteAll();
   }
 
-  Future<void> clearSession() => clearAll();
+  /// PR-VER-2026-08-06 (AUTH P1-4): wipe the session credentials ONLY.
+  /// `clearAll()`/`clearSession()` blow away `fcm_command_secret` and
+  /// `device_locked_by_admin` too — a refresh-token rejection on a transient
+  /// 401 then silently disabled ADMIN_LOCK verification on the device.
+  /// These device-level values are deliberately preserved here.
+  Future<void> clearSessionCredentials() async {
+    await _storage.delete(key: _keyToken);
+    await _storage.delete(key: _keySessionToken);
+    await _storage.delete(key: _keyRefreshToken);
+    await _storage.delete(key: _keyPhone);
+    await _storage.delete(key: _keyRiderId);
+  }
+
+  Future<void> clearSession() => clearSessionCredentials();
 
   Future<bool> hasToken() async {
     final token = await getToken();

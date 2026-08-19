@@ -11,7 +11,13 @@ import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { validateBody } from '@/lib/validators';
+import {
+  createAdminTicketSchema,
+  updateAdminTicketSchema,
+} from '@/lib/validators/admin';
 import { supportUseCases } from '@/server/modules/support/support.use-cases';
+import { parsePositiveInt } from '@/lib/api-utils';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -23,8 +29,9 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || '';
     const priority = url.searchParams.get('priority') || '';
     const search = url.searchParams.get('search') || '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
+    // PR-4b (13th audit P0-6): NaN-safe pagination.
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await supportUseCases.getAdminTickets({ status, priority, search, page, limit });
     return withCacheHeaders(success(result.tickets, undefined, 200, result.pagination), 5);
@@ -41,10 +48,17 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, status, assignedTo } = body;
-    if (!id) return errors.validation('Ticket ID is required');
+    // P1-10/P2-10: the PUT used to read body fields directly — `status:
+    // 'banana'` reached the DB and `updateData: Record<string, unknown>`
+    // erased the types. Now validated (status is an enum; assignedTo may be
+    // null for unassign, which the admin UI sends).
+    const validation = validateBody(updateAdminTicketSchema, body);
+    if (!validation.success) return errors.validation(validation.error);
 
-    const updateData: Record<string, unknown> = {};
+    const { id, status, assignedTo } = validation.data;
+
+    const updateData: { status?: string; assignedTo?: string | null; resolvedAt?: Date | null } =
+      {};
     if (status) {
       updateData.status = status;
       updateData.resolvedAt = ['RESOLVED', 'CLOSED'].includes(status) ? new Date() : null;
@@ -53,10 +67,12 @@ export async function PUT(req: NextRequest) {
 
     const ticket = await supportUseCases.updateTicket(id, updateData);
 
+    // P3-8: log only the status/assignment change — never a raw payload that
+    // could carry sensitive notes into the audit trail.
     await supportUseCases.logAdminAction(session.adminId || '', {
       action: status ? `ticket.${status.toLowerCase()}` : 'ticket.assign',
       ticketId: id,
-      details: updateData,
+      details: { status, assignedTo },
     });
 
     return success(ticket);
@@ -73,13 +89,18 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { riderDbId, category, priority, subject, message } = body;
-    if (!riderDbId || !subject || !message) return errors.validation('Missing required fields');
+    // P1-12/P3-7: the POST previously had NO validation — an empty-string
+    // subject sailed through (`!subject` is false for ''). Now schema-checked
+    // (subject/message min(1), category/priority enum'd, strict allowlist).
+    const validation = validateBody(createAdminTicketSchema, body);
+    if (!validation.success) return errors.validation(validation.error);
+
+    const { riderDbId, category, priority, subject, message } = validation.data;
 
     const ticket = await supportUseCases.createTicket(riderDbId, {
       riderId: riderDbId,
-      category: category || 'GENERAL',
-      priority: priority || 'LOW',
+      category,
+      priority,
       subject,
       message,
     });

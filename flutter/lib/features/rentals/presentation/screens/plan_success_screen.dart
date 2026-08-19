@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -60,7 +61,11 @@ class PlanSuccessScreen extends StatelessWidget {
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.success,
                 ),
-                child: const Text('Proceed to Pickup'),
+                // T-66: hardcoded English button label. Localised
+                // via the existing `onboarding_proceedToPickup`
+                // ARB key.
+                child: Text(AppLocalizations.of(context)!
+                    .onboarding_proceedToPickup),
               ),
               const SizedBox(height: 32),
             ],

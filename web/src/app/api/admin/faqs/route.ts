@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminFaqUseCases } from '@/server/modules/support/admin-faq.use-cases';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { createFaqAdminSchema, updateFaqAdminSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
@@ -15,8 +16,8 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const search = url.searchParams.get('search') || '';
     const category = url.searchParams.get('category') || '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await adminFaqUseCases.list({ search, category, page, limit });
     return withCacheHeaders(success(result.faqs, undefined, 200, result.pagination), 60);

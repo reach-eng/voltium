@@ -18,10 +18,18 @@ import 'package:voltium_rider/services/cache_service.dart';
 class MockRiderRepository implements RiderRepository {
   bool getRiderProfileCalled = false;
   bool registerFCMTokenCalled = false;
+  // ONBOARDING-AUDIT 2026-08-14 P0-4: when set, getRiderProfile throws
+  // an ApiException with this statusCode. Lets tests exercise the 401
+  // (session expired) branch and the generic error branch.
+  int? throwApiExceptionWithStatus;
 
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
     getRiderProfileCalled = true;
+    final code = throwApiExceptionWithStatus;
+    if (code != null) {
+      throw ApiException('mock failure', code, code: 'MOCK_$code');
+    }
     return {
       'data': {
         'id': '1',
@@ -62,8 +70,6 @@ class MockRentalRepository implements RentalRepository {
 
   @override
   Future<Map<String, dynamic>> submitVehicleReturn({
-    required String vehicleId,
-    required String hubId,
     required List<String> photos,
   }) async {
     submitReturnCalled = true;
@@ -180,7 +186,7 @@ void main() {
     var state = container.read(riderProvider);
     expect(state.rider, isNotNull);
 
-    notifier.logout();
+    await notifier.logout();
 
     state = container.read(riderProvider);
     expect(state.rider, isNull);
@@ -287,6 +293,78 @@ void main() {
           .read(appStateProvider.notifier)
           .replaceState(const AccountClosed());
       expect(container.read(appStateProvider), isA<AccountClosed>());
+    });
+  });
+
+  // ONBOARDING-AUDIT 2026-08-14 P0-4: 401 from the profile endpoint
+  // used to be silently swallowed into "Pull to retry" — the rider
+  // stayed on stale data forever. We now stamp a sessionExpired
+  // timestamp that the router watches.
+  group('P0-4: 401 session expiry routing', () {
+    test('401 from getRiderProfile stamps lastSessionExpiredAt', () async {
+      riderRepo.throwApiExceptionWithStatus = 401;
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      notifier.updateCredentials(riderId: '1', phone: '1234567890');
+      await notifier.refreshFromApi();
+
+      final state = container.read(riderProvider);
+      expect(state.lastSessionExpiredAt, isNotNull);
+      expect(
+        DateTime.now().millisecondsSinceEpoch - state.lastSessionExpiredAt!,
+        lessThan(5000),
+      );
+      // The user-facing errorMessage stays null — the router renders
+      // its own "Your session expired" snackbar from the timestamp.
+      expect(state.errorMessage, isNull);
+    });
+
+    test('non-401 ApiException falls back to generic errorMessage', () async {
+      riderRepo.throwApiExceptionWithStatus = 500;
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      notifier.updateCredentials(riderId: '1', phone: '1234567890');
+      await notifier.refreshFromApi();
+
+      final state = container.read(riderProvider);
+      expect(state.lastSessionExpiredAt, isNull);
+      expect(state.errorMessage, contains('Pull to retry'));
+    });
+
+    test('init() clears a sticky lastSessionExpiredAt', () async {
+      riderRepo.throwApiExceptionWithStatus = 401;
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      notifier.updateCredentials(riderId: '1', phone: '1234567890');
+      await notifier.refreshFromApi();
+      expect(container.read(riderProvider).lastSessionExpiredAt, isNotNull);
+
+      // Successful subsequent refresh on a non-throwing repo.
+      riderRepo.throwApiExceptionWithStatus = null;
+      await notifier.init();
+
+      expect(container.read(riderProvider).lastSessionExpiredAt, isNull);
+    });
+
+    test('logout() clears a sticky lastSessionExpiredAt', () async {
+      riderRepo.throwApiExceptionWithStatus = 401;
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      notifier.updateCredentials(riderId: '1', phone: '1234567890');
+      await notifier.refreshFromApi();
+      expect(container.read(riderProvider).lastSessionExpiredAt, isNotNull);
+
+      await notifier.logout();
+
+      expect(container.read(riderProvider).lastSessionExpiredAt, isNull);
     });
   });
 }

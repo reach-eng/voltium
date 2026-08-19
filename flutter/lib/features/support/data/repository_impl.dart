@@ -25,6 +25,7 @@ class SupportRepositoryImpl implements SupportRepository {
     String message, {
     String riderId = '',
     String priority = 'MEDIUM',
+    String? attachments,
   }) async {
     final request = CreateTicketRequest(
       riderId: riderId,
@@ -32,18 +33,9 @@ class SupportRepositoryImpl implements SupportRepository {
       priority: priority,
       subject: subject,
       message: message,
+      attachments: attachments,
     );
     final response = await _apiClient.postSupportTickets(request);
     return response.toJson();
-  }
-
-  @override
-  Future<Map<String, dynamic>> getSupportChat() async {
-    return await _apiClient.getSupportChat();
-  }
-
-  @override
-  Future<void> sendChatMessage(String message) async {
-    await _apiClient.postSupportChat({'message': message});
   }
 }

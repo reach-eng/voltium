@@ -1,11 +1,12 @@
 import {
   sendOtpSchema,
-  submitKycSchema,
   topUpSchema,
   updateProfileSchema,
   registerTokenSchema,
-  submitGuarantorSchema,
+  approveTransactionSchema,
+  MAX_ADMIN_BONUS_CREDIT_RUPEES,
 } from '../../src/lib/validators';
+import { updateSystemSettingSchema, updateAdminSchema } from '../../src/lib/validators/admin';
 import fc from 'fast-check';
 
 describe('Phase 1: Foundational Schema Validation', () => {
@@ -38,100 +39,15 @@ describe('Phase 1: Foundational Schema Validation', () => {
     });
   });
 
-  describe('KYC Validators (submitKycSchema)', () => {
-    test('should fail for invalid Aadhaar format', () => {
-      const result = submitKycSchema.safeParse({
-        riderId: 'test-123',
-        aadhaarNumber: '123456781234', // Missing hyphens
-        panNumber: 'ABCDE1234F',
-        bankName: 'HDFC',
-        bankAccount: '1234567890',
-        bankIfsc: 'HDFC0001234',
-      });
-      expect(result.success).toBe(false);
-    });
+  // KYC Validators (submitKycSchema) tests removed in PR-3:
+  // POST /api/rider/kyc was a dead endpoint with 0 Flutter callers.
+  // KYC docs are submitted via PUT /api/rider/profile instead.
+  // See: docs/audits/2026-08-05-rider-onboarding-api-flows.md OQ-1
 
-    test('should fail for invalid PAN format', () => {
-      const result = submitKycSchema.safeParse({
-        riderId: 'test-123',
-        aadhaarNumber: '1234-5678-1234',
-        panNumber: 'abcde1234f', // Lowercase
-        bankName: 'HDFC',
-        bankAccount: '1234567890',
-        bankIfsc: 'HDFC0001234',
-      });
-      expect(result.success).toBe(false);
-    });
-
-    test('should fail for invalid IFSC code', () => {
-      const result = submitKycSchema.safeParse({
-        riderId: 'test-123',
-        aadhaarNumber: '1234-5678-1234',
-        panNumber: 'ABCDE1234F',
-        bankName: 'HDFC',
-        bankAccount: '1234567890',
-        bankIfsc: 'HDFC_000123', // Invalid format
-      });
-      expect(result.success).toBe(false);
-    });
-    test('should fail if riderPhoto or riderVideo is missing', () => {
-      const result = submitKycSchema.safeParse({
-        riderId: 'test-123',
-        aadhaarNumber: '1234-5678-1234',
-        panNumber: 'ABCDE1234F',
-        bankName: 'HDFC',
-        bankAccount: '1234567890',
-        bankIfsc: 'HDFC0001234',
-        // missing riderPhoto and riderVideo
-      });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues.some(e => e.path.includes('riderPhoto'))).toBe(true);
-        expect(result.error.issues.some(e => e.path.includes('riderVideo'))).toBe(true);
-      }
-    });
-
-    test('should pass when all mandatory fields including media are provided', () => {
-      const result = submitKycSchema.safeParse({
-        riderId: 'test-123',
-        aadhaarNumber: '1234-5678-1234',
-        panNumber: 'ABCDE1234F',
-        bankName: 'HDFC',
-        bankAccount: '1234567890',
-        bankIfsc: 'HDFC0001234',
-        riderPhoto: 'https://example.com/photo.jpg',
-        riderVideo: 'https://example.com/video.mp4',
-      });
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('Guarantor Validators (submitGuarantorSchema)', () => {
-    test('should fail if guarantor video is missing', () => {
-      const result = submitGuarantorSchema.safeParse({
-        riderId: 'test-123',
-        name: 'John Doe',
-        relation: 'Father',
-        phone: '9876543210',
-        // missing video
-      });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues.some(e => e.path.includes('video'))).toBe(true);
-      }
-    });
-
-    test('should pass with guarantor video provided', () => {
-      const result = submitGuarantorSchema.safeParse({
-        riderId: 'test-123',
-        name: 'John Doe',
-        relation: 'Father',
-        phone: '9876543210',
-        video: 'https://example.com/guarantor.mp4',
-      });
-      expect(result.success).toBe(true);
-    });
-  });
+  // Guarantor Validators (submitGuarantorSchema) tests removed in PR-3:
+  // POST /api/rider/guarantor was a dead endpoint with 0 Flutter callers.
+  // Guarantor data is submitted via PUT /api/rider/profile instead.
+  // See: docs/audits/2026-08-05-rider-onboarding-api-flows.md OQ-2
 
   describe('Transaction Validators (topUpSchema)', () => {
     test('should fail for negative amounts', () => {
@@ -249,6 +165,91 @@ describe('Phase 1: Foundational Schema Validation', () => {
       if (result.success) {
         expect((result.data as Record<string, unknown>).riderId).toBeUndefined();
       }
+    });
+  });
+
+  describe('Admin Transaction Approval (approveTransactionSchema)', () => {
+    test('TG-4 (financial audit P0-1): rejects walletCreditAmount above the ₹1,00,000 cap', () => {
+      const result = approveTransactionSchema.safeParse({
+        id: 'txn-1',
+        action: 'APPROVE',
+        walletCreditAmount: MAX_ADMIN_BONUS_CREDIT_RUPEES + 1,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.path.join('.')).toContain('walletCreditAmount');
+      }
+    });
+
+    test('TG-4 (financial audit P0-1): accepts a bonus credit at exactly the cap', () => {
+      const result = approveTransactionSchema.safeParse({
+        id: 'txn-1',
+        action: 'APPROVE',
+        walletCreditAmount: MAX_ADMIN_BONUS_CREDIT_RUPEES,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test('rejects a negative bonus credit', () => {
+      const result = approveTransactionSchema.safeParse({
+        id: 'txn-1',
+        action: 'APPROVE',
+        walletCreditAmount: -100,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    test('walletCreditAmount is optional (plain approve/reject)', () => {
+      const result = approveTransactionSchema.safeParse({
+        id: 'txn-1',
+        action: 'REJECT',
+        rejectionReason: 'Fraud suspicion',
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Ops audit P0-8: updateSystemSettingSchema rejects empty value', () => {
+    test('rejects value: ""', () => {
+      const result = updateSystemSettingSchema.safeParse({ key: 'JWT_SECRET', value: '' });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(JSON.stringify(result.error)).toContain('empty');
+      }
+    });
+
+    test('accepts non-empty value', () => {
+      const result = updateSystemSettingSchema.safeParse({ key: 'JWT_SECRET', value: 's3cret' });
+      expect(result.success).toBe(true);
+    });
+
+    test('rejects unknown keys (strict)', () => {
+      const result = updateSystemSettingSchema.safeParse({
+        key: 'JWT_SECRET',
+        value: 's3cret',
+        isSecret: true,
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('Ops audit P0-3: updateAdminSchema has currentPassword', () => {
+    test('accepts currentPassword with a password change', () => {
+      const result = updateAdminSchema.safeParse({
+        id: 'admin_1',
+        password: 'NewPass123!',
+        currentPassword: 'OldPass123!',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test('rejects a too-short currentPassword', () => {
+      const result = updateAdminSchema.safeParse({
+        id: 'admin_1',
+        password: 'NewPass123!',
+        currentPassword: 'short',
+      });
+      expect(result.success).toBe(false);
     });
   });
 });

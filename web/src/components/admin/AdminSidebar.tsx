@@ -49,6 +49,7 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
 } from 'lucide-react';
 import { getVisibleNavItems, ROLE_LABELS, ROLE_COLORS } from '@/lib/role-config';
 import { LOGO_PATH } from '@/lib/branding';
@@ -92,6 +93,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Users,
   Users2,
   Wallet,
+  CreditCard,
 };
 
 interface AdminSidebarProps {
@@ -170,10 +172,10 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
             const buttonContent = (
               <Button
                 variant="ghost"
-                className={`w-full justify-start gap-3 h-11 px-4 font-medium transition-colors duration-200 relative z-10 ${
+                className={`w-full justify-start gap-3 h-11 px-4 font-medium transition-colors duration-200 relative z-10 cursor-pointer ${
                   isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    ? 'text-primary font-bold'
+                    : 'text-muted-foreground hover:bg-slate-200/90 dark:hover:bg-slate-800/90 hover:text-foreground'
                 } ${collapsed ? 'px-0 justify-center' : ''}`}
               >
                 {Icon && <Icon className="w-5 h-5 shrink-0" />}

@@ -7,6 +7,7 @@ import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'gen/app_localizations.dart';
@@ -72,13 +73,19 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
   // Pre-bundle Google Fonts from asset package to eliminate startup network requests and layout shift
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  // Parallelize independent startup initializations to cut app cold-boot latency
+  // Parallelize independent startup initializations to cut app cold-boot latency.
+  // LANGUAGE-AUDIT (2026-08-16) #1: `Intl.defaultLocale` is set later in
+  // `VoltiumApp.build()` via a `ref.listen(localeProvider, ...)` so it
+  // follows the rider's chosen language (en_IN / hi_IN). Removing the
+  // eager `Intl.defaultLocale = 'en_IN'` here means the very first
+  // frame uses the same locale the system reports, then settles to
+  // the rider's choice as soon as `LocaleNotifier.build()` runs.
   await Future.wait([
     initializeDateFormatting('en_IN', null),
+    initializeDateFormatting('hi_IN', null),
     MonitoringService.initialize(),
     PostHogService.initialize(),
   ]);
-  Intl.defaultLocale = 'en_IN';
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
     appDebug('[FlutterError] ${details.exception}');
@@ -145,31 +152,14 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
   // ── Zone-based async error handler ────────────────────────────────────────
   runZonedGuarded(
     () async {
-      // ── Initialize services ─────────────────────────────────────────────
-      await CacheService().init();
-      if (!kIsWeb) {
-        try {
-          await OfflineStorageService().init();
-        } catch (_) {
-          // Offline storage is optional on platforms that don't support sqflite
-        }
-      }
-      await NotificationService().init();
-      await ConnectivityService().init();
-
-      // ── Determine initial locale from persisted preference ──────────────
-      final savedLocale = CacheService().getLocale();
-
-      // ── Create providers ────────────────────────────────────────────────
-      // R4.3c-1: ThemeProvider and LocaleProvider are now Riverpod Notifiers.
-      // We instantiate them here so we can apply the persisted locale
-      // choice before the first build, then inject them via
-      // ProviderScope.overrides (replacing the default NotifierProvider
-      // factory).
-      final localeProviderInstance = LocaleNotifier();
-      if (savedLocale == 'hi') {
-        localeProviderInstance.setHindi();
-      }
+      // ── Initialize services in parallel ─────────────────────────────────
+      await Future.wait([
+        CacheService().init(),
+        if (!kIsWeb)
+          OfflineStorageService().init().catchError((_) {}),
+        NotificationService().init(),
+        ConnectivityService().init(),
+      ]);
 
       final appInstance = injectedAppProvider ?? AppProvider();
       final themeProviderInstance = ThemeNotifier();
@@ -191,22 +181,6 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       }
       AnalyticsService().track(AnalyticsEvent.appOpened);
 
-      // ── Connect connectivity stream to the Riverpod notifier ─────────
-      // R4.3c-3: ConnectivityProvider is no longer a ChangeNotifier; we
-      // instantiate the Notifier directly and bind it to the
-      // ConnectivityService stream.
-      final connectivityNotifierInstance = ConnectivityNotifier();
-      connectivityNotifierInstance.bindConnectivityService(
-        ConnectivityService(),
-      );
-
-      // R4.3c-2: EmergencyContactsService is now a Riverpod Notifier.
-      // We instantiate it here so we can override the default NotifierProvider
-      // factory in ProviderScope (allowing it to be shared with the same
-      // `EmergencyContactsService` instance used by the legacy
-      // ChangeNotifierProvider entries that have not yet been migrated).
-      final emergencyContactsServiceInstance = EmergencyContactsNotifier();
-
       runApp(
         // ProviderScope is the root of Riverpod's dependency injection.
         // Existing ChangeNotifierProviders are bridged via legacy.MultiProvider
@@ -214,20 +188,12 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
         ProviderScope(
           overrides: [
             appProvider.overrideWith((ref) => appInstance),
-            riderProvider.overrideWith(() => appInstance.riderProvider),
-            walletProvider.overrideWith(() => appInstance.walletProvider),
-            supportProvider.overrideWith(() => appInstance.supportProvider),
-            engagementProvider
-                .overrideWith(() => appInstance.engagementProvider),
-            devicePolicyProvider
-                .overrideWith(() => appInstance.devicePolicyProvider),
-            connectivityProviderRef
-                .overrideWith(() => connectivityNotifierInstance),
-            localeProviderRef.overrideWith(() => localeProviderInstance),
+            connectivityProviderRef.overrideWith(ConnectivityNotifier.new),
+            localeProviderRef.overrideWith(LocaleNotifier.new),
             themeProviderRef.overrideWith(() => themeProviderInstance),
-            notificationProvider.overrideWith(() => NotificationNotifier()),
+            notificationProvider.overrideWith(NotificationNotifier.new),
             emergencyContactsService
-                .overrideWith(() => emergencyContactsServiceInstance),
+                .overrideWith(EmergencyContactsNotifier.new),
           ],
           child: const VoltiumApp(),
         ),
@@ -251,7 +217,27 @@ class VoltiumApp extends ConsumerWidget {
     // R4.3c-1: Locale + Theme are Riverpod v3 Notifiers. Use ref.watch
     // (no longer context.watch<LocaleProvider>() / ThemeProvider()).
     final locale = ref.watch(localeProvider).locale;
-    final themeMode = ref.watch(themeProvider).themeMode;
+    final themeState = ref.watch(themeProvider);
+    final themeMode = themeState.themeMode;
+    final isDark = themeState.isDarkMode;
+
+    // LANGUAGE-AUDIT (2026-08-16) #1: keep `Intl.defaultLocale` in
+    // sync with the rider's chosen language so any future
+    // `Intl.message()` / `Intl.plural()` / `Intl.date()` call that
+    // omits an explicit locale picks up the correct country variant
+    // (en_IN vs hi_IN). Runs every build so the system default is
+    // updated at least once at startup and again on every change.
+    Intl.defaultLocale = _intlLocaleFor(locale);
+
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor:
+          isDark ? ThemeColors.dark.surface : ThemeColors.light.surface,
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
+    );
 
     return MaterialApp(
       title: 'Voltium',
@@ -273,15 +259,19 @@ class VoltiumApp extends ConsumerWidget {
 
       // ── Responsive Web Wrapper ────────────────────────────────────────────
       builder: (context, child) {
+        Widget content = child ?? const SizedBox.shrink();
         if (kIsWeb) {
-          return Center(
+          content = Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: child ?? const SizedBox.shrink(),
+              child: content,
             ),
           );
         }
-        return child ?? const SizedBox.shrink();
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlayStyle,
+          child: content,
+        );
       },
 
       // ── Navigation Observer ───────────────────────────────────────────────
@@ -295,6 +285,20 @@ class VoltiumApp extends ConsumerWidget {
       ),
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+/// LANGUAGE-AUDIT (2026-08-16) #1: map a [Locale] to a BCP-47
+/// country-tagged locale string for the `intl` package. Falls back to
+/// `en_IN` if the language code is unknown (the app currently
+/// supports en + hi only).
+String _intlLocaleFor(Locale locale) {
+  switch (locale.languageCode) {
+    case 'hi':
+      return 'hi_IN';
+    case 'en':
+    default:
+      return 'en_IN';
   }
 }
 
@@ -332,10 +336,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   }
 
   void _prewarmAssets() {
+    // PR-47 removed assets/images/* from the bundle; only assets/logo.png
+    // exists on disk. Precache the real logo — anything else would throw
+    // (asset-not-found) every cold start.
     try {
-      precacheImage(const AssetImage('assets/images/logo.png'), context)
-          .catchError((_) {});
-      precacheImage(const AssetImage('assets/images/scooter_hero.png'), context)
+      precacheImage(const AssetImage('assets/logo.png'), context)
           .catchError((_) {});
     } catch (_) {}
   }

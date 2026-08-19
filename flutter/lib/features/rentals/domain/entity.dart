@@ -6,7 +6,14 @@ class RentalPlanEntity {
   final String id;
   final String name;
   final PlanType type;
-  final int pricePerPaise;
+
+  /// PR-RUPEES-2026-08-08: the plan price is now in **rupees** (decimal).
+  /// Renamed from `pricePerPaise` (int) → `priceInRupees` (double). The
+  /// API exposes rupees; the DB stores paise. The `fromJson` handles
+  /// both the new `price` (already rupees) and the legacy
+  /// `priceInPaise` (paise) for backwards-compat during the rollout.
+  final double priceInRupees;
+
   final int durationDays;
   final String? description;
 
@@ -14,19 +21,30 @@ class RentalPlanEntity {
     required this.id,
     required this.name,
     this.type = PlanType.daily,
-    this.pricePerPaise = 0,
+    this.priceInRupees = 0,
     this.durationDays = 1,
     this.description,
   });
 
-  double get priceInRupees => pricePerPaise / 100;
-
   factory RentalPlanEntity.fromJson(Map<String, dynamic> json) {
+    // Prefer the new rupees-shaped field; fall back to the legacy
+    // paise field if present.
+    double rupees = 0.0;
+    final priceRupees = json['priceInRupees'];
+    final price = json['price'];
+    final pricePaise = json['priceInPaise'];
+    if (priceRupees is num) {
+      rupees = priceRupees.toDouble();
+    } else if (price is num) {
+      rupees = price.toDouble();
+    } else if (pricePaise is num) {
+      rupees = pricePaise.toDouble() / 100.0;
+    }
     return RentalPlanEntity(
       id: json['id'] as String,
       name: json['name'] as String? ?? '',
       type: _parseType(json['type'] as String?),
-      pricePerPaise: (json['price'] as num?)?.toInt() ?? 0,
+      priceInRupees: rupees,
       durationDays: (json['durationDays'] as num?)?.toInt() ?? 1,
       description: json['description'] as String?,
     );

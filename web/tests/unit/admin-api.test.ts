@@ -279,3 +279,44 @@ describe('adminApi x-request-id (PR-41, N8)', () => {
     expect(headers['x-request-id']).toMatch(UUID_RE);
   });
 });
+
+describe('adminApi client-side micro-caching & SWR', () => {
+  it('caches GET response in memory when ttlMs is provided', async () => {
+    const { adminApi } = await getFreshApi();
+    const res1 = await adminApi.get('/api/admin/riders', { ttlMs: 10000 });
+    expect(res1.success).toBe(true);
+    expect(fetchCalls).toHaveLength(1);
+
+    // Second call reads from memory cache instantly — 0 new fetch calls
+    const res2 = await adminApi.get('/api/admin/riders', { ttlMs: 10000 });
+    expect(res2.success).toBe(true);
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('supports prefetch to preload data in memory', async () => {
+    const { adminApi } = await getFreshApi();
+    adminApi.prefetch('/api/admin/kyc', 10000);
+    // Allow microtask/fetch to complete
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetchCalls).toHaveLength(1);
+
+    // Subsequent read hits the prefetched cache
+    const res = await adminApi.get('/api/admin/kyc', { ttlMs: 10000 });
+    expect(res.success).toBe(true);
+    expect(fetchCalls).toHaveLength(1);
+  });
+
+  it('invalidates cache on mutations (POST/PUT/DELETE)', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.get('/api/admin/riders', { ttlMs: 10000 });
+    expect(fetchCalls).toHaveLength(1);
+
+    // Mutating via POST invalidates '/api/admin/riders'
+    await adminApi.post('/api/admin/riders', { fullName: 'New Rider' });
+    expect(fetchCalls).toHaveLength(2);
+
+    // Next GET triggers a fresh fetch
+    await adminApi.get('/api/admin/riders', { ttlMs: 10000 });
+    expect(fetchCalls).toHaveLength(3);
+  });
+});

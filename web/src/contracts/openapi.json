@@ -746,19 +746,6 @@
         }
       }
     },
-    "/api/admin/auth/auto-login": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Dev-only auto-login (disabled in production)",
-        "responses": {
-          "200": {
-            "description": "Auto-login successful"
-          }
-        }
-      }
-    },
     "/api/admin/auth/me": {
       "get": {
         "tags": [
@@ -1700,24 +1687,6 @@
         }
       }
     },
-    "/api/rider/offers": {
-      "get": {
-        "tags": [
-          "Rider Profile"
-        ],
-        "summary": "Fetch rental offers",
-        "security": [
-          {
-            "riderSession": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Offer list"
-          }
-        }
-      }
-    },
     "/api/rider/plans": {
       "get": {
         "tags": [
@@ -2063,54 +2032,6 @@
         "responses": {
           "200": {
             "description": "Shifts list"
-          }
-        }
-      }
-    },
-    "/api/support/chat": {
-      "get": {
-        "tags": [
-          "Support"
-        ],
-        "summary": "Fetch support chat messages",
-        "security": [
-          {
-            "riderSession": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Chat message list"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Support"
-        ],
-        "summary": "Send chat message",
-        "security": [
-          {
-            "riderSession": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "message": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Message sent"
           }
         }
       }

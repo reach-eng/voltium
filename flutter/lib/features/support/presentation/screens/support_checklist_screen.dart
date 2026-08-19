@@ -34,17 +34,22 @@ class _SupportChecklistScreenState
   Widget build(BuildContext context) {
     final provider = ref.watch(supportProvider);
     final checklist = provider.supportConfig?.ticketChecklist ?? [];
+    final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         title: Text(
           'Support Checklist',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.bold,
+            color: colors.onSurface,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
+        iconTheme: IconThemeData(color: colors.onSurface),
       ),
       body: SafeArea(
         child: Column(
@@ -60,14 +65,14 @@ class _SupportChecklistScreenState
                       style: AppTypography.bodySmall
                           .copyWith(fontWeight: FontWeight.w800)
                           .copyWith(
-                              color: AppColors.slate500, letterSpacing: 1.0),
+                              color: colors.onSurfaceMuted, letterSpacing: 1.0),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: AppColors.slate800,
+                        color: colors.onSurface,
                         height: 1.5,
                       ),
                     ),
@@ -90,10 +95,12 @@ class _SupportChecklistScreenState
   }
 
   Widget _buildChecklistItem(int index, String text) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -111,7 +118,7 @@ class _SupportChecklistScreenState
         },
         title: Text(
           text,
-          style: AppTypography.bodyMedium.copyWith(color: AppColors.slate800),
+          style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
         ),
         activeColor: AppColors.primary,
         shape: RoundedRectangleBorder(
@@ -153,7 +160,7 @@ class _SupportChecklistScreenState
               style: AppTypography.titleSmall,
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'Keep checking all items to proceed',
             style: AppTypography.bodySmall

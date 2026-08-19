@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Voltium — Onboarding Flow (current + active path) (2026-08-11)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #0053C1;
+    --brand-dark: #003e94;
+    --brand-light: #e6efff;
+    --brand-soft: #f4f7fd;
+    --accent: #ffb020;
+    --green: #1f9d55;
+    --red: #d14848;
+    --ink: #14213d;
+    --ink-soft: #4a5468;
+    --line: #e2e6ee;
+    --archive: #97a0b3;
+    --archive-bg: #f3f4f8;
+    --bg: #f1f4f9;
+    --surface: #fafbfd;
+    --card: #ffffff;
+    --shadow: 0 1px 2px rgba(20, 33, 61, .04), 0 4px 16px rgba(20, 33, 61, .06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 14px/1.55 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal; font-style: normal;
+    font-size: 20px; line-height: 1;
+    letter-spacing: normal; text-transform: none;
+    display: inline-block; white-space: nowrap;
+    direction: ltr; -webkit-font-feature-settings: 'liga';
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  /* Top header */
+  .topbar {
+    background: #fff; border-bottom: 1px solid var(--line);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10; flex-wrap: wrap; gap: 8px;
+  }
+  .topbar .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .topbar .brand .logo { width: 28px; height: 28px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; }
+  .topbar .meta { color: var(--ink-soft); font-size: 13px; }
+  .topbar .actions { display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line);
+    background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: 0.12s;
+  }
+  .btn:hover { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+  .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn.primary:hover { background: var(--brand-dark); color: #fff; }
+  .btn.ghost { background: transparent; border-color: transparent; }
+  .btn.archive { background: var(--archive-bg); color: var(--archive); border-color: var(--line); }
+  .btn.archive:hover { background: #e9ebf0; color: var(--ink-soft); }
+  /* Main stage */
+  .stage { display: grid; grid-template-columns: 300px 1fr 300px; gap: 24px; max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+  @media (max-width: 1100px) { .stage { grid-template-columns: 270px 1fr; } .stage .right { display: none; } }
+  @media (max-width: 820px)  { .stage { grid-template-columns: 1fr; } .stage .left { order: 2; } }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+  .panel h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--ink-soft); }
+  /* Step list */
+  .steps { display: flex; flex-direction: column; gap: 2px; max-height: 740px; overflow-y: auto; padding-right: 4px; }
+  .steps::-webkit-scrollbar { width: 4px; }
+  .steps::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+  .step { display: flex; gap: 8px; align-items: flex-start; padding: 7px 8px; border-radius: 6px; cursor: pointer; transition: 0.12s; border: 1px solid transparent; }
+  .step:hover { background: var(--brand-soft); }
+  .step.active { background: var(--brand-light); border-color: var(--brand); }
+  .step.archived { opacity: 0.6; background: var(--archive-bg); }
+  .step.archived:hover { opacity: 0.85; background: #e9ebf0; }
+  .step.archived .title { text-decoration: line-through; color: var(--ink-soft); }
+  .step .num { width: 22px; height: 22px; border-radius: 50%; background: var(--line); color: var(--ink-soft); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step.done .num { background: var(--green); color: #fff; }
+  .step.active .num { background: var(--brand); color: #fff; }
+  .step.archived.done .num { background: var(--archive); color: #fff; }
+  .step .info { min-width: 0; flex: 1; }
+  .step .title { font-weight: 600; font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  .step .title .archive-badge { font-size: 8.5px; font-weight: 700; padding: 1px 4px; border-radius: 3px; background: var(--archive); color: #fff; text-transform: uppercase; letter-spacing: 0.3px; }
+  .step .sub { font-size: 11px; color: var(--ink-soft); }
+  .step.pain .title::after { content: '⚠'; color: var(--red); margin-left: 4px; font-size: 11px; }
+  .archive-divider {
+    display: flex; align-items: center; gap: 8px;
+    margin: 10px 0 6px; padding: 0 4px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--archive);
+  }
+  .archive-divider::before, .archive-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  /* Phone */
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .phone { width: 360px; height: 760px; background: #fff; border: 10px solid #1a1d24; border-radius: 44px; box-shadow: 0 20px 60px rgba(20, 33, 61, .18); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 110px; height: 28px; background: #1a1d24; border-radius: 16px; z-index: 5; }
+  .statusbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 22px 6px; font-size: 12px; font-weight: 700; background: var(--surface); }
+  .statusbar .right { display: flex; gap: 6px; align-items: center; }
+  .appbar { display: flex; align-items: center; gap: 6px; padding: 6px 12px 10px; background: var(--surface); }
+  .appbar .icon-btn { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--brand); cursor: pointer; }
+  .appbar .icon-btn:hover { background: var(--brand-light); }
+  .appbar .title { font-size: 15px; font-weight: 700; flex: 1; }
+  .appbar .step-pill { font-size: 10px; background: var(--brand-light); color: var(--brand-dark); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+  .appbar .new-pill { font-size: 9px; background: var(--green); color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .appbar .archive-pill { font-size: 9px; background: var(--archive-bg); color: var(--archive); padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .progress { height: 3px; background: var(--line); margin: 0 16px; }
+  .progress > div { height: 100%; background: var(--brand); transition: width 0.3s; border-radius: 0 2px 2px 0; }
+  .screen { flex: 1; overflow-y: auto; background: var(--surface); padding: 16px 16px 110px; }
+  .screen::-webkit-scrollbar { width: 4px; }
+  .screen::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+  .screen h2 { font-size: 19px; margin: 0 0 4px; letter-spacing: -0.3px; line-height: 1.2; font-weight: 700; }
+  .screen .lede { color: var(--ink-soft); font-size: 12.5px; margin: 0 0 14px; }
+  .field { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .field .label { font-size: 10.5px; color: var(--ink-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .field .value { font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+  .field .value .icon { color: var(--brand); }
+  .field .req { color: var(--red); font-weight: 700; }
+  .field.error { border-color: var(--red); background: #fff5f5; }
+  .field.success { border-color: var(--green); }
+  .field .check { color: var(--green); }
+  .card-section { background: var(--card); border-radius: 10px; padding: 12px; box-shadow: 0 1px 3px rgba(20, 33, 61, .04); margin-bottom: 8px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .pill { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pill.brand { background: var(--brand); color: #fff; }
+  .pill.green { background: var(--green); color: #fff; }
+  .pill.warn { background: var(--accent); color: #4a2c00; }
+  .pill.gray { background: #eef0f4; color: var(--ink-soft); }
+  .pill.danger { background: var(--red); color: #fff; }
+  .screen-btn { width: 100%; padding: 13px 16px; border-radius: 999px; background: var(--brand); color: #fff; border: none; font: inherit; font-size: 14px; font-weight: 700; letter-spacing: 0.3px; box-shadow: 0 4px 14px rgba(0, 83, 193, 0.3); cursor: pointer; margin-top: 10px; text-transform: uppercase; }
+  .screen-btn.secondary { background: #fff; color: var(--brand); border: 1.5px solid var(--brand); box-shadow: none; }
+  .screen-btn.ghost { background: transparent; color: var(--brand); border: none; box-shadow: none; text-decoration: underline; text-transform: none; }
+  .screen-btn[disabled] { background: #c5cad6; box-shadow: none; cursor: not-allowed; }
+  .sticky-bottom { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px 22px; background: linear-gradient(to top, var(--surface) 75%, rgba(250, 251, 253, 0)); }
+  /* Splash */
+  .splash { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center; background: linear-gradient(180deg, var(--brand) 0%, var(--brand-dark) 100%); color: #fff; }
+  .splash .v { font-size: 100px; font-weight: 800; line-height: 1; margin-bottom: 24px; opacity: 0.95; }
+  .splash h1 { font-size: 13px; letter-spacing: 3px; font-weight: 700; margin: 0 0 6px; opacity: 0.9; }
+  .splash p { font-size: 12px; opacity: 0.7; margin: 0; }
+  .splash .dots { margin-top: 32px; display: flex; gap: 6px; }
+  .splash .dots span { width: 6px; height: 6px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; animation: pulse 1.4s infinite; }
+  .splash .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .splash .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  /* Legal expandables */
+  .legal-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .legal-card .head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; }
+  .legal-card .head .mat { color: var(--ink-soft); font-size: 18px; }
+  /* Permissions grid */
+  .perm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .perm-tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; position: relative; }
+  .perm-tile .req-tag { position: absolute; top: 6px; right: 6px; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: var(--red); color: #fff; }
+  .perm-tile .opt-tag { position: absolute; top: 6px; right: 6px; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: #eef0f4; color: var(--ink-soft); }
+  .perm-tile .mat { color: var(--brand); font-size: 24px; margin-bottom: 6px; }
+  .perm-tile .name { font-size: 12.5px; font-weight: 600; margin-bottom: 2px; }
+  .perm-tile .desc { font-size: 10.5px; color: var(--ink-soft); }
+  .perm-tile .toggle { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .perm-tile .toggle.off { background: #eef0f4; color: var(--ink-soft); }
+  /* Wizard steps */
+  .wiz-steps { display: flex; gap: 4px; margin-bottom: 16px; }
+  .wiz-step { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+  .wiz-step.active { background: var(--brand); }
+  .wiz-step.done { background: var(--green); }
+  /* Doc tile */
+  .doc-tile { background: var(--brand-soft); border: 2px dashed var(--brand); border-radius: 10px; padding: 12px 8px; text-align: center; color: var(--brand); font-weight: 600; font-size: 11px; }
+  .doc-tile .mat { font-size: 26px; color: var(--brand); display: block; margin-bottom: 4px; }
+  .doc-tile.done { background: #ebf6f0; border: 2px solid var(--green); color: var(--green); }
+  .doc-tile.done .mat { color: var(--green); }
+  /* Intent cards */
+  .intent-card { display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid var(--line); border-radius: 12px; margin-bottom: 10px; background: var(--card); cursor: pointer; }
+  .intent-card.on { border-color: var(--brand); background: var(--brand-light); }
+  .intent-card .ico { width: 48px; height: 48px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; }
+  .intent-card .ico.alt { background: #eef0f4; color: var(--brand); }
+  .intent-card .title { font-weight: 700; font-size: 14px; }
+  .intent-card .desc { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+  /* OTP */
+  .otp-row { display: flex; gap: 6px; justify-content: center; margin: 8px 0 12px; }
+  .otp-box { width: 36px; height: 44px; border-radius: 8px; border: 2px solid var(--line); background: #fff; text-align: center; font-size: 20px; font-weight: 700; color: var(--brand); display: flex; align-items: center; justify-content: center; }
+  .otp-box.filled { border-color: var(--brand); }
+  .otp-box.cursor { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-light); }
+  /* Hang tight */
+  .hang-hero { background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%); color: #fff; border-radius: 14px; padding: 26px 20px 22px; margin: -16px -16px 14px; text-align: center; position: relative; overflow: hidden; }
+  .hang-hero::after { content: ''; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, 0.07); }
+  .hang-hero .icon-wrap { width: 80px; height: 80px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; backdrop-filter: blur(8px); }
+  .hang-hero .icon-wrap .mat { font-size: 44px; color: #fff; animation: spin 3s linear infinite; display: inline-block; }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .hang-hero h1 { font-size: 26px; margin: 0 0 6px; font-weight: 800; letter-spacing: -0.4px; }
+  .hang-hero p { font-size: 13px; opacity: 0.88; margin: 0; line-height: 1.4; }
+  .status-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .status-row { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+  .status-row .icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .status-row.done .icon { background: #ebf6f0; color: var(--green); }
+  .status-row.pending .icon { background: var(--brand-light); color: var(--brand); animation: pulse2 1.4s infinite; }
+  @keyframes pulse2 { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .status-row .grow { flex: 1; min-width: 0; }
+  .status-row .label { font-size: 12.5px; font-weight: 600; }
+  .status-row .meta { font-size: 10.5px; color: var(--ink-soft); margin-top: 1px; }
+  .status-row .icon .mat { font-size: 16px; }
+  /* Pre-dashboard */
+  .pre-hero { background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%); color: #fff; border-radius: 14px; padding: 18px; margin: -16px -16px 14px; }
+  .pre-hero .greeting { font-size: 12px; opacity: 0.85; }
+  .pre-hero .name { font-size: 18px; font-weight: 800; margin-top: 2px; }
+  .kyc-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+  .kyc-pill.pending { background: rgba(255, 255, 255, 0.18); color: #fff; }
+  .kyc-pill.verified { background: rgba(31, 157, 85, 0.3); color: #fff; }
+  /* Phone nav */
+  .phone-nav { display: flex; gap: 12px; align-items: center; }
+  .phone-nav .label { font-size: 12px; color: var(--ink-soft); }
+  /* Right panel */
+  .right h3 { margin-top: 0; }
+  .pain-list { padding-left: 0; list-style: none; margin: 0; }
+  .pain-list li { padding: 8px 10px; background: #fcecec; border-left: 3px solid var(--red); border-radius: 4px; margin-bottom: 6px; font-size: 12px; }
+  .change-list { padding-left: 0; list-style: none; margin: 0; }
+  .change-list li { padding: 8px 10px; background: var(--brand-soft); border-left: 3px solid var(--brand); border-radius: 4px; margin-bottom: 6px; font-size: 12px; }
+  .compare-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-row .pill { font-size: 10px; }
+  /* Bottom safe-area indicator */
+  .home-indicator { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); width: 100px; height: 4px; border-radius: 2px; background: #1a1d24; opacity: 0.6; }
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100; }
+  .toast.show { opacity: 1; }
+  .compare-banner { background: var(--brand-light); border-left: 4px solid var(--brand); padding: 10px 14px; border-radius: 6px; font-size: 12.5px; color: var(--ink); margin-bottom: 12px; }
+  .compare-banner strong { color: var(--brand); }
+  /* Plan card */
+  .plan-card { border: 2px solid var(--brand); border-radius: 12px; padding: 14px; background: var(--brand-light); margin-bottom: 8px; position: relative; }
+  .plan-card .badge { position: absolute; top: -8px; right: 12px; background: var(--brand); color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .plan-card h3 { margin: 0 0 4px; font-size: 15px; }
+  .plan-card .price { font-size: 22px; font-weight: 800; color: var(--brand); letter-spacing: -0.5px; }
+  .plan-card .price small { font-size: 11px; color: var(--ink-soft); font-weight: 500; }
+  .plan-card ul { margin: 6px 0 0; padding-left: 16px; font-size: 11px; color: var(--ink-soft); }
+  /* Top-up */
+  .topup-amount { background: var(--brand-light); color: var(--brand-dark); padding: 18px 16px; border-radius: 12px; text-align: center; margin-bottom: 12px; }
+  .topup-amount .n { font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+  .topup-amount .l { font-size: 11px; color: var(--brand-dark); }
+  .topup-preset { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .topup-preset .p { background: var(--card); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; font-weight: 600; font-size: 13px; }
+  /* Pickup */
+  .photo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .photo-tile { aspect-ratio: 1; background: var(--brand-soft); border: 1.5px dashed var(--brand); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--brand); font-size: 9px; font-weight: 600; text-align: center; padding: 4px; }
+  .photo-tile.done { background: #ebf6f0; border: 1.5px solid var(--green); color: var(--green); }
+  .photo-tile .mat { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">V</div>
+    <div>
+      <div>Voltium Onboarding</div>
+      <div class="meta" id="meta-line">Active path · 14 screens · Archived older flow · 5 screens</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn archive" id="btn-archive">Show archived (5)</button>
+    <button class="btn primary" id="btn-next-top">Next screen →</button>
+  </div>
+</header>
+
+<div class="stage" id="stage">
+  <aside class="panel left">
+    <h3 id="left-title">Active path · 14 screens</h3>
+    <div class="steps" id="steps"></div>
+  </aside>
+
+  <div class="phone-wrap">
+    <div id="phone-body">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="statusbar">
+          <span id="clock">9:41</span>
+          <span class="right">
+            <span class="material-symbols-outlined" style="font-size:14px">signal_cellular_alt</span>
+            <span class="material-symbols-outlined" style="font-size:14px">wifi</span>
+            <span class="material-symbols-outlined" style="font-size:14px">battery_full</span>
+          </span>
+        </div>
+        <div class="appbar">
+          <div class="icon-btn" id="back-btn"><span class="material-symbols-outlined">arrow_back</span></div>
+          <div class="title" id="appbar-title">Splash</div>
+          <div class="step-pill" id="step-pill" style="display:none"></div>
+        </div>
+        <div class="progress" id="progress-wrap" style="display:none"><div id="progress-bar" style="width:5%"></div></div>
+        <div class="screen" id="screen"></div>
+        <div class="home-indicator"></div>
+      </div>
+      <div class="phone-nav">
+        <button class="btn" id="btn-prev">← Previous</button>
+        <span class="label" id="step-label">Screen 1 of 21</span>
+        <button class="btn primary" id="btn-next-bottom">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <aside class="panel right">
+    <h3 id="right-title">What's painful here</h3>
+    <div id="pain-panel"></div>
+    <hr style="border: none; border-top: 1px solid var(--line); margin: 14px 0;">
+    <h3>Flow impact</h3>
+    <div id="impact-panel">
+      <div class="compare-row"><span>Active path screens</span><span class="pill green" id="pill-active">14</span></div>
+      <div class="compare-row"><span>Archived (older flow)</span><span class="pill gray" id="pill-archive">5</span></div>
+      <div class="compare-row"><span>OTP sends on active path</span><span class="pill warn" id="pill-otp">2</span></div>
+      <div class="compare-row"><span>Sync mode after pickup</span><span class="pill brand" style="font-size: 9px;">Hang tight → notify</span></div>
+    </div>
+    <hr style="border: none; border-top: 1px solid var(--line); margin: 14px 0;">
+    <h3>Restoring archived</h3>
+    <div style="font-size: 12px; color: var(--ink-soft); line-height: 1.5;">
+      Click <strong>Show archived (5)</strong> to reveal the older KYC + top-up + pre-dashboard screens. Tap any greyed-out step to view. The right panel still works on archived screens.
+    </div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// === SCREEN DATA — all 21 screens, 5 marked archived ===
+const screens = [
+  // === ACTIVE PATH (1-7: auth) ===
+  {
+    id: 1, name: "Splash", phase: "Auth", progress: 5, status: 'active',
+    pain: ["Zero value delivered — 3.5s of brand animation before the user sees anything actionable."],
+    html: () => `<div class="splash"><div class="v">V</div><h1>CONNECTING TO GRID</h1><p>Electric scooter rentals</p><div class="dots"><span></span><span></span><span></span></div></div>`
+  },
+  {
+    id: 2, name: "Legal", phase: "Auth", progress: 10, status: 'active',
+    pain: ["5 dense legal cards (Terms, Privacy, Rental Safety, Refund, Guarantor) before they know what the app is."],
+    html: () => `<h2>Legal</h2><p class="lede">Please review and accept our policies before continuing.</p>
+      ${['Terms of Service', 'Privacy Policy', 'Rental Safety', 'Refund Policy', 'Guarantor Agreement'].map(t => `<div class="legal-card"><div class="head"><span>${t}</span><span class="material-symbols-outlined mat">expand_more</span></div></div>`).join('')}
+      <div class="field" style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="legal-cb" style="width: 18px; height: 18px;" /><label for="legal-cb" style="font-size: 12px;">I accept the terms and conditions</label></div>
+      <div class="sticky-bottom"><button class="screen-btn" id="legal-btn" disabled>Continue</button></div>`
+  },
+  {
+    id: 3, name: "Permissions", phase: "Auth", progress: 15, status: 'active',
+    pain: ["8 permission tiles before the rider has any context for why they're needed."],
+    html: () => `<h2>Permissions</h2><p class="lede">Voltium needs a few permissions to work properly.</p>
+      <div class="perm-grid">
+        <div class="perm-tile"><span class="req-tag">Required</span><span class="material-symbols-outlined mat">location_on</span><div class="name">Location</div><div class="desc">For pickup & tracking</div><span class="toggle">Allowed</span></div>
+        <div class="perm-tile"><span class="req-tag">Required</span><span class="material-symbols-outlined mat">photo_camera</span><div class="name">Camera</div><div class="desc">For KYC documents</div><span class="toggle">Allowed</span></div>
+        <div class="perm-tile"><span class="req-tag">Required</span><span class="material-symbols-outlined mat">notifications</span><div class="name">Notifications</div><div class="desc">For ride updates</div><span class="toggle">Allowed</span></div>
+        <div class="perm-tile"><span class="opt-tag">Optional</span><span class="material-symbols-outlined mat">battery_saver</span><div class="name">Battery</div><div class="desc">Disable optimization</div><span class="toggle off">Allow</span></div>
+        <div class="perm-tile"><span class="opt-tag">Optional</span><span class="material-symbols-outlined mat">phone</span><div class="name">Phone state</div><div class="desc">Read phone state</div><span class="toggle off">Allow</span></div>
+        <div class="perm-tile"><span class="opt-tag">Optional</span><span class="material-symbols-outlined mat">contacts</span><div class="name">Contacts</div><div class="desc">Pick emergency contact</div><span class="toggle off">Allow</span></div>
+        <div class="perm-tile"><span class="opt-tag">Optional</span><span class="material-symbols-outlined mat">mic</span><div class="name">Microphone</div><div class="desc">For support calls</div><span class="toggle off">Allow</span></div>
+        <div class="perm-tile"><span class="opt-tag">Optional</span><span class="material-symbols-outlined mat">security</span><div class="name">Device admin</div><div class="desc">Lock on theft</div><span class="toggle off">Allow</span></div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Continue</button></div>`
+  },
+  {
+    id: 4, name: "KYC preflight", phase: "Auth", progress: 18, status: 'active',
+    pain: ["Third info screen (after Legal, Permissions) before the rider is allowed to enter their phone number."],
+    html: () => `<div style="text-align: center; margin: 16px 0 8px;"><span class="material-symbols-outlined" style="font-size: 60px; color: var(--brand);">verified_user</span></div>
+      <h2 style="text-align: center;">Before we start</h2><p class="lede" style="text-align: center;">Have these ready before submitting your KYC.</p>
+      <div class="card-section">
+        <div class="row" style="padding: 8px 0;"><span class="material-symbols-outlined" style="color: var(--green);">check_circle</span><div class="grow"><div style="font-weight: 600; font-size: 13px;">Aadhaar Card</div><div class="meta">Front + back photos</div></div></div>
+        <div class="row" style="padding: 8px; border-top: 1px solid var(--line);"><span class="material-symbols-outlined" style="color: var(--green);">check_circle</span><div class="grow"><div style="font-weight: 600; font-size: 13px;">PAN Card</div><div class="meta">Front photo</div></div></div>
+        <div class="row" style="padding: 8px; border-top: 1px solid var(--line);"><span class="material-symbols-outlined" style="color: var(--green);">check_circle</span><div class="grow"><div style="font-weight: 600; font-size: 13px;">3 Minutes of Time</div><div class="meta">Have a quiet spot</div></div></div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">I'm Ready</button></div>`
+  },
+  {
+    id: 5, name: "Phone entry", phase: "Auth", progress: 22, status: 'active',
+    pain: ["First drop-off cliff — 5 screens of friction before the rider is allowed to enter their number."],
+    html: () => `<h2>Enter your phone number</h2><p class="lede">We'll send a 6-digit code to verify it's you.</p>
+      <div class="field"><div class="label">Phone number <span class="req">*</span></div><div class="value"><span style="color: var(--ink-soft); font-size: 13px;">+91</span><span>98765 43210</span></div></div>
+      <div class="field"><div class="label">Referral code (optional)</div><div class="value" style="color: var(--ink-soft);">Have a code? Enter here</div></div>
+      <div class="sticky-bottom"><button class="screen-btn">Enter</button></div>`
+  },
+  {
+    id: 6, name: "OTP verify (1 of 2)", phase: "Auth", progress: 27, status: 'active',
+    pain: ["First SMS send. If the rider misses the code, the entire flow collapses."],
+    html: () => `<h2>Verify your phone</h2><p class="lede">Enter the 6-digit code sent to +91 98765 43210.</p>
+      <div class="otp-row"><div class="otp-box filled">4</div><div class="otp-box filled">8</div><div class="otp-box filled">2</div><div class="otp-box filled">1</div><div class="otp-box cursor">7</div><div class="otp-box"></div></div>
+      <div style="text-align: center; font-size: 11.5px; color: var(--ink-soft);">Didn't get it? <span style="color: var(--ink-soft); font-weight: 600;">Resend in 0:24</span></div>
+      <div class="sticky-bottom"><button class="screen-btn">Verify & Proceed</button></div>`
+  },
+  {
+    id: 7, name: "Intent of use", phase: "Auth", progress: 33, status: 'active',
+    pain: ["Forces a marketing decision (delivery vs. personal) before the rider has seen the app."],
+    html: () => `<h2>How will you use Voltium?</h2><p class="lede">Select your primary usage to help us customize your experience.</p>
+      <div class="intent-card"><div class="ico"><span class="material-symbols-outlined">bolt</span></div><div><div class="title">Deliver with Us</div><div class="desc">Rent an EV for logistics, delivery, or commercial needs.</div></div></div>
+      <div class="intent-card on"><div class="ico alt"><span class="material-symbols-outlined">directions_car</span></div><div><div class="title">Personal Usage</div><div class="desc">Daily commutes, weekend trips, or general city riding.</div></div></div>
+      <div class="card-section" style="background: var(--brand-light); border-left: 3px solid var(--brand); display: flex; gap: 8px; align-items: flex-start;"><span class="material-symbols-outlined" style="color: var(--brand); font-size: 18px;">info</span><div style="font-size: 11px; color: var(--ink);">Switching between types is possible later through account settings.</div></div>
+      <div class="sticky-bottom"><button class="screen-btn">Confirm Selection</button></div>`
+  },
+
+  // === ARCHIVED (older flow) — KYC 8-10 ===
+  {
+    id: 8, name: "KYC step 1: Personal", phase: "KYC (older)", progress: 40, wizard: "1/3", status: 'archived',
+    pain: ["7+ required fields, all on one page. Form data is stored in process memory — killed app = lost work (audit Bug 21)."],
+    html: () => `<h2>Tell us about you</h2><p class="lede">Step 1 of 3 — Personal details.</p>
+      <div class="wiz-steps"><div class="wiz-step active"></div><div class="wiz-step"></div><div class="wiz-step"></div></div>
+      <div class="field"><div class="label">Full name <span class="req">*</span></div><div class="value">Rajesh Kumar</div></div>
+      <div class="field"><div class="label">Date of birth <span class="req">*</span></div><div class="value">15 Aug 1998</div></div>
+      <div class="field"><div class="label">Email <span class="req">*</span></div><div class="value">rajesh.kumar@email.com</div></div>
+      <div class="field"><div class="label">Father's name <span class="req">*</span></div><div class="value">Mohan Kumar</div></div>
+      <div class="field"><div class="label">Mother's name <span class="req">*</span></div><div class="value">Sita Devi</div></div>
+      <div class="field"><div class="label">Current address <span class="req">*</span></div><div class="value">42, Koramangala, Bengaluru</div></div>
+      <div class="sticky-bottom"><button class="screen-btn">Next Step</button></div>`
+  },
+  {
+    id: 9, name: "KYC step 2: Identity + Bank", phase: "KYC (older)", progress: 50, wizard: "2/3", status: 'archived',
+    pain: ["4 mandatory uploads + bank details dialog. Bank dialog had zero client-side validation (audit 2.4 — now fixed)."],
+    html: () => `<h2>Verify your identity</h2><p class="lede">Step 2 of 3 — Documents + bank.</p>
+      <div class="wiz-steps"><div class="wiz-step done"></div><div class="wiz-step active"></div><div class="wiz-step"></div></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px;">
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>Aadhaar front</div>
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>Aadhaar back</div>
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>PAN</div>
+        <div class="doc-tile"><span class="material-symbols-outlined mat">account_balance</span>Bank details</div>
+      </div>
+      <div class="card-section" style="background: #fff7e6; border-left: 3px solid var(--accent); display: flex; gap: 8px; align-items: flex-start;">
+        <span class="material-symbols-outlined" style="color: var(--accent);">account_balance</span>
+        <div style="font-size: 11.5px;">Bank details: Account, IFSC, Bank name<br/><span style="color: var(--ink-soft);">Opens a separate dialog — easy to miss</span></div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Next Step</button></div>`
+  },
+  {
+    id: 10, name: "KYC step 3: Selfie + Signature", phase: "KYC (older)", progress: 58, wizard: "3/3", status: 'archived',
+    pain: ["Selfie + signature bundled into one step. If selfie is rejected, rider has to redo both."],
+    html: () => `<h2>Selfie & signature</h2><p class="lede">Step 3 of 3 — A quick photo and a signature.</p>
+      <div class="wiz-steps"><div class="wiz-step done"></div><div class="wiz-step done"></div><div class="wiz-step active"></div></div>
+      <div class="doc-tile done" style="margin-bottom: 10px;"><span class="material-symbols-outlined mat">check</span>Selfie captured</div>
+      <div class="doc-tile"><span class="material-symbols-outlined mat">draw</span>Signature — sign in the white box</div>
+      <div class="sticky-bottom"><button class="screen-btn">Submit for review</button></div>`
+  },
+
+  // === ACTIVE PATH — Guarantor 11-13 ===
+  {
+    id: 11, name: "Guarantor step 1: Details + OTP", phase: "Guarantor", progress: 65, wizard: "1/3", status: 'active',
+    pain: ["Asks for someone else's personal data right after the rider's own auth."],
+    html: () => `<h2>Guarantor details</h2><p class="lede">Step 1 of 3 — Someone who can confirm your identity.</p>
+      <div class="wiz-steps"><div class="wiz-step active"></div><div class="wiz-step"></div><div class="wiz-step"></div></div>
+      <div class="field"><div class="label">Guarantor full name <span class="req">*</span></div><div class="value">Suresh Kumar</div></div>
+      <div class="field"><div class="label">Relationship</div><div class="value">Brother</div></div>
+      <div class="field" style="display: flex; align-items: center; gap: 8px;">
+        <div style="flex: 1;"><div class="label">Guarantor phone <span class="req">*</span></div><div class="value">+91 87654 32109</div></div>
+        <button class="btn" style="background: var(--brand); color: #fff; padding: 6px 10px; font-size: 10px;">RESEND</button>
+      </div>
+      <div class="card-section" style="background: var(--brand-light); border-left: 3px solid var(--brand); display: flex; gap: 8px; align-items: center;">
+        <span class="material-symbols-outlined" style="color: var(--brand);">smartphone</span>
+        <div style="font-size: 11.5px;">OTP sent to guarantor · 2nd of 2 SMS this session</div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Next Step</button></div>`
+  },
+  {
+    id: 12, name: "Guarantor step 2: Docs", phase: "Guarantor", progress: 72, wizard: "2/3", status: 'active',
+    pain: ["Four more mandatory uploads — for a person who is not the rider and may not have their documents ready."],
+    html: () => `<h2>Guarantor documents</h2><p class="lede">Step 2 of 3 — Ask the guarantor to share their Aadhaar & PAN.</p>
+      <div class="wiz-steps"><div class="wiz-step done"></div><div class="wiz-step active"></div><div class="wiz-step"></div></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>Aadhaar front</div>
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>Aadhaar back</div>
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>PAN</div>
+        <div class="doc-tile done"><span class="material-symbols-outlined mat">check</span>Photo</div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Next Step</button></div>`
+  },
+  {
+    id: 13, name: "Guarantor step 3: Video + Signature", phase: "Guarantor", progress: 78, wizard: "3/3", status: 'active',
+    pain: ["30-second video proof is invasive — copy/code drift: instructions say '5-sec' but screen enforces 30s (audit 3.3)."],
+    html: () => `<h2>Video proof & signature</h2><p class="lede">Step 3 of 3 — A short video + signature.</p>
+      <div class="wiz-steps"><div class="wiz-step done"></div><div class="wiz-step done"></div><div class="wiz-step active"></div></div>
+      <div class="doc-tile" style="margin-bottom: 10px;"><span class="material-symbols-outlined mat">videocam</span>Record a 5-sec video holding ID, saying<br/>"I agree to be the guarantor for Rajesh Kumar"</div>
+      <div class="doc-tile"><span class="material-symbols-outlined mat">draw</span>Guarantor signature</div>
+      <div class="sticky-bottom"><button class="screen-btn">Finish Setup</button></div>`
+  },
+
+  // === ACTIVE PATH — Plan 14 ===
+  {
+    id: 14, name: "Choose plan", phase: "Plan", progress: 82, status: 'active',
+    pain: ["Forces a plan choice before the rider has seen pricing in context."],
+    html: () => `<h2>Choose a plan</h2><p class="lede">Pick the rental plan that fits how you ride.</p>
+      <div class="plan-card"><h3>Daily</h3><div class="price">₹80 <small>/ day</small></div><ul><li>1 day</li><li>Best for one-off trips</li></ul></div>
+      <div class="plan-card"><div class="badge">Most popular</div><h3>Weekly</h3><div class="price">₹200 <small>/ week</small></div><ul><li>7 days</li><li>Security deposit ₹500 (refundable)</li></ul></div>
+      <div class="plan-card" style="opacity: 0.6;"><h3>Monthly</h3><div class="price">₹700 <small>/ month</small></div><ul><li>30 days</li><li>Best for daily commuters</li></ul></div>
+      <div class="sticky-bottom"><button class="screen-btn">Continue with Weekly</button></div>`
+  },
+
+  // === ARCHIVED — Top-up 15-16 ===
+  {
+    id: 15, name: "Top-up: Amount", phase: "Top-up (older)", progress: 85, sub: "1/4", status: 'archived',
+    pain: ["Top-up flow is a 4-screen sub-flow: Amount → UPI → Proof → Receipt. The rider is now 15 screens in."],
+    html: () => `<h2>Top up wallet</h2><p class="lede">Choose how much to add to your wallet.</p>
+      <div class="topup-amount"><div class="l">SELECTED AMOUNT</div><div class="n">₹500</div></div>
+      <div class="topup-preset"><div class="p">₹500</div><div class="p" style="border-color: var(--brand); background: var(--brand-light);">₹1,000</div><div class="p">₹2,000</div></div>
+      <div class="field" style="margin-top: 4px;"><div class="label">Or enter custom amount</div><div class="value" style="color: var(--ink-soft);">₹</div></div>
+      <div class="sticky-bottom"><button class="screen-btn">Proceed</button></div>`
+  },
+  {
+    id: 16, name: "Top-up: UPI", phase: "Top-up (older)", progress: 88, sub: "2/4", status: 'archived',
+    pain: ["App switch to UPI app. Return flow is fragile — riders have to remember to come back."],
+    html: () => `<h2>Pay via UPI</h2><p class="lede">You'll be redirected to your UPI app.</p>
+      <div class="topup-amount"><div class="l">PAYING</div><div class="n">₹1,000</div></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+        <div class="card-section" style="text-align: center;"><span class="material-symbols-outlined" style="color: var(--brand); font-size: 28px;">account_balance</span><div style="font-size: 11px; font-weight: 600; margin-top: 4px;">Google Pay</div></div>
+        <div class="card-section" style="text-align: center;"><span class="material-symbols-outlined" style="color: var(--brand); font-size: 28px;">phone_iphone</span><div style="font-size: 11px; font-weight: 600; margin-top: 4px;">PhonePe</div></div>
+        <div class="card-section" style="text-align: center;"><span class="material-symbols-outlined" style="color: var(--brand); font-size: 28px;">payments</span><div style="font-size: 11px; font-weight: 600; margin-top: 4px;">Paytm</div></div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Pay ₹1,000</button></div>`
+  },
+
+  // === ACTIVE PATH — Pickup 17-19 ===
+  {
+    id: 17, name: "Pickup step 1: Assignment", phase: "Pickup", progress: 90, wizard: "1/2", status: 'active',
+    pain: ["Hub + TL + vehicle are 3 separate dropdowns before any upload. Emergency contact OTP required at this step."],
+    html: () => `<h2>Assignment details</h2><p class="lede">Step 1 of 2 — Hub, team leader, vehicle, emergency contact.</p>
+      <div class="wiz-steps"><div class="wiz-step active"></div><div class="wiz-step"></div></div>
+      <div class="field"><div class="label">Hub <span class="req">*</span></div><div class="value">Koramangala Hub <span class="material-symbols-outlined icon" style="font-size: 16px; margin-left: auto;">expand_more</span></div></div>
+      <div class="field"><div class="label">Team leader <span class="req">*</span></div><div class="value">Rajesh Kumar (TL-01) <span class="material-symbols-outlined icon" style="font-size: 16px; margin-left: auto;">expand_more</span></div></div>
+      <div class="field"><div class="label">Vehicle <span class="req">*</span></div><div class="value">MH-01 • EV-X <span class="material-symbols-outlined icon" style="font-size: 16px; margin-left: auto;">expand_more</span></div></div>
+      <div class="card-section" style="background: #fff7e6; border-left: 3px solid var(--accent);">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"><span class="material-symbols-outlined" style="color: var(--accent);">smartphone</span><div style="font-size: 12px; font-weight: 600;">Emergency contact</div></div>
+        <div class="otp-row" style="margin: 6px 0;"><div class="otp-box filled">3</div><div class="otp-box filled">1</div><div class="otp-box filled">5</div><div class="otp-box cursor">2</div><div class="otp-box"></div><div class="otp-box"></div></div>
+        <div style="font-size: 10.5px; color: var(--ink-soft);">2nd of 2 SMS this session</div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Next Step</button></div>`
+  },
+  {
+    id: 18, name: "Pickup step 2: Vehicle photos", phase: "Pickup", progress: 95, wizard: "2/2", status: 'active',
+    pain: ["5 photos required, in order. No retry if a photo is rejected for blur or angle."],
+    html: () => `<h2>Vehicle photos</h2><p class="lede">Step 2 of 2 — Take 5 photos in order.</p>
+      <div class="wiz-steps"><div class="wiz-step done"></div><div class="wiz-step active"></div></div>
+      <div style="font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 600;">VEHICLE PHOTOS · 5</div>
+      <div class="photo-grid">
+        <div class="photo-tile done"><span class="material-symbols-outlined mat">check</span>Front</div>
+        <div class="photo-tile done"><span class="material-symbols-outlined mat">check</span>Back</div>
+        <div class="photo-tile done"><span class="material-symbols-outlined mat">check</span>Left</div>
+        <div class="photo-tile done"><span class="material-symbols-outlined mat">check</span>Right</div>
+        <div class="photo-tile"><span class="material-symbols-outlined mat">add_a_photo</span>With rider</div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Finish Setup</button></div>`
+  },
+  {
+    id: 19, name: "Pickup verification", phase: "Pickup", progress: 99, status: 'active',
+    pain: ["Final agreement screen after the rider has been through 18 prior screens. Fatigue is real."],
+    html: () => `<h2>Confirm pickup</h2><p class="lede">Please review and confirm before you start your ride.</p>
+      <div class="card-section" style="font-size: 12px;">
+        <div class="compare-row"><span>Hub</span><span style="font-weight: 600;">Koramangala</span></div>
+        <div class="compare-row"><span>Vehicle</span><span style="font-weight: 600;">MH-01</span></div>
+        <div class="compare-row"><span>Plan</span><span style="font-weight: 600;">Weekly</span></div>
+        <div class="compare-row"><span>Deposit paid</span><span style="font-weight: 600; color: var(--green);">₹700 ✓</span></div>
+      </div>
+      <div class="field" style="display: flex; align-items: center; gap: 8px;"><input type="checkbox" style="width: 16px; height: 16px;" /><label style="font-size: 11px;">I have inspected the vehicle and accept its condition.</label></div>
+      <div class="sticky-bottom"><button class="screen-btn" disabled>Complete & Start Ride</button></div>`
+  },
+
+  // === ARCHIVED — Pre-dashboard ===
+  {
+    id: 20, name: "Pre-dashboard → ACTIVE", phase: "Dashboard (older)", progress: 100, status: 'archived',
+    pain: ["Synchronous: rider has to wait for KYC review + vehicle assignment before seeing the dashboard. New 'Hang Tight' screen replaces this with an async wait."],
+    html: () => `<div class="pre-hero"><div class="greeting">Good morning</div><div class="name">Hi, Rajesh 👋</div><div class="kyc-pill pending"><span class="material-symbols-outlined" style="font-size: 14px;">pending</span>KYC under review</div></div>
+      <div class="card-section"><div class="row"><span class="material-symbols-outlined" style="color: var(--brand);">directions_car</span><div class="grow"><div style="font-weight: 600; font-size: 13px;">Your Voltium EV is ready</div><div class="meta">MH-01 · Koramangala Hub</div></div></div></div>
+      <div class="card-section" style="background: #ebf6f0; border-left: 3px solid var(--green);"><div style="display: flex; gap: 8px; align-items: flex-start;"><span class="material-symbols-outlined" style="color: var(--green);">check_circle</span><div style="font-size: 12px;"><strong>Verified & Secure</strong><div class="meta">Your account is active</div></div></div></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+        <div class="card-section" style="text-align: center;"><div style="font-size: 18px; font-weight: 800; color: var(--brand);">₹0</div><div class="meta">Wallet</div></div>
+        <div class="card-section" style="text-align: center;"><div style="font-size: 18px; font-weight: 800; color: var(--green);">7d</div><div class="meta">Plan</div></div>
+      </div>
+      <div class="sticky-bottom"><button class="screen-btn">Go to Dashboard</button></div>`
+  },
+
+  // === ACTIVE — NEW: Hang Tight ===
+  {
+    id: 21, name: "Hang tight", phase: "Wait", progress: 100, status: 'active', isNew: true,
+    pain: [],  // new screen, no audit pain points
+    html: () => `<div class="hang-hero">
+        <div class="icon-wrap"><span class="material-symbols-outlined mat">hourglass_top</span></div>
+        <h1>Hang tight</h1>
+        <p>We're setting up your account.<br/>This usually takes 5–10 minutes.</p>
+      </div>
+      <div style="font-size: 11px; color: var(--ink-soft); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.4px;">WHAT'S HAPPENING</div>
+      <div class="status-list">
+        <div class="status-row done">
+          <div class="icon"><span class="material-symbols-outlined mat">check</span></div>
+          <div class="grow"><div class="label">Guarantor approved</div><div class="meta">Suresh Kumar · verified</div></div>
+          <span class="pill green">Done</span>
+        </div>
+        <div class="status-row done">
+          <div class="icon"><span class="material-symbols-outlined mat">check</span></div>
+          <div class="grow"><div class="label">Plan selected</div><div class="meta">Weekly · ₹200/week</div></div>
+          <span class="pill green">Done</span>
+        </div>
+        <div class="status-row done">
+          <div class="icon"><span class="material-symbols-outlined mat">check</span></div>
+          <div class="grow"><div class="label">Pickup confirmed</div><div class="meta">MH-01 · Koramangala Hub</div></div>
+          <span class="pill green">Done</span>
+        </div>
+        <div class="status-row pending">
+          <div class="icon"><span class="material-symbols-outlined mat">schedule</span></div>
+          <div class="grow"><div class="label">KYC under review</div><div class="meta">Typically 5–10 min</div></div>
+          <span class="pill warn">In progress</span>
+        </div>
+        <div class="status-row pending">
+          <div class="icon"><span class="material-symbols-outlined mat">directions_car</span></div>
+          <div class="grow"><div class="label">Vehicle assignment</div><div class="meta">Pending KYC approval</div></div>
+          <span class="pill gray">Waiting</span>
+        </div>
+      </div>
+      <div class="card-section" style="background: var(--brand-light); border-left: 3px solid var(--brand); display: flex; gap: 8px; align-items: flex-start;">
+        <span class="material-symbols-outlined" style="color: var(--brand); font-size: 18px;">notifications_active</span>
+        <div style="font-size: 11.5px;">We'll send a notification when your account is active. You don't need to keep this open.</div>
+      </div>
+      <div class="sticky-bottom">
+        <button class="screen-btn secondary">Contact support</button>
+      </div>`
+  },
+];
+
+// === STATE ===
+let showArchive = false;
+let idx = 1;
+
+function getActiveCount() { return screens.filter(s => s.status === 'active').length; }
+function getArchivedCount() { return screens.filter(s => s.status === 'archived').length; }
+
+function render() {
+  const s = screens[idx - 1];
+  document.getElementById('appbar-title').textContent = s.name;
+  document.getElementById('screen').innerHTML = s.html();
+  // progress bar
+  const pb = document.getElementById('progress-wrap');
+  const pbar = document.getElementById('progress-bar');
+  if (s.progress && s.status === 'active') { pb.style.display = 'block'; pbar.style.width = s.progress + '%'; }
+  else if (s.progress && showArchive) { pb.style.display = 'block'; pbar.style.width = s.progress + '%'; pbar.style.background = 'var(--archive)'; }
+  else { pb.style.display = 'none'; }
+  // step pill
+  const sp = document.getElementById('step-pill');
+  let pillHtml = '';
+  if (s.wizard) pillHtml = 'Step ' + s.wizard;
+  else if (s.sub) pillHtml = s.sub;
+  if (s.isNew) { sp.outerHTML = '<div class="new-pill" id="step-pill" style="margin-left:auto">NEW</div>'; }
+  else if (s.status === 'archived') { sp.outerHTML = '<div class="archive-pill" id="step-pill" style="margin-left:auto">Archived</div>'; }
+  else if (pillHtml) { sp.outerHTML = '<div class="step-pill" id="step-pill" style="margin-left:auto">' + pillHtml + '</div>'; }
+  else { sp.outerHTML = '<div class="step-pill" id="step-pill" style="display:none;margin-left:auto"></div>'; }
+  // label
+  document.getElementById('step-label').textContent = `Screen ${idx} of ${screens.length} · ${s.phase}`;
+  // steps list
+  const list = document.getElementById('steps');
+  const visibleScreens = showArchive ? screens : screens.filter(x => x.status === 'active');
+  let html = '';
+  let lastPhase = null;
+  visibleScreens.forEach(sc => {
+    if (lastPhase !== null && lastPhase !== sc.phase) {
+      html += `<div class="archive-divider">${sc.status === 'archived' ? 'Older flow' : 'Next phase'}</div>`;
+    }
+    lastPhase = sc.phase;
+    const pain = (sc.pain && sc.pain.length) ? ' pain' : '';
+    const archClass = sc.status === 'archived' ? ' archived' : '';
+    const isNewBadge = sc.isNew ? ' <span class="archive-badge" style="background:var(--green)">NEW</span>' : '';
+    const archBadge = sc.status === 'archived' ? ' <span class="archive-badge">OLD</span>' : '';
+    html += `
+      <div class="step ${sc.id === idx ? 'active' : ''} ${sc.id < idx ? 'done' : ''}${archClass}${pain}" data-id="${sc.id}">
+        <div class="num">${sc.id < idx ? '✓' : sc.id}</div>
+        <div class="info">
+          <div class="title">${sc.name}${isNewBadge}${archBadge}</div>
+          <div class="sub">${sc.phase}</div>
+        </div>
+      </div>`;
+  });
+  list.innerHTML = html;
+  list.querySelectorAll('.step').forEach(el => {
+    el.onclick = () => { idx = parseInt(el.dataset.id); render(); };
+  });
+  // right panel
+  const list2 = (s.pain && s.pain.length) ? s.pain : [`This screen is part of the active path. Tap "Show archived" to view the older KYC + top-up + pre-dashboard screens.`];
+  document.getElementById('pain-panel').innerHTML = `
+    <ul class="pain-list">${list2.map(c => `<li>${c}</li>`).join('')}</ul>
+  `;
+  // impact panel
+  document.getElementById('pill-active').textContent = getActiveCount();
+  document.getElementById('pill-archive').textContent = getArchivedCount();
+  document.getElementById('pill-otp').textContent = s.id <= 6 ? 1 : (s.id === 11 || s.id === 17) ? 2 : 0;
+  // left title + meta
+  document.getElementById('left-title').textContent = showArchive
+    ? `All screens · ${screens.length} (active + archived)`
+    : `Active path · ${getActiveCount()} screens`;
+  document.getElementById('meta-line').textContent = showArchive
+    ? `Showing all ${screens.length} screens · ${getActiveCount()} active, ${getArchivedCount()} archived`
+    : `Active path · ${getActiveCount()} screens · Archived older flow · ${getArchivedCount()} screens`;
+  // archive button
+  document.getElementById('btn-archive').textContent = showArchive
+    ? 'Hide archived (' + getArchivedCount() + ')'
+    : 'Show archived (' + getArchivedCount() + ')';
+  // nav
+  document.getElementById('btn-next-top').textContent = idx === screens.length ? 'Restart' : 'Next screen →';
+  document.getElementById('btn-prev').disabled = idx === 1;
+  document.getElementById('btn-next-bottom').disabled = idx === screens.length;
+  document.getElementById('back-btn').style.visibility = idx === 1 ? 'hidden' : 'visible';
+}
+
+document.getElementById('btn-prev').onclick = () => { if (idx > 1) { idx--; render(); } };
+document.getElementById('btn-next-bottom').onclick = () => { if (idx < screens.length) { idx++; render(); } else { idx = 1; render(); } };
+document.getElementById('btn-next-top').onclick = () => { if (idx < screens.length) { idx++; render(); } else { idx = 1; render(); } };
+document.getElementById('back-btn').onclick = () => { if (idx > 1) { idx--; render(); } };
+document.getElementById('btn-archive').onclick = () => {
+  showArchive = !showArchive;
+  // when revealing archive, keep current selection if it's active
+  // when hiding, if current is archived, jump to the last active screen
+  if (!showArchive) {
+    const cur = screens[idx - 1];
+    if (cur && cur.status === 'archived') {
+      // find the nearest active screen at or before this index
+      for (let i = idx; i >= 1; i--) {
+        if (screens[i - 1].status === 'active') { idx = i; break; }
+      }
+    }
+  }
+  render();
+  const t = document.getElementById('toast');
+  t.textContent = showArchive
+    ? 'Showing ' + getArchivedCount() + ' archived screens (older flow)'
+    : 'Active path only · ' + getActiveCount() + ' screens';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+};
+setInterval(() => {
+  const d = new Date();
+  document.getElementById('clock').textContent = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}, 30000);
+render();
+</script>
+</body>
+</html>

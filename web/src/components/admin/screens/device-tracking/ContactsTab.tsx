@@ -18,9 +18,13 @@ export function ContactsTab({
   search,
   onSearchChange,
 }: ContactsTabProps) {
+  // P2-9 (2026-08-05 legal/device audit): the name branch lowercased the
+  // query but the phone branch compared the raw input — inconsistent. Phones
+  // are digits so case rarely matters, but normalize both branches against
+  // the same lowercased query so behavior is uniform.
   const q = search.toLowerCase();
   const filtered = (contacts || []).filter(
-    (c) => c.name.toLowerCase().includes(q) || c.phone.includes(search)
+    (c) => c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
   );
 
   return (

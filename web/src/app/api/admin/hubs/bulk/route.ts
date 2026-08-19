@@ -6,6 +6,8 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
 
+import { invalidateCache } from '@/lib/cache';
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -33,6 +35,8 @@ export async function POST(req: NextRequest) {
       default:
         return errors.validation('Invalid action');
     }
+    invalidateCache('admin:*');
+    invalidateCache('admin:vehicles:*');
     return success(result, `Bulk ${action} completed`);
   } catch (error: unknown) {
     const message = errorMessage(error);

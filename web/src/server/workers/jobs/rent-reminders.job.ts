@@ -1,4 +1,6 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
+import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '../outbox';
@@ -14,8 +16,23 @@ interface RentReminderResult {
 }
 
 export const rentRemindersJob = {
-  async process(job: any): Promise<RentReminderResult> {
-    logger.info('[RentRemindersJob] Starting', { jobId: job.id });
+  /**
+   * PR-VER-2026-08-06 (EVENT_BUS P0-6): `mode` differentiates the two admin
+   * job cards that share this processor.
+   *   - 'full' (default): rent-due check — detect overdue + notify, AND
+   *     auto-debit wallets with sufficient balance.
+   *   - 'debit-only': auto-debit — only attempt wallet debits; do NOT emit
+   *     RENT_OVERDUE or send overdue notifications.
+   */
+  async process(
+    job: QueueJob,
+    opts?: { mode?: 'full' | 'debit-only' }
+  ): Promise<RentReminderResult> {
+    logger.info('[RentRemindersJob] Starting', {
+      jobId: job.id,
+      mode: opts?.mode ?? 'full',
+    });
+    const debitOnly = opts?.mode === 'debit-only';
 
     const result: RentReminderResult = {
       checkedRentals: 0,
@@ -31,7 +48,7 @@ export const rentRemindersJob = {
     // tenant every day and drained the wallet in 1-2 days.
     const now = clock.now();
 
-    const activeLeases = (await db.rentalLease.findMany({
+    const activeLeases = await db.rentalLease.findMany({
       where: {
         status: 'BOOKED',
         nextRentDueAt: { lte: now },
@@ -56,7 +73,7 @@ export const rentRemindersJob = {
           },
         },
       },
-    })) as any;
+    });
 
     result.checkedRentals = activeLeases.length;
 
@@ -79,7 +96,7 @@ export const rentRemindersJob = {
             lease.nextRentDueAt!.getTime() + durationDays * 24 * 60 * 60 * 1000
           );
 
-          await db.$transaction(async (tx: any) => {
+          await db.$transaction(async (tx) => {
             // Re-check inside tx: another worker may have already
             // advanced this lease. If periodNo changed, skip.
             const fresh = await tx.rentalLease.findUnique({
@@ -123,6 +140,27 @@ export const rentRemindersJob = {
                 nextRentDueAt: newNextRentDueAt,
               },
             });
+
+            // PR-VER-2026-08-06 (EVENT_BUS P0-5): RENT_PAID had a consumer
+            // (orphan-event-consumer sends the receipt push) but NO producer —
+            // the outbox row for it never existed, so the receipt was never
+            // sent. Emit INSIDE the debit tx (repo convention:
+            // scripts/check-outbox-emit-with-tx.sh) so a payment can never
+            // commit without its RENT_PAID outbox row. If the emit fails the
+            // whole tx rolls back — the debit is idempotent via periodKey,
+            // so a job retry replays it cleanly.
+            await OutboxService.emit(
+              OutboxEventTypes.RENT_PAID,
+              {
+                riderId: rider.id,
+                leaseId: lease.id,
+                amountInPaise: rentAmount,
+                periodNo: lease.periodNo,
+              },
+              3,
+              tx,
+              'interactive'
+            );
           });
 
           createAuditLog({
@@ -155,8 +193,11 @@ export const rentRemindersJob = {
           }
           logger.error('[RentRemindersJob] Auto-debit failed', { riderId: rider.id, err });
         }
-      } else {
-        // Insufficient balance — mark as potential overdue
+      } else if (!debitOnly) {
+        // Insufficient balance — mark as potential overdue. Skipped in
+        // debit-only mode (PR-VER-2026-08-06 EVENT_BUS P0-6): the
+        // auto-debit admin job only attempts debits, it does not spam
+        // overdue notifications.
         result.overdueDetected++;
 
         // Emit outbox event for overdue
@@ -170,6 +211,8 @@ export const rentRemindersJob = {
             leaseId: lease.id,
             amountDue: rentAmount,
             balance,
+            hoursUntilDebit: 0,
+            periodNo: lease.periodNo ?? 1,
           },
           3,
           undefined,

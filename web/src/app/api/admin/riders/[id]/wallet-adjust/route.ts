@@ -10,6 +10,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { randomUUID } from 'crypto';
 import { adminWalletAdjustSchema } from '@/lib/validators/admin';
 import { env } from '@/lib/env';
+import { toRupeesResponse } from '@/lib/api-money';
 
 // PR-89 (API N6): hard cap on a single admin DEBIT and second-admin
 // approval for debits above the threshold. Defaults:
@@ -104,7 +105,7 @@ export async function POST(
       }
     }
 
-    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await db.$transaction(async (tx) => {
       // Create a Transaction record for transparency
       const txn = await tx.transaction.create({
         data: {
@@ -173,7 +174,7 @@ export async function POST(
       }),
     }).catch(() => {});
 
-    return success(result);
+    return success(toRupeesResponse(result));
   } catch (error: any) {
     logger.error('Wallet adjust error:', error);
     return errors.internal('Failed to adjust wallet');

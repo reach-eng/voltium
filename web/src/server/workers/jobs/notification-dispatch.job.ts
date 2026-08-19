@@ -63,7 +63,9 @@ export interface NotificationPayload {
 
 interface DispatchResult {
   delivered: boolean;
-  channel: 'fcm' | 'overlay' | 'in-app' | 'none';
+  // 'fcm+in-app' (KYC cases): both the FCM push AND the in-app row were
+  // written — the channel reflects the real delivery path.
+  channel: 'fcm' | 'overlay' | 'in-app' | 'fcm+in-app' | 'none';
   warning?: string;
 }
 
@@ -91,7 +93,22 @@ export const notificationDispatchJob = {
           payload.riderId,
           'APPROVED'
         );
-        return { delivered: true, channel: 'fcm' };
+        try {
+          await db.notification.create({
+            data: {
+              riderId: payload.riderId as string,
+              // SYSTEM is the canonical DB enum for KYC events
+              // (see notificationService.createAndSend TYPE_MAP);
+              // the event type rides in the payload JSON.
+              type: 'SYSTEM',
+              title: (payload.title as string) ?? 'KYC Approved',
+              message: (payload.body as string) ?? 'Your KYC verification has been approved.',
+            },
+          });
+        } catch (err) {
+          logger.warn('[NotificationDispatch] Failed to persist in-app KYC_APPROVED notification', { err });
+        }
+        return { delivered: true, channel: 'fcm+in-app' };
 
       case 'KYC_REJECTED':
         await notificationService.notifyKycStatusChange(
@@ -99,7 +116,19 @@ export const notificationDispatchJob = {
           'REJECTED',
           payload.reason as string | undefined
         );
-        return { delivered: true, channel: 'fcm' };
+        try {
+          await db.notification.create({
+            data: {
+              riderId: payload.riderId as string,
+              type: 'SYSTEM',
+              title: (payload.title as string) ?? 'KYC Rejected',
+              message: (payload.body as string) ?? (payload.reason as string) ?? 'Your KYC verification was rejected.',
+            },
+          });
+        } catch (err) {
+          logger.warn('[NotificationDispatch] Failed to persist in-app KYC_REJECTED notification', { err });
+        }
+        return { delivered: true, channel: 'fcm+in-app' };
 
       case 'KYC_INFO_REQUIRED':
         await notificationService.notifyKycStatusChange(
@@ -112,24 +141,22 @@ export const notificationDispatchJob = {
       case 'WALLET_TOPUP_APPROVED':
       case 'WALLET_TOPUP_REJECTED':
       case 'DEPOSIT_APPROVED':
-      case 'DEPOSIT_REJECTED':
-      case 'KYC_APPROVED':
-      case 'KYC_REJECTED': {
+      case 'DEPOSIT_REJECTED': {
         // PR-78: actually persist a Notification row so the in-app
         // notification center has a record. The previous code returned
         // `delivered:true, channel:'in-app'` without a side effect,
         // so the OutboxEvent was acked but the rider never saw
         // anything if the in-request `notificationService` call failed.
-        const notifType = String(payload.type);
+        const eventType = String(payload.type);
         try {
           await db.notification.create({
             data: {
               riderId: payload.riderId as string,
-              type: notifType,
-              title: (payload.title as string) ?? notifType.replace(/_/g, ' '),
-              body: (payload.body as string) ?? null,
-              channel: 'in-app',
-              payload: JSON.stringify(payload),
+              // PAYMENT is the canonical DB enum for wallet/deposit
+              // events; the exact event rides in the payload JSON.
+              type: 'PAYMENT',
+              title: (payload.title as string) ?? eventType.replace(/_/g, ' '),
+              message: (payload.body as string) ?? eventType.replace(/_/g, ' '),
             },
           });
         } catch (err) {

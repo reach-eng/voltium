@@ -98,6 +98,11 @@ jobs:
           fi
           cd flutter && dart run tool/lint_static_palette_tokens.dart
 
+      - name: Run raw toast calls ratchet
+        # P0-F1: Prohibits raw `showSnackBar` calls outside `lib/utils/toast.dart`.
+        # All user notifications must use `Toast.success / .error / .info / .warning`.
+        run: dart run tool/lint_raw_toast_calls.dart
+
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest

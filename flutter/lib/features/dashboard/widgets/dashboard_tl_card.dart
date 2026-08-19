@@ -3,6 +3,9 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/premium_cards.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+
 /// Team Leader card widget for the Active Dashboard.
 class TeamLeaderCard extends StatelessWidget {
   final String? teamLeaderName;
@@ -19,6 +22,13 @@ class TeamLeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final isUnassigned = teamLeaderName == null ||
+        teamLeaderName!.isEmpty ||
+        teamLeaderName == 'Not Assigned';
+    final displayName =
+        isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : teamLeaderName!;
+
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
         child: Container(
@@ -35,16 +45,21 @@ class TeamLeaderCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Team Leader',
+                    l10n?.txtteamLeader ?? 'Team Leader',
                     style: AppTypography.bodySmall
                         .copyWith(fontWeight: FontWeight.w800)
                         .copyWith(
                             color: colors.onSurfaceMuted, letterSpacing: 1.0),
                   ),
                   InkWell(
-                    onTap: onViewDetails,
+                    onTap: onViewDetails != null
+                        ? () {
+                            HapticService.light();
+                            onViewDetails!();
+                          }
+                        : null,
                     child: Text(
-                      'View Details',
+                      l10n?.txtviewDetailsAction ?? 'View Details',
                       style: AppTypography.labelMedium
                           .copyWith(color: AppColors.primary),
                     ),
@@ -61,7 +76,7 @@ class TeamLeaderCard extends StatelessWidget {
                       color: AppColors.warningSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border:
-                          Border.all(color: AppColors.of(context).warningLight),
+                          Border.all(color: colors.warningLight),
                     ),
                     child: const Icon(Icons.stars,
                         color: AppColors.warningForeground, size: 24),
@@ -72,17 +87,16 @@ class TeamLeaderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (teamLeaderName == null ||
-                                  teamLeaderName!.isEmpty ||
-                                  teamLeaderName == 'Not Assigned')
-                              ? 'Not assigned'
-                              : teamLeaderName!,
+                          displayName,
                           style: AppTypography.titleSmall
                               .copyWith(color: colors.onSurface),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Assigned TL',
+                          isUnassigned
+                              ? (l10n?.txttlPendingNotice ??
+                                  'Your hub will assign a team leader shortly')
+                              : (l10n?.txtassignedTlBadge ?? 'Assigned TL'),
                           style: AppTypography.bodySmall
                               .copyWith(fontWeight: FontWeight.w600)
                               .copyWith(color: colors.onSurfaceVariant),
@@ -101,7 +115,12 @@ class TeamLeaderCard extends StatelessWidget {
                         color: colors.onSurfaceVariant,
                         size: 20,
                       ),
-                      onPressed: onCall,
+                      onPressed: onCall != null
+                          ? () {
+                              HapticService.light();
+                              onCall!();
+                            }
+                          : null,
                     ),
                   ),
                 ],

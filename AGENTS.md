@@ -51,7 +51,7 @@ This file contains context for AI assistants working on this codebase.
 ### Backend Unit Tests
 
 - Location: `tests/unit/`
-- Run: `npm run test:unit` (574 passing, 28 skipped)
+- Run: `npm run test:unit` (2,958 passing, 3 skipped — 298 test files)
 
 ### Backend Integration & API Tests
 
@@ -61,7 +61,15 @@ This file contains context for AI assistants working on this codebase.
 - Wait-for-server: `npx wait-on tcp:8081`
 - CI pipeline: seed DB → start dev → wait → integration tests → API tests → stop dev
 
-### Flutter E2E Tests (33/33 PASSING)
+### Flutter E2E Tests (49/49 PASSING)
+
+> TEST-STRATEGY-AUDIT (2026-08-08, T-P0-3): the prior claim of "33/33 PASSING"
+> was stale — the canonical suite at `flutter/integration_test/e2e_individual/`
+> actually contains 49 unique-numbered tests (00–48). The previous count of
+> 33 omitted the 16 tests added in subsequent PRs (PR-8 pickup, PR-9 emergency
+> SOS, and others). The deprecated `e2e/` directory holds 9 additional
+> full-journey tests that overlap with `e2e_individual/` and are not run
+> by the canonical script — see `e2e/DEPRECATED.md`.
 
 - Location: `flutter/integration_test/e2e_individual/`
 - Run all: `bash flutter/integration_test/e2e_individual/run_phased_tests.sh emulator-5554`
@@ -105,6 +113,21 @@ This file contains context for AI assistants working on this codebase.
 | 31  | `31_error_recovery_test.dart`             | Error Recovery |
 | 32  | `32_rental_end_test.dart`                 | Rental         |
 | 33  | `33_onboarding_referral_logout_test.dart` | Full Flow      |
+| 34  | `34_guarantor_flow_test.dart`             | Guarantor Flow |
+| 35  | `35_kyc_notification_test.dart`           | KYC Notify     |
+| 36  | `36_offline_edge_cases_test.dart`         | Offline Edge   |
+| 37  | `37_wallet_topup_balance_test.dart`       | Wallet Balance |
+| 38  | `38_kyc_notification_flow_test.dart`      | KYC Notify Flow|
+| 39  | `39_vehicle_return_workflow_test.dart`    | Vehicle Return |
+| 40  | `40_exhaustive_ui_traversal_test.dart`    | UI Traversal   |
+| 41  | `41_realtime_onboarding_to_active_dashboard_test.dart` | Realtime Onboard |
+| 42  | `42_adversarial_error_paths_test.dart`    | Adversarial    |
+| 43  | `43_debug_login_test.dart`                | Debug Login    |
+| 44  | `44_full_onboarding_to_dashboard_test.dart` | Full Onboarding |
+| 45  | `45_guarantor_form_test.dart`             | Guarantor Form  |
+| 46  | `46_pickup_screen_test.dart`              | Pickup          |
+| 47  | `47_admin_approval_wait_test.dart`        | Admin Approval  |
+| 48  | `48_emergency_sos_test.dart`              | Emergency SOS   |
 
 #### Key Test Helpers (`flutter/integration_test/helpers/test_helpers.dart`)
 
@@ -154,10 +177,14 @@ GitHub Actions: `.github/workflows/ci-cd.yml`
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
 
+> **PATH requirement**: the `graphify` CLI must be installed and on PATH for the commands below to work.
+> Run `graphify --version` to verify. If the binary is absent, skip the graphify steps and fall back to
+> `graphify-out/wiki/index.md` (broad navigation) or `graphify-out/GRAPH_REPORT.md` (architecture review).
+
 When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 
 Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists **and the CLI is on PATH**. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
 - Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.

@@ -147,6 +147,8 @@ export async function GET(
         headers: {
           'Content-Type': contentType,
           'Cache-Control': 'private, max-age=3600',
+          'X-Content-Type-Options': 'nosniff',
+          'Content-Disposition': `inline; filename="${record.originalName || 'file'}"`,
         },
       });
     } catch (readError) {

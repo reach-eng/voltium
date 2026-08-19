@@ -18,6 +18,7 @@ import type { SessionPayload } from '@/lib/auth';
 import { logPermissionDenied } from '@/lib/security-events';
 
 export type { SessionPayload } from '@/lib/auth';
+export { requireAdminSession } from '@/server/modules/admin/admin.policy';
 
 export async function requireAdmin(): Promise<SessionPayload | null> {
   return await getAdminSession();
@@ -77,13 +78,10 @@ export function adminForbiddenWithLog(
 }
 
 /**
- * Parse `?page=N&limit=M` from a URL. Clamped to [1, 100] for limit.
- * Lives here (not in `permissions.ts`) because it's an HTTP helper,
- * not an RBAC concern.
+ * DEEP-AUDIT D-P1-1 (2026-08-08): removed. The implementation used
+ * `parseInt()` (NaN-prone on `?page=abc` — Math.max(1, NaN) === NaN,
+ * which then crashes Prisma's skip/take). Every paginated route now
+ * uses `parsePositiveInt` from `@/lib/api-utils`, which clamps to a
+ * safe finite integer ≥ 1. Import sites updated.
  */
-export function parsePaginationParams(url: URL): { page: number; limit: number } {
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-  const limitRaw = parseInt(url.searchParams.get('limit') || '20');
-  const limit = Math.min(Math.max(1, limitRaw), 100);
-  return { page, limit };
-}
+// parsePaginationParams removed — see DEEP-AUDIT D-P1-1

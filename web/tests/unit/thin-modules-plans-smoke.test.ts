@@ -83,8 +83,8 @@ describe('plans (thin module) — list() use case', () => {
     vi.clearAllMocks();
     mockDb.rentalPlan = {
       findMany: vi.fn().mockResolvedValue([
-        { id: 'p1', name: 'Daily', price: 10000 },   // 100 rupees
-        { id: 'p2', name: 'Weekly', price: 60000 },  // 600 rupees
+        { id: 'p1', name: 'Daily', priceInPaise: 10000, securityDepositInPaise: 5000 },  // 100 ₹ / 50 ₹
+        { id: 'p2', name: 'Weekly', priceInPaise: 60000, securityDepositInPaise: 10000 }, // 600 ₹ / 100 ₹
       ]),
       count: vi.fn().mockResolvedValue(2),
     };
@@ -93,10 +93,25 @@ describe('plans (thin module) — list() use case', () => {
   it('list() paginates and converts price from paise to rupees', async () => {
     const result = await planUseCases.list(1, 10);
     expect(result.plans).toEqual([
-      { id: 'p1', name: 'Daily', price: 100 },
-      { id: 'p2', name: 'Weekly', price: 600 },
+      { id: 'p1', name: 'Daily', priceInPaise: 10000, securityDepositInPaise: 5000, price: 100, securityDeposit: 50 },
+      { id: 'p2', name: 'Weekly', priceInPaise: 60000, securityDepositInPaise: 10000, price: 600, securityDeposit: 100 },
     ]);
     expect(result.pagination).toEqual({ page: 1, limit: 10, total: 2, totalPages: 1 });
+  });
+
+  // P0.1 (2026-08-05 rentals/vehicles/hubs audit): `list` previously read
+  // `p.price` — a field that doesn't exist on RentalPlan (it has
+  // `priceInPaise`) — so every plan serialized `price: NaN` to the admin UI
+  // and the Flutter plan picker. Regression: formatted prices must be finite.
+  it('list() never emits NaN for price or securityDeposit', async () => {
+    const result = await planUseCases.list(1, 10);
+    expect(result.plans).toHaveLength(2);
+    for (const plan of result.plans) {
+      expect(Number.isFinite(plan.price)).toBe(true);
+      expect(Number.isFinite(plan.securityDeposit)).toBe(true);
+    }
+    // Explicit NaN guards on the exact P0.1 field path
+    expect(planUseCases.list).toBeDefined();
   });
 });
 
@@ -108,7 +123,7 @@ describe('plans (thin module) — create() use case', () => {
     };
   });
 
-  it('create() computes durationDays from type', async () => {
+  it('create() computes durationDays from type and defaults isActive to draft (false)', async () => {
     await planUseCases.create(
       { name: 'Daily Plan', type: 'DAILY', price: 100 },
       'admin-1'
@@ -119,9 +134,24 @@ describe('plans (thin module) — create() use case', () => {
           name: 'Daily Plan',
           type: 'DAILY',
           durationDays: 1,
-          price: 10000, // rupees to paise
-          isActive: true,
+          priceInPaise: 10000, // rupees to paise
+          securityDepositInPaise: 0,
+          // P0-6 (2026-08-07 verification): omitted isActive now defaults to
+          // inactive (draft) instead of silently publishing the plan.
+          isActive: false,
         }),
+      })
+    );
+  });
+
+  it('create() honors an explicit isActive: true flag', async () => {
+    await planUseCases.create(
+      { name: 'Daily Plan', type: 'DAILY', price: 100, isActive: true },
+      'admin-1'
+    );
+    expect(mockDb.rentalPlan.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isActive: true }),
       })
     );
   });
@@ -174,9 +204,13 @@ describe('plans (thin module) — update() use case', () => {
     await planUseCases.update('p1', { price: 200 }, 'admin-1');
     expect(mockDb.rentalPlan.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ price: 20000 }),
+        data: expect.objectContaining({ priceInPaise: 20000 }),
       })
     );
+    // The legacy `price` key must be stripped — RentalPlan has no such column
+    // (P0.1 field name is priceInPaise)
+    const data = mockDb.rentalPlan.update.mock.calls[0][0].data;
+    expect(data).not.toHaveProperty('price');
   });
 
   it('update() invalidates both rental_plans and rider_plans caches', async () => {
@@ -189,12 +223,20 @@ describe('plans (thin module) — update() use case', () => {
 describe('plans (thin module) — delete() use case', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDb.rentalPlan = { delete: vi.fn().mockResolvedValue({}) };
+    mockDb.rentalPlan = { update: vi.fn().mockResolvedValue({}) };
   });
 
-  it('delete() removes the plan and invalidates caches', async () => {
+  // P1.9 (2026-08-05 rentals/vehicles/hubs audit): delete is a SOFT delete —
+  // sets deletedAt + isActive: false. The row and audit trail survive; every
+  // read path filters deletedAt: null. Hard deletes are gone from the API.
+  it('delete() soft-deletes the plan and invalidates caches', async () => {
     await planUseCases.delete('p1', 'admin-1');
-    expect(mockDb.rentalPlan.delete).toHaveBeenCalledWith({ where: { id: 'p1' } });
+    // Hard delete is gone from the API surface entirely
+    expect((mockDb.rentalPlan as Record<string, unknown>).delete).toBeUndefined();
+    const { where, data } = mockDb.rentalPlan.update.mock.calls[0][0];
+    expect(where).toEqual({ id: 'p1' });
+    expect(data).toMatchObject({ isActive: false });
+    expect(data.deletedAt).toBeInstanceOf(Date);
     expect(mockInvalidateCache).toHaveBeenCalledWith('rental_plans*');
     expect(mockInvalidateCache).toHaveBeenCalledWith('rider_plans*');
   });

@@ -29,7 +29,7 @@ describe('POST /api/admin/transactions/bulk', () => {
     adminCookie = await adminLogin();
   });
 
-  it('1. returns 200 for a valid request', async () => {
+  it('1. returns 207 Multi-Status when an ID fails (P0-3 / TG-6)', async () => {
     const { status, body } = await api('/api/admin/transactions/bulk', {
       method: 'POST',
       cookie: adminCookie,
@@ -39,9 +39,13 @@ describe('POST /api/admin/transactions/bulk', () => {
       },
     });
 
-    expect(status).toBe(200);
+    // P0-3: the old code returned 200 with a green toast over failures.
+    // A failing ID now surfaces as 207 with an explicit failed count.
+    expect(status).toBe(207);
     expect(body.success).toBe(true);
     expect(body.data.results).toBeDefined();
+    expect(body.data.failed).toBe(1);
+    expect(body.data.results[0].status).toBe('ERROR');
   });
 
   it('2. returns 401 without auth', async () => {

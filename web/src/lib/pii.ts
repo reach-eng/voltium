@@ -52,3 +52,19 @@ export function maskPan(pan: string | null | undefined): string {
   if (cleanPan.length !== 10) return '**********'; // 10 asterisks
   return `******${cleanPan.slice(-4)}`;
 }
+
+/**
+ * Mask bank account number (e.g. 12345678901234 -> XXXXXX1234)
+ *
+ * SECURITY (PR-5: RIDER_DASHBOARD P0-3): account numbers are PII under DPDP.
+ * The dashboard endpoint was returning unmasked `accountNumber` and `ifscCode`
+ * alongside the masked Aadhaar/PAN. The IFSC code is non-sensitive (it
+ * identifies a bank branch, not a person), but the account number must be
+ * masked. We show only the last 4 digits.
+ */
+export function maskAccountNumber(accountNumber: string | null | undefined): string {
+  if (!accountNumber) return '';
+  const clean = accountNumber.replace(/[^0-9]/g, '');
+  if (clean.length < 4) return '****';
+  return `${'*'.repeat(Math.max(0, clean.length - 4))}${clean.slice(-4)}`;
+}

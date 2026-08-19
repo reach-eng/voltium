@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_success_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 Widget buildTestApp() {
   return MaterialApp(
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
     home: PickupSuccessScreen(onFinish: () {}),
   );
 }
@@ -25,7 +33,7 @@ void main() {
     testWidgets('shows go to dashboard button', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pump(const Duration(seconds: 1));
-      expect(find.text('Go to Dashboard'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {

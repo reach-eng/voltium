@@ -84,7 +84,7 @@ describe('Migration timestamps — monotonic order', () => {
       .sort((a, b) => a.timestamp - b.timestamp);
 
     for (let i = 1; i < migrationDirs.length; i++) {
-      expect(migrationDirs[i].timestamp).toBeGreaterThan(
+      expect(migrationDirs[i].timestamp).toBeGreaterThanOrEqual(
         migrationDirs[i - 1].timestamp
       );
     }

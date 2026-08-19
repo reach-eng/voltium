@@ -29,8 +29,11 @@ export async function POST(request: NextRequest) {
       return errors.badRequest('Missing refreshToken');
     }
 
-    const session = await verifySessionToken(refreshToken, 'Refresh');
-    if (!session) {
+    // P0-3 (admin audit, same class): only a genuine refresh token may be
+    // exchanged — an access token passed here must never mint a fresh 30d
+    // refresh token.
+    const session = await verifySessionToken(refreshToken);
+    if (!session || session.type !== 'refresh') {
       return errors.unauthorized('Invalid or expired refresh token');
     }
 

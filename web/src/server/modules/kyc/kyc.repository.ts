@@ -13,24 +13,24 @@ import { encryptPii, decryptPii } from '@/lib/pii-crypto';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { logKycDocumentView } from '@/lib/security-events';
 
-function encryptKycData(data: any) {
+function encryptKycData(data: Record<string, unknown> | null) {
   if (!data) return data;
   const result = { ...data };
-  if (result.aadhaarNumber !== undefined) result.aadhaarNumber = encryptPii(result.aadhaarNumber);
-  if (result.panNumber !== undefined) result.panNumber = encryptPii(result.panNumber);
-  if (result.accountNumber !== undefined) result.accountNumber = encryptPii(result.accountNumber);
-  if (result.ifscCode !== undefined) result.ifscCode = encryptPii(result.ifscCode);
+  if (result.aadhaarNumber !== undefined) result.aadhaarNumber = encryptPii(String(result.aadhaarNumber));
+  if (result.panNumber !== undefined) result.panNumber = encryptPii(String(result.panNumber));
+  if (result.accountNumber !== undefined) result.accountNumber = encryptPii(String(result.accountNumber));
+  if (result.ifscCode !== undefined) result.ifscCode = encryptPii(String(result.ifscCode));
   return result;
 }
 
-function decryptKycData(data: any) {
+function decryptKycData<T>(data: T): T {
   if (!data) return data;
-  const result = { ...data };
-  if (result.aadhaarNumber !== undefined) result.aadhaarNumber = decryptPii(result.aadhaarNumber);
-  if (result.panNumber !== undefined) result.panNumber = decryptPii(result.panNumber);
-  if (result.accountNumber !== undefined) result.accountNumber = decryptPii(result.accountNumber);
-  if (result.ifscCode !== undefined) result.ifscCode = decryptPii(result.ifscCode);
-  return result;
+  const result = { ...(data as Record<string, unknown>) };
+  if (result.aadhaarNumber !== undefined) result.aadhaarNumber = decryptPii(String(result.aadhaarNumber));
+  if (result.panNumber !== undefined) result.panNumber = decryptPii(String(result.panNumber));
+  if (result.accountNumber !== undefined) result.accountNumber = decryptPii(String(result.accountNumber));
+  if (result.ifscCode !== undefined) result.ifscCode = decryptPii(String(result.ifscCode));
+  return result as T;
 }
 
 export const kycRepository = {
@@ -92,12 +92,12 @@ export const kycRepository = {
     const kyc = await db.kycProfile.upsert({
       where: { riderId: riderDbId },
       create: {
+        ...(encryptedData as unknown as Prisma.KycProfileUncheckedCreateInput),
         riderId: riderDbId,
-        ...(encryptedData as any),
         status: currentStatus,
       },
       update: {
-        ...(encryptedData as any),
+        ...(encryptedData as unknown as Prisma.KycProfileUncheckedUpdateInput),
         // Don't change status — let submitKyc handle the transition
       },
     });
@@ -117,16 +117,16 @@ export const kycRepository = {
 
     const encryptedData = encryptKycData(data);
 
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    return db.$transaction(async (tx) => {
       const kyc = await tx.kycProfile.upsert({
         where: { riderId: riderDbId },
         create: {
+          ...(encryptedData as unknown as Prisma.KycProfileUncheckedCreateInput),
           riderId: riderDbId,
-          ...(encryptedData as any),
           status: 'SUBMITTED',
         },
         update: {
-          ...(encryptedData as any),
+          ...(encryptedData as unknown as Prisma.KycProfileUncheckedUpdateInput),
           status: 'SUBMITTED',
         },
       });
@@ -154,7 +154,7 @@ export const kycRepository = {
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
     validateKycTransition(currentStatus, 'APPROVED');
 
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    return db.$transaction(async (tx) => {
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
         data: { status: 'APPROVED' },
@@ -203,7 +203,7 @@ export const kycRepository = {
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
     validateKycTransition(currentStatus, 'REJECTED');
 
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    return db.$transaction(async (tx) => {
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
         data: { status: 'REJECTED', rejectionReason: reason, editableFields },
@@ -237,7 +237,7 @@ export const kycRepository = {
         status: 'INFO_REQUIRED',
         rejectionReason: infoRequest,
       },
-    }).then((kyc: any) => {
+    }).then((kyc) => {
       invalidateRiderCache(riderDbId);
       return kyc;
     });

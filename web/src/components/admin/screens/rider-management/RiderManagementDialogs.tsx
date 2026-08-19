@@ -300,5 +300,4 @@ export function RiderUndoToast({
   );
 }
 
-// Suppress unused-import warning for Rider (kept for type clarity)
-void ({} as Rider);
+

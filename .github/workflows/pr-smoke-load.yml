@@ -1,0 +1,115 @@
+name: PR Smoke Load Test
+
+# TEST-STRATEGY-AUDIT T-P1-2 (2026-08-08): the deep load test in
+# nightly-load.yml is weekly, not on PR. A regression in the outbox
+# or wallet would not be caught until the next Sunday. This workflow
+# adds a SHORT (1 minute, 50 concurrent) smoke run on every PR to
+# catch the worst regressions before merge.
+#
+# The full deep weekly test (k6-load.js, k6 chaos, vehicles-load,
+# rental-book-load, wallet-concurrency) still runs in nightly-load.yml
+# for thorough SLO evaluation.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - fix/**
+      - feat/**
+  workflow_dispatch:
+
+concurrency:
+  group: pr-smoke-load-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ./web
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  smoke-load:
+    name: PR Smoke k6 (50 VUs / 1 min)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: voltium_test
+          POSTGRES_PASSWORD: voltium_test
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
+      TEST_DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
+      API_URL: http://127.0.0.1:8081
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed database
+        run: npm run db:seed
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Start production server
+        run: |
+          npm run start > /tmp/next-start.log 2>&1 &
+          echo "PROD_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for server
+        run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
+
+      - name: Setup k6
+        run: |
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run smoke k6 (50 VUs / 1 min)
+        # Thresholds are intentionally loose — the smoke is for
+        # catching catastrophic regressions (5xx spike, infinite
+        # hangs), not for SLO evaluation. Real SLOs run in
+        # nightly-load.yml.
+        run: |
+          k6 run --vus 50 --duration 60s \
+            --threshold http_req_failed:rate<0.05 \
+            --threshold http_req_duration:p(95)<2000 \
+            tests/load/k6-load.js --out json=k6-smoke.json
+        continue-on-error: true
+
+      - name: Upload k6 smoke artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-k6-smoke-summary
+          path: web/k6-smoke.json
+
+      - name: Stop server
+        if: always()
+        run: kill ${{ env.PROD_PID }} || true

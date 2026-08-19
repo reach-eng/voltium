@@ -43,7 +43,12 @@ class ConnectivityNotifier extends Notifier<ConnectivityState> {
       _connectivitySubscription?.cancel();
       _connectivitySubscription = null;
     });
-    return const ConnectivityState();
+
+    final service = ConnectivityService();
+    _connectivitySubscription?.cancel();
+    _connectivitySubscription = service.onConnectivityChanged.listen(setOnline);
+
+    return ConnectivityState(isOnline: service.isConnected);
   }
 
   /// Bind the notifier to a [ConnectivityService] stream. Calling this

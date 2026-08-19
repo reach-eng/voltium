@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Riverpod 3.x moved the `Override` type to the `misc` library.
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 /// A test harness for Riverpod providers that manages a ProviderContainer.

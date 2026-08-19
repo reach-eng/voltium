@@ -5,7 +5,7 @@ export const adminSupportUseCases = {
   updateTicket: supportUseCases.updateTicket,
   replyToTicket: supportUseCases.replyToTicket,
   getTicket: supportUseCases.getTicket,
-  async logAdminAction(adminId: string, input: { action: string; ticketId: string; details?: any }) {
+  async logAdminAction(adminId: string, input: { action: string; ticketId: string; details?: Record<string, unknown> }) {
     await createAuditLog({
       actorId: adminId,
       action: input.action,

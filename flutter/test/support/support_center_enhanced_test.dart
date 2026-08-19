@@ -18,8 +18,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 Widget wrapWithProviders(Widget child) {
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      localeProviderRef.overrideWith(() => LocaleProvider()),
+      themeProviderRef.overrideWith(() => ThemeProvider()),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -83,8 +83,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            localeProviderRef.overrideWith((ref) => LocaleProvider()),
-            themeProviderRef.overrideWith((ref) => ThemeProvider()),
+            localeProviderRef.overrideWith(() => LocaleProvider()),
+            themeProviderRef.overrideWith(() => ThemeProvider()),
           ],
           child: const MaterialApp(
             home: Scaffold(body: SupportCenterScreen()),

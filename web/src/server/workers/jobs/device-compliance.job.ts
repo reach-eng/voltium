@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { OutboxService, OutboxEventTypes } from '../outbox';
@@ -10,7 +11,7 @@ interface DeviceComplianceResult {
 }
 
 export const deviceComplianceJob = {
-  async process(job: any): Promise<DeviceComplianceResult> {
+  async process(job: QueueJob): Promise<DeviceComplianceResult> {
     logger.info('[DeviceComplianceJob] Starting', { jobId: job.id });
 
     const result: DeviceComplianceResult = {

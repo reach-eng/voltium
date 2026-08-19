@@ -15,6 +15,9 @@ void main() {
     mockDb = MockDatabase();
     service = OfflineStorageService();
     service.dbForTesting = mockDb;
+    // The service is a singleton — clear the in-memory cache so a previous
+    // test's cacheData() can't satisfy a later "not found" assertion.
+    service.clearMemCacheForTesting();
   });
 
   test('cacheData inserts data correctly', () async {

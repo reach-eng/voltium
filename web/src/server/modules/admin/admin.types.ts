@@ -45,6 +45,26 @@ export const ADMIN_ROLE_DESCRIPTIONS: Record<AdminRole, string> = {
   [AdminRole.READ_ONLY]: 'Read-only access to operations dashboards',
 };
 
+/**
+ * Role hierarchy for privilege-escalation checks (P1-1, 2026-08-05 ops audit).
+ *
+ * An admin may only create/assign roles ranked AT or BELOW their own role.
+ * Only SUPER_ADMIN (the top rank) can create or promote another SUPER_ADMIN —
+ * an OPERATIONS_ADMIN could previously create a SUPER_ADMIN account by
+ * passing role: 'SUPER_ADMIN' on POST /api/admin/admins.
+ */
+export const ADMIN_ROLE_RANK: Record<AdminRole, number> = {
+  [AdminRole.READ_ONLY]: 1,
+  [AdminRole.TEAM_LEADER]: 2,
+  [AdminRole.HUB_MANAGER]: 3,
+  [AdminRole.FLEET_MANAGER]: 3,
+  [AdminRole.SUPPORT_AGENT]: 3,
+  [AdminRole.KYC_REVIEWER]: 4,
+  [AdminRole.FINANCE_ADMIN]: 5,
+  [AdminRole.OPERATIONS_ADMIN]: 6,
+  [AdminRole.SUPER_ADMIN]: 7,
+};
+
 // ---------------------------------------------------------------------------
 // Admin Session
 // ---------------------------------------------------------------------------
@@ -124,6 +144,51 @@ export const AUDIT_ACTIONS = {
   // System
   RECONCILIATION_RUN: 'reconciliation.run',
   SYSTEM_CONFIG_CHANGE: 'system.config_change',
+
+  // Operations / Platform (2026-08-05 ops audit, P2-14). These actions were
+  // already being WRITTEN by the routes — the map is documentation; the
+  // AuditLog.action column is TEXT (migration 20260811000000) so every
+  // dot-string persists. This section keeps the docs map in sync with the
+  // code so future enum-style lookups find everything.
+  MAINTENANCE_ENABLED: 'MAINTENANCE_ENABLED',
+  MAINTENANCE_DISABLED: 'MAINTENANCE_DISABLED',
+  FEATURE_FLAG_UPDATE: 'feature_flag.update',
+  NOTIFICATION_SEND: 'notification.send',
+  NOTIFICATION_SEND_ALL: 'notification.send_all',
+  NOTIFICATION_SEND_BATCH: 'notification.send_batch',
+  SETTINGS_UPDATE: 'settings.update',
+  TICKET_CREATED_BY_ADMIN: 'ticket.created_by_admin',
+  TICKET_STATUS_CHANGED: 'ticket.status_changed',
+  TICKET_ASSIGNED: 'ticket.assign',
+  TICKET_BULK_ACTION: 'ticket.bulk',
+  INCIDENT_CREATE: 'incident.create',
+  INCIDENT_UPDATE: 'incident.update',
+  INCIDENT_STATUS: 'incident.status',
+  TEAM_LEADER_CREATE: 'tl.create',
+  TEAM_LEADER_UPDATE: 'tl.update',
+  TEAM_LEADER_DELETE: 'tl.delete',
+  HUB_CREATE: 'hub.create',
+  HUB_UPDATE: 'hub.update',
+  HUB_DELETE: 'hub.delete',
+  // P2.20 (2026-08-05 rentals/vehicles/hubs audit): bulk hub ops write ONE
+  // batched audit entry — distinct action strings so bulk and per-hub clicks
+  // are distinguishable in the trail.
+  HUB_BULK_ACTIVATE: 'hub.bulk_activate',
+  HUB_BULK_DEACTIVATE: 'hub.bulk_deactivate',
+  HUB_BULK_DELETE: 'hub.bulk_delete',
+  SCORE_RECALCULATE: 'score.recalculate',
+  REWARD_AWARD_MANUAL: 'reward.award_manual',
+  SHIFT_CREATE: 'shift.create',
+  SHIFT_UPDATE: 'shift.update',
+  SHIFT_DELETE: 'shift.delete',
+  TELEMETRY_CLEANUP: 'telemetry.cleanup',
+  WALLET_TOPUP_APPROVE: 'wallet.approve_topup',
+  WALLET_TOPUP_REJECT: 'wallet.reject_topup',
+  WALLET_ADJUSTMENT: 'wallet.adjustment',
+  TRANSACTION_APPROVE: 'transaction.approve',
+  TRANSACTION_REJECT: 'transaction.reject',
+  TRANSACTION_REVERSE: 'transaction.reverse',
+  WALLET_RECONCILIATION_MISMATCH: 'security.reconciliation.mismatch',
 
   // Data Management / Backups
   BACKUP_CREATED: 'backup.created',

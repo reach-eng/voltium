@@ -12,9 +12,8 @@ import type {
   SubTabId,
 } from './types';
 
-// We type the session as SessionPayload so it satisfies hasPermission().
-// The actual /api/admin/auth/me response is a superset, so the narrow
-// interface is fine.
+// The /api/admin/auth/me response carries more fields than SessionPayload
+// (phone, permissions, etc.); the narrow interface is the subset we consume.
 type AdminSession = SessionPayload;
 
 /**
@@ -28,6 +27,12 @@ export function useDeviceTracking(riderId: string | undefined) {
   const [data, setData] = useState<DeviceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<AdminSession | null>(null);
+  // P1-16: distinct from `session` so the view can wait for the /me fetch to
+  // SETTLE (success OR failure) before running the permission check — a
+  // pending/null session must not short-circuit it.
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  // P1-14: surfaced as an error banner instead of a silent empty state.
+  const [error, setError] = useState<string | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>('calls');
   const [searchQuery, setSearchQuery] = useState('');
   const [isActionPending, setIsActionPending] = useState(false);
@@ -47,26 +52,43 @@ export function useDeviceTracking(riderId: string | undefined) {
       if (res.ok) {
         const json = await res.json();
         setSession(json.data);
+      } else {
+        setError('Session check failed — permission cannot be verified');
       }
     } catch (err) {
       logger.error('Failed to fetch admin session', { error: err });
+      setError('Session check failed — permission cannot be verified');
+    } finally {
+      setSessionLoaded(true);
     }
   }, []);
 
   const fetchData = useCallback(async () => {
     if (!riderId) {
       setLoading(false);
+      setData(null);
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/admin/riders/${riderId}/device-data`);
+      if (!res.ok) {
+        setError(`Failed to load device data (${res.status})`);
+        setData(null);
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+      } else {
+        setError(json.error || 'Failed to load device data');
+        setData(null);
       }
     } catch (err) {
       logger.error('Failed to fetch device data', { error: err });
+      setError('Failed to load device data');
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -95,6 +117,13 @@ export function useDeviceTracking(riderId: string | undefined) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, riderId, ...extra }),
         });
+        // P1-14: a non-JSON error (proxy 502, network reset) previously
+        // threw inside res.json() and fell into the catch — now handled
+        // explicitly with the HTTP status.
+        if (!res.ok) {
+          toast.error(`Request failed (${res.status})`);
+          return;
+        }
         const json = await res.json();
         if (json.success) {
           toast.success(json.message || `${action} triggered successfully`);
@@ -139,7 +168,9 @@ export function useDeviceTracking(riderId: string | undefined) {
     // data
     data,
     loading,
+    error,
     session,
+    sessionLoaded,
     // sub-tab + search
     activeSubTab,
     setActiveSubTab,

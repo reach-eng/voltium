@@ -10,6 +10,7 @@ import '../../../models/hub_model.dart';
 import '../../../widgets/dashed_border_painter.dart';
 import '../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 // Pickup Hub styling constants have been moved to dynamic AppColors.of(context)
 // Note: AppColors.primary and AppColors.success are brand colors and remain static.
@@ -119,7 +120,8 @@ Widget buildTeamLeaderDropdown(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
-      hintText: 'Select Team Leader',
+      hintText: AppLocalizations.of(context)?.txtselectTeamLeader ??
+          'Select Team Leader',
       hintStyle: GoogleFonts.plusJakartaSans(
         color: colors.onSurfaceMuted.withValues(alpha: 0.7),
         fontSize: 14,

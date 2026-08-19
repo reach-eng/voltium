@@ -6,31 +6,21 @@ import 'package:voltium_rider/features/wallet/domain/repository.dart';
 
 /// Implementation of [WalletRepository] using the Voltium API.
 class WalletRepositoryImpl implements WalletRepository {
-  final ApiClient _client;
   final VoltiumApiClient _apiClient;
 
-  WalletRepositoryImpl(this._client, this._apiClient);
-
-  @override
-  Future<WalletEntity> getWallet(String riderDbId) async {
-    final response = await _apiClient.getRiderDashboard();
-    Map<String, dynamic> walletJson = {};
-    if (response['rider'] is Map<String, dynamic> &&
-        response['rider']['wallet'] is Map<String, dynamic>) {
-      walletJson = response['rider']['wallet'] as Map<String, dynamic>;
-    } else if (response['wallet'] is Map<String, dynamic>) {
-      walletJson = response['wallet'] as Map<String, dynamic>;
-    } else {
-      walletJson = response;
-    }
-    return WalletEntity.fromJson(walletJson);
-  }
+  // PR-VER-2026-08-06 (WALLET P0-2/P0-4): `_client` was only used by the
+  // removed `deleteTransactionHistory` (HISTORY_IMMUTABLE — history is a
+  // permanent record). The `client` param is kept so call sites and test
+  // doubles that construct with two args keep compiling.
+  WalletRepositoryImpl(ApiClient client, this._apiClient);
 
   @override
   Future<TopupRequest> submitTopup(TopupRequest request) async {
     final req = api.TopupRequest(
       riderId: request.riderId,
-      amount: request.amount,
+      // PR-RUPEES-2026-08-08: the API accepts the amount in rupees. The
+      // conversion to paise happens server-side on insert.
+      amount: request.amountInRupees,
       method: request.method,
       purpose: request.purpose,
       upiRef: request.upiRef,
@@ -62,10 +52,5 @@ class WalletRepositoryImpl implements WalletRepository {
     return data
         .map((e) => TransactionEntity.fromJson(e as Map<String, dynamic>))
         .toList();
-  }
-
-  @override
-  Future<void> deleteTransactionHistory(String riderDbId) async {
-    await _client.delete('/api/transaction/history');
   }
 }

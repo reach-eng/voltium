@@ -62,9 +62,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     // Both now read from the brightness-aware theme.
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: colors.iconBackground,
+        backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,

@@ -7,6 +7,7 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma, RentalStatus } from '@prisma/client';
 import { flattenRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { logger } from '@/lib/logger';
@@ -15,6 +16,24 @@ import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.s
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
 import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
+import { clock } from '@/lib/clock';
+import { verifyVerifyReceipt } from '@/lib/verify-receipt';
+
+const GUARANTOR_FIELD_TO_DB: Record<string, string> = {
+  guarantorName: 'name',
+  guarantorRelation: 'relation',
+  guarantorDob: 'dob',
+  guarantorPhone: 'phone',
+  guarantorAadhaarFront: 'aadhaarFront',
+  guarantorAadhaarBack: 'aadhaarBack',
+  guarantorPan: 'pan',
+  guarantorVideo: 'video',
+  guarantorSignature: 'signature',
+  guarantorAddress: 'address',
+  guarantorPhoto: 'photo',
+  guarantorFatherName: 'fatherName',
+  guarantorMotherName: 'motherName',
+};
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -33,6 +52,10 @@ const SAFE_RIDER_FIELDS = new Set([
   'micGranted',
   'cameraGranted',
   'phoneGranted',
+  // LANGUAGE-AUDIT (2026-08-16) #6: the rider's chosen language as a
+  // BCP-47 language tag (e.g. `en`, `hi`). Sanitized on the way in
+  // (validator allows only lowercase letters + optional country code).
+  'preferredLocale',
 ]);
 
 const SAFE_KYC_FIELDS = new Set([
@@ -69,6 +92,83 @@ const SAFE_GUARANTOR_FIELDS = new Set([
   'guarantorStatus',
 ]);
 
+/**
+ * DEEP-AUDIT D-P1-5 (2026-08-08): the rent-prompt logic was previously
+ * inlined in getDashboard's try/catch. Extracted to a free function so:
+ *   1. It runs in parallel with the dashboard's other async work via
+ *      Promise.all.
+ *   2. It can be unit-tested without spinning up the entire
+ *      getDashboard flow.
+ *   3. Failures here do not affect the rest of the dashboard response
+ *      — the function always resolves to a RentPromptShape (null when
+ *      no active lease is due within 24h).
+ */
+async function computeUpcomingRentPrompt(
+  riderDbId: string,
+  walletBalanceInPaise: number
+): Promise<{
+  showPrompt: boolean;
+  leaseId: string;
+  rentAmountInRupees: number;
+  walletBalanceInRupees: number;
+  shortfallInRupees: number;
+  recommendedTopUpRupees: number;
+  dueDate: string;
+  dueTimeFormatted: string;
+  requiresTopUp: boolean;
+} | null> {
+  try {
+    const activeLease = await db.rentalLease.findFirst({
+      where: {
+        riderId: riderDbId,
+        status: { in: ['BOOKED', 'ACTIVE'] },
+      },
+      select: {
+        id: true,
+        finalPriceInPaise: true,
+        nextRentDueAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!activeLease?.nextRentDueAt) return null;
+
+    const now = clock.now();
+    const dueAt = new Date(activeLease.nextRentDueAt);
+    const msUntilDue = dueAt.getTime() - now.getTime();
+    const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+
+    if (msUntilDue > TWENTY_FOUR_HOURS_MS) return null;
+
+    const rentAmountInRupees = Math.ceil(activeLease.finalPriceInPaise / 100);
+    const walletBalanceInRupees = Math.floor(walletBalanceInPaise / 100);
+    const shortfallInRupees = Math.max(0, rentAmountInRupees - walletBalanceInRupees);
+    const recommendedTopUpRupees = shortfallInRupees > 0 ? shortfallInRupees : rentAmountInRupees;
+    const isOverdue = msUntilDue < 0;
+
+    const hours = dueAt.getHours();
+    const minutes = dueAt.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const formattedHour = hours % 12 || 12;
+    const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+    return {
+      showPrompt: true,
+      leaseId: activeLease.id,
+      rentAmountInRupees,
+      walletBalanceInRupees,
+      shortfallInRupees,
+      recommendedTopUpRupees,
+      dueDate: dueAt.toISOString(),
+      dueTimeFormatted: isOverdue ? 'Overdue' : `Due today at ${formattedTime}`,
+      requiresTopUp: shortfallInRupees > 0,
+    };
+  } catch (err) {
+    logger.error('[getDashboard] computeUpcomingRentPrompt failed', err);
+    return null;
+  }
+}
+
 export const riderUseCases = {
   /**
    * Gets full rider profile with all relations.
@@ -93,7 +193,7 @@ export const riderUseCases = {
       db.reward.aggregate({ where: { riderId: rider.id }, _sum: { points: true } }),
     ]);
 
-    const flatRider = flattenRider(rider as any);
+    const flatRider = flattenRider(rider);
     let assignedVehicleNumber = flatRider.assignedVehicle;
     let vehicleModel: string | null = null;
     if (rider.vehicle) {
@@ -154,14 +254,29 @@ export const riderUseCases = {
         riderId: true,
         fullName: true,
         phone: true,
+        email: true,
+        fatherName: true,
+        motherName: true,
+        dob: true,
+        currentAddress: true,
         lifecycleStatus: true,
         currentPlan: true,
+        currentPlanId: true,
+        currentPlanPrice: true,
+        advanceRentPaid: true,
+        // PR-47 (WALLET P1-1): include the current plan's security
+        // deposit so the dashboard can render the correct amount
+        // without falling back to a hardcoded map. The FK
+        // `currentPlanRef` is set in the schema (line 270 of
+        // schema.prisma).
+        currentPlanRef: { select: { securityDepositInPaise: true } },
         planStartDate: true,
         planEndDate: true,
         planRejectionReason: true,
         referralCode: true,
         pickupHub: true,
-        teamLeader: true,
+        teamLeaderId: true,
+        teamLeaderRef: { select: { id: true, name: true, phone: true } },
         emergencyContact: true,
         pickupPhotoFront: true,
         pickupPhotoBack: true,
@@ -173,15 +288,6 @@ export const riderUseCases = {
             status: true,
             profilePhoto: true,
             riderPhoto: true,
-            signature: true,
-            aadhaarFront: true,
-            aadhaarBack: true,
-            aadhaarNumber: true,
-            panCard: true,
-            panNumber: true,
-            bankName: true,
-            accountNumber: true,
-            ifscCode: true,
             rejectionReason: true,
             editableFields: true,
           },
@@ -189,7 +295,7 @@ export const riderUseCases = {
         wallet: {
           select: {
             balanceInPaise: true,
-            securityDeposit: true,
+            securityDepositInPaise: true,
             depositStatus: true,
             paymentStreak: true,
           },
@@ -220,17 +326,33 @@ export const riderUseCases = {
     });
     if (!rider) return null;
 
-    const unreadNotifications = await db.notification.count({
-      where: { riderId: riderDbId, isRead: false },
-    });
+    // DEEP-AUDIT D-P1-5 (2026-08-08): the previous code ran these three
+    // queries SEQUENTIALLY (notification.count, then referral-code update,
+    // then signRiderUrls + rentalLease.findFirst). The notification count
+    // and the rent-prompt lease lookup are independent of each other and
+    // of the signRiderUrls work, so they now run in parallel via
+    // Promise.all. The referral-code update is fire-and-forget so it
+    // doesn't block the response.
 
+    // 1. referralCode: generate if missing. This is a one-time write —
+    //    fire-and-forget so a slow update doesn't block the dashboard.
     let referralCode = rider.referralCode;
     if (!referralCode) {
       const namePart = (rider.fullName || 'VOLT').slice(0, 4).toUpperCase();
       const idPart = (rider.riderId || '0000000000').slice(-6);
       referralCode = `${namePart}${idPart}`;
+      // No await: best-effort write, do not block the response.
+      void db.rider
+        .update({
+          where: { id: riderDbId },
+          data: { referralCode },
+        })
+        .catch((err: unknown) => {
+          logger.error('[getDashboard] Failed to persist generated referral code', err);
+        });
     }
 
+    // 2. planDaysRemaining: pure date math, no DB.
     let planDaysRemaining: number | null = null;
     if (
       (rider.lifecycleStatus === 'ACTIVE' ||
@@ -242,28 +364,50 @@ export const riderUseCases = {
       planDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     }
 
-    let signedRider: any = null;
-    try {
-      const flatRider = flattenRider(rider as any);
-      let assignedVehicleNumber = flatRider.assignedVehicle;
-      if (flatRider.assignedVehicle) {
-        const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
-        if (v) assignedVehicleNumber = v.vehicleNumber;
-      }
-      flatRider.assignedVehicle = assignedVehicleNumber;
-      
-      const { signRiderUrls } = await import('@/lib/sign-rider');
-      signedRider = await signRiderUrls(flatRider);
-    } catch {
-      signedRider = { id: rider.id, fullName: rider.fullName, riderId: rider.riderId };
-    }
+    // 3. Run the three independent async bits in parallel:
+    //    - unreadNotifications: 1 indexed count
+    //    - signRiderUrls: dynamic import + URL signing
+    //    - upcomingRentPrompt: 1 indexed findFirst (lease) + date math
+    const [unreadNotifications, signedRider, upcomingRentPrompt] = await Promise.all([
+      db.notification
+        .count({ where: { riderId: riderDbId, isRead: false } })
+        .catch((err: unknown) => {
+          logger.error('[getDashboard] unreadNotifications count failed', err);
+          return 0;
+        }),
+      (async () => {
+        try {
+          const flatRider = flattenRider(rider);
+          if (rider.vehicle?.vehicleNumber) {
+            flatRider.assignedVehicle = rider.vehicle.vehicleNumber;
+          }
+          const { signRiderUrls } = await import('@/lib/sign-rider');
+          return await signRiderUrls(flatRider);
+        } catch (err) {
+          logger.error('[getDashboard] signRiderUrls failed', err);
+          return { id: rider.id, fullName: rider.fullName, riderId: rider.riderId };
+        }
+      })(),
+      computeUpcomingRentPrompt(riderDbId, rider.wallet?.balanceInPaise ?? 0),
+    ]);
 
     return {
       rider: signedRider,
       referralCode,
       unreadNotifications,
-      todayStats: { distance: 0, power: 0, speed: 0, battery: 0 },
+      // PR-VER-2026-08-07 (RIDER_DASHBOARD P0-9): no telemetry/trip-log table
+      // exists yet, so report null + dataAvailable:false instead of misleading
+      // zeros — the rider app renders a "not yet available" placeholder off
+      // dataAvailable. Battery comes from the joined vehicle.
+      todayStats: {
+        distance: null,
+        power: null,
+        speed: null,
+        dataAvailable: false,
+        battery: rider.vehicle?.batteryLevel ?? 0,
+      },
       planDaysRemaining,
+      upcomingRentPrompt,
     };
   },
 
@@ -299,11 +443,30 @@ export const riderUseCases = {
       0
     );
 
+    const totalPoints = aggregates._sum.points || 0;
+    const tierBronze = 500;
+    const tierSilver = 2000;
+    const tierGold = 5000;
+    
+    let currentTier = 'Bronze';
+    let nextTierThreshold = tierSilver;
+    if (totalPoints >= tierSilver && totalPoints < tierGold) {
+      currentTier = 'Silver';
+      nextTierThreshold = tierGold;
+    } else if (totalPoints >= tierGold) {
+      currentTier = 'Gold';
+      nextTierThreshold = tierGold;
+    }
+    
+    const progress = Math.min(1.0, totalPoints / nextTierThreshold);
+    const pointsToNext = Math.max(0, nextTierThreshold - totalPoints);
+
     return {
       rewards,
-      totalPoints: aggregates._sum.points || 0,
+      totalPoints,
       thisMonthPoints,
       currentStreak: rider.wallet?.paymentStreak ?? 0,
+      tier: { currentTier, nextTierThreshold, progress, pointsToNext, tierBronze, tierSilver, tierGold }
     };
   },
 
@@ -335,11 +498,12 @@ export const riderUseCases = {
     }
   ) {
     const { startDate, endDate, platform, page, limit } = filters;
-    const where: Record<string, unknown> = { riderId };
+    const where: Prisma.RiderEarningWhereInput = { riderId };
     if (startDate || endDate) {
-      where.date = {};
-      if (startDate) (where.date as any).gte = new Date(startDate);
-      if (endDate) (where.date as any).lte = new Date(endDate);
+      where.date = {
+        ...(startDate ? { gte: new Date(startDate) } : {}),
+        ...(endDate ? { lte: new Date(endDate) } : {}),
+      };
     }
     if (platform) where.platform = platform;
 
@@ -360,18 +524,21 @@ export const riderUseCases = {
 
     const weeklySummary = await db.riderEarning.aggregate({
       where: { riderId, date: { gte: startOfWeek } },
-      _sum: { amount: true, trips: true, distance: true, hoursOnline: true },
+      _sum: { amountInPaise: true, trips: true, distance: true, hoursOnline: true },
       _count: { id: true },
     });
 
     return {
       earnings,
       weeklySummary: {
-        totalEarnings: weeklySummary._sum.amount ?? 0,
-        totalTrips: weeklySummary._sum.trips ?? 0,
-        totalDistance: weeklySummary._sum.distance ?? 0,
-        totalHoursOnline: weeklySummary._sum.hoursOnline ?? 0,
-        daysWorked: weeklySummary._count.id ?? 0,
+        // PR-RUPEES-2026-08-08: totalEarnings is exposed to the rider
+        // app in rupees (matches the per-earning `amount` field on
+        // each item). Internally the DB stores paise.
+        totalEarnings: (weeklySummary._sum?.amountInPaise ?? 0) / 100,
+        totalTrips: weeklySummary._sum?.trips ?? 0,
+        totalDistance: weeklySummary._sum?.distance ?? 0,
+        totalHoursOnline: weeklySummary._sum?.hoursOnline ?? 0,
+        daysWorked: weeklySummary._count?.id ?? 0,
       },
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
@@ -397,7 +564,7 @@ export const riderUseCases = {
         riderId,
         date: new Date(data.date),
         platform: data.platform || null,
-        amount: data.amount,
+        amountInPaise: data.amount,
         trips: data.trips,
         distance: data.distance || null,
         hoursOnline: data.hoursOnline || null,
@@ -426,13 +593,29 @@ export const riderUseCases = {
       if (SAFE_RIDER_FIELDS.has(key)) {
         riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (SAFE_KYC_FIELDS.has(key)) {
-        if (key === 'bankAccount') kycData['accountNumber'] = value;
-        else if (key === 'bankIfsc') kycData['ifscCode'] = value;
-        else if (key === 'selfie') kycData['profilePhoto'] = value;
-        else kycData[key] = value;
+        // PR-ONBOARDING-2026-08-11 (audit 2.10): KYC string values
+        // (aadhaarNumber, panNumber, name, address, etc.) are not
+        // sanitized. PII columns are stored encrypted via the
+        // repository, but the surrounding strings (fatherName, address,
+        // bankName) go to Postgres in cleartext. Run them through
+        // sanitizeText so a stray HTML tag or control char from a
+        // compromised client cannot end up in the audit log or admin UI.
+        const sanitized =
+          typeof value === 'string' ? sanitizeText(value) : value;
+        if (key === 'bankAccount') kycData['accountNumber'] = sanitized;
+        else if (key === 'bankIfsc') kycData['ifscCode'] = sanitized;
+        else if (key === 'selfie') kycData['profilePhoto'] = sanitized;
+        else kycData[key] = sanitized;
       } else if (SAFE_GUARANTOR_FIELDS.has(key)) {
-        const dbKey = key.charAt(9).toLowerCase() + key.slice(10);
-        guarantorData[dbKey] = value;
+        // PR-ONBOARDING-2026-08-11 (audit 2.10): same — guarantor
+        // name, address, parents' names are PII on a non-rider record.
+        const dbKey =
+          GUARANTOR_FIELD_TO_DB[key] ??
+          (key.startsWith('guarantor')
+            ? key.charAt(9).toLowerCase() + key.slice(10)
+            : key);
+        guarantorData[dbKey] =
+          typeof value === 'string' ? sanitizeText(value) : value;
       }
     }
 
@@ -493,6 +676,22 @@ export const riderUseCases = {
 
     // Update Guarantor
     if (Object.keys(guarantorData).length > 0) {
+      if (guarantorData.phone) {
+        const cleanGuarantorPhone = String(guarantorData.phone).replace(/\D/g, '');
+        const cleanRiderPhone = existing.phone ? String(existing.phone).replace(/\D/g, '') : '';
+        if (cleanGuarantorPhone.length > 0 && cleanGuarantorPhone === cleanRiderPhone) {
+          throw new Error('Guarantor phone cannot be the same as rider phone');
+        }
+
+        const receipt = input.guarantorPhoneReceipt as string | undefined;
+        if (receipt) {
+          const receiptCheck = verifyVerifyReceipt(receipt, cleanGuarantorPhone);
+          if (!receiptCheck.valid) {
+            throw new Error(`Guarantor phone verification receipt is invalid: ${receiptCheck.reason}`);
+          }
+        }
+      }
+
       if (!guarantorData.relation) guarantorData.relation = 'Other';
       await db.guarantor.upsert({
         where: { riderId: riderDbId },
@@ -558,8 +757,15 @@ export const riderUseCases = {
     const rider = await riderRepository.getFullState(riderDbId);
     if (!rider) return null;
 
-    const activeLease = (rider.leases || []).find((lease: any) =>
-      ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING'].includes(lease.status)
+    const ACTIVE_LEASE_STATUSES: RentalStatus[] = [
+      'BOOKED',
+      'PICKUP_SCHEDULED',
+      'ACTIVE',
+      'OVERDUE',
+      'RETURN_PENDING',
+    ];
+    const activeLease = (rider.leases || []).find((lease) =>
+      ACTIVE_LEASE_STATUSES.includes(lease.status)
     );
 
     return {
@@ -584,7 +790,11 @@ export const riderUseCases = {
         rider.vehicleId || rider.assignedVehicle
           ? { id: rider.vehicleId, vehicleId: rider.assignedVehicle }
           : null,
-      walletBalance: rider.wallet?.balanceInPaise || 0,
+      // PR-RUPEES-2026-08-08: `walletBalance` on the rider object is
+      // exposed in rupees to clients (matches the field name and
+      // convention used by the dashboard route and the Flutter
+      // wallet provider). Internally the DB stores paise.
+      walletBalance: (rider.wallet?.balanceInPaise || 0) / 100,
     };
   },
 };

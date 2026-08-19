@@ -3,7 +3,13 @@
 import { Loader2, Search, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ExportButton } from '../../export-button';
 import { STATE_FILTERS, KYC_FILTERS, type Rider } from './types';
 
@@ -115,19 +121,27 @@ export function RiderFiltersBar({
         </div>
       </div>
 
-      <Tabs value={stateFilter} onValueChange={onStateFilterChange}>
-        <TabsList className="bg-muted/30 p-1 rounded-xl">
-          {STATE_FILTERS.map((s) => (
-            <TabsTrigger
-              key={s}
-              value={s}
-              className="rounded-lg text-xs font-bold uppercase tracking-tight h-8 px-4"
-            >
-              {s.replace('_', ' ')}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="flex items-center gap-3">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+          Lifecycle State:
+        </span>
+        <Select value={stateFilter} onValueChange={onStateFilterChange}>
+          <SelectTrigger className="w-full sm:w-[280px] h-10 rounded-xl bg-background border-muted-foreground/20 text-xs font-bold uppercase">
+            <SelectValue placeholder="Select Lifecycle State" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            {STATE_FILTERS.map((s) => (
+              <SelectItem
+                key={s}
+                value={s}
+                className="text-xs font-bold uppercase tracking-tight"
+              >
+                {s === 'ALL' ? 'All Lifecycle States' : s.replace(/_/g, ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">

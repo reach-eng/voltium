@@ -5,6 +5,7 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { randomBytes } from 'crypto';
 import { supportRepository } from './support.repository';
@@ -110,18 +111,24 @@ export const supportUseCases = {
     limit?: number;
   }) {
     const { status, priority, search, page = 1, limit = 20 } = query;
-    const where: Record<string, unknown> = {};
-    if (status) where.status = status;
-    if (priority) where.priority = priority;
+    const searchWhere: Prisma.SupportTicketWhereInput = {};
+    if (priority) searchWhere.priority = priority as Prisma.SupportTicketWhereInput['priority'];
     if (search) {
-      (where as any).OR = [
-        { ticketId: { contains: search } },
-        { subject: { contains: search } },
-        { rider: { fullName: { contains: search } } },
+      const trimmed = search.trim();
+      searchWhere.OR = [
+        { ticketId: { contains: trimmed, mode: 'insensitive' } },
+        { subject: { contains: trimmed, mode: 'insensitive' } },
+        { rider: { fullName: { contains: trimmed, mode: 'insensitive' } } },
+        { rider: { phone: { contains: trimmed } } },
+        { rider: { riderId: { contains: trimmed, mode: 'insensitive' } } },
       ];
     }
+    const where: Prisma.SupportTicketWhereInput = {
+      ...searchWhere,
+      ...(status ? { status: status as Prisma.SupportTicketWhereInput['status'] } : {}),
+    };
 
-    const [tickets, total] = await Promise.all([
+    const [tickets, total, openCount, inProgressCount, resolvedCount, closedCount] = await Promise.all([
       db.supportTicket.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -132,9 +139,13 @@ export const supportUseCases = {
         take: limit,
       }),
       db.supportTicket.count({ where }),
+      db.supportTicket.count({ where: { ...searchWhere, status: 'OPEN' } }),
+      db.supportTicket.count({ where: { ...searchWhere, status: 'IN_PROGRESS' } }),
+      db.supportTicket.count({ where: { ...searchWhere, status: 'RESOLVED' } }),
+      db.supportTicket.count({ where: { ...searchWhere, status: 'CLOSED' } }),
     ]);
 
-    const formatted = tickets.map((t: any) => ({
+    const formatted = tickets.map((t) => ({
       id: t.id,
       ticketId: t.ticketId,
       riderId: t.riderId,
@@ -153,6 +164,13 @@ export const supportUseCases = {
 
     return {
       tickets: formatted,
+      statusCounts: {
+        all: openCount + inProgressCount + resolvedCount + closedCount,
+        OPEN: openCount,
+        IN_PROGRESS: inProgressCount,
+        RESOLVED: resolvedCount,
+        CLOSED: closedCount,
+      },
       pagination: {
         page,
         limit,
@@ -183,7 +201,7 @@ export const supportUseCases = {
   },
 
   async getAdminTicket(ticketId: string) {
-    const ticket: any = await supportRepository.findByIdWithMessages(ticketId);
+    const ticket = await supportRepository.findByIdWithMessages(ticketId);
     if (!ticket) return null;
 
     return {

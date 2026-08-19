@@ -5,12 +5,11 @@ import { toast } from 'sonner';
 import type { SystemSettingsData } from './types';
 
 /**
- * R3.7k split — System settings data hook.
+ * System settings data hook.
  *
  * Owns the editable + readOnly payload, the per-key edit values, the
  * per-key saving state, the secret show/hide toggles, and the
- * admin's role (used to gate edits to super-admin only). Exposes
- * the data + a few thin callbacks so the orchestrator can stay slim.
+ * admin's role. Exposes data + callbacks to orchestrate system settings safely.
  */
 export function useSystemSettings() {
   const [data, setData] = useState<SystemSettingsData | null>(null);
@@ -45,6 +44,13 @@ export function useSystemSettings() {
           }
           setEditValues(values);
         }
+      } else if (res.status === 401) {
+        toast.error('Session expired — redirecting to login');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
+      } else if (res.status === 403) {
+        toast.error('Forbidden: Super Admin access required for system settings');
       } else {
         toast.error('Failed to load system settings');
       }
@@ -68,12 +74,31 @@ export function useSystemSettings() {
         body: JSON.stringify({ key, value: editValues[key] }),
       });
       if (res.ok) {
-        toast.success(`${key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} updated`);
+        const title = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        toast.success(`${title} updated successfully`);
+        // Update local data state cleanly so save state resets
+        if (data && data.editable[key]) {
+          setData({
+            ...data,
+            editable: {
+              ...data.editable,
+              [key]: {
+                ...data.editable[key],
+                value: editValues[key],
+              },
+            },
+          });
+        }
+      } else if (res.status === 401) {
+        toast.error('Session expired — redirecting to login');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
       } else if (res.status === 403) {
         toast.error('Super Admin permission required to modify system settings');
       } else {
-        const err = await res.json();
-        toast.error(err.error || 'Failed to update');
+        const err = await res.json().catch(() => null);
+        toast.error(err?.error?.message || err?.error || 'Failed to update setting');
       }
     } catch {
       toast.error('Failed to update setting');

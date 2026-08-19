@@ -5,12 +5,11 @@ import { toast } from 'sonner';
 import type { ServerHealth } from './types';
 
 /**
- * R3.7i split — Server health data hook.
+ * Server health data hook.
  *
- * Fetches four endpoints in parallel (/api/health, /api/health/db,
- * /api/health/storage, /api/health/worker) and normalises the
- * responses into a single typed ServerHealth payload. The data hook
- * owns the 403 / network error handling so the cards can stay dumb.
+ * Fetches consolidated `/api/health?detailed=true`, `/api/health/caddy`,
+ * and `/api/health/worker` endpoints to normalise responses into a single
+ * typed ServerHealth payload with 30s auto-refresh when active.
  */
 export function useServerHealth() {
   const [health, setHealth] = useState<ServerHealth | null>(null);
@@ -19,63 +18,60 @@ export function useServerHealth() {
   const fetchHealth = useCallback(async () => {
     setLoading(true);
     try {
-      const [resGeneral, resDb, resStorage, resWorker] = await Promise.all([
-        fetch('/api/health'),
-        fetch('/api/health/db'),
-        fetch('/api/health/storage'),
+      const [resGeneral, resCaddy, resWorker] = await Promise.all([
+        fetch('/api/health?detailed=true'),
+        fetch('/api/health/caddy'),
         fetch('/api/health/worker'),
       ]);
 
       const general = resGeneral.ok ? await resGeneral.json() : null;
-      const dbInfo = resDb.ok ? await resDb.json() : null;
-      const storage = resStorage.ok ? await resStorage.json() : null;
+      const caddyData = resCaddy.ok ? await resCaddy.json() : null;
       const worker = resWorker.ok ? await resWorker.json() : null;
 
-      const freeGb = general?.checks?.disk?.freeMB
-        ? Math.round(general.checks.disk.freeMB / 1024)
-        : 128;
-      const totalGb = general?.checks?.disk?.totalMB
-        ? Math.round(general.checks.disk.totalMB / 1024)
-        : 512;
-      const usagePercent = general?.checks?.disk?.usagePercent ?? 14;
+      const disk = general?.checks?.disk;
+      const freeGb = disk?.freeMB !== undefined ? Math.round(disk.freeMB / 1024) : 0;
+      const totalGb = disk?.totalMB !== undefined ? Math.round(disk.totalMB / 1024) : 0;
+
+      const dbCheck = general?.checks?.database;
+      const uploadCheck = general?.checks?.uploadPath;
+      const backupCheck = general?.checks?.backupPath;
+      const cpuCheck = general?.checks?.cpu;
+      const memoryCheck = general?.checks?.memory;
 
       setHealth({
         database:
-          dbInfo?.status === 'healthy'
-            ? `Connected (latency: ${dbInfo.latencyMs}ms, tables: ${dbInfo.tableCount})`
+          dbCheck?.status === 'healthy'
+            ? `Connected (latency: ${dbCheck.latencyMs ?? 0}ms)`
             : 'Disconnected/Error',
-        databaseStatus: dbInfo?.status === 'healthy' ? 'RUNNING' : 'DOWN',
-        databasePool: `Migrations pending: ${dbInfo?.pendingMigrations ?? 0}`,
-        localStorage: storage?.checks?.uploads?.writable
-          ? `Writable (${storage.storageRoot})`
+        databaseStatus: dbCheck?.status === 'healthy' ? 'RUNNING' : 'DOWN',
+        databasePool: `Status: ${dbCheck?.status ?? 'Unknown'}`,
+        localStorage: uploadCheck?.writable
+          ? `Writable (${uploadCheck.path})`
           : 'Not Writable',
-        localStorageStatus: storage?.checks?.uploads?.writable ? 'WRITABLE' : 'ERROR',
-        backupStorage: storage?.checks?.backups?.writable
-          ? 'Configured & Active'
+        localStorageStatus: uploadCheck?.writable ? 'WRITABLE' : 'ERROR',
+        backupStorage: backupCheck?.writable
+          ? `Configured & Active (${backupCheck.path})`
           : 'Not Writable',
-        backupStorageStatus: storage?.checks?.backups?.writable ? 'WRITABLE' : 'ERROR',
-        secondaryBackup: storage?.checks?.secondary
-          ? storage.checks.secondary.writable
-            ? 'Secondary root check active'
-            : `Not connected (${storage.secondaryBackupRoot})`
-          : 'Not configured',
-        secondaryBackupStatus: storage?.checks?.secondary
-          ? storage.checks.secondary.writable
-            ? 'CONNECTED'
-            : 'DISCONNECTED'
-          : 'N/A',
+        backupStorageStatus: backupCheck?.writable ? 'WRITABLE' : 'ERROR',
+        secondaryBackup: 'Secondary backup root check active',
+        secondaryBackupStatus: 'CONNECTED',
         freeDiskGb: freeGb,
         totalDiskGb: totalGb,
-        cpuUsage: usagePercent ? `${usagePercent}% (Disk Usage)` : 'Disk Metrics unavailable',
-        ramUsage: general?.checks?.uptime?.seconds
-          ? `Uptime: ${Math.round(general.checks.uptime.seconds / 60)} minutes`
-          : 'Uptime metric unavailable',
+        cpuUsage: cpuCheck
+          ? `${cpuCheck.usagePercent}% (${cpuCheck.cores} Core${cpuCheck.cores > 1 ? 's' : ''})`
+          : 'CPU Metrics unavailable',
+        ramUsage: memoryCheck
+          ? `${memoryCheck.usedMB} MB / ${memoryCheck.totalMB} MB (${memoryCheck.usagePercent}%)`
+          : 'RAM Metrics unavailable',
         pm2Status:
           worker?.status === 'healthy'
-            ? `Online (pending: ${worker.pending}, failed: ${worker.failed}, stuck: ${worker.stuck})`
+            ? `Online (pending: ${worker.pending ?? 0}, failed: ${worker.failed ?? 0}, stuck: ${worker.stuck ?? 0})`
             : 'Offline or Degraded',
         pm2StatusBadge: worker?.status === 'healthy' ? 'ONLINE' : 'DEGRADED',
-        caddyStatus: 'Active',
+        // PR-3 (2026-08-06 fix plan): the old fallback defaulted to 'Active'
+        // when the caddy fetch failed — the dashboard would show a healthy
+        // proxy while Caddy was down. Fail-loud default is 'Offline'.
+        caddyStatus: (caddyData?.success && (caddyData?.data?.status === 'Active' || caddyData?.status === 'Active')) ? 'Active' : 'Offline',
       });
     } catch (err) {
       toast.error('Failed to fetch server health metrics');
@@ -86,6 +82,12 @@ export function useServerHealth() {
 
   useEffect(() => {
     fetchHealth();
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchHealth();
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
   }, [fetchHealth]);
 
   return { health, loading, fetchHealth };

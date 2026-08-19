@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 class FormScrollHelper {
   static void scrollToFirstError(
@@ -45,13 +46,7 @@ class FormScrollHelper {
   static GlobalKey createKey() => GlobalKey();
 
   static void showFieldError(BuildContext context, String fieldName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Please fix $fieldName'),
-        backgroundColor: AppColors.error,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    Toast.error(context, 'Please fix $fieldName');
   }
 }
 

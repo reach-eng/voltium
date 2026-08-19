@@ -32,9 +32,12 @@ export const vehicleUseCases = {
 
   async assignVehicle(vehicleId: string, riderDbId: string) {
     const [vehicle, rider, existingRental] = await Promise.all([
-      db.vehicle.findUnique({ where: { id: vehicleId } }),
+      db.vehicle.findUnique({ where: { id: vehicleId, deletedAt: null } }),
       db.rider.findUnique({ where: { id: riderDbId } }),
-      db.rentalLease.findFirst({ where: { riderId: riderDbId, status: 'ACTIVE' } }),
+      // P1.11: the old check `status: 'ACTIVE'` let a rider with an OVERDUE
+      // (or BOOKED / RETURN_PENDING / SUSPENDED) lease get a second vehicle
+      // assigned. Any lease that is not CLOSED is still an open rental.
+      db.rentalLease.findFirst({ where: { riderId: riderDbId, status: { not: 'CLOSED' } } }),
     ]);
 
     if (!vehicle || vehicle.status !== 'AVAILABLE') {
@@ -44,7 +47,7 @@ export const vehicleUseCases = {
       throw new Error('Rider is not in ACTIVE state');
     }
     if (existingRental) {
-      throw new Error('Rider already has an active rental');
+      throw new Error('Rider already has an open rental');
     }
 
     const result = await vehicleRepository.assignToRider(vehicleId, riderDbId);
@@ -76,7 +79,8 @@ export const vehicleUseCases = {
     limit: number;
   }) {
     const { status, hubId, page, limit } = params;
-    const where: Record<string, unknown> = {};
+    // P1.6: soft-deleted vehicles must not appear in the admin list.
+    const where: Record<string, unknown> = { deletedAt: null };
     if (status) where.status = status;
     if (hubId) where.hubId = hubId;
 
@@ -133,7 +137,7 @@ export const vehicleUseCases = {
     if (!hub) throw new Error('Hub not found');
 
     const vehicles = await db.vehicle.findMany({
-      where: { hubId },
+      where: { hubId, deletedAt: null },
       orderBy: [{ status: 'asc' }, { model: 'asc' }],
       include: {
         leases: {
@@ -148,7 +152,7 @@ export const vehicleUseCases = {
       },
     });
 
-    const vehiclesData = vehicles.map((vehicle: any) => {
+    const vehiclesData = vehicles.map((vehicle) => {
       const activeLease = vehicle.leases[0] || null;
       return {
         id: vehicle.id,
@@ -182,13 +186,13 @@ export const vehicleUseCases = {
     });
 
     const totalVehicles = vehicles.length;
-    const availableVehicles = vehicles.filter((v: any) => v.status === 'AVAILABLE').length;
+    const availableVehicles = vehicles.filter((v) => v.status === 'AVAILABLE').length;
 
     return { hubName: hub.name, totalVehicles, availableVehicles, vehicles: vehiclesData };
   },
 
   async verifyPickupVehicle(query: string, hubId: string) {
-    const vehicle = (await db.vehicle.findFirst({
+    const vehicle = await db.vehicle.findFirst({
       where: {
         OR: [
           { id: query },
@@ -198,9 +202,10 @@ export const vehicleUseCases = {
           { vehicleNumber: { contains: query, mode: 'insensitive' } },
         ],
         hubId,
+        deletedAt: null,
       },
       include: { hub: { select: { id: true, name: true } } },
-    })) as any;
+    });
     if (!vehicle) throw new Error('Vehicle not found at this hub');
     return {
       id: vehicle.id,
@@ -209,12 +214,42 @@ export const vehicleUseCases = {
       model: vehicle.model,
       status: vehicle.status,
       hubId: vehicle.hubId,
-      hub: vehicle.hub as any,
+      hub: vehicle.hub,
     };
   },
 
   async getVehicleHistory(vehicleId: string) {
     return vehicleRepository.findVehicleHistory(vehicleId);
+  },
+
+  /**
+   * P1.7/P3.15 (2026-08-05 rentals/vehicles/hubs audit): admin DELETE now
+   * 404s on an unknown id (the old code silently returned 200 with no write)
+   * and 409s when the vehicle is on an active lease — mirroring
+   * markForMaintenance. Retires the vehicle (soft delete) on success.
+   */
+  async retireVehicle(vehicleId: string, actorId: string) {
+    const vehicle = await vehicleRepository.findById(vehicleId);
+    if (!vehicle) throw new Error('VEHICLE_NOT_FOUND');
+    const activeLease = await db.rentalLease.findFirst({
+      where: { vehicleId, status: { in: ['BOOKED', 'ACTIVE', 'RETURN_PENDING'] } },
+    });
+    if (activeLease) throw new Error('VEHICLE_HAS_ACTIVE_LEASE');
+
+    const result = await vehicleRepository.update(vehicleId, { status: 'RETIRED' });
+    invalidateCache('vehicles_list:*');
+    invalidateCache('admin:vehicles:*');
+    createAuditLog({
+      actorId,
+      action: 'vehicle.retire',
+      entity: 'vehicle',
+      entityId: vehicleId,
+      details: {
+        vehicleNumber: vehicle.vehicleNumber,
+        vehicleId: vehicle.vehicleId,
+      },
+    }).catch((e: unknown) => logger.error('Audit log failed for vehicle retire', e));
+    return result;
   },
 
   async bulkUpdateVehicles(
@@ -238,16 +273,11 @@ export const vehicleUseCases = {
       }
       case 'reassignHub': {
         if (!value) throw new Error('Hub ID is required');
-        // Update individually because hubId is not allowed in updateMany mutation input
-        await db.$transaction(
-          ids.map((id) =>
-            db.vehicle.update({
-              where: { id },
-              data: { hubId: value },
-            })
-          )
-        );
-        updatedCount = ids.length;
+        const result = await db.vehicle.updateMany({
+          where: { id: { in: ids } },
+          data: { hubId: value },
+        });
+        updatedCount = result.count;
         auditAction = 'vehicle.bulk_reassign_hub';
         break;
       }
@@ -270,6 +300,7 @@ export const vehicleUseCases = {
     }).catch((e: unknown) => logger.error('Audit log failed for bulk vehicle action', e));
 
     invalidateCache('vehicles_list:*');
+    invalidateCache('admin:vehicles:*');
     return { count: updatedCount };
   },
 };

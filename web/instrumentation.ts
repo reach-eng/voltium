@@ -1,4 +1,15 @@
 export async function register() {
+  // P2-4: fail fast on a production boot with the dev auto-login env var set.
+  // The auto-login route was deleted (P0-2), so the flag is dead config now,
+  // but a stale env-file mistake must not silently linger in prod. Refuse to
+  // boot so operators are forced to clean it up.
+  if (process.env.APP_ENV === 'production' && process.env.ENABLE_DEV_ADMIN_LOGIN === 'true') {
+    throw new Error(
+      'Refusing to start: ENABLE_DEV_ADMIN_LOGIN is set in a production environment. ' +
+        'The dev auto-login backdoor was removed; unset this variable.'
+    );
+  }
+
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { NodeSDK } = await import('@opentelemetry/sdk-node');
     const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http');

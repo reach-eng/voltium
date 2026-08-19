@@ -13,6 +13,11 @@ export const requestUploadUrlSchema = z.object({
     'RETURN_PHOTO',
     'TOPUP_PROOF',
     'vehicle_return',
+    // PR-ONBOARDING-FLOW-2026-08-12: security-deposit proof uploaded
+    // from the rider app's deposit workflow. Mirrors `payment_proof`
+    // in rules; separated so the admin panel can route the review
+    // queue distinctly.
+    'security_deposit',
   ]),
   // Max file size: 25MB to match the largest FILE_UPLOAD_RULES
   // category (kyc_document). The per-category limit is enforced by

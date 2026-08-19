@@ -10,12 +10,11 @@
  * See docs/STATE_MACHINES.md and docs/WORKFLOWS.md for ledger categories.
  */
 
-import { db } from '@/lib/db';
+import { db, type TxClient as PrismaTransaction } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { invalidateRiderCache } from '@/lib/server-cache';
 
-type PrismaTransaction = any;
-
-const txDb = db as any;
+const txDb = db;
 import {
   creditWallet as libCreditWallet,
   debitWallet as libDebitWallet,
@@ -77,6 +76,7 @@ export const walletLedgerService = {
       });
     }
 
+    invalidateRiderCache(params.riderId);
     return result;
   },
 
@@ -109,7 +109,7 @@ export const walletLedgerService = {
     };
 
     const result = tx ? await work(tx) : await txDb.$transaction(work);
-
+    invalidateRiderCache(params.riderId);
     return result;
   },
 
@@ -137,6 +137,7 @@ export const walletLedgerService = {
 
     if (tx) await work(tx);
     else await txDb.$transaction(work);
+    invalidateRiderCache(params.riderId);
   },
 
   async reverse(
@@ -163,8 +164,9 @@ export const walletLedgerService = {
         reason: params.reason,
       });
 
-    if (tx) return work(tx);
-    return txDb.$transaction(work);
+    const result = tx ? await work(tx) : await txDb.$transaction(work);
+    invalidateRiderCache(params.riderId);
+    return result;
   },
 
   /**

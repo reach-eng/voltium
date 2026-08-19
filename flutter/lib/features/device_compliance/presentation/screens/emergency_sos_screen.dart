@@ -13,6 +13,7 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 class EmergencySOSScreen extends ConsumerStatefulWidget {
   const EmergencySOSScreen({super.key});
@@ -129,17 +130,9 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
     await _callNumber('112');
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded English
-        // SnackBar text. The "5" placeholder is appended
-        // dynamically; a future ARB pass can replace it with a
-        // full template if the rider sees a localised count.
-        content: Text(
-          AppLocalizations.of(context)!.txtsosAlertTriggeredDialing,
-        ),
-        backgroundColor: AppColors.error,
-      ),
+    Toast.error(
+      context,
+      AppLocalizations.of(context)!.txtsosAlertTriggeredDialing,
     );
     _sosInFlight = false;
   }
@@ -166,38 +159,15 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
           style: AppTypography.titleLarge
               .copyWith(color: AppColors.of(context).onSurface),
         ),
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: UnconstrainedBox(
-            child: GestureDetector(
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                child: Icon(Icons.arrow_back,
-                    // DARK-MODE-AUDIT 2026-08-14 P0-7: same
-                    // `slate800` issue — disappears in dark
-                    // mode. Read from the theme.
-                    color: AppColors.of(context).onSurface,
-                    size: 20),
-              ),
-            ),
-          ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back,
+              color: AppColors.of(context).onSurface, size: 20),
+          tooltip: AppLocalizations.of(context)?.txtback ?? 'Back',
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(

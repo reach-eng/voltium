@@ -119,7 +119,14 @@ export function useRentals() {
   }, []);
 
   const handleSavePlan = useCallback(async () => {
-    if (!form.name || !form.price) return;
+    if (!form.name || !form.price || Number(form.price) <= 0) {
+      toast.error('Plan name and a positive price (₹) are required');
+      return;
+    }
+    if (Number(form.securityDeposit) < 0) {
+      toast.error('Security deposit cannot be negative');
+      return;
+    }
     setSaving(true);
     try {
       const method = editingPlan ? 'PUT' : 'POST';
@@ -210,13 +217,12 @@ export function useRentals() {
     async (riderId: string) => {
       setSaving(true);
       try {
-        const res = await fetch('/api/admin/riders', {
+        const res = await fetch('/api/admin/rentals', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: riderId,
-            returnPending: false,
-            rentalStatus: 'RETURNED',
+            leaseId: riderId,
+            action: 'APPROVE_RETURN',
           }),
         });
         const json = await res.json().catch(() => null);
@@ -224,7 +230,7 @@ export function useRentals() {
           toast.error(json?.error?.message || 'Failed to approve return');
           return;
         }
-        toast.success('Return approved');
+        toast.success('Return approved successfully');
         setConfirmApprove(null);
         setSelectedReturn(null);
         fetchAll();

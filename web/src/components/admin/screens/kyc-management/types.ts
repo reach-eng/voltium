@@ -65,3 +65,5 @@ export interface LastKycBulkAction {
   previousStatuses: Record<string, string>;
   action: string;
 }
+
+export type KycBulkConfirmAction = 'approve' | 'reject' | 'info_required';

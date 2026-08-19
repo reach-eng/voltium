@@ -7,7 +7,7 @@ import {
   TicketFiltersBar,
   TicketBulkActionsBar,
   TicketTable,
-  TicketDetailSheet,
+  TicketDetailDialog,
   TicketDialogs,
 } from './ticket-management';
 
@@ -61,7 +61,7 @@ export default function TicketManagement() {
           </TabsContent>
         </Tabs>
 
-        <TicketDetailSheet
+        <TicketDetailDialog
           selectedTicket={t.selectedTicket}
           detailOpen={t.detailOpen}
           setDetailOpen={t.setDetailOpen}

@@ -17,6 +17,7 @@ import {
   creditWallet,
 } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import { fcmService } from '@/lib/fcm';
 import { logger } from '@/lib/logger';
@@ -117,11 +118,17 @@ export async function approveDeposit(params: {
       });
     }
 
-    // Mark rider deposit approved via lifecycleStatus
-    await tx.rider.update({
+    // Mark rider deposit approved via lifecycleStatus if rank < 8
+    const currentRider = await tx.rider.findUnique({
       where: { id: riderId },
-      data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
+      select: { lifecycleStatus: true },
     });
+    if (currentRider && lifecycleRankOf(currentRider.lifecycleStatus) < 8) {
+      await tx.rider.update({
+        where: { id: riderId },
+        data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
+      });
+    }
 
     // Update DepositRecord
     await tx.depositRecord.update({

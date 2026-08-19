@@ -28,10 +28,23 @@ export async function POST_verifyOtp(request: NextRequest) {
     return errors.validation(validation.error);
   }
 
-  const result = await authUseCases.verifyOtp(validation.data as any);
+  // Typed sweep (2026-08-16): the zod schema fields are `.nullish()` — map
+  // nulls away before crossing into the typed VerifyOtpInput boundary.
+  const result = await authUseCases.verifyOtp({
+    phone: validation.data.phone ?? undefined,
+    otp: validation.data.otp ?? undefined,
+    idToken: validation.data.idToken ?? undefined,
+    referralCode: validation.data.referralCode ?? undefined,
+  });
 
   const response = success(
-    { riderId: result.riderId, isNewRider: result.isNewRider },
+    {
+      ...result.riderData,
+      token: result.token,
+      refreshToken: result.refreshToken,
+      isNewRider: result.isNewRider,
+      riderId: result.riderId,
+    },
     'OTP verified successfully'
   );
 

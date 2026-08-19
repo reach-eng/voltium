@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
@@ -12,7 +14,6 @@ import 'package:voltium_rider/features/profile/presentation/screens/profile_scre
 import 'package:voltium_rider/features/dashboard/presentation/screens/active_dashboard_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
 
 /// Offline & Error State tests covering:
 /// - Loading skeleton states
@@ -67,15 +68,38 @@ RiderModel makeRider({
   );
 }
 
+/// A RiderNotifier that serves a fixed rider state without touching the
+/// network or the cache (PR-VER-2026-08-06: the profile/wallet screens read
+/// `riderProvider` directly after the Riverpod migration, so the old
+/// appProvider-only override no longer feeds them rider data).
+class _StaticRiderNotifier extends RiderNotifier {
+  _StaticRiderNotifier(this.seedRider);
+
+  final RiderModel? seedRider;
+
+  @override
+  RiderState build() {
+    final rider = seedRider;
+    return RiderState(
+      rider: rider,
+      riderId: rider?.riderId.isNotEmpty == true ? rider?.riderId : rider?.id,
+      phone: rider?.phone,
+      dataState: rider != null ? DataState.fresh : DataState.initial,
+    );
+  }
+}
+
 Widget wrapInApp({
   required Widget child,
   AppProvider? provider,
 }) {
+  final mock = provider ?? _MockAppProvider();
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
-      appProvider.overrideWith((ref) => provider ?? _MockAppProvider()),
+      localeProviderRef.overrideWith(() => LocaleProvider()),
+      themeProviderRef.overrideWith(() => ThemeProvider()),
+      appProvider.overrideWith((ref) => mock),
+      riderProvider.overrideWith(() => _StaticRiderNotifier(mock.rider)),
     ],
     child: MaterialApp(
       localizationsDelegates: const [
@@ -339,55 +363,65 @@ void main() {
   });
 
   group('Offline/Error — Theme & Locale Provider States', () {
+    // ThemeProvider / LocaleProvider are Riverpod v3 Notifiers (they no
+    // longer extend ChangeNotifier), so these tests drive them through a
+    // ProviderContainer instead of the legacy `provider` package.
     testWidgets('dark mode toggle in widget tree', (tester) async {
-      final themeProvider = ThemeProvider();
-      await tester.pumpWidget(MaterialApp(
-        home: ChangeNotifierProvider<ThemeProvider>.value(
-          value: themeProvider,
-          child: Builder(
-            builder: (context) {
-              final tp = context.watch<ThemeProvider>();
-              return Scaffold(
-                body: SwitchListTile(
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) {
+                final isDark = ref.watch(themeProvider).isDarkMode;
+                return SwitchListTile(
                   title: const Text('Dark Mode'),
-                  value: tp.isDarkMode,
-                  onChanged: (v) => tp.setDarkMode(v),
-                ),
-              );
-            },
+                  value: isDark,
+                  onChanged: (v) =>
+                      ref.read(themeProvider.notifier).setDarkMode(v),
+                );
+              },
+            ),
           ),
         ),
       ));
 
-      expect(themeProvider.isDarkMode, isFalse);
+      expect(container.read(themeProvider).isDarkMode, isFalse);
 
       await tester.tap(find.byType(Switch));
       await tester.pump();
-      expect(themeProvider.isDarkMode, isTrue);
+      expect(container.read(themeProvider).isDarkMode, isTrue);
     });
 
     testWidgets('locale switch in widget tree', (tester) async {
-      final localeProvider = LocaleProvider();
-      await tester.pumpWidget(MaterialApp(
-        home: ChangeNotifierProvider<LocaleProvider>.value(
-          value: localeProvider,
-          child: Builder(
-            builder: (context) {
-              return Text(context.watch<LocaleProvider>().locale.languageCode);
-            },
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Consumer(
+              builder: (context, ref, _) {
+                final code = ref.watch(localeProvider).locale.languageCode;
+                return Text(code);
+              },
+            ),
           ),
         ),
       ));
 
       expect(find.text('en'), findsOneWidget);
 
-      localeProvider.setHindi();
-      await tester.pump(const Duration(seconds: 1));
+      await container.read(localeProvider.notifier).setHindi();
       await tester.pump();
       expect(find.text('hi'), findsOneWidget);
 
-      localeProvider.setEnglish();
-      await tester.pump(const Duration(seconds: 1));
+      await container.read(localeProvider.notifier).setEnglish();
       await tester.pump();
       expect(find.text('en'), findsOneWidget);
     });

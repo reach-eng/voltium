@@ -35,6 +35,17 @@ void main() {
     expect(isValid, isTrue);
   });
 
+  test('validatePayload accepts onboarding activation overlay actions', () async {
+    for (final action in ['RIDER_ACTIVATED', 'VEHICLE_ASSIGNED', 'GUARANTOR_STATUS', 'PLAN_STATUS']) {
+      final data = {
+        'action': action,
+        'type': 'OVERLAY_TRIGGER',
+      };
+      final isValid = await FCMService.validatePayload(data, isSecurity: false);
+      expect(isValid, isTrue, reason: '$action should be an allowed overlay action');
+    }
+  });
+
   test('validatePayload rejects invalid security action', () async {
     final data = {
       'action': 'UNKNOWN_SECURITY',

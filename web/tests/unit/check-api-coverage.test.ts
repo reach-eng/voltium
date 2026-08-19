@@ -45,9 +45,12 @@ describe('check-api-coverage.js (#38)', () => {
     expect(result.stdout).toMatch(/All operations are covered/);
   });
 
-  it('reports correct coverage count (163 operations)', () => {
+  it('reports correct coverage count (166 operations)', () => {
+    // 166 = 167 − 1: /api/rider/offers was deleted (2026-08-06 fix-plan PR-6,
+    // 14th audit P0-2 — zero production callers, dead Flutter client method).
+    // Count re-synced 2026-08-16 after the 7th/8th/9th audit route additions.
     const result = runScript();
-    expect(result.stdout).toMatch(/Total Operations \(excluding skipped\): 163/);
+    expect(result.stdout).toMatch(/Total Operations \(excluding skipped\): 166/);
   });
 
   it('basePath no longer has double-slash (regression guard for #38 bug #1)', async () => {

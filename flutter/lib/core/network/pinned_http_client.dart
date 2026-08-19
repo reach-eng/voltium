@@ -56,11 +56,19 @@ class PinnedHttpInterceptor {
 
     final activeFingerprints = configuredFingerprints;
     if (activeFingerprints.isEmpty) {
-      appDebug(
-        '[PinnedHttpClient] WARNING: No production fingerprints configured. '
-        'TLS pinning is not active. Set TLS_PIN_SHA256 dart-define before release.',
+      // DEEP-AUDIT D-P0-1: never silently disable TLS pinning in release.
+      // A build that ships without a fingerprint set is a security incident
+      // waiting to happen (MITM via rogue CA / fraudulent proxy). The
+      // pre-fix behavior of falling back to a plain http.Client with only
+      // a debug log let misconfigured release builds ship unprotected with
+      // zero signal to the operator. Throw loudly so the app crashes on
+      // first network call rather than running with no pinning.
+      throw StateError(
+        'PinnedHttpClient: no production TLS fingerprints configured. '
+        'Build the release with --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>" '
+        'or set DynamicPins via PinnedHttpInterceptor.setDynamicPins() at '
+        'app start. See pinned_http_client.dart for the deployment checklist.',
       );
-      return http.Client();
     }
 
     final httpClient = HttpClient(

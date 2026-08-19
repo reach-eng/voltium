@@ -4,11 +4,13 @@ import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized, adminForbidden, adminForbiddenWithLog } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { kycRepository } from '@/server/modules/kyc/kyc.repository';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
 import { approveKyc } from '@/server/modules/kyc/use-cases/approveKyc';
 import { KycApproveError } from '@/server/modules/kyc/use-cases/errors';
 import { withApiHandler } from '@/lib/api-handler';
+import { signRiderUrls } from '@/lib/sign-rider';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
@@ -25,8 +27,8 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const url = request.nextUrl;
   const status = url.searchParams.get('status') || undefined;
   const search = url.searchParams.get('search') || undefined;
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-  const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
+  const page = parsePositiveInt(url.searchParams.get('page'), 1);
+  const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
   const where: Prisma.KycProfileWhereInput = {};
   if (status && status !== 'ALL' && status in KycStatus) {
@@ -63,7 +65,19 @@ export const GET = withApiHandler(async (request: NextRequest) => {
           where,
           include: {
             rider: {
-              select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
+              select: {
+                id: true,
+                riderId: true,
+                fullName: true,
+                phone: true,
+                email: true,
+                fatherName: true,
+                motherName: true,
+                dob: true,
+                currentAddress: true,
+                emergencyContact: true,
+                lifecycleStatus: true,
+              },
             },
           },
           orderBy: { updatedAt: 'desc' },
@@ -72,8 +86,15 @@ export const GET = withApiHandler(async (request: NextRequest) => {
         }),
         kycRepository.count({ where }),
       ]);
+      // PR-ONBOARDING-2026-08-11 (audit 2.8): sign photo URLs so the admin
+      // browser can actually load them. Without this, public buckets leak
+      // and private buckets show broken images. `signRiderUrls` no-ops on
+      // missing fields, so it's safe across the schema.
+      const signed = await Promise.all(
+        records.map((r) => signRiderUrls(r as unknown as Record<string, unknown>))
+      );
       return {
-        records,
+        records: signed,
         pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       };
     },

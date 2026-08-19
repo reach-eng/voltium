@@ -18,4 +18,8 @@ export type SessionPayload = {
   adminRole?: string;
   adminId?: string;
   adminPermissions?: string[]; // Array of allowed permission keys
+  /** Token kind marker: 'refresh' on refresh tokens, absent on access tokens (P0-3). */
+  type?: string;
+  /** tokenVersion at signing time, surfaced to verifiers for rotation checks (P0-9). */
+  tokenVersion?: number;
 };

@@ -1,10 +1,25 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { shiftUseCases } from '@/server/modules/shifts/shift.use-cases';
 
+// This endpoint is public by design (rider shift view) — no session required.
+// PR-9 (2026-08-06 fix plan): the rate limit prevents scraping/abuse.
 export async function GET(request: NextRequest) {
   try {
+    // Per-IP limit: 30 requests / 60s is generous for a rider checking
+    // shift availability, but blocks automated scraping of hub schedules.
+    const identifier = rateLimitIdentifierFromRequest(request);
+    const rl = await checkRateLimit(`public:shifts:${identifier}`, {
+      windowMs: 60_000,
+      maxRequests: 30,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many requests. Please try again later.');
+    }
+
     const hubId = request.nextUrl.searchParams.get('hubId');
     const date = request.nextUrl.searchParams.get('date') || undefined;
 

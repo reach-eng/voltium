@@ -3,20 +3,28 @@ import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/auth';
+import { hasPermission, type Permission } from '@/lib/auth';
+import { parsePositiveInt } from '@/lib/api-utils';
+import { validateBody, adminRentalActionSchema } from '@/lib/validators';
 import { rentalRepository } from '@/server/modules/rentals/rental.repository';
 import { withApiHandler } from '@/lib/api-handler';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+  if (
+    !hasPermission(session.adminRole || '', 'rentals_pickup_inspection') &&
+    !hasPermission(session.adminRole || '', 'rentals_return_inspection') &&
+    !hasPermission(session.adminRole || '', 'riders_view')
+  ) {
+    return adminForbidden();
+  }
 
   const url = request.nextUrl;
   const status = url.searchParams.get('status') || undefined;
   const search = url.searchParams.get('search') || undefined;
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-  const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
+  const page = parsePositiveInt(url.searchParams.get('page'), 1);
+  const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
   const where: Prisma.RentalLeaseWhereInput = {};
   if (status && status !== 'ALL' && status in RentalStatus) {
@@ -80,15 +88,33 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   if (!session) return adminUnauthorized();
 
   const body = await request.json().catch(() => ({}));
-  const action = String(body.action || '').toUpperCase();
   const leaseId = body.leaseId || body.id;
-  if (!leaseId || !action) return errors.badRequest('leaseId and action are required');
+  if (!leaseId || typeof body.action !== 'string') {
+    return errors.badRequest('leaseId and action are required');
+  }
 
-  const permission =
-    action.includes('RETURN') || action === 'CLOSE'
-      ? 'rentals_return_inspection'
-      : 'rentals_pickup_inspection';
-  if (!hasPermission(session.adminRole || '', permission as any)) return adminForbidden();
+  // P1.4: closed Zod enum — a typo'd action is a 400 here instead of being
+  // silently bucketed into the wrong permission (the old code did
+  // `String.includes('RETURN')`, so `RETURNX` passed the return gate).
+  const validation = validateBody(
+    adminRentalActionSchema,
+    String(body.action).toUpperCase()
+  );
+  if (!validation.success) return errors.badRequest('Invalid rental action');
+  const action = validation.data;
+
+  const ACTION_PERMISSION_MAP: Record<string, Permission> = {
+    START: 'rentals_pickup_inspection',
+    PICKUP_COMPLETE: 'rentals_pickup_inspection',
+    REQUEST_RETURN: 'rentals_return_inspection',
+    APPROVE_RETURN: 'rentals_return_inspection',
+    CLOSE: 'rentals_return_inspection',
+    MARK_OVERDUE: 'rentals_pickup_inspection',
+    SUSPEND: 'rentals_pickup_inspection',
+  };
+  const permission: Permission =
+    ACTION_PERMISSION_MAP[action] || 'rentals_pickup_inspection';
+  if (!hasPermission(session.adminRole || '', permission)) return adminForbidden();
 
   const lease = await rentalRepository.findLeaseById(leaseId);
   if (!lease) return errors.notFound('Rental lease not found');

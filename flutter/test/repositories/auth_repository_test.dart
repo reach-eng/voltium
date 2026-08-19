@@ -91,12 +91,16 @@ void main() {
       expect(result.isNewRider, isTrue);
     });
 
-    test('logout calls clearSession on client storage', () async {
-      when(() => mockStorage.clearSession()).thenAnswer((_) async {});
+    test('logout calls clearSessionCredentials on client storage', () async {
+      // AUTH P1-4: logout wipes session credentials but preserves the FCM
+      // command secret + device-lock state — so it must call the scoped
+      // wipe, not the legacy clearSession/clearAll.
+      when(() => mockStorage.clearSessionCredentials())
+          .thenAnswer((_) async {});
 
       await repository.logout();
 
-      verify(() => mockStorage.clearSession()).called(1);
+      verify(() => mockStorage.clearSessionCredentials()).called(1);
     });
   });
 }

@@ -5,16 +5,17 @@
  */
 
 import { db } from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 import type { BackupType, BackupStatus, RestoreStatus } from './backup.types';
 
 export const backupRepository = {
   // ── Backup Schedule ────────────────────────────────────────────────────
 
-  async getSchedule(): Promise<any | null> {
+  async getSchedule() {
     return db.backupSchedule.findFirst({ orderBy: { createdAt: 'desc' } });
   },
 
-  async upsertSchedule(data: any): Promise<any> {
+  async upsertSchedule(data: Prisma.BackupScheduleUncheckedCreateInput) {
     const existing = await db.backupSchedule.findFirst({ orderBy: { createdAt: 'desc' } });
     if (existing) {
       return db.backupSchedule.update({ where: { id: existing.id }, data });
@@ -36,7 +37,7 @@ export const backupRepository = {
     });
   },
 
-  async findRunningBackup(): Promise<any | null> {
+  async findRunningBackup() {
     return db.backupJob.findFirst({
       where: { status: { in: ['QUEUED', 'RUNNING'] } },
     });
@@ -86,7 +87,7 @@ export const backupRepository = {
   },
 
   async listBackupJobs(params: { page: number; limit: number; type?: string; status?: string }) {
-    const where: any = {};
+    const where: Prisma.BackupJobWhereInput = {};
     if (params.type) where.type = params.type;
     if (params.status) where.status = params.status;
 

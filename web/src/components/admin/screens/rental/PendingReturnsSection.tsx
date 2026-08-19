@@ -48,7 +48,7 @@ export function PendingReturnsSection({
         {pendingReturns.map((rental) => (
           <Card
             key={rental.id}
-            className="rounded-xl border-rose-200 bg-rose-50/30 overflow-hidden shadow-sm hover:shadow-md transition-all"
+            className="rounded-xl border-rose-200 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-950/20 overflow-hidden shadow-sm hover:shadow-md transition-all"
           >
             <CardContent className="p-5 space-y-4">
               <div className="flex justify-between items-start">
@@ -63,7 +63,7 @@ export function PendingReturnsSection({
                 </Badge>
               </div>
 
-              <div className="bg-white/60 rounded-xl p-3 border border-rose-100/50">
+              <div className="bg-white/60 dark:bg-slate-900/60 rounded-xl p-3 border border-rose-100/50 dark:border-rose-900/30">
                 <p className="text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400 mb-1">
                   Scooter Submitted On
                 </p>
@@ -84,7 +84,7 @@ export function PendingReturnsSection({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-rose-200 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-lg"
+                  className="flex-1 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50 rounded-lg"
                   onClick={() => onReview(rental)}
                 >
                   Review

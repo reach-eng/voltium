@@ -12,18 +12,26 @@ const register = new Registry();
 // Collect default metrics (CPU, memory, event loop lag, etc.)
 collectDefaultMetrics({ register });
 
+async function isAuthorizedMetricsCaller(req: NextRequest): Promise<boolean> {
+  const tokenHeader = req.headers.get('x-internal-metrics-token');
+  const expectedToken = process.env.INTERNAL_METRICS_TOKEN;
+  if (expectedToken && tokenHeader === expectedToken) {
+    return true;
+  }
+  const session = await requireAdmin();
+  return !!session;
+}
+
 export async function GET(req: NextRequest) {
-  // If Prometheus is scraping, it usually expects text format and doesn't send auth headers by default,
-  // but to protect internal metrics we could enforce a basic auth or IP whitelist. 
-  // For this project, we'll allow scraping or fallback to JSON for admin dashboard.
-  
+  const isAuth = await isAuthorizedMetricsCaller(req);
+  if (!isAuth) {
+    return adminUnauthorized();
+  }
+
   const format = req.nextUrl.searchParams.get('format');
   const type = req.nextUrl.searchParams.get('type') || 'summary';
 
   if (format === 'json' || type === 'slow') {
-    const session = await requireAdmin();
-    if (!session) return adminUnauthorized();
-
     try {
       if (type === 'slow') {
         const slowQueries = getSlowQueries();

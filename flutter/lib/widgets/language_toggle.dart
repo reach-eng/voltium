@@ -3,149 +3,78 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../gen/app_localizations.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
-import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
-/// A reusable animated segmented control for toggling between English and Hindi.
+/// Displays the unified language selection dialog across all app screens.
 ///
-/// Displays two options with an animated selection indicator themed with the
-/// Voltium brand colour (`#0053c1`). When the user taps an option the
-/// [LocaleProvider] is updated and [onLocaleChanged] is invoked so the parent
-/// can react (e.g. show a snackbar).
-class LanguageToggle extends ConsumerStatefulWidget {
-  const LanguageToggle({super.key, this.onLocaleChanged});
+/// PR-28 (DARK_MODE P0-1): the previous `LanguageToggle` widget
+/// (ConsumerStatefulWidget) is gone — it was never instantiated
+/// anywhere in the app, but its file was imported by `settings_screen`
+/// and `profile_screen` as a dead dependency. Both screens now call
+/// this dialog directly via `showAppLanguageDialog(context, ref)`,
+/// which is the single source of truth for language selection.
+///
+/// LANGUAGE-AUDIT (2026-08-16) #11: the dialog now iterates over
+/// `LocaleNotifier.supportedLanguages` instead of hard-coding 3
+/// ListTiles. Adding a 3rd language is a one-line change in
+/// [LocaleNotifier.supportedLanguages] (plus the ARB file).
+void showAppLanguageDialog(BuildContext context, WidgetRef ref) {
+  final l10n = AppLocalizations.of(context);
+  final localeState = ref.read(localeProvider);
+  final currentLocale = localeState.locale.languageCode;
+  final followingSystem = localeState.isFollowingSystem;
+  // Radio group value: `'system'` when following the OS locale, otherwise
+  // the explicit language code.
+  final groupValue = followingSystem ? 'system' : currentLocale;
+  final colors = AppColors.of(context);
 
-  /// Optional callback invoked after the locale has been changed.
-  final ValueChanged<Locale>? onLocaleChanged;
-
-  @override
-  ConsumerState<LanguageToggle> createState() => _LanguageToggleState();
-}
-
-class _LanguageToggleState extends ConsumerState<LanguageToggle>
-    with SingleTickerProviderStateMixin {
-  /// Controls the animated position of the selection indicator.
-  late final AnimationController _controller;
-  late final Animation<Offset> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-    _animation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(1, 0),
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    // Start in the correct position based on current locale.
-    if (ref.read(localeProvider).isHindi) {
-      _controller.value = 1.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// Returns the translated label for each segment.
-  String _labelFor(int index, AppLocalizations l10n) {
-    return index == 0 ? l10n.settings_english : l10n.settings_hindi;
-  }
-
-  Future<void> _onTap(int index) async {
-    if (index == 0 && !ref.read(localeProvider).isEnglish) {
-      await ref.read(localeProvider.notifier).setEnglish();
-      _controller.reverse();
-      widget.onLocaleChanged?.call(const Locale('en'));
-    } else if (index == 1 && !ref.read(localeProvider).isHindi) {
-      await ref.read(localeProvider.notifier).setHindi();
-      _controller.forward();
-      widget.onLocaleChanged?.call(const Locale('hi'));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-
-    const vfBlue = AppColors.primary;
-    const vfBlueLight = AppColors.primaryLight;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final segmentWidth =
-            (constraints.maxWidth - 4) / 2; // 4 = inner padding
-
-        return AnimatedBuilder(
-          animation: _animation,
-          builder: (context, child) {
-            return Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: vfBlueLight.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: colors.surface,
+      title: Text(l10n?.menu_selectLanguage ?? 'Select Language'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            title: Text(l10n?.settings_followSystem ?? 'Follow system'),
+            leading: Radio<String>(
+              key: const Key('systemRadio'),
+              value: 'system',
+              groupValue: groupValue,
+              onChanged: (v) {
+                ref.read(localeProvider.notifier).setFollowSystem();
+                Navigator.pop(ctx);
+              },
+            ),
+            onTap: () {
+              ref.read(localeProvider.notifier).setFollowSystem();
+              Navigator.pop(ctx);
+            },
+          ),
+          // Iterate over supportedLanguages so adding a 3rd language
+          // is purely a data change in LocaleNotifier.supportedLanguages.
+          for (final lang in LocaleNotifier.supportedLanguages)
+            ListTile(
+              title: Text(l10n != null
+                  ? LocaleNotifier.displayNameFor(lang.locale, l10n)
+                  : lang.nativeName),
+              leading: Radio<String>(
+                key: Key('${lang.code}Radio'),
+                value: lang.code,
+                groupValue: groupValue,
+                onChanged: (v) {
+                  ref.read(localeProvider.notifier).setLocale(lang.locale);
+                  Navigator.pop(ctx);
+                },
               ),
-              child: Stack(
-                children: [
-                  // Animated selection indicator.
-                  Positioned(
-                    left: 2 + (_animation.value.dx * segmentWidth),
-                    top: 2,
-                    child: Container(
-                      width: segmentWidth,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: vfBlue,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: vfBlue.withValues(alpha: 0.35),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Segment labels.
-                  Row(
-                    children: List.generate(2, (index) {
-                      final isSelected =
-                          (index == 0 && _animation.value.dx < 0.5) ||
-                              (index == 1 && _animation.value.dx >= 0.5);
-                      final textColor = isSelected
-                          ? Colors.white
-                          : vfBlue.withValues(alpha: 0.8);
-
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => _onTap(index),
-                          child: Center(
-                            child: Text(
-                              _labelFor(index, l10n),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: textColor,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+              onTap: () {
+                ref.read(localeProvider.notifier).setLocale(lang.locale);
+                Navigator.pop(ctx);
+              },
+            ),
+        ],
+      ),
+    ),
+  );
 }

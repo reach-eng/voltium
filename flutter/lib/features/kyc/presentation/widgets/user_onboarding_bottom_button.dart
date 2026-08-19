@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -19,6 +20,8 @@ class UserOnboardingBottomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
@@ -71,7 +74,7 @@ class UserOnboardingBottomButton extends StatelessWidget {
                           ),
                         ),
                         if (uploadProgressText.isNotEmpty) ...[
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
                             uploadProgressText,
                             style: AppTypography.bodyMedium
@@ -81,15 +84,16 @@ class UserOnboardingBottomButton extends StatelessWidget {
                       ],
                     )
                   : Text(
-                      'Confirm & Proceed',
+                      l10n?.txtconfirmAndProceed ?? 'Confirm & Proceed',
                       style: AppTypography.labelLarge
                           .copyWith(fontWeight: FontWeight.w700),
                     ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
+            l10n?.txtensureAllDetailsAccurate ??
+                'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
             textAlign: TextAlign.center,
             style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
                   color: colors.onSurfaceMuted.withValues(alpha: 0.7),

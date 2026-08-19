@@ -10,8 +10,7 @@ class RentalRepositoryImpl implements RentalRepository {
 
   @override
   Future<Map<String, dynamic>> fetchHubs() async {
-    final response = await _apiClient.getAdminHubs();
-    return response.toJson();
+    return _apiClient.getRiderHubs();
   }
 
   @override
@@ -48,14 +47,14 @@ class RentalRepositoryImpl implements RentalRepository {
 
   @override
   Future<Map<String, dynamic>> submitVehicleReturn({
-    required String vehicleId,
-    required String hubId,
     required List<String> photos,
   }) async {
-    // Delegate to the singleton service which routes to POST /api/rider/vehicle-return.
+    // Delegate to the singleton service which routes to POST /api/rider/rental/return.
+    // PR-VER-2026-08-06 (RENTAL P0-1 + P0-3): vehicleId/hubId were silently
+    // dropped and riderId was fabricated — the server resolves rider + vehicle
+    // from the session. The canonical body is now `{ returnPhotos, reason }`.
     return VoltiumApiService().submitVehicleReturn(
-      riderId: vehicleId,
-      photoUrls: photos,
+      returnPhotos: photos,
     );
   }
 }

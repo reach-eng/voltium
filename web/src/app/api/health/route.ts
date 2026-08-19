@@ -102,6 +102,54 @@ async function checkDatabase(): Promise<{
   }
 }
 
+import os from 'os';
+
+function getMemoryUsage(): {
+  status: 'healthy';
+  freeMB: number;
+  totalMB: number;
+  usedMB: number;
+  usagePercent: number;
+} {
+  const freeMem = os.freemem();
+  const totalMem = os.totalmem();
+  const usedMem = totalMem - freeMem;
+  const usagePercent = totalMem > 0 ? Math.round((usedMem / totalMem) * 100) : 0;
+  return {
+    status: 'healthy',
+    freeMB: Math.round(freeMem / 1024 / 1024),
+    totalMB: Math.round(totalMem / 1024 / 1024),
+    usedMB: Math.round(usedMem / 1024 / 1024),
+    usagePercent,
+  };
+}
+
+function getCpuUsage(): {
+  status: 'healthy';
+  usagePercent: number;
+  cores: number;
+  model: string;
+} {
+  const cpus = os.cpus();
+  let totalIdle = 0;
+  let totalTick = 0;
+  if (cpus && cpus.length > 0) {
+    for (const cpu of cpus) {
+      for (const type in cpu.times) {
+        totalTick += (cpu.times as any)[type];
+      }
+      totalIdle += cpu.times.idle;
+    }
+  }
+  const usagePercent = totalTick > 0 ? Math.round((1 - totalIdle / totalTick) * 100) : 0;
+  return {
+    status: 'healthy',
+    usagePercent,
+    cores: cpus?.length || 1,
+    model: cpus[0]?.model || 'Unknown',
+  };
+}
+
 function checkDisk(): {
   status: 'healthy' | 'degraded' | 'unhealthy';
   usagePercent: number;
@@ -128,6 +176,8 @@ export async function GET(request: NextRequest) {
 
   const database = await checkDatabase();
   const disk = checkDisk();
+  const memory = getMemoryUsage();
+  const cpu = getCpuUsage();
   const uptime = process.uptime();
 
   const uploadsRoot = process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
@@ -138,6 +188,8 @@ export async function GET(request: NextRequest) {
   const checks = {
     database,
     disk,
+    memory,
+    cpu,
     uploadPath: {
       status:
         uploadPath.exists && uploadPath.writable ? ('healthy' as const) : ('degraded' as const),

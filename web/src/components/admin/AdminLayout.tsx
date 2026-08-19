@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useAdminStore } from '@/store/admin';
 import AdminSidebar from './AdminSidebar';
@@ -7,13 +7,20 @@ import CommandPalette from './CommandPalette';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Toaster as SonnerToaster } from 'sonner';
-import { Menu, Search, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
+import { Menu, Search, ChevronRight, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { hasPermission } from '@/lib/permissions';
 import { ALL_NAV_ITEMS } from '@/lib/role-config';
+import {
+  getAdminRefreshToken,
+  setAdminRefreshToken,
+  clearAdminRefreshToken,
+} from '@/lib/admin-refresh-token';
+import type { SessionPayload } from '@/lib/session-payload';
 import { AdminErrorBoundary } from './error-boundary';
+import { AdminLoginForm } from './AdminLoginForm';
 
 // Screen placeholder with shimmer animation
 function ScreenLoader() {
@@ -63,9 +70,16 @@ export const screenImportMap: Record<string, () => Promise<any>> = {
   'server-health': () => import('./screens/ServerHealthScreen'),
   'data-management': () => import('./screens/data-management'),
   'background-jobs': () => import('./screens/BackgroundJobsScreen'),
+  'payment-gateways': () => import('./screens/PaymentGatewayManagement'),
 };
 
 const prefetchedSet = new Set<string>();
+
+// P1-13: the admin refresh token lives in lib/admin-refresh-token.ts (shared
+// with AdminLoginForm) — never in localStorage/sessionStorage.
+// Refresh at ~60% of the 2h access-token TTL (keep in sync with
+// ACCESS_TOKEN_TTL in lib/auth.ts).
+const ADMIN_REFRESH_INTERVAL_MS = Math.round(2 * 60 * 60 * 0.6) * 1000;
 
 export function prefetchAdminScreen(sectionId: string) {
   if (prefetchedSet.has(sectionId)) return;
@@ -112,6 +126,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   'server-health': loadAdminScreen('ServerHealthScreen'),
   'data-management': loadAdminScreen('data-management'),
   'background-jobs': loadAdminScreen('BackgroundJobsScreen'),
+  'payment-gateways': loadAdminScreen('PaymentGatewayManagement'),
 };
 
 function PlaceholderSection({ name }: { name: string }) {
@@ -126,51 +141,23 @@ function PlaceholderSection({ name }: { name: string }) {
   );
 }
 
-const sectionLabels: Record<string, string> = {
-  overview: 'Dashboard',
-  riders: 'Riders',
-  kyc: 'Onboarding / KYC',
-  rentals: 'Rentals',
-  vehicles: 'Vehicles',
-  hubs: 'Hubs',
-  'background-jobs': 'Background Jobs',
+// P3-2: single source of truth — labels come from ALL_NAV_ITEMS (role-config.ts)
+// instead of a second hardcoded map that could drift.
+const sectionLabels: Record<string, string> = Object.fromEntries(
+  ALL_NAV_ITEMS.map((item) => [item.id, item.label])
+);
+// Sections that have screens but deliberately no sidebar entry keep a small
+// local override — they are not part of the nav, so they can't live in
+// ALL_NAV_ITEMS without appearing in the sidebar.
+const EXTRA_SECTION_LABELS: Record<string, string> = {
   'wallet-deposits': 'Wallet Deposits',
-  'earnings': 'Earnings',
-  transactions: 'Finance',
-  tickets: 'Support',
-  incidents: 'Incidents & Fines',
-  'team-leaders': 'Team Leaders',
-  operations: 'Operations',
-  'fleet-map': 'Fleet Map',
-  shifts: 'Shifts',
-  'rider-scoring': 'Rider Scoring',
-  offers: 'Offers & Coupons',
-  faq: 'FAQ Management',
-  legal: 'Legal Documents',
-  'device-tracking': 'Device Tracking',
-  'workflow-coverage': 'Workflow Coverage',
-  notifications: 'Messaging',
-  rewards: 'Rewards',
-  analytics: 'Reports & Analytics',
-  'admin-users': 'Admin Access',
-  'business-settings': 'Configuration',
-  settings: 'System Settings',
-  'server-health': 'Server Health',
-  'data-management': 'Data Management',
+  'payment-gateways': 'Payment Gateway',
 };
+Object.assign(sectionLabels, EXTRA_SECTION_LABELS);
 
-// Number keys → section shortcuts
-const numberToSection = [
-  'overview',
-  'riders',
-  'kyc',
-  'vehicles',
-  'rentals',
-  'transactions',
-  'tickets',
-  'data-management',
-  'server-health',
-];
+// P3-3: number-key shortcuts (1-9) follow the canonical nav order from
+// ALL_NAV_ITEMS instead of a second hardcoded list.
+const numberToSection = ALL_NAV_ITEMS.slice(0, 9).map((item) => item.id);
 
 function AdminSectionRenderer({ section, session }: { section: string; session: any }) {
   const item = ALL_NAV_ITEMS.find((i) => i.id === section);
@@ -199,6 +186,28 @@ function AdminSectionRenderer({ section, session }: { section: string; session: 
   return <PlaceholderSection name={sectionLabels[section] || section} />;
 }
 
+// P1-5: shown when the auth check fails for infra reasons (5xx / network),
+// distinct from the login form so admins know it's not a credential problem.
+function AdminAuthErrorScreen({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-dvh bg-background p-6">
+      <div className="w-full max-w-sm flex flex-col items-center text-center">
+        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-6">
+          <ShieldAlert className="w-8 h-8 text-destructive" />
+        </div>
+        <h1 className="text-2xl font-black mb-2 tracking-tight">Server unreachable</h1>
+        <p className="text-sm text-muted-foreground mb-6 font-medium leading-relaxed">
+          The admin service didn't respond. This is a connectivity problem, not a sign-in
+          problem — retry before entering your credentials.
+        </p>
+        <Button size="lg" className="w-full font-bold" onClick={onRetry}>
+          Retry connection
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminLayout() {
   const activeSection = useAdminStore((s) => s.activeSection);
   const sidebarCollapsed = useAdminStore((s) => s.sidebarCollapsed);
@@ -207,8 +216,14 @@ export default function AdminLayout() {
   const setCommandPaletteOpen = useAdminStore((s) => s.setCommandPaletteOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [session, setSession] = useState<any>(null);
+  // P1-7: typed session — no more `any`. The /me payload is a superset of
+  // SessionPayload (admin profile fields), so it's narrowed at the set site.
+  const [session, setSession] = useState<SessionPayload | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  // P1-5: distinguish "logged out" (401/403 → login form) from "server is
+  // down" (5xx/network → retry screen) so admins aren't sent to the login
+  // form during an outage.
+  const [authError, setAuthError] = useState(false);
   const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set([activeSection]));
 
   useEffect(() => {
@@ -220,26 +235,146 @@ export default function AdminLayout() {
     });
   }, [activeSection]);
 
-  useEffect(() => {
-    // Initiate auth check and dashboard stats prefetch in parallel
-    const authPromise = fetch('/api/admin/auth/me', { credentials: 'include' }).then((res) =>
-      res.ok ? res.json() : null
-    );
-    const statsPromise = fetch('/api/admin/dashboard', { credentials: 'include' }).then((res) =>
-      res.ok ? res.json() : null
-    );
-
-    Promise.all([authPromise, statsPromise])
-      .then(([authData]) => {
-        if (authData?.success && authData?.data?.role) {
-          setIsAuthorized(true);
-          setSession(authData.data);
-        } else {
-          setIsAuthorized(false);
-        }
-      })
-      .catch(() => setIsAuthorized(false));
+  const refreshTokens = useCallback(async (): Promise<boolean> => {
+    if (!getAdminRefreshToken()) return false;
+    try {
+      const res = await fetch('/api/admin/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: getAdminRefreshToken() }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        // Only a 401 means the refresh token itself is dead (revoked,
+        // expired, deactivated). Transient 5xx/429s keep the token so the
+        // next cycle retries — one blip must not log the admin out later.
+        if (res.status === 401) clearAdminRefreshToken();
+        return false;
+      }
+      try {
+        const data = await res.json();
+        // Rotation: the server invalidated the old refresh token and mints a
+        // new one — keep the latest copy.
+        if (data?.data?.refreshToken) setAdminRefreshToken(data.data.refreshToken);
+      } catch {
+        // cookie was rotated via Set-Cookie even if the body was malformed
+      }
+      return true;
+    } catch {
+      return false; // network blip — the caller decides whether to retry
+    }
   }, []);
+
+  const runAuthCheck = useCallback(async () => {
+    let res: Response;
+    try {
+      res = await fetch('/api/admin/auth/me', { credentials: 'include' });
+    } catch {
+      setAuthError(true);
+      setIsAuthorized(false);
+      return;
+    }
+
+    // P1-13: if the access token expired, try one silent refresh before
+    // giving up and showing the login form.
+    if (res.status === 401 && (await refreshTokens())) {
+      try {
+        res = await fetch('/api/admin/auth/me', { credentials: 'include' });
+      } catch {
+        setAuthError(true);
+        setIsAuthorized(false);
+        return;
+      }
+    }
+
+    if (res.status === 401 || res.status === 403) {
+      // Genuinely logged out (or deactivated) — the login form is correct.
+      setAuthError(false);
+      setIsAuthorized(false);
+      return;
+    }
+    if (!res.ok) {
+      // P1-5: server error — never masquerade as "not logged in".
+      setAuthError(true);
+      setIsAuthorized(false);
+      return;
+    }
+    try {
+      const data = await res.json();
+      if (data?.success && data?.data?.role) {
+        setIsAuthorized(true);
+        setSession(data.data as SessionPayload);
+        setAuthError(false);
+      } else {
+        setAuthError(false);
+        setIsAuthorized(false);
+      }
+    } catch {
+      setAuthError(true);
+      setIsAuthorized(false);
+    }
+  }, [refreshTokens]);
+
+  useEffect(() => {
+    // P1-4: the auth check must not depend on the dashboard endpoint — a
+    // slow or down stats API can't force an authenticated admin to the
+    // login form. The dashboard prefetch is fire-and-forget.
+    fetch('/api/admin/dashboard', { credentials: 'include' }).catch(() => {});
+    void runAuthCheck();
+  }, [runAuthCheck]);
+
+  // Speculative idle prefetching of primary screens for instant navigation
+  useEffect(() => {
+    if (isAuthorized !== true) return;
+    const idleId =
+      typeof requestIdleCallback !== 'undefined'
+        ? requestIdleCallback(
+            () => {
+              prefetchAdminScreen('overview');
+              prefetchAdminScreen('riders');
+              prefetchAdminScreen('kyc');
+              prefetchAdminScreen('vehicles');
+            },
+            { timeout: 2000 }
+          )
+        : setTimeout(() => {
+            prefetchAdminScreen('overview');
+            prefetchAdminScreen('riders');
+            prefetchAdminScreen('kyc');
+            prefetchAdminScreen('vehicles');
+          }, 800);
+
+    return () => {
+      if (typeof cancelIdleCallback !== 'undefined' && typeof idleId === 'number') {
+        cancelIdleCallback(idleId);
+      } else {
+        clearTimeout(idleId as any);
+      }
+    };
+  }, [isAuthorized]);
+
+  // P1-13: background session refresh — keeps long-lived admin sessions
+  // alive past the 2h access-token TTL without a full re-login.
+  useEffect(() => {
+    if (isAuthorized !== true) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(async () => {
+        if (cancelled) return;
+        await refreshTokens();
+        if (cancelled) return;
+        // Keep the cycle going as long as we still hold a refresh token;
+        // transient failures just skip that cycle.
+        if (getAdminRefreshToken()) schedule();
+      }, ADMIN_REFRESH_INTERVAL_MS);
+    };
+    schedule();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isAuthorized, refreshTokens]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────
   useEffect(() => {
@@ -273,81 +408,29 @@ export default function AdminLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [setActiveSection, setCommandPaletteOpen]);
 
-  if (isAuthorized === null) {
-    return (
-      <div className="flex items-center justify-center min-h-dvh bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">Verifying authorization...</p>
-        </div>
-      </div>
-    );
+  // P1-5: server-down is a retryable error, not a sign-in failure.
+  if (isAuthorized === false && authError) {
+    return <AdminAuthErrorScreen onRetry={() => void runAuthCheck()} />;
   }
 
   if (isAuthorized === false) {
-    const handleAutoLogin = async () => {
-      setLoginLoading(true);
-      try {
-        const res = await fetch('/api/admin/auth/auto-login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (res.ok) {
-          window.location.reload();
-        } else {
-          const data = await res.json();
-          alert(data.error?.message || 'Login failed');
-        }
-      } catch (err) {
-        alert('Connection error');
-      } finally {
-        setLoginLoading(false);
-      }
-    };
-
-    const isDev =
-      typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
     return (
-      <div className="flex flex-col items-center justify-center min-h-dvh bg-background p-6 text-center">
-        <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8">
-          <ShieldAlert className="w-10 h-10 text-primary" />
-        </div>
-        <h1 className="text-3xl font-black mb-3 tracking-tight">Admin</h1>
-        <p className="text-muted-foreground mb-8 max-w-sm font-medium">
-          Please log in with your admin credentials to access the management dashboard.
-        </p>
-
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          {isDev && (
-            <Button
-              size="lg"
-              className="w-full font-bold shadow-xl shadow-primary/20"
-              onClick={handleAutoLogin}
-              disabled={loginLoading}
-            >
-              {loginLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Login as Admin (Dev)'}
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            className="text-muted-foreground"
-            onClick={() => (window.location.href = '/rider-app')}
-          >
-            Return to Rider App
-          </Button>
-        </div>
-      </div>
+      <AdminLoginForm
+        loginLoading={loginLoading}
+        setLoginLoading={setLoginLoading}
+        onAuthenticated={(data) => {
+          setIsAuthorized(true);
+          setSession(data);
+        }}
+      />
     );
   }
 
   return (
     <AdminErrorBoundary>
-    <div className="flex min-h-dvh bg-background overflow-hidden">
+    <div className="flex h-dvh bg-background overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block shrink-0 h-full overflow-hidden">
+      <aside className="hidden lg:block shrink-0 h-dvh overflow-hidden">
         <AdminSidebar collapsed={sidebarCollapsed} />
       </aside>
 
@@ -363,7 +446,7 @@ export default function AdminLayout() {
       <CommandPalette />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 h-dvh overflow-hidden">
         {/* Top Bar */}
         <header className="h-16 border-b bg-card flex items-center px-6 gap-4 shrink-0 transition-colors duration-200">
           {/* Mobile menu button */}
@@ -408,7 +491,10 @@ export default function AdminLayout() {
               variant="outline"
               size="default"
               className="hidden sm:flex items-center gap-2 h-10 px-4 font-medium transition-colors"
-              onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || 'http://localhost:8080', '_blank')}
+              // P3-4: the rider app is served same-origin at /rider-app — a
+              // production deploy that forgets NEXT_PUBLIC_FLUTTER_WEB_URL must
+              // not point this button at the developer's localhost.
+              onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || '/rider-app', '_blank')}
             >
               Rider App
             </Button>

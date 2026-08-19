@@ -1,6 +1,5 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { AuditActionType } from '@prisma/client';
 
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
@@ -52,7 +51,7 @@ export async function createAuditLog(params: {
       data: {
         actorId: params.actorId,
         actorType: (params.actorType || 'ADMIN') as 'ADMIN' | 'SYSTEM' | 'RIDER',
-        action: params.action as AuditActionType,
+        action: params.action,
         entity: params.entity,
         entityId: params.entityId || null,
         details:

@@ -4,8 +4,7 @@
 //   - `transactions`, `isRefreshingTransactions`, `lastError`,
 //     `isToppingUp`, `walletMinTopup`, `walletBalanceLow`,
 //     `currentBalance`
-//   - `topUpWallet`, `deleteTransactionHistory`,
-//     `refreshTransactions`, `setWalletBalanceWarning`,
+//   - `topUpWallet`, `refreshTransactions`, `setWalletBalanceWarning`,
 //     `setWalletSettings`, `logout`
 //
 // The notifier pulls its dependencies (`WalletRepository`,
@@ -22,6 +21,9 @@ import 'package:universal_io/io.dart';
 
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
+import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/models/transaction_model.dart';
 
@@ -125,7 +127,10 @@ class WalletNotifier extends Notifier<WalletState> {
       }
       final req = entity.TopupRequest(
         riderId: riderId,
-        amount: amount,
+        // PR-RUPEES-2026-08-08: `amount` is now in **rupees** (the
+        // public API contract). The server converts to paise on
+        // insert; the Flutter app never sees paise.
+        amountInRupees: amount,
         method: method,
         upiRef: upiRef,
         proofUrl: uploadedUrl,
@@ -137,15 +142,6 @@ class WalletNotifier extends Notifier<WalletState> {
       rethrow;
     } finally {
       state = state.copyWith(isToppingUp: false);
-    }
-  }
-
-  Future<void> deleteTransactionHistory({required String riderId}) async {
-    try {
-      await _repo.deleteTransactionHistory(riderId);
-      state = state.copyWith(transactions: const []);
-    } catch (e) {
-      rethrow;
     }
   }
 
@@ -217,11 +213,13 @@ final walletProvider = NotifierProvider<WalletNotifier, WalletState>(
 // ── Repository providers (overridden in main.dart with real impls) ──
 
 final filesRepositoryProvider = Provider<FilesRepository>((ref) {
-  throw UnimplementedError(
-      'filesRepositoryProvider must be overridden in ProviderScope');
+  final client = ApiClient();
+  final vClient = VoltiumApiClient(client);
+  return FilesRepository(client, vClient);
 });
 
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
-  throw UnimplementedError(
-      'walletRepositoryProvider must be overridden in ProviderScope');
+  final client = ApiClient();
+  final vClient = VoltiumApiClient(client);
+  return WalletRepositoryImpl(client, vClient);
 });

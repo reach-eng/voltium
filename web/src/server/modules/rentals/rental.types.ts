@@ -1,11 +1,16 @@
 /**
  * Rentals module - Types
  *
- * Rental plan, booking, pickup, active rental, and return types.
+ * PR-ONBOARDING-2026-08-11 (audit 2.19): the previous file diverged
+ * from the Prisma `RentalPlan` / `RentalLease` models. The `RentalStatus`
+ * union was missing `BOOKED` (used by the booking flow) and the plan
+ * `pricePaise` field name was the legacy `*Paise` short-form; the
+ * Prisma column is `priceInPaise`. Brought back into sync.
  */
 
 export type RentalStatus =
   | 'NO_RENTAL'
+  | 'BOOKED'
   | 'PLAN_SELECTED'
   | 'PICKUP_SCHEDULED'
   | 'ACTIVE'
@@ -21,7 +26,8 @@ export interface RentalPlan {
   id: string;
   name: string;
   type: RentalPlanType;
-  pricePaise: number;
+  priceInPaise: number;
+  securityDepositInPaise?: number;
   durationDays: number;
   description?: string;
   isActive: boolean;
@@ -37,6 +43,7 @@ export interface ActiveRental {
   startDate: Date;
   dueDate?: Date;
   endDate?: Date;
-  dailyRatePaise: number;
+  basePriceInPaise: number;
+  finalPriceInPaise: number;
   rentPaidUntil?: Date;
 }

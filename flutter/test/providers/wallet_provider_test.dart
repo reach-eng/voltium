@@ -10,7 +10,6 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 
 class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
-  bool deleteCalled = false;
 
   @override
   Future<entity.TopupRequest> submitTopup(entity.TopupRequest request) async {
@@ -24,23 +23,15 @@ class MockWalletRepository implements WalletRepository {
     return [
       entity.TransactionEntity(
         id: '1',
-        amountInPaise: 10000,
+        // PR-RUPEES-2026-08-08: the field is now `amountInRupees`
+        // (decimal). Was `amountInPaise: 10000` (₹100) before.
+        amountInRupees: 100.0,
         type: 'CREDIT',
         purpose: 'TOP_UP',
         status: 'SUCCESS',
         createdAt: DateTime.now(),
       )
     ];
-  }
-
-  @override
-  Future<void> deleteTransactionHistory(String riderId) async {
-    deleteCalled = true;
-  }
-
-  @override
-  Future<entity.WalletEntity> getWallet(String riderDbId) async {
-    return const entity.WalletEntity(riderId: '1', balanceInPaise: 0);
   }
 }
 
@@ -112,16 +103,10 @@ void main() {
     final state = readState();
     expect(state.transactions.length, 1);
     expect(state.transactions.first.id, '1');
+    // PR-RUPEES-2026-08-08: the state stores `TransactionModel` (not
+    // `TransactionEntity`). The `amount` field is already in rupees
+    // (₹100.00) — no /100 conversion needed at the consumer layer.
     expect(state.transactions.first.amount, 100.0);
-  });
-
-  test('deleteTransactionHistory removes history', () async {
-    await notifier.refreshTransactions(riderId: '1');
-    expect(readState().transactions.length, 1);
-
-    await notifier.deleteTransactionHistory(riderId: '1');
-    expect(mockRepo.deleteCalled, isTrue);
-    expect(readState().transactions, isEmpty);
   });
 
   test('topUpWallet sets isToppingUp and uploads image', () async {

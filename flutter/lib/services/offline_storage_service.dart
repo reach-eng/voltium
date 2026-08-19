@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
@@ -13,6 +14,11 @@ class OfflineStorageService {
   bool _initialized = false;
 
   set dbForTesting(Database? database) => _db = database;
+
+  /// Test-only: the service is a singleton, so the in-memory cache survives
+  /// across tests. Tests call this in setUp to avoid cross-test leakage.
+  @visibleForTesting
+  void clearMemCacheForTesting() => _memCache.clear();
 
   Future<void> init() async {
     if (_initialized) return;

@@ -343,8 +343,8 @@ export const backupService = {
 
       try {
         dumpDatabase(dbUrl, databaseFile);
-      } catch (dbErr: any) {
-        throw new Error(`Database dump failed: ${dbErr.message}`);
+      } catch (dbErr: unknown) {
+        throw new Error(`Database dump failed: ${dbErr instanceof Error ? dbErr.message : String(dbErr)}`);
       }
 
       // 2. Archive uploaded files (cross-platform: tar on Unix, PowerShell on Windows)
@@ -352,8 +352,8 @@ export const backupService = {
       const uploadsRoot = await getUploadsRootAsync();
       try {
         createArchive(uploadsRoot, uploadsFile);
-      } catch (fileErr: any) {
-        throw new Error(`Uploads archive failed: ${fileErr.message}`);
+      } catch (fileErr: unknown) {
+        throw new Error(`Uploads archive failed: ${fileErr instanceof Error ? fileErr.message : String(fileErr)}`);
       }
 
       // 3. Create manifest
@@ -379,8 +379,8 @@ export const backupService = {
         try {
           encryptFile(databaseFile, encryptionKey);
           encryptFile(uploadsFile, encryptionKey);
-        } catch (encErr: any) {
-          throw new Error(`Backup encryption failed: ${encErr.message}`);
+        } catch (encErr: unknown) {
+          throw new Error(`Backup encryption failed: ${encErr instanceof Error ? encErr.message : String(encErr)}`);
         }
       }
 
@@ -418,8 +418,8 @@ export const backupService = {
           const { cpSync } = await import('fs');
           cpSync(backupDir, secondaryDir, { recursive: true, force: true });
           logger.info('[BackupService] Copied backup to secondary location', { secondaryDir });
-        } catch (copyErr: any) {
-          logger.warn('[BackupService] Secondary backup copy failed', { error: copyErr.message });
+        } catch (copyErr: unknown) {
+          logger.warn('[BackupService] Secondary backup copy failed', { error: copyErr instanceof Error ? copyErr.message : String(copyErr) });
         }
       }
 
@@ -547,7 +547,7 @@ export const backupService = {
 
   async acquireLock(status: 'BACKUP_RUNNING' | 'RESTORE_RUNNING', owner: string): Promise<boolean> {
     try {
-      return await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      return await db.$transaction(async (tx) => {
         const lockStatus = await tx.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
         const currentStatus = lockStatus?.value || 'NONE';
 

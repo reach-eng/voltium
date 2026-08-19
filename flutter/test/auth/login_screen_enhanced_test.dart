@@ -7,6 +7,8 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+
 /// Enhanced LoginScreen widget tests covering:
 /// - Basic rendering & layout
 /// - Phone input validation (empty, short, invalid prefix, too long)
@@ -23,6 +25,8 @@ Widget buildTestApp(
       themeProviderRef.overrideWith(() => ThemeNotifier()),
     ],
     child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: LoginScreen(onNext: onNext, isSignUp: isSignUp),
     ),
   );
@@ -41,7 +45,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('Voltium'), findsOneWidget);
       expect(
-        find.text('Electric scooter rentals made simple.'),
+        find.text('Electric scooter rentals'),
         findsOneWidget,
       );
     });

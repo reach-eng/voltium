@@ -502,3 +502,125 @@ The 3 gated drop migrations are ready to run on staging. The
 APP_ENV, NODE_ENV, DATABASE_OFFLINE, fontSize, GoogleFonts,
 Colors.white, screen-size, and touch-target ratchets are all in place
 to prevent drift going forward.
+
+### Reclassification #84-#93 — 2026-08-06 fix-plan still-true audits (10 PRs)
+
+Executed per `docs/plans/2026-08-06-fix-plan-still-true-audits.md`
+(verified against current source before writing; several "likely still true"
+items were already fixed by prior passes and are NOT reclassified here).
+
+- #84 — PR-4a/4b — `?page=abc` NaN → Prisma skip/take. `parsePositiveInt`
+  helper in `web/src/lib/api-utils.ts`; applied to 19 paginated routes
+  (admin earnings/transactions/admins/audit-logs/incidents/tickets/
+  notifications/rewards/team-leaders/riders/deposits/faqs/announcements/
+  guarantors/rentals/kyc/scores, rider/earnings, transaction/history).
+- #85 — PR-1 — dead `server/modules/admin/admin.routes.ts` removed;
+  `PasswordComplexitySchema` enforced in `createAdminSchema` +
+  `adminLoginSchema` (verified present; no rework needed).
+- #86 — PR-2 — dead `getDashboard()` in analytics.use-cases removed (already).
+- #87 — PR-9 — `activeRentals`/`activeRiders` labels distinct; lifecycle
+  rank consolidated in `web/src/lib/lifecycle-ranks.ts` (already).
+- #88 — PR-6 — `/api/rider/offers` route deleted (Path B), openapi entry +
+  flutter `getRiderOffers` client method removed; redeem-reward feature
+  deferred → FOLLOWUP_TICKETS.
+- #89 — PR-3 — 4 PII fields stripped from rider dashboard + N+1 vehicle
+  query folded (already).
+- #90 — PR-8 — ReferralScreen no longer renders fake `VOLTIUM-XXXX`;
+  nullable code resolved from rider cache else singular
+  `GET /api/rider/referral`, skeleton + retry while unresolved.
+- #91 — PR-5 — Flutter `postRiderDeviceVerifyLock` wired into the locked
+  overlay + settings (already).
+- #92 — PR-7 — two-person data deletion completed: restore route now clears
+  `deletedAt` (soft-delete middleware was hiding restored riders),
+  `?deleted=true` list filter, `data-deletion-purge.job.ts` hard-anonymizes
+  PII past the 7-day window (Rider/KycProfile/Guarantor) with
+  `RIDER_DATA_DELETION_PURGED` audit record, wired into workers registry.
+- #93 — PR-8 test gates + PR-4b/PR-6/PR-7 gates: `api-utils.test.ts`,
+  `admin-riders-list-deleted.test.ts`, `data-deletion-purge.test.ts`,
+  updated `data-deletion-flow.test.ts` (restore clears deletedAt), flutter
+  referral-screen behavioral tests (no placeholder, retry, real code),
+  regenerated `referralscreen_golden.png`.
+- #94 — PR-7 (DR restore orphan) — `restore.service.ts` tracks the
+  pre-restore backup id; on a mid-restore failure it flags the backup
+  `ORPHANED_BY_FAILED_RESTORE:<restoreJobId>` and emits
+  `restore.orphaned_pre_restore_backup` audit entry. New
+  `orphan-backup-cleanup.job.ts` purges flagged PRE_RESTORE backups past the
+  7-day operator-acknowledgement window (disk + row + `backup.orphan_purged`
+  audit), registered in the workers SCHEDULED_TASKS. Gates:
+  `restore-orphaned-pre-restore.test.ts`, `orphan-backup-cleanup.test.ts`.
+- #95 — PR-8 (credentials at rest) — payment-gateway `keySecret` and
+  `webhookSecret` are now AES-256-GCM encrypted at rest via the new
+  `lib/credentials.ts` (idempotent encrypt — the edit dialog round-trips the
+  decrypted value without double-encryption; legacy plaintext rows decrypt
+  through untouched). Wired into POST/PATCH/GET for both
+  `/api/admin/payment-gateways` routes. Gate:
+  `credentials-roundtrip.test.ts` (store→read-back, no double-encrypt,
+  legacy passthrough).
+- #96 — PR-4 (announcements async) — `POST /api/admin/announcements` no
+  longer fans out to 10k+ riders in a request transaction. Immediate ALL
+  sends require `?confirm=true` + 3/hr/admin fail-closed rate limit and
+  return 202; the use-case emits `ANNOUNCEMENT_BROADCAST` outbox events and
+  the new `announcement-broadcast.job.ts` re-derives recipients and runs the
+  batched insert (500/batch, 100ms throttle, `skipDuplicates` idempotency)
+  in the background. Scheduled announcements: the cron now emits events
+  instead of inline fanout. Admin Bulk Messaging UI added the confirm gate
+  + `?confirm=true` for immediate ALL. Gates:
+  `announcements-async-broadcast.test.ts` (7 tests).
+- #97 — 2026-08-07 verification sweep (Section 2 still-open items) — PR-1
+  backend: `todayStats` TODO comment (distance/power/speed debt visible);
+  verified dashboard PII already stripped + N+1 vehicle join + two-person
+  rule + ASSIGN_PLAN dedup + async backup outbox + DEVICE_VIOLATION
+  maxAttempts=3 + settings_manage doc + rewards PUT already landed. PR-2
+  admin UI: KycDetailSheet PII masked behind `showPii` toggle (gated on
+  `kyc_approve`), PaymentGatewayEditDialog/Card secret masking, vehicles
+  "retired" terminology, `useServerHealth` caddyStatus normalization,
+  maintenance-mode message save split into PATCH (toggle no longer wipes
+  message). PR-3 Flutter: delete-account dialog now POSTs the new
+  `/api/rider/account/delete-request` route (session-gated, Zod-validated,
+  writes `deletionRequestedAt`/`deletionRequestReason` + RIDER_DELETION_REQUESTED
+  audit log) instead of a silent no-op; logout clears the nav stack to
+  AppShell; edit_profile drops the redundant `name` key. PR-4 Flutter:
+  `GET /api/rider/legal` (public, cache 300s) + legal screen renders
+  API-managed docs with hardcoded offline fallback (legal gate never
+  hard-blocks); `walletMaxTopup`/`autoApproveTopupLimit`/`referralBonusCap`
+  added to SETTING_REGISTRY (paise defaults); plan `isActive` now drafts
+  by default; bulk-reject reason guard (10-char min) on both sides;
+  run-now returns 202; legal route cache=0; team-leader soft-delete;
+  jobs_view perm; case-insensitive earnings search; HardwareMetricsCard
+  labels verified correct. Gates: `rider-legal.test.ts` (3),
+  `legal_screen_api_test.dart` (2), `notification-batch-fcm-push.test.ts` (4),
+  `emergency-sos.test.ts` (6). Also restored 4 files an over-eager dead-code
+  pass had deleted while still referenced (RiderRepository interface+impl,
+  ProfileEntity, TopUpReceiptScreen) and prisma generate re-run for the two
+  new Rider columns.
+- #98 — 2026-08-07 Section 2 re-verification (7-PR sweep): 20+ tracker
+  "still-open" items verified against source — ~15 already fixed
+  (reclassified, no code change): wallet-deduct 100x prefill (amount is
+  already rupees via paiseToRupees), analytics raw-SQL mapping + plan
+  isActive (landed), offers route deleted, HardwareMetricsCard labels,
+  ScheduleTab backup roots, admin legal cache, KYC Ctrl-shortcut block,
+  window.open noopener, create-ticket photo picker, SOS GPS, logout
+  guarantor reset, submitVehicleReturn vehicleId guard, end-rental
+  onSuccess wiring. Applied fixes: dashboard `activeRentals` now counts
+  ACTIVE rental leases (not vehicles); ADMIN_JOB_DAILY_ENGAGEMENT worker
+  entry added (admin Run-now was a silent no-op — same class as the
+  earlier ADMIN_JOB_RENT_DUE_CHECK fix); `todayStats` returns
+  null+dataAvailable:false instead of misleading zeros; payment-gateway
+  edit dialog never pre-populates secrets + change-only submit + cleared
+  on close; maintenance banner draftable while disabled; Reward.points
+  unit JSDoc; consent schema extended to 9 permission types; scheduled
+  backup SystemSetting.upsert now passes required `category`
+  (runtime-crash fix); stale run-now test updated 200→202. Flutter:
+  lock-password tile labelled "Change"; theme follows system on first
+  launch + theme_changed PostHog event; splash skips ~3s animation for
+  logged-in riders; pickup hub RefreshIndicator + refresh-on-resume;
+  updateRiderProfile maps full generated-model field set; permissions
+  screen gates onboarding on location/camera/notifications only and
+  records consent for every permission; login PostHog calls awaited;
+  emergency-contact ids use microsecond+random (collision fix); mark-all
+  read guarded against re-entrancy. Deferred (needs product decision):
+  rewards redeem endpoint, pickup-state persistence on app kill,
+  theme/locale tri-state "Follow System", earnings local-to-backend sync.
+  Validation: web tsc 0 errors, 281 test files / 2797 tests green (test
+  DB schema re-synced via prisma db push), flutter analyze clean, 56
+  targeted Flutter tests green.

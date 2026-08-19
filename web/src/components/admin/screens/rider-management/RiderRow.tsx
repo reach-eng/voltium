@@ -126,7 +126,7 @@ export const RiderRow = React.memo(function RiderRow({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50"
+              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
               onClick={onDelete}
               title="Remove Rider"
             >

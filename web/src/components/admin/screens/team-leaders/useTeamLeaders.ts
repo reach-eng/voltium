@@ -123,7 +123,10 @@ export function useTeamLeaders() {
   }, []);
 
   const saveLeader = useCallback(async () => {
-    if (!form.name.trim() || !form.phone.trim()) return;
+    if (!form.name.trim() || form.phone.trim().length !== 10) {
+      setError('Please provide a valid name and 10-digit phone number');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -207,7 +210,7 @@ export function useTeamLeaders() {
 
   const handleBulkAction = useCallback(
     async (action: string) => {
-      if (selectedIds.size === 0) return;
+      if (selectedIds.size === 0) return false;
       const previousStates: Record<string, { isActive: boolean }> = {};
       leaders
         .filter((l) => selectedIds.has(l.id))
@@ -225,7 +228,7 @@ export function useTeamLeaders() {
         if (!res.ok) {
           toast.error(json?.error?.message || 'Bulk action failed');
           setBulkLoading(false);
-          return;
+          return false;
         }
         toast.success(
           `Bulk ${action} completed on ${selectedIds.size} team leader(s)`
@@ -235,8 +238,10 @@ export function useTeamLeaders() {
         setTimeout(() => setShowUndoToast(false), 5000);
         setSelectedIds(new Set());
         fetchLeaders();
+        return true;
       } catch {
         toast.error('Bulk action failed. Please try again.');
+        return false;
       } finally {
         setBulkLoading(false);
       }
@@ -248,22 +253,18 @@ export function useTeamLeaders() {
     if (!lastAction) return;
     setBulkLoading(true);
     try {
-      const results = await Promise.allSettled(
-        Object.entries(lastAction.previousStates).map(([id, prev]) =>
-          fetch('/api/admin/team-leaders', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, isActive: prev.isActive }),
-          })
-        )
-      );
-      const failed = results.filter((r) => r.status === 'rejected');
-      if (failed.length > 0) {
-        logger.error('Undo partial failure', {
-          failed: failed.length,
-          total: results.length,
-        });
-        toast.error(`Undo partially failed (${failed.length}/${results.length})`);
+      const items = Object.entries(lastAction.previousStates).map(([id, prev]) => ({
+        id,
+        isActive: prev.isActive,
+      }));
+      const res = await fetch('/api/admin/team-leaders/bulk/undo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(json?.error?.message || 'Undo failed');
       } else {
         toast.success('Undo successful');
       }
@@ -279,8 +280,10 @@ export function useTeamLeaders() {
 
   const confirmBulkDelete = useCallback(async () => {
     if (!bulkDeleteTargets || bulkDeleteTargets.length === 0) return;
-    await handleBulkAction('delete');
-    setBulkDeleteTargets(null);
+    const success = await handleBulkAction('delete');
+    if (success) {
+      setBulkDeleteTargets(null);
+    }
   }, [bulkDeleteTargets, handleBulkAction]);
 
   const viewStats = useCallback(async (leader: TeamLeader) => {

@@ -29,29 +29,30 @@ void main() {
   });
 
   group('RentalRepositoryImpl', () {
-    // fetchHubs
-    test('fetchHubs calls getAdminHubs and returns json map', () async {
-      final mockHubs = ListHubsResponse(hubs: []);
-      when(() => mockVoltiumApiClient.getAdminHubs())
-          .thenAnswer((_) async => mockHubs);
+    // fetchHubs — the impl calls the rider-facing getRiderHubs (returns a raw
+    // Map), not the admin-typed getAdminHubs.
+    test('fetchHubs calls getRiderHubs and returns json map', () async {
+      when(() => mockVoltiumApiClient.getRiderHubs())
+          .thenAnswer((_) async => {'hubs': <dynamic>[]});
 
       final result = await repository.fetchHubs();
       expect(result.containsKey('hubs'), true);
-      verify(() => mockVoltiumApiClient.getAdminHubs()).called(1);
+      verify(() => mockVoltiumApiClient.getRiderHubs()).called(1);
     });
 
     test('fetchHubs propagates api exceptions', () async {
-      when(() => mockVoltiumApiClient.getAdminHubs())
+      when(() => mockVoltiumApiClient.getRiderHubs())
           .thenThrow(Exception('API error'));
 
       expect(() => repository.fetchHubs(), throwsException);
     });
 
     test('fetchHubs returns properly formatted data with hubs', () async {
-      final mockHubs =
-          ListHubsResponse(hubs: [HubResponse(id: 'hub1', name: 'Main Hub')]);
-      when(() => mockVoltiumApiClient.getAdminHubs())
-          .thenAnswer((_) async => mockHubs);
+      when(() => mockVoltiumApiClient.getRiderHubs()).thenAnswer((_) async => {
+            'hubs': [
+              {'id': 'hub1', 'name': 'Main Hub'},
+            ],
+          });
 
       final result = await repository.fetchHubs();
       expect((result['hubs'] as List).length, 1);
@@ -60,7 +61,7 @@ void main() {
 
     test('fetchHubs throws StateError when empty response (if applicable)',
         () async {
-      when(() => mockVoltiumApiClient.getAdminHubs())
+      when(() => mockVoltiumApiClient.getRiderHubs())
           .thenThrow(StateError('Empty response'));
       expect(() => repository.fetchHubs(), throwsStateError);
     });
@@ -205,59 +206,56 @@ void main() {
     });
 
     // submitVehicleReturn
+    // PR-VER-2026-08-06 (RENTAL P0-1 + P0-3): the canonical body is now
+    // `{ returnPhotos, reason }` — vehicleId/hubId/riderId were dropped;
+    // the server resolves rider + vehicle from the session.
     test('submitVehicleReturn delegates to VoltiumApiService', () async {
       when(() => mockApiService.submitVehicleReturn(
-            riderId: any(named: 'riderId'),
-            photoUrls: any(named: 'photoUrls'),
+            returnPhotos: any(named: 'returnPhotos'),
+            reason: any(named: 'reason'),
           )).thenAnswer((_) async => {'returnStatus': 'success'});
 
       final result = await repository.submitVehicleReturn(
-        vehicleId: 'v1',
-        hubId: 'h1',
         photos: ['photo1.jpg', 'photo2.jpg'],
       );
 
       expect(result['returnStatus'], 'success');
       verify(() => mockApiService.submitVehicleReturn(
-            riderId: 'v1',
-            photoUrls: ['photo1.jpg', 'photo2.jpg'],
+            returnPhotos: ['photo1.jpg', 'photo2.jpg'],
+            reason: null,
           )).called(1);
     });
 
     test('submitVehicleReturn throws when service throws', () async {
       when(() => mockApiService.submitVehicleReturn(
-            riderId: any(named: 'riderId'),
-            photoUrls: any(named: 'photoUrls'),
+            returnPhotos: any(named: 'returnPhotos'),
+            reason: any(named: 'reason'),
           )).thenThrow(Exception('Return error'));
 
       expect(
-        () => repository
-            .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []),
+        () => repository.submitVehicleReturn(photos: []),
         throwsException,
       );
     });
 
     test('submitVehicleReturn passes empty photos array correctly', () async {
       when(() => mockApiService.submitVehicleReturn(
-            riderId: any(named: 'riderId'),
-            photoUrls: any(named: 'photoUrls'),
+            returnPhotos: any(named: 'returnPhotos'),
+            reason: any(named: 'reason'),
           )).thenAnswer((_) async => {});
 
-      await repository
-          .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []);
-      verify(() =>
-              mockApiService.submitVehicleReturn(riderId: 'v', photoUrls: []))
-          .called(1);
+      await repository.submitVehicleReturn(photos: []);
+      verify(() => mockApiService
+          .submitVehicleReturn(returnPhotos: [], reason: null)).called(1);
     });
 
     test('submitVehicleReturn returns full response payload', () async {
       when(() => mockApiService.submitVehicleReturn(
-            riderId: any(named: 'riderId'),
-            photoUrls: any(named: 'photoUrls'),
+            returnPhotos: any(named: 'returnPhotos'),
+            reason: any(named: 'reason'),
           )).thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
 
-      final result = await repository
-          .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: ['p1']);
+      final result = await repository.submitVehicleReturn(photos: ['p1']);
       expect(result['key1'], 'val1');
       expect(result['key2'], 2);
     });

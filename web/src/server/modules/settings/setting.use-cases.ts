@@ -39,7 +39,13 @@ export const settingUseCases = {
     const coercedEntries: Array<{ key: string; stored: string; valueType: string; category: string }> = [];
     for (const [key, value] of Object.entries(data)) {
       const { stored, valueType } = coerceSettingValue(key, value);
-      const meta = SETTINGS_BY_KEY.get(key)!;
+      // P2-18/P3-19: the route's schema allowlists keys, but the use-case must
+      // not crash with a raw 500 if ever called with a registry-missing key
+      // (P3-20 — a key inserted directly into the DB is not in the registry).
+      const meta = SETTINGS_BY_KEY.get(key);
+      if (!meta) {
+        throw new Error(`Unknown setting key: ${key}`);
+      }
       coercedEntries.push({ key, stored, valueType, category: meta.category });
     }
 
@@ -50,6 +56,9 @@ export const settingUseCases = {
           value: item.stored,
           valueType: item.valueType,
           category: item.category,
+          // P3-20: isSecret/isEditable are server-owned metadata — the
+          // allowlist in the route (and the registry guard above) prevents a
+          // malicious admin from flipping a read-only setting to editable.
           isSecret: false,
           isEditable: true,
         },

@@ -14,6 +14,7 @@ import type { AdminRole } from '../admin/admin.types';
 import type { BackupScheduleConfig, StorageOverview } from './backup.types';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 
 export const dataManagementUseCases = {
   async getOverview(adminRole: AdminRole) {
@@ -80,10 +81,19 @@ export const dataManagementUseCases = {
       throw new Error('Unauthorized');
     }
 
-    return backupService.createBackup({
-      type: params.type,
-      adminId: params.adminId,
-    });
+    const outboxId = await OutboxService.emit(
+      OutboxEventTypes.ADMIN_JOB_SCHEDULED_BACKUP,
+      {
+        type: params.type,
+        adminId: params.adminId,
+        triggeredAt: new Date().toISOString(),
+      },
+      3,
+      undefined,
+      'background'
+    );
+
+    return { status: 'ENQUEUED', outboxId, message: 'Backup job queued for background execution' };
   },
 
   async getBackupDetails(backupId: string, adminRole: AdminRole) {
@@ -356,42 +366,32 @@ export const dataManagementUseCases = {
     });
 
     try {
-      const result = await backupService.runScheduledBackup({
-        id: schedule.id,
-        frequency: schedule.frequency,
-        includeDatabase: schedule.includeDatabase,
-        includeUploads: schedule.includeUploads,
-        includeLogs: schedule.includeLogs,
-        primaryBackupRoot: schedule.primaryBackupRoot,
-        secondaryBackupRoot: schedule.secondaryBackupRoot,
-        keepDaily: schedule.keepDaily,
-        keepWeekly: schedule.keepWeekly,
-        keepMonthly: schedule.keepMonthly,
-        keepManual: schedule.keepManual,
-        minimumFreeDiskGb: schedule.minimumFreeDiskGb,
-      });
-
-      // Calculate next run
-      const nextRunAt = calculateNextRun({
-        frequency: schedule.frequency,
-        timeOfDay: schedule.timeOfDay,
-        timezone: schedule.timezone,
-        dayOfWeek: schedule.dayOfWeek,
-        dayOfMonth: schedule.dayOfMonth,
-      });
-
-      await backupRepository.markScheduleSuccess(schedule.id, new Date(), nextRunAt ?? new Date());
+      const outboxId = await OutboxService.emit(
+        OutboxEventTypes.ADMIN_JOB_SCHEDULED_BACKUP,
+        {
+          scheduleId: schedule.id,
+          triggeredBy: adminId,
+          triggeredAt: new Date().toISOString(),
+        },
+        3,
+        undefined,
+        'background'
+      );
 
       await createAuditLog({
         actorId: adminId,
         actorType: 'ADMIN',
-        action: 'backup.scheduled_completed',
-        entity: 'BackupJob',
-        entityId: result.id,
-        details: { backupId: result.backupId, sizeBytes: result.sizeBytes },
+        action: 'backup.scheduled_enqueued',
+        entity: 'BackupSchedule',
+        entityId: schedule.id,
+        details: { outboxId },
       });
 
-      return result;
+      return {
+        status: 'ENQUEUED',
+        outboxId,
+        message: 'Backup job enqueued in background worker queue',
+      };
     } catch (err: unknown) {
       await backupRepository.markScheduleFailure(schedule.id, (err instanceof Error ? err.message : String(err)));
 
@@ -426,13 +426,12 @@ export const dataManagementUseCases = {
     // Get largest file categories from upload records
     let largestFileCategories: { category: string; sizeBytes: number }[] = [];
     try {
-      const categories: { purpose: string; _sum: { sizeBytes: number | null } }[] =
-        (await db.fileRecord.groupBy({
-          by: ['purpose'],
-          _sum: { sizeBytes: true },
-          orderBy: { _sum: { sizeBytes: 'desc' as const } },
-          take: 10,
-        })) as any;
+      const categories = (await db.fileRecord.groupBy({
+        by: ['purpose'],
+        _sum: { sizeBytes: true },
+        orderBy: { _sum: { sizeBytes: 'desc' as const } },
+        take: 10,
+      })) as unknown as { purpose: string; _sum: { sizeBytes: number | null } }[];
       largestFileCategories = categories
         .filter((c) => c._sum.sizeBytes !== null)
         .map((c) => ({ category: c.purpose, sizeBytes: Number(c._sum.sizeBytes) }));

@@ -72,6 +72,7 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
       riderDbId: 'rider-db-1',
       tokenVersion: 5,
       role: 'rider',
+      type: 'refresh',
     });
     mocks.rider.findUnique.mockResolvedValue({
       id: 'rider-db-1',
@@ -111,6 +112,7 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
       riderDbId: 'rider-db-1',
       tokenVersion: 3,
       role: 'rider',
+      type: 'refresh',
     });
     mocks.rider.findUnique.mockResolvedValue({
       id: 'rider-db-1',
@@ -128,5 +130,25 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
     const response = await POST(makeRequest({}) as any);
     expect(response.status).toBe(400);
     expect(response.headers.get('set-cookie')).toBeNull();
+  });
+
+  it('rejects an access token passed as a refresh token (P0-3, same class)', async () => {
+    // Access tokens carry no `type` claim
+    mocks.verifySessionToken.mockResolvedValue({
+      riderDbId: 'rider-db-1',
+      tokenVersion: 5,
+      role: 'rider',
+    });
+    mocks.rider.findUnique.mockResolvedValue({
+      id: 'rider-db-1',
+      riderId: 'rider-1',
+      phone: '9999999999',
+      tokenVersion: 5,
+    });
+
+    const response = await POST(makeRequest({ refreshToken: 'an-access-token' }) as any);
+
+    expect(response.status).toBe(401);
+    expect(mocks.rider.update).not.toHaveBeenCalled();
   });
 });

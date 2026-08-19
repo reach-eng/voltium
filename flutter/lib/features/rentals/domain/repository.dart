@@ -21,9 +21,12 @@ abstract class RentalRepository {
   });
 
   /// Submits return photos.
+  ///
+  /// PR-VER-2026-08-06 (RENTAL P0-3): the old signature took `vehicleId` and
+  /// `hubId` that were silently discarded (the server resolves the rider and
+  /// vehicle from the session) — a footgun that encouraged callers to pass
+  /// garbage. Identity now comes from the session only.
   Future<Map<String, dynamic>> submitVehicleReturn({
-    required String vehicleId,
-    required String hubId,
     required List<String> photos,
   });
 }

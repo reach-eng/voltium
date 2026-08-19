@@ -15,11 +15,18 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-const { mockDb, mockAuditLog, mockSanitize } = vi.hoisted(() => {
+const { mockDb, mockAuditLog, mockSanitize, mockOutboxEmit, mockEmitWithCommit } = vi.hoisted(() => {
   const mockDb: any = {};
   const mockAuditLog = vi.fn(() => Promise.resolve());
   const mockSanitize = vi.fn((s: string) => s);
-  return { mockDb, mockAuditLog, mockSanitize };
+  // PR-4: announcement.create emits an outbox event for immediate sends —
+  // the smoke test must not hit the real outbox table. emitWithCommit runs
+  // the writer against the mocked db and records the event type.
+  const mockOutboxEmit = vi.fn(() => Promise.resolve('evt_1'));
+  const mockEmitWithCommit = vi.fn(async (eventType: string, writer: (tx: any) => Promise<any>) =>
+    writer(mockDb)
+  );
+  return { mockDb, mockAuditLog, mockSanitize, mockOutboxEmit, mockEmitWithCommit };
 });
 
 vi.mock('@/lib/db', () => ({ db: mockDb }));
@@ -31,6 +38,13 @@ vi.mock('@/lib/audit-log', () => ({
 }));
 vi.mock('@/lib/sanitize', () => ({
   sanitizeHtml: mockSanitize,
+}));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: { emit: mockOutboxEmit },
+  OutboxEventTypes: { ANNOUNCEMENT_BROADCAST: 'announcement.broadcast' },
+  // PR-4: immediate sends go through emitWithCommit (atomic create+emit) —
+  // run the writer against the mocked db directly in tests.
+  emitWithCommit: mockEmitWithCommit,
 }));
 
 // ---------------------------------------------------------------------------
@@ -51,11 +65,14 @@ describe('coupons (thin module) — smoke tests (#22.1 batch 2)', () => {
   });
 
   it('list() paginates correctly', async () => {
-    const coupons = [{ id: 'c1', code: 'PROMO10' }];
+    const coupons = [{ id: 'c1', code: 'PROMO10', discountType: 'PERCENTAGE', discountValueInPaise: 1000, minAmount: null }];
     mockDb.coupon.findMany.mockResolvedValue(coupons);
     mockDb.coupon.count.mockResolvedValue(23);
     const result = await couponUseCases.list(1, 10);
-    expect(result.coupons).toBe(coupons);
+    // list() maps raw rows to API shape (discountValue/minAmount in rupees) —
+    // a fresh array, so assert by value not reference.
+    expect(result.coupons).toHaveLength(1);
+    expect(result.coupons[0]).toEqual(expect.objectContaining({ id: 'c1', code: 'PROMO10' }));
     expect(result.pagination).toEqual({ page: 1, limit: 10, total: 23, totalPages: 3 });
   });
 
@@ -192,7 +209,12 @@ describe('announcements (thin module) — smoke tests (#22.1 batch 2)', () => {
     };
     mockDb.announcementDelivery = { createMany: vi.fn().mockResolvedValue({ count: 0 }) };
     mockDb.notification = { createMany: vi.fn().mockResolvedValue({ count: 0 }) };
-    mockDb.rider = { findMany: vi.fn().mockResolvedValue([]) };
+    // PR-4: create() uses a count query for totalRecipients (no 10k id
+    // round-trip in the request); the background job does findMany.
+    mockDb.rider = {
+      count: vi.fn().mockResolvedValue(0),
+      findMany: vi.fn().mockResolvedValue([]),
+    };
     mockDb.$transaction = vi.fn(async (fn: any) => fn(mockDb));
   });
 
@@ -259,8 +281,8 @@ describe('announcements (thin module) — smoke tests (#22.1 batch 2)', () => {
     expect(result.announcements[0].targetIds).toEqual([]);
   });
 
-  it('create() with targetAudience=ALL finds all riders', async () => {
-    mockDb.rider.findMany.mockResolvedValue([{ id: 'r1' }, { id: 'r2' }]);
+  it('create() with targetAudience=ALL counts riders and emits', async () => {
+    mockDb.rider.count.mockResolvedValue(2);
     mockDb.announcement.create.mockResolvedValue({ id: 'a1' });
 
     await announcementUseCases.create(
@@ -274,8 +296,15 @@ describe('announcements (thin module) — smoke tests (#22.1 batch 2)', () => {
       'admin-1'
     );
 
-    // The implementation calls findMany with select id only, no where
-    expect(mockDb.rider.findMany).toHaveBeenCalledWith({ select: { id: true } });
+    // PR-4: the request only needs the count (no 10k id round-trip); the
+    // background job re-derives the actual ids. The emit goes through
+    // emitWithCommit (atomic row + event).
+    expect(mockDb.rider.count).toHaveBeenCalledWith();
+    expect(mockEmitWithCommit).toHaveBeenCalledWith(
+      'announcement.broadcast',
+      expect.any(Function),
+      expect.any(Function)
+    );
     expect(mockDb.announcement.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

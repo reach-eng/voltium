@@ -56,15 +56,9 @@ describe('Rider Endpoints', () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  it('GET /api/rider/offers - returns offers if authenticated', async () => {
-    const { status, body } = await api('/api/rider/offers', { method: 'GET' });
-    if (status === 200) {
-      expect(body.success).toBe(true);
-      expect(Array.isArray(body.data)).toBe(true);
-    } else {
-      expect(status).toBe(404); // Route might not be fully implemented
-    }
-  });
+  // PR-6 (2026-08-06 fix-plan; 14th audit P0-2): /api/rider/offers was
+  // deleted — the endpoint had zero production callers (getRiderOffers was
+  // dead code in the Flutter client). Promotions feature deferred.
 
   it('GET /api/rider/rewards - returns rewards if authenticated', async () => {
     const { status, body } = await api('/api/rider/rewards', { method: 'GET' });

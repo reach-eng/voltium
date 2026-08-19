@@ -17,12 +17,12 @@ export async function GET_verifyAccess(request: NextRequest) {
     return errors.unauthorized('Authentication required');
   }
 
-  const permissions = adminSession ? (adminSession as any).permissions : undefined;
+  const permissions = adminSession ? adminSession.adminPermissions : undefined;
 
   const result = await fileUseCases.verifyFileAccess(fileRecordId, {
     role: adminSession ? 'admin' : 'rider',
-    riderDbId: (riderSession as any)?.riderDbId,
-    adminId: (adminSession as any)?.adminId,
+    riderDbId: riderSession && 'riderDbId' in riderSession ? riderSession.riderDbId : undefined,
+    adminId: adminSession?.adminId,
     permissions,
   });
 

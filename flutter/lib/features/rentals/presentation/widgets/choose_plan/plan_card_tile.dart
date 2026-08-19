@@ -67,7 +67,7 @@ class PlanCardTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.white.withValues(alpha: 0.2)
-            : AppColors.accentPurpleSurface,
+            : AppColors.accentPurple.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -84,6 +84,7 @@ class PlanCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return RepaintBoundary(
       child: GestureDetector(
         onTap: onTap,
@@ -92,10 +93,10 @@ class PlanCardTile extends StatelessWidget {
           curve: Curves.easeInOut,
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.white,
+            color: isSelected ? AppColors.primary : colors.card,
             borderRadius: BorderRadius.circular(AppRadius.radiusModal),
             border: Border.all(
-              color: isSelected ? Colors.transparent : AppColors.outlineVariant,
+              color: isSelected ? Colors.transparent : colors.outlineVariant,
               width: 1.5,
             ),
             boxShadow: [
@@ -166,7 +167,7 @@ class PlanCardTile extends StatelessWidget {
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.slate900,
+                                      color: colors.onSurface,
                                     ),
                                   ),
                                 ),
@@ -182,7 +183,7 @@ class PlanCardTile extends StatelessWidget {
                         border: Border.all(
                           color: isSelected
                               ? Colors.white
-                              : AppColors.borderMedium,
+                              : colors.outlineVariant,
                           width: 2,
                         ),
                       ),
@@ -206,7 +207,7 @@ class PlanCardTile extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: isSelected ? Colors.white : AppColors.slate900,
+                        color: isSelected ? Colors.white : colors.onSurface,
                         letterSpacing: -1,
                       ),
                     ),
@@ -218,7 +219,7 @@ class PlanCardTile extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.8)
-                            : AppColors.of(context).onSurfaceVariant,
+                            : colors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -228,7 +229,7 @@ class PlanCardTile extends StatelessWidget {
                   Divider(
                     color: isSelected
                         ? Colors.white.withValues(alpha: 0.15)
-                        : AppColors.of(context).iconBackground,
+                        : colors.outlineVariant,
                   ),
                   const SizedBox(height: 12),
                   ...features.map(
@@ -251,7 +252,7 @@ class PlanCardTile extends StatelessWidget {
                                 fontWeight: FontWeight.w500,
                                 color: isSelected
                                     ? Colors.white.withValues(alpha: 0.9)
-                                    : AppColors.slate600,
+                                    : colors.onSurfaceVariant,
                               ),
                             ),
                           ),

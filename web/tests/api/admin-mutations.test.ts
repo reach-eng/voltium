@@ -1,5 +1,6 @@
 import '../setup-env';
 import { describe, it, expect, beforeAll } from 'vitest';
+import { adminLoginTo } from '../admin-auth-helper';
 
 const BASE = 'http://localhost:8081';
 
@@ -25,15 +26,8 @@ async function api(path: string, options: RequestInit = {}) {
 
 beforeAll(async () => {
   try {
-    const res = await fetch(`${BASE}/api/admin/auth/auto-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
-    const setCookie = res.headers.get('set-cookie');
-    if (setCookie) {
-      adminCookie = setCookie;
-    }
+    // P0-2: auto-login route is deleted — authenticate with real credentials.
+    adminCookie = await adminLoginTo(BASE);
   } catch (err) {
     console.error('Failed to log in as admin for API tests', err);
   }

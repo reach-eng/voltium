@@ -1,15 +1,12 @@
-'use client';
-
 import { useCallback, useEffect, useState } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
+import { toast } from 'sonner';
 import { EMPTY_FAQ_FORM, FAQ_PAGE_SIZE, type Faq, type FaqForm } from './types';
 
 export interface FaqPagination {
   total: number;
   totalPages: number;
 }
-
-const EMPTY_PAGINATION: FaqPagination = { total: 0, totalPages: 1 };
 
 /**
  * R3.7n split — FAQs data hook.
@@ -30,7 +27,7 @@ export function useFaqs() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<FaqPagination>(EMPTY_PAGINATION);
+  const [pagination, setPagination] = useState<FaqPagination>({ total: 0, totalPages: 1 });
   const debouncedSearch = useDebounce(search, 500);
 
   const fetchFaqs = useCallback(async () => {
@@ -44,7 +41,10 @@ export function useFaqs() {
       if (category !== 'all') params.append('category', category);
 
       const res = await fetch(`/api/admin/faqs?${params.toString()}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error('Failed to load FAQs');
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setFaqs(json.data || []);
@@ -55,6 +55,8 @@ export function useFaqs() {
           });
         }
       }
+    } catch {
+      toast.error('Failed to load FAQs');
     } finally {
       setLoading(false);
     }
@@ -76,81 +78,108 @@ export function useFaqs() {
       });
     } else {
       setEditFaq(null);
-      setForm({ ...EMPTY_FAQ_FORM, order: faqs.length });
+      setForm({ ...EMPTY_FAQ_FORM });
     }
     setDialogOpen(true);
   };
 
   const saveFaq = async () => {
-    const payload = { ...form, category: form.category || null };
-    if (editFaq?.id) {
-      await fetch('/api/admin/faqs', {
-        method: 'PUT',
+    try {
+      const payload = { ...form, category: form.category || null };
+      const url = '/api/admin/faqs';
+      const method = editFaq?.id ? 'PUT' : 'POST';
+      const body = editFaq?.id ? { id: editFaq.id, ...payload } : payload;
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editFaq.id, ...payload }),
+        body: JSON.stringify(body),
       });
-    } else {
-      await fetch('/api/admin/faqs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to save FAQ');
+        return;
+      }
+
+      toast.success(editFaq?.id ? 'FAQ updated' : 'FAQ created');
+      setDialogOpen(false);
+      fetchFaqs();
+    } catch {
+      toast.error('Failed to save FAQ');
     }
-    setDialogOpen(false);
-    fetchFaqs();
   };
 
   const confirmDeleteFaq = async () => {
     if (!deleteTarget) return;
-    await fetch(`/api/admin/faqs?id=${deleteTarget}`, { method: 'DELETE' });
-    setDeleteTarget(null);
-    fetchFaqs();
+    try {
+      const res = await fetch(`/api/admin/faqs?id=${deleteTarget}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to delete FAQ');
+        return;
+      }
+      toast.success('FAQ deleted');
+      setDeleteTarget(null);
+      fetchFaqs();
+    } catch {
+      toast.error('Failed to delete FAQ');
+    }
   };
 
   const toggleActive = async (faq: Faq) => {
-    await fetch('/api/admin/faqs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: faq.id, isActive: !faq.isActive }),
-    });
-    fetchFaqs();
+    try {
+      const res = await fetch('/api/admin/faqs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: faq.id, isActive: !faq.isActive }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to update FAQ status');
+        return;
+      }
+      toast.success(`FAQ ${!faq.isActive ? 'activated' : 'deactivated'}`);
+      fetchFaqs();
+    } catch {
+      toast.error('Failed to update FAQ status');
+    }
   };
 
   const moveUp = async (faq: Faq) => {
-    if (faq.order <= 0) return;
-    const sorted = [...faqs].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex((f) => f.id === faq.id);
-    if (idx <= 0) return;
-    const prev = sorted[idx - 1];
-    await fetch('/api/admin/faqs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: faq.id, order: prev.order }),
-    });
-    await fetch('/api/admin/faqs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: prev.id, order: faq.order }),
-    });
-    fetchFaqs();
+    try {
+      const res = await fetch('/api/admin/faqs/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: faq.id, direction: 'up' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to reorder FAQ');
+        return;
+      }
+      fetchFaqs();
+    } catch {
+      toast.error('Failed to reorder FAQ');
+    }
   };
 
   const moveDown = async (faq: Faq) => {
-    const sorted = [...faqs].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex((f) => f.id === faq.id);
-    if (idx >= sorted.length - 1) return;
-    const next = sorted[idx + 1];
-    await fetch('/api/admin/faqs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: faq.id, order: next.order }),
-    });
-    await fetch('/api/admin/faqs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: next.id, order: faq.order }),
-    });
-    fetchFaqs();
+    try {
+      const res = await fetch('/api/admin/faqs/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: faq.id, direction: 'down' }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to reorder FAQ');
+        return;
+      }
+      fetchFaqs();
+    } catch {
+      toast.error('Failed to reorder FAQ');
+    }
   };
 
   return {

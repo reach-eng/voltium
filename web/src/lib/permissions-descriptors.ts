@@ -67,6 +67,9 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   // Rentals
   { key: 'rentals_pickup_inspection', label: 'Pickup Inspection', category: 'Rentals' },
   { key: 'rentals_return_inspection', label: 'Return Inspection', category: 'Rentals' },
+  // P2.10 (2026-08-05 rentals/vehicles/hubs audit): admins can create a
+  // rental on behalf of a locked-out rider (bookRental + syncPickup mirror).
+  { key: 'rentals_book', label: 'Book Rentals On Behalf', category: 'Rentals' },
 
   // Hubs
   { key: 'hubs_manage', label: 'Manage Hubs', category: 'Hubs' },
@@ -82,6 +85,7 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   { key: 'transactions_reject', label: 'Reject Transactions', category: 'Finance' },
   { key: 'transactions_manage', label: 'Manage Transactions', category: 'Finance' },
   { key: 'finance_view', label: 'View Finance', category: 'Finance' },
+  { key: 'finance_reconcile', label: 'Run Wallet Reconciliation', category: 'Finance' },
   { key: 'payment_gateways_manage', label: 'Manage Payment Gateways', category: 'Finance' },
   { key: 'plans_manage', label: 'Manage Plans', category: 'Finance' },
   { key: 'plans_view', label: 'View Plans', category: 'Finance' },
@@ -112,6 +116,7 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   { key: 'data_management_test', label: 'Test Backup/Restore', category: 'Data Management' },
 
   // Incidents & Shifts
+  { key: 'ops_read', label: 'View Operations Overview', category: 'Operations' },
   { key: 'incidents_manage', label: 'Manage Incidents', category: 'Operations' },
   { key: 'shifts_manage', label: 'Manage Shifts', category: 'Operations' },
 
@@ -122,6 +127,7 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   { key: 'settings_manage', label: 'Manage Settings', category: 'Admin' },
   { key: 'legal_manage', label: 'Manage Legal', category: 'Admin' },
   { key: 'offers_manage', label: 'Manage Offers', category: 'Admin' },
+  { key: 'jobs_view', label: 'View Background Jobs', category: 'Admin' },
   { key: 'jobs_run', label: 'Run Background Jobs', category: 'Admin' },
 
   // Analytics & System

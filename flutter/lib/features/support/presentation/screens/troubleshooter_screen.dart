@@ -3,10 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 import 'troubleshooter_result.dart';
 import '../widgets/troubleshooter_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Smart Troubleshooter screen for the Voltium Rider App.
@@ -217,18 +219,23 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        backgroundColor: AppColors.of(context).card,
+        // T-66: hardcoded English dialog title + body + actions.
+        // Localised via existing `txtemergencySos`/`txtcancel`/`txtcallNow`
+        // and the new `txtcallNumberForEmergencyAssistance` template.
+        title: Row(
           children: [
-            Icon(Icons.warning, color: AppColors.error),
-            SizedBox(width: 8),
-            Text('Emergency SOS'),
+            const Icon(Icons.warning, color: AppColors.error),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.txtemergencySos),
           ],
         ),
-        content: const Text('Call $sosNumber for emergency assistance?'),
+        content: Text(AppLocalizations.of(context)!
+            .txtcallNumberForEmergencyAssistance(sosNumber)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.txtcancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -239,7 +246,7 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
               }
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Call Now'),
+            child: Text(AppLocalizations.of(context)!.txtcallNow),
           ),
         ],
       ),
@@ -270,22 +277,12 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_ticketCreatedMessage()),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        Toast.success(context, _ticketCreatedMessage());
         _resetToCategories();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        Toast.error(context, e.toString().replaceAll('Exception: ', ''));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -300,8 +297,9 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: AnimatedSwitcher(
@@ -360,6 +358,7 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
   // ── Category selection ─────────────────────────────────────────────────────
 
   Widget _buildCategorySelect() {
+    final colors = AppColors.of(context);
     return SingleChildScrollView(
       key: const ValueKey<_Mode>(_Mode.categorySelect),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -369,18 +368,18 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           const SizedBox(height: 8),
           // Header illustration.
           const TroubleshooterHeaderIcon(),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
             style: AppTypography.headingSmall.copyWith(
-                color: AppColors.of(context).onSurface, letterSpacing: -0.5),
+                color: colors.onSurface, letterSpacing: -0.5),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Select a category and we will guide you through a step‑by‑step diagnosis.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.of(context).onSurfaceVariant,
+              color: colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 20),

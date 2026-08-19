@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import 'app_logger.dart';
+
 /// Date utilities for DD-MM-YYYY formatting on the Flutter rider app.
 ///
 /// The Voltium app standardizes on DD-MM-YYYY (day-month-year) for all
@@ -72,14 +74,21 @@ class DateUtils {
     // Try DD-MM-YYYY first
     try {
       return _dateFormat.parseStrict(trimmed);
-    } catch (_) {
-      // Not DD-MM-YYYY; try ISO 8601 fallback
+    } catch (e) {
+      // ONBOARDING-AUDIT 2026-08-14 P3-11: not DD-MM-YYYY; fall
+      // through to ISO 8601. Log in debug mode so silent format
+      // mismatches (e.g. a rider-typed wrong format) are visible.
+      appDebug('[date_utils] DD-MM-YYYY parse failed for "$trimmed": $e');
     }
 
     // ISO 8601 fallback
     try {
       return DateTime.parse(trimmed);
-    } catch (_) {
+    } catch (e) {
+      // ONBOARDING-AUDIT 2026-08-14 P3-11: both formats failed; the
+      // caller treats null as "invalid input". Log so the failure is
+      // visible without changing the contract.
+      appDebug('[date_utils] ISO 8601 parse also failed for "$trimmed": $e');
       return null;
     }
   }

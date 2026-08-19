@@ -109,11 +109,18 @@ export const fileUseCases = {
   async confirmUpload(
     fileRecordId: string,
     sizeBytes: number,
-    checksum?: string
+    checksum?: string,
+    actor?: { role: string; riderDbId?: string; adminId?: string; permissions?: string[] }
   ): Promise<{ status: string }> {
     const record = await fileRepository.getFileRecordById(fileRecordId);
     if (!record) {
       throw new Error(`FileRecord ${fileRecordId} not found`);
+    }
+    // P0-S2: IDOR protection — verify actor owns the file record or has admin privileges
+    if (actor && actor.role === 'rider') {
+      if (record.ownerId !== actor.riderDbId) {
+        throw new Error('Forbidden: You do not have permission to confirm this file upload');
+      }
     }
     if (record.status !== 'PENDING_UPLOAD') {
       return { status: record.status.toLowerCase() };

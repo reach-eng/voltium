@@ -23,6 +23,34 @@ export const SETTING_REGISTRY: SettingMetadata[] = [
     description: 'Minimum wallet top-up in paise',
   },
   {
+    // PR-5 (2026-08-07 verification, Section 2 — Admin Config P1-6): the
+    // System Settings UI renders walletMaxTopup / autoApproveTopupLimit /
+    // referralBonusCap fields but they were missing from the registry, so
+    // saving them silently failed (isValidSettingKey → unknown key).
+    key: 'walletMaxTopup',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '5000000', // 50000 rupees in paise
+    isPublic: true,
+    description: 'Maximum allowed single wallet top-up in paise',
+  },
+  {
+    key: 'autoApproveTopupLimit',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '500000', // 5000 rupees in paise
+    isPublic: true,
+    description: 'Top-ups at or below this amount (paise) are auto-approved',
+  },
+  {
+    key: 'referralBonusCap',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '1000000', // 10000 rupees in paise
+    isPublic: true,
+    description: 'Maximum referral bonus a single rider can earn in paise',
+  },
+  {
     key: 'lateFee',
     category: 'BUSINESS',
     valueType: 'NUMBER',
@@ -77,6 +105,54 @@ export const SETTING_REGISTRY: SettingMetadata[] = [
     defaultValue: '10',
     isPublic: true,
     description: 'GPS fetch interval in minutes',
+  },
+  {
+    key: 'maxRentalDays',
+    category: 'POLICY',
+    valueType: 'NUMBER',
+    defaultValue: '30',
+    isPublic: true,
+    description: 'Maximum rental period in days',
+  },
+  {
+    key: 'penaltyCapDays',
+    category: 'POLICY',
+    valueType: 'NUMBER',
+    defaultValue: '7',
+    isPublic: true,
+    description: 'Maximum penalty calculation period cap in days',
+  },
+  {
+    key: 'maxWalletBalance',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '1000000', // 10000 rupees in paise
+    isPublic: true,
+    description: 'Maximum allowed wallet balance in paise',
+  },
+  {
+    key: 'loyaltyPointsPerRupee',
+    category: 'POLICY',
+    valueType: 'NUMBER',
+    defaultValue: '1',
+    isPublic: true,
+    description: 'Loyalty points awarded per rupee spent',
+  },
+  {
+    key: 'supportEmail',
+    category: 'NOTIFICATION',
+    valueType: 'STRING',
+    defaultValue: 'support@voltium.io',
+    isPublic: true,
+    description: 'Public customer support email address',
+  },
+  {
+    key: 'supportPhone',
+    category: 'NOTIFICATION',
+    valueType: 'STRING',
+    defaultValue: '+91 80000 00000',
+    isPublic: true,
+    description: 'Public customer support contact phone number',
   },
 ];
 

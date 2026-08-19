@@ -16,7 +16,11 @@ import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { parseDDMMYYYY } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
+import { invalidateRiderCache } from '@/lib/server-cache';
+import { createAuditLog } from '@/lib/audit-log';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { parsePositiveInt } from '@/lib/api-utils';
+import { toRupeesResponse } from '@/lib/api-money';
 
 /**
  * Allowlisted update schema — prevents mass assignment by only accepting
@@ -115,10 +119,14 @@ export async function GET(req: NextRequest) {
       ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
       : '';
     const cursor = url.searchParams.get('cursor') || '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '20'));
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
     const sortBy = url.searchParams.get('sortBy') || 'createdAt';
     const sortDir = url.searchParams.get('sortDir') || 'desc';
+    // PR-7 (1st audit P0-1): the data-deletion queue lists soft-deleted
+    // riders via ?deleted=true. Without it, the middleware's default
+    // `deletedAt: null` filter hides them forever.
+    const deleted = url.searchParams.get('deleted') === 'true';
 
     const cacheKey = [
       'admin:riders',
@@ -133,6 +141,7 @@ export async function GET(req: NextRequest) {
       limit,
       sortBy,
       sortDir,
+      String(deleted),
     ].join(':');
 
     const result = await getOrSetResponse(cacheKey, () =>
@@ -147,11 +156,12 @@ export async function GET(req: NextRequest) {
         limit,
         sortBy,
         sortDir,
+        deleted,
       }),
       5
     );
 
-    return withCacheHeaders(success(result), 5);
+    return withCacheHeaders(success(toRupeesResponse(result)), 5);
   } catch (error) {
     logger.error('Riders list error:', error);
     return errors.internal('Failed to fetch riders');
@@ -208,6 +218,14 @@ export async function PUT(req: NextRequest) {
     });
 
     invalidateCache('admin:*');
+    // PR-ONBOARDING-FLOW-2026-08-12: invalidate the RIDER cache so the
+    // rider's next /api/rider/profile poll (mobile app, 15s cadence) sees
+    // the admin's KYC / status change. Previously only `admin:*` was
+    // invalidated, so the rider kept getting the pre-update cached
+    // payload until the TTL expired — the admin would see "KYC approved"
+    // in the admin panel and the rider app would still show "KYC under
+    // review" on the Hang Tight screen.
+    invalidateRiderCache(id);
     return success(result);
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
@@ -231,6 +249,12 @@ export async function DELETE(req: NextRequest) {
     if (!id) return errors.badRequest('ID required');
 
     await adminRiderUseCases.delete(id);
+    createAuditLog({
+      actorId: session.adminId || session.riderDbId || 'system',
+      action: 'rider.delete',
+      entity: 'rider',
+      entityId: id,
+    }).catch((e: unknown) => logger.error('Audit log failed for rider delete', e));
     invalidateCache('admin:*');
     return success(null, 'Rider deleted');
   } catch (error) {

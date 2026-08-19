@@ -129,10 +129,10 @@ export function DataDeletionApprovalCard({
           <div
             className={`p-3 rounded-md text-sm border flex items-start gap-2 ${
               message.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40'
                 : message.type === 'error'
-                ? 'bg-rose-50 text-rose-800 border-rose-200'
-                : 'bg-blue-50 text-blue-800 border-blue-200'
+                ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40'
+                : 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/40'
             }`}
           >
             {message.type === 'success' ? (
@@ -145,12 +145,12 @@ export function DataDeletionApprovalCard({
         )}
 
         {isSoftDeleted ? (
-          <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
-            <div className="flex items-center gap-2 text-amber-800 font-medium">
+          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 space-y-3">
+            <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-medium">
               <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>Rider is currently Soft-Deleted</span>
             </div>
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-700 dark:text-amber-400">
               Soft-deleted at: {deletedAt ? new Date(deletedAt).toLocaleString() : 'N/A'}. Permanent anonymization will automatically occur in 7 days unless restored.
             </p>
             <div className="flex gap-2 pt-2">

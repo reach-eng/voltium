@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import '../../../../utils/app_logger.dart';
@@ -75,28 +76,18 @@ class _NotificationPreferencesScreenState
 
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded English
-          // SnackBars. Localised via the existing
-          // `txtpreferencesSaved` / `txtfailedToSavePreferences`
-          // ARB keys.
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.txtpreferencesSaved),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 2),
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)!.txtpreferencesSaved,
         );
       }
     } catch (e) {
       appDebug('Failed to save notification preferences: $e');
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text(AppLocalizations.of(context)!.txtfailedToSavePreferences),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txtfailedToSavePreferences,
         );
       }
     }
@@ -196,7 +187,7 @@ class _NotificationPreferencesScreenState
                           ),
                         ],
                       ),
-                      SizedBox(height: 32),
+                      const SizedBox(height: 32),
                       FilledButton(
                         onPressed: _isLoading ? null : _savePreferences,
                         style: FilledButton.styleFrom(
@@ -277,7 +268,7 @@ class _NotificationPreferencesScreenState
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Text(
             'Notification Preferences',
             style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
@@ -343,7 +334,7 @@ class _NotificationPreferencesScreenState
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,10 +342,10 @@ class _NotificationPreferencesScreenState
                 Text(
                   title,
                   style: AppTypography.bodyMedium
-                      .copyWith(fontWeight: FontWeight.w600)
-                      .copyWith(color: colors.onSurface),
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: colors.onSurface),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: GoogleFonts.plusJakartaSans(

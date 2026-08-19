@@ -12,6 +12,12 @@ const TEST_FILES = [
 ];
 
 // Exclusions as per plan
+// TEST-STRATEGY-AUDIT T-P1-4 (2026-08-08): reduced the exclusion list.
+// `/api/files` was previously skipped because the route contract
+// needs a real upload payload to assert against, but at least
+// one positive + one negative test is feasible (the route shape
+// is documented in OpenAPI). Add a contract test for the route
+// at tests/api/files-routes.test.ts and remove the exclusion.
 const EXCLUSIONS = [
   '/api/health',
   '/api/internal',
@@ -19,7 +25,9 @@ const EXCLUSIONS = [
   '/api/metrics',
   '/api/monitoring/metrics',
   '/api/rider/register-token',
-  '/api/files',
+  // '/api/files',     // TEST-STRATEGY-AUDIT T-P1-4: removed from exclusions.
+                       // Add a contract test in tests/api/files-routes.test.ts
+                       // before merging this change.
 ];
 
 function isExcluded(routePath) {

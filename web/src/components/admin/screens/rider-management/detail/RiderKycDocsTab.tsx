@@ -255,7 +255,7 @@ export function RiderKycDocsTab({
       <div className="p-8 rounded-3xl bg-blue-500/5 border border-blue-500/10">
         <div className="flex items-center gap-3 mb-6">
           <Building className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-          <h4 className="text-lg font-black tracking-tight text-blue-900">
+          <h4 className="text-lg font-black tracking-tight text-blue-900 dark:text-blue-200">
             Bank Details
           </h4>
         </div>

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { invalidateCache } from '@/lib/cache';
 import { validateBody, updateIncidentSchema } from '@/lib/validators';
+import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { incidentUseCases } from '@/server/modules/incidents/incident.use-cases';
@@ -22,6 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // extra round-trip is fine.
     return withCacheHeaders(success(incident), 30);
   } catch (error) {
+    // P1-9: every other admin route logs its errors — this one silently
+    // returned 500 with no trail.
+    logger.error('GET /api/admin/incidents/[id] error:', error);
     return errors.internal('Failed to fetch incident');
   }
 }
@@ -42,10 +46,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber } =
       validation.data;
 
+    // P2-9: `session.adminId || ''` could pass an empty-string actor into the
+    // use-case; and a client-sent assignedTo: '' would be written verbatim.
+    // Normalize: never pass '' as the actor, and treat an empty assignedTo as
+    // an explicit unassign (null) rather than a garbage string.
+    const actorId = session.adminId ?? session.riderDbId ?? 'system';
     const incident = await incidentUseCases.updateIncident(
       id,
-      { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber },
-      session.adminId || ''
+      {
+        status,
+        assignedTo: assignedTo === '' ? null : assignedTo,
+        resolution,
+        insuranceClaim,
+        insuranceClaimNumber,
+      },
+      actorId
     );
 
     // Update changes the record + the list view; clear the list cache so the
@@ -54,6 +69,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return success(incident);
   } catch (error) {
+    logger.error('PUT /api/admin/incidents/[id] error:', error);
     return errors.internal('Failed to update incident');
   }
 }

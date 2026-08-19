@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createHubSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
+import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
@@ -20,16 +21,19 @@ export async function GET(req: NextRequest) {
   if (!session) return adminUnauthorized();
   if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
   try {
-    const { page, limit } = parsePaginationParams(req.nextUrl);
+    // DEEP-AUDIT D-P1-1: parsePositiveInt (NaN-safe) replaces the removed
+    // parsePaginationParams helper.
+    const page = parsePositiveInt(req.nextUrl.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(req.nextUrl.searchParams.get('limit'), 20, 100);
     const cacheKey = [
       'admin:hubs',
       session.adminId ?? session.riderDbId ?? 'anon',
       page,
       limit,
     ].join(':');
-    const result = await getOrSetResponse(cacheKey, () => hubUseCases.listAdminHubs(page, limit), 300);
+    const result = await getOrSetResponse(cacheKey, () => hubUseCases.listAdminHubs(page, limit), 30);
     if (!result) return errors.internal('Failed to fetch hubs');
-    return withCacheHeaders(success(result.hubs, undefined, 200, result.pagination), 300);
+    return withCacheHeaders(success(result.hubs, undefined, 200, result.pagination), 30);
   } catch (error) {
     logger.error('GET /api/admin/hubs error:', error);
     return errors.internal('Failed to fetch hubs');

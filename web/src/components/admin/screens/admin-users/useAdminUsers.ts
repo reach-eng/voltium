@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getPermissionsForRole } from '@/lib/permissions';
+import { toast } from 'sonner';
 import type { Admin, AdminForm } from './types';
 
 export function useAdminUsers() {
@@ -30,7 +31,10 @@ export function useAdminUsers() {
       });
 
       const res = await fetch(`/api/admin/admins?${params.toString()}`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        toast.error('Failed to load admin users');
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         setAdmins(json.data || []);
@@ -41,6 +45,8 @@ export function useAdminUsers() {
           });
         }
       }
+    } catch {
+      toast.error('Failed to load admin users');
     } finally {
       setLoading(false);
     }
@@ -63,20 +69,25 @@ export function useAdminUsers() {
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
-        setDialogOpen(false);
-        setEditingId(null);
-        setForm({
-          name: '',
-          email: '',
-          password: '',
-          role: 'OPERATIONS_ADMIN',
-          permissions: [],
-        });
-        fetchAdmins();
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to save admin user');
+        return;
       }
+
+      toast.success(editingId ? 'Admin updated successfully' : 'Admin created successfully');
+      setDialogOpen(false);
+      setEditingId(null);
+      setForm({
+        name: '',
+        email: '',
+        password: '',
+        role: 'OPERATIONS_ADMIN',
+        permissions: [],
+      });
+      fetchAdmins();
     } catch {
-      /* empty */
+      toast.error('Failed to save admin user');
     }
   };
 
@@ -114,21 +125,22 @@ export function useAdminUsers() {
   };
 
   const toggleActive = async (admin: Admin) => {
-    await fetch('/api/admin/admins', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: admin.id, isActive: !admin.isActive }),
-    });
-    fetchAdmins();
-  };
-
-  const changeRole = async (admin: Admin, role: string) => {
-    await fetch('/api/admin/admins', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: admin.id, role }),
-    });
-    fetchAdmins();
+    try {
+      const res = await fetch('/api/admin/admins', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: admin.id, isActive: !admin.isActive }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error?.message || json.error || 'Failed to update admin status');
+        return;
+      }
+      toast.success(`Admin ${!admin.isActive ? 'activated' : 'deactivated'} successfully`);
+      fetchAdmins();
+    } catch {
+      toast.error('Failed to update admin status');
+    }
   };
 
   return {
@@ -151,6 +163,5 @@ export function useAdminUsers() {
     handleRoleChange,
     togglePermission,
     toggleActive,
-    changeRole,
   };
 }

@@ -12,7 +12,8 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 
 class FCMService {
   static const _channel =
@@ -53,6 +54,10 @@ class FCMService {
     'KYC_STATUS',
     'SUPPORT_REPLY',
     'DEPOSIT_APPROVED',
+    'RIDER_ACTIVATED',
+    'VEHICLE_ASSIGNED',
+    'GUARANTOR_STATUS',
+    'PLAN_STATUS',
   };
 
   @visibleForTesting
@@ -243,11 +248,11 @@ class FCMService {
     // Register FCM token with backend
     try {
       final token = await messaging.getToken();
-      if (token != null) {
+      if (token != null && token.isNotEmpty) {
         _syncTokenToBackend(token);
       }
       messaging.onTokenRefresh.listen((newToken) {
-        _syncTokenToBackend(newToken);
+        if (newToken.isNotEmpty) _syncTokenToBackend(newToken);
       });
     } catch (e) {
       developer.log('FCM: Token retrieval failed: $e');
@@ -256,8 +261,8 @@ class FCMService {
 
   static Future<void> _syncTokenToBackend(String token) async {
     try {
-      await VoltiumApiService()
-          .post('/api/rider/fcm-token', body: {'token': token});
+      await VoltiumApiClient(ApiClient())
+          .postRidersRegisterToken({'fcmToken': token});
       developer.log('FCM: Token synced to backend successfully');
     } catch (e) {
       developer.log('FCM: Failed to sync token to backend: $e');
@@ -332,7 +337,11 @@ class FCMService {
     } else if (action == 'WALLET_LOW') {
       final balance = double.tryParse(data['balance'] ?? '0.0') ?? 0.0;
       _wallet?.setWalletBalanceWarning(true, balance: balance);
-    } else if (action == 'KYC_STATUS') {
+    } else if (action == 'KYC_STATUS' ||
+        action == 'RIDER_ACTIVATED' ||
+        action == 'VEHICLE_ASSIGNED' ||
+        action == 'GUARANTOR_STATUS' ||
+        action == 'PLAN_STATUS') {
       _rider?.refresh();
     } else if (action == 'SUPPORT_REPLY') {
       _support?.refreshTickets();

@@ -19,8 +19,8 @@ class _TestAppProvider extends AppProvider {
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      localeProviderRef.overrideWith(() => LocaleProvider()),
+      themeProviderRef.overrideWith(() => ThemeProvider()),
       appProvider.overrideWith((ref) => _TestAppProvider()),
     ],
     child: const MaterialApp(home: TlDetailsScreen()),
@@ -51,6 +51,21 @@ void main() {
       await tester.pumpWidget(buildTestApp());
       await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
+    });
+
+    // PR-ONBOARDING-2026-08-11 (audit 1.8): the "Change Team Leader" button
+    // used to show a fake "Request submitted" snackbar without calling any
+    // API. The label is now "Request Team Leader change" and the action
+    // routes to the support center so the rider can file a real ticket.
+    testWidgets(
+        'shows the "Request Team Leader change" action (audit 1.8 regression)',
+        (tester) async {
+      await tester.pumpWidget(buildTestApp());
+      await tester.pump(const Duration(seconds: 1));
+      // Old buggy label must be gone.
+      expect(find.text('Change Team Leader'), findsNothing);
+      // New label must be present.
+      expect(find.text('Request Team Leader change'), findsOneWidget);
     });
   });
 }

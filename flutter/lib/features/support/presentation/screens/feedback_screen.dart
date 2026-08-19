@@ -5,7 +5,9 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class TutorialTip {
@@ -84,9 +86,9 @@ class _TutorialDialogState extends State<TutorialDialog> {
           child: Container(
             padding: Spacing.paddingXl,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: AppColors.of(context).card.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(color: AppColors.of(context).outlineVariant),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -202,7 +204,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.of(context).iconBackground,
+      backgroundColor: AppColors.of(context).surface,
       body: Stack(
         children: [
           _buildMeshBackground(),
@@ -225,10 +227,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           child: Container(
                             height: 80,
                             width: 80,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: AppColors.of(context).card,
                               shape: BoxShape.circle,
-                              boxShadow: [
+                              border: Border.all(
+                                color: AppColors.of(context).outlineVariant.withValues(alpha: 0.5),
+                              ),
+                              boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black12,
                                   blurRadius: 20,
@@ -243,44 +248,44 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 32),
+                        const SizedBox(height: 32),
                         FadeUpWidget(
                           delay: 100,
                           child: Text(
                             'Share Your Thoughts',
-                            style: AppTypography.headingMedium.copyWith(
-                                color: AppColors.of(context).onSurface),
+                            style: AppTypography.headingMedium
+                                .copyWith(color: AppColors.of(context).onSurface),
                           ),
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         FadeUpWidget(
-                          delay: 200,
+                          delay: 150,
                           child: Text(
-                            'Your feedback helps us improve the experience for everyone.',
+                            'Your feedback helps us improve the Voltium experience for all riders.',
+                            textAlign: TextAlign.center,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
                               color: AppColors.of(context).onSurfaceVariant,
                               height: 1.5,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 300,
+                          delay: 200,
                           child: _buildRatingStars(),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 400,
+                          delay: 250,
                           child: _buildCommentField(),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 500,
+                          delay: 300,
                           child: _buildSubmitButton(),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -301,8 +306,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.of(context).iconBackground,
-              AppColors.of(context).primarySurface
+              AppColors.of(context).surface,
+              AppColors.of(context).primarySurface,
             ],
           ),
         ),
@@ -311,6 +316,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -321,8 +327,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 shape: BoxShape.circle,
+                border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -331,13 +338,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                 ],
               ),
               child: Icon(Icons.close,
-                  size: 18, color: AppColors.of(context).onSurface),
+                  size: 18, color: colors.onSurface),
             ),
           ),
           Text(
             'Feedback',
             style: AppTypography.titleMedium
-                .copyWith(color: AppColors.of(context).onSurface),
+                .copyWith(color: colors.onSurface),
           ),
           const SizedBox(width: 40), // Balance
         ],
@@ -358,7 +365,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               duration: const Duration(milliseconds: 200),
               child: Icon(
                 isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected ? AppColors.warning : AppColors.borderMedium,
+                color: isSelected ? AppColors.warning : AppColors.of(context).outlineVariant,
                 size: 48,
               ),
             ),
@@ -369,28 +376,29 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   }
 
   Widget _buildCommentField() {
+    final colors = AppColors.of(context);
     return Container(
       padding: Spacing.paddingSm,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: colors.card.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: Colors.white),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
         style: GoogleFonts.plusJakartaSans(
-            fontSize: 15, color: AppColors.of(context).onSurface),
+            fontSize: 15, color: colors.onSurface),
         decoration: InputDecoration(
           hintText: 'Tell us more about your experience...',
           hintStyle: GoogleFonts.plusJakartaSans(
-              color: AppColors.slate400, fontSize: 14),
+              color: colors.onSurfaceMuted, fontSize: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: colors.card,
           contentPadding: const EdgeInsets.all(Spacing.md),
         ),
       ),
@@ -417,12 +425,10 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               } catch (e) {
                 if (mounted) {
                   setState(() => _isSubmitting = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          Text('Failed to submit feedback: ${e.toString()}'),
-                      backgroundColor: AppColors.error,
-                    ),
+                  Toast.error(
+                    context,
+                    AppLocalizations.of(context)!
+                        .txtfailedToSubmitFeedback(e.toString()),
                   );
                 }
               }
@@ -431,7 +437,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: AppColors.borderMedium,
+        disabledBackgroundColor: AppColors.of(context).outlineVariant,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.radiusModal)),
@@ -472,8 +478,11 @@ class RateAppPrompt {
           child: Container(
             padding: Spacing.paddingXl,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.of(context).card,
               borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
+              border: Border.all(
+                color: AppColors.of(context).outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -483,13 +492,13 @@ class RateAppPrompt {
                   color: AppColors.warning,
                   size: 64,
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Text(
                   'Enjoying Voltium?',
                   style: AppTypography.headingSmall
                       .copyWith(color: AppColors.of(context).onSurface),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   'Take a moment to rate your experience. It helps us grow!',
                   textAlign: TextAlign.center,
@@ -499,7 +508,7 @@ class RateAppPrompt {
                     height: 1.5,
                   ),
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
                     prefs.setBool('has_rated', true);
@@ -521,13 +530,13 @@ class RateAppPrompt {
                     ),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     'NOT NOW',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.slate400,
+                      color: AppColors.of(context).onSurfaceMuted,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

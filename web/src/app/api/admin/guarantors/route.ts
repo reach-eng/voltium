@@ -4,6 +4,7 @@ import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { guarantorRepository } from '@/server/modules/guarantors/guarantor.repository';
 import { guarantorUseCases } from '@/server/modules/guarantors/guarantor.use-cases';
 import { logger } from '@/lib/logger';
@@ -17,8 +18,8 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const url = request.nextUrl;
   const status = url.searchParams.get('status') || undefined;
   const search = url.searchParams.get('search') || undefined;
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-  const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
+  const page = parsePositiveInt(url.searchParams.get('page'), 1);
+  const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
   const where: Prisma.GuarantorWhereInput = {};
   if (status && status !== 'ALL' && status in GuarantorStatus) {
     where.status = status as GuarantorStatus;
@@ -74,7 +75,17 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'kyc_approve')) return adminForbidden();
+  if (
+    // PR-ONBOARDING-2026-08-11 (audit 2.22): `ops_read` (read-only ops
+    // staff) was in the allow-list for guarantor review. Rejecting a
+    // guarantor moves the rider to `SUSPENDED`; that is a state-change
+    // decision, not a read. Drop `ops_read` here so read-only staff
+    // cannot silently suspend riders. `guarantor_view_limited` is
+    // also removed from the write path; it should only grant GET.
+    !hasPermission(session.adminRole || '', 'kyc_approve')
+  ) {
+    return adminForbidden();
+  }
 
   const body = await request.json();
   const riderId = body.riderId || body.riderDbId;

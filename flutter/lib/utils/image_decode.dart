@@ -67,7 +67,6 @@ Future<DecodeResult?> decodeImageWithCap(
     bytes,
     targetWidth: maxWidth,
   );
-  if (codec == null) return null;
   final frame = await codec.getNextFrame();
   final image = frame.image;
   final originalSize = Size(image.width.toDouble(), image.height.toDouble());

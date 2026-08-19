@@ -92,7 +92,14 @@ const TransactionTableRow = React.memo(function TransactionTableRow({
             className="w-8 h-8 rounded border overflow-hidden bg-muted cursor-pointer hover:scale-110 transition-transform"
             onClick={() => onSelectTx(tx)}
           >
-            <img src={tx.proofUrl} alt="" className="w-full h-full object-cover" />
+            <img
+              src={tx.proofUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
+            />
           </div>
         ) : (
           <span className="text-[10px] text-muted-foreground">-</span>

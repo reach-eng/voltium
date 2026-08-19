@@ -6,6 +6,9 @@ import '../../../widgets/premium_cards.dart';
 import '../../../core/network/api_client.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+
 /// Profile card with vehicle details for the Active Dashboard.
 class DashboardProfileCard extends StatelessWidget {
   final RiderModel rider;
@@ -16,23 +19,37 @@ class DashboardProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final fallbackRider = l10n?.txtguestRider ?? 'Rider';
+    final isUnassignedVehicle = rider.assignedVehicle == null ||
+        rider.assignedVehicle!.isEmpty ||
+        rider.assignedVehicle == 'Not Assigned';
+    final vehicleText = isUnassignedVehicle
+        ? (l10n?.txtvehiclePendingAssignment ?? 'Vehicle Pending Assignment')
+        : rider.assignedVehicle!;
+
     return PremiumDoubleBezelCard.interactive(
-      onTap: onTap,
+      onTap: onTap != null
+          ? () {
+              HapticService.light();
+              onTap!();
+            }
+          : null,
       padding: Spacing.paddingMd,
       child: Row(
         children: [
           _buildAvatar(colors),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  rider.name.isEmpty ? 'GUEST RIDER' : rider.name,
+                  rider.name.isEmpty ? fallbackRider : rider.name,
                   style: AppTypography.titleLarge
                       .copyWith(color: colors.onSurface, letterSpacing: -0.3),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -47,15 +64,14 @@ class DashboardProfileCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.electric_scooter,
                           size: 14, color: AppColors.primary),
-                      SizedBox(width: 6),
-                      Text(
-                        (rider.assignedVehicle == null ||
-                                rider.assignedVehicle!.isEmpty ||
-                                rider.assignedVehicle == 'Not Assigned')
-                            ? 'UNASSIGNED'
-                            : rider.assignedVehicle!,
-                        style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.primary, letterSpacing: 0.5),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          vehicleText,
+                          style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.primary, letterSpacing: 0.5),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

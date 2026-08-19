@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
@@ -44,6 +45,12 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
   @override
   Widget build(BuildContext context) {
     final canShowFull = widget.canVerify && !widget.isLoading;
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final verifyingText = l10n?.txtverifying ?? 'Verifying…';
+    final verifyAndProceedText =
+        l10n?.txtverifyAndProceed ?? 'Verify & Proceed';
+
     return ClipRRect(
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -51,10 +58,10 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
           padding: EdgeInsets.fromLTRB(
               20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: colors.card.withValues(alpha: 0.8),
             border: Border(
               top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: colors.outline.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -92,10 +99,10 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
                   ),
                   child: Center(
                     child: widget.isLoading
-                        ? const Row(
+                        ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -103,10 +110,10 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
                                   strokeWidth: 2,
                                 ),
                               ),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
                               Text(
-                                'Verifying…',
-                                style: TextStyle(
+                                verifyingText,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
@@ -118,7 +125,7 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'Verify & Proceed',
+                                verifyAndProceedText,
                                 style: AppTypography.labelLarge
                                     .copyWith(fontWeight: FontWeight.w700)
                                     .copyWith(color: Colors.white),

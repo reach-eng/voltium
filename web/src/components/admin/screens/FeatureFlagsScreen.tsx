@@ -14,31 +14,7 @@ interface FlagEntry {
   source: string;
 }
 
-const FLAG_LABELS: Record<string, string> = {
-  enableReferralSystem: 'Referral System',
-  enableRewardsSystem: 'Rewards System',
-  enableVehicleAssignment: 'Vehicle Assignment',
-  enableKYCVerification: 'KYC Verification',
-  enableGuarantorRequirement: 'Guarantor Requirement',
-  enableDynamicPricing: 'Dynamic Pricing',
-  enableOfflineMode: 'Offline Mode',
-  enableChatSupport: 'Chat Support',
-  enablePushNotifications: 'Push Notifications',
-  maxUploadSizeMb: 'Max Upload Size (MB)',
-};
-
-const FLAG_DESCRIPTIONS: Record<string, string> = {
-  enableReferralSystem: 'Allow riders to refer others and earn bonuses',
-  enableRewardsSystem: 'Enable rewards and points system for riders',
-  enableVehicleAssignment: 'Allow admin to assign vehicles to riders',
-  enableKYCVerification: 'Require KYC verification for rider onboarding',
-  enableGuarantorRequirement: 'Require a guarantor during registration',
-  enableDynamicPricing: 'Enable dynamic pricing based on demand',
-  enableOfflineMode: 'Allow app to function with limited offline capabilities',
-  enableChatSupport: 'Enable in-app chat support for riders',
-  enablePushNotifications: 'Send push notifications for important updates',
-  maxUploadSizeMb: 'Maximum file upload size in megabytes',
-};
+import { FLAG_LABELS, FLAG_DESCRIPTIONS } from '@/lib/feature-flags';
 
 async function apiFetch(url: string, options?: RequestInit) {
   const res = await fetch(url, {
@@ -216,7 +192,13 @@ export default function FeatureFlagsScreen() {
                       <Input
                         type="number"
                         value={entry.value}
-                        onChange={(e) => updateNumericFlag(key, e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFlags((prev) => ({
+                            ...prev,
+                            [key]: { ...prev[key], value: val },
+                          }));
+                        }}
                         className="w-24 h-11 text-base rounded-xl"
                         disabled={saving === key}
                       />

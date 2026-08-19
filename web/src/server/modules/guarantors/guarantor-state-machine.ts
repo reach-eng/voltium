@@ -24,7 +24,7 @@ const VALID_TRANSITIONS: TransitionMap = {
   INFO_REQUIRED: ['SUBMITTED'],
   APPROVED: ['REPLACED'],
   REJECTED: ['SUBMITTED'],
-  REPLACED: [],
+  REPLACED: ['SUBMITTED'],
 };
 
 export class GuarantorStateError extends Error {

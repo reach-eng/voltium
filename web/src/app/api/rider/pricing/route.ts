@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { calculateDynamicPrice } from '@/lib/dynamic-pricing';
-import { rupeesToPaise, paiseToRupees } from '@/lib/flatten-rider';
+import { rupeesToPaise, paiseToRupees } from '@/lib/money';
 import { logger } from '@/lib/logger';
 import { pricingUseCases } from '@/server/modules/pricing/pricing.use-cases';
+import { toRupeesResponse } from '@/lib/api-money';
 
 const PLANS = [
   { id: 'daily', name: 'Daily Flex', basePrice: 180 },
@@ -45,11 +46,11 @@ export async function GET(request: NextRequest) {
     });
 
     return success(
-      {
+      toRupeesResponse({
         hub: { id: hubPricing.hub.id, name: hubPricing.hub.name },
         availability,
         plans: planPricing,
-      },
+      }),
       'Plan pricing fetched'
     );
   } catch (err) {

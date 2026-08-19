@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createOfferSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
+import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { offerUseCases } from '@/server/modules/offers/offer.use-cases';
 
@@ -19,8 +20,12 @@ export async function GET(req: NextRequest) {
   if (!checkOfferPermission(session)) return adminForbidden();
 
   try {
-    const { page, limit } = parsePaginationParams(req.nextUrl);
-    const result = await offerUseCases.listAdmin(page, limit);
+    // DEEP-AUDIT D-P1-1: parsePositiveInt (NaN-safe) replaces the removed
+    // parsePaginationParams helper.
+    const page = parsePositiveInt(req.nextUrl.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(req.nextUrl.searchParams.get('limit'), 20, 100);
+    const search = req.nextUrl.searchParams.get('search');
+    const result = await offerUseCases.listAdmin(page, limit, search);
     return withCacheHeaders(success(result.offers, undefined, 200, result.pagination), 60);
   } catch (error) {
     logger.error('GET /api/admin/offers error:', error);

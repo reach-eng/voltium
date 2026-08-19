@@ -51,7 +51,8 @@ const TWO_PHOTOS = {
   pickupPhotoFront: 'https://cdn.example.com/front.jpg',
   pickupPhotoBack: 'https://cdn.example.com/back.jpg',
   hubId: 'hub-1',
-  teamLeader: 'TL-Alice',
+  // Post PR-P3.2 the field is the FK column, not the legacy string.
+  teamLeaderId: 'TL-Alice',
 };
 
 describe('completePickupVerification use case — happy path', () => {
@@ -67,7 +68,7 @@ describe('completePickupVerification use case — happy path', () => {
     expect(mockSyncPickup).toHaveBeenCalledWith('rider-1', {
       vehicleId: 'V001',
       hubId: 'hub-1',
-      teamLeader: 'TL-Alice',
+      teamLeaderId: 'TL-Alice',
       emergencyContact: undefined,
       pickupPhotoFront: 'https://cdn.example.com/front.jpg',
       pickupPhotoBack: 'https://cdn.example.com/back.jpg',
@@ -91,7 +92,7 @@ describe('completePickupVerification use case — happy path', () => {
         details: expect.objectContaining({
           vehicleId: 'V001',
           hubId: 'hub-1',
-          teamLeader: 'TL-Alice',
+          teamLeaderId: 'TL-Alice',
           photoCount: 2,
         }),
       })

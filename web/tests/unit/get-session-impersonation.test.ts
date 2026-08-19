@@ -35,4 +35,24 @@ describe('getAdminId — x-admin-id header scoping', () => {
     const adminId = await getAdminId(req);
     expect(adminId).toBeNull();
   });
+
+  it('does NOT honor x-admin-id on a path merely CONTAINING /impersonate (P2-20)', async () => {
+    // The old `pathname.includes('/impersonate')` matched this substring too,
+    // letting any /api/admin/impersonate-* path spoof an admin id.
+    const req = new Request('http://localhost/api/admin/impersonate-test', {
+      headers: { 'x-admin-id': 'admin-attacker-id' },
+    });
+
+    const adminId = await getAdminId(req);
+    expect(adminId).toBeNull();
+  });
+
+  it('still honors the exact route with a trailing query string (P2-20)', async () => {
+    const req = new Request('http://localhost/api/admin/impersonate?riderId=r-1', {
+      headers: { 'x-admin-id': 'admin-impersonator-id' },
+    });
+
+    const adminId = await getAdminId(req);
+    expect(adminId).toBe('admin-impersonator-id');
+  });
 });

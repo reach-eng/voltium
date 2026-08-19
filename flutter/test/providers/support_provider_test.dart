@@ -7,6 +7,7 @@ class MockSupportRepository implements SupportRepository {
   bool fetchFaqsCalled = false;
   bool fetchTicketsCalled = false;
   bool createTicketCalled = false;
+  String? lastAttachments;
 
   @override
   Future<Map<String, dynamic>> fetchFaqs() async {
@@ -47,18 +48,11 @@ class MockSupportRepository implements SupportRepository {
   @override
   Future<Map<String, dynamic>> createTicket(
       String category, String subject, String message,
-      {String? priority, String? riderId}) async {
+      {String? priority, String? riderId, String? attachments}) async {
     createTicketCalled = true;
+    lastAttachments = attachments;
     return {'success': true, 'data': {}};
   }
-
-  @override
-  Future<Map<String, dynamic>> getSupportChat() async {
-    return {'success': true, 'data': {}};
-  }
-
-  @override
-  Future<void> sendChatMessage(String message) async {}
 }
 
 void main() {
@@ -113,6 +107,27 @@ void main() {
 
     expect(mockRepo.createTicketCalled, isTrue);
     expect(mockRepo.fetchTicketsCalled, isTrue);
+  });
+
+  // PR-VER-2026-08-06 (SUPPORT P0-4): the ticket photo the rider attaches
+  // must flow through to the repository (which posts it as `attachments`).
+  test('createTicket forwards attachments to the repository', () async {
+    await notifier.createTicket(
+      category: 'VEHICLE',
+      subject: 'Broken mirror',
+      message: 'The mirror snapped off at the hub.',
+      attachments: '/api/files/tickets/photo-1.png',
+    );
+
+    expect(mockRepo.createTicketCalled, isTrue);
+    expect(mockRepo.lastAttachments, '/api/files/tickets/photo-1.png');
+  });
+
+  test('createTicket without attachment passes null', () async {
+    await notifier.createTicket(
+        category: 'PAYMENT', subject: 'Refund query', message: 'Where is it?');
+
+    expect(mockRepo.lastAttachments, isNull);
   });
 
   test('logout clears state', () {

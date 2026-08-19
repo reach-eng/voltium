@@ -18,34 +18,53 @@ export type KycStatus =
   | 'SUBMITTED'
   | 'VERIFIED';
 
+export { RiderLifecycleStatus } from '@prisma/client';
+
 export type RiderState =
   | 'NEW'
+  | 'PHONE_VERIFIED'
+  | 'PROFILE_SUBMITTED'
   | 'KYC_SUBMITTED'
+  | 'KYC_APPROVED'
+  | 'GUARANTOR_SUBMITTED'
+  | 'GUARANTOR_APPROVED'
+  | 'DEPOSIT_PENDING'
+  | 'DEPOSIT_APPROVED'
+  | 'PLAN_SELECTED'
+  | 'PICKUP_SCHEDULED'
   | 'ACTIVE'
   | 'SUSPENDED'
-  | 'CLOSED'
-  | 'APPROVED'
-  | 'POST_ACTIVE'
-  | 'PRE_ACTIVE'
-  | 'ONBOARDING';
+  | 'RETURN_PENDING'
+  | 'CLOSED';
 
 export type KycActionKind = 'approve' | 'reject' | 'info_required';
 
 export const STATE_FILTERS = [
   'ALL',
   'NEW',
+  'PHONE_VERIFIED',
+  'PROFILE_SUBMITTED',
   'KYC_SUBMITTED',
+  'KYC_APPROVED',
+  'GUARANTOR_SUBMITTED',
+  'GUARANTOR_APPROVED',
+  'DEPOSIT_PENDING',
+  'DEPOSIT_APPROVED',
+  'PLAN_SELECTED',
+  'PICKUP_SCHEDULED',
   'ACTIVE',
   'SUSPENDED',
+  'RETURN_PENDING',
   'CLOSED',
 ] as const;
 
 export const KYC_FILTERS = [
   'ALL',
+  'PENDING',
+  'SUBMITTED',
   'APPROVED',
   'REJECTED',
   'INFO_REQUIRED',
-  'PENDING',
 ] as const;
 
 export const RIDER_PERMISSIONS: { key: keyof Rider; label: string }[] = [
@@ -71,39 +90,4 @@ export interface LastBulkAction {
   action: string;
 }
 
-export function getStateBadge(state: string): string {
-  const styles: Record<string, string> = {
-    APPROVED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
-    VERIFIED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
-    POST_ACTIVE:
-      'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
-    PRE_ACTIVE: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
-    PENDING: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
-    SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
-    REJECTED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
-    SUSPENDED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
-    ONBOARDING:
-      'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400',
-  };
-  return (
-    styles[state] ||
-    'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400'
-  );
-}
 
-export function getKycBadge(status: string): string {
-  switch (status?.toUpperCase()) {
-    case 'APPROVED':
-    case 'VERIFIED':
-      return 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400';
-    case 'REJECTED':
-      return 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400';
-    case 'INFO_REQUIRED':
-      return 'border-orange-500/20 text-orange-600 bg-orange-500/5 dark:text-orange-400';
-    case 'PENDING':
-    case 'SUBMITTED':
-      return 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400';
-    default:
-      return 'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400';
-  }
-}

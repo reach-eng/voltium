@@ -14,6 +14,8 @@ export interface PendingDeletionItem {
   lifecycleStatus: string;
   deletedAt: string;
   daysRemaining: number;
+  /** Set once the 7-day window passed and PII was destroyed (purged). */
+  purgedAt?: string;
 }
 
 export function DataDeletionQueueTable() {
@@ -40,7 +42,8 @@ export function DataDeletionQueueTable() {
             phone: r.phone || 'N/A',
             lifecycleStatus: r.lifecycleStatus || 'CLOSED',
             deletedAt: r.deletedAt,
-            daysRemaining,
+            daysRemaining: r.purgedAt ? 0 : daysRemaining,
+            purgedAt: r.purgedAt,
           };
         });
         setItems(mapped);
@@ -97,7 +100,7 @@ export function DataDeletionQueueTable() {
             <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading pending queue...
           </div>
         ) : error ? (
-          <div className="p-4 bg-rose-50 text-rose-800 rounded-md text-sm border border-rose-200">
+          <div className="p-4 bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40 rounded-md text-sm border">
             {error}
           </div>
         ) : items.length === 0 ? (
@@ -125,11 +128,27 @@ export function DataDeletionQueueTable() {
                     </td>
                     <td className="p-3 text-xs text-muted-foreground">
                       {new Date(item.deletedAt).toLocaleString()}
+                      {item.purgedAt && (
+                        <div className="text-xs mt-0.5">
+                          Purged:{' '}
+                          {new Date(item.purgedAt).toLocaleString()}
+                        </div>
+                      )}
                     </td>
                     <td className="p-3">
-                      <Badge variant={item.daysRemaining <= 2 ? 'destructive' : 'secondary'}>
-                        {item.daysRemaining} {item.daysRemaining === 1 ? 'day' : 'days'} left
-                      </Badge>
+                      {item.purgedAt ? (
+                        <Badge variant="outline">
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-muted-foreground" />
+                          Purged
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant={item.daysRemaining <= 2 ? 'destructive' : 'secondary'}
+                        >
+                          {item.daysRemaining}{' '}
+                          {item.daysRemaining === 1 ? 'day' : 'days'} left
+                        </Badge>
+                      )}
                     </td>
                     <td className="p-3 text-right space-x-2">
                       <Link href={`/admin/riders/${item.id}/data-deletion`}>
@@ -137,20 +156,22 @@ export function DataDeletionQueueTable() {
                           <ShieldAlert className="w-3.5 h-3.5 mr-1" /> Deletion Details
                         </Button>
                       </Link>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="text-xs"
-                        onClick={() => handleRestore(item.id)}
-                        disabled={restoringId === item.id}
-                      >
-                        {restoringId === item.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                        ) : (
-                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                        )}
-                        Restore
-                      </Button>
+                      {!item.purgedAt && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="text-xs"
+                          onClick={() => handleRestore(item.id)}
+                          disabled={restoringId === item.id}
+                        >
+                          {restoringId === item.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                          ) : (
+                            <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          )}
+                          Restore
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -13,7 +13,12 @@ export async function GET() {
 
   try {
     const documents = await legalUseCases.list();
-    return withCacheHeaders(success(documents), 300);
+    // P2-6 (2026-08-05 legal/device audit): the old 300s browser cache meant
+    // an admin who saved a document then reloaded saw the STALE version for up
+    // to 5 minutes (fetchDocuments() after PUT hit the cached GET). Admin
+    // reads are cheap (4 rows) — max-age=0 + must-revalidate forces a
+    // revalidation on every load instead of serving a poisoned cache.
+    return withCacheHeaders(success(documents), 0);
   } catch (error) {
     logger.error('GET /api/admin/legal error:', error);
     return errors.internal('Failed to fetch legal documents');

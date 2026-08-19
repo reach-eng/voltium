@@ -15,8 +15,8 @@ void main() {
     return ProviderScope(
       overrides: [
         appProvider.overrideWith((ref) => AppProvider()),
-        localeProviderRef.overrideWith((ref) => LocaleProvider()),
-        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+        localeProviderRef.overrideWith(() => LocaleProvider()),
+        themeProviderRef.overrideWith(() => ThemeProvider()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [

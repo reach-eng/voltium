@@ -1,15 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import {
-  sendOtpSchema,
-  verifyOtpSchema,
-  submitKycSchema,
-  submitGuarantorSchema,
-  createRiderSchema,
-  bulkActionSchema,
-  createPlanSchema,
-  createVehicleSchema,
-} from './lib/validators';
+import { bulkActionSchema, createPlanSchema, createRiderSchema, createVehicleSchema, sendOtpSchema, verifyOtpSchema } from './lib/validators';
 import { env } from './lib/env';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -24,8 +15,6 @@ const isProd =
 const VALIDATION_MAP: Record<string, Record<string, any>> = {
   '/api/auth/send-otp': { POST: sendOtpSchema },
   '/api/auth/verify-otp': { POST: verifyOtpSchema },
-  '/api/rider/kyc': { POST: submitKycSchema },
-  '/api/rider/guarantor': { POST: submitGuarantorSchema },
   '/api/admin/riders': { POST: createRiderSchema },
   '/api/admin/riders/bulk': { POST: bulkActionSchema },
   '/api/admin/plans': { POST: createPlanSchema },
@@ -39,7 +28,7 @@ const getDevCsp = (nonce: string) =>
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
     "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
     "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' http://localhost:* https://api.voltium.app ws://localhost:* wss://localhost:* https://*.googleapis.com https://*.google.com",
+    "connect-src 'self' http://localhost:* http://127.0.0.1:* https://api.voltium.app ws://localhost:* wss://localhost:* ws://127.0.0.1:* https://*.googleapis.com https://*.google.com",
     "frame-ancestors 'none'",
     "form-action 'self'",
     "base-uri 'self'",
@@ -92,10 +81,39 @@ function rejectCsrf(message: string): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
+import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth';
+// PR-3 (2026-08-06 fix plan): the maintenance cache moved to a shared
+// module so the admin PUT route can invalidate it (see maintenance-cache.ts).
+import { getMaintenanceState } from './lib/maintenance-cache';
+
 export async function middleware(request: NextRequest) {
   // Bypass middleware for the Flutter web portal static files
   if (request.nextUrl.pathname.startsWith('/rider-app')) {
     return NextResponse.next();
+  }
+
+  // P0-1: Maintenance Mode Enforcement for rider traffic
+  const pathname = request.nextUrl.pathname;
+  if (
+    (pathname.startsWith('/api/rider/') || pathname.startsWith('/api/auth/')) &&
+    pathname !== '/api/rider/maintenance-status'
+  ) {
+    const isAdmin = request.cookies.has(ADMIN_SESSION_COOKIE_NAME);
+    if (!isAdmin) {
+      const maintenanceState = await getMaintenanceState();
+      if (maintenanceState.enabled) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'MAINTENANCE_MODE',
+              message: maintenanceState.message,
+            },
+          },
+          { status: 503 }
+        );
+      }
+    }
   }
 
   // Enforce schema validations on API endpoints before hitting DB/services
@@ -166,9 +184,15 @@ export async function middleware(request: NextRequest) {
   // ── CORS ────────────────────────────────────────────────────────────────
   const origin = request.headers.get('origin');
   const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) ?? [];
-  const isLocalhost = origin && origin.startsWith('http://localhost:');
+  const isLocalhost =
+    origin &&
+    (origin.startsWith('http://localhost:') ||
+      origin.startsWith('http://127.0.0.1:') ||
+      origin.startsWith('http://192.168.') ||
+      origin.startsWith('http://10.'));
 
-  if (origin && (allowedOrigins.includes(origin) || !isProd || isLocalhost)) {
+  // P1-S4: Restrict CORS origins strictly to ALLOWED_ORIGINS or localhost/local IP in dev
+  if (origin && (allowedOrigins.includes(origin) || isLocalhost)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-correlation-id, Idempotency-Key, Api-Version, Accept, Origin, X-Requested-With');
@@ -194,7 +218,12 @@ export async function middleware(request: NextRequest) {
     try {
       const originHost = new URL(origin).host;
       const host = request.headers.get('host');
-      const isLocalhostOrigin = originHost.startsWith('localhost:') || originHost === 'localhost';
+      const isLocalhostOrigin =
+        originHost.startsWith('localhost:') ||
+        originHost === 'localhost' ||
+        originHost.startsWith('127.0.0.1') ||
+        originHost.startsWith('192.168.') ||
+        originHost.startsWith('10.');
       if (host && originHost !== host && !allowedOrigins.includes(origin) && !isLocalhostOrigin) {
         return rejectCsrf('CSRF validation failed: origin mismatch');
       }

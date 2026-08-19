@@ -13,17 +13,29 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
+
 /// TL Details bottom sheet
 void showTLDetailsSheet(BuildContext context, RiderModel rider) {
+  final l10n = AppLocalizations.of(context);
+  final isUnassigned = rider.teamLeader == null ||
+      rider.teamLeader!.isEmpty ||
+      rider.teamLeader == 'Not Assigned';
+  final displayName =
+      isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : rider.teamLeader!;
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
+      final colors = AppColors.of(context);
       return Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(32),
             topRight: Radius.circular(32),
           ),
@@ -37,7 +49,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.outlineVariant,
+                  color: colors.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -45,31 +57,27 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
             const SizedBox(height: 24),
             CircleAvatar(
               radius: 48,
-              backgroundColor: AppColors.of(context).iconBackground,
-              child: Icon(Icons.person, size: 48, color: AppColors.slate400),
+              backgroundColor: colors.iconBackground,
+              child: Icon(Icons.person, size: 48, color: colors.onSurfaceMuted),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              (rider.teamLeader == null ||
-                      rider.teamLeader!.isEmpty ||
-                      rider.teamLeader == 'Not Assigned')
-                  ? 'Not assigned'
-                  : rider.teamLeader!,
+              displayName,
               style: AppTypography.headingSmall
-                  .copyWith(color: AppColors.of(context).onSurface),
+                  .copyWith(color: colors.onSurface),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Assigned Team Leader',
+              l10n?.txtassignedTeamLeader ?? 'Assigned Team Leader',
               style: AppTypography.bodyMedium
                   .copyWith(fontSize: 13)
-                  .copyWith(color: AppColors.of(context).onSurfaceVariant),
+                  .copyWith(color: colors.onSurfaceVariant),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Container(
               padding: Spacing.paddingMd,
               decoration: BoxDecoration(
-                color: AppColors.of(context).surfaceBright,
+                color: colors.surfaceBright,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
@@ -79,32 +87,32 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                     color: AppColors.primary,
                     size: 20,
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Text(
-                    (rider.emergencyContact == null ||
-                            rider.emergencyContact!.isEmpty)
+                    (rider.teamLeaderPhone == null ||
+                            rider.teamLeaderPhone!.isEmpty)
                         ? ''
-                        : rider.emergencyContact!,
+                        : rider.teamLeaderPhone!,
                     style: AppTypography.bodyLarge
-                        .copyWith(color: AppColors.of(context).onSurface),
+                        .copyWith(color: colors.onSurface),
                   ),
                   const Spacer(),
                   IconButton(
                     key: const Key('callTeamLeaderButton'),
                     onPressed: () async {
-                      final phone = (rider.emergencyContact == null ||
-                              rider.emergencyContact!.isEmpty)
+                      HapticService.light();
+                      // PR-AUDIT-FIX 2026-08-17 (AD-P0-1): dial the assigned Team Leader's phone
+                      final phone = (rider.teamLeaderPhone == null ||
+                              rider.teamLeaderPhone!.isEmpty)
                           ? ''
-                          : rider.emergencyContact!;
+                          : rider.teamLeaderPhone!;
                       final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
                       if (sanitized.isEmpty) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'No phone number available for your Team Leader.'),
-                              backgroundColor: AppColors.warning,
-                            ),
+                          Toast.warning(
+                            context,
+                            l10n?.txtnoContactNumberTl ??
+                                'No contact number available for your Team Leader.',
                           );
                         }
                         return;
@@ -117,12 +125,10 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                         }
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Could not open the phone dialer. Please try again.'),
-                              backgroundColor: AppColors.error,
-                            ),
+                          Toast.error(
+                            context,
+                            l10n?.txtcouldNotOpenDialer ??
+                                'Could not open the phone dialer. Please try again.',
                           );
                         }
                       }
@@ -132,25 +138,26 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                 ],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     key: const Key('changeTeamLeaderButton'),
                     onPressed: () {
+                      HapticService.light();
                       Navigator.pop(context);
                       showChangeTLReasonSheet(context);
                     },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(color: AppColors.outlineVariant),
+                      side: BorderSide(color: colors.outlineVariant),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
-                      'Change TL',
+                      l10n?.txtchangeTl ?? 'Change TL',
                       style: GoogleFonts.plusJakartaSans(
                         color: AppColors.error,
                         fontWeight: FontWeight.bold,
@@ -158,10 +165,13 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      HapticService.light();
+                      Navigator.pop(context);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -171,7 +181,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                       ),
                     ),
                     child: Text(
-                      'Close',
+                      l10n?.txtclose ?? 'Close',
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold),
                     ),
@@ -189,18 +199,21 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
 /// Change TL Reason bottom sheet
 void showChangeTLReasonSheet(BuildContext context) {
   final TextEditingController reasonController = TextEditingController();
+  final l10n = AppLocalizations.of(context);
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
+      final colors = AppColors.of(context);
       return Padding(
         padding:
             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(32),
               topRight: Radius.circular(32),
             ),
@@ -215,49 +228,51 @@ void showChangeTLReasonSheet(BuildContext context) {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.outlineVariant,
+                    color: colors.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Text(
-                'Change Team Leader',
+                l10n?.txtchangeTeamLeaderTitle ?? 'Change Team Leader',
                 style: AppTypography.titleLarge
-                    .copyWith(color: AppColors.of(context).onSurface),
+                    .copyWith(color: colors.onSurface),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
+                l10n?.txtchangeTlReasonPrompt ??
+                    'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
                 style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
-                    color: AppColors.of(context).onSurfaceVariant),
+                    color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: reasonController,
                 maxLines: 3,
+                style: TextStyle(color: colors.onSurface),
                 decoration: InputDecoration(
-                  hintText: 'Enter your reason here...',
+                  hintText: l10n?.txtenterReasonHint ?? 'Enter your reason here...',
+                  hintStyle: TextStyle(color: colors.onSurfaceMuted),
                   filled: true,
-                  fillColor: AppColors.of(context).surfaceBright,
+                  fillColor: colors.surfaceBright,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
+                  HapticService.light();
                   final reason = reasonController.text.trim();
                   if (reason.length < 5) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Please provide a detailed reason (at least 5 characters)'),
-                        backgroundColor: AppColors.error,
-                      ),
+                    Toast.error(
+                      context,
+                      l10n?.txtprovideDetailedReason ??
+                          'Please provide a detailed reason (at least 5 characters)',
                     );
                     return;
                   }
@@ -272,22 +287,18 @@ void showChangeTLReasonSheet(BuildContext context) {
                               'Rider request to change Team Leader. Reason: $reason',
                         );
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Your TL change request has been submitted for approval'),
-                          backgroundColor: AppColors.success,
-                        ),
+                      Toast.success(
+                        context,
+                        l10n?.txttlChangeSubmitted ??
+                            'Your TL change request has been submitted for approval',
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Failed to submit request: ${e.toString()}'),
-                          backgroundColor: AppColors.error,
-                        ),
+                      Toast.error(
+                        context,
+                        l10n?.txtfailedToSubmitRequest(e.toString()) ??
+                            'Failed to submit request: ${e.toString()}',
                       );
                     }
                   }
@@ -301,7 +312,7 @@ void showChangeTLReasonSheet(BuildContext context) {
                   ),
                 ),
                 child: Text(
-                  'Submit Request',
+                  l10n?.txtsubmitRequest ?? 'Submit Request',
                   style:
                       GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
@@ -320,15 +331,32 @@ void showSubscriptionSheet(
   RiderModel rider, {
   VoidCallback? onRequestPlanChange,
 }) {
+  final l10n = AppLocalizations.of(context);
+  final planLower = (rider.currentPlan ?? '').toLowerCase();
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
+      final colors = AppColors.of(context);
+      final cadence = planLower.contains('daily')
+          ? (l10n?.txtperDay ?? '/ day')
+          : (planLower.contains('monthly')
+              ? (l10n?.txtperMonth ?? '/ month')
+              : (l10n?.txtperWeek ?? '/ week'));
+      final displayPlan = rider.currentPlan?.replaceAll('_', ' ').toUpperCase() ??
+          (l10n?.txtnoPlan ?? 'NO PLAN');
+
+      final intentLabel = rider.intent != null
+          ? (l10n?.txtchangeIntentPrefix(rider.intent!) ??
+              'Change Intent: ${rider.intent}')
+          : (l10n?.txtchangeIntentButton ?? 'Change Intent of Use');
+
       return Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
           ),
@@ -344,32 +372,33 @@ void showSubscriptionSheet(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.outlineVariant,
+                  color: colors.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
-              'Manage Subscription',
+              l10n?.txtmanageSubscriptionTitle ?? 'Manage Subscription',
               style: AppTypography.titleLarge
-                  .copyWith(color: AppColors.of(context).onSurface),
+                  .copyWith(color: colors.onSurface),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.',
+              l10n?.txtmanageSubscriptionSubtitle ??
+                  'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: AppColors.of(context).onSurfaceVariant,
+                color: colors.onSurfaceVariant,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(Spacing.md),
               decoration: BoxDecoration(
-                color: AppColors.of(context).surfaceBright,
+                color: colors.surfaceBright,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(color: AppColors.outlineVariant),
+                border: Border.all(color: colors.outlineVariant),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,10 +407,9 @@ void showSubscriptionSheet(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        rider.currentPlan?.replaceAll('_', ' ').toUpperCase() ??
-                            'NO PLAN',
+                        displayPlan,
                         style: AppTypography.titleSmall
-                            .copyWith(color: AppColors.slate900),
+                            .copyWith(color: colors.onSurface),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -389,51 +417,41 @@ void showSubscriptionSheet(
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.of(context).successLight,
+                          color: colors.successLight,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
-                          'Active',
+                          l10n?.txtactiveBadge ?? 'Active',
                           style: AppTypography.labelMedium
                               .copyWith(color: AppColors.success),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Icon(
                         Icons.currency_rupee,
                         size: 16,
-                        color: AppColors.of(context).onSurfaceVariant,
+                        color: colors.onSurfaceVariant,
                       ),
-                      Builder(builder: (context) {
-                        final planLower =
-                            (rider.currentPlan ?? '').toLowerCase();
-                        final cadence = planLower.contains('daily')
-                            ? '/ day'
-                            : (planLower.contains('monthly')
-                                ? '/ month'
-                                : '/ week');
-                        return Text(
-                          '${rider.activeRentalPlanPrice.toInt()} $cadence',
-                          style: AppTypography.bodyMedium
-                              .copyWith(fontWeight: FontWeight.w600)
-                              .copyWith(
-                                  color:
-                                      AppColors.of(context).onSurfaceVariant),
-                        );
-                      }),
+                      Text(
+                        '${rider.activeRentalPlanPrice.toInt()} $cadence',
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: colors.onSurfaceVariant),
+                      ),
                     ],
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             FilledButton(
               key: const Key('requestPlanChangeButton'),
               onPressed: () {
+                HapticService.light();
                 Navigator.pop(context);
                 onRequestPlanChange?.call();
               },
@@ -444,19 +462,20 @@ void showSubscriptionSheet(
                 shape: const StadiumBorder(),
               ),
               child: Text(
-                'Request Plan Change',
+                l10n?.txtrequestPlanChangeButton ?? 'Request Plan Change',
                 style: AppTypography.titleSmall,
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             OutlinedButton(
               key: const Key('endRentalButton'),
               onPressed: () {
+                HapticService.light();
                 Navigator.pop(context);
                 startVehicleReturnWorkflow(context, rider);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
+                foregroundColor: colors.error,
                 side: const BorderSide(color: AppColors.errorBorder),
                 minimumSize: const Size(double.infinity, 54),
                 shape: const StadiumBorder(),
@@ -464,25 +483,26 @@ void showSubscriptionSheet(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.assignment_return_outlined, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.assignment_return_outlined, size: 20),
+                  const SizedBox(width: 8),
                   Text(
-                    'End Rental',
+                    l10n?.txtendRentalButton ?? 'End Rental',
                     style: AppTypography.titleSmall,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             OutlinedButton(
               key: const Key('changeIntentButton'),
               onPressed: () {
+                HapticService.light();
                 Navigator.pop(context);
                 showIntentDialog(context, rider);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.slate600,
-                side: const BorderSide(color: AppColors.outlineVariant),
+                foregroundColor: colors.onSurfaceVariant,
+                side: BorderSide(color: colors.outlineVariant),
                 minimumSize: const Size(double.infinity, 54),
                 shape: const StadiumBorder(),
               ),
@@ -490,27 +510,28 @@ void showSubscriptionSheet(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.work_outline, size: 20),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    rider.intent != null
-                        ? 'Change Intent: ${rider.intent}'
-                        : 'Change Intent of Use',
+                    intentLabel,
                     style: AppTypography.titleSmall,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             OutlinedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                HapticService.light();
+                Navigator.pop(context);
+              },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.of(context).onSurfaceVariant,
-                side: const BorderSide(color: AppColors.borderMedium),
+                foregroundColor: colors.onSurfaceVariant,
+                side: BorderSide(color: colors.outlineVariant),
                 minimumSize: const Size(double.infinity, 54),
                 shape: const StadiumBorder(),
               ),
               child: Text(
-                'Close',
+                l10n?.txtclose ?? 'Close',
                 style: AppTypography.titleSmall,
               ),
             ),
@@ -529,21 +550,28 @@ Future<void> startVehicleReturnWorkflow(
 ) async {
   final picker = ImagePicker();
   final List<File> photos = [];
-  const List<String> labels = [
-    'Left Side',
-    'Right Side',
-    'Front View',
-    'Speedometer',
+  final l10n = AppLocalizations.of(context);
+
+  final List<String> labels = [
+    l10n?.txtleftSide ?? 'Left Side',
+    l10n?.txtrightSide ?? 'Right Side',
+    l10n?.txtfrontView ?? 'Front View',
+    l10n?.txtspeedometer ?? 'Speedometer',
   ];
 
   for (int i = 0; i < labels.length; i++) {
     final XFile? image = await showModalBottomSheet<XFile?>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.of(context).card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final colors = AppColors.of(context);
+        final stepText = l10n?.txtstepXofY(i + 1, 4) ?? 'Step ${i + 1} of 4';
+        final captureTitle = l10n?.txtcaptureViewOfVehicle(labels[i]) ??
+            'Capture ${labels[i]} of Vehicle';
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -555,30 +583,32 @@ Future<void> startVehicleReturnWorkflow(
                   size: 48,
                   color: AppColors.primary,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'Step ${i + 1} of 4',
+                  stepText,
                   style: AppTypography.labelMedium
                       .copyWith(color: AppColors.primary),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Capture ${labels[i]} of Vehicle',
+                  captureTitle,
                   style: AppTypography.titleMedium
-                      .copyWith(color: AppColors.of(context).onSurface),
+                      .copyWith(color: colors.onSurface),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Ensure the photo is clear and well-lit for faster approval.',
+                  l10n?.txtensureClearPhotoPrompt ??
+                      'Ensure the photo is clear and well-lit for faster approval.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
-                      color: AppColors.of(context).onSurfaceVariant),
+                      color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   key: const Key('captureReturnPhotoButton'),
                   onPressed: () async {
+                    HapticService.light();
                     try {
                       final photo = await picker.pickImage(
                         source: ImageSource.camera,
@@ -593,7 +623,7 @@ Future<void> startVehicleReturnWorkflow(
                     }
                   },
                   icon: const Icon(Icons.photo_camera),
-                  label: const Text('Capture Photo'),
+                  label: Text(l10n?.txtcapturePhotoBtn ?? 'Capture Photo'),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 54),
@@ -602,14 +632,17 @@ Future<void> startVehicleReturnWorkflow(
                     ),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextButton(
                   key: const Key('cancelReturnProcessButton'),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    HapticService.light();
+                    Navigator.pop(context);
+                  },
                   child: Text(
-                    'Cancel Return Process',
+                    l10n?.txtcancelReturnProcessBtn ?? 'Cancel Return Process',
                     style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceVariant),
+                        color: colors.onSurfaceVariant),
                   ),
                 ),
               ],
@@ -624,24 +657,28 @@ Future<void> startVehicleReturnWorkflow(
   }
 
   if (context.mounted) {
+    final colors = AppColors.of(context);
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: colors.card,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              'Uploading photos & submitting request...',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+              l10n?.txtuploadingPhotosSubmitting ??
+                  'Uploading photos & submitting request...',
+              style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold, color: colors.onSurface),
             ),
             const SizedBox(height: 8),
             Text(
-              'Please do not close the app.',
+              l10n?.txtdoNotCloseApp ?? 'Please do not close the app.',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12, color: AppColors.onSurfaceVariant),
+                  fontSize: 12, color: colors.onSurfaceVariant),
             ),
           ],
         ),
@@ -662,29 +699,38 @@ Future<void> startVehicleReturnWorkflow(
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
+            backgroundColor: colors.card,
             icon: const Icon(
               Icons.check_circle,
               size: 48,
               color: AppColors.success,
             ),
-            title: const Text('Return Request Submitted'),
-            content: const Text(
-              'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.',
+            title: Text(
+              l10n?.txtreturnRequestSubmittedTitle ??
+                  'Return Request Submitted',
+              style: TextStyle(color: colors.onSurface),
+            ),
+            content: Text(
+              l10n?.txtreturnRequestSubmittedBody ??
+                  'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.',
+              style: TextStyle(color: colors.onSurfaceVariant),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Great!'),
+                onPressed: () {
+                  HapticService.light();
+                  Navigator.pop(context);
+                },
+                child: Text(l10n?.txtgreatBtn ?? 'Great!'),
               ),
             ],
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit return request. Please try again.'),
-            backgroundColor: AppColors.error,
-          ),
+        Toast.error(
+          context,
+          l10n?.txtfailedToSubmitReturn ??
+              'Failed to submit return request. Please try again.',
         );
       }
     }
@@ -693,31 +739,38 @@ Future<void> startVehicleReturnWorkflow(
 
 /// Intent of Use dialog
 void showIntentDialog(BuildContext context, RiderModel rider) {
+  final l10n = AppLocalizations.of(context);
+  final colors = AppColors.of(context);
+
   showDialog(
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: const Text('Intent of Use'),
+        backgroundColor: colors.card,
+        title: Text(
+          l10n?.txtintentOfUse ?? 'Intent of Use',
+          style: TextStyle(color: colors.onSurface),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _IntentOption(
-              label: 'Personal Use',
+              label: l10n?.txtpersonalUse ?? 'Personal Use',
               isSelected: rider.intent == 'Personal Use',
               onTap: () => _updateIntent(context, rider, 'Personal Use'),
             ),
             _IntentOption(
-              label: 'E-commerce Delivery',
+              label: l10n?.txtecommerceDelivery ?? 'E-commerce Delivery',
               isSelected: rider.intent == 'E-commerce Delivery',
               onTap: () => _updateIntent(context, rider, 'E-commerce Delivery'),
             ),
             _IntentOption(
-              label: 'Food Delivery',
+              label: l10n?.txtfoodDelivery ?? 'Food Delivery',
               isSelected: rider.intent == 'Food Delivery',
               onTap: () => _updateIntent(context, rider, 'Food Delivery'),
             ),
             _IntentOption(
-              label: 'Other',
+              label: l10n?.txtother ?? 'Other',
               isSelected: rider.intent == 'Other',
               onTap: () => _updateIntent(context, rider, 'Other'),
             ),
@@ -725,8 +778,11 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () {
+              HapticService.light();
+              Navigator.pop(context);
+            },
+            child: Text(l10n?.txtcancel ?? 'Cancel'),
           ),
         ],
       );
@@ -736,28 +792,28 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
 
 Future<void> _updateIntent(
     BuildContext context, RiderModel rider, String newIntent) async {
+  HapticService.light();
   final provider =
       ProviderScope.containerOf(context).read(riderProvider.notifier);
+  final l10n = AppLocalizations.of(context);
+
   try {
     await ApiClient().put('/api/rider/profile', body: {'intent': newIntent});
     final updated = rider.copyWith(intent: newIntent);
     provider.updateRider(updated);
     if (context.mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Intent updated successfully'),
-          backgroundColor: AppColors.success,
-        ),
+      Toast.success(
+        context,
+        l10n?.txtintentUpdatedSuccess ?? 'Intent updated successfully',
       );
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to update intent: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
+      Toast.error(
+        context,
+        l10n?.txtfailedToUpdateIntent(e.toString()) ??
+            'Failed to update intent: ${e.toString()}',
       );
     }
   }
@@ -776,11 +832,12 @@ class _IntentOption extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return ListTile(
-      title: Text(label),
+      title: Text(label, style: TextStyle(color: colors.onSurface)),
       leading: Icon(
         isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: isSelected ? AppColors.primary : null,
+        color: isSelected ? AppColors.primary : colors.onSurfaceMuted,
       ),
       onTap: onTap,
     );

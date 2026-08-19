@@ -3377,3 +3377,107 @@ px tsc --noEmit — 0 errors
   legal_page 670, pickup_hub 626, dashboard_sheets 763.
 - 600+ fontSize/GoogleFonts uses need migration (PR-126 follow-ups).
 - 581 Colors.white/black uses need migration (PR-128 follow-ups).
+
+### Follow-up — Redeem-reward endpoint (deferred, 2026-08-06 fix-plan PR-8 Path A)
+
+The 14th audit's redeem-reward gap was intentionally deferred from the
+2026-08-06 fix-plan sweep: it is ~2 days of feature work and is blocked on a
+product decision — are rewards redeemed as wallet credits (in-app) or via
+external fulfilment (Amazon/voucher, etc.)?
+
+**What exists:** `offerUseCases.getActiveSponsored()` + admin offer CRUD;
+rewards/points earned through referrals are tracked server-side but there is
+no rider-facing `POST /api/rider/rewards/redeem` endpoint.
+
+**Decision needed before work starts:** redemption medium (wallet credit vs
+external voucher), point→value conversion rate, and minimum redemption
+threshold. Once decided, the work is: redeem endpoint + validation +
+idempotency, outbox/ledger entry, admin redemption-queue screen, and
+Flutter UI wiring. Add to the next planning cycle.
+
+### Follow-up — Language audit (LANGUAGE-AUDIT 2026-08-16) l10n sprint
+
+**Date:** 2026-08-16
+**Source:** Language audit (in-chat, 2026-08-16). Full audit input is
+reproducible from the diff of this session.
+**Languages in scope:** **en + hi only.** The user confirmed a 3rd
+language is out of scope for now. `scripts/scaffold_locale.dart`
+remains as a future utility, but no Tamil/Bengali/Marathi ARB is
+shipped in this PR.
+
+**Status (this PR):**
+- **Critical** items 1, 2, 3, 4 (all four pre-existing — already
+  landed in code before this PR; verified, no changes needed).
+- **Major** items 6 (server persistence), 8 (e2e test for language
+  dialog) — both already landed before this PR. The PR adds
+  `integration_test/e2e_individual/49_language_dialog_test.dart`
+  to give device-level coverage in addition to the existing widget
+  test.
+- **Major** item 5 (wire l10n in 80+ screens) — partial. Across two
+  passes this PR wired 19 high-traffic screens: splash, login,
+  login footer, phone entry, OTP trigger, OTP verification,
+  emergency SOS, emergency contacts, notifications screen,
+  notifications preferences, pickup verification, dashboard,
+  KYC documents, pickup success, referrals, choose plan, settings
+  lock-password dialog, edit profile. 38 existing `txt*` ARB keys
+  consumed + 22 newly-added ARB keys.
+- **Nice-to-have** items 10/14 (linter + dead-key test) — shipped.
+  The existing `i18n_dead_key_test.dart` is tightened from 475
+  → 442 baseline. A new `i18n_no_new_dead_keys_test.dart` flags
+  any hardcoded `Text('…')` literal in a presentation screen
+  (current threshold 43; fails on any growth).
+- **T-67 (PostHog `app_locale_resolved`)** — **DONE** in this PR.
+  `LocaleNotifier.build()` now fires `locale_resolved` on every
+  cold start with `{code, is_explicit_choice}` so product can
+  measure the fraction of riders seeing en vs hi in production.
+  PII-free. Unit test added to `i18n_test.dart`.
+
+**Acceptance gates (this PR):**
+- `flutter test test/core/i18n_test.dart` — 7/7 pass (was 6, +1 for T-67).
+- `flutter test test/core/i18n_dead_key_test.dart` — 1/1 pass
+  (442 dead / 534 total, threshold 442).
+- `flutter test test/core/i18n_no_new_dead_keys_test.dart` — 1/1
+  pass (43 hardcoded Text() literals, threshold 43).
+- `flutter test test/features/profile/settings_theme_language_dialog_test.dart`
+  — 3/3 pass.
+- `flutter analyze` on touched files — no new issues.
+
+**Follow-up tickets (file as GitHub issues, non-blocking):**
+
+**T-66 — Continue the l10n wiring sprint (Major #5 continued).**
+✅ **DONE** (2026-08-17) — 33 hardcoded `Text()` literals
+wired across 13 screens (rewards, plan success, edit
+profile, end rental, troubleshooter, create ticket,
+support center, feedback, hang tight, deposit workflow,
+guarantor, top-up amount, top-up proof, top-up flow). 79
+existing ARB keys consumed + 15 new ARB keys added. Final
+state: 363 dead keys (was 442) / 734 total (was 534).
+The 5 remaining `i18n_no_new_dead_keys_test` matches are
+regex false positives on interpolation patterns
+(`'${l10n.txtcancel} (5s)'`, `'₹$secDeposit'`, `'₹$rentPrice'`,
+`'₹${widget.amount}'`, `'₹$total'`) — no real English. A
+follow-up ticket can refine the regex to exclude `'₹'` and
+`'${'` prefixes and lower the threshold to 0.
+
+**T-68 — Move the i18n tests from "fail-on-growth" to
+"fail-on-any".** Current thresholds (442 dead ARB keys, 43
+hardcoded Text() literals) are baselines that allow growth
+up to those numbers. Once the l10n sprint (T-66) finishes
+and the count drops to 0, flip the tests to fail-on-any so
+any future PR that adds a dead key or hardcoded literal
+fails CI immediately. The infrastructure is in place; this
+is just a final-mode toggle.
+**Owner:** Rider team. **Effort:** 5 min. **Why non-blocking:**
+current tests already prevent growth.
+
+**T-69 — Add a 3rd language (Bn / Mr / Ta) only if product asks.**
+`scripts/scaffold_locale.dart` is the one-command path
+(`dart run scripts/scaffold_locale.dart <code>`) but no work
+should land until product confirms the language + translator
+is lined up. The Tamil scaffold that briefly existed in this
+PR was reverted per user direction; the script remains for
+future use.
+**Owner:** Localization lead. **Effort:** 10 min + translator
+review. **Why non-blocking:** product decision on which
+language to add next; current en + hi is the full product
+spec.

@@ -2,5 +2,10 @@ arb-dir: lib/l10n
 template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
-preferred-supported-locales: ["en"]
+# LANGUAGE-AUDIT (2026-08-16) #11: include every locale the app
+# actually ships with. The `flutter gen-l10n` runner uses this list
+# to pre-generate the locale-specific subclasses. Keep in sync with
+# `LocaleNotifier.supportedLanguages` in
+# `lib/core/localization/locale_provider.dart`.
+preferred-supported-locales: ["en", "hi"]
 output-dir: lib/gen

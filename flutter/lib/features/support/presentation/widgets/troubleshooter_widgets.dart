@@ -42,15 +42,16 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.glass,
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.6),
+            color: colors.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -72,7 +73,7 @@ class CategoryCard extends StatelessWidget {
                     ),
                     child: Icon(icon, color: color, size: 22),
                   ),
-                  SizedBox(width: 14),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,24 +82,24 @@ class CategoryCard extends StatelessWidget {
                         Text(
                           title,
                           style: AppTypography.titleSmall
-                              .copyWith(color: AppColors.of(context).onSurface),
+                              .copyWith(color: colors.onSurface),
                         ),
                         if (description != null) ...[
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             description!,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
-                              color: AppColors.of(context).onSurfaceVariant,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                         ],
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
-                    color: AppColors.onSurfaceDisabled,
+                    color: colors.onSurfaceMuted,
                   ),
                 ],
               ),
@@ -124,13 +125,14 @@ class QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: colors.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -147,20 +149,20 @@ class QuestionCard extends StatelessWidget {
               ),
               child: Icon(icon, color: categoryColor, size: 32),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               question,
               textAlign: TextAlign.center,
               style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.of(context).onSurface, height: 1.4),
+                  color: colors.onSurface, height: 1.4),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'Answer honestly for the most accurate diagnosis.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
-                color: AppColors.of(context).onSurfaceVariant,
+                color: colors.onSurfaceVariant,
               ),
             ),
           ],
@@ -204,7 +206,7 @@ class ActionButtons extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: SizedBox(
             height: 52,
@@ -240,13 +242,14 @@ class PathSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: colors.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -255,13 +258,13 @@ class PathSummary extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading: const Icon(Icons.history,
-              size: 18, color: AppColors.onSurfaceDisabled),
+          leading: Icon(Icons.history,
+              size: 18, color: colors.onSurfaceMuted),
           title: Text(
             'Your answers (${path.length})',
             style: AppTypography.bodyMedium
                 .copyWith(fontWeight: FontWeight.w600)
-                .copyWith(color: AppColors.of(context).onSurfaceVariant),
+                .copyWith(color: colors.onSurfaceVariant),
           ),
           children: [
             for (final answer in path)
@@ -285,13 +288,13 @@ class PathSummary extends StatelessWidget {
                             answer.answer ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         answer.question,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: AppColors.of(context).onSurface,
+                          color: colors.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -319,17 +322,18 @@ class ResolutionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final (title, titleColor) = switch (resolutionType) {
       'SUCCESS' => ('Issue Resolved', AppColors.success),
       'FAILED' => ('Troubleshooting Tip', Colors.orange),
       'NEEDS_SUPPORT' => ('Support Required', vfBlue),
       'DANGER' => ('Safety Warning', AppColors.error),
-      _ => ('Result', AppColors.onSurfaceVariant),
+      _ => ('Result', colors.onSurfaceVariant),
     };
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
@@ -345,13 +349,13 @@ class ResolutionCard extends StatelessWidget {
               title,
               style: AppTypography.titleMedium.copyWith(color: titleColor),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               resolution,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
-                color: AppColors.of(context).onSurface,
+                color: colors.onSurface,
                 height: 1.5,
               ),
             ),
@@ -374,6 +378,7 @@ class PathStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -395,7 +400,7 @@ class PathStep extends StatelessWidget {
                   color: answer.answer ? AppColors.success : AppColors.error),
             ),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,10 +409,10 @@ class PathStep extends StatelessWidget {
                   answer.question,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: AppColors.of(context).onSurface,
+                    color: colors.onSurface,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Icon(
@@ -417,7 +422,7 @@ class PathStep extends StatelessWidget {
                           ? AppColors.successDark
                           : AppColors.errorDark,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       answer.answer ? 'Yes' : 'No',
                       style: AppTypography.labelMedium.copyWith(
@@ -450,9 +455,9 @@ class TroubleshooterHeaderIcon extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         child: const Icon(
-          Icons.build_circle_rounded,
-          color: vfBlue,
-          size: 44,
+          Icons.build_circle_outlined,
+          color: AppColors.primary,
+          size: 40,
         ),
       ),
     );
@@ -527,8 +532,8 @@ class TroubleshooterResultIcon extends StatelessWidget {
         ),
       _ => (
           Icons.info_outline,
-          AppColors.onSurfaceVariant,
-          AppColors.onSurfaceVariant.withValues(alpha: 0.12),
+          AppColors.of(context).onSurfaceVariant,
+          AppColors.of(context).onSurfaceVariant.withValues(alpha: 0.12),
         ),
     };
 
@@ -554,13 +559,14 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: colors.outlineVariant.withValues(alpha: 0.5),
           width: 1,
         ),
       ),
@@ -571,13 +577,13 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.route,
-                    size: 18, color: AppColors.onSurfaceDisabled),
-                SizedBox(width: 8),
+                Icon(Icons.route,
+                    size: 18, color: colors.onSurfaceMuted),
+                const SizedBox(width: 8),
                 Text(
                   'Diagnostic path taken',
                   style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.of(context).onSurface),
+                      .copyWith(color: colors.onSurface),
                 ),
               ],
             ),
@@ -588,13 +594,13 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
               PathStep(stepNumber: i + 1, answer: path[i]),
               if (i < path.length - 1) ...[
                 Padding(
-                  padding: EdgeInsets.only(left: 13),
+                  padding: const EdgeInsets.only(left: 13),
                   child: SizedBox(
                     height: 16,
                     child: VerticalDivider(
                       width: 2,
                       thickness: 1.5,
-                      color: AppColors.of(context).borderSubtle,
+                      color: colors.borderSubtle,
                     ),
                   ),
                 ),

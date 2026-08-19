@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const double lowBalanceThresholdRatio = 0.3;
@@ -14,6 +14,43 @@ class AppConstants {
 
   static const Duration otpResendCooldown = Duration(seconds: 30);
 
+  /// PR-PICKUP-OTP: how long a successfully verified emergency-contact OTP
+  /// stays trusted after a pickup-draft resume. The server's OTP is
+  /// single-use with a 5-minute expiry and `verify-phone` issues no token,
+  /// so the client persists a short-lived receipt (verifiedPhone +
+  /// verifiedAt) and honors it only inside this window — a resumed rider
+  /// skips re-verification within the pickup session, but the proof can
+  /// never be reused indefinitely (post-window it re-verifies, exactly as
+  /// a fresh session would).
+  static const Duration emergencyContactVerificationWindow =
+      Duration(minutes: 15);
+
+  /// Pure freshness check for a phone-OTP receipt (single source of truth —
+  /// the pickup emergency-contact flow and the guarantor onboarding flow
+  /// both call this so the window logic cannot drift). A receipt counts as
+  /// fresh only when it was issued for the exact same phone (digits-
+  /// stripped) AND is inside the window; future timestamps (clock skew /
+  /// tampering) are rejected.
+  static bool isEmergencyContactVerificationFresh({
+    required String? verifiedPhone,
+    required String? contact,
+    required int? verifiedAt,
+    DateTime? now,
+  }) {
+    if (verifiedPhone == null || verifiedAt == null || contact == null) {
+      return false;
+    }
+    final contactDigits = contact.replaceAll(RegExp(r'\D'), '');
+    if (contactDigits.isEmpty) return false;
+    if (verifiedPhone.replaceAll(RegExp(r'\D'), '') != contactDigits) {
+      return false;
+    }
+    final current = now ?? DateTime.now();
+    final delta = current.millisecondsSinceEpoch - verifiedAt;
+    return delta >= 0 &&
+        delta <= emergencyContactVerificationWindow.inMilliseconds;
+  }
+
   static bool isTestModeOverride = false;
 
   static bool get isTestMode =>
@@ -22,8 +59,10 @@ class AppConstants {
           (!kReleaseMode &&
               const String.fromEnvironment('TEST_MODE') == 'true'));
 
-  // ── Plan durations ───────────────────────────────────────────────────
-  /// Maps a plan name (uppercase) to its duration in days.
+  // Plan durations — kept here because they're a static app config
+  // (not user-modifiable). The plan name → days mapping mirrors the
+  // `getDurationForPlanType` helper in `web/src/server/modules/plans/plan.use-cases.ts`
+  // so the client can render "7 days" copy without a network round-trip.
   static const Map<String, int> planDurationDays = {
     'DAILY': 1,
     'DAILY_FLEX': 1,
@@ -52,36 +91,12 @@ class AppConstants {
     return '$days days';
   }
 
-  // ── Plan pricing (fallback values) ─────────────────────────────────
-  /// Fallback rental price in rupees per plan (used when backend price is unavailable).
-  static const Map<String, double> planPriceRupees = {
-    'DAILY_FLEX': 250.0,
-    'WEEKLY_BASIC': 1000.0,
-    'WEEKLY_MAX': 1500.0,
-    'MONTHLY_PREMIUM': 2500.0,
-  };
-
-  /// Fallback security deposit in rupees per plan.
-  static const Map<String, double> planSecurityDepositRupees = {
-    'DAILY_FLEX': 500.0,
-    'WEEKLY_BASIC': 1000.0,
-    'WEEKLY_MAX': 1500.0,
-    'MONTHLY_PREMIUM': 2500.0,
-  };
-
-  static const double defaultPlanPrice = 1500.0;
-  static const double defaultSecurityDeposit = 1500.0;
-
-  /// Returns the fallback rental price for [planName].
-  static double getPlanPrice(String? planName) {
-    if (planName == null) return defaultPlanPrice;
-    return planPriceRupees[planName.toUpperCase()] ?? defaultPlanPrice;
-  }
-
-  /// Returns the fallback security deposit for [planName].
-  static double getPlanSecurityDeposit(String? planName) {
-    if (planName == null) return defaultSecurityDeposit;
-    return planSecurityDepositRupees[planName.toUpperCase()] ??
-        defaultSecurityDeposit;
-  }
+  // PR-47 (WALLET P1-1): the hardcoded `planPriceRupees` /
+  // `planSecurityDepositRupees` / `defaultPlanPrice` /
+  // `defaultSecurityDeposit` / `getPlanPrice` / `getPlanSecurityDeposit`
+  // fallback block has been removed. Plan prices and security deposits
+  // now flow from the backend (`plan.use-cases.ts:56-57, 73-74` and the
+  // new `currentPlanRef.securityDepositInPaise` join on the rider
+  // dashboard). The old fallbacks drifted from server truth and were
+  // the root cause of the audit's hardcoded-price finding.
 }

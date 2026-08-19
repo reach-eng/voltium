@@ -30,7 +30,7 @@ void main() {
         .setMockMethodCallHandler(shareChannel, null);
   });
 
-  test('generatePdf creates a file', () async {
+  test('receiptUrl points at the server-side receipt endpoint', () {
     final receipt = TransactionReceipt(
       transactionId: 'TXN123456789',
       riderName: 'John Doe',
@@ -40,14 +40,10 @@ void main() {
       amount: 50000,
     );
 
-    final file = await receipt.generatePdf();
-    expect(file.existsSync(), isTrue);
-    expect(file.path, contains('receipt_TXN12345.pdf'));
-
-    // cleanup
-    if (file.existsSync()) {
-      file.deleteSync();
-    }
+    // Receipts are server-hosted (no local PDF generation) — the URL must
+    // reference the API receipt endpoint with the transaction id.
+    expect(receipt.receiptUrl, contains('/api/rider/receipts/'));
+    expect(receipt.receiptUrl, contains('TXN123456789'));
   });
 
   test('share invokes share channel', () async {

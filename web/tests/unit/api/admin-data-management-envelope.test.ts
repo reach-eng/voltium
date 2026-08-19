@@ -161,7 +161,9 @@ describe('PR-90 (API N12) — admin/data-management/schedule envelope', () => {
       method: 'POST',
     });
     const res = await POST(req);
-    expect(res.status).toBe(200);
+    // P0-3 (2026-08-07): run-now enqueues to the outbox → 202 Accepted,
+    // not 200 — the assertion was stale after the async-jobs refactor.
+    expect(res.status).toBe(202);
     const body = await res.json();
     expect(body.data).toEqual({ jobId: 'b-1', status: 'RUNNING' });
   });
@@ -229,7 +231,9 @@ describe('PR-90 (API N12) — admin/maintenance-mode envelope', () => {
     const text = await res.text();
     expect(text).not.toMatch(/password/);
     expect(text).not.toMatch(/secret/);
-    expect(text).toMatch(/Internal error/);
+    // P0-5 (2026-08-05 ops audit): the catch message now follows the
+    // 'Failed to ...' convention used by every other admin route.
+    expect(text).toMatch(/Failed to fetch maintenance status/);
   });
 
   it('PUT returns the success envelope', async () => {

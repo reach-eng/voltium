@@ -1,15 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_SETTINGS, type Settings } from './settingsTypes';
 
 /**
- * R3.7d split — Settings data hook.
+ * Settings data hook.
  *
  * Owns the GET / PUT to /api/admin/settings, holds the live + initial
- * snapshots, exposes typed setters and dirty-state. Caller renders the
- * cards; this hook just keeps state in sync.
+ * snapshots, exposes typed setters, surface backend messages, and dirty-state memoization.
  */
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -47,11 +46,12 @@ export function useSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      if (res.ok) {
-        toast.success('Settings saved successfully');
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        toast.success(json.message || 'Settings saved successfully');
         setInitial(settings);
       } else {
-        toast.error('Failed to save settings');
+        toast.error(json?.error?.message || json?.message || 'Failed to save settings');
       }
     } catch {
       toast.error('Network error — please try again.');
@@ -68,7 +68,10 @@ export function useSettings() {
     setSettings((prev) => ({ ...prev, [key]: String(checked) }));
   };
 
-  const isDirty = JSON.stringify(settings) !== JSON.stringify(initial);
+  const isDirty = useMemo(() => {
+    const keys = Object.keys(settings) as (keyof Settings)[];
+    return keys.some((k) => settings[k] !== initial[k]);
+  }, [settings, initial]);
 
   return {
     settings,

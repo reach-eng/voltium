@@ -4,25 +4,39 @@
 
 Comprehensive end-to-end test suite for the Voltium Rider Flutter app. Tests cover the complete user journey from splash screen to logout, including all major features and edge cases.
 
+**Current count: 49 tests** (per `e2e_individual/` directory — 50 files, 49 unique-numbered, plus 1 test_helpers.dart).
+
 ## Test Structure
 
 ```
 integration_test/
 ├── helpers/
-│   └── test_helpers.dart          # Shared utilities and helpers
-└── e2e/
-    ├── auth_flow_test.dart        # Login, OTP, auth choice, logout (10 tests)
-    ├── onboarding_flow_test.dart  # Intent, user form, guarantor, pickup (9 tests)
-    ├── dashboard_test.dart        # Dashboard elements, navigation, referral (10 tests)
-    ├── wallet_test.dart           # Balance, top-up, history, filters (11 tests)
-    ├── profile_test.dart          # Profile, edit, documents, SOS, rewards (14 tests)
-    ├── support_test.dart          # Tickets, FAQ, notifications (8 tests)
-    ├── settings_test.dart         # Dark mode, language, 2FA, delete account (12 tests)
-    ├── error_edge_cases_test.dart # Validation, empty states, stress tests (17 tests)
-    └── full_journey_test.dart     # Complete user journey (3 tests)
+│   └── test_helpers.dart          # (legacy — see e2e_individual/test_helpers.dart)
+├── pages/                         # Page Object Model — composable widgets
+│   ├── app_page.dart
+│   ├── app_robots.dart
+│   ├── dashboard_page.dart
+│   ├── pickup_page.dart           # PICKUP P0-1 (TEST-STRATEGY-AUDIT T-P0-1)
+│   ├── login_page.dart
+│   ├── ...
+├── e2e_individual/                # ✅ CANONICAL — 49 numbered tests
+│   ├── run_phased_tests.sh        # runs all 49 tests in 17 phases
+│   ├── 00_diagnostic_test.dart
+│   ├── 01_splash_screen_test.dart
+│   ├── 02_legal_screen_test.dart
+│   ├── ...
+│   ├── 48_emergency_sos_test.dart
+│   └── test_helpers.dart          # Shared helpers (used by all 49 tests)
+└── e2e_DEPRECATED_DO_NOT_USE/     # 🚫 Retired 2026-08-08 — see inside
+    └── README.md
 ```
 
-**Total: 94 E2E tests**
+The previous test layout had 33 numbered tests + 9 full-journey tests in `e2e/`. After
+PR-8 (pickup integration test) and PR-9 (emergency SOS test) added 2 more numbered
+tests, the directory had collisions on numbers 34/35/36/37/38/39. The 2026-08-08
+TEST-STRATEGY-AUDIT (T-P0-3) re-numbered the collisions to 43–48. The 9 redundant
+`e2e/` files were then moved to `D:\voltium\.deprecated\e2e-old-snapshot-2026-08-08\`
+and the empty `e2e/` directory was renamed to `e2e_DEPRECATED_DO_NOT_USE/`.
 
 ## Prerequisites
 
@@ -32,39 +46,25 @@ integration_test/
 
 ## Running Tests
 
-### Run all E2E tests
+### Run all 49 E2E tests (canonical)
 
 ```bash
-flutter test integration_test/e2e/ -d <device-id>
+./integration_test/e2e_individual/run_phased_tests.sh emulator-5554
 ```
+
+This is what CI runs (via `flutter-e2e-manual.yml`). The script shards the tests
+across 17 phases; pass `--shard-index=N --shard-count=M` to split across parallel
+emulators.
 
 ### Run a specific test file
 
 ```bash
-# Auth flow tests
-flutter test integration_test/e2e/auth_flow_test.dart -d <device-id>
-
-# Dashboard tests
-flutter test integration_test/e2e/dashboard_test.dart -d <device-id>
-
-# Full journey test
-flutter test integration_test/e2e/full_journey_test.dart -d <device-id>
-```
-
-### Run with custom API URL
-
-```bash
-flutter test integration_test/e2e/auth_flow_test.dart \
+flutter drive \
+  --driver=test_driver/integration_test.dart \
+  --target=integration_test/e2e_individual/04_login_screen_test.dart \
+  -d emulator-5554 \
   --dart-define=API_URL=http://10.0.2.2:8081 \
-  -d <device-id>
-```
-
-### Run a single test
-
-```bash
-flutter test integration_test/e2e/auth_flow_test.dart \
-  --name "Login screen – enter phone and send OTP" \
-  -d <device-id>
+  --dart-define=TEST_MODE=true
 ```
 
 ## Test Credentials
@@ -80,152 +80,29 @@ All tests use the following default credentials (dev backend accepts any 10-digi
 | Guarantor | `Test Guarantor` |
 | Guarantor Phone | `9998887776` |
 
-## Test Helpers
-
-The `test_helpers.dart` file provides reusable utilities:
+## Test Helpers (in `e2e_individual/test_helpers.dart`)
 
 | Helper | Description |
 |--------|-------------|
-| `launchApp()` | Launches app and waits for splash to complete |
-| `waitFor()` | Waits for a widget to appear with timeout |
-| `waitUntilGone()` | Waits for a widget to disappear |
-| `completeLegalScreen()` | Completes terms acceptance if shown |
-| `completePermissionsScreen()` | Completes permissions screen if shown |
-| `completeAuthFlow()` | Completes phone + OTP verification |
-| `completeOnboardingFlow()` | Completes intent + user form + guarantor |
-| `fullLoginFlow()` | Complete setup: launch → auth → onboarding |
-| `navigateToTab()` | Navigates to a bottom nav tab |
-| `expectOnDashboard()` | Asserts dashboard is visible |
-| `expectOnLogin()` | Asserts login screen is visible |
-
-## Test Categories
-
-### Auth Flow (10 tests)
-- Splash screen display and auto-navigation
-- Legal/terms acceptance
-- Permissions screen
-- Phone entry and OTP sending
-- OTP verification
-- Auth choice screen (create account / login)
-- Full auth → onboarding → dashboard chain
-- Logout flow
-
-### Onboarding (9 tests)
-- Intent of use selection
-- User onboarding form
-- Guarantor form
-- Plan selection
-- Pickup hub selection
-- Vehicle verification
-- Inspection checklist
-- Pickup verification
-- Full onboarding chain
-
-### Dashboard (10 tests)
-- Core element verification
-- Notification bell navigation
-- Points badge → rewards
-- Team leader details
-- Vehicle card details
-- Referral widget (copy code)
-- Pull to refresh
-- Bottom navigation switching
-- Manage subscription
-- Action required banner
-
-### Wallet (11 tests)
-- Balance display
-- Top-up dialog
-- Top-up amount entry and submit
-- Cancel top-up
-- Transaction filters
-- History navigation
-- Payment method selection
-- UPI reference field
-- Payment proof upload
-- Security deposit card
-- Payment streak bar
-
-### Profile (14 tests)
-- Rider info display
-- KYC status
-- Guarantor status
-- Edit profile navigation
-- Edit and save profile
-- My documents navigation
-- Rewards navigation
-- Referral navigation
-- App settings navigation
-- Legal screen navigation
-- Emergency SOS
-- Logout
-- Guarantor information
-- All quick links navigable
-
-### Support (8 tests)
-- Support center display
-- Raise ticket
-- FAQ navigation
-- Call us action
-- Email us action
-- Empty description validation
-- Mark all notifications read
-- Notification cards
-
-### Settings (12 tests)
-- Settings screen open
-- Dark mode toggle
-- Notifications toggle
-- Language selection (English/Hindi)
-- Two-factor auth toggle
-- Terms of service
-- Privacy policy
-- Rate us
-- Change phone number
-- Change password
-- Delete account dialog (cancel)
-- Navigate back
-
-### Error & Edge Cases (17 tests)
-- Empty phone number
-- Short phone number
-- Invalid OTP
-- Zero top-up amount
-- Negative amount
-- Very large amount
-- Empty profile fields
-- Invalid email format
-- Empty ticket description
-- No assigned vehicle
-- Empty transaction history
-- Empty notifications
-- Missing rider data
-- Rapid navigation stress test
-- Deep screen back navigation
-- Multiple dialog dismissals
-- Special characters (XSS prevention)
-
-### Full Journey (3 tests)
-- Complete user journey (splash → logout)
-- Returning user flow (cached login)
-- Multi-tab navigation stress test
+| `launchApp(tester)` | Launches app, clears state, waits past splash |
+| `handlePreamble(tester)` | Handles auth choice, legal, permissions screens |
+| `completeAuthFlow(tester)` | Phone entry → OTP verification (uses scrollUntilVisible for buttons) |
+| `fullLoginFlow(tester)` | Complete journey: splash → auth → onboarding → dashboard |
+| `navigateToTab(tester, key)` | Bottom nav switching |
+| `expectOnDashboard(tester)` | Dashboard assertion |
+| `goBack(tester)` | Handles custom back buttons |
+| `setupReturningUser()` | Pre-seeds rider cache for returning user flow |
 
 ## CI/CD Integration
 
-Add to your GitHub Actions workflow:
-
-```yaml
-- name: Run E2E Tests
-  run: |
-    flutter test integration_test/e2e/ \
-      --dart-define=API_URL=http://localhost:8081 \
-      -d emulator-5554
-```
+The canonical E2E pipeline is `flutter-e2e-manual.yml` (manual trigger) and
+`e2e-windows.yml` (auto on PR via Windows runner). Both invoke the
+`e2e_individual/` tests.
 
 ## Notes
 
-- Tests are designed to be **idempotent** – each test can run independently
-- Tests use **conditional checks** – if a screen isn't shown (e.g., already logged in), the test skips gracefully
+- Tests are designed to be **idempotent** — each test can run independently
+- Tests use **conditional checks** — if a screen isn't shown (e.g., already logged in), the test skips gracefully
 - All tests use **Keys** for reliable widget targeting
 - The `fullLoginFlow()` helper handles the complete setup, making individual feature tests concise
 - Tests handle **both new and returning user** flows automatically

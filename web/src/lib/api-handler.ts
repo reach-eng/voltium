@@ -20,7 +20,27 @@ export function withApiHandler(
 ) {
   return async (request: NextRequest, ...args: any[]) => {
     try {
-      return await handler(request, ...args);
+      const response = await handler(request, ...args);
+
+      // Automatic HTTP 304 Not Modified evaluation for GET requests
+      if (request.method === 'GET' && response.status === 200) {
+        const ifNoneMatch = request.headers.get('if-none-match');
+        const etag = response.headers.get('etag');
+
+        if (
+          etag &&
+          ifNoneMatch &&
+          (ifNoneMatch === etag || ifNoneMatch === `W/${etag}` || `W/${ifNoneMatch}` === etag)
+        ) {
+          const headers = new Headers(response.headers);
+          return new NextResponse(null, {
+            status: 304,
+            headers,
+          });
+        }
+      }
+
+      return response;
     } catch (err: unknown) {
       const domainErr = asDomainError(err);
       logger.error('[ApiHandler] Unhandled route error', redactPii({

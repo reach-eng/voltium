@@ -14,6 +14,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/spark_otp_input.dart';
 import 'package:voltium_rider/widgets/underline_otp_input.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_app_bar.dart';
@@ -281,17 +282,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         // fallback. Localised via `txtotpVerifyFailed`. The
         // `ApiException` branch keeps the server-provided
         // (already-localised) message.
-        String errorMsg = AppLocalizations.of(context)!.txtotpVerifyFailed;
+        String errorMsg = AppLocalizations.of(context)?.txtotpVerifyFailed ??
+            'Failed to verify OTP';
         if (e is ApiException) {
           errorMsg = e.message;
         }
         _setOtpError(errorMsg);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Toast.error(context, errorMsg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -311,28 +308,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
           _isOtpComplete = false;
         });
         _startCountdown();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                AppLocalizations.of(context)!.txtotpCodeResentSuccessfully),
-            behavior: SnackBarBehavior.floating,
-          ),
+        Toast.success(
+          context,
+          AppLocalizations.of(context)?.txtotpCodeResentSuccessfully ??
+              'OTP code resent successfully',
         );
       }
     } catch (e) {
       if (mounted) {
-        // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
-        // fallback. Localised via `txtotpResendError`.
-        String errorMsg = AppLocalizations.of(context)!.txtotpResendError;
+        String errorMsg = AppLocalizations.of(context)?.txtotpResendError ??
+            'Failed to resend OTP';
         if (e is ApiException) {
           errorMsg = e.message;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Toast.error(context, errorMsg);
       }
     }
   }
@@ -434,7 +423,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
                     color: AppColors.of(context).card.withValues(alpha: 0.8),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.of(context).outline.withValues(alpha: 0.2),
+                      color:
+                          AppColors.of(context).outline.withValues(alpha: 0.2),
                       width: 1.5,
                     ),
                     boxShadow: AppShadows.card,
@@ -456,11 +446,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   Widget _buildTitle() {
     // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
     // title + subtitle pair. Localised via `txtotpVerifyTitle` /
-    // `txtotpWelcomeBack` for the title and `txtotpSignupSubtitle`
-    // / `txtotpLoginSubtitle` for the body. The phone-number
-    // TextSpan stays as the literal widget input (digits, not
-    // localisable).
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    final title = widget.isLogin
+        ? (l10n?.txtotpWelcomeBack ?? 'Welcome Back')
+        : (l10n?.txtotpVerifyTitle ?? 'Verify Phone');
+    final subtitle = widget.isLogin
+        ? (l10n?.txtotpLoginSubtitle ?? 'Enter the 6-digit code sent to ')
+        : (l10n?.txtotpSignupSubtitle ?? 'Enter the 6-digit code sent to ');
+
     return FadeTransition(
       opacity: CurvedAnimation(
         parent: _entryCtrl,
@@ -469,7 +462,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       child: Column(
         children: [
           Text(
-            widget.isLogin ? l10n.txtotpWelcomeBack : l10n.txtotpVerifyTitle,
+            title,
             style: AppTypography.headingMedium
                 .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
           ),
@@ -483,9 +476,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               ),
               children: [
                 TextSpan(
-                  text: widget.isLogin
-                      ? l10n.txtotpLoginSubtitle
-                      : l10n.txtotpSignupSubtitle,
+                  text: subtitle,
                 ),
                 TextSpan(
                   text: widget.phoneNumber,

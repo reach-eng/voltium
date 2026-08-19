@@ -29,7 +29,14 @@ export default function WalletDepositManagement() {
         onExport={() => exportWalletLedger(w.filteredLedger)}
       />
       <WalletStatsCards stats={w.stats} />
-      <LedgerTable loading={w.loading} ledger={w.filteredLedger} />
+      <LedgerTable
+        loading={w.loading}
+        ledger={w.filteredLedger}
+        page={w.page}
+        totalPages={w.totalPages}
+        total={w.total}
+        setPage={w.setPage}
+      />
     </div>
   );
 }

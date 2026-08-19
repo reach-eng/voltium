@@ -81,6 +81,17 @@ export const notificationRepository = {
     });
   },
 
+  /**
+   * PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-5): delete one notification,
+   * ownership-scoped. `deleteMany` (not `delete`) so a rider can never
+   * delete another rider's row even with a guessed id.
+   */
+  async deleteOwned(id: string, riderDbId: string) {
+    return db.notification.deleteMany({
+      where: { id, riderId: riderDbId },
+    });
+  },
+
   async getUnreadCount(riderDbId: string) {
     return db.notification.count({
       where: { riderId: riderDbId, isRead: false },

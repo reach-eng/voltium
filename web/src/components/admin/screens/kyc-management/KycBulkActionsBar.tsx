@@ -1,23 +1,19 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, ShieldAlert, ShieldX, Undo2, Loader2 } from 'lucide-react';
-import type { LastKycBulkAction } from './types';
+import { ShieldCheck, ShieldAlert, ShieldX, Loader2 } from 'lucide-react';
+import type { KycBulkConfirmAction } from './types';
 
 export interface KycBulkActionsBarProps {
   selectedIds: Set<string>;
   bulkLoading: boolean;
-  handleBulkAction: (action: 'approve' | 'reject' | 'info_required') => void;
-  lastAction: LastKycBulkAction | null;
-  handleUndo: () => void;
+  setBulkConfirmAction: (action: KycBulkConfirmAction) => void;
 }
 
 export function KycBulkActionsBar({
   selectedIds,
   bulkLoading,
-  handleBulkAction,
-  lastAction,
-  handleUndo,
+  setBulkConfirmAction,
 }: KycBulkActionsBarProps) {
   if (selectedIds.size === 0) return null;
 
@@ -26,7 +22,7 @@ export function KycBulkActionsBar({
       <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
       <Button
         size="default"
-        onClick={() => handleBulkAction('approve')}
+        onClick={() => setBulkConfirmAction('approve')}
         disabled={bulkLoading}
         className="h-10 text-sm px-4 bg-emerald-600 hover:bg-emerald-700 transition-all duration-200"
         title="Approve all selected"
@@ -41,7 +37,7 @@ export function KycBulkActionsBar({
       <Button
         size="default"
         variant="outline"
-        onClick={() => handleBulkAction('info_required')}
+        onClick={() => setBulkConfirmAction('info_required')}
         disabled={bulkLoading}
         className="h-10 text-sm px-4 border-orange-500/30 text-orange-600 dark:text-orange-400 transition-all duration-200"
         title="Needs Correction"
@@ -56,7 +52,7 @@ export function KycBulkActionsBar({
       <Button
         size="default"
         variant="destructive"
-        onClick={() => handleBulkAction('reject')}
+        onClick={() => setBulkConfirmAction('reject')}
         disabled={bulkLoading}
         className="h-10 text-sm px-4 transition-all duration-200"
         title="Reject all selected"
@@ -68,21 +64,6 @@ export function KycBulkActionsBar({
         )}
         Reject All
       </Button>
-      {lastAction && (
-        <>
-          <div className="w-px h-4 bg-border/50 mx-1" />
-          <Button
-            size="default"
-            variant="outline"
-            onClick={handleUndo}
-            disabled={bulkLoading}
-            className="h-10 text-sm px-4 transition-all duration-200"
-            title="Undo last bulk action"
-          >
-            <Undo2 className="w-4 h-4 mr-1.5" /> Undo
-          </Button>
-        </>
-      )}
     </div>
   );
 }

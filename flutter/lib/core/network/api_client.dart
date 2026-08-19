@@ -19,9 +19,17 @@ class ApiClient {
   static final http.Client _sharedHttpClient =
       PinnedHttpInterceptor.createClient();
   static ApiClient? _sharedInstance;
-  static const Duration requestTimeout = Duration(seconds: 10);
+  // PR-ONBOARDING-FLOW-2026-08-13: bumped the request timeout from
+  // 10s to 30s. The hang-tight poll calls /api/rider/profile, and
+  // the dev server occasionally takes 10-14s on cold-route compiles
+  // or under load (we've seen up to 13.6s in the log). A 10s timeout
+  // would cancel the call before the data arrived, leaving the rider
+  // stuck on the hang-tight screen even after the admin approved
+  // them. 30s is generous enough to absorb the slow tail while still
+  // failing fast on a genuinely dead connection.
+  static const Duration requestTimeout = Duration(seconds: 30);
   static const Duration uploadTimeout = Duration(seconds: 60);
-  static const int shortRetryMaxAttempts = kDebugMode ? 1 : 3;
+  static const int shortRetryMaxAttempts = 3;
   static const Duration shortRetryBaseDelay = Duration(milliseconds: 200);
   static final Random _requestRandom = Random.secure();
 
@@ -31,6 +39,22 @@ class ApiClient {
 
   String get baseUrl => _baseUrl;
   SecureStorageService get storage => _storage;
+
+  /// Test seam (F-025 house pattern, mirrors `VoltiumApiService.instance`):
+  /// lets widget tests substitute a fake transport for the singleton that
+  /// the `ApiClient()` factory returns. Several call sites construct
+  /// `ApiClient()` fresh (e.g. the pickup hub's OTP send), so tests must be
+  /// able to replace the shared instance. Set to `null` in teardown.
+  @visibleForTesting
+  static set instanceForTest(ApiClient? client) {
+    _sharedInstance = client;
+    _isTestOverrideActive = client != null;
+  }
+
+  /// DEEP-AUDIT D-P1-3: tracks whether the test seam is currently in use,
+  /// so the factory's StateError on custom-after-singleton can be skipped
+  /// for legit test scenarios while still firing in production code.
+  static bool _isTestOverrideActive = false;
 
   /// Single-flight guard for token refresh. While a refresh is in progress,
   /// concurrent 401-handlers `_await` this Future instead of issuing their
@@ -44,12 +68,24 @@ class ApiClient {
     String? baseUrl,
   }) {
     if (client != null || storage != null || baseUrl != null) {
-      assert(
-        _sharedInstance == null,
-        'ApiClient: creating a custom instance after the shared singleton was '
-        'initialized. This may cause inconsistent auth state. Use the shared '
-        'instance or create custom instances before the first ApiClient() call.',
-      );
+      // DEEP-AUDIT D-P1-3 (2026-08-08): the previous `assert()` only
+      // fired in debug/test — release builds silently let a second
+      // instance through, with two SecureStorageService singletons
+      // holding the same session_token. Token refresh on the wrong
+      // instance logged the rider out unexpectedly. This is a real
+      // check now (throws in release, debug, and test alike) unless the
+      // test seam `instanceForTest` is actively in use.
+      if (_sharedInstance != null && !_isTestOverrideActive) {
+        throw StateError(
+          'ApiClient: shared singleton already initialized. '
+          'Creating a custom instance after the shared singleton is '
+          'initialized can cause inconsistent auth state (two '
+          'SecureStorageService instances holding the same '
+          'session_token). Use the shared instance or call '
+          'ApiClient.instanceForTest = null before constructing a custom '
+          'instance.',
+        );
+      }
       return ApiClient._(
         client: client ?? _sharedHttpClient,
         storage: storage ?? SecureStorageService(),
@@ -71,6 +107,19 @@ class ApiClient {
   })  : _client = client,
         _storage = storage,
         _baseUrl = baseUrl;
+
+  /// Subclass hook for test fakes: a generative constructor that bypasses
+  /// the singleton factory (a factory cannot be a `super()` target), so a
+  /// fake transport can `extends ApiClient` and override `post`/`get`.
+  /// Install the fake with [instanceForTest] before pumping.
+  @visibleForTesting
+  ApiClient.testOverride({
+    http.Client? client,
+    SecureStorageService? storage,
+    String? baseUrl,
+  })  : _client = client ?? _sharedHttpClient,
+        _storage = storage ?? SecureStorageService(),
+        _baseUrl = baseUrl ?? _defaultBaseUrl;
 
   static const configuredApiUrl = String.fromEnvironment('API_URL');
 
@@ -168,10 +217,13 @@ class ApiClient {
           }
         } else if (response.statusCode == 401 || response.statusCode == 403) {
           // Explicit token rejection (revoked or expired refresh token).
-          // Clear stale credentials to prevent persistent 401 loops on launch.
+          // Clear stale session credentials to prevent persistent 401 loops
+          // on launch — but NOT the FCM command secret / device-lock state
+          // (PR-VER-2026-08-06 AUTH P1-4: clearAll() wiped those, silently
+          // disabling ADMIN_LOCK HMAC verification on the device).
           MonitoringService.logInfo(
-              'ApiClient: refresh token explicitly rejected (${response.statusCode}), clearing credentials');
-          await _storage.clearAll();
+              'ApiClient: refresh token explicitly rejected (${response.statusCode}), clearing session credentials');
+          await _storage.clearSessionCredentials();
         }
       } catch (e, stack) {
         MonitoringService.logError(e, stack,
@@ -263,9 +315,10 @@ class ApiClient {
       if (response.statusCode == 401 && !PlatformInfo.isWeb && attempt == 0) {
         final refreshed = await _refreshToken();
         if (refreshed) {
-          continue; // re-issue with new headers
+          final retriedHeaders = await _getHeaders();
+          response = await request(retriedHeaders);
         }
-        // Fall through: caller will see the 401 and can react.
+        // Fall through: caller will see response and react.
       } else if (response.statusCode >= 500 &&
           attempt < shortRetryMaxAttempts - 1) {
         await _backoffBeforeRetry(attempt);
@@ -289,15 +342,42 @@ class ApiClient {
     );
   }
 
-  /// GET request
+  /// In-flight GET request deduplication: merges concurrent identical GET requests into a single Future.
+  final Map<String, Future<Map<String, dynamic>>> _inFlightGets = {};
+
+  /// GET request with in-flight single-flight deduplication
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, String>? queryParams,
     Future<void>? cancelSignal,
+    bool noDedup = false,
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
+    final key = uri.toString();
 
+    if (!noDedup && cancelSignal == null) {
+      final existing = _inFlightGets[key];
+      if (existing != null) {
+        return existing;
+      }
+      final future = _executeGet(uri, path, cancelSignal);
+      _inFlightGets[key] = future;
+      try {
+        return await future;
+      } finally {
+        _inFlightGets.remove(key);
+      }
+    }
+
+    return _executeGet(uri, path, cancelSignal);
+  }
+
+  Future<Map<String, dynamic>> _executeGet(
+    Uri uri,
+    String path,
+    Future<void>? cancelSignal,
+  ) async {
     try {
       return await _executeWithRetry(
         (headers) => _client.get(uri, headers: headers).timeout(requestTimeout),
@@ -335,6 +415,56 @@ class ApiClient {
         await get(path, queryParams: queryParams, cancelSignal: cancelSignal);
     await cacheService.cacheApiResponse(path, fresh);
     return fresh;
+  }
+
+  /// GET request with HTTP ETag / 304 conditional caching.
+  /// Sends `If-None-Match: <etag>` and serves local SQLite cache if 304 is returned.
+  Future<Map<String, dynamic>> getWithConditionalCache(
+    String path, {
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
+    final cacheKey = 'http_etag_$path';
+    final offlineStorage = OfflineStorageService();
+    final cached = await offlineStorage.getCachedData(cacheKey);
+    final savedEtag = cached?['_etag'] as String?;
+    final savedBody = cached?['data'] as Map<String, dynamic>?;
+
+    final uri =
+        Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
+
+    try {
+      final headers = await _getHeaders();
+      if (savedEtag != null && savedEtag.isNotEmpty) {
+        headers['If-None-Match'] = savedEtag;
+      }
+
+      final response =
+          await _client.get(uri, headers: headers).timeout(requestTimeout);
+
+      if (response.statusCode == 304 && savedBody != null) {
+        return savedBody;
+      }
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final body = await _handleResponse(response);
+        final newEtag = response.headers['etag'];
+        if (newEtag != null && newEtag.isNotEmpty) {
+          await offlineStorage.cacheData(cacheKey, {
+            'data': body,
+            '_etag': newEtag,
+          });
+        }
+        return body;
+      }
+
+      return await _handleResponse(response);
+    } catch (e) {
+      if (savedBody != null) {
+        return savedBody;
+      }
+      rethrow;
+    }
   }
 
   /// POST request
@@ -503,6 +633,10 @@ class ApiClient {
     final body = decoded is Map<String, dynamic>
         ? decoded
         : (decoded == null ? <String, dynamic>{} : {'data': decoded});
+
+    if (response.statusCode == 304) {
+      return <String, dynamic>{'_status': 304, '_isNotModified': true};
+    }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (body['success'] == true) {

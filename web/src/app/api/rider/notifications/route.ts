@@ -38,3 +38,26 @@ export async function PUT(request: NextRequest) {
     return errors.internal('Failed to update notifications');
   }
 }
+
+// PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS P0-5): the rider app's
+// swipe-to-delete was local-only. This is the server half — DELETE by id,
+// ownership-scoped (a rider cannot delete another rider's row).
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await requireRiderSession(request);
+    if (session instanceof Response) return session;
+
+    const id = new URL(request.url).searchParams.get('id');
+    if (!id) return errors.badRequest('notification id is required');
+
+    const deleted = await notificationUseCases.deleteNotification(
+      id,
+      session.riderDbId
+    );
+    if (!deleted) return errors.notFound('Notification not found');
+    return success({ id }, 'Notification deleted');
+  } catch (error) {
+    logger.error('[DELETE /api/rider/notifications]', error);
+    return errors.internal('Failed to delete notification');
+  }
+}

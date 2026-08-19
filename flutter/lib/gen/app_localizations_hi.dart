@@ -625,6 +625,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtemergencySos => 'आपातकालीन SOS';
 
   @override
+  String get txtsosAlertTriggeredDialing =>
+      'SOS अलर्ट सक्रिय! आपातकालीन सेवाओं (112) को डायल किया जा रहा है...';
+
+  @override
   String get txttakeAPhoto => 'फ़ोटो लें';
 
   @override
@@ -682,6 +686,98 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtunableToOpenDocument => 'दस्तावेज़ खोल नहीं पा रहे';
+
+  @override
+  String get txtreferAndEarn => 'रेफ़र करें और कमाएँ';
+
+  @override
+  String get txtrefresh => 'रिफ़्रेश करें';
+
+  @override
+  String txtfailedToUploadProof(String error) {
+    return 'प्रूफ़ अपलोड करने में विफल: $error';
+  }
+
+  @override
+  String get txtpleaseUploadPaymentProof =>
+      'कृपया सबमिट करने से पहले भुगतान प्रूफ़ अपलोड करें।';
+
+  @override
+  String txtfailedToSubmitDeposit(String error) {
+    return 'डिपॉज़िट सबमिट करने में विफल: $error';
+  }
+
+  @override
+  String get txtdiscard => 'छोड़ें';
+
+  @override
+  String get txtremovePhoto => 'फ़ोटो हटाएं';
+
+  @override
+  String txtupToNPhotosPerTicket(String count) {
+    return 'प्रति टिकट अधिकतम $count फ़ोटो';
+  }
+
+  @override
+  String get txtticketCreatedSuccessfully => 'टिकट सफलतापूर्वक बनाया गया';
+
+  @override
+  String txtfailedToCreateTicket(String error) {
+    return 'टिकट बनाने में विफल: $error';
+  }
+
+  @override
+  String txtfailedToSubmitFeedback(String error) {
+    return 'फ़ीडबैक सबमिट करने में विफल: $error';
+  }
+
+  @override
+  String get txtcreateTicket => 'टिकट बनाएं';
+
+  @override
+  String txtcallNumberForEmergencyAssistance(String number) {
+    return 'क्या आप आपातकालीन सहायता के लिए $number पर कॉल करना चाहते हैं?';
+  }
+
+  @override
+  String get txtadvanceRentalPlanFee => 'अग्रिम किराया योजना शुल्क';
+
+  @override
+  String get txttopUpProofSubmittedSuccessfully =>
+      'टॉप-अप प्रूफ़ सफलतापूर्वक सबमिट किया गया!';
+
+  @override
+  String get txtupiIdCopiedToClipboard => 'UPI ID क्लिपबोर्ड पर कॉपी किया गया';
+
+  @override
+  String get txttopUpAmountAddedToWallet =>
+      'टॉप-अप राशि (वॉलेट में जोड़ी जाएगी)';
+
+  @override
+  String get txttotalPayable => 'कुल देय राशि';
+
+  @override
+  String get txtchangeLockPassword => 'लॉक पासवर्ड बदलें';
+
+  @override
+  String get txtlockPassword => 'लॉक पासवर्ड';
+
+  @override
+  String get txtlockPasswordSubtitle =>
+      'सुरक्षा कॉन्फ़िगरेशन सत्यापित करने के लिए अपने डिवाइस का लॉक पासवर्ड दर्ज करें।';
+
+  @override
+  String get txtlockPasswordVerifyFailed => 'लॉक पासवर्ड सत्यापन विफल';
+
+  @override
+  String get txtverify => 'सत्यापित करें';
+
+  @override
+  String get txtenterAValid10DigitNumber =>
+      'एक मान्य 10 अंकों का नंबर दर्ज करें';
+
+  @override
+  String get txtenterThe6DigitOtp => '6 अंकों का OTP दर्ज करें';
 
   @override
   String get txtmyDocuments => 'मेरे दस्तावेज़';
@@ -851,6 +947,51 @@ class AppLocalizationsHi extends AppLocalizations {
       'सब कुछ सिंक हो गया है। आपका वाहन तैयार है और आपका डैशबोर्ड अब लाइव है। अपनी सवारी का आनंद लें!';
 
   @override
+  String get txtsplashTagline => 'इलेक्ट्रिक स्कूटर किराए पर';
+
+  @override
+  String get txtloginWelcomeSubtitle =>
+      'लॉगिन करने के लिए पंजीकृत फ़ोन नंबर दर्ज करें या नया खाता बनाने के लिए नया नंबर दर्ज करें।';
+
+  @override
+  String get txtloginLegalIntro => 'साइन इन करके, आप हमारी';
+
+  @override
+  String get txtloginReferralHint => 'रेफरल कोड (वैकल्पिक)';
+
+  @override
+  String get txtloginSecureOtpNote => 'एक सुरक्षित OTP भेजा जाएगा';
+
+  @override
+  String get txtloginEnterButton => 'दर्ज करें';
+
+  @override
+  String get txtloginSendingButton => 'भेज रहे हैं…';
+
+  @override
+  String get txtloginNetworkError => 'नेटवर्क त्रुटि। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get txtotpVerifyTitle => 'OTP सत्यापित करें';
+
+  @override
+  String get txtotpWelcomeBack => 'वापसी पर स्वागत है!';
+
+  @override
+  String get txtotpSignupSubtitle => '6 अंकों का कोड दर्ज करें जो भेजा गया है ';
+
+  @override
+  String get txtotpLoginSubtitle =>
+      'अपने खाते में लॉगिन करने के लिए कोड दर्ज करें ';
+
+  @override
+  String get txtotpVerifyFailed =>
+      'OTP सत्यापित नहीं हो पाया। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get txtotpResendError => 'OTP दोबारा भेजने में त्रुटि';
+
+  @override
   String get txtgoToDashboard => 'डैशबोर्ड पर जाएं';
 
   @override
@@ -881,7 +1022,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtteamLeader => 'टीम लीडर';
 
   @override
-  String get txtassignedTeamLeader => 'असाइन टीम लीडर';
+  String get txtassignedTeamLeader => 'आवंटित टीम लीडर';
 
   @override
   String get txtrequestSubmittedToSupportTeam =>
@@ -897,7 +1038,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtpickupPhotos => 'पिकअप फ़ोटो';
 
   @override
-  String get txtbackToDashboard => 'डैशबोर्ड पर वापस';
+  String get txtbackToDashboard => 'डैशबोर्ड पर वापस जाएं';
 
   @override
   String get txtassignmentDetails => 'असाइनमेंट विवरण';
@@ -991,9 +1132,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtguarantorPhone => 'गारंटर फ़ोन';
-
-  @override
-  String get txtverify => 'सत्यापित करें';
 
   @override
   String get txtphoneVerified => 'फ़ोन सत्यापित';
@@ -1334,7 +1472,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtyourCode => 'आपका कोड';
 
   @override
-  String get txtchangeTl => 'TL बदलें';
+  String get txtchangeTl => 'टीएल बदलें';
 
   @override
   String get txtchangeTeamLeader => 'टीम लीडर बदलें';
@@ -1594,6 +1732,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settings_darkMode => 'डार्क मोड';
 
   @override
+  String get settings_appearance => 'स्वरूप';
+
+  @override
+  String get settings_followSystem => 'सिस्टम का अनुसरण करें';
+
+  @override
+  String get settings_themeLight => 'लाइट';
+
+  @override
+  String get settings_themeDark => 'डार्क';
+
+  @override
   String get settings_supportLegal => 'सहायता और कानूनी';
 
   @override
@@ -1625,6 +1775,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settings_delete => 'हटाएं';
 
   @override
+  String get settings_deleteReason => 'मैं अपना खाता हटाना चाहता हूं';
+
+  @override
   String get settings_deleteNotAvailable =>
       'खाता हटाना अभी उपलब्ध नहीं है। कृपया सपोर्ट से संपर्क करें।';
 
@@ -1636,4 +1789,613 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get settings_comingSoon => 'जल्द आ रहा है';
+
+  @override
+  String get txtfullName => 'पूरा नाम';
+
+  @override
+  String get txtenterFullName => 'पूरा नाम दर्ज करें';
+
+  @override
+  String get txtdateOfBirth => 'जन्म तिथि';
+
+  @override
+  String get txtemailAddress => 'ईमेल पता';
+
+  @override
+  String get txtenterEmailAddress => 'ईमेल पता दर्ज करें';
+
+  @override
+  String get txtfathersName => 'पिता का नाम';
+
+  @override
+  String get txtenterFathersName => 'पिता का नाम दर्ज करें';
+
+  @override
+  String get txtmothersName => 'माता का नाम';
+
+  @override
+  String get txtenterMothersName => 'माता का नाम दर्ज करें';
+
+  @override
+  String get txtcurrentAddress => 'वर्तमान पता';
+
+  @override
+  String get txtenterYourFullAddress => 'अपना पूरा पता दर्ज करें';
+
+  @override
+  String get txtaadhaarFront => 'आधार कार्ड\n(सामने)';
+
+  @override
+  String get txtaadhaarBack => 'आधार कार्ड\n(पीछे)';
+
+  @override
+  String get txtpanCard => 'पैन कार्ड';
+
+  @override
+  String get txtbankName => 'बैंक का नाम';
+
+  @override
+  String get txtaccountNumber => 'खाता संख्या';
+
+  @override
+  String get txtifscCode => 'IFSC कोड';
+
+  @override
+  String get txtclearPhotosOnly => 'केवल स्पष्ट फ़ोटो। प्रत्येक अधिकतम 5MB।';
+
+  @override
+  String get txtriderProfile => 'राइडर प्रोफ़ाइल';
+
+  @override
+  String get txtcompleteDetailsSubtitle =>
+      'ऑनबोर्डिंग पूरा करने के लिए अपना विवरण भरें';
+
+  @override
+  String get txtconfirmAndProceed => 'पुष्टि करें और आगे बढ़ें';
+
+  @override
+  String get txtensureAllDetailsAccurate =>
+      'आगे बढ़ने से पहले सुनिश्चित करें कि सभी विवरण सही हैं';
+
+  @override
+  String get txtselfieLiveCameraHint =>
+      'KYC सत्यापन के लिए लाइव कैमरा अनिवार्य है';
+
+  @override
+  String get txtofflineDraftBanner =>
+      'आप ऑफ़लाइन हैं — आपका ड्राफ्ट स्थानीय रूप से सहेजा गया है। सबमिट करने के लिए इंटरनेट से कनेक्ट करें।';
+
+  @override
+  String get txtdocumentPreview => 'दस्तावेज़ पूर्वावलोकन';
+
+  @override
+  String get txtretakePhoto => 'फिर से फ़ोटो लें';
+
+  @override
+  String get txtkeepPhoto => 'फ़ोटो रखें';
+
+  @override
+  String get txtuploaded => 'अपलोड हो गया';
+
+  @override
+  String get txtpermissionsTitle => 'अनुमतियाँ';
+
+  @override
+  String get txtpermissionsSubtitle =>
+      'सुरक्षा और कार्यक्षमता सुनिश्चित करने के लिए कृपया निम्नलिखित अनुमतियाँ दें।';
+
+  @override
+  String get txtlocationPermName => 'स्थान';
+
+  @override
+  String get txtlocationPermDesc => 'सवारी ट्रैक करें और नजदीकी वाहन खोजें';
+
+  @override
+  String get txtnotificationsPermName => 'सूचनाएं';
+
+  @override
+  String get txtnotificationsPermDesc =>
+      'महत्वपूर्ण अपडेट और अलर्ट प्राप्त करें';
+
+  @override
+  String get txtbatteryPermName => 'बैटरी ऑप्टिमाइज़ेशन';
+
+  @override
+  String get txtbatteryPermDesc =>
+      'ऐप को पृष्ठभूमि में विश्वसनीय रूप से चलने दें।';
+
+  @override
+  String get txtcameraPermName => 'कैमरा';
+
+  @override
+  String get txtcameraPermDesc => 'दस्तावेज़ अपलोड और क्यूआर स्कैनिंग';
+
+  @override
+  String get txtphonePermName => 'फ़ोन स्थिति';
+
+  @override
+  String get txtphonePermDesc => 'फ़ोन स्थिति (सुरक्षा कॉल पहचान के लिए)';
+
+  @override
+  String get txtphonePermTooltip =>
+      'कॉल स्थिति पढ़ता है ताकि आपातकालीन कॉल का पता लगाया जा सके — यह कभी भी कॉल इतिहास या संपर्क नहीं पढ़ता।';
+
+  @override
+  String get txtcontactsPermName => 'संपर्क';
+
+  @override
+  String get txtcontactsPermDesc => 'आपातकालीन एसओएस और रेफरल के लिए संपर्क';
+
+  @override
+  String get txtmicPermName => 'माइक्रोफ़ोन';
+
+  @override
+  String get txtmicPermDesc => 'ऑडियो रिकॉर्डिंग और सत्यापन के लिए आवश्यक';
+
+  @override
+  String get txtdeviceAdminPermName => 'डिवाइस व्यवस्थापक';
+
+  @override
+  String get txtdeviceAdminPermDesc =>
+      'फ्लीट सुरक्षा और रिमोट लॉक सुविधाओं के लिए आवश्यक';
+
+  @override
+  String get txtpreciseLocationRequired =>
+      'सटीक स्थान आवश्यक है। कृपया सेटिंग्स में इसे सक्षम करें।';
+
+  @override
+  String get txtbeforeYouBegin => 'शुरू करने से पहले';
+
+  @override
+  String get txtquickKycSubtitle => 'त्वरित केवाईसी सत्यापन (~3 मिनट)';
+
+  @override
+  String get txtpleaseHaveReady => 'कृपया इन्हें तैयार रखें:';
+
+  @override
+  String get txtaadhaarCard => 'आधार कार्ड';
+
+  @override
+  String get txtaadhaarCardDesc => 'आगे और पीछे की फोटो या ई-आधार पीडीएफ';
+
+  @override
+  String get txtpanCardDesc => 'कर और पहचान सत्यापन के लिए';
+
+  @override
+  String get txtthreeMinutesTime => '3 मिनट का समय';
+
+  @override
+  String get txtfastAutomatedVerification => 'तेज़ स्वचालित सत्यापन';
+
+  @override
+  String get txtimReady => 'मैं तैयार हूँ';
+
+  @override
+  String get txtillDoThisLater => 'मैं यह बाद में करूँगा';
+
+  @override
+  String get txtsyncingLatestDocs => 'नवीनतम दस्तावेज़ सिंक हो रहे हैं…';
+
+  @override
+  String get txtlegalAgreeCheckboxPrefix =>
+      'मैंने पढ़ लिया है और मैं सहमत हूँ ';
+
+  @override
+  String get txtelectronicSignature => '(इलेक्ट्रॉनिक हस्ताक्षर)';
+
+  @override
+  String get txtlegalHelpText =>
+      'यदि हमारी नीतियों के बारे में कोई प्रश्न हैं, तो कृपया हमारी सहायता टीम से संपर्क करें ';
+
+  @override
+  String get txtorCall => ' या कॉल करें ';
+
+  @override
+  String get txtdidntReceiveCode => 'क्या आपको कोड नहीं मिला?';
+
+  @override
+  String get txtresendCode => 'कोड पुनः भेजें';
+
+  @override
+  String txtresendIn(int seconds) {
+    return '$seconds सेकंड में पुनः भेजें';
+  }
+
+  @override
+  String get txtverifying => 'सत्यापित किया जा रहा है…';
+
+  @override
+  String get txtverifyAndProceed => 'सत्यापित करें और आगे बढ़ें';
+
+  @override
+  String get txtgreetingMorning => 'शुभ प्रभात';
+
+  @override
+  String get txtgreetingAfternoon => 'शुभ दोपहर';
+
+  @override
+  String get txtgreetingEvening => 'शुभ संध्या';
+
+  @override
+  String get txtguestRider => 'राइडर';
+
+  @override
+  String get txtshowingCachedData => 'कैश किया गया डेटा दिखाया जा रहा है';
+
+  @override
+  String get txtnoDataAvailable => 'कोई डेटा उपलब्ध नहीं है';
+
+  @override
+  String get txtvehiclePendingAssignment => 'वाहन आवंटन लंबित है';
+
+  @override
+  String get txtnoPlan => 'कोई प्लान नहीं';
+
+  @override
+  String get txtweeklyPayment => 'साप्ताहिक भुगतान';
+
+  @override
+  String get txtdailyPayment => 'दैनिक भुगतान';
+
+  @override
+  String get txtmonthlyPayment => 'मासिक भुगतान';
+
+  @override
+  String get txtexpired => 'समाप्त';
+
+  @override
+  String get txtexpiresToday => 'आज समाप्त हो रहा है';
+
+  @override
+  String txtdaysCount(int count) {
+    return '$count दिन';
+  }
+
+  @override
+  String get txttotalBalance => 'कुल बैलेंस';
+
+  @override
+  String get txtavailableBalance => 'उपलब्ध बैलेंस';
+
+  @override
+  String txtstreakDays(int current, int total) {
+    return '$current/$total दिन';
+  }
+
+  @override
+  String txtminRechargeNotice(String amount) {
+    return 'आगे बढ़ने के लिए न्यूनतम ₹$amount का रिचार्ज आवश्यक है।';
+  }
+
+  @override
+  String txtlowBalanceWarningNotice(int amount) {
+    return 'सवारी करने के लिए अभी टॉप अप करें। आपका बैलेंस अपर्याप्त है। न्यूनतम टॉप-अप: ₹$amount।';
+  }
+
+  @override
+  String get txttopUpWalletAction => 'वॉलेट टॉप अप करें';
+
+  @override
+  String get txtshareCodeWithFriends => 'दोस्तों के साथ अपना कोड साझा करें';
+
+  @override
+  String get txtreferralCodeCopied => 'रेफ़रल कोड कॉपी हो गया!';
+
+  @override
+  String txtshareReferralMessage(String code) {
+    return 'Voltium से जुड़ने के लिए मेरे कोड $code का उपयोग करें!';
+  }
+
+  @override
+  String get txtjoinVoltiumSubject => 'Voltium से जुड़ें';
+
+  @override
+  String get txtviewDetailsAction => 'विवरण देखें';
+
+  @override
+  String get txtnotAssigned => 'आवंटित नहीं';
+
+  @override
+  String get txtassignedTlBadge => 'आवंटित टीएल';
+
+  @override
+  String get txttlPendingNotice => 'आपका हब जल्द ही एक टीम लीडर आवंटित करेगा';
+
+  @override
+  String get txtnoContactNumberTl =>
+      'आपके टीम लीडर के लिए कोई संपर्क नंबर उपलब्ध नहीं है।';
+
+  @override
+  String get txtcouldNotOpenDialer =>
+      'फ़ोन डायलर नहीं खोला जा सका। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get txtscooterSubmissionRequired => 'स्कूटर जमा करना\nआवश्यक है';
+
+  @override
+  String get txtpendingReturnSubmission => 'लंबित वापसी प्रस्तुति';
+
+  @override
+  String txtsubmissionDatePrefix(String date) {
+    return 'जमा करने की तिथि: $date';
+  }
+
+  @override
+  String txthubNamePrefix(String hub) {
+    return 'हब का नाम: $hub';
+  }
+
+  @override
+  String get txtdesignatedHub => 'नामित हब';
+
+  @override
+  String get txtupcomingRentDebit => 'आगामी किराया कटौती';
+
+  @override
+  String get txttopUpBeforeTomorrow6am => 'कल सुबह 6 बजे से पहले टॉप-अप करें';
+
+  @override
+  String txtrentDebitNoticeShortfall(
+      String rent, String balance, String shortfall) {
+    return '₹$rent का किराया स्वचालित रूप से काट लिया जाएगा। आपका वर्तमान वॉलेट बैलेंस ₹$balance है (कमी: ₹$shortfall)।';
+  }
+
+  @override
+  String txtrentDebitNoticeSufficient(String rent, String balance) {
+    return 'किराया ₹$rent कल सुबह 6 बजे काटा जाएगा। वॉलेट बैलेंस ₹$balance पर्याप्त है।';
+  }
+
+  @override
+  String txttopUpAmountAction(String amount) {
+    return '₹$amount टॉप अप करें';
+  }
+
+  @override
+  String get txtchangeTeamLeaderTitle => 'टीम लीडर बदलें';
+
+  @override
+  String get txtchangeTlReasonPrompt =>
+      'कृपया अपने आवंटित टीम लीडर को बदलने का कारण बताएं। सहायता टीम द्वारा इसकी समीक्षा की जाएगी।';
+
+  @override
+  String get txtenterReasonHint => 'यहाँ अपना कारण दर्ज करें...';
+
+  @override
+  String get txtprovideDetailedReason =>
+      'कृपया एक विस्तृत कारण प्रदान करें (कम से कम 5 अक्षर)';
+
+  @override
+  String get txttlChangeSubmitted =>
+      'आपका टीएल परिवर्तन अनुरोध अनुमोदन के लिए सबमिट कर दिया गया है';
+
+  @override
+  String txtfailedToSubmitRequest(String error) {
+    return 'अनुरोध सबमिट करने में विफल: $error';
+  }
+
+  @override
+  String get txtmanageSubscriptionTitle => 'सदस्यता प्रबंधित करें';
+
+  @override
+  String get txtmanageSubscriptionSubtitle =>
+      'नीचे अपने वर्तमान सक्रिय प्लान का विवरण देखें। अपना प्लान बदलने या अपग्रेड करने के लिए, कृपया अपने हब मैनेजर को अनुरोध सबमिट करें।';
+
+  @override
+  String get txtactiveBadge => 'सक्रिय';
+
+  @override
+  String get txtperDay => '/ दिन';
+
+  @override
+  String get txtperWeek => '/ सप्ताह';
+
+  @override
+  String get txtperMonth => '/ माह';
+
+  @override
+  String get txtrequestPlanChangeButton => 'प्लान परिवर्तन का अनुरोध करें';
+
+  @override
+  String get txtendRentalButton => 'किराया समाप्त करें';
+
+  @override
+  String get txtchangeIntentButton => 'उपयोग का उद्देश्य बदलें';
+
+  @override
+  String txtchangeIntentPrefix(String intent) {
+    return 'उद्देश्य बदलें: $intent';
+  }
+
+  @override
+  String txtstepXofY(int current, int total) {
+    return 'चरण $current का $total';
+  }
+
+  @override
+  String txtcaptureViewOfVehicle(String view) {
+    return 'वाहन का $view कैप्चर करें';
+  }
+
+  @override
+  String get txtensureClearPhotoPrompt =>
+      'तेज़ अनुमोदन के लिए सुनिश्चित करें कि फोटो स्पष्ट और अच्छी रोशनी में हो।';
+
+  @override
+  String get txtcapturePhotoBtn => 'फोटो लें';
+
+  @override
+  String get txtcancelReturnProcessBtn => 'वापसी प्रक्रिया रद्द करें';
+
+  @override
+  String get txtuploadingPhotosSubmitting =>
+      'फोटो अपलोड हो रही हैं और अनुरोध सबमिट किया जा रहा है...';
+
+  @override
+  String get txtdoNotCloseApp => 'कृपया ऐप बंद न करें।';
+
+  @override
+  String get txtreturnRequestSubmittedTitle => 'वापसी अनुरोध सबमिट किया गया';
+
+  @override
+  String get txtreturnRequestSubmittedBody =>
+      'आपका वाहन वापसी अनुरोध अनुमोदन के लिए लंबित है। हमारा हब मैनेजर जल्द ही आपके सबमिशन को सत्यापित करेगा।';
+
+  @override
+  String get txtgreatBtn => 'बहुत बढ़िया!';
+
+  @override
+  String get txtfailedToSubmitReturn =>
+      'वापसी अनुरोध सबमिट करने में विफल। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get txtleftSide => 'बाईं तरफ';
+
+  @override
+  String get txtrightSide => 'राइट साइड';
+
+  @override
+  String get txtfrontView => 'सामने का दृश्य';
+
+  @override
+  String get txtspeedometer => 'स्पीडोमीटर';
+
+  @override
+  String get txtpersonalUse => 'व्यक्तिगत उपयोग';
+
+  @override
+  String get txtecommerceDelivery => 'ई-कॉमर्स डिलीवरी';
+
+  @override
+  String get txtfoodDelivery => 'फ़ूड डिलीवरी';
+
+  @override
+  String get txtother => 'अन्य';
+
+  @override
+  String get txtrentalDetailsTitle => 'किराया विवरण';
+
+  @override
+  String get txtcurrentPlanSection => 'वर्तमान प्लान';
+
+  @override
+  String get txtnoActivePlan => 'कोई सक्रिय प्लान नहीं';
+
+  @override
+  String get txtperCycle => ' / चक्र';
+
+  @override
+  String get txtrentalInformation => 'किराया जानकारी';
+
+  @override
+  String get txtstartDate => 'प्रारंभ तिथि';
+
+  @override
+  String get txtendDate => 'समाप्ति तिथि';
+
+  @override
+  String get txtpaymentStreak => 'भुगतान स्ट्रीक';
+
+  @override
+  String get txtchangePlan => 'प्लान बदलें';
+
+  @override
+  String get txtpickupHub => 'पिकअप हब';
+
+  @override
+  String get txtintentUpdatedSuccess => 'उद्देश्य सफलतापूर्वक अपडेट किया गया';
+
+  @override
+  String txtfailedToUpdateIntent(String error) {
+    return 'उद्देश्य अपडेट करने में विफल: $error';
+  }
+
+  @override
+  String get txtteamLeaderInfoDescription =>
+      'आपके दैनिक संचालन, मार्ग मार्गदर्शन और ऑन-ग्राउंड सहायता के लिए आपके टीम लीडर आपके प्राथमिक संपर्क बिंदु हैं।';
+
+  @override
+  String get txtrequestTlChange => 'टीम लीडर बदलने का अनुरोध करें';
+
+  @override
+  String get txtselectTeamLeader => 'टीम लीडर चुनें';
+
+  @override
+  String get txtcall => 'कॉल करें';
+
+  @override
+  String get txtnotProvided => 'उपलब्ध नहीं है';
+
+  @override
+  String get txtemergencyContact => 'आपातकालीन संपर्क';
+
+  @override
+  String get txtkycStatusTitle => 'केवाईसी स्थिति';
+
+  @override
+  String get txtguarantorStatusTitle => 'गारंटर';
+
+  @override
+  String get txtvehicleTitle => 'वाहन';
+
+  @override
+  String get txtaddress => 'पता';
+
+  @override
+  String get txtunderReview => 'समीक्षाधीन';
+
+  @override
+  String get txtphone => 'फ़ोन';
+
+  @override
+  String get txtverifiedAndSecure => 'सत्यापित और सुरक्षित';
+
+  @override
+  String get txtidentityGuarantorVerifiedDesc =>
+      'आपकी पहचान और गारंटर की जानकारी सत्यापित हो गई है। आप नीचे अपने दस्तावेज़ देख या डाउनलोड कर सकते हैं।';
+
+  @override
+  String get txtverificationInProgressDesc =>
+      'आपका सत्यापन प्रगति पर है। कुछ दस्तावेज़ अभी भी हमारी टीम द्वारा समीक्षाधीन हो सकते हैं।';
+
+  @override
+  String get txtyourDocuments => 'आपके दस्तावेज़';
+
+  @override
+  String get txtguarantorDocuments => 'गारंटर के दस्तावेज़';
+
+  @override
+  String txtfilesCount(int count) {
+    return '$count फ़ाइलें';
+  }
+
+  @override
+  String get txtaadhaarCardFront => 'आधार कार्ड (सामने)';
+
+  @override
+  String get txtaadhaarCardBack => 'आधार कार्ड (पीछे)';
+
+  @override
+  String get txtpanCardLabel => 'पैन कार्ड';
+
+  @override
+  String get txtguarantorAadhaarFront => 'गारंटर का आधार (सामने)';
+
+  @override
+  String get txtguarantorAadhaarBack => 'गारंटर का आधार (पीछे)';
+
+  @override
+  String get txtguarantorPanCard => 'गारंटर का पैन कार्ड';
+
+  @override
+  String get txtverificationVideo => 'सत्यापन वीडियो';
+
+  @override
+  String get txtguarantorSignatureDoc => 'गारंटर के हस्ताक्षर';
+
+  @override
+  String get txtverifiedAndActive => 'सत्यापित और सक्रिय';
+
+  @override
+  String get txtopenExternal => 'बाहर खोलें';
 }

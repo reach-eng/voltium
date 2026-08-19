@@ -11,7 +11,8 @@ import { validateBody, topUpSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from '@/server/modules/wallet/wallet.use-cases';
-import { paiseToRupees, rupeesToPaise } from '@/lib/flatten-rider';
+import { rupeesToPaise } from '@/lib/money';
+import { toRupeesResponse } from '@/lib/api-money';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +30,10 @@ export async function POST(request: NextRequest) {
     const validation = validateBody(topUpSchema, body);
     if (!validation.success) return errors.validation(validation.error);
 
-    const { amount, purpose, method, upiRef, proofUrl } = validation.data;
+    const { amount, purpose, method, upiRef, proofUrl, gatewayStatus, mdrAmount } = validation.data;
     const amountInPaise = rupeesToPaise(amount);
 
-    // Use wallet use-case which handles idempotency, security deposit detection, test mode
+    // Use wallet use-case which handles idempotency, security deposit detection, test mode, and instant payment approval/rejection
     const transaction = await walletUseCases.requestTopup(
       riderDbId,
       amountInPaise,
@@ -42,18 +43,21 @@ export async function POST(request: NextRequest) {
         upiRef: upiRef || undefined,
         proofUrl: proofUrl || undefined,
         idempotencyKey: request.headers.get('x-idempotency-key') || undefined,
+        gatewayStatus: gatewayStatus || undefined,
+        mdrAmount: mdrAmount || undefined,
       }
     );
 
+    let responseMessage = 'Payment submitted for verification';
+    if (transaction.status === 'APPROVED') {
+      responseMessage = method === 'INSTANT' ? 'Instant payment approved and credited to wallet' : 'Payment auto-approved';
+    } else if (transaction.status === 'REJECTED') {
+      responseMessage = 'Instant payment declined by payment gateway';
+    }
+
     return success(
-      {
-        id: transaction.id,
-        amount: paiseToRupees(transaction.amount),
-        status: transaction.status,
-      },
-      transaction.status === 'APPROVED'
-        ? 'Payment auto-approved (test mode)'
-        : 'Payment submitted for verification'
+      toRupeesResponse(transaction),
+      responseMessage
     );
   } catch (err: unknown) {
     logger.error('[POST /api/transaction/topup]', err);

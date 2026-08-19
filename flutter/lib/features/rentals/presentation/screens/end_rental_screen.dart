@@ -6,9 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
-
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -58,12 +59,17 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   }
 
   void _showPhotoOptionsDialog(String key, String label) {
+    // T-66: dialog title + 3 action labels localised. The title
+    // interpolates `label` (e.g. "Front", "Left") so we keep the
+    // runtime composition; the "Photo" suffix is part of the EN
+    // string and the ARB provides the equivalent in each locale.
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(ctx).colorScheme.surface,
         title: Text(
-          '$label Photo',
+          l10n.txtretakePhoto.replaceAll('Photo', '$label Photo'),
           style: AppTypography.titleMedium
               .copyWith(color: Theme.of(ctx).colorScheme.onSurface),
         ),
@@ -73,7 +79,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ListTile(
               leading: Icon(Icons.refresh_rounded,
                   color: Theme.of(ctx).colorScheme.primary),
-              title: Text('Retake Photo',
+              title: Text(l10n.txtretakePhoto,
                   style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(ctx);
@@ -82,8 +88,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('Remove Photo',
-                  style: TextStyle(color: AppColors.error)),
+              // T-66: hardcoded English "Remove Photo" action.
+              // Localised via the new `txtremovePhoto` ARB key.
+              title: Text(l10n.txtremovePhoto,
+                  style: const TextStyle(color: AppColors.error)),
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() => _photos[key] = null);
@@ -92,7 +100,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ListTile(
               leading: Icon(Icons.close,
                   color: Theme.of(ctx).colorScheme.onSurfaceVariant),
-              title: Text('Cancel',
+              title: Text(l10n.txtcancel,
                   style: TextStyle(
                       color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
               onTap: () => Navigator.pop(ctx),
@@ -194,11 +202,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _submitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error submitting return. Please try again.'),
-            behavior: SnackBarBehavior.floating,
-          ),
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txterrorSubmittingReturnPleaseTryAgain,
         );
       }
     }
@@ -305,7 +311,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 child: Column(
                   children: [
                     // Warning card
-                    _buildWarningCard(colorScheme),
+                    _buildWarningCard(colorScheme, colors),
                     const SizedBox(height: 20),
 
                     // Photo grid
@@ -336,13 +342,16 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildWarningCard(ColorScheme colorScheme) {
+  Widget _buildWarningCard(ColorScheme colorScheme, ThemeColors colors) {
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.of(context).errorLight,
+        color: colors.errorLight,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.errorBorder, width: 2),
+        border: Border.all(
+          color: colors.error.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,12 +360,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.of(context).errorLight,
+              color: colors.errorLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.warning_amber_rounded,
-              color: AppColors.errorDark,
+              color: colors.errorLightForeground,
               size: 20,
             ),
           ),
@@ -368,14 +377,14 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 Text(
                   'Are you sure?',
                   style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.errorDark),
+                      .copyWith(color: colors.errorLightForeground),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.error.withValues(alpha: 0.8),
+                    color: colors.errorLightForeground.withValues(alpha: 0.9),
                     height: 1.6,
                   ),
                 ),
@@ -415,18 +424,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'RETURN INSPECTION',
-          style: AppTypography.bodySmall
-              .copyWith(fontWeight: FontWeight.w800)
-              .copyWith(color: colorScheme.onSurface, letterSpacing: 1.2),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Take return photos of your vehicle',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          'VEHICLE CONDITION PHOTOS *',
+          style: AppTypography.labelMedium.copyWith(
+              color: colorScheme.onSurfaceVariant, letterSpacing: 1.2),
         ),
         const SizedBox(height: 12),
         GridView.count(
@@ -447,11 +447,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color:
-                      taken ? AppColors.of(context).successLight : colors.card,
+                  color: taken ? colors.successLight : colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
-                    color: taken ? AppColors.greenFill : AppColors.divider,
+                    color: taken ? AppColors.greenFill : colors.outlineVariant,
                     width: taken ? 2 : 1,
                   ),
                 ),
@@ -482,7 +481,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(
                                 color: taken
-                                    ? AppColors.onSurface
+                                    ? colors.onSurface
                                     : colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 2),
@@ -522,7 +521,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
           Text(
             'ODOMETER READING *',
             style: AppTypography.labelMedium.copyWith(
-                color: colorScheme.onSurfaceVariant, letterSpacing: 1.2),
+              color: colorScheme.onSurfaceVariant,
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -537,10 +538,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               hintText: 'Enter current odometer reading',
               hintStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: AppColors.onSurfaceDisabled,
+                color: colors.onSurfaceMuted,
               ),
               filled: true,
-              fillColor: AppColors.inputBackground,
+              fillColor: colors.inputFill,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
@@ -574,12 +575,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.of(context).successLight,
+              color: colors.successLight,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.battery_5_bar,
-              color: AppColors.successDark,
+              color: colors.successLightForeground,
               size: 18,
             ),
           ),
@@ -611,7 +612,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 value: batteryVal != null
                     ? (batteryVal / 100.0).clamp(0.0, 1.0)
                     : 0.0,
-                backgroundColor: AppColors.divider,
+                backgroundColor: colors.outlineVariant,
                 valueColor: const AlwaysStoppedAnimation(AppColors.success),
                 minHeight: 8,
               ),
@@ -645,7 +646,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 color: _confirmed ? AppColors.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.xs),
                 border: Border.all(
-                  color: _confirmed ? AppColors.primary : AppColors.divider,
+                  color: _confirmed ? AppColors.primary : colors.outlineVariant,
                   width: 2,
                 ),
               ),
@@ -671,6 +672,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   }
 
   Widget _buildConfirmButton(ColorScheme colorScheme) {
+    final colors = AppColors.of(context);
     return Column(
       children: [
         GestureDetector(
@@ -680,7 +682,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              color: _canSubmit ? AppColors.errorDark : AppColors.divider,
+              color: _canSubmit ? AppColors.error : colors.outlineVariant,
               borderRadius: BorderRadius.circular(AppRadius.full),
               boxShadow: _canSubmit
                   ? const [

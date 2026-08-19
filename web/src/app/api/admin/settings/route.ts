@@ -35,10 +35,18 @@ export async function PUT(req: NextRequest) {
       validation.data,
       session.adminId ?? session.riderDbId ?? 'system'
     );
-    invalidateCache('admin:*');
+    // P1-19/P3-16: 'admin:*' nuked EVERY admin cache (dashboards, sessions,
+    // lists) on any settings change. Scope to the settings cache key.
+    invalidateCache('admin:settings:*');
     return success(results, 'Settings updated');
   } catch (error) {
     logger.error('PUT /api/admin/settings error:', error);
+    // P2-18: an unknown key used to blow up as a 500 inside the use-case's
+    // SETTINGS_BY_KEY.get(key)! — surface it as a client error instead.
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.startsWith('Unknown setting key')) {
+      return errors.badRequest(message);
+    }
     return errors.internal('Failed to update settings');
   }
 }

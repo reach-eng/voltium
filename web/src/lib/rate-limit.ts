@@ -67,7 +67,7 @@ function shouldUseDatabaseLimiter(): boolean {
 
 if (typeof globalThis !== 'undefined' && !('$_rateLimitCleanup' in globalThis)) {
   (globalThis as any).$_rateLimitCleanup = true;
-  setInterval(
+  const cleanupTimer = setInterval(
     () => {
       const now = Date.now();
       for (const [key, entry] of memoryStore) {
@@ -76,6 +76,13 @@ if (typeof globalThis !== 'undefined' && !('$_rateLimitCleanup' in globalThis)) 
     },
     5 * 60 * 1000
   );
+  // P3-13: in a long-running server (Next.js standalone / PM2) the sweep
+  // interval would otherwise keep the event loop alive forever. unref() lets
+  // the process exit naturally, and SIGTERM clears it explicitly.
+  if (typeof cleanupTimer.unref === 'function') cleanupTimer.unref();
+  if (typeof process !== 'undefined' && typeof process.once === 'function') {
+    process.once('SIGTERM', () => clearInterval(cleanupTimer));
+  }
 }
 
 export async function checkRateLimit(
@@ -170,4 +177,21 @@ export const API_RATE_LIMIT: RateLimitConfig = {
 export const UPLOAD_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60 * 1000,
   maxRequests: 10,
+};
+
+/**
+ * P2-18: sensitive rider actions (KYC submission, doc uploads, etc.).
+ * Unlike API_RATE_LIMIT these must NOT fail open on a DB outage — an
+ * unlimited-request window on a document-upload endpoint is an abuse/DoS
+ * hole. Deny instead. Dev keeps a high cap so integration tests (memory
+ * store) aren't throttled.
+ */
+export const SENSITIVE_ACTION_RATE_LIMIT: RateLimitConfig = {
+  windowMs: 60 * 1000,
+  // Only prod/staging (where the DB limiter is active) get the strict cap;
+  // local dev, CI and tests use the memory store and a high cap so
+  // integration runs are not throttled.
+  maxRequests:
+    process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging' ? 10 : 1000,
+  failClosed: true,
 };

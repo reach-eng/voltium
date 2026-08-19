@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/animated_balance_counter.dart';
 import '../../../../widgets/streak_celebration_bar.dart';
 import '../../../../widgets/effect_widgets.dart';
 import '../screens/top_up_flow.dart';
+import '../screens/history_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -27,7 +30,7 @@ class TransactionListTile extends StatelessWidget {
     final double amount =
         tx is TransactionModel ? tx.amount : (tx['amount'] ?? 0).toDouble();
     final String status = tx is TransactionModel
-        ? tx.status.name
+        ? tx.status.value
         : (tx['status'] ?? 'pending').toString();
     final String dateStr = tx is TransactionModel
         ? (tx.createdAt?.toIso8601String() ?? '')
@@ -49,33 +52,33 @@ class TransactionListTile extends StatelessWidget {
       displayLabel = purpose.isNotEmpty ? purpose : type;
     }
 
+    final colors = AppColors.of(context);
+
     // Status colors.
-    Color statusTextColor = AppColors.warningDark;
-    Color statusBgColor = AppColors.warningSurface;
+    Color statusTextColor = colors.warningLightForeground;
+    Color statusBgColor = colors.warningLight;
 
     if (status == 'rejected' || status == 'failed') {
-      statusTextColor = AppColors.error;
-      statusBgColor = AppColors.errorSurface;
+      statusTextColor = colors.errorLightForeground;
+      statusBgColor = colors.errorLight;
     } else if (status == 'pending') {
-      statusTextColor = AppColors.warningDark;
-      statusBgColor = AppColors.warningSurface;
+      statusTextColor = colors.warningLightForeground;
+      statusBgColor = colors.warningLight;
     } else if (status == 'approved' || status == 'success') {
       if (purpose.contains('REWARD')) {
-        statusTextColor = AppColors.warning;
-        statusBgColor = AppColors.warningSurface;
+        statusTextColor = colors.warningLightForeground;
+        statusBgColor = colors.warningLight;
       } else if (purpose.contains('REFUND')) {
         statusTextColor = AppColors.primary;
-        statusBgColor = AppColors.of(context).primarySurface;
+        statusBgColor = colors.primarySurface;
       } else if (isCredit) {
-        statusTextColor = AppColors.success;
-        statusBgColor = AppColors.of(context).successLight;
+        statusTextColor = colors.successLightForeground;
+        statusBgColor = colors.successLight;
       } else {
         statusTextColor = AppColors.primary;
-        statusBgColor = AppColors.of(context).primarySurface;
+        statusBgColor = colors.primarySurface;
       }
     }
-
-    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -93,7 +96,7 @@ class TransactionListTile extends StatelessWidget {
               size: 18,
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +177,7 @@ class TransactionListTile extends StatelessWidget {
                     .copyWith(
                         color: isCredit ? AppColors.success : colors.onSurface),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -210,6 +213,7 @@ class MethodChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -218,14 +222,17 @@ class MethodChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary
-              : AppColors.of(context).iconBackground,
+              : colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: isSelected ? Colors.transparent : colors.outlineVariant,
+          ),
         ),
         child: Text(
           label,
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w600)
-              .copyWith(color: isSelected ? Colors.white : AppColors.slate600),
+              .copyWith(color: isSelected ? Colors.white : colors.onSurfaceVariant),
         ),
       ),
     );
@@ -757,7 +764,15 @@ class TransactionHistorySection extends StatelessWidget {
               InkWell(
                 key: const Key('seeAllTransactionsButton'),
                 onTap: () {
-                  Navigator.of(context).pushNamed('/history');
+                  final riderId = ProviderScope.containerOf(context)
+                          .read(riderProvider)
+                          .riderId ??
+                      '';
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => HistoryScreen(riderId: riderId),
+                    ),
+                  );
                 },
                 child: Padding(
                   padding:

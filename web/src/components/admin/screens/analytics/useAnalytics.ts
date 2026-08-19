@@ -28,8 +28,10 @@ export function useAnalytics() {
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
+        setLastUpdated(new Date());
+      } else {
+        logger.error('Failed to fetch analytics', { status: res.status });
       }
-      setLastUpdated(new Date());
     } catch (error) {
       logger.error('Failed to fetch analytics', { error });
     } finally {
@@ -52,9 +54,8 @@ export function useAnalytics() {
 
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.hidden) {
-        if (intervalRef.current) clearInterval(intervalRef.current);
-      } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (!document.hidden) {
         fetchData(true);
         intervalRef.current = setInterval(() => fetchData(true), POLL_INTERVAL_MS);
       }

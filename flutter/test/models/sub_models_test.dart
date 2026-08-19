@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/models/hub_model.dart';
 import 'package:voltium_rider/models/plan_model.dart';
-import 'package:voltium_rider/models/reward_model.dart';
 import 'package:voltium_rider/models/rider_metrics.dart';
 import 'package:voltium_rider/models/rider_wallet.dart';
 import 'package:voltium_rider/models/rider_rental.dart';
@@ -117,34 +116,8 @@ void main() {
   });
 
   // ── RewardItem ──────────────────────────────────────────────────────────
-  group('RewardItem', () {
-    test('fromJson parses all fields', () {
-      final json = {
-        'id': 'r1',
-        'title': 'First Ride',
-        'points': 100,
-        'createdAt': '2024-01-15T10:00:00.000Z',
-      };
-      final model = RewardItem.fromJson(json);
-      expect(model.id, 'r1');
-      expect(model.title, 'First Ride');
-      expect(model.points, 100);
-      expect(model.createdAt, DateTime.parse('2024-01-15T10:00:00.000Z'));
-    });
-
-    test('toJson round-trips', () {
-      final json = {
-        'id': 'r1',
-        'title': 'T',
-        'points': 50,
-        'createdAt': '2024-06-01T00:00:00.000Z'
-      };
-      final model = RewardItem.fromJson(json);
-      final out = model.toJson();
-      expect(out['id'], 'r1');
-      expect(out['points'], 50);
-    });
-  });
+  // RewardItem was deleted as dead code (PR-2 audit fix) — the canonical
+  // class lives in features/dashboard/presentation/providers/engagement_provider.dart.
 
   // ── RiderMetrics ────────────────────────────────────────────────────────
   group('RiderMetrics', () {

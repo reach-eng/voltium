@@ -11,6 +11,7 @@
 
 export type RentalStatus =
   | 'NO_RENTAL'
+  | 'BOOKED'
   | 'DEPOSIT_APPROVED'
   | 'PLAN_SELECTED'
   | 'PICKUP_SCHEDULED'
@@ -25,6 +26,11 @@ type TransitionMap = Record<RentalStatus, RentalStatus[]>;
 
 const VALID_TRANSITIONS: TransitionMap = {
   NO_RENTAL: ['PLAN_SELECTED', 'DEPOSIT_APPROVED'],
+  // PR-ONBOARDING-2026-08-11 (audit 2.19): BOOKED is the lease-side
+  // initial state set by `bookRental` (Prisma `RentalLease.status`).
+  // Transitions to PICKUP_SCHEDULED on the rider side, and the
+  // lease-side ACTIVE is set by syncPickup.
+  BOOKED: ['PICKUP_SCHEDULED', 'ACTIVE'],
   DEPOSIT_APPROVED: ['PLAN_SELECTED'],
   PLAN_SELECTED: ['PICKUP_SCHEDULED', 'ACTIVE'],
   PICKUP_SCHEDULED: ['ACTIVE'],

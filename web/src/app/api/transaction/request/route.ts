@@ -11,7 +11,8 @@ import { validateBody, topUpSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from '@/server/modules/wallet/wallet.use-cases';
-import { rupeesToPaise } from '@/lib/flatten-rider';
+import { rupeesToPaise } from '@/lib/money';
+import { toRupeesResponse } from '@/lib/api-money';
 
 type IdempotentTransactionError = Error & { transaction?: unknown };
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       amount,
     });
 
-    return success(transaction, 'Transaction request submitted successfully');
+    return success(toRupeesResponse(transaction), 'Transaction request submitted successfully');
   } catch (err: unknown) {
     const error: IdempotentTransactionError =
       err instanceof Error ? (err as IdempotentTransactionError) : new Error(String(err));
@@ -59,5 +60,34 @@ export async function POST(request: NextRequest) {
     }
     logger.error('Failed to create pending transaction', err);
     return errors.internal('Failed to process request');
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await requireRiderSession(request);
+    if (auth instanceof Response) return auth;
+    const riderDbId = auth.riderDbId;
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return errors.badRequest('Transaction ID is required');
+    }
+
+    const { db } = await import('@/lib/db');
+    const transaction = await db.transaction.findUnique({
+      where: { id },
+    });
+
+    if (!transaction || transaction.riderId !== riderDbId) {
+      return errors.notFound('Transaction request not found');
+    }
+
+    return success(toRupeesResponse(transaction), 'Transaction request retrieved successfully');
+  } catch (err: unknown) {
+    logger.error('Failed to retrieve transaction request', err);
+    return errors.internal('Failed to retrieve transaction request');
   }
 }

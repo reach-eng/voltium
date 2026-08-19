@@ -6,6 +6,7 @@ import 'package:voltium_rider/utils/date_helpers.dart';
 
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/models/earnings_entry_model.dart';
 import 'package:voltium_rider/features/wallet/widgets/earnings_chart.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
@@ -187,12 +188,9 @@ class _EarningsScreenState extends State<EarningsScreen> {
       final synced = await _syncEntryToBackend(entry);
       if (!synced) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                "Couldn't save the entry — we'll retry on your next sign-in.",
-              ),
-            ),
+          Toast.error(
+            context,
+            "Couldn't save the entry — we'll retry on your next sign-in.",
           );
         }
         return;

@@ -23,9 +23,7 @@ class VehicleSearchSheet extends StatefulWidget {
 
 class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
   static const Color _primary = AppColors.primary;
-  static const Color _outline = AppColors.borderMedium;
   static const Color _success = AppColors.success;
-  static const Color _textDark = AppColors.slate900;
 
   final TextEditingController _searchCtrl = TextEditingController();
   List<Map<String, dynamic>> _filtered = [];
@@ -83,13 +81,14 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: EdgeInsets.only(bottom: bottomInset),
         child: Column(
@@ -100,7 +99,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: _outline,
+                color: colors.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -115,7 +114,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: _textDark,
+                        color: colors.onSurface,
                       ),
                     ),
                   ),
@@ -134,15 +133,13 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
               child: TextFormField(
                 controller: _searchCtrl,
                 autofocus: true,
-                style:
-                    GoogleFonts.plusJakartaSans(fontSize: 14, color: _textDark),
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14, color: colors.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Search by ID, model or plate…',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
-                    color: AppColors.of(context)
-                        .onSurfaceMuted
-                        .withValues(alpha: 0.7),
+                    color: colors.onSurfaceMuted.withValues(alpha: 0.7),
                   ),
                   prefixIcon:
                       const Icon(Icons.search, color: _primary, size: 20),
@@ -151,22 +148,22 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                           icon: Icon(
                             Icons.close,
                             size: 18,
-                            color: AppColors.of(context).onSurfaceMuted,
+                            color: colors.onSurfaceMuted,
                           ),
                           onPressed: () => _searchCtrl.clear(),
                         )
                       : null,
                   filled: true,
-                  fillColor: AppColors.of(context).surfaceBright,
+                  fillColor: colors.surfaceBright,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: const BorderSide(color: _outline),
+                    borderSide: BorderSide(color: colors.outlineVariant),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: const BorderSide(color: _outline),
+                    borderSide: BorderSide(color: colors.outlineVariant),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
@@ -186,17 +183,17 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                       padding: Spacing.paddingXl,
                       child: Column(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.electric_moped_outlined,
                             size: 40,
-                            color: _outline,
+                            color: colors.outlineVariant,
                           ),
                           SizedBox(height: 12),
                           Text(
                             'No vehicles match your search',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              color: AppColors.of(context).onSurfaceMuted,
+                              color: colors.onSurfaceMuted,
                             ),
                           ),
                         ],
@@ -229,20 +226,22 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                   shape: BoxShape.circle,
                                   color: isSelected
                                       ? _primary.withValues(alpha: 0.1)
-                                      : AppColors.of(context).surfaceBright,
+                                      : colors.surfaceBright,
                                 ),
                                 child: Icon(
                                   Icons.electric_moped_outlined,
                                   size: 20,
                                   color: isSelected
                                       ? _primary
-                                      : AppColors.of(context).onSurfaceMuted,
+                                      : colors.onSurfaceMuted,
                                 ),
                               ),
                               title: Text(
                                 v['vehicleNumber'] as String? ?? '',
                                 style: AppTypography.labelLarge.copyWith(
-                                    color: isSelected ? _primary : _textDark),
+                                    color: isSelected
+                                        ? _primary
+                                        : colors.onSurface),
                               ),
                               subtitle: Text(
                                 [

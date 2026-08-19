@@ -11,7 +11,7 @@
 
 import { NextRequest } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
-import { hasPermission, type Permission } from '@/lib/auth';
+import { hasPermission, type Permission, type SessionPayload } from '@/lib/auth';
 import { errors } from '@/lib/api-response';
 
 export class AdminAuthError extends Error {
@@ -32,10 +32,13 @@ export class AdminForbiddenError extends Error {
 }
 
 /**
- * Require that the request has a valid admin session.
- * Throws AdminAuthError if not authenticated.
+ * Require that the request has a valid admin session, and optionally a required permission.
+ * Throws AdminAuthError if not authenticated, or AdminForbiddenError if lacking permission.
  */
-export async function requireAdminSession(request?: NextRequest) {
+export async function requireAdminSession(request?: NextRequest, permission?: Permission) {
+  if (permission) {
+    return requirePermission(permission, request);
+  }
   const session = await getAdminSession(request);
   if (!session) {
     throw new AdminAuthError('Admin authentication required');
@@ -77,7 +80,7 @@ export async function requirePermission(permission: Permission, request?: NextRe
  */
 export function withPermission(
   permission: Permission,
-  handler: (req: NextRequest, session: any) => Promise<Response>
+  handler: (req: NextRequest, session: SessionPayload) => Promise<Response>
 ) {
   return async (req: NextRequest) => {
     try {
@@ -98,7 +101,7 @@ export function withPermission(
 /**
  * Admin-only version (any active admin).
  */
-export function withAdmin(handler: (req: NextRequest, session: any) => Promise<Response>) {
+export function withAdmin(handler: (req: NextRequest, session: SessionPayload) => Promise<Response>) {
   return async (req: NextRequest) => {
     try {
       const session = await requireAdminSession(req);

@@ -41,7 +41,10 @@ export const guarantorUseCases = {
       await guarantorRepository.replaceGuarantor(riderDbId);
     }
 
-    return guarantorRepository.submitGuarantor(riderDbId, input as any);
+    return guarantorRepository.submitGuarantor(
+      riderDbId,
+      input as unknown as Record<string, unknown>
+    );
   },
 
   async reviewGuarantor(riderDbId: string, reviewerId: string, review: GuarantorReview) {

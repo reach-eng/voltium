@@ -14,11 +14,15 @@ import { hasPermission } from '@/lib/auth';
 import { validateBody } from '@/lib/validators';
 import { parseDDMMYYYY } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
+import { parsePositiveInt } from '@/lib/api-utils';
+import { withIdempotency } from '@/lib/api-middleware';
+import { toRupeesResponse } from '@/lib/api-money';
 import { approveTransactionSchema } from '@/server/modules/transactions/transaction.schemas';
 import {
   transactionUseCases,
   TransactionError,
 } from '@/server/modules/transactions/transaction.use-cases';
+import { toStateAction } from '@/server/modules/transactions/transaction.types';
 import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
 import { WalletServiceError } from '@/lib/services/wallet-service';
 import { DepositStateError } from '@/lib/services/deposit-service';
@@ -33,6 +37,7 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const status = url.searchParams.get('status') || '';
     const type = url.searchParams.get('type') || '';
+    const purpose = url.searchParams.get('purpose') || '';
     const search = url.searchParams.get('search') || '';
     // Accept both DD-MM-YYYY (canonical) and ISO 8601 (legacy) for
     // backward compatibility with existing API clients.
@@ -44,14 +49,20 @@ export async function GET(req: NextRequest) {
     const endDate = endDateRaw
       ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
       : '';
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
+    // PR-4b (13th audit P0-6): `?page=abc` must fall back to 1, not NaN.
+    const page = parsePositiveInt(url.searchParams.get('page'), 1);
+    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
+    // P0-6 (financial audit): the adminId used to be part of the key, so every
+    // admin kept their own duplicate copy of the same list — and a wildcard
+    // 'admin:*' invalidation on every PUT cleared ALL admin caches. The key is
+    // now shared (same data for every admin with the same filters) and
+    // invalidation is scoped to 'admin:transactions:*'.
     const cacheKey = [
       'admin:transactions',
-      session.adminId ?? session.riderDbId ?? 'anon',
       status,
       type,
+      purpose,
       search,
       startDate,
       endDate,
@@ -63,6 +74,7 @@ export async function GET(req: NextRequest) {
       transactionUseCases.list({
         status,
         type,
+        purpose,
         search,
         startDate,
         endDate,
@@ -73,7 +85,7 @@ export async function GET(req: NextRequest) {
     );
 
     if (!result) return errors.internal('Failed to fetch transactions');
-    return withCacheHeaders(success(result.transactions, undefined, 200, result.pagination), 5);
+    return withCacheHeaders(success(toRupeesResponse(result.transactions), undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('Transactions list error:', error);
     return errors.internal('Failed to fetch transactions');
@@ -81,7 +93,16 @@ export async function GET(req: NextRequest) {
 }
 
 // PUT /api/admin/transactions — approve / reject / reverse
-export async function PUT(req: NextRequest) {
+// P0-7 (financial audit): POST is an alias for PUT but bypassed idempotency,
+// so a retried POST could not tell whether the credit happened. Both verbs
+// now run through `withIdempotency` — a retry with the same x-idempotency-key
+// replays the cached response instead of double-processing.
+//
+// Note: `withIdempotency` only engages for POST + x-idempotency-key (see
+// api-middleware.ts — PUT short-circuits). That is the direction the audit
+// cared about (generated clients retry POST); PUT retries without the key
+// still re-execute, which is unchanged legacy behavior.
+async function putHandler(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (!hasPermission(session.adminRole || '', 'transactions_approve')) return adminForbidden();
@@ -95,39 +116,55 @@ export async function PUT(req: NextRequest) {
 
     const { id, action, rejectionReason, walletCreditAmount } = validation.data;
 
+    // P2-1 (financial audit): the action used to reach the use-case through
+    // an unchecked `as` cast. `toStateAction` validates and normalizes it
+    // once, producing the canonical type (P2-2/P3-21: one UPPERCASE
+    // convention across routes).
+    const stateAction = toStateAction(action);
+
     const result = await transactionUseCases.approveTransaction({
       transactionId: id,
-      action: action as 'APPROVE' | 'REJECT' | 'REVERSE',
+      action: stateAction,
       rejectionReason,
       walletCreditAmount,
       adminId,
     });
 
-    invalidateCache('admin:*');
-    return success(result, `Transaction ${action.toLowerCase()}d`);
+    // P0-6: scoped invalidation — no more clearing every admin's cache.
+    invalidateCache('admin:transactions:*');
+    invalidateCache('admin:riders:*');
+    return success(toRupeesResponse(result), `Transaction ${stateAction.toLowerCase()}d`);
   } catch (error) {
+    // P0-2: lost CAS race (concurrent admin already processed it) → 409.
+    if (error instanceof Error && (error as { code?: string }).code === 'CONFLICT') {
+      return errors.conflict(error.message);
+    }
+    // P3-17 (financial audit): the error branches wrapped every message in a
+    // redundant `error instanceof Error ? ... : String(error)` inside an
+    // already-guarded instanceof — simplified to `error.message`.
     if (error instanceof TransactionError) {
-      return errors.badRequest((error instanceof Error ? error.message : String(error)));
+      return errors.badRequest(error.message);
     }
     if (error instanceof TransactionStateError) {
-      return errors.conflict((error instanceof Error ? error.message : String(error)));
+      return errors.conflict(error.message);
     }
     if (error instanceof WalletServiceError) {
-      return errors.badRequest((error instanceof Error ? error.message : String(error)));
+      return errors.badRequest(error.message);
     }
     if (error instanceof DepositStateError) {
-      return errors.conflict((error instanceof Error ? error.message : String(error)));
+      return errors.conflict(error.message);
     }
-    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
-      return errors.notFound((error instanceof Error ? error.message : String(error)));
+    if (error instanceof Error && error.message.includes('not found')) {
+      return errors.notFound(error.message);
     }
-    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('deposit')) {
-      return errors.conflict((error instanceof Error ? error.message : String(error)));
+    if (error instanceof Error && error.message.includes('deposit')) {
+      return errors.conflict(error.message);
     }
     logger.error('Update transaction error:', error);
     return errors.internal('Failed to update transaction');
   }
 }
 
+export const PUT = (req: NextRequest) => withIdempotency(putHandler)(req);
 // Compatibility for generated clients that submit admin transaction actions with POST.
-export const POST = PUT;
+export const POST = (req: NextRequest) => withIdempotency(putHandler)(req);

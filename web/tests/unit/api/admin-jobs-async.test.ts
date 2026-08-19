@@ -36,6 +36,8 @@ const emitMock = vi.fn();
 const outboxEventTypesMock = {
   ADMIN_JOB_WALLET_RECONCILIATION: 'admin.job.wallet_reconciliation',
   ADMIN_JOB_RENT_DUE_CHECK: 'admin.job.rent_due_check',
+  // PR-VER-2026-08-06 (EVENT_BUS P0-6): new dedicated event for debit-only runs.
+  ADMIN_JOB_AUTO_DEBIT: 'admin.job.auto_debit',
   ADMIN_JOB_DEVICE_COMPLIANCE: 'admin.job.device_compliance',
   ADMIN_JOB_REFERRAL_REWARD: 'admin.job.referral_reward',
   ADMIN_JOB_NOTIFICATIONS_CLEANUP: 'admin.job.notifications_cleanup',
@@ -138,7 +140,10 @@ describe('POST /api/admin/jobs — PR-89 (API N3) async enqueue', () => {
     const cases: Array<[string, string]> = [
       ['wallet-reconciliation', 'admin.job.wallet_reconciliation'],
       ['rent-due-checker', 'admin.job.rent_due_check'],
-      ['auto-debit', 'admin.job.rent_due_check'],
+      // PR-VER-2026-08-06 (EVENT_BUS P0-6): auto-debit is now its own
+      // event — it used to share rent_due_check, so admins couldn't tell
+      // the two jobs apart.
+      ['auto-debit', 'admin.job.auto_debit'],
       ['device-compliance', 'admin.job.device_compliance'],
       ['referral-reward', 'admin.job.referral_reward'],
       ['notifications-cleanup', 'admin.job.notifications_cleanup'],

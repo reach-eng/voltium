@@ -9,7 +9,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class FaqScreen extends ConsumerStatefulWidget {
-  const FaqScreen({super.key});
+  final VoidCallback? onBack;
+  const FaqScreen({super.key, this.onBack});
 
   @override
   ConsumerState<FaqScreen> createState() => _FaqScreenState();
@@ -21,14 +22,19 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   String? _expandedId;
 
   Future<void> _callSupport() async {
-    final uri = Uri.parse('tel:+919876543210');
+    final supportConfig = ref.read(supportProvider).supportConfig;
+    final phone = supportConfig?.supportPhone ?? '+919876543210';
+    final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$sanitized');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
   }
 
   Future<void> _emailSupport() async {
-    final uri = Uri.parse('mailto:support@voltium.app');
+    final supportConfig = ref.read(supportProvider).supportConfig;
+    final email = supportConfig?.supportEmail ?? 'support@voltium.app';
+    final uri = Uri.parse('mailto:$email');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -37,6 +43,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   @override
   Widget build(BuildContext context) {
     final faqItems = ref.watch(supportProvider.select((p) => p.faqs));
+    final colors = AppColors.of(context);
 
     final categories = <String>[
       'All',
@@ -53,7 +60,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.of(context).iconBackground,
+      backgroundColor: colors.iconBackground,
       body: Stack(
         children: [
           _buildMeshBackground(),
@@ -130,6 +137,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   }
 
   Widget _buildMeshBackground() {
+    final colors = AppColors.of(context);
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
@@ -137,8 +145,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.of(context).iconBackground,
-              AppColors.of(context).surfaceBright
+              colors.surface,
+              colors.primarySurface,
             ],
           ),
         ),
@@ -147,23 +155,30 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: colors.card.withValues(alpha: 0.8),
         border: Border(
-            bottom: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
+            bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: Row(
         children: [
           InkWell(
             key: const Key('backButton'),
-            onTap: () => Navigator.pop(context),
+            onTap: widget.onBack ??
+                () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                },
             child: Container(
               padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 shape: BoxShape.circle,
+                border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -174,15 +189,15 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
               child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: AppColors.of(context).onSurface,
+                color: colors.onSurface,
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Text(
             'Help & FAQ',
             style: AppTypography.titleLarge
-                .copyWith(color: AppColors.of(context).onSurface),
+                .copyWith(color: colors.onSurface),
           ),
         ],
       ),
@@ -190,10 +205,12 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   }
 
   Widget _buildSearchBar() {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: colors.card.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -204,12 +221,13 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       ),
       child: TextFormField(
         onChanged: (v) => setState(() => _searchQuery = v),
+        style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
         decoration: InputDecoration(
           prefixIcon:
-              const Icon(Icons.search, color: AppColors.slate400, size: 18),
+              Icon(Icons.search, color: colors.onSurfaceMuted, size: 18),
           hintText: 'Search help topics...',
           hintStyle:
-              AppTypography.bodyMedium.copyWith(color: AppColors.slate400),
+              AppTypography.bodyMedium.copyWith(color: colors.onSurfaceMuted),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -219,6 +237,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   }
 
   Widget _buildCategoryScroller(List<String> categories) {
+    final colors = AppColors.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -232,8 +251,11 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.white,
+                  color: isSelected ? AppColors.primary : colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.full),
+                  border: isSelected
+                      ? null
+                      : Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
@@ -249,7 +271,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   style: AppTypography.labelMedium.copyWith(
                       color: isSelected
                           ? Colors.white
-                          : AppColors.of(context).onSurfaceVariant),
+                          : colors.onSurfaceVariant),
                 ),
               ),
             ),
@@ -260,6 +282,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   }
 
   Widget _buildEmptyFaqState() {
+    final colors = AppColors.of(context);
     return Column(
       children: [
         const SizedBox(height: 60),
@@ -267,21 +290,21 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           height: 64,
           width: 64,
           decoration: BoxDecoration(
-            color: AppColors.of(context).primarySurface,
+            color: colors.primarySurface,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.search, color: AppColors.primary, size: 24),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Text(
           'No results found',
           style: AppTypography.titleSmall
-              .copyWith(color: AppColors.of(context).onSurface),
+              .copyWith(color: colors.onSurface),
         ),
         Text(
           "We couldn't find any match for your search.",
           style: GoogleFonts.plusJakartaSans(
-              fontSize: 13, color: AppColors.of(context).onSurfaceVariant),
+              fontSize: 13, color: colors.onSurfaceVariant),
         ),
       ],
     );
@@ -289,57 +312,62 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   Widget _buildFaqItem(dynamic faq) {
     final isExpanded = _expandedId == faq.id;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            onTap: () =>
-                setState(() => _expandedId = isExpanded ? null : faq.id),
-            title: Text(
-              faq.question,
-              style: AppTypography.bodyMedium
-                  .copyWith(fontWeight: FontWeight.w600)
-                  .copyWith(color: AppColors.of(context).onSurface),
-            ),
-            trailing: AnimatedRotation(
-              duration: const Duration(milliseconds: 300),
-              turns: isExpanded ? 0.5 : 0,
-              child: const Icon(
-                Icons.keyboard_arrow_down,
-                size: 18,
-                color: AppColors.slate400,
+    final colors = AppColors.of(context);
+    return Material(
+      color: colors.card,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          children: [
+            ListTile(
+              onTap: () =>
+                  setState(() => _expandedId = isExpanded ? null : faq.id),
+              title: Text(
+                faq.question,
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: colors.onSurface),
               ),
-            ),
-          ),
-          if (isExpanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Text(
-                faq.answer,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: AppColors.of(context).onSurfaceVariant,
+              trailing: AnimatedRotation(
+                duration: const Duration(milliseconds: 300),
+                turns: isExpanded ? 0.5 : 0,
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: colors.onSurfaceMuted,
                 ),
               ),
             ),
-        ],
+            if (isExpanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(
+                  faq.answer,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildContactSection() {
+    final colors = AppColors.of(context);
     return Container(
       padding: Spacing.paddingLg,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
@@ -349,7 +377,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 height: 40,
                 width: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.of(context).primarySurface,
+                  color: colors.primarySurface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
@@ -358,7 +386,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   size: 20,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -366,13 +394,13 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                     'Still need help?',
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(color: AppColors.of(context).onSurface),
+                        .copyWith(color: colors.onSurface),
                   ),
                   Text(
                     'Our team is available 24/7 for you.',
                     style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: AppColors.of(context).onSurfaceVariant),
+                        color: colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -387,8 +415,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   child: _buildContactButton(
                     Icons.phone_outlined,
                     'Call Support',
-                    AppColors.of(context).successLight,
-                    AppColors.successDark,
+                    colors.successLight,
+                    colors.successLightForeground,
                   ),
                 ),
               ),
@@ -399,7 +427,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   child: _buildContactButton(
                     Icons.email_outlined,
                     'Email Us',
-                    AppColors.accentPurpleSurface,
+                    AppColors.accentPurple.withValues(alpha: 0.15),
                     AppColors.accentPurple,
                   ),
                 ),
@@ -425,7 +453,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 14, color: text),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Text(
             label,
             style: AppTypography.labelMedium.copyWith(color: text),

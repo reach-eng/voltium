@@ -36,7 +36,7 @@ describe('Support Use Cases - Edge Cases', () => {
       subject: 'Help', // Sanitized (assuming sanitizeHtml strips scripts)
       message: '<b>Need</b> help', // Allows some html
       status: 'OPEN',
-      ticketId: expect.stringMatching(/^TICKET-\d+-[A-Z0-9]+$/),
+      ticketId: expect.stringMatching(/^TICKET-[A-F0-9]{8}$/),
     }));
     expect(result).toBeDefined();
   });
@@ -44,7 +44,7 @@ describe('Support Use Cases - Edge Cases', () => {
   it('getTickets returns rider tickets', async () => {
     (supportRepository.findByRiderId as any).mockResolvedValue([]);
     const result = await riderSupportUseCases.getTickets('rider-1');
-    expect(supportRepository.findByRiderId).toHaveBeenCalledWith('rider-1', undefined, undefined);
+    expect(supportRepository.findByRiderId).toHaveBeenCalledWith('rider-1');
     expect(result).toEqual([]);
   });
 

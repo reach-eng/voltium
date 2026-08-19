@@ -6,6 +6,8 @@ class DashboardEntity {
   final int batteryLevel;
   final double todayDistance;
   final double todayEarnings;
+  final List<double> weeklyEarnings;
+  final int earningStreak;
   final int planDaysRemaining;
   final bool isOverdue;
 
@@ -16,6 +18,8 @@ class DashboardEntity {
     this.batteryLevel = 0,
     this.todayDistance = 0,
     this.todayEarnings = 0,
+    this.weeklyEarnings = const [],
+    this.earningStreak = 0,
     this.planDaysRemaining = 0,
     this.isOverdue = false,
   });

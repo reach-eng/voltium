@@ -1,0 +1,2673 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Voltium Rider · Onboarding Redesign</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* =========================================================
+         VOLTIUM REDESIGN — Premium Mobile UI
+         Design language: soft gradients, glass surfaces, refined
+         micro-typography, generous whitespace, subtle motion.
+         ========================================================= */
+      :root {
+        /* Brand */
+        --brand-50:  #EEF4FD;
+        --brand-100: #D6E5F9;
+        --brand-200: #B0CDF3;
+        --brand-300: #84B0EA;
+        --brand-400: #4F8DD9;
+        --brand-500: #0053C1;
+        --brand-600: #004AB0;
+        --brand-700: #003D95;
+        --brand-800: #002F76;
+        --brand-900: #001E50;
+
+        /* Accents */
+        --accent-amber: #FF9D2E;
+        --accent-amber-50: #FFF6E8;
+        --accent-coral: #FF6B5C;
+        --accent-coral-50: #FFEEEB;
+        --accent-mint: #2BC8A2;
+        --accent-mint-50: #E5FBF5;
+        --accent-violet: #8A6BFF;
+        --accent-violet-50: #F1ECFF;
+
+        /* Neutrals */
+        --ink-900: #0A0F1F;
+        --ink-800: #14182B;
+        --ink-700: #2A2F44;
+        --ink-600: #4A5067;
+        --ink-500: #6A7088;
+        --ink-400: #9198AE;
+        --ink-300: #C3C8D6;
+        --ink-200: #E2E5EE;
+        --ink-100: #EFF1F7;
+        --ink-50:  #F7F8FC;
+        --ink-25:  #FBFCFE;
+
+        /* Semantic */
+        --success: #10B981;
+        --success-50: #E6FAF1;
+        --warning: #F59E0B;
+        --warning-50: #FEF6E6;
+        --danger:  #EF4444;
+        --danger-50:  #FEEAEA;
+
+        /* Surfaces */
+        --bg: linear-gradient(180deg, #F4F6FB 0%, #EEF1F8 100%);
+        --surface: #FFFFFF;
+        --surface-2: #FBFCFE;
+
+        /* Radii */
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 16px;
+        --r-xl: 22px;
+        --r-2xl: 28px;
+        --r-3xl: 36px;
+        --r-full: 9999px;
+
+        /* Shadows */
+        --shadow-xs: 0 1px 2px rgba(13, 20, 50, 0.04);
+        --shadow-sm: 0 2px 6px rgba(13, 20, 50, 0.05);
+        --shadow-md: 0 8px 24px rgba(13, 20, 50, 0.08);
+        --shadow-lg: 0 18px 48px rgba(13, 20, 50, 0.12);
+        --shadow-brand: 0 14px 36px rgba(0, 83, 193, 0.28);
+        --shadow-glow: 0 0 0 6px rgba(0, 83, 193, 0.12);
+
+        /* Motion */
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --t-fast: 160ms;
+        --t-base: 240ms;
+        --t-slow: 420ms;
+      }
+
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink-900);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      button, input, select, textarea { font-family: inherit; }
+      h1, h2, h3, h4 { font-family: "Plus Jakarta Sans", "Inter", sans-serif; letter-spacing: -0.02em; }
+
+      /* =========================================================
+         APP SHELL
+         ========================================================= */
+      .app {
+        display: grid;
+        grid-template-columns: 280px 1fr 340px;
+        min-height: 100vh;
+      }
+
+      /* LEFT RAIL */
+      .rail {
+        background: linear-gradient(180deg, #0A0F1F 0%, #14182B 100%);
+        color: #C3C8D6;
+        padding: 26px 18px;
+        position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      }
+      .rail .brand {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 26px;
+      }
+      .rail .brand .logo {
+        width: 40px; height: 40px;
+        background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%);
+        border-radius: 12px;
+        display: grid; place-items: center;
+        color: white;
+        box-shadow: 0 8px 20px rgba(0, 83, 193, 0.35);
+      }
+      .rail .brand .logo svg { width: 22px; height: 22px; }
+      .rail .brand .name { font-family: "Plus Jakarta Sans"; font-weight: 800; font-size: 16px; color: white; letter-spacing: -0.02em; }
+      .rail .brand .sub { font-size: 10px; color: #9198AE; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; margin-top: 1px;}
+      .rail .group-label {
+        font-size: 10px; font-weight: 700; color: #6A7088;
+        letter-spacing: 1.2px; text-transform: uppercase;
+        margin: 16px 8px 8px;
+      }
+      .rail .step {
+        display: flex; align-items: center; gap: 12px;
+        padding: 11px 12px; border-radius: 12px;
+        cursor: pointer; user-select: none;
+        color: #C3C8D6; font-size: 13px; font-weight: 500;
+        transition: all var(--t-fast);
+        margin-bottom: 2px;
+      }
+      .rail .step:hover { background: rgba(255,255,255,0.04); color: white; }
+      .rail .step.active {
+        background: linear-gradient(135deg, rgba(0, 83, 193, 0.25) 0%, rgba(0, 83, 193, 0.1) 100%);
+        color: white;
+        box-shadow: inset 0 0 0 1px rgba(132, 176, 234, 0.3);
+      }
+      .rail .step .num {
+        width: 24px; height: 24px; border-radius: 7px;
+        background: rgba(255,255,255,0.06);
+        color: #9198AE;
+        display: grid; place-items: center;
+        font-size: 11px; font-weight: 700; font-family: "Plus Jakarta Sans";
+        flex-shrink: 0;
+      }
+      .rail .step.active .num {
+        background: var(--brand-500);
+        color: white;
+        box-shadow: 0 0 0 4px rgba(0, 83, 193, 0.2);
+      }
+      .rail .step .label { line-height: 1.3; }
+      .rail .step .label small { display: block; font-weight: 500; color: #6A7088; font-size: 11px; margin-top: 1px; }
+      .rail .step.active .label small { color: #C3C8D6; }
+      .rail .foot {
+        margin-top: 24px; padding-top: 18px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        font-size: 11px; color: #6A7088; line-height: 1.6;
+      }
+
+      /* CENTER STAGE */
+      .stage {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 36px 24px 60px;
+        position: relative;
+      }
+      .stage-header {
+        width: 100%; max-width: 460px;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 18px;
+      }
+      .stage-header .crumb {
+        font-size: 11px; font-weight: 700; color: var(--ink-500);
+        text-transform: uppercase; letter-spacing: 1.2px;
+      }
+      .stage-header .progress {
+        font-size: 12px; font-weight: 600; color: var(--ink-500);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .progress-bar {
+        width: 100%; max-width: 460px; height: 6px;
+        background: var(--ink-100); border-radius: var(--r-full);
+        overflow: hidden; margin-bottom: 28px;
+      }
+      .progress-bar .fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--brand-500) 0%, var(--brand-400) 100%);
+        border-radius: var(--r-full);
+        transition: width var(--t-base);
+        position: relative;
+      }
+      .progress-bar .fill::after {
+        content: "";
+        position: absolute; right: 0; top: -3px;
+        width: 12px; height: 12px;
+        background: white; border: 2px solid var(--brand-500);
+        border-radius: 50%;
+        box-shadow: 0 2px 6px rgba(0,83,193,0.3);
+      }
+
+      /* PHONE */
+      .phone {
+        width: 380px; height: 800px;
+        background: #0A0F1F;
+        border-radius: 50px;
+        padding: 12px;
+        box-shadow:
+          0 50px 100px -20px rgba(13, 20, 50, 0.25),
+          0 30px 60px -30px rgba(13, 20, 50, 0.3),
+          inset 0 0 0 2px #1A1F33;
+        position: relative;
+      }
+      .phone-inner {
+        position: relative;
+        width: 100%; height: 100%;
+        background: var(--ink-25);
+        border-radius: 40px;
+        overflow: hidden;
+      }
+      .notch {
+        position: absolute; top: 10px; left: 50%;
+        transform: translateX(-50%);
+        width: 110px; height: 30px;
+        background: #0A0F1F;
+        border-radius: 999px; z-index: 50;
+      }
+      .status-bar {
+        height: 48px; padding: 18px 28px 0;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 13px; font-weight: 700; color: var(--ink-900);
+        font-family: "Plus Jakarta Sans";
+        position: relative; z-index: 5;
+      }
+      .status-bar .right { display: flex; align-items: center; gap: 6px; }
+      .status-bar .dot { width: 14px; height: 8px; border: 1.5px solid var(--ink-900); border-radius: 2px; position: relative; }
+      .status-bar .dot::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 70%; background: var(--ink-900); border-radius: 1px; }
+      .status-bar .wifi { font-size: 11px; letter-spacing: -1px; }
+
+      .screen {
+        position: absolute;
+        top: 48px; left: 0; right: 0; bottom: 0;
+        display: none; flex-direction: column;
+        background: var(--ink-25);
+        overflow: hidden;
+      }
+      .screen.active { display: flex; }
+      .screen .scroll {
+        flex: 1;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .screen .scroll::-webkit-scrollbar { display: none; }
+
+      .home-indicator {
+        position: absolute; bottom: 8px; left: 50%;
+        transform: translateX(-50%);
+        width: 120px; height: 5px;
+        background: var(--ink-900);
+        border-radius: 999px;
+        opacity: 0.85; z-index: 60;
+      }
+
+      /* RIGHT RAIL */
+      .notes {
+        padding: 36px 28px;
+        background: white;
+        border-left: 1px solid var(--ink-200);
+        position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      }
+      .notes h3 {
+        font-size: 11px; font-weight: 700; color: var(--brand-500);
+        text-transform: uppercase; letter-spacing: 1.4px;
+        margin: 0 0 10px;
+      }
+      .notes h2 {
+        font-size: 26px; font-weight: 800; margin: 0 0 10px;
+        letter-spacing: -0.02em; line-height: 1.2;
+        color: var(--ink-900);
+      }
+      .notes .desc {
+        color: var(--ink-600); font-size: 14px; line-height: 1.65;
+        margin: 0 0 22px;
+      }
+      .notes .meta {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        margin-bottom: 22px;
+      }
+      .notes .meta .cell {
+        background: var(--ink-25);
+        border: 1px solid var(--ink-100);
+        border-radius: 12px; padding: 12px 14px;
+      }
+      .notes .meta .cell small {
+        display: block;
+        font-size: 10px; color: var(--ink-500);
+        text-transform: uppercase; font-weight: 700;
+        letter-spacing: 0.6px; margin-bottom: 4px;
+      }
+      .notes .meta .cell strong {
+        font-size: 13px; color: var(--ink-900); font-weight: 700;
+      }
+      .notes .changes {
+        background: linear-gradient(135deg, var(--brand-50) 0%, white 100%);
+        border: 1px solid var(--brand-100);
+        border-radius: 14px; padding: 16px;
+        margin-bottom: 18px;
+      }
+      .notes .changes h4 {
+        font-size: 11px; font-weight: 700; color: var(--brand-600);
+        margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.6px;
+      }
+      .notes .changes ul { padding-left: 18px; margin: 0; color: var(--ink-700); font-size: 13px; line-height: 1.6; }
+      .notes .changes li + li { margin-top: 6px; }
+      .notes .changes strong { color: var(--ink-900); }
+      .notes .controls {
+        display: flex; gap: 8px; margin-top: 8px;
+      }
+      .notes .controls button {
+        flex: 1; padding: 12px 14px; border-radius: 12px;
+        font-size: 13px; font-weight: 600; cursor: pointer;
+        border: 1px solid var(--ink-200); background: white;
+        color: var(--ink-700);
+        transition: all var(--t-fast);
+        font-family: "Plus Jakarta Sans";
+      }
+      .notes .controls button:hover { background: var(--ink-50); transform: translateY(-1px); }
+      .notes .controls button.primary {
+        background: var(--brand-500); color: white;
+        border-color: transparent;
+        box-shadow: var(--shadow-brand);
+      }
+      .notes .controls button.primary:hover { background: var(--brand-600); }
+      .notes .controls button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+      /* =========================================================
+         SHARED COMPONENTS
+         ========================================================= */
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .glass-dark {
+        background: rgba(10, 15, 31, 0.6);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .app-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 4px 4px;
+        position: relative; z-index: 2;
+      }
+      .icon-btn {
+        width: 42px; height: 42px;
+        border-radius: var(--r-full);
+        background: white;
+        display: grid; place-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--ink-100);
+        cursor: pointer; color: var(--ink-700);
+        transition: all var(--t-fast);
+      }
+      .icon-btn:hover { transform: scale(1.05); box-shadow: var(--shadow-md); }
+      .icon-btn:active { transform: scale(0.95); }
+      .icon-btn svg { width: 18px; height: 18px; }
+      .icon-btn.brand { background: var(--brand-500); color: white; border: 0; box-shadow: var(--shadow-brand); }
+
+      .pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 12px;
+        border-radius: var(--r-full);
+        font-size: 11px; font-weight: 700;
+        font-family: "Plus Jakarta Sans";
+        letter-spacing: 0.2px;
+      }
+      .pill.brand { background: var(--brand-50); color: var(--brand-600); }
+      .pill.mint { background: var(--accent-mint-50); color: var(--accent-mint); }
+      .pill.amber { background: var(--accent-amber-50); color: var(--accent-amber); }
+      .pill.coral { background: var(--accent-coral-50); color: var(--accent-coral); }
+      .pill.violet { background: var(--accent-violet-50); color: var(--accent-violet); }
+      .pill.dark { background: var(--ink-900); color: white; }
+      .pill.glass { background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.25); }
+      .pill.dot::before {
+        content: ""; width: 6px; height: 6px; border-radius: 50%;
+        background: currentColor;
+      }
+
+      .display {
+        font-family: "Plus Jakarta Sans";
+        font-size: 30px; font-weight: 800;
+        letter-spacing: -0.025em; line-height: 1.15;
+        color: var(--ink-900); margin: 0 0 8px;
+      }
+      .display.xl { font-size: 34px; }
+      .h1 {
+        font-family: "Plus Jakarta Sans";
+        font-size: 22px; font-weight: 800;
+        letter-spacing: -0.02em; line-height: 1.2;
+        color: var(--ink-900); margin: 0 0 6px;
+      }
+      .body {
+        color: var(--ink-500);
+        font-size: 13px; font-weight: 500; line-height: 1.5;
+        margin: 0;
+      }
+
+      .cta {
+        width: 100%; height: 54px;
+        border-radius: var(--r-full);
+        background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%);
+        color: white; font-size: 15px; font-weight: 700;
+        font-family: "Plus Jakarta Sans";
+        border: 0; cursor: pointer;
+        box-shadow: var(--shadow-brand);
+        transition: all var(--t-fast);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        letter-spacing: 0.01em;
+      }
+      .cta:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0, 83, 193, 0.4); }
+      .cta:active { transform: translateY(0); }
+      .cta.secondary {
+        background: white; color: var(--brand-600);
+        border: 1.5px solid var(--ink-200);
+        box-shadow: var(--shadow-sm);
+      }
+      .cta.secondary:hover { border-color: var(--brand-500); box-shadow: var(--shadow-md); }
+      .cta.dark {
+        background: var(--ink-900); color: white;
+        box-shadow: 0 12px 28px rgba(10, 15, 31, 0.3);
+      }
+      .cta:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+      .cta svg { width: 18px; height: 18px; }
+
+      .bottom-cta {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        padding: 18px 22px 30px;
+        background: linear-gradient(180deg, rgba(251, 252, 254, 0) 0%, var(--ink-25) 40%);
+        z-index: 5;
+      }
+      .bottom-cta.with-bar::before {
+        content: "";
+        position: absolute; top: -10px; left: 22px; right: 22px;
+        height: 1px; background: var(--ink-100);
+      }
+
+      .field {
+        background: white;
+        border: 1.5px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 14px 16px;
+        display: flex; align-items: center; gap: 10px;
+        transition: all var(--t-fast);
+      }
+      .field:hover { border-color: var(--ink-300); }
+      .field:focus-within {
+        border-color: var(--brand-500);
+        box-shadow: var(--shadow-glow);
+      }
+      .field input {
+        flex: 1; border: 0; outline: 0; background: transparent;
+        font-size: 14px; font-weight: 600; color: var(--ink-900);
+        font-family: inherit;
+      }
+      .field input::placeholder { color: var(--ink-400); font-weight: 500; }
+      .field-label {
+        font-size: 11px; font-weight: 700; color: var(--ink-700);
+        margin-bottom: 8px; display: block;
+        text-transform: uppercase; letter-spacing: 0.4px;
+      }
+
+      /* =========================================================
+         SCREEN 1 — SPLASH
+         ========================================================= */
+      .splash {
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+          radial-gradient(circle at 70% 80%, rgba(79, 141, 217, 0.4) 0%, transparent 50%),
+          linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 50%, var(--brand-400) 100%);
+        align-items: center; justify-content: center; text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+      .splash::before {
+        content: ""; position: absolute; inset: 0;
+        background:
+          radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.4), transparent),
+          radial-gradient(2px 2px at 80% 50%, rgba(255,255,255,0.3), transparent),
+          radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.5), transparent),
+          radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.3), transparent),
+          radial-gradient(2px 2px at 90% 80%, rgba(255,255,255,0.4), transparent);
+        background-size: 100% 100%;
+        pointer-events: none;
+        animation: sparkle 4s linear infinite;
+      }
+      @keyframes sparkle {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+      .splash .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(40px);
+        opacity: 0.5;
+      }
+      .splash .orb-1 { width: 200px; height: 200px; background: var(--brand-300); top: -50px; right: -50px; }
+      .splash .orb-2 { width: 250px; height: 250px; background: var(--accent-violet); bottom: -100px; left: -50px; opacity: 0.3; }
+      .splash .logo {
+        width: 96px; height: 96px;
+        background: rgba(255,255,255,0.15);
+        border: 1.5px solid rgba(255,255,255,0.3);
+        backdrop-filter: blur(20px);
+        border-radius: 28px;
+        display: grid; place-items: center;
+        margin-bottom: 28px;
+        position: relative; z-index: 1;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      }
+      .splash .logo svg { width: 50px; height: 50px; color: white; }
+      .splash .word {
+        font-family: "Plus Jakarta Sans";
+        font-size: 38px; font-weight: 800;
+        letter-spacing: -0.04em;
+        color: white;
+        position: relative; z-index: 1;
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+      }
+      .splash .tag {
+        margin-top: 8px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px; font-weight: 500;
+        position: relative; z-index: 1;
+        letter-spacing: 0.01em;
+      }
+      .splash .loader {
+        position: absolute; bottom: 90px; left: 50%;
+        transform: translateX(-50%);
+        display: flex; align-items: center; gap: 8px;
+      }
+      .splash .loader .dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: white;
+        animation: bounce 1.4s ease-in-out infinite;
+      }
+      .splash .loader .dot:nth-child(2) { animation-delay: 0.2s; }
+      .splash .loader .dot:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes bounce {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+        30% { transform: translateY(-8px); opacity: 1; }
+      }
+      .splash .legal {
+        position: absolute; bottom: 32px; left: 0; right: 0;
+        text-align: center; z-index: 1;
+        font-size: 10px; color: rgba(255, 255, 255, 0.5);
+        font-weight: 500; letter-spacing: 0.4px;
+      }
+
+      /* =========================================================
+         SCREEN 2 — PERMISSIONS
+         ========================================================= */
+      .perm-hero {
+        text-align: center; padding: 4px 0 24px;
+      }
+      .perm-hero .ill {
+        width: 80px; height: 80px;
+        margin: 0 auto 16px;
+        background: linear-gradient(135deg, var(--brand-50) 0%, var(--brand-100) 100%);
+        border-radius: 24px;
+        display: grid; place-items: center;
+        position: relative;
+        box-shadow: var(--shadow-sm);
+      }
+      .perm-hero .ill::before {
+        content: ""; position: absolute; inset: -4px;
+        border-radius: 28px;
+        background: linear-gradient(135deg, var(--brand-200) 0%, transparent 100%);
+        z-index: -1;
+        opacity: 0.4;
+      }
+      .perm-hero .ill svg { width: 40px; height: 40px; color: var(--brand-500); }
+      .perm-list { display: flex; flex-direction: column; gap: 10px; }
+      .perm {
+        background: white;
+        border-radius: var(--r-lg);
+        padding: 14px;
+        display: flex; align-items: center; gap: 14px;
+        box-shadow: var(--shadow-xs);
+        border: 1px solid var(--ink-100);
+        transition: all var(--t-fast);
+      }
+      .perm:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+      .perm .icon {
+        width: 44px; height: 44px;
+        border-radius: 14px;
+        display: grid; place-items: center;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .perm .icon svg { width: 22px; height: 22px; }
+      .perm .icon.brand { background: var(--brand-50); color: var(--brand-500); }
+      .perm .icon.amber { background: var(--accent-amber-50); color: var(--accent-amber); }
+      .perm .icon.coral { background: var(--accent-coral-50); color: var(--accent-coral); }
+      .perm .icon.mint { background: var(--accent-mint-50); color: var(--accent-mint); }
+      .perm .icon.violet { background: var(--accent-violet-50); color: var(--accent-violet); }
+      .perm .body { flex: 1; min-width: 0; }
+      .perm .name { font-size: 14px; font-weight: 700; color: var(--ink-900); }
+      .perm .desc { font-size: 11.5px; color: var(--ink-500); margin-top: 2px; line-height: 1.4; }
+      .perm .tag {
+        position: absolute; top: -6px; right: -6px;
+        font-size: 9px; font-weight: 700;
+        padding: 2px 6px; border-radius: var(--r-full);
+        background: var(--danger-50); color: var(--danger);
+        letter-spacing: 0.3px;
+      }
+      .perm .tag.opt { background: var(--ink-50); color: var(--ink-500); }
+      .perm .icon { position: relative; }
+
+      /* Custom toggle */
+      .toggle {
+        position: relative;
+        width: 44px; height: 26px;
+        background: var(--ink-200);
+        border-radius: var(--r-full);
+        cursor: pointer;
+        transition: background var(--t-base);
+        flex-shrink: 0;
+      }
+      .toggle::after {
+        content: "";
+        position: absolute; top: 3px; left: 3px;
+        width: 20px; height: 20px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        transition: transform var(--t-base);
+      }
+      .toggle.on { background: var(--brand-500); }
+      .toggle.on::after { transform: translateX(18px); }
+
+      /* =========================================================
+         SCREEN 3 — LEGAL
+         ========================================================= */
+      .legal-hero {
+        text-align: center; padding: 4px 0 16px;
+      }
+      .legal-hero .ill {
+        width: 80px; height: 80px;
+        margin: 0 auto 18px;
+        background: linear-gradient(135deg, var(--brand-50) 0%, var(--brand-100) 100%);
+        border-radius: 24px;
+        display: grid; place-items: center;
+        box-shadow: var(--shadow-sm);
+        position: relative;
+      }
+      .legal-hero .ill::after {
+        content: ""; position: absolute; inset: 0;
+        border-radius: 24px;
+        background: linear-gradient(135deg, transparent 60%, var(--brand-200) 100%);
+        opacity: 0.3;
+      }
+      .legal-hero .ill svg { width: 40px; height: 40px; color: var(--brand-500); position: relative; z-index: 1; }
+      .legal-doc {
+        background: white;
+        border-radius: var(--r-lg);
+        margin-top: 10px;
+        box-shadow: var(--shadow-xs);
+        border: 1px solid var(--ink-100);
+        overflow: hidden;
+        transition: all var(--t-fast);
+      }
+      .legal-doc:hover { box-shadow: var(--shadow-sm); }
+      .legal-doc.open { box-shadow: var(--shadow-sm); border-color: var(--brand-200); }
+      .legal-doc .head {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px; cursor: pointer;
+      }
+      .legal-doc .head .ic {
+        width: 36px; height: 36px;
+        background: var(--brand-50);
+        color: var(--brand-500);
+        border-radius: 10px;
+        display: grid; place-items: center;
+        flex-shrink: 0;
+      }
+      .legal-doc .head .ic svg { width: 18px; height: 18px; }
+      .legal-doc .head .name { font-weight: 700; font-size: 14px; color: var(--ink-900); }
+      .legal-doc .head .name small { display: block; color: var(--ink-500); font-size: 11px; font-weight: 500; margin-top: 1px; }
+      .legal-doc .head .spacer { flex: 1; }
+      .legal-doc .head .chev { color: var(--ink-400); transition: transform var(--t-base); }
+      .legal-doc.open .head .chev { transform: rotate(180deg); color: var(--brand-500); }
+      .legal-doc .body {
+        max-height: 0; overflow: hidden;
+        transition: max-height var(--t-base);
+      }
+      .legal-doc.open .body { max-height: 200px; }
+      .legal-doc .body-inner {
+        padding: 0 16px 14px;
+        color: var(--ink-600); font-size: 12px; line-height: 1.6;
+        border-top: 1px solid var(--ink-100);
+        padding-top: 12px; max-height: 130px; overflow-y: auto;
+      }
+
+      .accept-row {
+        margin-top: 18px;
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, var(--brand-50) 0%, white 100%);
+        border-radius: var(--r-lg);
+        border: 1.5px solid var(--brand-100);
+        cursor: pointer;
+        transition: all var(--t-fast);
+      }
+      .accept-row:hover { border-color: var(--brand-200); }
+      .accept-row.on { background: linear-gradient(135deg, var(--brand-100) 0%, var(--brand-50) 100%); border-color: var(--brand-500); }
+      .check {
+        width: 22px; height: 22px;
+        border-radius: 7px;
+        border: 2px solid var(--ink-300);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+        background: white;
+        transition: all var(--t-base);
+      }
+      .check.on { background: var(--brand-500); border-color: var(--brand-500); }
+      .check.on::after {
+        content: "";
+        width: 12px; height: 6px;
+        border-left: 2.5px solid white;
+        border-bottom: 2.5px solid white;
+        transform: rotate(-45deg) translate(1px, -2px);
+        animation: pop var(--t-base) var(--ease);
+      }
+      @keyframes pop {
+        0% { transform: rotate(-45deg) scale(0) translate(1px, -2px); }
+        70% { transform: rotate(-45deg) scale(1.2) translate(1px, -2px); }
+        100% { transform: rotate(-45deg) scale(1) translate(1px, -2px); }
+      }
+      .accept-row span { font-size: 13px; font-weight: 600; color: var(--ink-900); line-height: 1.4; }
+
+      /* =========================================================
+         SCREEN 4 — WELCOME / MOBILE
+         ========================================================= */
+      .welcome-hero {
+        position: relative;
+        padding: 28px 24px 110px;
+        margin: 0 -22px 0;
+        background:
+          radial-gradient(circle at 80% 0%, rgba(79, 141, 217, 0.3) 0%, transparent 60%),
+          linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
+        color: white;
+        border-radius: 0 0 36px 36px;
+        overflow: hidden;
+      }
+      .welcome-hero::after {
+        content: ""; position: absolute;
+        right: -40px; top: -40px;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        border-radius: 50%;
+      }
+      .welcome-hero .badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 6px 12px;
+        border-radius: var(--r-full);
+        font-size: 11px; font-weight: 700;
+        margin-bottom: 18px;
+      }
+      .welcome-hero .badge .spark { font-size: 12px; }
+      .welcome-hero h1 {
+        font-family: "Plus Jakarta Sans";
+        font-size: 30px; font-weight: 800;
+        letter-spacing: -0.03em; line-height: 1.1;
+        margin: 0 0 8px;
+        color: white;
+      }
+      .welcome-hero .lead {
+        font-size: 13px; line-height: 1.5;
+        color: rgba(255,255,255,0.85);
+        margin: 0; max-width: 280px;
+      }
+      .welcome-hero .metrics {
+        position: absolute; bottom: 24px; left: 24px; right: 24px;
+        display: flex; gap: 16px;
+        z-index: 1;
+      }
+      .welcome-hero .metric {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; font-weight: 600;
+        color: rgba(255,255,255,0.9);
+      }
+      .welcome-hero .metric .dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: var(--accent-mint);
+        box-shadow: 0 0 8px var(--accent-mint);
+      }
+      .welcome-form {
+        padding: 24px 22px 110px;
+      }
+      .country-pill {
+        background: white;
+        border-radius: var(--r-lg);
+        padding: 14px 16px;
+        display: flex; align-items: center; gap: 10px;
+        box-shadow: var(--shadow-sm);
+        border: 1.5px solid var(--ink-200);
+        cursor: pointer;
+      }
+      .country-pill .flag {
+        width: 26px; height: 18px;
+        background: linear-gradient(180deg, #FF9933 0%, #FF9933 33%, #fff 33%, #fff 66%, #138808 66%);
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px var(--ink-200);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .country-pill .flag::after {
+        content: ""; position: absolute;
+        top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 5px; height: 5px;
+        background: #1d4ed8;
+        border-radius: 50%;
+      }
+      .country-pill .name { font-size: 14px; font-weight: 700; color: var(--ink-900); }
+      .country-pill .name small { display: block; font-size: 10px; color: var(--ink-500); font-weight: 500; }
+      .country-pill .spacer { flex: 1; }
+      .country-pill .chev { color: var(--ink-400); }
+
+      .input-card {
+        background: white;
+        border-radius: var(--r-lg);
+        padding: 4px 4px 4px 0;
+        display: flex; align-items: center;
+        box-shadow: var(--shadow-sm);
+        border: 1.5px solid var(--ink-200);
+        transition: all var(--t-fast);
+        overflow: hidden;
+      }
+      .input-card:focus-within {
+        border-color: var(--brand-500);
+        box-shadow: var(--shadow-glow);
+      }
+      .input-card .prefix {
+        padding: 14px 16px;
+        font-weight: 700; font-size: 15px;
+        color: var(--ink-900);
+        border-right: 1.5px solid var(--ink-100);
+        display: flex; align-items: center; gap: 4px;
+      }
+      .input-card input {
+        flex: 1;
+        border: 0; outline: 0;
+        padding: 14px 16px;
+        font-size: 18px; font-weight: 700;
+        color: var(--ink-900);
+        font-family: "JetBrains Mono", monospace;
+        letter-spacing: 0.5px;
+      }
+      .helper {
+        text-align: center;
+        margin-top: 18px;
+        color: var(--ink-500);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .helper a { color: var(--brand-500); font-weight: 700; }
+
+      /* =========================================================
+         SCREEN 5 — OTP
+         ========================================================= */
+      .otp-wrap { padding: 0 22px 110px; }
+      .otp-phone {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--brand-50);
+        border: 1px solid var(--brand-100);
+        padding: 4px 10px;
+        border-radius: var(--r-full);
+        color: var(--brand-600);
+        font-weight: 700; font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .otp-row {
+        display: flex; gap: 8px; justify-content: center;
+        margin: 28px 0 16px;
+      }
+      .otp-box {
+        width: 46px; height: 58px;
+        border-radius: var(--r-md);
+        background: white;
+        border: 1.5px solid var(--ink-200);
+        display: grid; place-items: center;
+        font-size: 24px; font-weight: 700;
+        color: var(--ink-900);
+        font-family: "JetBrains Mono", monospace;
+        position: relative;
+        box-shadow: var(--shadow-xs);
+        transition: all var(--t-fast);
+      }
+      .otp-box.filled {
+        border-color: var(--brand-500);
+        color: var(--ink-900);
+      }
+      .otp-box.active {
+        border-color: var(--brand-500);
+        box-shadow: var(--shadow-glow);
+      }
+      .otp-box.active::after {
+        content: "";
+        position: absolute; top: 12px; left: 50%;
+        transform: translateX(-50%);
+        width: 1.5px; height: 22px;
+        background: var(--brand-500);
+        animation: blink 1s infinite;
+      }
+      @keyframes blink { 50% { opacity: 0; } }
+      .resend {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 12px; color: var(--ink-500);
+      }
+      .resend .timer { color: var(--brand-500); font-weight: 700; }
+
+      /* =========================================================
+         SCREEN 6 — INTENT OF USE
+         ========================================================= */
+      .intent-wrap { padding: 0 22px 110px; }
+      .intent-card {
+        background: white;
+        border-radius: var(--r-xl);
+        padding: 18px;
+        border: 1.5px solid var(--ink-200);
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all var(--t-base);
+        position: relative;
+        overflow: hidden;
+      }
+      .intent-card::after {
+        content: ""; position: absolute; top: 0; right: 0; bottom: 0;
+        width: 4px; background: transparent;
+        transition: background var(--t-base);
+      }
+      .intent-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+      .intent-card.sel {
+        border-color: var(--brand-500);
+        background: linear-gradient(135deg, var(--brand-50) 0%, white 50%);
+        box-shadow: var(--shadow-glow);
+      }
+      .intent-card.sel::after { background: var(--brand-500); }
+      .intent-card .icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        background: var(--ink-50);
+        color: var(--ink-500);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+        transition: all var(--t-base);
+      }
+      .intent-card.sel .icon {
+        background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-400) 100%);
+        color: white;
+        box-shadow: var(--shadow-brand);
+      }
+      .intent-card .icon svg { width: 28px; height: 28px; }
+      .intent-card .body h3 { margin: 0 0 4px; font-size: 15px; font-weight: 800; color: var(--ink-900); }
+      .intent-card .body p { margin: 0; color: var(--ink-500); font-size: 12px; line-height: 1.5; }
+      .intent-card .body .meta { display: flex; gap: 6px; margin-top: 8px; }
+      .intent-card .check-pill {
+        margin-left: auto;
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        background: var(--ink-100);
+        display: grid; place-items: center;
+        color: var(--ink-400);
+        transition: all var(--t-base);
+      }
+      .intent-card.sel .check-pill {
+        background: var(--brand-500);
+        color: white;
+        transform: scale(1.1);
+      }
+      .intent-card .check-pill svg { width: 14px; height: 14px; }
+      .info-banner {
+        margin-top: 18px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, var(--accent-violet-50) 0%, white 100%);
+        border: 1px solid #DDD0FF;
+        border-radius: var(--r-lg);
+        display: flex; gap: 12px;
+        color: #5A3AB5;
+        font-size: 12px; line-height: 1.55;
+        font-weight: 500;
+      }
+      .info-banner svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--accent-violet); margin-top: 1px; }
+
+      /* =========================================================
+         SCREEN 7 & 8 — RIDER / GUARANTOR
+         ========================================================= */
+      .form-wrap { padding: 0 22px 110px; }
+      .step-progress {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 22px;
+      }
+      .step-progress .seg {
+        flex: 1; height: 5px;
+        background: var(--ink-200);
+        border-radius: var(--r-full);
+        overflow: hidden;
+        position: relative;
+      }
+      .step-progress .seg.done { background: var(--brand-500); }
+      .step-progress .seg.active {
+        background: var(--ink-200);
+        position: relative;
+        overflow: hidden;
+      }
+      .step-progress .seg.active::after {
+        content: "";
+        position: absolute; inset: 0;
+        background: linear-gradient(90deg, var(--brand-500) 0%, var(--brand-500) 60%, var(--ink-200) 60%, var(--ink-200) 100%);
+        animation: progress 2s var(--ease) infinite;
+      }
+      @keyframes progress {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(0); }
+      }
+      .step-tag {
+        display: inline-block;
+        font-size: 10px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 1px;
+        color: var(--brand-500);
+        margin-bottom: 6px;
+        padding: 4px 10px;
+        background: var(--brand-50);
+        border-radius: var(--r-full);
+      }
+      .form-title {
+        font-family: "Plus Jakarta Sans";
+        font-size: 26px; font-weight: 800;
+        letter-spacing: -0.02em;
+        margin: 4px 0 6px;
+        color: var(--ink-900);
+        line-height: 1.2;
+      }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+      .form-group { margin-bottom: 14px; }
+      .upload-area {
+        background: white;
+        border: 2px dashed var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 20px;
+        text-align: center;
+        color: var(--ink-500);
+        font-size: 13px; font-weight: 600;
+        margin-top: 4px;
+        transition: all var(--t-fast);
+        cursor: pointer;
+      }
+      .upload-area:hover { border-color: var(--brand-300); background: var(--brand-50); }
+      .upload-area svg { display: block; margin: 0 auto 8px; width: 32px; height: 32px; color: var(--brand-500); }
+      .upload-area .hint { display: block; font-size: 11px; color: var(--ink-400); font-weight: 500; margin-top: 4px; }
+      .uploaded {
+        background: linear-gradient(135deg, var(--accent-mint-50) 0%, white 100%);
+        color: var(--accent-mint);
+        border: 1px solid #A6EBD5;
+        padding: 10px 14px;
+        border-radius: var(--r-md);
+        font-size: 12px; font-weight: 700;
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 8px;
+      }
+      .uploaded .x {
+        margin-left: auto; width: 20px; height: 20px;
+        background: white; color: var(--accent-mint);
+        border-radius: 50%;
+        display: grid; place-items: center;
+        font-size: 11px; font-weight: 800;
+        border: 1px solid #A6EBD5;
+      }
+
+      /* =========================================================
+         SCREEN 9 — CHOOSE PLAN
+         ========================================================= */
+      .plan-wrap { padding: 0 22px 110px; }
+      .plan-card {
+        background: white;
+        border-radius: var(--r-xl);
+        padding: 18px;
+        border: 1.5px solid var(--ink-200);
+        margin-bottom: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all var(--t-base);
+        overflow: hidden;
+      }
+      .plan-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+      .plan-card.sel {
+        border-color: var(--brand-500);
+        background: linear-gradient(135deg, var(--brand-50) 0%, white 70%);
+        box-shadow: var(--shadow-glow);
+      }
+      .plan-card .ribbon {
+        position: absolute; top: 12px; right: 12px;
+        background: linear-gradient(135deg, var(--accent-amber) 0%, #FF7A00 100%);
+        color: white;
+        font-size: 9px; font-weight: 800; letter-spacing: 0.6px;
+        padding: 4px 8px; border-radius: var(--r-full);
+        text-transform: uppercase;
+        box-shadow: 0 4px 10px rgba(255, 122, 0, 0.3);
+      }
+      .plan-card .head {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .plan-card .head h3 {
+        margin: 0; font-size: 18px; font-weight: 800;
+        color: var(--ink-900);
+      }
+      .plan-card .head .sub { font-size: 11px; color: var(--ink-500); font-weight: 500; margin-top: 2px; }
+      .plan-card .head .price {
+        font-family: "Plus Jakarta Sans";
+        font-size: 24px; font-weight: 800;
+        color: var(--ink-900);
+        letter-spacing: -0.02em;
+      }
+      .plan-card .head .price small {
+        font-size: 11px; color: var(--ink-500);
+        font-weight: 600; margin-left: 2px;
+      }
+      .plan-card ul { margin: 0; padding: 0; list-style: none; }
+      .plan-card ul li {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: var(--ink-700);
+        padding: 5px 0; font-weight: 500;
+      }
+      .plan-card ul li svg {
+        width: 14px; height: 14px;
+        color: var(--accent-mint);
+        flex-shrink: 0;
+      }
+
+      /* =========================================================
+         SCREEN 10 — WALLET TOP-UP
+         ========================================================= */
+      .wallet-wrap { padding: 0 22px 110px; }
+      .balance-card {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 50%),
+          linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 50%, var(--brand-400) 100%);
+        color: white;
+        border-radius: var(--r-2xl);
+        padding: 22px;
+        margin-bottom: 22px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-brand);
+      }
+      .balance-card::before {
+        content: ""; position: absolute;
+        right: -30px; bottom: -30px;
+        width: 140px; height: 140px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+        border-radius: 50%;
+      }
+      .balance-card::after {
+        content: ""; position: absolute;
+        left: -20px; top: -20px;
+        width: 80px; height: 80px;
+        background: radial-gradient(circle, rgba(43, 200, 162, 0.3) 0%, transparent 60%);
+        border-radius: 50%;
+      }
+      .balance-card .top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+      .balance-card .label { font-size: 12px; opacity: 0.8; font-weight: 600; }
+      .balance-card .amt {
+        font-family: "Plus Jakarta Sans";
+        font-size: 36px; font-weight: 800;
+        margin-top: 6px; letter-spacing: -0.03em;
+        position: relative; z-index: 1;
+      }
+      .balance-card .meta {
+        margin-top: 12px; display: flex; align-items: center; gap: 8px;
+        position: relative; z-index: 1;
+      }
+      .balance-card .meta .chip {
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 4px 10px;
+        border-radius: var(--r-full);
+        font-size: 11px; font-weight: 700;
+        color: white;
+      }
+      .amt-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 10px; margin: 14px 0 8px;
+      }
+      .amt-chip {
+        background: white;
+        border: 1.5px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 16px 8px;
+        text-align: center;
+        cursor: pointer;
+        font-weight: 800;
+        color: var(--ink-900);
+        font-size: 16px;
+        font-family: "Plus Jakarta Sans";
+        box-shadow: var(--shadow-xs);
+        transition: all var(--t-fast);
+        position: relative;
+      }
+      .amt-chip:hover { transform: translateY(-1px); border-color: var(--brand-300); }
+      .amt-chip.sel {
+        border-color: var(--brand-500);
+        background: var(--brand-50);
+        color: var(--brand-700);
+        box-shadow: var(--shadow-glow);
+      }
+      .amt-chip .bonus {
+        position: absolute; top: -6px; right: -6px;
+        background: var(--accent-mint);
+        color: white;
+        font-size: 9px; font-weight: 800;
+        padding: 2px 6px; border-radius: var(--r-full);
+      }
+      .amt-chip .sub {
+        display: block; font-size: 10px; color: var(--ink-500);
+        font-weight: 600; margin-top: 2px; letter-spacing: 0.2px;
+      }
+      .pay-row {
+        background: white;
+        border: 1.5px solid var(--ink-200);
+        border-radius: var(--r-lg);
+        padding: 14px 16px;
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 8px;
+        box-shadow: var(--shadow-xs);
+        cursor: pointer;
+        transition: all var(--t-fast);
+      }
+      .pay-row:hover { border-color: var(--ink-300); }
+      .pay-row.sel {
+        border-color: var(--brand-500);
+        background: var(--brand-50);
+        box-shadow: var(--shadow-glow);
+      }
+      .pay-row .icon {
+        width: 40px; height: 40px;
+        background: var(--ink-50);
+        border-radius: 10px;
+        display: grid; place-items: center;
+        font-size: 14px; font-weight: 800;
+        color: var(--ink-700);
+        font-family: "Plus Jakarta Sans";
+        flex-shrink: 0;
+      }
+      .pay-row.sel .icon { background: white; color: var(--brand-500); }
+      .pay-row .body { flex: 1; font-size: 13px; font-weight: 700; color: var(--ink-900); }
+      .pay-row .body small { display: block; color: var(--ink-500); font-size: 11px; font-weight: 500; margin-top: 1px; }
+      .pay-row .radio {
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--ink-300);
+        flex-shrink: 0;
+        transition: all var(--t-fast);
+      }
+      .pay-row.sel .radio { border-color: var(--brand-500); background: var(--brand-500); box-shadow: inset 0 0 0 3px white; }
+
+      /* =========================================================
+         SCREEN 11 — PICKUP
+         ========================================================= */
+      .pickup-wrap { padding: 0 22px 110px; }
+      .stepper {
+        display: flex; align-items: center; gap: 0;
+        margin-bottom: 20px;
+      }
+      .stepper .dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: var(--ink-100);
+        color: var(--ink-400);
+        font-size: 12px; font-weight: 700;
+        font-family: "Plus Jakarta Sans";
+        display: grid; place-items: center;
+        transition: all var(--t-base);
+        position: relative;
+      }
+      .stepper .dot.done { background: var(--accent-mint); color: white; }
+      .stepper .dot.curr {
+        background: var(--brand-500);
+        color: white;
+        box-shadow: 0 0 0 6px rgba(0, 83, 193, 0.15);
+      }
+      .stepper .line {
+        flex: 1; height: 2px;
+        background: var(--ink-100);
+        transition: background var(--t-base);
+      }
+      .stepper .line.done { background: var(--accent-mint); }
+      .photo-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        gap: 10px; margin-top: 12px;
+      }
+      .photo-slot {
+        aspect-ratio: 1;
+        background: white;
+        border: 2px dashed var(--ink-200);
+        border-radius: var(--r-lg);
+        display: grid; place-items: center;
+        color: var(--ink-400);
+        cursor: pointer;
+        position: relative;
+        transition: all var(--t-fast);
+      }
+      .photo-slot:hover { border-color: var(--brand-300); background: var(--brand-50); }
+      .photo-slot svg { width: 24px; height: 24px; }
+      .photo-slot .x {
+        position: absolute; top: 6px; right: 6px;
+        width: 22px; height: 22px;
+        background: var(--ink-900);
+        color: white;
+        border-radius: 50%;
+        display: grid; place-items: center;
+        font-size: 11px; font-weight: 800;
+      }
+      .photo-slot.has {
+        background: linear-gradient(135deg, var(--accent-mint) 0%, #1A9D7C 100%);
+        border: 0; color: white;
+        box-shadow: 0 8px 20px rgba(43, 200, 162, 0.3);
+      }
+      .photo-slot.has svg { color: white; }
+
+      /* =========================================================
+         SCREEN 12 — WAIT FOR CONFIRMATION
+         ========================================================= */
+      .wait-wrap { padding: 0 22px 110px; }
+      .wait-hero { text-align: center; padding: 8px 0 12px; }
+      .pulse-wrap {
+        position: relative;
+        width: 120px; height: 120px;
+        margin: 0 auto 22px;
+      }
+      .pulse-wrap .ring {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        border: 2px solid var(--brand-500);
+        animation: ring 2s ease-out infinite;
+      }
+      .pulse-wrap .ring.r2 { animation-delay: 0.7s; }
+      .pulse-wrap .ring.r3 { animation-delay: 1.4s; }
+      @keyframes ring {
+        0% { transform: scale(0.5); opacity: 0.8; }
+        100% { transform: scale(1.4); opacity: 0; }
+      }
+      .pulse-wrap .core {
+        position: absolute; inset: 22px;
+        background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%);
+        border-radius: 50%;
+        display: grid; place-items: center;
+        color: white;
+        box-shadow: var(--shadow-brand);
+        animation: pulseCore 2s ease-in-out infinite;
+      }
+      @keyframes pulseCore {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      .pulse-wrap .core svg { width: 32px; height: 32px; }
+      .checklist {
+        background: white;
+        border-radius: var(--r-xl);
+        padding: 6px 18px;
+        margin-top: 18px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--ink-100);
+        overflow: hidden;
+      }
+      .checklist .row {
+        display: flex; align-items: center; gap: 14px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--ink-100);
+      }
+      .checklist .row:last-child { border-bottom: 0; }
+      .checklist .ic {
+        width: 40px; height: 40px;
+        border-radius: 12px;
+        background: var(--accent-amber-50);
+        color: var(--accent-amber);
+        display: grid; place-items: center;
+        flex-shrink: 0;
+      }
+      .checklist .ic.ok { background: var(--accent-mint-50); color: var(--accent-mint); }
+      .checklist .ic svg { width: 20px; height: 20px; }
+      .checklist .body { flex: 1; min-width: 0; }
+      .checklist .body .name { font-size: 13px; font-weight: 700; color: var(--ink-900); }
+      .checklist .body .status { font-size: 11px; color: var(--ink-500); font-weight: 500; margin-top: 2px; }
+
+      /* =========================================================
+         SCREEN 13 — ACTIVE DASHBOARD
+         ========================================================= */
+      .dash-hero {
+        position: relative;
+        margin: 0 -22px 0;
+        padding: 24px 24px 90px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(79, 141, 217, 0.3) 0%, transparent 50%),
+          linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
+        color: white;
+        border-radius: 0 0 36px 36px;
+        overflow: hidden;
+      }
+      .dash-hero::after {
+        content: ""; position: absolute;
+        right: -60px; top: -60px;
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+        border-radius: 50%;
+      }
+      .dash-hero .top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+      .dash-hero .greet { font-size: 12px; opacity: 0.85; font-weight: 500; }
+      .dash-hero .name {
+        font-family: "Plus Jakarta Sans";
+        font-size: 24px; font-weight: 800;
+        margin-top: 2px; letter-spacing: -0.02em;
+        color: white;
+      }
+      .dash-hero .actions { display: flex; gap: 8px; }
+      .dash-hero .actions .ic {
+        width: 38px; height: 38px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        display: grid; place-items: center;
+        color: white;
+        position: relative;
+        cursor: pointer;
+      }
+      .dash-hero .actions .ic svg { width: 18px; height: 18px; }
+      .dash-hero .actions .ic .dot {
+        position: absolute; top: 8px; right: 8px;
+        width: 8px; height: 8px;
+        background: var(--accent-amber);
+        border: 2px solid var(--brand-500);
+        border-radius: 50%;
+      }
+      .kyc-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 5px 10px;
+        border-radius: var(--r-full);
+        font-size: 11px; font-weight: 700;
+        margin-top: 12px;
+        color: white;
+        position: relative; z-index: 1;
+      }
+      .kyc-badge svg { width: 12px; height: 12px; }
+
+      .dash-body { padding: 0 22px 90px; margin-top: -60px; position: relative; z-index: 2; }
+      .balance-card.dash-balance {
+        margin: 0 0 14px;
+        padding: 18px 20px;
+        background: white;
+        color: var(--ink-900);
+        box-shadow: var(--shadow-md);
+      }
+      .balance-card.dash-balance::before, .balance-card.dash-balance::after { display: none; }
+      .balance-card.dash-balance .row { display: flex; align-items: center; justify-content: space-between; }
+      .balance-card.dash-balance .lbl { font-size: 12px; color: var(--ink-500); font-weight: 600; }
+      .balance-card.dash-balance .val {
+        font-family: "Plus Jakarta Sans";
+        font-size: 30px; font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-top: 2px;
+      }
+      .balance-card.dash-balance .trend {
+        display: flex; align-items: center; gap: 4px;
+        font-size: 11px; font-weight: 700;
+        color: var(--accent-mint);
+        background: var(--accent-mint-50);
+        padding: 4px 8px;
+        border-radius: var(--r-full);
+      }
+      .balance-card.dash-balance .quick {
+        margin-top: 14px;
+        display: flex; gap: 8px;
+      }
+      .balance-card.dash-balance .qbtn {
+        flex: 1;
+        background: var(--brand-500);
+        color: white;
+        border: 0;
+        padding: 10px;
+        border-radius: var(--r-md);
+        font-size: 12px; font-weight: 700;
+        font-family: "Plus Jakarta Sans";
+        display: flex; align-items: center; justify-content: center; gap: 4px;
+        cursor: pointer;
+        box-shadow: var(--shadow-brand);
+      }
+      .balance-card.dash-balance .qbtn svg { width: 14px; height: 14px; }
+      .balance-card.dash-balance .qbtn.alt { background: var(--ink-50); color: var(--ink-700); box-shadow: none; }
+
+      .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+      .stat-card {
+        background: white;
+        border-radius: var(--r-lg);
+        padding: 14px;
+        box-shadow: var(--shadow-xs);
+        border: 1px solid var(--ink-100);
+      }
+      .stat-card .top { display: flex; align-items: center; justify-content: space-between; }
+      .stat-card .ic {
+        width: 32px; height: 32px;
+        border-radius: 10px;
+        background: var(--brand-50);
+        color: var(--brand-500);
+        display: grid; place-items: center;
+      }
+      .stat-card .ic svg { width: 16px; height: 16px; }
+      .stat-card .lbl { font-size: 11px; color: var(--ink-500); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 8px; }
+      .stat-card .val { font-family: "Plus Jakarta Sans"; font-size: 20px; font-weight: 800; margin-top: 2px; letter-spacing: -0.01em; }
+      .stat-card .trend { font-size: 10px; font-weight: 700; color: var(--accent-mint); margin-top: 2px; }
+
+      .dash-section {
+        background: white;
+        border-radius: var(--r-lg);
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: var(--shadow-xs);
+        border: 1px solid var(--ink-100);
+      }
+      .dash-section .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+      .dash-section .head h4 { margin: 0; font-size: 14px; font-weight: 800; color: var(--ink-900); }
+      .dash-section .head a { font-size: 12px; color: var(--brand-500); font-weight: 700; }
+      .chart {
+        display: flex; align-items: end; gap: 8px;
+        height: 80px; margin-top: 8px;
+        padding: 0 4px;
+      }
+      .chart .b {
+        flex: 1; background: var(--ink-100);
+        border-radius: 6px 6px 0 0;
+        position: relative;
+        transition: all var(--t-base);
+      }
+      .chart .b:hover { background: var(--brand-300); }
+      .chart .b.hi { background: linear-gradient(180deg, var(--brand-500) 0%, var(--brand-400) 100%); }
+      .chart .b::after {
+        content: attr(data-d);
+        position: absolute; bottom: -18px; left: 0; right: 0;
+        text-align: center;
+        font-size: 9px; color: var(--ink-400);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .ref-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--ink-100);
+      }
+      .ref-row:first-of-type { border-top: 0; padding-top: 0; }
+      .ref-row .avatar {
+        width: 36px; height: 36px;
+        background: linear-gradient(135deg, var(--brand-300) 0%, var(--brand-500) 100%);
+        color: white;
+        border-radius: 50%;
+        display: grid; place-items: center;
+        font-weight: 800; font-size: 13px;
+        font-family: "Plus Jakarta Sans";
+        flex-shrink: 0;
+      }
+      .ref-row .body { flex: 1; min-width: 0; }
+      .ref-row .body .name { font-size: 13px; font-weight: 700; color: var(--ink-900); }
+      .ref-row .body .status { font-size: 11px; color: var(--ink-500); font-weight: 500; margin-top: 1px; }
+      .ref-row .amt { font-size: 13px; font-weight: 800; color: var(--accent-mint); }
+
+      .bottom-nav {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: white;
+        border-top: 1px solid var(--ink-100);
+        padding: 8px 0 24px;
+        display: flex; justify-content: space-around;
+        z-index: 5;
+        box-shadow: 0 -10px 30px rgba(13, 20, 50, 0.05);
+      }
+      .bottom-nav .item {
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        color: var(--ink-400);
+        font-size: 10px; font-weight: 600;
+        font-family: "Plus Jakarta Sans";
+        cursor: pointer;
+        padding: 4px 12px;
+        border-radius: 10px;
+        transition: all var(--t-fast);
+      }
+      .bottom-nav .item.active {
+        color: var(--brand-500);
+        background: var(--brand-50);
+      }
+      .bottom-nav .item svg { width: 22px; height: 22px; }
+
+      /* utility */
+      .row { display: flex; align-items: center; gap: 8px; }
+      .mt-12 { margin-top: 12px; }
+      .mt-16 { margin-top: 16px; }
+      .mt-20 { margin-top: 20px; }
+      .section-label {
+        font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.6px;
+        color: var(--ink-500);
+        margin: 4px 0 10px;
+      }
+
+      /* login/welcome specifics */
+      .trusted-by {
+        text-align: center; margin-top: 22px;
+        font-size: 10px; color: var(--ink-400);
+        text-transform: uppercase; letter-spacing: 0.8px;
+        font-weight: 700;
+      }
+      .trusted-logos {
+        display: flex; justify-content: center; align-items: center;
+        gap: 16px; margin-top: 10px; opacity: 0.6;
+      }
+      .trusted-logos .lg {
+        font-family: "Plus Jakarta Sans";
+        font-size: 11px; font-weight: 800; color: var(--ink-500);
+        letter-spacing: -0.02em;
+      }
+
+      @media (max-width: 1180px) {
+        .app { grid-template-columns: 240px 1fr; }
+        .notes { display: none; }
+      }
+      @media (max-width: 720px) {
+        .app { grid-template-columns: 1fr; }
+        .rail { position: relative; height: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- LEFT RAIL -->
+      <aside class="rail">
+        <div class="brand">
+          <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <div>
+            <div class="name">Voltium Redesign</div>
+            <div class="sub">Premium mobile concept</div>
+          </div>
+        </div>
+        <div class="group-label">Entry</div>
+        <div class="step active" data-target="s1"><div class="num">1</div><div class="label">Splash<small>brand reveal</small></div></div>
+        <div class="step" data-target="s2"><div class="num">2</div><div class="label">Permissions<small>7 toggles</small></div></div>
+        <div class="step" data-target="s3"><div class="num">3</div><div class="label">Legal<small>terms + privacy</small></div></div>
+        <div class="group-label">Authentication</div>
+        <div class="step" data-target="s4"><div class="num">4</div><div class="label">Welcome<small>phone entry</small></div></div>
+        <div class="step" data-target="s5"><div class="num">5</div><div class="label">OTP<small>6-digit</small></div></div>
+        <div class="group-label">KYC</div>
+        <div class="step" data-target="s6"><div class="num">6</div><div class="label">Intent of use<small>delivery / personal</small></div></div>
+        <div class="step" data-target="s7"><div class="num">7</div><div class="label">Rider onboarding<small>profile + KYC</small></div></div>
+        <div class="step" data-target="s8"><div class="num">8</div><div class="label">Guarantor<small>guarantor details</small></div></div>
+        <div class="group-label">Plan & wallet</div>
+        <div class="step" data-target="s9"><div class="num">9</div><div class="label">Choose plan<small>Daily · Weekly · Monthly</small></div></div>
+        <div class="step" data-target="s10"><div class="num">10</div><div class="label">Wallet top-up<small>min ₹999</small></div></div>
+        <div class="group-label">Pickup</div>
+        <div class="step" data-target="s11"><div class="num">11</div><div class="label">Pickup form<small>vehicle + TL + photos</small></div></div>
+        <div class="group-label">Approval</div>
+        <div class="step" data-target="s12"><div class="num">12</div><div class="label">Wait for confirmation<small>KYC + wallet</small></div></div>
+        <div class="group-label">Active</div>
+        <div class="step" data-target="s13"><div class="num">13</div><div class="label">Active dashboard<small>live rider</small></div></div>
+        <div class="foot">
+          Click any step on the left, or use the arrows in the side panel to walk the full flow.
+        </div>
+      </aside>
+
+      <!-- CENTER STAGE -->
+      <main class="stage">
+        <div class="stage-header">
+          <div class="crumb" id="crumb">Splash</div>
+          <div class="progress" id="progress">01 / 13</div>
+        </div>
+        <div class="progress-bar"><div class="fill" id="progressFill" style="width: 7.7%"></div></div>
+
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <span>9:41</span>
+              <span class="right">
+                <span class="wifi">●●●</span>
+                <span class="dot"></span>
+              </span>
+            </div>
+
+            <!-- SCREEN 1: SPLASH -->
+            <section class="screen splash active" id="s1">
+              <div class="orb orb-1"></div>
+              <div class="orb orb-2"></div>
+              <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+              </div>
+              <div class="word">Voltium</div>
+              <div class="tag">Ride electric. Earn smarter.</div>
+              <div class="loader">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+              <div class="legal">v4.2 · Made in Bengaluru</div>
+            </section>
+
+            <!-- SCREEN 2: PERMISSIONS -->
+            <section class="screen" id="s2">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s1')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">02 / 13</div>
+                </div>
+                <div class="perm-hero">
+                  <div class="ill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                  </div>
+                  <h1 class="h1">Quick permissions</h1>
+                  <p class="body" style="max-width: 280px; margin: 0 auto;">Three are required to ride. The rest are optional — change them anytime in Settings.</p>
+                </div>
+
+                <div class="perm-list">
+                  <div class="perm">
+                    <div class="icon brand">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      <div class="tag">Required</div>
+                    </div>
+                    <div class="body"><div class="name">Location</div><div class="desc">Track rides and find nearby vehicles</div></div>
+                    <div class="toggle on" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon amber">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+                      <div class="tag">Required</div>
+                    </div>
+                    <div class="body"><div class="name">Notifications</div><div class="desc">Ride updates, KYC, and safety alerts</div></div>
+                    <div class="toggle on" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon mint">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                      <div class="tag">Required</div>
+                    </div>
+                    <div class="body"><div class="name">Camera</div><div class="desc">Document upload and QR scanning</div></div>
+                    <div class="toggle on" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon violet">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                      <div class="tag opt">Optional</div>
+                    </div>
+                    <div class="body"><div class="name">Battery optimization</div><div class="desc">Reliable background operation</div></div>
+                    <div class="toggle" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon coral">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13 1.05.37 2.07.72 3.06a2 2 0 01-.45 2.11L8.09 10.91a16 16 0 006 6l2.02-1.29a2 2 0 012.11-.45c.99.35 2.01.59 3.06.72A2 2 0 0122 16.92z"/></svg>
+                      <div class="tag opt">Optional</div>
+                    </div>
+                    <div class="body"><div class="name">Phone state</div><div class="desc">Safety call detection</div></div>
+                    <div class="toggle" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon brand">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                      <div class="tag opt">Optional</div>
+                    </div>
+                    <div class="body"><div class="name">Contacts</div><div class="desc">Emergency SOS and referrals</div></div>
+                    <div class="toggle" onclick="toggle(this)"></div>
+                  </div>
+                  <div class="perm">
+                    <div class="icon mint">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                      <div class="tag opt">Optional</div>
+                    </div>
+                    <div class="body"><div class="name">Microphone</div><div class="desc">Voice support inside the app</div></div>
+                    <div class="toggle" onclick="toggle(this)"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s3')">
+                  Continue
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 3: LEGAL -->
+            <section class="screen" id="s3">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s2')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">03 / 13</div>
+                </div>
+                <div class="legal-hero">
+                  <div class="ill">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="9" y1="15" x2="15" y2="15"/>
+                      <line x1="9" y1="11" x2="13" y2="11"/>
+                    </svg>
+                  </div>
+                  <h1 class="h1">Just a few things to agree to</h1>
+                  <p class="body" style="max-width: 280px; margin: 0 auto;">Quick read, then we’ll get you on the road.</p>
+                </div>
+
+                <div class="legal-doc open" id="ld-tos">
+                  <div class="head" onclick="toggleDoc('ld-tos')">
+                    <div class="ic">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="name">Terms of Service<small>Updated 12 Aug 2026</small></div>
+                    <div class="spacer"></div>
+                    <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg></div>
+                  </div>
+                  <div class="body"><div class="body-inner">By using Voltium, you agree to ride electric vehicles in accordance with Indian traffic laws. Riders must hold a valid driving licence, follow our community guidelines, and accept the rental agreement terms. The full Terms of Service document is loaded from the admin panel; the on-device copy is shown here for offline review.</div></div>
+                </div>
+                <div class="legal-doc" id="ld-pp">
+                  <div class="head" onclick="toggleDoc('ld-pp')">
+                    <div class="ic">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="name">Privacy Policy<small>Updated 12 Aug 2026</small></div>
+                    <div class="spacer"></div>
+                    <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg></div>
+                  </div>
+                  <div class="body"><div class="body-inner">Voltium collects minimal data — phone, KYC, ride telemetry — to operate the service. We never sell your data. KYC documents are encrypted at rest and only accessed by verified admins for approval.</div></div>
+                </div>
+
+                <div class="accept-row" id="acceptBox" onclick="toggleAccept()">
+                  <div class="check on"></div>
+                  <span>I agree to the Terms of Service and Privacy Policy.</span>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s4')">
+                  Continue
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 4: WELCOME / MOBILE -->
+            <section class="screen" id="s4">
+              <div class="welcome-hero">
+                <div class="badge"><span class="spark">⚡</span> Welcome to Voltium</div>
+                <h1>Let’s get you<br/>on the road.</h1>
+                <p class="lead">Enter your mobile number — we’ll send a one-time code to verify it’s really you.</p>
+                <div class="metrics">
+                  <div class="metric"><div class="dot"></div> 50k+ riders</div>
+                  <div class="metric"><div class="dot"></div> 12 cities</div>
+                </div>
+              </div>
+              <div class="welcome-form" style="margin-top: -50px; position: relative; z-index: 5;">
+                <div class="app-bar" style="margin-bottom: 12px;">
+                  <div class="icon-btn" onclick="go('s3')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">04 / 13</div>
+                </div>
+                <label class="field-label">Mobile number</label>
+                <div class="input-card">
+                  <div class="prefix">+91</div>
+                  <input type="tel" value="98765 43210" placeholder="Enter mobile number" />
+                </div>
+                <div class="helper">By continuing you agree to our <a>Terms</a> & <a>Privacy Policy</a>.</div>
+                <div class="trusted-by">Trusted by riders across India</div>
+                <div class="trusted-logos">
+                  <div class="lg">blinkit</div>
+                  <div class="lg">zomato</div>
+                  <div class="lg">swiggy</div>
+                  <div class="lg">rapido</div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s5')">
+                  Send OTP
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 5: OTP -->
+            <section class="screen" id="s5">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s4')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">05 / 13</div>
+                </div>
+                <h1 class="display">Enter the code</h1>
+                <p class="body">We just sent a 6-digit code to <span class="otp-phone">+91 98765 43210</span>. It expires in 10 minutes.</p>
+
+                <div class="otp-row">
+                  <div class="otp-box filled">4</div>
+                  <div class="otp-box filled">2</div>
+                  <div class="otp-box filled">7</div>
+                  <div class="otp-box active">8</div>
+                  <div class="otp-box"></div>
+                  <div class="otp-box"></div>
+                </div>
+                <div class="resend">Didn’t get it? <span class="timer">Resend in 0:23</span></div>
+
+                <div class="info-banner mt-20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <div>Tip: on Android, long-press the box to paste the code from your messages.</div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s6')">
+                  Verify &amp; continue
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 6: INTENT OF USE -->
+            <section class="screen" id="s6">
+              <div class="scroll" style="padding: 8px 0 110px;">
+                <div style="padding: 8px 22px 0;">
+                  <div class="app-bar">
+                    <div class="icon-btn" onclick="go('s5')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </div>
+                    <div class="pill brand dot">06 / 13</div>
+                  </div>
+                  <h1 class="display">How will you ride?</h1>
+                  <p class="body" style="margin-bottom: 18px;">Pick the one that fits best — you can change it later.</p>
+                </div>
+                <div class="intent-wrap" style="padding-top: 0;">
+                  <div class="intent-card sel" onclick="selectIntent(this)">
+                    <div class="icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    </div>
+                    <div class="body">
+                      <h3>Deliver with us</h3>
+                      <p>Rent an EV for logistics, delivery, or commercial needs. Hub support included.</p>
+                      <div class="meta">
+                        <span class="pill mint dot">Hub supported</span>
+                        <span class="pill amber">+ Bonus earnings</span>
+                      </div>
+                    </div>
+                    <div class="check-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  </div>
+
+                  <div class="intent-card" onclick="selectIntent(this)">
+                    <div class="icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/><path d="M3 9l3-5h12l3 5M3 9v6h2M21 9v6h-2M3 9h18"/></svg>
+                    </div>
+                    <div class="body">
+                      <h3>Personal usage</h3>
+                      <p>Daily commutes, weekend trips, or general city riding.</p>
+                      <div class="meta">
+                        <span class="pill brand dot">Flexible</span>
+                      </div>
+                    </div>
+                    <div class="check-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  </div>
+
+                  <div class="info-banner">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <div><strong style="color: var(--ink-900);">Heads up:</strong> KYC requirements vary based on your selection. Commercial riders may need extra documents.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s7')">
+                  Continue
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 7: RIDER ONBOARDING -->
+            <section class="screen" id="s7">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s6')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">07 / 13</div>
+                </div>
+                <div class="step-progress">
+                  <div class="seg done"></div>
+                  <div class="seg active"></div>
+                  <div class="seg"></div>
+                </div>
+                <span class="step-tag">Step 2 of 3 · Rider details</span>
+                <h1 class="form-title">Tell us about you</h1>
+                <p class="body" style="margin-bottom: 18px;">Just the basics. You can edit anything later from your profile.</p>
+
+                <div class="form-row">
+                  <div>
+                    <label class="field-label">First name</label>
+                    <div class="field"><input value="Arjun" placeholder="First name" /></div>
+                  </div>
+                  <div>
+                    <label class="field-label">Last name</label>
+                    <div class="field"><input value="Sharma" placeholder="Last name" /></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Email</label>
+                  <div class="field">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <input value="arjun.sharma@example.com" placeholder="you@email.com" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Father's name</label>
+                  <div class="field"><input value="Rajesh Sharma" placeholder="Father's name" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Mother's name</label>
+                  <div class="field"><input value="Sunita Sharma" placeholder="Mother's name" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Driving licence number</label>
+                  <div class="field"><input value="DL-0420110143" placeholder="DL number" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Driving licence (front &amp; back)</label>
+                  <div class="upload-area">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Tap to upload photos
+                    <span class="hint">JPG or PNG · Max 5 MB</span>
+                  </div>
+                  <div class="uploaded">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    dl_front.jpg uploaded
+                    <span class="x">✓</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s8')">
+                  Save &amp; continue
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 8: GUARANTOR -->
+            <section class="screen" id="s8">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s7')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">08 / 13</div>
+                </div>
+                <div class="step-progress">
+                  <div class="seg done"></div>
+                  <div class="seg done"></div>
+                  <div class="seg active"></div>
+                </div>
+                <span class="step-tag">Step 3 of 3 · Guarantor</span>
+                <h1 class="form-title">Add a guarantor</h1>
+                <p class="body" style="margin-bottom: 18px;">A family member or close contact. They’re not contacted unless it’s needed.</p>
+
+                <div class="form-group">
+                  <label class="field-label">Guarantor full name</label>
+                  <div class="field"><input value="Rajesh Sharma" placeholder="Full name" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Mobile number</label>
+                  <div class="field">
+                    <span class="prefix" style="border:0; padding: 0 4px 0 0;">+91</span>
+                    <input value="99887 76543" placeholder="Mobile number" style="font-family: 'JetBrains Mono', monospace;" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div>
+                    <label class="field-label">Father's name</label>
+                    <div class="field"><input value="Madan Sharma" placeholder="Father's name" /></div>
+                  </div>
+                  <div>
+                    <label class="field-label">Mother's name</label>
+                    <div class="field"><input value="Lata Sharma" placeholder="Mother's name" /></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Relationship</label>
+                  <div class="field" style="cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+                    <span style="flex:1; font-weight: 600; color: var(--ink-900);">Father</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Guarantor ID proof</label>
+                  <div class="upload-area">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Aadhaar / PAN
+                    <span class="hint">Front only is fine</span>
+                  </div>
+                </div>
+                <div class="accept-row" onclick="toggleAccept()">
+                  <div class="check on"></div>
+                  <span>My guarantor has consented to be on this application.</span>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s9')">
+                  Continue to plans
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 9: CHOOSE PLAN -->
+            <section class="screen" id="s9">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s8')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">09 / 13</div>
+                </div>
+                <h1 class="display">Pick a rental plan</h1>
+                <p class="body" style="margin-bottom: 18px;">Switch or cancel anytime. Billed from your wallet.</p>
+
+                <div class="plan-card" onclick="selectPlan(this)">
+                  <div class="head">
+                    <div><h3>Daily</h3><div class="sub">Best for short trips</div></div>
+                    <div class="price">₹299<small>/day</small></div>
+                  </div>
+                  <ul>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 24-hour access</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 100 km included</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Hub pick-up &amp; drop</li>
+                  </ul>
+                </div>
+                <div class="plan-card sel" onclick="selectPlan(this)">
+                  <div class="ribbon">Most popular</div>
+                  <div class="head">
+                    <div><h3>Weekly</h3><div class="sub">Best for gig work</div></div>
+                    <div class="price">₹1,799<small>/week</small></div>
+                  </div>
+                  <ul>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Save 14% vs daily</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 700 km + free swap</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 24/7 roadside support</li>
+                  </ul>
+                </div>
+                <div class="plan-card" onclick="selectPlan(this)">
+                  <div class="head">
+                    <div><h3>Monthly</h3><div class="sub">Best for full-time</div></div>
+                    <div class="price">₹5,999<small>/month</small></div>
+                  </div>
+                  <ul>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Save 30% vs daily</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 3,000 km + 2 free swaps</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Priority hub allocation</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s10')">
+                  Continue to wallet
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 10: WALLET TOP-UP -->
+            <section class="screen" id="s10">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s9')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">10 / 13</div>
+                </div>
+                <h1 class="display">Top up your wallet</h1>
+                <p class="body" style="margin-bottom: 18px;">A minimum of <strong style="color: var(--ink-900);">₹999</strong> is required before pickup. Covers deposits and rental fees.</p>
+
+                <div class="balance-card">
+                  <div class="top">
+                    <div class="label">Current balance</div>
+                    <span class="pill glass">Min ₹999</span>
+                  </div>
+                  <div class="amt">₹0<span style="font-size: 24px; opacity: 0.7;">.00</span></div>
+                  <div class="meta">
+                    <span class="chip">No top-ups yet</span>
+                  </div>
+                </div>
+
+                <div class="section-label">Quick top-up</div>
+                <div class="amt-grid">
+                  <div class="amt-chip" onclick="pickAmt(this)">₹999<span class="sub">Minimum</span></div>
+                  <div class="amt-chip sel" onclick="pickAmt(this)">₹1,999<span class="sub">+1% bonus</span></div>
+                  <div class="amt-chip" onclick="pickAmt(this)">₹4,999<span class="sub">+3% bonus</span></div>
+                </div>
+                <div class="field mt-12">
+                  <span style="font-weight: 800; color: var(--ink-700); font-family: 'Plus Jakarta Sans';">₹</span>
+                  <input value="1,999" placeholder="Or enter custom amount" style="font-family: 'JetBrains Mono', monospace;" />
+                </div>
+
+                <div class="section-label mt-20">Pay with</div>
+                <div class="pay-row sel" onclick="selectPay(this)">
+                  <div class="icon">U</div>
+                  <div class="body">UPI <small>PhonePe, GPay, Paytm</small></div>
+                  <div class="radio"></div>
+                </div>
+                <div class="pay-row" onclick="selectPay(this)">
+                  <div class="icon" style="background: var(--accent-amber-50); color: var(--accent-amber);">C</div>
+                  <div class="body">Card <small>Debit / Credit</small></div>
+                  <div class="radio"></div>
+                </div>
+                <div class="pay-row" onclick="selectPay(this)">
+                  <div class="icon" style="background: var(--accent-mint-50); color: var(--accent-mint);">N</div>
+                  <div class="body">Netbanking <small>All major banks</small></div>
+                  <div class="radio"></div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta dark" onclick="go('s11')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                  Pay ₹1,999 securely
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 11: PICKUP FORM -->
+            <section class="screen" id="s11">
+              <div class="scroll" style="padding: 8px 22px 110px;">
+                <div class="app-bar">
+                  <div class="icon-btn" onclick="go('s10')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </div>
+                  <div class="pill brand dot">11 / 13</div>
+                </div>
+                <div class="stepper">
+                  <div class="dot done">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div class="line done"></div>
+                  <div class="dot curr">2</div>
+                  <div class="line"></div>
+                  <div class="dot">3</div>
+                </div>
+                <span class="step-tag">Pickup · step 2 of 3</span>
+                <h1 class="form-title">Team leader details</h1>
+                <p class="body" style="margin-bottom: 18px;">Captured at the hub on pickup day.</p>
+
+                <div class="form-group">
+                  <label class="field-label">Team leader name</label>
+                  <div class="field"><input value="Vikram Iyer" placeholder="Full name" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Hub location</label>
+                  <div class="field">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <input value="Indiranagar Hub, Bengaluru" placeholder="Hub name" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Pickup date &amp; time</label>
+                  <div class="field">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <input value="Fri, 15 Aug · 10:00 AM" />
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#9198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="field-label">Vehicle photos</label>
+                  <p class="body" style="font-size: 11px; margin-bottom: 6px;">Front · Back · Left · Right · Odometer · Damage</p>
+                  <div class="photo-grid">
+                    <div class="photo-slot has">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <div class="x">×</div>
+                    </div>
+                    <div class="photo-slot has">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <div class="x">×</div>
+                    </div>
+                    <div class="photo-slot">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <div class="photo-slot">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <div class="photo-slot">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                    <div class="photo-slot">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta" onclick="go('s12')">
+                  Submit pickup
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </section>
+
+            <!-- SCREEN 12: WAIT FOR CONFIRMATION -->
+            <section class="screen" id="s12">
+              <div class="scroll" style="padding: 8px 0 110px;">
+                <div style="padding: 0 22px;">
+                  <div class="app-bar">
+                    <div class="icon-btn" onclick="go('s11')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    </div>
+                    <div class="pill brand dot">12 / 13</div>
+                  </div>
+                </div>
+                <div class="wait-wrap" style="padding-top: 0;">
+                  <div class="wait-hero">
+                    <div class="pulse-wrap">
+                      <div class="ring"></div>
+                      <div class="ring r2"></div>
+                      <div class="ring r3"></div>
+                      <div class="core">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </div>
+                    </div>
+                    <h1 class="display">Hang tight, Arjun!</h1>
+                    <p class="body" style="max-width: 280px; margin: 0 auto;">We’re reviewing your KYC and confirming your wallet top-up. Usually takes a few minutes — we’ll notify you.</p>
+                  </div>
+
+                  <div class="checklist">
+                    <div class="row">
+                      <div class="ic">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </div>
+                      <div class="body">
+                        <div class="name">KYC documents</div>
+                        <div class="status">In review · ETA 5–10 min</div>
+                      </div>
+                      <span class="pill amber dot">Pending</span>
+                    </div>
+                    <div class="row">
+                      <div class="ic">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </div>
+                      <div class="body">
+                        <div class="name">Wallet top-up</div>
+                        <div class="status">Awaiting payment confirmation</div>
+                      </div>
+                      <span class="pill amber dot">Pending</span>
+                    </div>
+                    <div class="row">
+                      <div class="ic ok">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div class="body">
+                        <div class="name">Profile &amp; guarantor</div>
+                        <div class="status">Verified</div>
+                      </div>
+                      <span class="pill mint dot">Done</span>
+                    </div>
+                    <div class="row">
+                      <div class="ic ok">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                      <div class="body">
+                        <div class="name">Rental plan</div>
+                        <div class="status">Weekly plan selected</div>
+                      </div>
+                      <span class="pill mint dot">Done</span>
+                    </div>
+                  </div>
+
+                  <div class="info-banner mt-16">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+                    <div>You’ll be moved to the active dashboard automatically once both KYC and wallet top-up are approved. No need to refresh.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-cta">
+                <button class="cta secondary" onclick="go('s13')">Preview dashboard</button>
+              </div>
+            </section>
+
+            <!-- SCREEN 13: ACTIVE DASHBOARD -->
+            <section class="screen" id="s13">
+              <div class="dash-hero">
+                <div class="top">
+                  <div>
+                    <div class="greet">Good morning,</div>
+                    <div class="name">Arjun Sharma</div>
+                    <div class="kyc-badge">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      KYC approved
+                    </div>
+                  </div>
+                  <div class="actions">
+                    <div class="ic" style="position: relative;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+                      <div class="dot"></div>
+                    </div>
+                    <div class="ic">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash-body">
+                <div class="balance-card dash-balance">
+                  <div class="row">
+                    <div>
+                      <div class="lbl">Wallet balance</div>
+                      <div class="val">₹1,847</div>
+                    </div>
+                    <div class="trend">
+                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                      +12%
+                    </div>
+                  </div>
+                  <div class="quick">
+                    <button class="qbtn">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Top up
+                    </button>
+                    <button class="qbtn alt">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      Withdraw
+                    </button>
+                    <button class="qbtn alt">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      Send
+                    </button>
+                  </div>
+                </div>
+
+                <div class="stat-grid">
+                  <div class="stat-card">
+                    <div class="top">
+                      <div class="ic" style="background: var(--accent-mint-50); color: var(--accent-mint);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                      </div>
+                    </div>
+                    <div class="lbl">Earnings</div>
+                    <div class="val">₹428</div>
+                    <div class="trend">+12% vs yesterday</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="top">
+                      <div class="ic" style="background: var(--accent-amber-50); color: var(--accent-amber);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+                      </div>
+                    </div>
+                    <div class="lbl">Rides</div>
+                    <div class="val">7</div>
+                    <div class="trend">+2 this morning</div>
+                  </div>
+                </div>
+
+                <div class="dash-section">
+                  <div class="head"><h4>This week</h4><a>Details</a></div>
+                  <div class="chart">
+                    <div class="b" data-d="Mon" style="height: 30%"></div>
+                    <div class="b" data-d="Tue" style="height: 55%"></div>
+                    <div class="b" data-d="Wed" style="height: 42%"></div>
+                    <div class="b" data-d="Thu" style="height: 70%"></div>
+                    <div class="b" data-d="Fri" style="height: 48%"></div>
+                    <div class="b hi" data-d="Sat" style="height: 92%"></div>
+                    <div class="b" data-d="Sun" style="height: 8%"></div>
+                  </div>
+                </div>
+
+                <div class="dash-section">
+                  <div class="head"><h4>Refer &amp; earn</h4><a>Invite</a></div>
+                  <div class="ref-row">
+                    <div class="avatar">PV</div>
+                    <div class="body"><div class="name">Priya Verma</div><div class="status">Joined 3 days ago</div></div>
+                    <div class="amt">+ ₹200</div>
+                  </div>
+                  <div class="ref-row">
+                    <div class="avatar" style="background: linear-gradient(135deg, var(--accent-amber) 0%, #FF7A00 100%);">RK</div>
+                    <div class="body"><div class="name">Rohit Kumar</div><div class="status">Signed up · awaiting first ride</div></div>
+                    <span class="pill slate">Pending</span>
+                  </div>
+                </div>
+              </div>
+              <div class="bottom-nav">
+                <div class="item active">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  Home
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15" r="2.5"/><circle cx="16.5" cy="15" r="2.5"/><path d="M3 9l3-5h12l3 5M3 9v6h2M21 9v6h-2M3 9h18"/></svg>
+                  Rides
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  Wallet
+                </div>
+                <div class="item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Profile
+                </div>
+              </div>
+            </section>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT RAIL: ANNOTATIONS -->
+      <aside class="notes" id="notes">
+        <h3 id="notesGroup">01 · Entry</h3>
+        <h2 id="notesTitle">Splash screen</h2>
+        <p class="desc" id="notesDesc">Full-bleed gradient with floating brand orbs and a sparkle field. Centered logo sits in a frosted tile, then a three-dot loader and a quiet version line at the bottom — no progress bar, just a confident breathing mark.</p>
+
+        <div class="meta">
+          <div class="cell"><small>Pattern</small><strong>Hero / reveal</strong></div>
+          <div class="cell"><small>Motion</small><strong>Loader pulse</strong></div>
+          <div class="cell"><small>Surface</small><strong>Gradient</strong></div>
+          <div class="cell"><small>Auto-advance</small><strong>Yes</strong></div>
+        </div>
+
+        <div class="changes">
+          <h4>Design upgrades</h4>
+          <ul id="changesList">
+            <li>Replaced flat blue with multi-stop <strong>radial gradient</strong> + violet orb bleed for depth.</li>
+            <li>Logo in a <strong>frosted tile</strong> with subtle border instead of solid block.</li>
+            <li>Removed progress bar — three-dot loader feels lighter and more on-brand.</li>
+            <li>Sparkle field animates in 4s loop for premium feel.</li>
+          </ul>
+        </div>
+
+        <div class="controls">
+          <button id="btnPrev" onclick="prev()">← Back</button>
+          <button class="primary" id="btnNext" onclick="next()">Next →</button>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      const meta = {
+        s1:  { group: "01 · Entry",        title: "Splash screen",          desc: "Full-bleed gradient with floating brand orbs and a sparkle field. Centered logo sits in a frosted tile, then a three-dot loader and a quiet version line at the bottom — no progress bar, just a confident breathing mark.", changes: ["Replaced flat blue with multi-stop radial gradient + violet orb bleed for depth.", "Logo in a frosted tile with subtle border instead of solid block.", "Removed progress bar — three-dot loader feels lighter and more on-brand.", "Sparkle field animates in 4s loop for premium feel."] },
+        s2:  { group: "01 · Entry",        title: "Permissions",             desc: "Hero illustration above the fold sets the tone, then each permission becomes a soft card with a colored icon, a required/optional tag, and a custom toggle. Continue is the only primary action — everything else is secondary.", changes: ["Required/optional rendered as floating pill tags on the icon.", "Custom toggle with brand-blue active state and smooth slide.", "Color-coded icons (brand / amber / mint / coral / violet) for visual rhythm.", "One hero illustration up top — removes the need for verbose copy."] },
+        s3:  { group: "01 · Entry",        title: "Legal consent",           desc: "Each document is a card with its own icon, last-updated date, and a chevron that rotates to expand the body. Accept becomes a soft, brand-tinted card with a spring-animated check.", changes: ["Accordion expansion is animated via max-height.", "Accept card flips from white to brand-tinted gradient when checked.", "Check uses spring animation on toggle.", "Hero illustration ties this screen to the permissions page."] },
+        s4:  { group: "02 · Authentication", title: "Welcome & mobile",      desc: "A blue gradient hero with a small badge, a confident headline, a one-line subhead, and social proof metrics at the bottom (riders + cities). The phone input lives on a card that overlaps the hero, lifting the form visually.", changes: ["Hero card overlaps the form for depth.", "Social-proof metrics (50k+ riders · 12 cities) build trust.", "Phone input uses monospace font for numeric clarity.", "Trusted-by logos give weight without real branding assets."] },
+        s5:  { group: "02 · Authentication", title: "OTP verification",      desc: "Bold display headline, a brand-tinted phone pill, six 46×58 boxes with a focus halo, and a resend timer. A violet tip banner adds a friendly moment — paste-from-SMS is real friction for first-time users.", changes: ["OTP boxes have a focus glow on the active field.", "Phone number shown as a brand-tinted pill, not raw text.", "Resend timer is brand-blue, not muted grey.", "Tip banner uses violet accent to add a soft moment."] },
+        s6:  { group: "03 · KYC",          title: "Intent of use",           desc: "Two large, illustrated cards. The selected card lifts off the page with a brand-blue gradient background, a glowing icon, and a brand-blue check pill on the right. Each card also carries small status pills (Hub supported, + Bonus earnings).", changes: ["Selected card uses a 4px brand accent rail on the right edge.", "Icon background flips to a brand gradient on selection.", "Status pills (Hub supported, Flexible, etc.) replace long copy.", "Check pill animates in with a brand-blue ring."] },
+        s7:  { group: "03 · KYC",          title: "Rider onboarding",        desc: "Step tag at the top, animated progress bar, then a 26px display title and a softer subhead. Inputs have a focus halo, an icon in some fields, and a friendly upload zone with a hint line.", changes: ["Step progress is animated, not just colored.", "Step tag is a brand-tinted pill — feels like a chapter.", "Upload hint includes file size / type to set expectations.", "Successful upload shows a mint check with a dismiss button."] },
+        s8:  { group: "03 · KYC",          title: "Guarantor onboarding",    desc: "Same form language as rider onboarding, but on step 3. The relationship field is a custom dropdown tile with a chevron. The guarantor consent checkbox uses the same spring-animated check.", changes: ["Step 3 of 3 — last leg of KYC.", "Relationship field is a custom tile, not a default select.", "Consent checkbox uses the same animated check.", "Form density is identical to step 2 for muscle memory."] },
+        s9:  { group: "04 · Plan & wallet", title: "Choose a rental plan",   desc: "Three plans. The popular one has an amber ribbon, a soft brand-tinted background, and a glowing border. Each plan has a heading, a one-line sub, a large price, and a tight feature list with mint check icons.", changes: ["Amber ribbon for the recommended plan replaces plain 'Popular' text.", "Sub copy says who the plan is best for (short trips, gig work, full-time).", "Selected plan lifts off the page with a brand-tinted fill.", "Feature list uses mint check icons for a friendly rhythm."] },
+        s10: { group: "04 · Plan & wallet", title: "Wallet top-up",          desc: "A premium gradient balance card with two orbs bleeding through, a current balance, and a 'Min ₹999' glass pill. Quick-amount chips have a small bonus badge. Payment methods have colored icon tiles that turn white-on-brand when selected.", changes: ["Balance card uses a triple gradient (brand-700 → 500 → 400) with two orbs.", "Bonus percentages show as mint pills on the chip corner.", "Payment method icons are color-coded (UPI / amber / mint) and flip white-on-brand when selected.", "Pay CTA is dark, not brand-blue, to signal 'final step'."] },
+        s11: { group: "05 · Pickup",       title: "Pickup form",             desc: "A three-step stepper with mint checkmarks for done, brand-blue current, and ink-grey for upcoming. Form fields are consistent with the rest of the app. Photo grid uses dashed slots that turn mint gradient when filled.", changes: ["Stepper uses mint checks for completed steps.", "Photo slots fill with a mint gradient and a check icon when uploaded.", "Date field is a custom tile with a calendar icon and chevron.", "Step tag at the top anchors the rider's mental model."] },
+        s12: { group: "06 · Approval gate", title: "Wait for confirmation",  desc: "An animated pulse ring sits behind a glowing brand core. Below it: a checklist with mint checks for done, amber for pending. A violet info banner explains the auto-transition so the rider doesn't think the app is stuck.", changes: ["Three concentric pulse rings animate around a brand core.", "Checklist icons use mint (done) and amber (pending) — not just grey.", "Auto-transition copy is in a violet info banner for visual variety.", "Soft shadow on the checklist card lifts it off the background."] },
+        s13: { group: "07 · Active",       title: "Active dashboard",        desc: "Blue gradient hero with greeting + KYC-approved badge. The wallet card overlaps the hero with a top-up / withdraw / send quick-action row. Stats, weekly chart, and a referral card follow. Bottom nav has the active item tinted in a brand pill.", changes: ["Wallet card overlaps the hero, with quick actions (Top up, Withdraw, Send).", "Stats cards use a colored icon tile that matches the metric.", "Weekly chart uses a brand gradient on the active day only.", "Bottom nav active state is a brand-blue pill, not just a color change."] }
+      };
+      const order = ["s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","s12","s13"];
+      let current = "s1";
+
+      function go(id) {
+        document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        current = id;
+        sync();
+      }
+      function next() {
+        const i = order.indexOf(current);
+        if (i < order.length - 1) go(order[i+1]);
+      }
+      function prev() {
+        const i = order.indexOf(current);
+        if (i > 0) go(order[i-1]);
+      }
+      function sync() {
+        const m = meta[current];
+        document.getElementById("notesGroup").textContent = m.group;
+        document.getElementById("notesTitle").textContent = m.title;
+        document.getElementById("notesDesc").textContent = m.desc;
+        document.getElementById("crumb").textContent = m.title;
+        const i = order.indexOf(current);
+        document.getElementById("progress").textContent = `${String(i+1).padStart(2,"0")} / ${String(order.length).padStart(2,"0")}`;
+        document.getElementById("progressFill").style.width = `${((i+1)/order.length)*100}%`;
+        const list = document.getElementById("changesList");
+        list.innerHTML = "";
+        m.changes.forEach(c => { const li = document.createElement("li"); li.innerHTML = c; list.appendChild(li); });
+        document.querySelectorAll(".rail .step").forEach(el => el.classList.remove("active"));
+        document.querySelector(`.rail .step[data-target="${current}"]`).classList.add("active");
+        document.getElementById("btnPrev").disabled = i === 0;
+        document.getElementById("btnNext").disabled = i === order.length - 1;
+      }
+
+      document.querySelectorAll(".rail .step").forEach(el => {
+        el.addEventListener("click", () => go(el.dataset.target));
+      });
+      document.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight") next();
+        if (e.key === "ArrowLeft") prev();
+      });
+
+      // helpers
+      function toggleDoc(id) { document.getElementById(id).classList.toggle("open"); }
+      function toggleAccept() {
+        const box = document.getElementById("acceptBox");
+        const check = box.querySelector(".check");
+        check.classList.toggle("on");
+        box.classList.toggle("on", check.classList.contains("on"));
+      }
+      function selectIntent(card) {
+        card.parentElement.querySelectorAll(".intent-card").forEach(c => c.classList.remove("sel"));
+        card.classList.add("sel");
+      }
+      function selectPlan(card) {
+        card.parentElement.querySelectorAll(".plan-card").forEach(c => c.classList.remove("sel"));
+        card.classList.add("sel");
+      }
+      function pickAmt(chip) {
+        chip.parentElement.querySelectorAll(".amt-chip").forEach(c => c.classList.remove("sel"));
+        chip.classList.add("sel");
+      }
+      function selectPay(row) {
+        row.parentElement.querySelectorAll(".pay-row").forEach(c => c.classList.remove("sel"));
+        row.classList.add("sel");
+      }
+      function toggle(el) { el.classList.toggle("on"); }
+
+      sync();
+    </script>
+  </body>
+</html>

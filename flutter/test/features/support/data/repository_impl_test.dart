@@ -133,62 +133,37 @@ void main() {
       );
     });
 
-    // getSupportChat
-    test('getSupportChat calls API and returns data', () async {
-      final mockData = {'messages': []};
-      when(() => mockVoltiumApiClient.getSupportChat())
-          .thenAnswer((_) async => mockData);
+    // PR-VER-2026-08-06 (SUPPORT P0-4): the ticket photo URL flows through
+    // to the request payload as `attachments`.
+    test('createTicket forwards attachments to the request', () async {
+      when(() => mockVoltiumApiClient.postSupportTickets(any()))
+          .thenAnswer((_) async => TicketResponse(id: 't3'));
 
-      final result = await repository.getSupportChat();
-      expect(result, mockData);
-      verify(() => mockVoltiumApiClient.getSupportChat()).called(1);
-    });
-
-    test('getSupportChat propagates API exception', () async {
-      when(() => mockVoltiumApiClient.getSupportChat())
-          .thenThrow(Exception('Chat error'));
-
-      expect(() => repository.getSupportChat(), throwsException);
-    });
-
-    test('getSupportChat handles missing keys gracefully', () async {
-      when(() => mockVoltiumApiClient.getSupportChat())
-          .thenAnswer((_) async => {'foo': 'bar'});
-      final result = await repository.getSupportChat();
-      expect(result['messages'], null);
-      expect(result['foo'], 'bar');
-    });
-
-    // sendChatMessage
-    test('sendChatMessage sends payload correctly', () async {
-      when(() => mockVoltiumApiClient.postSupportChat(any()))
-          .thenAnswer((_) async => {});
-
-      await repository.sendChatMessage('Hello there');
+      await repository.createTicket(
+          'VEHICLE', 'Broken mirror', 'It snapped off.',
+          riderId: 'rider-1',
+          priority: 'MEDIUM',
+          attachments: '/api/files/ticket-1.png');
 
       final captured =
-          verify(() => mockVoltiumApiClient.postSupportChat(captureAny()))
+          verify(() => mockVoltiumApiClient.postSupportTickets(captureAny()))
               .captured;
-      final payload = captured.first as Map<String, dynamic>;
-      expect(payload['message'], 'Hello there');
+      final request = captured.first as CreateTicketRequest;
+      expect(request.attachments, '/api/files/ticket-1.png');
     });
 
-    test('sendChatMessage throws when API throws', () async {
-      when(() => mockVoltiumApiClient.postSupportChat(any()))
-          .thenThrow(Exception('Send chat error'));
+    test('createTicket omits attachments when not provided', () async {
+      when(() => mockVoltiumApiClient.postSupportTickets(any()))
+          .thenAnswer((_) async => TicketResponse(id: 't4'));
 
-      expect(() => repository.sendChatMessage('Hi'), throwsException);
-    });
+      await repository.createTicket(
+          'PAYMENT', 'Refund query', 'Where is my refund?');
 
-    test('sendChatMessage supports empty string', () async {
-      when(() => mockVoltiumApiClient.postSupportChat(any()))
-          .thenAnswer((_) async => {});
-
-      await repository.sendChatMessage('');
       final captured =
-          verify(() => mockVoltiumApiClient.postSupportChat(captureAny()))
+          verify(() => mockVoltiumApiClient.postSupportTickets(captureAny()))
               .captured;
-      expect((captured.first as Map)['message'], '');
+      final request = captured.first as CreateTicketRequest;
+      expect(request.attachments, isNull);
     });
   });
 }

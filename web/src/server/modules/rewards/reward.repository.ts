@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const rewardRepository = {
   async findAllPaginated(params: { search?: string | null; page: number; limit: number }) {
     const { search, page, limit } = params;
-    const where: any = {};
+    const where: Prisma.RewardWhereInput = {};
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -23,7 +24,7 @@ export const rewardRepository = {
       db.reward.count({ where }),
     ]);
 
-    const formatted = rewards.map((r: any) => ({
+    const formatted = rewards.map((r) => ({
       id: r.id,
       riderName: r.rider.fullName || 'Unknown',
       riderId: r.rider.riderId,
@@ -39,25 +40,48 @@ export const rewardRepository = {
   },
 
   async getSummary() {
-    const allRewards = await db.reward.findMany({
-      select: { points: true, createdAt: true, riderId: true },
-    });
-    const totalPoints = allRewards.reduce((sum: number, r: any) => sum + r.points, 0);
-    const uniqueRiders = new Set(allRewards.map((r: any) => r.riderId)).size;
-    const now = new Date();
-    const thisMonth = allRewards.filter((r: any) => {
-      const d = new Date(r.createdAt);
-      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    });
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [totalStats, uniqueRidersCount, thisMonthStats] = await Promise.all([
+      db.reward.aggregate({
+        _sum: { points: true },
+      }),
+      db.reward.groupBy({
+        by: ['riderId'],
+      }),
+      db.reward.aggregate({
+        where: { createdAt: { gte: startOfMonth } },
+        _sum: { points: true },
+        _count: true,
+      }),
+    ]);
+
     return {
-      totalPoints,
-      uniqueRiders,
-      thisMonthCount: thisMonth.length,
-      thisMonthPoints: thisMonth.reduce((s: number, r: any) => s + r.points, 0),
+      totalPoints: totalStats._sum.points || 0,
+      uniqueRiders: uniqueRidersCount.length,
+      thisMonthCount: thisMonthStats._count || 0,
+      thisMonthPoints: thisMonthStats._sum.points || 0,
     };
   },
 
-  async create(data: Record<string, unknown>) {
-    return db.reward.create({ data: data as any });
+  async findById(id: string) {
+    return db.reward.findUnique({
+      where: { id },
+      include: { rider: { select: { fullName: true, riderId: true } } },
+    });
+  },
+
+  async create(data: Prisma.RewardCreateInput) {
+    return db.reward.create({ data });
+  },
+
+  async delete(id: string) {
+    return db.reward.delete({ where: { id } });
+  },
+
+  async update(id: string, data: Prisma.RewardUpdateInput) {
+    return db.reward.update({ where: { id }, data });
   },
 };

@@ -35,13 +35,13 @@ export function AnalyticsKpiCards({ overview }: { overview: AnalyticsOverview })
     {
       label: 'Avg Revenue/Rider',
       value: formatINR(overview.avgRevenuePerRider),
-      change: overview.mrrGrowth > 0 ? 5 : -2,
+      change: overview.mrrGrowth,
       icon: Users,
     },
     {
       label: 'Collection Efficiency',
       value: `${overview.collectionEfficiency.toFixed(1)}%`,
-      change: overview.collectionEfficiency > 80 ? 3 : -5,
+      change: overview.collectionEfficiency >= 80 ? Math.round(overview.collectionEfficiency - 80) : Math.round(overview.collectionEfficiency - 80),
       icon: Percent,
     },
   ];

@@ -28,47 +28,6 @@ void main() {
   });
 
   group('WalletRepositoryImpl', () {
-    // getWallet tests
-    test('getWallet calls getRiderDashboard and maps to WalletEntity',
-        () async {
-      final mockResponse = {
-        'balanceInPaise': 150050,
-      };
-      when(() => mockVoltiumApiClient.getRiderDashboard())
-          .thenAnswer((_) async => mockResponse);
-
-      final result = await repository.getWallet('rider-123');
-
-      expect(result.balanceInRupees, 1500.5);
-      verify(() => mockVoltiumApiClient.getRiderDashboard()).called(1);
-    });
-
-    test('getWallet handles zero balance correctly', () async {
-      final mockResponse = {'balanceInPaise': 0};
-      when(() => mockVoltiumApiClient.getRiderDashboard())
-          .thenAnswer((_) async => mockResponse);
-
-      final result = await repository.getWallet('rider-123');
-      expect(result.balanceInRupees, 0.0);
-    });
-
-    test('getWallet handles null balance correctly by defaulting to 0',
-        () async {
-      final mockResponse = <String, dynamic>{};
-      when(() => mockVoltiumApiClient.getRiderDashboard())
-          .thenAnswer((_) async => mockResponse);
-
-      final result = await repository.getWallet('rider-123');
-      expect(result.balanceInRupees, 0.0);
-    });
-
-    test('getWallet propagates API exception', () async {
-      when(() => mockVoltiumApiClient.getRiderDashboard())
-          .thenThrow(Exception('Dashboard Error'));
-
-      expect(() => repository.getWallet('r1'), throwsException);
-    });
-
     // submitTopup tests
     test('submitTopup delegates to postTransactionTopup with mapped request',
         () async {
@@ -77,7 +36,9 @@ void main() {
 
       final request = TopupRequest(
         riderId: 'r1',
-        amount: 500,
+        // PR-RUPEES-2026-08-08: the field is `amountInRupees`. The value
+        // `500` is in rupees (₹500) — no /100 here.
+        amountInRupees: 500,
         method: 'UPI',
         purpose: 'TOP_UP',
         upiRef: 'ref1',
@@ -104,7 +65,10 @@ void main() {
           .thenAnswer((_) async => api.TopupResponse(id: null));
 
       final request = TopupRequest(
-          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -113,7 +77,10 @@ void main() {
           .thenAnswer((_) async => api.TopupResponse(id: ''));
 
       final request = TopupRequest(
-          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -122,7 +89,10 @@ void main() {
           .thenThrow(Exception('Topup error'));
 
       final request = TopupRequest(
-          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -131,7 +101,10 @@ void main() {
           .thenAnswer((_) async => api.TopupResponse(id: 'tx-123'));
 
       final request = TopupRequest(
-          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
       await repository.submitTopup(request);
       final captured =
           verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
@@ -197,33 +170,6 @@ void main() {
           .thenThrow(Exception('History error'));
 
       expect(() => repository.getTransactionHistory('r1'), throwsException);
-    });
-
-    // deleteTransactionHistory tests
-    test('deleteTransactionHistory calls ApiClient.delete on correct endpoint',
-        () async {
-      when(() => mockApiClient.delete(any()))
-          .thenAnswer((_) async => {'success': true});
-
-      await repository.deleteTransactionHistory('r1');
-      verify(() => mockApiClient.delete('/api/transaction/history')).called(1);
-    });
-
-    test('deleteTransactionHistory propagates exception on failure', () async {
-      when(() => mockApiClient.delete(any()))
-          .thenThrow(Exception('Delete failed'));
-
-      expect(() => repository.deleteTransactionHistory('r1'), throwsException);
-    });
-
-    test(
-        'deleteTransactionHistory handles missing API response gracefully if no return required',
-        () async {
-      when(() => mockApiClient.delete(any()))
-          .thenAnswer((_) async => <String, dynamic>{});
-
-      await repository.deleteTransactionHistory('r1');
-      verify(() => mockApiClient.delete('/api/transaction/history')).called(1);
     });
   });
 }

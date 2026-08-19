@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -32,15 +33,23 @@ class OtpResendWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final title = l10n?.txtdidntReceiveCode ?? "DIDN'T RECEIVE THE CODE?";
+    final resendText = _canResend
+        ? (l10n?.txtresendCode ?? 'Resend Code')
+        : (l10n?.txtresendIn(remainingSeconds) ??
+            'Resend in ${remainingSeconds}s');
+
     return Column(
       children: [
         Text(
-          "DIDN'T RECEIVE THE CODE?",
+          title,
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w800)
               .copyWith(
                 letterSpacing: 1.2,
-                color: AppColors.onSurfaceVariant,
+                color: colors.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 8),
@@ -50,13 +59,12 @@ class OtpResendWidget extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             child: Text(
-              _canResend ? 'Resend Code' : 'Resend in ${remainingSeconds}s',
+              resendText,
               style: AppTypography.labelLarge
                   .copyWith(fontWeight: FontWeight.w700)
                   .copyWith(
-                    color: _canResend
-                        ? AppColors.primary
-                        : AppColors.onSurfaceDisabled,
+                    color:
+                        _canResend ? AppColors.primary : colors.onSurfaceMuted,
                   ),
             ),
           ),

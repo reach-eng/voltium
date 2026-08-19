@@ -4,6 +4,13 @@ import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { toRupeesResponse } from '@/lib/api-money';
+
+// PR-RUPEES-2026-08-08: thresholds are in paise (DB unit). They are
+// converted to rupees at the response boundary (the API exposes
+// rupee values to admin clients). See `OVERDUE_BALANCE_INR` etc.
+const OVERDUE_BALANCE_PAISE = -50000; // -500 INR
+const HEALTHY_BALANCE_PAISE = 0;
 
 export async function GET(
   req: NextRequest,
@@ -28,27 +35,26 @@ export async function GET(
 
     // Fetch all riders assigned to this team leader
     const riders = await db.rider.findMany({
-      where: { teamLeader: id },
+      where: { teamLeaderId: id },
       select: {
         id: true,
         riderId: true,
         fullName: true,
         phone: true,
         lifecycleStatus: true,
-        hubId: true,
       }
     });
 
     const riderIds = riders.map((r: { id: string }) => r.id);
     
-    const [wallets, rentals] = await Promise.all([
+    const [wallets, rentalLeases] = await Promise.all([
       db.wallet.findMany({
         where: { riderId: { in: riderIds } },
-        select: { riderId: true, balance: true }
+        select: { riderId: true, balanceInPaise: true }
       }),
-      db.rental.findMany({
-        where: { riderId: { in: riderIds }, status: 'ACTIVE' },
-        select: { riderId: true, overdueAmount: true }
+      db.rentalLease.findMany({
+        where: { riderId: { in: riderIds } },
+        select: { riderId: true, status: true, nextRentDueAt: true, finalPriceInPaise: true }
       })
     ]);
 
@@ -59,19 +65,25 @@ export async function GET(
     let overdueScooterCount = 0;
 
     const walletMap = new Map<string, number>();
-    wallets.forEach((w: { riderId: string; balance: number }) => walletMap.set(w.riderId, w.balance));
+    wallets.forEach((w: { riderId: string; balanceInPaise: number }) => walletMap.set(w.riderId, w.balanceInPaise));
 
     const rentalMap = new Map<string, number>();
-    rentals.forEach((r: { riderId: string; overdueAmount: number }) => rentalMap.set(r.riderId, r.overdueAmount));
+    rentalLeases.forEach((r: { riderId: string; status: string; nextRentDueAt: Date | null; finalPriceInPaise: number }) => {
+      const isOverdue = r.status === 'OVERDUE' || (r.nextRentDueAt != null && r.nextRentDueAt < new Date());
+      if (isOverdue) {
+        const current = rentalMap.get(r.riderId) || 0;
+        rentalMap.set(r.riderId, current + r.finalPriceInPaise);
+      }
+    });
 
     const enrichedRiders = riders.map((rider: any) => {
       const balance = walletMap.get(rider.id) || 0;
       const overdueRentalAmount = rentalMap.get(rider.id) || 0;
       
       const isChurned = rider.lifecycleStatus === 'CLOSED' || rider.lifecycleStatus === 'SUSPENDED';
-      const isOverdue = balance < -10000; // -100 Rs
-      const isUpcoming = balance >= -10000 && balance < 50000; // e.g., slightly low balance
-      const isTimely = balance >= 50000 && rider.lifecycleStatus === 'ACTIVE'; // good balance
+      const isOverdue = balance < OVERDUE_BALANCE_PAISE;
+      const isUpcoming = balance >= OVERDUE_BALANCE_PAISE && balance < HEALTHY_BALANCE_PAISE;
+      const isTimely = balance >= HEALTHY_BALANCE_PAISE && rider.lifecycleStatus === 'ACTIVE';
       const hasOverdueScooter = overdueRentalAmount > 0;
 
       if (isChurned) churnedCount++;
@@ -82,7 +94,11 @@ export async function GET(
 
       return {
         ...rider,
-        balance,
+        // PR-RUPEES-2026-08-08: `balance` is exposed in rupees to admin
+        // clients. Internally `balance` is paise (from the wallet
+        // table). The `isOverdue` / `isTimely` flags are still computed
+        // against the paise thresholds above.
+        balance: balance / 100,
         isChurned,
         isOverdue,
         isTimely,
@@ -107,3 +123,4 @@ export async function GET(
     return errors.internal('Failed to fetch team leader riders');
   }
 }
+

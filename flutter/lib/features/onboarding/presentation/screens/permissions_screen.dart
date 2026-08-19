@@ -3,9 +3,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 import '../../../../core/platform/platform_info.dart';
 
@@ -14,32 +16,13 @@ import 'package:voltium_rider/theme/app_typography.dart';
 
 class _PermissionItem {
   final String id;
-  final String name;
-  final String description;
   final IconData icon;
-
-  /// Optional clarifying tooltip shown as an info icon on the tile
-  /// (PR-VER-2026-08-06 ONBOARDING P0-2 residual): the `phone` tile
-  /// maps to Android `READ_PHONE_STATE` — call-state detection, not
-  /// call history. The tooltip makes the difference explicit so the
-  /// tile doesn't mislead riders.
-  final String? tooltip;
-
-  /// Whether the user MUST grant this permission to proceed past the
-  /// permissions screen. PR-VER-2026-08-07 (ONBOARDING P0-2 residual):
-  /// only the three core permissions gate onboarding — location, camera,
-  /// notifications. Battery (Android Settings, 5+ taps), phone state,
-  /// contacts, mic, and device-admin gate individual features but no
-  /// longer block signup.
   final bool isRequired;
   bool isEnabled;
 
   _PermissionItem({
     required this.id,
-    required this.name,
-    required this.description,
     required this.icon,
-    this.tooltip,
     this.isRequired = true,
   }) : isEnabled = false;
 }
@@ -60,56 +43,38 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   final List<_PermissionItem> _permissions = [
     _PermissionItem(
       id: 'location',
-      name: 'Location',
-      description: 'Track rides and find nearby vehicles',
       icon: Icons.location_on_outlined,
     ),
     _PermissionItem(
       id: 'notifications',
-      name: 'Notifications',
-      description: 'Receive important updates and alerts',
       icon: Icons.notifications_active_outlined,
     ),
     _PermissionItem(
       id: 'battery',
-      name: 'Battery Optimization',
-      description: 'Allow the app to run reliably in the background.',
       icon: Icons.battery_saver_outlined,
       isRequired: false,
     ),
     _PermissionItem(
       id: 'camera',
-      name: 'Camera',
-      description: 'Document upload and QR scanning',
       icon: Icons.camera_alt_outlined,
     ),
     _PermissionItem(
       id: 'phone',
-      name: 'Phone State',
-      description: 'Phone state (for safety call detection)',
       icon: Icons.phone_outlined,
-      tooltip: 'Reads call state (incoming/outgoing) so ride-safety features '
-          'can detect emergency calls — it never reads call history or contacts.',
       isRequired: false,
     ),
     _PermissionItem(
       id: 'contacts',
-      name: 'Contacts',
-      description: 'Access contacts for emergency SOS and referrals',
       icon: Icons.contacts_outlined,
       isRequired: false,
     ),
     _PermissionItem(
       id: 'mic',
-      name: 'Microphone',
-      description: 'Required for audio recording and verification',
       icon: Icons.mic_outlined,
       isRequired: false,
     ),
     _PermissionItem(
       id: 'device_admin',
-      name: 'Device Admin',
-      description: 'Required for fleet security and remote lock features',
       icon: Icons.security_outlined,
       isRequired: false,
     ),
@@ -166,6 +131,61 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       default:
         return null;
     }
+  }
+
+  String _getPermName(BuildContext context, String id) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (id) {
+      case 'location':
+        return l10n.txtlocationPermName;
+      case 'notifications':
+        return l10n.txtnotificationsPermName;
+      case 'battery':
+        return l10n.txtbatteryPermName;
+      case 'camera':
+        return l10n.txtcameraPermName;
+      case 'phone':
+        return l10n.txtphonePermName;
+      case 'contacts':
+        return l10n.txtcontactsPermName;
+      case 'mic':
+        return l10n.txtmicPermName;
+      case 'device_admin':
+        return l10n.txtdeviceAdminPermName;
+      default:
+        return id;
+    }
+  }
+
+  String _getPermDesc(BuildContext context, String id) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (id) {
+      case 'location':
+        return l10n.txtlocationPermDesc;
+      case 'notifications':
+        return l10n.txtnotificationsPermDesc;
+      case 'battery':
+        return l10n.txtbatteryPermDesc;
+      case 'camera':
+        return l10n.txtcameraPermDesc;
+      case 'phone':
+        return l10n.txtphonePermDesc;
+      case 'contacts':
+        return l10n.txtcontactsPermDesc;
+      case 'mic':
+        return l10n.txtmicPermDesc;
+      case 'device_admin':
+        return l10n.txtdeviceAdminPermDesc;
+      default:
+        return '';
+    }
+  }
+
+  String? _getPermTooltip(BuildContext context, String id) {
+    if (id == 'phone') {
+      return AppLocalizations.of(context)!.txtphonePermTooltip;
+    }
+    return null;
   }
 
   Future<void> _checkInitialStatuses() async {
@@ -237,12 +257,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           if (accuracy != LocationAccuracyStatus.precise) {
             status = PermissionStatus.denied;
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Precise location is required. Please enable it in Settings.'),
-                  backgroundColor: AppColors.error,
-                ),
+              Toast.error(
+                context,
+                AppLocalizations.of(context)!.txtpreciseLocationRequired,
               );
             }
             await openAppSettings();
@@ -294,6 +311,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   @override
   Widget build(BuildContext context) {
     final devPolicy = ref.watch(devicePolicyProvider);
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     // Sync reactive state to local list
     for (var p in _permissions) {
@@ -301,7 +320,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceHover,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -311,22 +330,20 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Text(
-                      'Permissions',
+                      l10n.txtpermissionsTitle,
                       style: AppTypography.headingLarge.copyWith(
-                          // DARK-MODE-AUDIT 2026-08-14 P0-7:
-                          // same `slate800` issue — read
-                          // from the theme.
-                          color: AppColors.of(context).onSurface,
-                          letterSpacing: -0.5),
+                        color: colors.onSurface,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      'Please allow the following permissions to ensure safety and functionality.',
+                      l10n.txtpermissionsSubtitle,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: AppColors.slate600,
+                        color: colors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -364,20 +381,19 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   }
 
   Widget _buildPermissionCard(_PermissionItem perm) {
+    final colors = AppColors.of(context);
+    final name = _getPermName(context, perm.id);
+    final description = _getPermDesc(context, perm.id);
+    final tooltip = _getPermTooltip(context, perm.id);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.of(context).surfaceSubtle),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
@@ -394,7 +410,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
               size: 24,
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,31 +419,31 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                   children: [
                     Flexible(
                       child: Text(
-                        perm.name,
+                        name,
                         style: AppTypography.labelLarge
-                            .copyWith(color: AppColors.slate900),
+                            .copyWith(color: colors.onSurface),
                       ),
                     ),
-                    if (perm.tooltip != null) ...[
+                    if (tooltip != null) ...[
                       const SizedBox(width: 6),
                       Tooltip(
-                        message: perm.tooltip!,
+                        message: tooltip,
                         triggerMode: TooltipTriggerMode.tap,
-                        child: const Icon(
+                        child: Icon(
                           Icons.info_outline,
                           size: 16,
-                          color: AppColors.onSurfaceVariant,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ],
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  perm.description,
+                  description,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -441,6 +457,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   }
 
   Widget _buildToggle(_PermissionItem perm) {
+    final colors = AppColors.of(context);
     return GestureDetector(
         key: Key('allow${perm.id.capitalize()}Button'),
         onTap: () => _togglePermission(perm),
@@ -452,8 +469,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             width: 48,
             height: 24,
             decoration: BoxDecoration(
-              color:
-                  perm.isEnabled ? AppColors.primary : AppColors.borderDefault,
+              color: perm.isEnabled
+                  ? AppColors.primary
+                  : colors.outline.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Stack(
@@ -487,6 +505,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   }
 
   Widget _buildFooter() {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
     // Only required permissions gate the Continue button. Battery
     // optimization is optional (see _PermissionItem.isRequired).
     final allRequiredGranted =
@@ -497,7 +518,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -520,32 +541,22 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           decoration: BoxDecoration(
             color: canProceed
                 ? AppColors.primary
-                : AppColors.of(context).borderSubtle,
+                : colors.outline.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: canProceed
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
+            boxShadow: canProceed ? AppShadows.primaryButton : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Continue',
+                l10n.txtcontinue,
                 style: AppTypography.titleSmall.copyWith(
-                    color: canProceed
-                        ? Colors.white
-                        : AppColors.onSurfaceDisabled),
+                    color: canProceed ? Colors.white : colors.onSurfaceMuted),
               ),
               const SizedBox(width: 8),
               Icon(
                 Icons.arrow_forward,
-                color: canProceed ? Colors.white : AppColors.onSurfaceDisabled,
+                color: canProceed ? Colors.white : colors.onSurfaceMuted,
                 size: 20,
               ),
             ],

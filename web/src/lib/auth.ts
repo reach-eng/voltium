@@ -13,7 +13,7 @@ import { logger } from './logger';
 import { db } from './db';
 import { getOrSetResponse } from './cache';
 
-import { type SessionPayload } from './permissions';
+import { parsePermissions, type SessionPayload } from './permissions';
 export { ADMIN_ROLES, type AdminRole, type SessionPayload } from './permissions';
 
 // Session cookie configuration
@@ -40,6 +40,16 @@ export const SESSION_COOKIE_OPTIONS = {
 const ACTUAL_SECRET = new TextEncoder().encode(env.JWT_SECRET);
 const ACCESS_TOKEN_TTL = '2h';
 const REFRESH_TOKEN_TTL = '30d';
+
+// P1-12: the numeric TTL the refresh route reports back to clients. Keep in
+// sync with ACCESS_TOKEN_TTL ('2h') above — the old hardcoded 3600s lied
+// about the real 2-hour expiry.
+export const ACCESS_TOKEN_TTL_SECONDS = 2 * 60 * 60;
+
+// P1-8: admin JWTs have no phone number. A literal marker is used instead of
+// the admin's email so rider-shaped consumers (e.g. getRiderPhone, phone
+// logging) can never surface an admin's email address.
+export const ADMIN_SESSION_PHONE_MARKER = 'admin';
 
 // ── Token creation ──────────────────────────────────────────────────────────
 
@@ -122,12 +132,8 @@ interface VoltiumJwtPayload extends JWTPayload {
 
 /**
  * Verify and decode a session/refresh token.
- * The second parameter (context) is unused — kept for backward compatibility.
  */
-export async function verifySessionToken(
-  token: string,
-  _context?: string
-): Promise<SessionPayload | null> {
+export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     if (!token || typeof token !== 'string') {
       return null;
@@ -144,49 +150,62 @@ export async function verifySessionToken(
       return null;
     }
 
+    // P2-12: tokens minted before the tokenVersion field was added default
+    // to 1. That matches the default DB value (also 1), so legacy tokens stay
+    // valid; only admins backfilled to a different version need a refresh.
     const tokenVersion = decoded.tokenVersion ?? 1;
     let currentVersion: number | null = 1;
+    let adminDbError = false;
 
     try {
       if (decoded.role === 'admin') {
+        // P2-11: admin tokens are minted with adminId === riderDbId (P1-15),
+        // so the fallback only matters for pre-refactor legacy tokens — the
+        // DB id is identical either way.
         const adminId = decoded.adminId || decoded.riderDbId;
-        const cached = await getOrSetResponse(
-          `token_version:admin:${adminId}`,
-          async () => {
-            const admin = await db.admin.findUnique({
-              where: { id: adminId },
-              select: { tokenVersion: true, isActive: true, role: true, permissions: true },
-            });
-            return {
-              tokenVersion: admin?.tokenVersion ?? 1,
-              isActive: admin?.isActive ?? true,
-              role: admin?.role ?? null,
-              permissions: admin?.permissions ?? null,
-            };
-          },
-          30
-        );
-        if (!cached) return null;
-        currentVersion = cached.tokenVersion;
+        // P0-5 (audit #1): the 30s→5s cache still left a window where a
+        // deactivated (or compromised-and-detected) admin kept valid sessions.
+        // The admin check is now an UNcached fresh read every request: isActive
+        // takes effect immediately, and a demotion/permission edit applies to
+        // already-issued tokens on the very next request. The admin API surface
+        // is low-TPS, so one indexed lookup per request is cheap compared to a
+        // security window. (Riders keep the 30s cache below — no privileged
+        // surface, documented trade-off.)
+        const admin = await db.admin.findUnique({
+          where: { id: adminId },
+          select: { tokenVersion: true, isActive: true, role: true, permissions: true },
+        });
+        if (!admin) return null;
+        currentVersion = admin.tokenVersion;
 
-        if (!cached.isActive) {
+        if (!admin.isActive) {
           logger.info('[Auth] Admin is deactivated. Token rejected.', { adminId });
           return null;
         }
 
-        if (cached.role && cached.role !== decoded.adminRole) {
-          decoded.adminRole = cached.role;
+        // P1-18: fresh role/permissions from the same uncached read — a
+        // demotion or permission edit applies to already-issued tokens
+        // immediately. The JWT payload is mutated server-side only; the
+        // client's copy is refreshed on the next /me or refresh call.
+        if (admin.role && admin.role !== decoded.adminRole) {
+          decoded.adminRole = admin.role;
         }
 
-        if (cached.permissions) {
-          try {
-            decoded.adminPermissions = JSON.parse(cached.permissions);
-          } catch {
-            // ignore parse errors
-          }
+        if (admin.permissions) {
+          // P3-19 follow-up: the column is TEXT[] (migration 20260730000000),
+          // so Prisma returns a real string[] — JSON.parse coerces arrays to a
+          // comma-joined string, always throws, and silently fell back to
+          // role-derived permissions. The shared parser handles arrays and
+          // legacy JSON strings alike, so explicit per-admin permissions now
+          // actually reach the JWT.
+          decoded.adminPermissions = parsePermissions(admin.permissions);
         }
       } else {
         const riderDbId = decoded.riderDbId;
+        // P2-14: riders keep a 30s cache (same race window the admin path
+        // had before P0-5). Riders have no privileged surface, so a revoked
+        // rider token being usable for up to 30s is accepted in exchange for
+        // 6× fewer DB hits than the admin path.
         currentVersion = await getOrSetResponse(
           `token_version:rider:${riderDbId}`,
           async () => {
@@ -201,6 +220,15 @@ export async function verifySessionToken(
       }
     } catch (err) {
       logger.error('[Auth] Failed to verify tokenVersion against database:', err);
+      adminDbError = true;
+    }
+
+    // P1-19: fail closed for admin sessions. A DB outage must never make a
+    // possibly-revoked admin token valid — reject instead of skipping the
+    // version comparison. Riders stay lenient (no sensitive endpoints).
+    if (adminDbError && decoded.role === 'admin') {
+      logger.warn('[Auth] Admin tokenVersion DB check failed — rejecting token (fail closed)');
+      return null;
     }
 
     if (currentVersion !== null && tokenVersion !== currentVersion) {
@@ -219,10 +247,20 @@ export async function verifySessionToken(
       adminRole: decoded.adminRole,
       adminId: decoded.adminId,
       adminPermissions: decoded.adminPermissions as string[] | undefined,
+      // P0-3 / P0-9: surface the token kind marker and the signed version so
+      // refresh routes can enforce type === 'refresh' and compare versions
+      // instead of reading them back via `as any` (which was silently
+      // undefined and made rotation checks always fail).
+      type: decoded.type,
+      tokenVersion,
     };
   } catch (err) {
-    // jwtVerify throws on expiry, bad signature, etc.
-    logger.error('[Auth] Token verification failed:', err);
+    // P2-15/P3-12: jwtVerify throws on expiry, bad signature, etc. — this is
+    // an expected path (expired tokens are normal), so log at warn with only
+    // the error *name* (never the raw error, which could embed token bytes).
+    logger.warn('[Auth] Token verification failed (expired or invalid)', {
+      code: err instanceof Error ? err.name : 'Unknown',
+    });
     return null;
   }
 }

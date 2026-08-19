@@ -111,12 +111,13 @@ class PreDashboardBanner extends StatelessWidget {
   }
 
   Widget _buildActionRequiredBanner(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.errorSurface,
+        color: colors.errorLight,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.errorBorder),
+        border: Border.all(color: colors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -133,7 +134,7 @@ class PreDashboardBanner extends StatelessWidget {
               size: 18,
             ),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,14 +142,14 @@ class PreDashboardBanner extends StatelessWidget {
                 Text(
                   'Account Action',
                   style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.errorDark,
+                    color: colors.errorLightForeground,
                   ),
                 ),
                 Text(
                   'Required',
                   style: AppTypography.bodySmall
                       .copyWith(fontWeight: FontWeight.w600)
-                      .copyWith(color: AppColors.errorDark),
+                      .copyWith(color: colors.errorLightForeground),
                 ),
               ],
             ),
@@ -156,14 +157,14 @@ class PreDashboardBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.of(context).card,
+              color: colors.card,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.error),
+              border: Border.all(color: colors.error.withValues(alpha: 0.5)),
             ),
             child: Text(
-              'INACTIVE',
+              'ACTION',
               style: AppTypography.overline
-                  .copyWith(color: AppColors.error, letterSpacing: 0.8),
+                  .copyWith(color: colors.errorLightForeground, letterSpacing: 0.8),
             ),
           ),
         ],

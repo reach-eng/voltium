@@ -30,8 +30,13 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
     if (type === 'CREDIT' && !proofUrl) {
       return toast.error('Proof of payment is required for wallet top-up');
     }
-    if (type === 'DEBIT' && !reason) {
-      return toast.error('Reason is required when deducting from wallet (e.g. Late Fee)');
+    if (type === 'DEBIT') {
+      if (!reason || !reason.trim()) {
+        return toast.error('Reason is required when deducting from wallet (e.g. Late Fee)');
+      }
+      if (reason.trim().length < 10) {
+        return toast.error('Reason must be at least 10 characters for a debit');
+      }
     }
 
     setIsSubmitting(true);
@@ -104,6 +109,11 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
+            {type === 'DEBIT' && (
+              <p className="text-[11px] text-muted-foreground">
+                Minimum 10 characters required for deductions.
+              </p>
+            )}
           </div>
 
           {type === 'CREDIT' && (

@@ -187,6 +187,13 @@ class _SplashScreenState extends State<SplashScreen>
                                 blurRadius: 40,
                                 offset: const Offset(0, 15),
                               ),
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.25),
+                                blurRadius: 30,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 8),
+                              ),
                             ],
                           ),
                           child: ClipRRect(
@@ -228,16 +235,14 @@ class _SplashScreenState extends State<SplashScreen>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  // LANGUAGE-AUDIT (2026-08-16) #5: was a
-                                  // hardcoded English "Electric scooter
-                                  // rentals" string. Now localisable.
-                                  AppLocalizations.of(context)!
-                                      .txtsplashTagline,
+                                  AppLocalizations.of(context)
+                                          ?.txtsplashTagline ??
+                                      'Electric scooter rentals',
                                   style: AppTypography.bodyLarge.copyWith(
                                       color: colors.onSurfaceVariant,
                                       letterSpacing: 1.5),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text('⚡',
                                     style: GoogleFonts.plusJakartaSans(
                                         fontSize: 16)),
@@ -315,13 +320,14 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded
                       // English "CONNECTING TO GRID" string. Now
                       // localisable via the existing `txtconnectingToGrid`
                       // ARB key (one of the 475 keys this audit unblocks).
                       Text(
-                        AppLocalizations.of(context)!.txtconnectingToGrid,
+                        AppLocalizations.of(context)?.txtconnectingToGrid ??
+                            'CONNECTING TO GRID',
                         style: AppTypography.labelSmall.copyWith(
                             color: colors.onSurfaceMuted, letterSpacing: 2.5),
                       ),

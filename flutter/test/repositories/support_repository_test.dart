@@ -61,25 +61,9 @@ void main() {
       expect(req.riderId, 'r123');
     });
 
-    test('getSupportChat calls getSupportChat', () async {
-      when(() => mockApiClient.getSupportChat())
-          .thenAnswer((_) async => {'messages': []});
-
-      final result = await repository.getSupportChat();
-      expect(result['messages'], isEmpty);
-      verify(() => mockApiClient.getSupportChat()).called(1);
-    });
-
-    test('sendChatMessage calls postSupportChat', () async {
-      when(() => mockApiClient.postSupportChat(any()))
-          .thenAnswer((_) async => {});
-
-      await repository.sendChatMessage('Hello there');
-
-      final captured =
-          verify(() => mockApiClient.postSupportChat(captureAny())).captured;
-      final req = captured.first as Map<String, dynamic>;
-      expect(req['message'], 'Hello there');
-    });
+    // getSupportChat / sendChatMessage were removed with the dead chat API
+    // (2026-08-06 verification: the /api/support/chat route was deleted and
+    // the chat methods dropped from SupportRepositoryImpl + the generated
+    // client), so their tests were removed with them.
   });
 }

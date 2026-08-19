@@ -5,7 +5,7 @@ import { logger } from '@/lib/logger';
 export const syncUseCases = {
   async queueActions(
     riderDbId: string,
-    actions: Array<{ actionType: string; payload?: any; endpoint?: string; method?: string }>
+    actions: Array<{ actionType: string; payload?: Record<string, unknown>; endpoint?: string; method?: string }>
   ) {
     const validActionTypes = new Set([
       'CREATE_TICKET',

@@ -59,6 +59,10 @@ const commonEnv = {
   STORAGE_PROVIDER: 'local',
   VOLTIUM_SERVER_ROOT: serverRoot,
   VOLTIUM_LOG_ROOT: logsDir,
+  // P1-8 (2026-08-05 legal/device audit): env.ts now hard-requires
+  // INTERNAL_API_URL in production — internal health probes must stay on the
+  // loopback instead of round-tripping through the public URL (Caddy/TLS).
+  INTERNAL_API_URL: process.env.INTERNAL_API_URL || 'http://127.0.0.1:8081',
 };
 
 module.exports = {

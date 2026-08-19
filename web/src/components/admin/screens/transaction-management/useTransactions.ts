@@ -46,6 +46,8 @@ export function useTransactions() {
         params.set('type', 'TOP_UP');
       } else if (tab === 'DEBIT') {
         params.set('type', 'DEBIT');
+      } else if (tab === 'SECURITY_DEPOSIT') {
+        params.set('purpose', 'SECURITY_DEPOSIT');
       } else if (tab !== 'all') {
         params.set('status', tab.toUpperCase());
       }
@@ -58,19 +60,23 @@ export function useTransactions() {
       const res = await fetch(`/api/admin/transactions?${params}`);
       if (res.ok) {
         const json = await res.json();
-        if (json.success) {
+        if (json.success && mountedRef.current) {
           setTransactions(json.data || []);
           if (json.pagination) {
             setTotalPages(json.pagination.totalPages);
             setTotal(json.pagination.total);
           }
         }
+      } else {
+        toast.error('Failed to load transactions. Please try again.');
       }
     } catch (err) {
       logger.error('Failed to fetch transactions', { error: err });
+      toast.error('Failed to load transactions. Please try again.');
     } finally {
-
+      if (mountedRef.current) {
         setLoading(false);
+      }
     }
   }, [tab, debouncedSearch, startDate, endDate, page]);
 
@@ -99,8 +105,12 @@ export function useTransactions() {
   }, []);
 
   async function handleDeduct() {
-    if (!deductRiderId || !deductAmount || !deductReason) {
+    if (!deductRiderId || !deductAmount || !deductReason.trim()) {
       toast.error('Please fill in all fields');
+      return;
+    }
+    if (deductReason.trim().length < 10) {
+      toast.error('Please provide a reason of at least 10 characters');
       return;
     }
     setDeductLoading(true);
@@ -129,8 +139,9 @@ export function useTransactions() {
     } catch (err: any) {
       toast.error(err.message || 'An error occurred');
     } finally {
-
+      if (mountedRef.current) {
         setDeductLoading(false);
+      }
     }
   }
 
@@ -139,6 +150,14 @@ export function useTransactions() {
     const { tx, action } = confirmAction;
     setActionLoading(true);
     try {
+      // P1-2 (2026-08-07 verification, Section 2 — Admin Finance): the
+      // server rejects a reject with < 10 chars of reason; surface the same
+      // rule client-side so the admin gets a clear toast instead of a
+      // generic failure after a round-trip.
+      if (action === 'reject' && rejectionReason.trim().length < 10) {
+        toast.error('Please provide a rejection reason of at least 10 characters');
+        return;
+      }
       const body: Record<string, unknown> = {
         id: tx.id,
         action: action === 'approve' ? 'APPROVE' : 'REJECT',
@@ -165,14 +184,17 @@ export function useTransactions() {
       toast.success(
         `Transaction ${action === 'approve' ? 'approved' : 'rejected'}`,
       );
-      setConfirmAction(null);
-      setRejectionReason('');
+      if (mountedRef.current) {
+        setConfirmAction(null);
+        setRejectionReason('');
+      }
       fetchTransactions();
     } catch {
       toast.error('Network error. Please try again.');
     } finally {
-
+      if (mountedRef.current) {
         setActionLoading(false);
+      }
     }
   }
 
@@ -195,12 +217,29 @@ export function useTransactions() {
       const res = await fetch('/api/admin/transactions/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedIds), action, reason }),
+        body: JSON.stringify({ ids: Array.from(selectedIds), action, rejectionReason: reason }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         toast.error(json?.error?.message || 'Bulk action failed');
-        setBulkLoading(false);
+        if (mountedRef.current) {
+          setBulkLoading(false);
+        }
+        return;
+      }
+      // P0-3 (financial audit): a partial run returns 207 with `failed` —
+      // fetch's `res.ok` is true for 207, so without this check we'd show a
+      // green toast over failures. Surface the failures and skip the undo
+      // offer (undo assumes the whole batch landed).
+      const failedCount = json?.data?.failed ?? 0;
+      if (failedCount > 0) {
+        toast.error(
+          `${failedCount} of ${selectedIds.size} transaction(s) failed`,
+        );
+        if (mountedRef.current) {
+          setSelectedIds(new Set());
+        }
+        fetchTransactions();
         return;
       }
       toast.success(
@@ -208,16 +247,21 @@ export function useTransactions() {
           action === 'approve' ? 'approved' : 'rejected'
         }`,
       );
-      setLastAction({ ids: Array.from(selectedIds), previousStates, action });
-      setShowUndoToast(true);
-      setTimeout(() => setShowUndoToast(false), 5000);
-      setSelectedIds(new Set());
+      if (mountedRef.current) {
+        setLastAction({ ids: Array.from(selectedIds), previousStates, action });
+        setShowUndoToast(true);
+        setTimeout(() => {
+          if (mountedRef.current) setShowUndoToast(false);
+        }, 5000);
+        setSelectedIds(new Set());
+      }
       fetchTransactions();
     } catch (err) {
       logger.error('Bulk action failed', { error: err });
     } finally {
-
+      if (mountedRef.current) {
         setBulkLoading(false);
+      }
     }
   }
 
@@ -230,7 +274,7 @@ export function useTransactions() {
           fetch('/api/admin/transactions', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, action: 'REVERT' }),
+            body: JSON.stringify({ id, action: 'REVERSE' }),
           }),
         ),
       );
@@ -246,22 +290,33 @@ export function useTransactions() {
       } else {
         toast.success('Undo successful');
       }
-      setLastAction(null);
-      setShowUndoToast(false);
+      if (mountedRef.current) {
+        setLastAction(null);
+        setShowUndoToast(false);
+      }
       fetchTransactions();
     } catch {
       toast.error('Undo failed. Please try again.');
     } finally {
-
+      if (mountedRef.current) {
         setBulkLoading(false);
+      }
     }
   }
 
   const sorted = sortKey
     ? [...transactions].sort((a, b) => {
-        const aVal = a[sortKey as keyof Transaction] ?? '';
-        const bVal = b[sortKey as keyof Transaction] ?? '';
-        const cmp = String(aVal).localeCompare(String(bVal), undefined, {
+        const aVal = a[sortKey as keyof Transaction];
+        const bVal = b[sortKey as keyof Transaction];
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        if (sortKey === 'createdAt' || sortKey === 'approvedAt') {
+          const aTime = aVal ? new Date(aVal as string).getTime() : 0;
+          const bTime = bVal ? new Date(bVal as string).getTime() : 0;
+          return sortDir === 'asc' ? aTime - bTime : bTime - aTime;
+        }
+        const cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
           numeric: true,
         });
         return sortDir === 'asc' ? cmp : -cmp;

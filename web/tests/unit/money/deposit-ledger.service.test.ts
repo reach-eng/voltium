@@ -5,6 +5,18 @@ import { depositLedgerService } from '../../../src/server/modules/deposits/depos
 import { DepositStatus } from '@prisma/client';
 import { walletRepository } from '../../../src/server/modules/wallet/wallet.repository';
 
+// TEST-STRATEGY-AUDIT T-P0-2 (2026-08-08, reverted 2026-08-08):
+// the previously-skipped test below was targeted for re-enabling
+// via a per-file schema (tests/_setup/per-file-schema.ts). The
+// per-file schema approach failed in the test runner with
+// "permission denied to create database" — the `voltium_user`
+// (from .env) doesn't have CREATEDB privilege, and the
+// process.env.DATABASE_URL change in beforeAll is too late for
+// the `db` singleton (already initialized at import time).
+//
+// The skipped test stays skipped. Tracked as T-P0-2-backfill.
+// usePerFileSchema(__filename);  // disabled — see T-P0-2-backfill
+
 describe('depositLedgerService', () => {
   beforeAll(async () => {
   });
@@ -21,7 +33,7 @@ describe('depositLedgerService', () => {
     const riderId = `RD-${uuidv4().replace(/-/g, '').substring(0, 8)}`;
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
     const referralCode = `REF-${uuidv4().replace(/-/g, '').substring(0, 10)}`;
-    
+
     await testDb.rider.create({
       data: {
         id: riderDbId,
@@ -56,17 +68,21 @@ describe('depositLedgerService', () => {
   });
 
   it.skip('should upsert record', async () => {
-    // TODO: Fails intermittently with "Can't reach database server" when
-    // run as part of the full unit test suite. Root cause: shared Prisma
-    // connection pool fills up across test files. See wallet.service.test.ts
-    // for the same issue.
-
+    // TEST-STRATEGY-AUDIT T-P0-2 (reverted 2026-08-08): the
+    // per-file schema pattern from `tests/_setup/per-file-schema.ts`
+    // was tried but failed in the test runner with
+    // "permission denied to create database" — the `voltium_user`
+    // (from .env) doesn't have CREATEDB privilege, and the
+    // process.env.DATABASE_URL change in beforeAll is too late
+    // for the `db` singleton (already initialized at import time).
+    //
+    // The original `it.skip` is restored. Tracked as T-P0-2-backfill.
     await depositLedgerService.upsertRecord({
       riderId: riderDbId,
       transactionId: transactionId,
       amountInPaise: 5000,
     });
-    
+
     // Check db
     const record = await testDb.depositRecord.findUnique({ where: { riderId: riderDbId } });
     expect(record?.amountInPaise).toBe(5000);
@@ -235,6 +251,7 @@ describe('depositLedgerService', () => {
     });
     
     it('approving with a bonus credits the bonus to general balance', async () => {
+      await testDb.depositRecord.deleteMany({ where: { riderId: riderDbId } });
       await testDb.depositRecord.create({
         data: {
           riderId: riderDbId,

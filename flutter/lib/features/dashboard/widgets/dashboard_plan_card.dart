@@ -4,6 +4,8 @@ import '../../../theme/app_theme.dart';
 import '../../../widgets/premium_cards.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+
 /// Reusable active plan card with blue gradient.
 /// Displays subscription name, time remaining, and next recharge date.
 class PlanCard extends StatelessWidget {
@@ -20,6 +22,9 @@ class PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final noPlanText = l10n?.txtnoPlan ?? 'NO PLAN';
+
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
         child: Container(
@@ -42,11 +47,11 @@ class PlanCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'CURRENT SUBSCRIPTION',
+                      l10n?.txtcurrentSubscription ?? 'CURRENT SUBSCRIPTION',
                       style: AppTypography.labelMedium
                           .copyWith(color: Colors.white70, letterSpacing: 1.0),
                     ),
-                    Icon(Icons.auto_graph, color: Colors.white, size: 24),
+                    const Icon(Icons.auto_graph, color: Colors.white, size: 24),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -62,7 +67,7 @@ class PlanCard extends StatelessWidget {
                   child: Text(
                     (currentPlan?.isNotEmpty ?? false)
                         ? currentPlan!.toUpperCase()
-                        : 'NO PLAN',
+                        : noPlanText,
                     style: AppTypography.bodySmall
                         .copyWith(
                             fontWeight: FontWeight.w800, letterSpacing: 1.2)
@@ -74,16 +79,18 @@ class PlanCard extends StatelessWidget {
               Text(
                 compact
                     ? (currentPlan?.replaceAll('_', ' ').toLowerCase() ??
-                            'no plan')
+                            noPlanText.toLowerCase())
                         .split(' ')
-                        .map((s) => s[0].toUpperCase() + s.substring(1))
+                        .map((s) => s.isNotEmpty
+                            ? s[0].toUpperCase() + s.substring(1)
+                            : '')
                         .join(' ')
                     : (currentPlan?.replaceAll('_', ' ').toUpperCase() ??
-                        'WEEKLY PAYMENT'),
+                        (l10n?.txtweeklyPayment ?? 'WEEKLY PAYMENT')),
                 style: AppTypography.headingSmall
                     .copyWith(color: Colors.white, letterSpacing: 0.5),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
@@ -97,12 +104,12 @@ class PlanCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'TIME REMAINING',
+                            l10n?.txttimeRemaining ?? 'TIME REMAINING',
                             style: AppTypography.labelMedium.copyWith(
                                 color: AppColors.primaryLightBlue,
                                 letterSpacing: 1),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             DateHelpers.computeTimeRemaining(planEndDate),
                             style: AppTypography.headingSmall
@@ -112,7 +119,7 @@ class PlanCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Container(
                       padding: Spacing.paddingMd,
@@ -124,12 +131,12 @@ class PlanCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'NEXT RECHARGE',
+                            l10n?.txtnextRecharge ?? 'NEXT RECHARGE',
                             style: AppTypography.labelMedium.copyWith(
                                 color: AppColors.primaryLightBlue,
                                 letterSpacing: 1),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             DateHelpers.computeNextRecharge(planEndDate),
                             style: AppTypography.headingSmall

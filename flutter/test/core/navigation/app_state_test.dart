@@ -160,10 +160,31 @@ void main() {
           AuthFlow() => 'auth',
           Onboarding() => 'onboarding',
           PreDashboard() => 'pre',
+          // PR-ONBOARDING-FLOW-2026-08-11: the new active flow's tail
+          // state. Exhaustive switch needs an explicit case.
+          HangTight() => 'hangTight',
           ActiveDashboard() => 'active',
           AccountClosed() => 'closed',
         };
         expect(name, 'active');
+      });
+
+      test('HangTight maps to "hangTight" name', () {
+        // PR-ONBOARDING-FLOW-2026-08-11: regression for the new state
+        // being reachable through the sealed-class switch.
+        AppState s = const HangTight();
+        final name = switch (s) {
+          Splash() => 'splash',
+          LegalGate() => 'legal',
+          PermissionsGate() => 'permissions',
+          AuthFlow() => 'auth',
+          Onboarding() => 'onboarding',
+          PreDashboard() => 'pre',
+          HangTight() => 'hangTight',
+          ActiveDashboard() => 'active',
+          AccountClosed() => 'closed',
+        };
+        expect(name, 'hangTight');
       });
     });
   });
@@ -243,6 +264,9 @@ void main() {
             appStateFromAuthState(AuthState.preDashboard), isA<PreDashboard>());
         expect(appStateFromAuthState(AuthState.accountClosed),
             isA<AccountClosed>());
+        // PR-ONBOARDING-FLOW-2026-08-11: the new active flow's tail
+        // state maps to the HangTight sealed class.
+        expect(appStateFromAuthState(AuthState.hangTight), isA<HangTight>());
       });
 
       test(
@@ -268,6 +292,8 @@ void main() {
             AuthState.preDashboard);
         expect(authStateFromAppState(const AccountClosed()),
             AuthState.accountClosed);
+        // PR-ONBOARDING-FLOW-2026-08-11: round-trip the new state.
+        expect(authStateFromAppState(const HangTight()), AuthState.hangTight);
       });
     });
   });

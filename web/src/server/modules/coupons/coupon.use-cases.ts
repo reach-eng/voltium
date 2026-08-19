@@ -1,13 +1,39 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { invalidateCache } from '@/lib/cache';
 
 export const couponUseCases = {
-  async list(page: number, limit: number) {
-    const [coupons, total] = await Promise.all([
-      db.coupon.findMany({ orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),
-      db.coupon.count(),
+  async list(page: number, limit: number, search?: string | null) {
+    // PR-9 (2026-08-06 fix plan): the admin coupons screen previously had
+    // local-only search — the server never filtered. Filter by code/description.
+    const where = search?.trim()
+      ? {
+          OR: [
+            { code: { contains: search.trim(), mode: 'insensitive' as const } },
+            {
+              description: {
+                contains: search.trim(),
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
+        }
+      : undefined;
+    const [rawCoupons, total] = await Promise.all([
+      db.coupon.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      db.coupon.count({ where }),
     ]);
+    const coupons = rawCoupons.map((c: Record<string, any>) => ({
+      ...c,
+      discountValue: c.discountType === 'FIXED' ? c.discountValueInPaise / 100 : c.discountValueInPaise,
+      minAmount: c.minAmount ? c.minAmount / 100 : null,
+    }));
     return { coupons, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   },
 
@@ -25,12 +51,15 @@ export const couponUseCases = {
     },
     actorId: string
   ) {
+    const discountValueInPaise =
+      data.discountType === 'FIXED' ? data.discountValue * 100 : data.discountValue;
+
     const coupon = await db.coupon.create({
       data: {
         code: data.code.toUpperCase(),
         description: data.description,
         discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
-        discountValueInPaise: data.discountValue,
+        discountValueInPaise,
         minAmount: data.minAmount ?? null,
         maxUses: data.maxUses ?? null,
         validFrom: new Date(data.validFrom),
@@ -38,6 +67,7 @@ export const couponUseCases = {
         isActive: data.isActive,
       },
     });
+    invalidateCache('admin:coupons:*');
     createAuditLog({
       actorId,
       action: 'coupon.create',
@@ -53,7 +83,29 @@ export const couponUseCases = {
     if (updateData.validFrom) updateData.validFrom = new Date(updateData.validFrom as string);
     if (updateData.validUntil) updateData.validUntil = new Date(updateData.validUntil as string);
     if (updateData.code) updateData.code = (updateData.code as string).toUpperCase();
+    // PR-VER-2026-08-06 (SHIFTS P0-3): the old update only converted
+    // `discountValue` when `discountType === 'FIXED'` — a PERCENTAGE update
+    // kept `discountValue` in the payload and hit Prisma with a field that
+    // doesn't exist. The create() path stores PERCENTAGE as-is (it is not a
+    // paise value), so update must mirror that. When the admin edits only the
+    // value (no type change), the existing coupon's type is authoritative.
+    if (updateData.discountValue !== undefined) {
+      let discountType = updateData.discountType as string | undefined;
+      if (!discountType) {
+        const existing = await db.coupon.findUnique({
+          where: { id },
+          select: { discountType: true },
+        });
+        discountType = existing?.discountType;
+      }
+      updateData.discountValueInPaise =
+        discountType === 'FIXED'
+          ? Number(updateData.discountValue) * 100
+          : Number(updateData.discountValue);
+      delete updateData.discountValue;
+    }
     const coupon = await db.coupon.update({ where: { id }, data: updateData });
+    invalidateCache('admin:coupons:*');
     createAuditLog({
       actorId,
       action: 'coupon.update',
@@ -66,6 +118,7 @@ export const couponUseCases = {
 
   async delete(id: string, actorId: string) {
     await db.coupon.delete({ where: { id } });
+    invalidateCache('admin:coupons:*');
     createAuditLog({ actorId, action: 'coupon.delete', entity: 'coupon', entityId: id }).catch(
       (e) => logger.error('Audit log failed', e)
     );

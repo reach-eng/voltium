@@ -40,6 +40,7 @@
             android:launchMode="singleTop"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
+            android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
@@ -64,7 +65,16 @@
         <meta-data
             android:name="com.posthog.posthog.AUTO_INIT"
             android:value="false" />
-        <!-- Enable Impeller rendering engine for smooth animations -->
+        <!-- PR-AUDIT 2026-08-12: Re-enable Impeller.
+             The "Width is zero. 0,0" issue from the dev-server cold-restart
+             sequence was a one-time Vulkan surface-init race. With the dev
+             server running stable, Impeller is required for the IME bridge
+             to work on P12279003265 — disabling Impeller (Skia path) leaves
+             the EditableText's InputConnection un-initialised:
+               mServedView stays as DecorView and
+               mInputShown stays false, and `input text` over adb is dropped.
+             Re-enable Impeller, keep the dev server hot to avoid the
+             cold-restart race. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="true" />

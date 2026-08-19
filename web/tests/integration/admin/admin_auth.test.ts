@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { api } from '../helpers';
+import { api, adminLogin } from '../helpers';
+import { resolveAdminCredentials } from '../admin-auth-helper';
 
 describe('Admin Authentication Integration Tests', () => {
   const testEmail = 'admin@voltium.io';
@@ -36,27 +37,40 @@ describe('Admin Authentication Integration Tests', () => {
     expect(body.error?.message).toContain('Invalid email or password');
   });
 
-  it('allows auto-login in dev/test environment and returns session cookie', async () => {
-    const { status, body, headers } = await api('/api/admin/auth/auto-login', {
+  it('logs in with valid credentials and returns a session cookie', async () => {
+    const cookie = await adminLogin();
+    expect(cookie).toContain('voltium-admin-session=');
+  });
+
+  it('login returns a refresh token for the client-side interceptor (P1-13)', async () => {
+    const candidates = resolveAdminCredentials();
+    let refreshToken: string | undefined;
+    for (const { email, password } of candidates) {
+      const { status, body } = await api('/api/admin/auth/login', {
+        method: 'POST',
+        json: { email, password },
+      });
+      if (status === 200) {
+        refreshToken = body.data?.refreshToken;
+        break;
+      }
+    }
+    expect(refreshToken).toBeDefined();
+  });
+
+  // TG-2: the P0-2 auto-login backdoor is deleted — the route no longer exists.
+  it('auto-login endpoint is gone (returns 404)', async () => {
+    const { status, body } = await api('/api/admin/auth/auto-login', {
       method: 'POST',
       json: {},
     });
 
-    expect(status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.data.role).toBeDefined();
-
-    const setCookie = headers.get('set-cookie');
-    expect(setCookie).toBeDefined();
-    expect(setCookie).toContain('voltium-admin-session');
+    expect(status).toBe(404);
+    expect(body.success).toBe(false);
   });
 
   it('retrieves profile via /me when authenticated', async () => {
-    const loginRes = await api('/api/admin/auth/auto-login', {
-      method: 'POST',
-      json: {},
-    });
-    const cookie = loginRes.headers.get('set-cookie')?.split(';')[0];
+    const cookie = await adminLogin();
 
     const { status, body } = await api('/api/admin/auth/me', {
       method: 'GET',
@@ -67,6 +81,8 @@ describe('Admin Authentication Integration Tests', () => {
     expect(body.success).toBe(true);
     expect(body.data.email).toBeDefined();
     expect(body.data.role).toBeDefined();
+    // TG-6: the password hash must never leave the server.
+    expect(body.data.password).toBeUndefined();
   });
 
   it('blocks /me when unauthenticated', async () => {
@@ -93,11 +109,7 @@ describe('Admin Authentication Integration Tests', () => {
   });
 
   it('logs out and clears the admin session cookie', async () => {
-    const loginRes = await api('/api/admin/auth/auto-login', {
-      method: 'POST',
-      json: {},
-    });
-    const cookie = loginRes.headers.get('set-cookie')?.split(';')[0];
+    const cookie = await adminLogin();
 
     const { status, body, headers } = await api('/api/admin/auth/logout', {
       method: 'POST',

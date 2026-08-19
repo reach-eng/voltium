@@ -6,7 +6,9 @@
  */
 
 import { db } from '@/lib/db';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import type { RiderLifecycleStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { OnboardingProgress, OnboardingStep } from './onboarding.types';
 
 export const onboardingUseCases = {
@@ -22,24 +24,8 @@ export const onboardingUseCases = {
 
     if (!rider) throw new Error('Rider not found');
 
-    const lifecycleRank: Record<string, number> = {
-      NEW: 0,
-      PHONE_VERIFIED: 1,
-      PROFILE_SUBMITTED: 2,
-      KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4,
-      GUARANTOR_SUBMITTED: 5,
-      GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7,
-      DEPOSIT_APPROVED: 8,
-      PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10,
-      ACTIVE: 11,
-      SUSPENDED: 12,
-      RETURN_PENDING: 13,
-      CLOSED: 14,
-    };
-    const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
+    // P1-12: shared lifecycle ranking (single source of truth).
+    const rank = lifecycleRankOf(rider.lifecycleStatus);
     const kycCompleted = rank >= 4 || rider.kycProfile?.status === 'APPROVED';
     const guarantorCompleted = rider.guarantor?.status === 'APPROVED';
 
@@ -54,25 +40,13 @@ export const onboardingUseCases = {
     };
   },
 
-  determineCurrentStep(rider: { lifecycleStatus: string }): OnboardingStep {
-    const lifecycleRank: Record<string, number> = {
-      NEW: 0,
-      PHONE_VERIFIED: 1,
-      PROFILE_SUBMITTED: 2,
-      KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4,
-      GUARANTOR_SUBMITTED: 5,
-      GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7,
-      DEPOSIT_APPROVED: 8,
-      PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10,
-      ACTIVE: 11,
-      SUSPENDED: 12,
-      RETURN_PENDING: 13,
-      CLOSED: 14,
-    };
-    const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
+  // PR-ONBOARDING-2026-08-11 (audit 5.2): type the lifecycleStatus as
+  // RiderLifecycleStatus (typed) instead of `string`. Callers passing
+  // a raw string get a type error; the canonical route loads the row
+  // from Prisma which already returns a typed status.
+  determineCurrentStep(rider: { lifecycleStatus: RiderLifecycleStatus }): OnboardingStep {
+    // P1-12: shared lifecycle ranking (single source of truth).
+    const rank = lifecycleRankOf(rider.lifecycleStatus);
     if (rank < 2) return 'PROFILE';
     if (rank < 4) return 'KYC';
     if (rank < 8) return 'DEPOSIT';

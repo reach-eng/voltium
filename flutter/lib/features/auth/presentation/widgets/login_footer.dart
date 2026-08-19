@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
@@ -27,6 +28,20 @@ class LoginFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // LANGUAGE-AUDIT (2026-08-16) #5: the entire footer is now
+    // localisable. The intro line ("By signing in, you agree to
+    // our"), the connector (" and "), and both link labels
+    // ("Terms of Service" / "Privacy Policy") all come from
+    // `AppLocalizations.of(context)`. The two link labels are
+    // already in the ARB as `txttermsOfService` /
+    // `txtprivacyPolicy` (unblocked by this wiring). The intro
+    // line is a new key `txtloginLegalIntro`.
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final intro = l10n?.txtloginLegalIntro ?? 'By signing in, you agree to our';
+    final terms = l10n?.txttermsOfService ?? 'Terms of Service';
+    final privacy = l10n?.txtprivacyPolicy ?? 'Privacy Policy';
+
     return ClipRRect(
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -34,10 +49,10 @@ class LoginFooter extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(
               20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: colors.card.withValues(alpha: 0.8),
             border: Border(
               top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: colors.outline.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -52,20 +67,19 @@ class LoginFooter extends StatelessWidget {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: colors.onSurfaceVariant,
                     height: 1.6,
                   ),
                   children: [
-                    TextSpan(
-                        text: a11yLabel('By signing in, you agree to our\n')),
+                    TextSpan(text: a11yLabel('$intro\n')),
                     WidgetSpan(
                       child: Semantics(
                         button: true,
-                        label: a11yButton('Terms of Service'),
+                        label: a11yButton(terms),
                         child: GestureDetector(
                           onTap: () => onLaunchUrl('https://voltium.app/terms'),
                           child: Text(
-                            'Terms of Service',
+                            terms,
                             style: AppTypography.labelMedium
                                 .copyWith(color: AppColors.primary),
                           ),
@@ -78,12 +92,12 @@ class LoginFooter extends StatelessWidget {
                     WidgetSpan(
                       child: Semantics(
                         button: true,
-                        label: a11yButton('Privacy Policy'),
+                        label: a11yButton(privacy),
                         child: GestureDetector(
                           onTap: () =>
                               onLaunchUrl('https://voltium.app/privacy'),
                           child: Text(
-                            'Privacy Policy',
+                            privacy,
                             style: AppTypography.labelMedium
                                 .copyWith(color: AppColors.primary),
                           ),

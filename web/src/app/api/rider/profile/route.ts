@@ -13,6 +13,7 @@ import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
 import { RiderLifecycleError } from '@/server/modules/riders/rider-lifecycle.service';
+import { toRupeesResponse } from '@/lib/api-money';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     const rider = await riderUseCases.getProfile(riderDbId);
     if (!rider) return errors.notFound('Rider not found');
 
-    return success(rider, 'Profile fetched');
+    return success(toRupeesResponse(rider), 'Profile fetched');
   } catch (err) {
     logger.error('[GET /api/rider/profile]', err);
     return errors.internal('Failed to fetch profile');
@@ -52,7 +53,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const result = await riderUseCases.updateProfile(riderDbId, updateData);
-    return success(result, 'Profile updated');
+    return success(toRupeesResponse(result), 'Profile updated');
   } catch (err) {
     if (err instanceof RiderLifecycleError) return errors.conflict((err instanceof Error ? err.message : String(err)));
     logger.error('[PUT /api/rider/profile]', err);
