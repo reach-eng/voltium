@@ -38,7 +38,8 @@ void main() {
         );
       });
 
-      final client = ApiClient(client: mockClient, baseUrl: 'https://test.api.voltium.in');
+      final client =
+          ApiClient(client: mockClient, baseUrl: 'https://test.api.voltium.in');
       ApiClient.instanceForTest = client;
 
       // First call (200 OK)
@@ -62,7 +63,9 @@ void main() {
       expect(notModifiedResponse['_isNotModified'], isTrue);
     });
 
-    test('in-flight GET requests to the same URL are deduplicated into 1 HTTP call', () async {
+    test(
+        'in-flight GET requests to the same URL are deduplicated into 1 HTTP call',
+        () async {
       int callCount = 0;
       final mockClient = MockClient((request) async {
         callCount++;
@@ -70,14 +73,17 @@ void main() {
         return http.Response(
           jsonEncode({
             'success': true,
-            'data': {'hubs': ['Hub A', 'Hub B']},
+            'data': {
+              'hubs': ['Hub A', 'Hub B']
+            },
           }),
           200,
           headers: {'content-type': 'application/json'},
         );
       });
 
-      final client = ApiClient(client: mockClient, baseUrl: 'https://test.api.voltium.in');
+      final client =
+          ApiClient(client: mockClient, baseUrl: 'https://test.api.voltium.in');
       ApiClient.instanceForTest = client;
 
       // 3 concurrent GET calls to the exact same URL

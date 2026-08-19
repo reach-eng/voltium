@@ -41,9 +41,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
           color: hasPhoto ? Colors.black : colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: hasPhoto
-                ? AppColors.success
-                : colors.outlineVariant,
+            color: hasPhoto ? AppColors.success : colors.outlineVariant,
             width: hasPhoto ? 2 : 1.5,
           ),
         ),

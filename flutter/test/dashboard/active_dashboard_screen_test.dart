@@ -46,7 +46,8 @@ class _StubEngagementNotifier extends EngagementNotifier {
   Future<void> initEngagementData() async {}
 }
 
-Widget buildTestApp({RiderModel? rider, ThemeMode themeMode = ThemeMode.light}) {
+Widget buildTestApp(
+    {RiderModel? rider, ThemeMode themeMode = ThemeMode.light}) {
   return ProviderScope(
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
@@ -135,7 +136,9 @@ void main() {
       expect(find.text('AARAV2026'), findsOneWidget);
     });
 
-    testWidgets('Team Leader View Details opens bottom sheet with teamLeaderPhone', (tester) async {
+    testWidgets(
+        'Team Leader View Details opens bottom sheet with teamLeaderPhone',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -174,7 +177,8 @@ void main() {
       expect(find.byKey(const Key('changeTeamLeaderButton')), findsOneWidget);
     });
 
-    testWidgets('renders cleanly in dark mode without throwing', (tester) async {
+    testWidgets('renders cleanly in dark mode without throwing',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -196,7 +200,8 @@ void main() {
         pickupDone: true,
       );
 
-      await tester.pumpWidget(buildTestApp(rider: testRider, themeMode: ThemeMode.dark));
+      await tester.pumpWidget(
+          buildTestApp(rider: testRider, themeMode: ThemeMode.dark));
       await tester.pumpAndSettle();
 
       expect(find.byType(ActiveDashboardScreen), findsOneWidget);

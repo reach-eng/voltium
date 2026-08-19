@@ -342,8 +342,8 @@ class _NotificationPreferencesScreenState
                 Text(
                   title,
                   style: AppTypography.bodyMedium
-                    .copyWith(fontWeight: FontWeight.w600)
-                    .copyWith(color: colors.onSurface),
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(color: colors.onSurface),
                 ),
                 const SizedBox(height: 2),
                 Text(

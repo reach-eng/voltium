@@ -64,8 +64,8 @@ class PlanSuccessScreen extends StatelessWidget {
                 // T-66: hardcoded English button label. Localised
                 // via the existing `onboarding_proceedToPickup`
                 // ARB key.
-                child: Text(AppLocalizations.of(context)!
-                    .onboarding_proceedToPickup),
+                child: Text(
+                    AppLocalizations.of(context)!.onboarding_proceedToPickup),
               ),
               const SizedBox(height: 32),
             ],

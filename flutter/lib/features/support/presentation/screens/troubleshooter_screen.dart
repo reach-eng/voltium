@@ -371,8 +371,8 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           const SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
-            style: AppTypography.headingSmall.copyWith(
-                color: colors.onSurface, letterSpacing: -0.5),
+            style: AppTypography.headingSmall
+                .copyWith(color: colors.onSurface, letterSpacing: -0.5),
           ),
           const SizedBox(height: 8),
           Text(

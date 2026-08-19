@@ -162,8 +162,8 @@ class _PickupVerificationScreenState
               SizedBox(height: 8),
               Text(
                 'Please review the digital rental agreement before collecting your vehicle.',
-                style: GoogleFonts.plusJakartaSans(
-                    color: colors.onSurfaceVariant),
+                style:
+                    GoogleFonts.plusJakartaSans(color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: 32),
 

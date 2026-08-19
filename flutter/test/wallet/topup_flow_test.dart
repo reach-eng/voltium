@@ -80,7 +80,8 @@ void main() {
       expect(hasTextField, isTrue);
     });
 
-    testWidgets('displays deposit breakdown when securityDeposit and rentalPrice are provided',
+    testWidgets(
+        'displays deposit breakdown when securityDeposit and rentalPrice are provided',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -149,7 +150,8 @@ void main() {
       expect(proceededAmount! >= 1000, isTrue);
     });
 
-    testWidgets('renders cleanly in dark mode without throwing', (tester) async {
+    testWidgets('renders cleanly in dark mode without throwing',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

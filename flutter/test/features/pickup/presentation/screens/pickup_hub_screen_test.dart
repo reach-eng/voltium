@@ -69,17 +69,22 @@ void main() {
   }
 
   group('PickupHubScreen Tests', () {
-    testWidgets('displays CircularProgressIndicator on initial load', (tester) async {
+    testWidgets('displays CircularProgressIndicator on initial load',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(
-        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________, {emergencyContactReceipt}) {},
+        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________,
+            {emergencyContactReceipt}) {},
       ));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('transitions to error state with retry button on network failure', (tester) async {
+    testWidgets(
+        'transitions to error state with retry button on network failure',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(
-        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________, {emergencyContactReceipt}) {},
+        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________,
+            {emergencyContactReceipt}) {},
       ));
 
       await tester.pumpAndSettle();
@@ -88,9 +93,12 @@ void main() {
       expect(find.text('Retry'), findsOneWidget);
     });
 
-    testWidgets('tapping Retry in error state is interactive and handles retry click', (tester) async {
+    testWidgets(
+        'tapping Retry in error state is interactive and handles retry click',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(
-        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________, {emergencyContactReceipt}) {},
+        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________,
+            {emergencyContactReceipt}) {},
       ));
 
       await tester.pumpAndSettle();

@@ -339,8 +339,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                     cacheKey: 'guarantorPan',
                   ),
                   _DocModel(
-                    label:
-                        l10n?.txtverificationVideo ?? "Verification Video",
+                    label: l10n?.txtverificationVideo ?? "Verification Video",
                     url: rider?.guarantorVideo,
                     icon: Icons.videocam_outlined,
                     isVideo: true,

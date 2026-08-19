@@ -23,8 +23,9 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
   final isUnassigned = rider.teamLeader == null ||
       rider.teamLeader!.isEmpty ||
       rider.teamLeader == 'Not Assigned';
-  final displayName =
-      isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : rider.teamLeader!;
+  final displayName = isUnassigned
+      ? (l10n?.txtnotAssigned ?? 'Not assigned')
+      : rider.teamLeader!;
 
   showModalBottomSheet(
     context: context,
@@ -63,8 +64,8 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
             const SizedBox(height: 16),
             Text(
               displayName,
-              style: AppTypography.headingSmall
-                  .copyWith(color: colors.onSurface),
+              style:
+                  AppTypography.headingSmall.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
@@ -236,16 +237,15 @@ void showChangeTLReasonSheet(BuildContext context) {
               const SizedBox(height: 24),
               Text(
                 l10n?.txtchangeTeamLeaderTitle ?? 'Change Team Leader',
-                style: AppTypography.titleLarge
-                    .copyWith(color: colors.onSurface),
+                style:
+                    AppTypography.titleLarge.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: 8),
               Text(
                 l10n?.txtchangeTlReasonPrompt ??
                     'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
                 style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: colors.onSurfaceVariant),
+                    fontSize: 14, color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -253,7 +253,8 @@ void showChangeTLReasonSheet(BuildContext context) {
                 maxLines: 3,
                 style: TextStyle(color: colors.onSurface),
                 decoration: InputDecoration(
-                  hintText: l10n?.txtenterReasonHint ?? 'Enter your reason here...',
+                  hintText:
+                      l10n?.txtenterReasonHint ?? 'Enter your reason here...',
                   hintStyle: TextStyle(color: colors.onSurfaceMuted),
                   filled: true,
                   fillColor: colors.surfaceBright,
@@ -345,8 +346,9 @@ void showSubscriptionSheet(
           : (planLower.contains('monthly')
               ? (l10n?.txtperMonth ?? '/ month')
               : (l10n?.txtperWeek ?? '/ week'));
-      final displayPlan = rider.currentPlan?.replaceAll('_', ' ').toUpperCase() ??
-          (l10n?.txtnoPlan ?? 'NO PLAN');
+      final displayPlan =
+          rider.currentPlan?.replaceAll('_', ' ').toUpperCase() ??
+              (l10n?.txtnoPlan ?? 'NO PLAN');
 
       final intentLabel = rider.intent != null
           ? (l10n?.txtchangeIntentPrefix(rider.intent!) ??
@@ -380,8 +382,7 @@ void showSubscriptionSheet(
             const SizedBox(height: 24),
             Text(
               l10n?.txtmanageSubscriptionTitle ?? 'Manage Subscription',
-              style: AppTypography.titleLarge
-                  .copyWith(color: colors.onSurface),
+              style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: 8),
             Text(
@@ -601,8 +602,7 @@ Future<void> startVehicleReturnWorkflow(
                       'Ensure the photo is clear and well-lit for faster approval.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      color: colors.onSurfaceVariant),
+                      fontSize: 14, color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(

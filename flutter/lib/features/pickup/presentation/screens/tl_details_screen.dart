@@ -35,12 +35,13 @@ class _TlDetailsScreenState extends ConsumerState<TlDetailsScreen> {
     final isUnassigned = rider?.teamLeader == null ||
         rider!.teamLeader!.isEmpty ||
         rider.teamLeader == 'Not Assigned';
-    final tlName =
-        isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : rider.teamLeader!;
-    final tlPhone = (rider?.teamLeaderPhone == null ||
-            rider!.teamLeaderPhone!.isEmpty)
-        ? ''
-        : rider.teamLeaderPhone!;
+    final tlName = isUnassigned
+        ? (l10n?.txtnotAssigned ?? 'Not assigned')
+        : rider.teamLeader!;
+    final tlPhone =
+        (rider?.teamLeaderPhone == null || rider!.teamLeaderPhone!.isEmpty)
+            ? ''
+            : rider.teamLeaderPhone!;
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -132,7 +133,9 @@ class _TlDetailsScreenState extends ConsumerState<TlDetailsScreen> {
             child: Icon(
               Icons.person,
               size: 48,
-              color: isUnassigned ? colors.onSurfaceMuted : colors.onSurfaceVariant,
+              color: isUnassigned
+                  ? colors.onSurfaceMuted
+                  : colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),

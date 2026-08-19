@@ -224,7 +224,8 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 title: l10n?.settings_legal ?? 'Legal documents',
                 icon: Icons.gavel_outlined,
                 iconColor: AppColors.successDark,
-                onTap: () => AppNavigator.push(context, const LegalPageScreen()),
+                onTap: () =>
+                    AppNavigator.push(context, const LegalPageScreen()),
               ),
               _Tile(
                 title: l10n?.menu_emergencySos ?? 'Emergency SOS',

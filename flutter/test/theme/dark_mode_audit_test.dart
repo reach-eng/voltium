@@ -32,13 +32,15 @@ void main() {
       expect(find.byType(SyncBanner), findsOneWidget);
     });
 
-    testWidgets('SuspensionBanner renders without crash in dark mode', (tester) async {
+    testWidgets('SuspensionBanner renders without crash in dark mode',
+        (tester) async {
       await tester.pumpWidget(_wrapWithDarkTheme(const SuspensionBanner()));
       await tester.pumpAndSettle();
       expect(find.byType(SuspensionBanner), findsOneWidget);
     });
 
-    testWidgets('AppBottomNav renders properly with dark theme tokens', (tester) async {
+    testWidgets('AppBottomNav renders properly with dark theme tokens',
+        (tester) async {
       await tester.pumpWidget(
         _wrapWithDarkTheme(
           AppBottomNav(
@@ -54,7 +56,8 @@ void main() {
       expect(find.text('Wallet'), findsOneWidget);
     });
 
-    testWidgets('TicketDetailScreen renders messages in dark mode', (tester) async {
+    testWidgets('TicketDetailScreen renders messages in dark mode',
+        (tester) async {
       final ticket = TicketEntity(
         id: '1',
         ticketId: 'TKT-1001',
@@ -80,7 +83,8 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(_wrapWithDarkTheme(TicketDetailScreen(ticket: ticket)));
+      await tester
+          .pumpWidget(_wrapWithDarkTheme(TicketDetailScreen(ticket: ticket)));
       await tester.pumpAndSettle();
       expect(find.text('TKT-1001'), findsOneWidget);
       expect(find.text('Support Team'), findsOneWidget);
@@ -88,7 +92,8 @@ void main() {
       expect(find.text('We are looking into this.'), findsOneWidget);
     });
 
-    testWidgets('TransactionListTile renders credit and debit in dark mode', (tester) async {
+    testWidgets('TransactionListTile renders credit and debit in dark mode',
+        (tester) async {
       final creditTx = TransactionModel(
         id: 'TX-1',
         riderId: 'R-1',
@@ -131,7 +136,8 @@ void main() {
       expect(find.text('Rent'), findsOneWidget);
     });
 
-    testWidgets('MethodChip renders active and inactive states in dark mode', (tester) async {
+    testWidgets('MethodChip renders active and inactive states in dark mode',
+        (tester) async {
       await tester.pumpWidget(
         _wrapWithDarkTheme(
           Row(
@@ -162,7 +168,9 @@ void main() {
       expect(find.text('Back to Dashboard'), findsOneWidget);
     });
 
-    testWidgets('DashboardLowBalanceCard renders with theme tokens in dark mode', (tester) async {
+    testWidgets(
+        'DashboardLowBalanceCard renders with theme tokens in dark mode',
+        (tester) async {
       await tester.pumpWidget(
         _wrapWithDarkTheme(
           Builder(

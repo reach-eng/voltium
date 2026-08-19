@@ -129,8 +129,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       if (mounted) {
         Toast.error(
           context,
-          AppLocalizations.of(context)!
-              .txtfailedToCreateTicket(e.toString()),
+          AppLocalizations.of(context)!.txtfailedToCreateTicket(e.toString()),
         );
       }
     } finally {
@@ -206,8 +205,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                       dropdownColor: colors.card,
                       icon: Icon(Icons.keyboard_arrow_down,
                           color: colors.onSurfaceVariant),
-                      style: GoogleFonts.plusJakartaSans(
-                          color: colors.onSurface),
+                      style:
+                          GoogleFonts.plusJakartaSans(color: colors.onSurface),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() => _selectedCategory = newValue);
@@ -239,8 +238,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _subjectController,
-                  style:
-                      GoogleFonts.plusJakartaSans(color: colors.onSurface),
+                  style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Brief summary of the issue',
                     hintStyle: GoogleFonts.plusJakartaSans(
@@ -285,8 +283,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _messageController,
-                  style:
-                      GoogleFonts.plusJakartaSans(color: colors.onSurface),
+                  style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
                   maxLines: 6,
                   decoration: InputDecoration(
                     hintText: 'Describe your issue in detail...',

@@ -124,7 +124,8 @@ void main() {
     // lower number and clean up that many. A future PR can move
     // from "fail-on-growth" to "fail-on-any" as part of a clean
     // onboarding-audit follow-up.
-    const deadKeyRegressionThreshold = 363; // baseline at 2026-08-17 (T-66 l10n sprint)
+    const deadKeyRegressionThreshold =
+        363; // baseline at 2026-08-17 (T-66 l10n sprint)
     if (deadKeys.length > deadKeyRegressionThreshold) {
       fail(
         'Dead-key count grew from baseline '

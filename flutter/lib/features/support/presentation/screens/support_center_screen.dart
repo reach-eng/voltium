@@ -362,8 +362,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         .copyWith(color: colors.onSurface)),
                 Text(subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 12)),
+                        color: colors.onSurfaceVariant, fontSize: 12)),
               ],
             ),
           ),
@@ -480,8 +479,7 @@ class RecentTicketsContainer extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.bold,
-                        color: colors.onSurface),
+                        fontWeight: FontWeight.bold, color: colors.onSurface),
                   ),
                   subtitle: Text(
                     'Status: ${ticket.status.name.toUpperCase()}',
@@ -491,7 +489,8 @@ class RecentTicketsContainer extends ConsumerWidget {
                           : AppColors.primary,
                     ),
                   ),
-                  trailing: Icon(Icons.chevron_right, color: colors.onSurfaceVariant),
+                  trailing:
+                      Icon(Icons.chevron_right, color: colors.onSurfaceVariant),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(

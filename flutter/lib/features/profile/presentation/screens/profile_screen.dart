@@ -249,8 +249,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       onTap: () {
                         PostHogService.capture('profile_menu_item_clicked',
                             properties: {'item': 'emergency_sos'});
-                        AppNavigator.push(
-                            context, const EmergencySOSScreen());
+                        AppNavigator.push(context, const EmergencySOSScreen());
                       },
                     ),
                   ),
@@ -346,7 +345,8 @@ class _CompactRiderHeader extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+          border:
+              Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),

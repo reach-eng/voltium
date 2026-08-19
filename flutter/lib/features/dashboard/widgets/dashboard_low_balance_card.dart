@@ -51,8 +51,7 @@ class DashboardLowBalanceCard extends StatelessWidget {
         : (isDark ? colors.errorLightForeground : AppColors.error);
     final Color lightBgColor =
         isDailyPlan ? colors.warningLight : colors.errorLight;
-    final Color borderColor =
-        isDailyPlan ? colors.warning : colors.error;
+    final Color borderColor = isDailyPlan ? colors.warning : colors.error;
 
     Widget balanceCounter = AnimatedBalanceCounter(
       value: walletBalance,

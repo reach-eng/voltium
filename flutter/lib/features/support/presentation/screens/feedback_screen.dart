@@ -231,7 +231,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                               color: AppColors.of(context).card,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.of(context).outlineVariant.withValues(alpha: 0.5),
+                                color: AppColors.of(context)
+                                    .outlineVariant
+                                    .withValues(alpha: 0.5),
                               ),
                               boxShadow: const [
                                 BoxShadow(
@@ -253,8 +255,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           delay: 100,
                           child: Text(
                             'Share Your Thoughts',
-                            style: AppTypography.headingMedium
-                                .copyWith(color: AppColors.of(context).onSurface),
+                            style: AppTypography.headingMedium.copyWith(
+                                color: AppColors.of(context).onSurface),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -329,7 +331,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               decoration: BoxDecoration(
                 color: colors.card,
                 shape: BoxShape.circle,
-                border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+                border: Border.all(
+                    color: colors.outlineVariant.withValues(alpha: 0.5)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -337,14 +340,12 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   ),
                 ],
               ),
-              child: Icon(Icons.close,
-                  size: 18, color: colors.onSurface),
+              child: Icon(Icons.close, size: 18, color: colors.onSurface),
             ),
           ),
           Text(
             'Feedback',
-            style: AppTypography.titleMedium
-                .copyWith(color: colors.onSurface),
+            style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
           const SizedBox(width: 40), // Balance
         ],
@@ -365,7 +366,9 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               duration: const Duration(milliseconds: 200),
               child: Icon(
                 isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected ? AppColors.warning : AppColors.of(context).outlineVariant,
+                color: isSelected
+                    ? AppColors.warning
+                    : AppColors.of(context).outlineVariant,
                 size: 48,
               ),
             ),
@@ -387,8 +390,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
-        style: GoogleFonts.plusJakartaSans(
-            fontSize: 15, color: colors.onSurface),
+        style:
+            GoogleFonts.plusJakartaSans(fontSize: 15, color: colors.onSurface),
         decoration: InputDecoration(
           hintText: 'Tell us more about your experience...',
           hintStyle: GoogleFonts.plusJakartaSans(
@@ -481,7 +484,8 @@ class RateAppPrompt {
               color: AppColors.of(context).card,
               borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
               border: Border.all(
-                color: AppColors.of(context).outlineVariant.withValues(alpha: 0.5),
+                color:
+                    AppColors.of(context).outlineVariant.withValues(alpha: 0.5),
               ),
             ),
             child: Column(

@@ -155,8 +155,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       // ── Initialize services in parallel ─────────────────────────────────
       await Future.wait([
         CacheService().init(),
-        if (!kIsWeb)
-          OfflineStorageService().init().catchError((_) {}),
+        if (!kIsWeb) OfflineStorageService().init().catchError((_) {}),
         NotificationService().init(),
         ConnectivityService().init(),
       ]);

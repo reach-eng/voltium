@@ -82,7 +82,9 @@ void main() {
       accountStatus: AccountStatus.active,
     );
 
-    testWidgets('DashboardProfileCard displays unassigned vehicle fallback and rider name', (tester) async {
+    testWidgets(
+        'DashboardProfileCard displays unassigned vehicle fallback and rider name',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: DashboardProfileCard(
@@ -97,7 +99,8 @@ void main() {
       expect(find.text('Vehicle Pending Assignment'), findsOneWidget);
     });
 
-    testWidgets('DashboardProfileCard renders in Dark Mode without crashing', (tester) async {
+    testWidgets('DashboardProfileCard renders in Dark Mode without crashing',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           themeMode: ThemeMode.dark,
@@ -112,7 +115,8 @@ void main() {
       expect(find.text('Vehicle Pending Assignment'), findsOneWidget);
     });
 
-    testWidgets('DashboardProfileCard renders in Hindi localization', (tester) async {
+    testWidgets('DashboardProfileCard renders in Hindi localization',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           locale: const Locale('hi'),
@@ -127,7 +131,8 @@ void main() {
       expect(find.text('वाहन आवंटन लंबित है'), findsOneWidget);
     });
 
-    testWidgets('PlanCard renders weekly plan and time remaining correctly', (tester) async {
+    testWidgets('PlanCard renders weekly plan and time remaining correctly',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: PlanCard(
@@ -144,7 +149,8 @@ void main() {
       expect(find.text('NEXT RECHARGE'), findsOneWidget);
     });
 
-    testWidgets('PlanCard renders NO PLAN fallback when plan is empty', (tester) async {
+    testWidgets('PlanCard renders NO PLAN fallback when plan is empty',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: const PlanCard(
@@ -159,7 +165,9 @@ void main() {
       expect(find.text('No Plan'), findsOneWidget);
     });
 
-    testWidgets('DashboardNormalWalletCard renders balance, streak and triggers top-up', (tester) async {
+    testWidgets(
+        'DashboardNormalWalletCard renders balance, streak and triggers top-up',
+        (tester) async {
       bool topUpTapped = false;
       await tester.pumpWidget(
         createLocalizedTestApp(
@@ -180,14 +188,16 @@ void main() {
 
       expect(find.text('TOTAL BALANCE'), findsOneWidget);
       expect(find.text('3/5 Days'), findsOneWidget);
-      expect(find.textContaining('A minimum recharge of ₹1200'), findsOneWidget);
+      expect(
+          find.textContaining('A minimum recharge of ₹1200'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
       expect(topUpTapped, isTrue);
     });
 
-    testWidgets('DashboardLowBalanceCard renders warning and triggers top-up', (tester) async {
+    testWidgets('DashboardLowBalanceCard renders warning and triggers top-up',
+        (tester) async {
       bool topUpTapped = false;
       await tester.pumpWidget(
         createLocalizedTestApp(
@@ -216,7 +226,8 @@ void main() {
       expect(topUpTapped, isTrue);
     });
 
-    testWidgets('ReferralCard displays code and supports copy action', (tester) async {
+    testWidgets('ReferralCard displays code and supports copy action',
+        (tester) async {
       bool copyTapped = false;
       await tester.pumpWidget(
         createLocalizedTestApp(
@@ -239,7 +250,8 @@ void main() {
       expect(copyTapped, isTrue);
     });
 
-    testWidgets('TeamLeaderCard displays pending hub notice when unassigned', (tester) async {
+    testWidgets('TeamLeaderCard displays pending hub notice when unassigned',
+        (tester) async {
       bool detailsTapped = false;
       await tester.pumpWidget(
         createLocalizedTestApp(
@@ -256,14 +268,16 @@ void main() {
 
       expect(find.text('Team Leader'), findsOneWidget);
       expect(find.text('Not assigned'), findsOneWidget);
-      expect(find.text('Your hub will assign a team leader shortly'), findsOneWidget);
+      expect(find.text('Your hub will assign a team leader shortly'),
+          findsOneWidget);
 
       await tester.tap(find.text('View Details'));
       await tester.pump();
       expect(detailsTapped, isTrue);
     });
 
-    testWidgets('ScooterSubmissionBanner displays formatted submission details', (tester) async {
+    testWidgets('ScooterSubmissionBanner displays formatted submission details',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: const ScooterSubmissionBanner(
@@ -279,7 +293,8 @@ void main() {
       expect(find.text('Hub Name: South Hub Center'), findsOneWidget);
     });
 
-    testWidgets('DashboardRentPromptCard displays upcoming debit alert', (tester) async {
+    testWidgets('DashboardRentPromptCard displays upcoming debit alert',
+        (tester) async {
       final prompt = UpcomingRentPrompt(
         leaseId: 'lease-123',
         showPrompt: true,
@@ -305,7 +320,9 @@ void main() {
       expect(find.text('Top up ₹800'), findsOneWidget);
     });
 
-    testWidgets('RentalDetailsScreen displays plan, table, dark mode tokens, and actions', (tester) async {
+    testWidgets(
+        'RentalDetailsScreen displays plan, table, dark mode tokens, and actions',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           themeMode: ThemeMode.dark,
@@ -331,7 +348,9 @@ void main() {
       expect(find.text('End Rental'), findsOneWidget);
     });
 
-    testWidgets('showTLDetailsSheet and showChangeTLReasonSheet open without errors', (tester) async {
+    testWidgets(
+        'showTLDetailsSheet and showChangeTLReasonSheet open without errors',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: Builder(
@@ -360,7 +379,9 @@ void main() {
       expect(find.text('Submit Request'), findsOneWidget);
     });
 
-    testWidgets('showSubscriptionSheet and showIntentDialog open without errors', (tester) async {
+    testWidgets(
+        'showSubscriptionSheet and showIntentDialog open without errors',
+        (tester) async {
       await tester.pumpWidget(
         createLocalizedTestApp(
           child: Builder(

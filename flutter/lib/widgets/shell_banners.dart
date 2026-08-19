@@ -30,14 +30,10 @@ class SyncBanner extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isOnline
-            ? colors.successLight
-            : colors.surface,
+        color: isOnline ? colors.successLight : colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isOnline
-              ? colors.successLight
-              : colors.outlineVariant,
+          color: isOnline ? colors.successLight : colors.outlineVariant,
         ),
       ),
       child: Row(
@@ -84,16 +80,15 @@ class SyncBanner extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isOnline
-                    ? colors.successLight
-                    : colors.card,
+                color: isOnline ? colors.successLight : colors.card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 '$pendingCount',
                 style: AppTypography.labelSmall.copyWith(
-                    color:
-                        isOnline ? colors.successLightForeground : colors.onSurfaceVariant),
+                    color: isOnline
+                        ? colors.successLightForeground
+                        : colors.onSurfaceVariant),
               ),
             ),
         ],
@@ -178,7 +173,9 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
     final isCritical = topReason.severity == _Severity.critical;
 
     final bannerBg = isCritical ? colors.errorLight : colors.warningLight;
-    final bannerFg = isCritical ? colors.errorLightForeground : colors.warningLightForeground;
+    final bannerFg = isCritical
+        ? colors.errorLightForeground
+        : colors.warningLightForeground;
     final bannerBorder = isCritical
         ? colors.error.withValues(alpha: 0.3)
         : colors.warning.withValues(alpha: 0.3);

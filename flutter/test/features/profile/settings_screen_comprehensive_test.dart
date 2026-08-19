@@ -89,15 +89,18 @@ void main() {
 
       // Preferences Section
       expect(find.byKey(const Key('themeOption')), findsAtLeastNWidgets(1));
-      expect(find.byKey(const Key('notificationsTile')), findsAtLeastNWidgets(1));
-      expect(find.byKey(const Key('notificationsSwitch')), findsAtLeastNWidgets(1));
+      expect(
+          find.byKey(const Key('notificationsTile')), findsAtLeastNWidgets(1));
+      expect(find.byKey(const Key('notificationsSwitch')),
+          findsAtLeastNWidgets(1));
 
       // Language Section
       expect(find.byKey(const Key('languageOption')), findsAtLeastNWidgets(1));
 
       // Security Section
       expect(find.byKey(const Key('editProfileTile')), findsAtLeastNWidgets(1));
-      expect(find.byKey(const Key('changePasswordTile')), findsAtLeastNWidgets(1));
+      expect(
+          find.byKey(const Key('changePasswordTile')), findsAtLeastNWidgets(1));
 
       // Support & Legal Section
       expect(find.byKey(const Key('feedbackLink')), findsAtLeastNWidgets(1));
@@ -110,7 +113,8 @@ void main() {
       expect(find.byKey(const Key('rateUsTile')), findsAtLeastNWidgets(1));
 
       // Account / Danger Zone
-      expect(find.byKey(const Key('deleteAccountButton')), findsAtLeastNWidgets(1));
+      expect(find.byKey(const Key('deleteAccountButton')),
+          findsAtLeastNWidgets(1));
       expect(find.byKey(const Key('logoutButton')), findsAtLeastNWidgets(1));
     });
 
@@ -160,7 +164,8 @@ void main() {
       expect(find.byKey(const Key('confirmVerifyLockButton')), findsOneWidget);
 
       // Enter password
-      await tester.enterText(find.byKey(const Key('lockPasswordInput')), '123456');
+      await tester.enterText(
+          find.byKey(const Key('lockPasswordInput')), '123456');
       await tester.tap(find.byKey(const Key('confirmVerifyLockButton')));
       await tester.pump();
 

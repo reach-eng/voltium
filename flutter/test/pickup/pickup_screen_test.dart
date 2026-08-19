@@ -27,8 +27,18 @@ class FakeVoltiumApiService extends Fake implements VoltiumApiService {
     return {
       'success': true,
       'data': [
-        {'id': 'vehicle-1', 'vehicleNumber': 'V-1001', 'status': 'AVAILABLE', 'batteryLevel': 85},
-        {'id': 'vehicle-2', 'vehicleNumber': 'V-1002', 'status': 'AVAILABLE', 'batteryLevel': 90},
+        {
+          'id': 'vehicle-1',
+          'vehicleNumber': 'V-1001',
+          'status': 'AVAILABLE',
+          'batteryLevel': 85
+        },
+        {
+          'id': 'vehicle-2',
+          'vehicleNumber': 'V-1002',
+          'status': 'AVAILABLE',
+          'batteryLevel': 90
+        },
       ]
     };
   }
@@ -42,7 +52,8 @@ class FakeVoltiumApiService extends Fake implements VoltiumApiService {
   }
 
   @override
-  Future<Map<String, dynamic>> verifyPhone({required String phone, required String otp}) async {
+  Future<Map<String, dynamic>> verifyPhone(
+      {required String phone, required String otp}) async {
     return {
       'success': true,
       'verified': true,
@@ -121,7 +132,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('pickup hub screen restores draft values and jumps to step 2 when complete', (tester) async {
+    testWidgets(
+        'pickup hub screen restores draft values and jumps to step 2 when complete',
+        (tester) async {
       String? submittedHubId;
       String? submittedVehicleId;
       String? submittedEmergencyContact;
@@ -133,7 +146,8 @@ void main() {
           initialTeamLeader: 'Rajesh Kumar (TL-01)',
           initialEmergencyContact: '9876543210',
           initialEmergencyContactVerifiedPhone: '9876543210',
-          initialEmergencyContactVerifiedAt: DateTime.now().millisecondsSinceEpoch,
+          initialEmergencyContactVerifiedAt:
+              DateTime.now().millisecondsSinceEpoch,
           initialPhotos: const {
             'front': 'https://example.com/front.jpg',
             'back': 'https://example.com/back.jpg',
@@ -195,7 +209,8 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('pickup verification button enabled only after checking terms', (tester) async {
+    testWidgets('pickup verification button enabled only after checking terms',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupVerificationScreen(
           onNext: () {},

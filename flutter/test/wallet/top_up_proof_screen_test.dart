@@ -87,11 +87,13 @@ void main() {
       expect(find.byKey(const Key('upiRefField')), findsOneWidget);
 
       // Enter UTR text
-      await tester.enterText(find.byKey(const Key('upiRefField')), '123456789012');
+      await tester.enterText(
+          find.byKey(const Key('upiRefField')), '123456789012');
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renders cleanly in dark mode without throwing', (tester) async {
+    testWidgets('renders cleanly in dark mode without throwing',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

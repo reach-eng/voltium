@@ -34,7 +34,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final rider = ref.watch(riderProvider).rider;
-    final plan = rider?.currentPlan ?? (l10n?.txtnoActivePlan ?? 'No Active Plan');
+    final plan =
+        rider?.currentPlan ?? (l10n?.txtnoActivePlan ?? 'No Active Plan');
     final price = rider?.activeRentalPlanPrice ?? 0.0;
     final status = rider?.rentalStatus ?? 'NONE';
     final vehicle = (rider?.assignedVehicle == null ||
@@ -161,8 +162,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
             const SizedBox(height: 32),
             Text(
               l10n?.txtrentalInformation ?? 'Rental Information',
-              style: AppTypography.titleMedium
-                  .copyWith(color: colors.onSurface),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: 16),
             Container(
@@ -202,9 +203,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                               ? (l10n?.txtexpiresToday ?? 'Expires Today')
                               : (l10n?.txtdaysCount(daysRemaining) ??
                                   '$daysRemaining Days'));
-                      final Color remainingColor = daysRemaining <= 3
-                          ? colors.error
-                          : AppColors.primary;
+                      final Color remainingColor =
+                          daysRemaining <= 3 ? colors.error : AppColors.primary;
                       return _buildDetailRow(
                         context,
                         Icons.timer_outlined,
@@ -282,8 +282,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: colors.onSurface,
-                      side: BorderSide(
-                          color: colors.outlineVariant, width: 1.5),
+                      side:
+                          BorderSide(color: colors.outlineVariant, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -380,8 +380,7 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
             value,
             style: AppTypography.labelLarge
                 .copyWith(fontWeight: FontWeight.w700)
-                .copyWith(
-                    color: valueColor ?? colors.onSurface),
+                .copyWith(color: valueColor ?? colors.onSurface),
           ),
         ],
       ),

@@ -250,8 +250,8 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final cardRadius = borderRadius ?? BorderRadius.circular(AppRadius.lg);
-    final cardBorder =
-        border ?? Border.all(color: colors.outlineVariant.withValues(alpha: 0.5));
+    final cardBorder = border ??
+        Border.all(color: colors.outlineVariant.withValues(alpha: 0.5));
     final cardColor = color ?? colors.card;
 
     Widget content = Container(

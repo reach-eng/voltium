@@ -161,7 +161,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       decoration: BoxDecoration(
         color: colors.card.withValues(alpha: 0.8),
         border: Border(
-            bottom: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.3))),
+            bottom: BorderSide(
+                color: colors.outlineVariant.withValues(alpha: 0.3))),
       ),
       child: Row(
         children: [
@@ -178,7 +179,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
               decoration: BoxDecoration(
                 color: colors.card,
                 shape: BoxShape.circle,
-                border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+                border: Border.all(
+                    color: colors.outlineVariant.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -196,8 +198,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           const SizedBox(width: 16),
           Text(
             'Help & FAQ',
-            style: AppTypography.titleLarge
-                .copyWith(color: colors.onSurface),
+            style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
         ],
       ),
@@ -255,7 +256,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   border: isSelected
                       ? null
-                      : Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+                      : Border.all(
+                          color: colors.outlineVariant.withValues(alpha: 0.5)),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
@@ -269,9 +271,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 child: Text(
                   cat,
                   style: AppTypography.labelMedium.copyWith(
-                      color: isSelected
-                          ? Colors.white
-                          : colors.onSurfaceVariant),
+                      color:
+                          isSelected ? Colors.white : colors.onSurfaceVariant),
                 ),
               ),
             ),
@@ -298,8 +299,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
         const SizedBox(height: 16),
         Text(
           'No results found',
-          style: AppTypography.titleSmall
-              .copyWith(color: colors.onSurface),
+          style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
         ),
         Text(
           "We couldn't find any match for your search.",
@@ -319,7 +319,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
+          border:
+              Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
         ),
         child: Column(
           children: [
@@ -399,8 +400,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   Text(
                     'Our team is available 24/7 for you.',
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        color: colors.onSurfaceVariant),
+                        fontSize: 12, color: colors.onSurfaceVariant),
                   ),
                 ],
               ),

@@ -146,11 +146,11 @@ class ReferralCard extends StatelessWidget {
                             HapticService.light();
                             PostHogService.capture('referral_shared',
                                 properties: {'code': displayCode});
-                            final shareMsg = l10n
-                                    ?.txtshareReferralMessage(displayCode) ??
-                                'Use my code $displayCode to join Voltium!';
-                            final shareSub = l10n?.txtjoinVoltiumSubject ??
-                                'Join Voltium';
+                            final shareMsg =
+                                l10n?.txtshareReferralMessage(displayCode) ??
+                                    'Use my code $displayCode to join Voltium!';
+                            final shareSub =
+                                l10n?.txtjoinVoltiumSubject ?? 'Join Voltium';
                             SharePlus.instance.share(
                               ShareParams(
                                 text: shareMsg,

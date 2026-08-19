@@ -230,7 +230,8 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: AppColors.of(context).outlineVariant,
+                    disabledBackgroundColor:
+                        AppColors.of(context).outlineVariant,
                     foregroundColor: Colors.white,
                     disabledForegroundColor: Colors.white70,
                     elevation: 0,

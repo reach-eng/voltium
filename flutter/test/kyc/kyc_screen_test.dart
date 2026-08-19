@@ -96,7 +96,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('renders Step 1 Personal Details fields and pre-fills rider name/phone', (tester) async {
+    testWidgets(
+        'renders Step 1 Personal Details fields and pre-fills rider name/phone',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -127,7 +129,8 @@ void main() {
       expect(find.byKey(const Key('nextOnboardingButton')), findsOneWidget);
     });
 
-    testWidgets('advances to Step 2 and opens Bank Details dialog', (tester) async {
+    testWidgets('advances to Step 2 and opens Bank Details dialog',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       AppConstants.isTestModeOverride = true;
@@ -137,7 +140,8 @@ void main() {
         AppConstants.isTestModeOverride = false;
       });
 
-      await tester.pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
       await tester.pumpAndSettle();
 
       // In test mode, _canProceedCurrentStep is true, click Confirm & Proceed
@@ -165,7 +169,8 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('renders cleanly in dark mode without throwing', (tester) async {
+    testWidgets('renders cleanly in dark mode without throwing',
+        (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

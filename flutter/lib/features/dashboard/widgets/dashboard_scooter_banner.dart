@@ -52,11 +52,10 @@ class ScooterSubmissionBanner extends StatelessWidget {
         ? _formatDate(DateTime.parse(submissionDate!))
         : (l10n?.txtpendingReturnSubmission ?? 'Friday, Oct 27, 2023');
 
-    final String hub = (pickupHub == null ||
-            pickupHub!.isEmpty ||
-            pickupHub == 'Not Assigned')
-        ? (l10n != null ? l10n.txtdesignatedHub : 'New Delhi Central')
-        : pickupHub!;
+    final String hub =
+        (pickupHub == null || pickupHub!.isEmpty || pickupHub == 'Not Assigned')
+            ? (l10n != null ? l10n.txtdesignatedHub : 'New Delhi Central')
+            : pickupHub!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

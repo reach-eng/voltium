@@ -163,8 +163,8 @@ class PreDashboardBanner extends StatelessWidget {
             ),
             child: Text(
               'ACTION',
-              style: AppTypography.overline
-                  .copyWith(color: colors.errorLightForeground, letterSpacing: 0.8),
+              style: AppTypography.overline.copyWith(
+                  color: colors.errorLightForeground, letterSpacing: 0.8),
             ),
           ),
         ],

@@ -219,16 +219,23 @@ void main() {
       expect(find.byIcon(Icons.chevron_right_rounded), findsWidgets);
     });
 
-    testWidgets('RiderModel equality includes assignedVehicle, guarantorStatus, and planStatus',
+    testWidgets(
+        'RiderModel equality includes assignedVehicle, guarantorStatus, and planStatus',
         (tester) async {
-      final r1 = _rider(assignedVehicle: null, guarantor: GuarantorStatus.submitted);
-      final r2 = _rider(assignedVehicle: 'VEH-001', guarantor: GuarantorStatus.submitted);
-      final r3 = _rider(assignedVehicle: null, guarantor: GuarantorStatus.approved);
+      final r1 =
+          _rider(assignedVehicle: null, guarantor: GuarantorStatus.submitted);
+      final r2 = _rider(
+          assignedVehicle: 'VEH-001', guarantor: GuarantorStatus.submitted);
+      final r3 =
+          _rider(assignedVehicle: null, guarantor: GuarantorStatus.approved);
       final r4 = _rider(assignedVehicle: null, planStatus: 'REJECTED');
 
-      expect(r1 == r2, isFalse, reason: 'assignedVehicle change must break equality');
-      expect(r1 == r3, isFalse, reason: 'guarantorStatus change must break equality');
-      expect(r1 == r4, isFalse, reason: 'planStatus change must break equality');
+      expect(r1 == r2, isFalse,
+          reason: 'assignedVehicle change must break equality');
+      expect(r1 == r3, isFalse,
+          reason: 'guarantorStatus change must break equality');
+      expect(r1 == r4, isFalse,
+          reason: 'planStatus change must break equality');
       expect(r1 == _rider(), isTrue, reason: 'identical models must be equal');
     });
   });

@@ -232,8 +232,7 @@ void main() {
       expect(find.byType(SupportCenterScreen), findsOneWidget);
     });
 
-    testWidgets('tapping AppBar back button triggers maybePop',
-        (tester) async {
+    testWidgets('tapping AppBar back button triggers maybePop', (tester) async {
       await tester.pumpWidget(buildTestScreen());
       await tester.pump(const Duration(milliseconds: 500));
 

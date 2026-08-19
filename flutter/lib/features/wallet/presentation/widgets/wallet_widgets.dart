@@ -220,9 +220,7 @@ class MethodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : colors.surface,
+          color: isSelected ? AppColors.primary : colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isSelected ? Colors.transparent : colors.outlineVariant,
@@ -232,7 +230,8 @@ class MethodChip extends StatelessWidget {
           label,
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w600)
-              .copyWith(color: isSelected ? Colors.white : colors.onSurfaceVariant),
+              .copyWith(
+                  color: isSelected ? Colors.white : colors.onSurfaceVariant),
         ),
       ),
     );

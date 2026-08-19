@@ -132,11 +132,13 @@ void main() {
       expect(find.text('Category'), findsAtLeastNWidgets(1));
       expect(find.text('Subject'), findsAtLeastNWidgets(1));
       expect(find.text('Message'), findsAtLeastNWidgets(1));
-      expect(find.byKey(const Key('ticketAttachmentPicker')), findsAtLeastNWidgets(1));
+      expect(find.byKey(const Key('ticketAttachmentPicker')),
+          findsAtLeastNWidgets(1));
       expect(find.text('Submit Ticket'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('validates subject and message minimum lengths', (tester) async {
+    testWidgets('validates subject and message minimum lengths',
+        (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -200,7 +202,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('TCK-1001'), findsAtLeastNWidgets(1));
-      expect(find.text('Issue: Battery not charging properly'), findsAtLeastNWidgets(1));
+      expect(find.text('Issue: Battery not charging properly'),
+          findsAtLeastNWidgets(1));
       expect(find.text('Support Team'), findsAtLeastNWidgets(1));
       expect(find.text('You'), findsAtLeastNWidgets(1));
     });

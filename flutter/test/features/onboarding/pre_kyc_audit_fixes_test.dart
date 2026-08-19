@@ -108,7 +108,8 @@ void main() {
   });
 
   group('KycPreflightScreen Audit & Fixes', () {
-    testWidgets('renders header checklist in English and Dark Mode', (tester) async {
+    testWidgets('renders header checklist in English and Dark Mode',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: KycPreflightScreen(onNext: () {}, onSkip: () {}),
         themeMode: ThemeMode.dark,

@@ -431,15 +431,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isCredit
-                          ? colors.successLight
-                          : colors.errorLight,
+                      color: isCredit ? colors.successLight : colors.errorLight,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
-                      color: isCredit ? colors.successLightForeground : colors.errorLightForeground,
+                      color: isCredit
+                          ? colors.successLightForeground
+                          : colors.errorLightForeground,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -449,8 +449,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                       children: [
                         Text(
                           tx.description ?? tx.purpose ?? 'Transaction',
-                          style: AppTypography.labelLarge.copyWith(
-                              color: colors.onSurface),
+                          style: AppTypography.labelLarge
+                              .copyWith(color: colors.onSurface),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -494,8 +494,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             ? Icons.add_circle_outline
                             : Icons.remove_circle_outline,
                         size: 14,
-                        color:
-                            isCredit ? AppColors.success : colors.onSurfaceVariant,
+                        color: isCredit
+                            ? AppColors.success
+                            : colors.onSurfaceVariant,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -526,8 +527,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.surface,
-        border:
-            Border(top: BorderSide(color: colors.outlineVariant)),
+        border: Border(top: BorderSide(color: colors.outlineVariant)),
       ),
       padding: Spacing.paddingMd,
       child: Column(
@@ -619,8 +619,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               const SizedBox(width: 8),
               Text(
                 label,
-                style: AppTypography.bodySmall
-                    .copyWith(color: colors.onSurface),
+                style:
+                    AppTypography.bodySmall.copyWith(color: colors.onSurface),
               ),
             ],
           ),

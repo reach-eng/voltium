@@ -26,8 +26,9 @@ class TeamLeaderCard extends StatelessWidget {
     final isUnassigned = teamLeaderName == null ||
         teamLeaderName!.isEmpty ||
         teamLeaderName == 'Not Assigned';
-    final displayName =
-        isUnassigned ? (l10n?.txtnotAssigned ?? 'Not assigned') : teamLeaderName!;
+    final displayName = isUnassigned
+        ? (l10n?.txtnotAssigned ?? 'Not assigned')
+        : teamLeaderName!;
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
@@ -75,8 +76,7 @@ class TeamLeaderCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.warningSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border:
-                          Border.all(color: colors.warningLight),
+                      border: Border.all(color: colors.warningLight),
                     ),
                     child: const Icon(Icons.stars,
                         color: AppColors.warningForeground, size: 24),

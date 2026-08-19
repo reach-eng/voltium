@@ -153,8 +153,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       localeProv.isFollowingSystem
                           ? (l10n?.settings_followSystem ?? 'Follow system')
-                          : LocaleNotifier.displayNameFor(
-                              localeProv.locale, l10n ?? AppLocalizations.of(context)!),
+                          : LocaleNotifier.displayNameFor(localeProv.locale,
+                              l10n ?? AppLocalizations.of(context)!),
                       style: AppTypography.bodyMedium
                           .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: colors.onSurfaceMuted),
@@ -340,7 +340,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: colors.surface,
-              title: Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
+              title:
+                  Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -676,9 +677,7 @@ class _RiderIdentityCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: verified
-                  ? colors.successSurface
-                  : colors.warningSurface,
+              color: verified ? colors.successSurface : colors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(
                 color: verified

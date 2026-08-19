@@ -478,8 +478,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: const BorderSide(
-                          color: AppColors.primary, width: 2),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
                     ),
                   ),
                   textCapitalization: TextCapitalization.words,
@@ -509,8 +509,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: const BorderSide(
-                          color: AppColors.primary, width: 2),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
                     ),
                   ),
                   keyboardType: TextInputType.number,
@@ -541,8 +541,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      borderSide: const BorderSide(
-                          color: AppColors.primary, width: 2),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
                     ),
                   ),
                   textCapitalization: TextCapitalization.characters,

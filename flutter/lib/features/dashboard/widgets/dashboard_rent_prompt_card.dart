@@ -114,7 +114,8 @@ class DashboardRentPromptCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                l10n?.txttopUpBeforeTomorrow6am ?? 'Top-up before tomorrow 6 AM',
+                l10n?.txttopUpBeforeTomorrow6am ??
+                    'Top-up before tomorrow 6 AM',
                 style: AppTypography.headingSmall.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 6),
@@ -142,8 +143,7 @@ class DashboardRentPromptCard extends StatelessWidget {
                   icon: const Icon(Icons.account_balance_wallet_rounded,
                       size: 18),
                   label: Text(
-                    l10n?.txttopUpAmountAction(topUpStr) ??
-                        'Top up ₹$topUpStr',
+                    l10n?.txttopUpAmountAction(topUpStr) ?? 'Top up ₹$topUpStr',
                     style: AppTypography.labelLarge
                         .copyWith(fontWeight: FontWeight.bold),
                   ),

@@ -402,8 +402,8 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
               // `suspension_contactSupport` ARB key (the closest
               // semantic match — "contact support" as a verb in
               // an error-state button).
-              label: Text(
-                  AppLocalizations.of(context)!.suspension_contactSupport),
+              label:
+                  Text(AppLocalizations.of(context)!.suspension_contactSupport),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -473,7 +473,8 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
 /// is always set; but we still derive it to keep the contract
 /// honest (a forced-deposit-failed flow could land here without a
 /// plan and we shouldn't show a green check).
-_StatusRow _planRow(String? currentPlan, String? planStatus, [VoidCallback? onAttention]) {
+_StatusRow _planRow(String? currentPlan, String? planStatus,
+    [VoidCallback? onAttention]) {
   final hasPlan =
       currentPlan != null && currentPlan.isNotEmpty && currentPlan != 'NONE';
   if (!hasPlan) {

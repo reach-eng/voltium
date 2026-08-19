@@ -136,8 +136,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             // via the existing `txtproceedToPayment` ARB key
             // (the closest semantic match — the rider proceeds
             // to the payment step).
-            child: Text(
-                AppLocalizations.of(context)!.txtproceedToPayment,
+            child: Text(AppLocalizations.of(context)!.txtproceedToPayment,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
@@ -599,8 +598,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     HapticFeedback.lightImpact();
                     Toast.success(
                       context,
-                      AppLocalizations.of(context)!
-                          .txtupiIdCopiedToClipboard,
+                      AppLocalizations.of(context)!.txtupiIdCopiedToClipboard,
                     );
                   },
                   icon: const Icon(Icons.copy_rounded, size: 18),
@@ -937,9 +935,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             children: [
               // T-66: hardcoded English receipt line. Localised
               // via the new `txttopUpAmountAddedToWallet` ARB key.
-              Text(
-                  AppLocalizations.of(context)!
-                      .txttopUpAmountAddedToWallet,
+              Text(AppLocalizations.of(context)!.txttopUpAmountAddedToWallet,
                   style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
                       fontSize: 14)),
@@ -1068,7 +1064,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 )
               : Text(
                   isInstant
-                       ? 'Proceed to Instant Pay (₹$total)'
+                      ? 'Proceed to Instant Pay (₹$total)'
                       : 'Submit Proof',
                   style: AppTypography.titleSmall.copyWith(
                       letterSpacing: 0.5,

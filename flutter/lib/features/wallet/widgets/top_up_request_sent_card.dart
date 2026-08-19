@@ -27,8 +27,7 @@ class TopUpRequestSentCard extends StatelessWidget {
     final statusColor = isRejected
         ? (isDark ? colors.errorLightForeground : AppColors.error)
         : (isDark ? colors.warningLightForeground : AppColors.warningDark);
-    final statusBg =
-        isRejected ? colors.errorLight : colors.warningLight;
+    final statusBg = isRejected ? colors.errorLight : colors.warningLight;
 
     return Container(
       width: double.infinity,
@@ -53,8 +52,8 @@ class TopUpRequestSentCard extends StatelessWidget {
             children: [
               Text(
                 'Top-up Request',
-                style: AppTypography.titleSmall
-                    .copyWith(color: colors.onSurface),
+                style:
+                    AppTypography.titleSmall.copyWith(color: colors.onSurface),
               ),
               Container(
                 padding:
@@ -77,19 +76,23 @@ class TopUpRequestSentCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.errorLight,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border:
-                    Border.all(color: colors.error.withValues(alpha: 0.2)),
+                border: Border.all(color: colors.error.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
                   Icon(Icons.error_outline,
-                      color: isDark ? colors.errorLightForeground : AppColors.error, size: 16),
+                      color: isDark
+                          ? colors.errorLightForeground
+                          : AppColors.error,
+                      size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Reason: ${record!.rejectionReason}',
-                      style: AppTypography.bodySmall
-                          .copyWith(color: isDark ? colors.errorLightForeground : AppColors.error),
+                      style: AppTypography.bodySmall.copyWith(
+                          color: isDark
+                              ? colors.errorLightForeground
+                              : AppColors.error),
                     ),
                   ),
                 ],

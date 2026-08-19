@@ -100,7 +100,8 @@ void main() {
   }
 
   group('NotificationsScreen - UI, UX & Header Actions', () {
-    testWidgets('renders header, unread badge count, and all notification items',
+    testWidgets(
+        'renders header, unread badge count, and all notification items',
         (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
@@ -149,7 +150,8 @@ void main() {
       expect(find.byKey(const Key('markAllReadButton')), findsNothing);
     });
 
-    testWidgets('tapping settings icon navigates to NotificationPreferencesScreen',
+    testWidgets(
+        'tapping settings icon navigates to NotificationPreferencesScreen',
         (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;

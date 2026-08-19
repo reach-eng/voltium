@@ -88,14 +88,17 @@ void main() {
       await tester.pumpWidget(buildTestApp(faqs: faqs));
       await tester.pumpAndSettle();
 
-      expect(find.text('How do I unlock the scooter?'), findsAtLeastNWidgets(1));
-      expect(find.text('Where are the battery swap stations?'), findsAtLeastNWidgets(1));
+      expect(
+          find.text('How do I unlock the scooter?'), findsAtLeastNWidgets(1));
+      expect(find.text('Where are the battery swap stations?'),
+          findsAtLeastNWidgets(1));
 
       // Enter search text
       await tester.enterText(find.byType(TextFormField), 'unlock');
       await tester.pumpAndSettle();
 
-      expect(find.text('How do I unlock the scooter?'), findsAtLeastNWidgets(1));
+      expect(
+          find.text('How do I unlock the scooter?'), findsAtLeastNWidgets(1));
       expect(find.text('Where are the battery swap stations?'), findsNothing);
     });
 
@@ -111,7 +114,8 @@ void main() {
         const FaqItem(
           id: 'faq-1',
           question: 'How do I top up my wallet?',
-          answer: 'Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.',
+          answer:
+              'Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.',
           categoryId: 'Wallet',
         ),
       ];
@@ -120,13 +124,19 @@ void main() {
       await tester.pumpAndSettle();
 
       // Initially collapsed: answer text is not in tree
-      expect(find.text('Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.'), findsNothing);
+      expect(
+          find.text(
+              'Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.'),
+          findsNothing);
 
       // Tap on question
       await tester.tap(find.text('How do I top up my wallet?'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.'), findsAtLeastNWidgets(1));
+      expect(
+          find.text(
+              'Go to the Wallet screen and click Add Money to pay via UPI or Bank Transfer.'),
+          findsAtLeastNWidgets(1));
     });
 
     testWidgets('renders properly in dark mode', (tester) async {

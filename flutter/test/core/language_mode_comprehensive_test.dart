@@ -73,7 +73,8 @@ void main() {
   }
 
   group('LocaleNotifier Unit & State Tests', () {
-    test('default state starts as English and follows system when no cache', () {
+    test('default state starts as English and follows system when no cache',
+        () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -142,7 +143,8 @@ void main() {
       expect(state.isHindi, isTrue);
     });
 
-    test('maybeApplyFromServer ignores remote preference when local override exists',
+    test(
+        'maybeApplyFromServer ignores remote preference when local override exists',
         () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);

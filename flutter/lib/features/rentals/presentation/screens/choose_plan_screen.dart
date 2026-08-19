@@ -330,7 +330,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             return GestureDetector(
                               key: Key('planCard_$index'),
                               onTap: () =>
-                                   setState(() => _selectedPlanId = plan.id),
+                                  setState(() => _selectedPlanId = plan.id),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeInOut,
@@ -444,8 +444,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                             fontSize: 16,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            color:
-                                                                colors.onSurface,
+                                                            color: colors
+                                                                .onSurface,
                                                           ),
                                                         ),
                                                       ),
@@ -534,7 +534,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.9)
-                                                        : colors.onSurfaceVariant,
+                                                        : colors
+                                                            .onSurfaceVariant,
                                                     height: 1.4,
                                                   ),
                                                 ),
@@ -580,7 +581,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.7)
-                                                        : colors.onSurfaceVariant,
+                                                        : colors
+                                                            .onSurfaceVariant,
                                                   ),
                                             ),
                                           ],

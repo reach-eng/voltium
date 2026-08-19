@@ -15,7 +15,8 @@ void main() {
   }
 
   group('PlanSuccessScreen Tests', () {
-    testWidgets('renders confirmation title, description, and check icon', (tester) async {
+    testWidgets('renders confirmation title, description, and check icon',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(onNext: () {}));
       await tester.pumpAndSettle();
 
@@ -24,7 +25,8 @@ void main() {
       expect(find.byType(ElevatedButton), findsOneWidget);
     });
 
-    testWidgets('invokes onNext when proceed to pickup button is pressed', (tester) async {
+    testWidgets('invokes onNext when proceed to pickup button is pressed',
+        (tester) async {
       bool nextCalled = false;
       await tester.pumpWidget(buildTestHost(onNext: () => nextCalled = true));
       await tester.pumpAndSettle();

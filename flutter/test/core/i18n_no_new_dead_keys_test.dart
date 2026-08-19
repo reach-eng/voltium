@@ -153,7 +153,8 @@ void main() {
     // regex, the baseline tracking) is in place; a follow-up
     // ticket can refine the regex to handle the '₹' and '${'
     // cases and lower the threshold to 0.
-    const hardcodedTextThreshold = 5; // baseline at 2026-08-17 (T-66 l10n sprint)
+    const hardcodedTextThreshold =
+        5; // baseline at 2026-08-17 (T-66 l10n sprint)
     if (offenders.length > hardcodedTextThreshold) {
       // Print the first 30 so the failure log is actionable.
       final shown = offenders.take(30).map((o) => '  $o').join('\n');

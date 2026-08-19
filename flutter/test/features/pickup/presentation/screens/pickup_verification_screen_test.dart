@@ -57,7 +57,9 @@ void main() {
   }
 
   group('PickupVerificationScreen Tests', () {
-    testWidgets('renders heading, agreement text, and photos status when present', (tester) async {
+    testWidgets(
+        'renders heading, agreement text, and photos status when present',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(
         onNext: () {},
         pickupPhotoFront: 'https://example.com/photo.jpg',
@@ -85,21 +87,25 @@ void main() {
       expect(backCalled, isTrue);
     });
 
-    testWidgets('toggling terms checkbox enables agreement state and complete pickup button', (tester) async {
+    testWidgets(
+        'toggling terms checkbox enables agreement state and complete pickup button',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(onNext: () {}));
       await tester.pumpAndSettle();
 
       final checkbox = find.byKey(const Key('rentalAgreementCheckbox'));
       expect(tester.widget<Checkbox>(checkbox).value, isFalse);
 
-      final buttonBefore = tester.widget<ElevatedButton>(find.byKey(const Key('completePickupButton')));
+      final buttonBefore = tester.widget<ElevatedButton>(
+          find.byKey(const Key('completePickupButton')));
       expect(buttonBefore.onPressed, isNull);
 
       await tester.tap(checkbox);
       await tester.pumpAndSettle();
 
       expect(tester.widget<Checkbox>(checkbox).value, isTrue);
-      final buttonAfter = tester.widget<ElevatedButton>(find.byKey(const Key('completePickupButton')));
+      final buttonAfter = tester.widget<ElevatedButton>(
+          find.byKey(const Key('completePickupButton')));
       expect(buttonAfter.onPressed, isNotNull);
     });
   });

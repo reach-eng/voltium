@@ -51,7 +51,8 @@ void main() {
   }
 
   group('TopUpAmountScreen Tests', () {
-    testWidgets('renders initial amount in text field and quick amount chips', (tester) async {
+    testWidgets('renders initial amount in text field and quick amount chips',
+        (tester) async {
       await tester.pumpWidget(buildTestHost(initialAmount: 1500));
       await tester.pumpAndSettle();
 
@@ -71,7 +72,8 @@ void main() {
       expect(backCalled, isTrue);
     });
 
-    testWidgets('invokes onProceed with selected amount when proceed is tapped', (tester) async {
+    testWidgets('invokes onProceed with selected amount when proceed is tapped',
+        (tester) async {
       int? proceededAmount;
       await tester.pumpWidget(buildTestHost(
         initialAmount: 2000,

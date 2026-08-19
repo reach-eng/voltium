@@ -139,7 +139,8 @@ void main() {
   });
 
   group('Profile Detail Screen Deep Audit Tests', () {
-    testWidgets('renders full rider personal details, vehicle, and guarantor in Light Mode',
+    testWidgets(
+        'renders full rider personal details, vehicle, and guarantor in Light Mode',
         (tester) async {
       await tester.pumpWidget(createMenuTestApp(
         child: const ProfileDetailScreen(),
@@ -173,7 +174,8 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('renders localized Hindi personal details in ProfileDetailScreen',
+    testWidgets(
+        'renders localized Hindi personal details in ProfileDetailScreen',
         (tester) async {
       await tester.pumpWidget(createMenuTestApp(
         locale: const Locale('hi'),
@@ -193,7 +195,8 @@ void main() {
   });
 
   group('Settings Screen Deep Audit Tests', () {
-    testWidgets('renders SettingsScreen in Light Mode with all preferences tiles',
+    testWidgets(
+        'renders SettingsScreen in Light Mode with all preferences tiles',
         (tester) async {
       await tester.pumpWidget(createMenuTestApp(child: const SettingsScreen()));
       await tester.pumpAndSettle();

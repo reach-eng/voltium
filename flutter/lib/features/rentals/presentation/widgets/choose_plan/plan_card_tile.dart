@@ -181,9 +181,8 @@ class PlanCardTile extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isSelected ? Colors.white : Colors.transparent,
                         border: Border.all(
-                          color: isSelected
-                              ? Colors.white
-                              : colors.outlineVariant,
+                          color:
+                              isSelected ? Colors.white : colors.outlineVariant,
                           width: 2,
                         ),
                       ),

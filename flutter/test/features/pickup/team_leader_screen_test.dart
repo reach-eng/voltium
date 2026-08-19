@@ -63,7 +63,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Team Leader Details Screen Tests', () {
-    testWidgets('renders assigned Team Leader details in English and Light Mode',
+    testWidgets(
+        'renders assigned Team Leader details in English and Light Mode',
         (tester) async {
       await tester.pumpWidget(createLocalizedTLTestApp(
         child: const TlDetailsScreen(),
@@ -75,7 +76,9 @@ void main() {
       expect(find.text('Rajesh Kumar (TL-01)'), findsOneWidget);
       expect(find.text('Assigned Team Leader'), findsOneWidget);
       expect(find.text('+919876500000'), findsOneWidget);
-      expect(find.textContaining('Your team leader is your primary point of contact'),
+      expect(
+          find.textContaining(
+              'Your team leader is your primary point of contact'),
           findsOneWidget);
       expect(find.text('Request Team Leader change'), findsOneWidget);
       expect(find.text('Back to Dashboard'), findsOneWidget);
@@ -127,11 +130,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Not assigned'), findsOneWidget);
-      expect(find.text('Your hub will assign a team leader shortly'), findsOneWidget);
+      expect(find.text('Your hub will assign a team leader shortly'),
+          findsOneWidget);
       expect(find.byKey(const Key('callTeamLeaderButton')), findsNothing);
     });
 
-    testWidgets('tapping Request Team Leader change opens change TL reason bottom sheet',
+    testWidgets(
+        'tapping Request Team Leader change opens change TL reason bottom sheet',
         (tester) async {
       await tester.pumpWidget(createLocalizedTLTestApp(
         child: const TlDetailsScreen(),

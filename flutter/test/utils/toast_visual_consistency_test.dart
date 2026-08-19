@@ -4,7 +4,8 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 void main() {
-  Widget buildTestHost(ThemeMode themeMode, void Function(BuildContext) onTrigger) {
+  Widget buildTestHost(
+      ThemeMode themeMode, void Function(BuildContext) onTrigger) {
     return MaterialApp(
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -26,7 +27,9 @@ void main() {
     for (final mode in [ThemeMode.light, ThemeMode.dark]) {
       final modeName = mode == ThemeMode.light ? 'Light' : 'Dark';
 
-      testWidgets('Toast.success displays check icon and message in $modeName mode', (tester) async {
+      testWidgets(
+          'Toast.success displays check icon and message in $modeName mode',
+          (tester) async {
         await tester.pumpWidget(buildTestHost(mode, (ctx) {
           Toast.success(ctx, 'Success operation');
         }));
@@ -39,7 +42,9 @@ void main() {
         expect(find.byIcon(Icons.check_circle), findsOneWidget);
       });
 
-      testWidgets('Toast.error displays error icon and message in $modeName mode', (tester) async {
+      testWidgets(
+          'Toast.error displays error icon and message in $modeName mode',
+          (tester) async {
         await tester.pumpWidget(buildTestHost(mode, (ctx) {
           Toast.error(ctx, 'Failed operation');
         }));
@@ -52,7 +57,8 @@ void main() {
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
       });
 
-      testWidgets('Toast.info displays info icon and message in $modeName mode', (tester) async {
+      testWidgets('Toast.info displays info icon and message in $modeName mode',
+          (tester) async {
         await tester.pumpWidget(buildTestHost(mode, (ctx) {
           Toast.info(ctx, 'Info note');
         }));
@@ -65,7 +71,9 @@ void main() {
         expect(find.byIcon(Icons.info_outline), findsOneWidget);
       });
 
-      testWidgets('Toast.warning displays warning icon and message in $modeName mode', (tester) async {
+      testWidgets(
+          'Toast.warning displays warning icon and message in $modeName mode',
+          (tester) async {
         await tester.pumpWidget(buildTestHost(mode, (ctx) {
           Toast.warning(ctx, 'Warning notice');
         }));

@@ -549,8 +549,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                       .copyWith(fontWeight: FontWeight.w700)
                       .copyWith(
                           letterSpacing: 0.5,
-                          color:
-                              _canProceed ? Colors.white : colors.onSurfaceMuted),
+                          color: _canProceed
+                              ? Colors.white
+                              : colors.onSurfaceMuted),
                 ),
               ),
               if (_canProceed)

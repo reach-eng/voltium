@@ -153,8 +153,8 @@ class QuestionCard extends StatelessWidget {
             Text(
               question,
               textAlign: TextAlign.center,
-              style: AppTypography.titleMedium.copyWith(
-                  color: colors.onSurface, height: 1.4),
+              style: AppTypography.titleMedium
+                  .copyWith(color: colors.onSurface, height: 1.4),
             ),
             const SizedBox(height: 12),
             Text(
@@ -258,8 +258,7 @@ class PathSummary extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading: Icon(Icons.history,
-              size: 18, color: colors.onSurfaceMuted),
+          leading: Icon(Icons.history, size: 18, color: colors.onSurfaceMuted),
           title: Text(
             'Your answers (${path.length})',
             style: AppTypography.bodyMedium
@@ -577,8 +576,7 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.route,
-                    size: 18, color: colors.onSurfaceMuted),
+                Icon(Icons.route, size: 18, color: colors.onSurfaceMuted),
                 const SizedBox(width: 8),
                 Text(
                   'Diagnostic path taken',
