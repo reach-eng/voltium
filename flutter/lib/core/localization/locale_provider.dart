@@ -12,9 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 
 /// Immutable locale state.
@@ -200,11 +200,12 @@ class LocaleNotifier extends Notifier<LocaleState> {
   /// (i.e. switch back to "follow system").
   Future<void> _syncPreferredLocale(String? code) async {
     try {
-      // Use a dynamic import to avoid a circular dep — the
-      // VoltiumApiService pulls in rider_provider via the api-money
-      // serializer chain.
+      // PR-13: the wrapper's `.put('/api/rider/profile', body: ...)`
+      // was a 1-line pass-through to ApiClient.put. Use ApiClient
+      // directly. The new-instance allocation is cheap (it shares
+      // the shared pinned HTTP client).
       // ignore: prefer_const_constructors
-      final api = VoltiumApiService();
+      final api = ApiClient();
       await api.put(
         '/api/rider/profile',
         body: {'preferredLocale': code ?? ''},

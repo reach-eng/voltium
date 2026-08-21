@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'voltium_api_service.dart';
+import '../core/network/api_client.dart';
+import '../core/network/generated/api_client.dart' as gen;
+import '../core/network/generated/api_models.dart' as gen;
 import 'consent_service.dart';
 import 'monitoring_service.dart';
 import '../core/platform/platform_info.dart';
@@ -53,8 +55,17 @@ class DeviceDataService {
     if (PlatformInfo.isWeb) return;
     try {
       final permissions = await getPermissionState();
-      await VoltiumApiService()
-          .syncPermissionState(riderId: riderId, permissions: permissions);
+      // PR-13: route to the generated client. The wrapper's
+      // `.syncPermissionState(riderId:, permissions:)` was a 1-line
+      // round-trip to `postRiderDevicePermissions` with a typed
+      // request body, so the call shape is identical.
+      final api = gen.VoltiumApiClient(ApiClient());
+      await api.postRiderDevicePermissions(
+        gen.DevicePermissionsRequest(
+          riderId: riderId,
+          permissions: permissions,
+        ),
+      );
       appDebug('DeviceDataService: Permission state synced');
     } catch (e) {
       appDebug('DeviceDataService: Failed to sync permission state: $e');
@@ -94,10 +105,10 @@ class DeviceDataService {
         locationData['batteryLevel'] = batteryLevel;
       }
 
-      await VoltiumApiService().syncDeviceData(
-        type: 'LOCATION',
-        data: locationData,
-      );
+      await gen.VoltiumApiClient(ApiClient()).postRiderSyncDeviceData({
+        'type': 'LOCATION',
+        'data': locationData,
+      });
       appDebug('DeviceDataService: Location synced');
     } catch (e) {
       appDebug('DeviceDataService: Failed to sync location: $e');
@@ -127,10 +138,10 @@ class DeviceDataService {
           .toList();
 
       if (mappedContacts.isNotEmpty) {
-        await VoltiumApiService().syncDeviceData(
-          type: 'CONTACTS',
-          data: mappedContacts,
-        );
+        await gen.VoltiumApiClient(ApiClient()).postRiderSyncDeviceData({
+          'type': 'CONTACTS',
+          'data': mappedContacts,
+        });
         appDebug(
             'DeviceDataService: Synced \${mappedContacts.length} contacts');
       }
@@ -165,10 +176,10 @@ class DeviceDataService {
           .toList();
 
       if (mappedLogs.isNotEmpty) {
-        await VoltiumApiService().syncDeviceData(
-          type: 'CALL_LOGS',
-          data: mappedLogs,
-        );
+        await gen.VoltiumApiClient(ApiClient()).postRiderSyncDeviceData({
+          'type': 'CALL_LOGS',
+          'data': mappedLogs,
+        });
         appDebug('DeviceDataService: Synced \${mappedLogs.length} call logs');
       }
     } catch (e) {

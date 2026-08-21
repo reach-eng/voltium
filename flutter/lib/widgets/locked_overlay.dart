@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/voltium_api_service.dart';
 import '../core/platform/platform_info.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -45,7 +44,8 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
 
   Future<void> _checkLockState() async {
     try {
-      final response = await VoltiumApiService().get('/api/rider/device');
+      final response =
+          await ref.read(apiClientProvider).get('/api/rider/device');
       final data = response['data'] as Map<String, dynamic>? ?? response;
       final adminLocked = data['isAdminLocked'] as bool?;
       if (mounted) {
@@ -84,7 +84,14 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
     });
 
     try {
-      final response = await VoltiumApiService().verifyLockPassword(password);
+      // PR-13: route through the generated client; it returns
+      // `Map<String, dynamic>` already, so the call shape matches
+      // the wrapper's `.toJson()` output and the caller's
+      // `response['success']` / `response['data']` pattern keeps
+      // working unchanged.
+      final response = await ref
+          .read(voltiumApiClientProvider)
+          .postRiderDeviceVerifyLock({'password': password});
 
       final successVal = response['success'] as bool? ?? false;
       final data = response['data'] as Map<String, dynamic>?;

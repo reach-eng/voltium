@@ -35,7 +35,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:voltium_rider/core/navigation/app_state.dart';
 import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 
@@ -252,7 +252,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
 
   Future<void> _pollSecurityFlags({required String riderId}) async {
     try {
-      final resp = await VoltiumApiService().get('/api/rider/device');
+      final resp = await ref.read(apiClientProvider).get('/api/rider/device');
       final data = resp['data'] as Map<String, dynamic>? ?? resp;
       final uninstallBlocked = data['isUninstallBlocked'] as bool?;
       final locationMandatory = data['isLocationMandatory'] as bool?;
@@ -375,7 +375,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
   Future<void> _reportViolation(String permissionId) async {
     if (_riderId == null) return;
     try {
-      await VoltiumApiService().post(
+      await ref.read(apiClientProvider).post(
         '/api/rider/device',
         body: {
           'permissionId': permissionId,

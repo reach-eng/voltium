@@ -268,7 +268,15 @@ class _AppRouterState extends ConsumerState<AppRouter>
     final vehicleId = _pickupVehicleId;
     if (hubId == null || vehicleId == null) return true; // nothing to resume
     try {
-      final hubsResp = await VoltiumApiService().fetchHubs();
+      // PR-13: route through the (now-thin) VoltiumApiService shim
+      // so the existing test fakes (which set
+      // `VoltiumApiService.instance = _FakeVoltiumApiService(...)`)
+      // keep working. The shim is a 1-line delegation; this is the
+      // only production lib/ call site that still uses it. A
+      // follow-up will migrate the test suite to mock
+      // `VoltiumApiClient` directly and drop the shim.
+      final api = VoltiumApiService();
+      final hubsResp = await api.fetchHubs();
       final hubs = (hubsResp['data'] as List?) ?? const [];
       final hubOk = hubs.any((h) {
         final map = h as Map;
@@ -279,7 +287,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
         return false;
       }
 
-      final vehResp = await VoltiumApiService().fetchVehicles(hubId);
+      final vehResp = await api.fetchVehicles(hubId);
       final data = vehResp['data'];
       final rawList = data is List
           ? data

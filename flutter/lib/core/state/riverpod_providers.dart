@@ -65,3 +65,27 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final client = ApiClient();
   return AuthRepositoryImpl(client, VoltiumApiClient(client));
 });
+
+/// PR-13 (2026-08-22): Riverpod provider for the generated
+/// [VoltiumApiClient]. Replaces the `VoltiumApiService` singleton —
+/// the wrapper used to own one [VoltiumApiClient] per process; now
+/// the provider is the canonical place to get one. Tests can
+/// override this to inject a fake.
+///
+/// Callers in widget/provider contexts should prefer
+/// `ref.read(voltiumApiClientProvider).methodName(args)`. Callers
+/// in non-widget contexts (singletons, services) can construct
+/// `VoltiumApiClient(ApiClient())` ad hoc.
+final voltiumApiClientProvider = Provider<VoltiumApiClient>((ref) {
+  return VoltiumApiClient(ApiClient());
+});
+
+/// PR-13 (2026-08-22): Riverpod provider for the untyped [ApiClient]
+/// (the legacy HTTP transport used for the untyped REST paths
+/// that aren't in the generated client). Most notifiers that need
+/// this also read [voltiumApiClientProvider]; both are sourced from
+/// the same [ApiClient] under the hood so the shared HTTP client
+/// (and pinned TLS) is reused.
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient();
+});

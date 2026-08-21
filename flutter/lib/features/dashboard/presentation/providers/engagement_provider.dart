@@ -11,14 +11,20 @@
 //     `refreshNotifications`, `markNotificationAsRead`,
 //     `markAllNotificationsRead`, `logout`
 //
-// The notifier pulls its `VoltiumApiService` from a Riverpod
-// provider so tests can inject a fake.
+// PR-13 (2026-08-22): the notifier now talks directly to the
+// generated [VoltiumApiClient] for typed endpoints (rewards,
+// referrals) and to the [ApiClient] for the untyped notification
+// REST paths. The old `VoltiumApiService` wrapper is gone. Tests
+// override [voltiumApiClientProvider] / construct a fresh
+// [ApiClient] for the notification path.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/models/notification_model.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import '../../../../utils/app_logger.dart';
@@ -89,7 +95,16 @@ class EngagementProvider extends Notifier<EngagementState> {
   @override
   EngagementState build() => const EngagementState();
 
-  VoltiumApiService get _api => ref.read(engagementApiProvider);
+  /// PR-13: typed endpoint client (rewards, referrals). Sourced
+  /// from the shared Riverpod provider so tests can inject a fake.
+  VoltiumApiClient get _gen => ref.read(voltiumApiClientProvider);
+
+  /// PR-13: untyped REST paths (the `/api/rider/notifications*`
+  /// endpoints aren't in the generated client — they're raw HTTP).
+  /// Sourced from [apiClientProvider] so tests can inject a fake
+  /// (the regression guard for `markAllNotificationsRead`'s
+  /// in-flight flag needs a gated `put`).
+  ApiClient get _http => ref.read(apiClientProvider);
 
   void initEngagementData() {
     if (AppConstants.isTestMode) {
@@ -143,7 +158,7 @@ class EngagementProvider extends Notifier<EngagementState> {
 
   Future<void> refreshRewards() async {
     try {
-      final response = await _api.fetchRewards();
+      final response = await _gen.getRiderRewards();
       if (response['success'] == true) {
         final data = response['data'] as Map<String, dynamic>?;
         if (data != null) {
@@ -163,7 +178,7 @@ class EngagementProvider extends Notifier<EngagementState> {
 
   Future<void> refreshReferrals() async {
     try {
-      final response = await _api.fetchReferrals();
+      final response = await _gen.getRiderReferrals();
       if (response['success'] == true) {
         state = state.copyWith(
             referralData: response['data'] as Map<String, dynamic>?);
@@ -175,7 +190,7 @@ class EngagementProvider extends Notifier<EngagementState> {
 
   Future<void> refreshNotifications() async {
     try {
-      final response = await _api.get('/api/rider/notifications');
+      final response = await _http.get('/api/rider/notifications');
       if (response['success'] == true && response['data'] != null) {
         final data = response['data'] as Map<String, dynamic>;
         final list = data['notifications'] as List<dynamic>?;
@@ -201,7 +216,7 @@ class EngagementProvider extends Notifier<EngagementState> {
       unreadCount: (state.unreadCount - 1).clamp(0, 999),
     );
     if (!AppConstants.isTestMode) {
-      _api.put('/api/rider/notifications', body: {'notificationId': id});
+      _http.put('/api/rider/notifications', body: {'notificationId': id});
     }
   }
 
@@ -228,7 +243,7 @@ class EngagementProvider extends Notifier<EngagementState> {
     }
 
     try {
-      await _api.delete('/api/rider/notifications?id=$id');
+      await _http.delete('/api/rider/notifications?id=$id');
       final next = [...state.notifications]..removeWhere((n) => n.id == id);
       state = state.copyWith(
         notifications: next,
@@ -256,7 +271,7 @@ class EngagementProvider extends Notifier<EngagementState> {
     );
     try {
       if (!AppConstants.isTestMode) {
-        await _api.put('/api/rider/notifications', body: {});
+        await _http.put('/api/rider/notifications', body: {});
       }
     } catch (_) {
       // Best-effort — local read state is already applied.
@@ -276,7 +291,7 @@ class EngagementProvider extends Notifier<EngagementState> {
     if (!AppConstants.isTestMode) {
       try {
         await Future.wait(readIds
-            .map((id) => _api.delete('/api/rider/notifications?id=$id')));
+            .map((id) => _http.delete('/api/rider/notifications?id=$id')));
       } catch (e) {
         appDebug('Failed to delete read notifications: $e');
       }
@@ -294,9 +309,8 @@ final engagementProvider =
   EngagementProvider.new,
 );
 
-/// API service provider — overridden in `main.dart` with the real impl.
-final engagementApiProvider = Provider<VoltiumApiService>((ref) {
-  // Default factory: construct a fresh service. Tests can override
-  // this provider to inject a fake.
-  return VoltiumApiService();
-});
+/// PR-13 (2026-08-22): backwards-compat alias. The engagement notifier
+/// now reads [voltiumApiClientProvider] (defined in
+/// `riverpod_providers.dart`) directly. This re-export keeps any
+/// downstream code that imported `engagementApiProvider` working.
+final engagementApiProvider = voltiumApiClientProvider;

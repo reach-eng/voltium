@@ -8,20 +8,28 @@
 //
 // In unit tests `AppConstants.isTestMode` is false, so the API path runs —
 // a gated fake lets us hold the PUT open and observe the guard.
+//
+// PR-13 (2026-08-22): the fake now targets [ApiClient] (the
+// untyped REST transport) instead of the deleted
+// `VoltiumApiService`. The notifier reads `apiClientProvider` for
+// the PUT path and `voltiumApiClientProvider` for typed methods.
 
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:voltium_rider/models/notification_model.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+
+class _MockApiClient extends Mock implements ApiClient {}
 
 /// Fake API whose `put` future stays unresolved until the test completes it,
 /// so the in-flight window can be held open deterministically.
-class _GatedApi extends Fake implements VoltiumApiService {
+class _GatedApi extends _MockApiClient {
   final Completer<Map<String, dynamic>> _completer =
       Completer<Map<String, dynamic>>();
   int putCalls = 0;
@@ -32,6 +40,9 @@ class _GatedApi extends Fake implements VoltiumApiService {
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
+    String? idempotencyKey,
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
   }) {
     putCalls++;
     lastPutPath = path;
@@ -58,7 +69,7 @@ void main() {
         () async {
       final api = _GatedApi();
       final container = ProviderContainer(
-        overrides: [engagementApiProvider.overrideWithValue(api)],
+        overrides: [apiClientProvider.overrideWithValue(api)],
       );
       addTearDown(container.dispose);
 
@@ -97,7 +108,7 @@ void main() {
     test('PUTs the notifications endpoint with an empty body', () async {
       final api = _GatedApi();
       final container = ProviderContainer(
-        overrides: [engagementApiProvider.overrideWithValue(api)],
+        overrides: [apiClientProvider.overrideWithValue(api)],
       );
       addTearDown(container.dispose);
 
