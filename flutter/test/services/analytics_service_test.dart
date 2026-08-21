@@ -19,68 +19,103 @@ void main() {
     expect(service.isEnabled, isTrue);
   });
 
-  test('trackScreen calls debugPrint when enabled', () {
-    String? printedMessage;
+  // PR-11 (2026-08-21): the canonical telemetry layer is now
+  // MonitoringService. AnalyticsService routes through it, so
+  // local debug output for identity and screen events comes from
+  // the MonitoringService prefix. The AnalyticsService-level
+  // [Analytics] ... prefix is preserved for typed events only.
+  test('trackScreen logs the typed event AND routes through MonitoringService',
+      () {
+    final printed = <String>[];
     final originalDebugPrint = debugPrint;
     debugPrint = (String? message, {int? wrapWidth}) {
-      printedMessage = message;
+      if (message != null) printed.add(message);
     };
 
     service.trackScreen('Home', {'test_param': 123});
 
-    expect(printedMessage, isNotNull);
-    expect(printedMessage, contains('[Analytics] screenViewed:'));
-    expect(printedMessage, contains('screen_name: Home'));
-    expect(printedMessage, contains('test_param: 123'));
-
     debugPrint = originalDebugPrint;
+
+    // Typed AnalyticsEvent.screenViewed log from AnalyticsService.track().
+    expect(printed.any((m) => m.contains('[Analytics] screenViewed:')), isTrue,
+        reason: 'should still emit the typed screenViewed event');
+    // Canonical layer log for the screen capture.
+    expect(printed.any((m) => m.contains('[Monitoring] Screen: Home')), isTrue,
+        reason: 'should route through MonitoringService.logScreen');
+    // Both must carry the screen name and the test param.
+    expect(
+        printed.any((m) =>
+            m.contains('screen_name: Home') && m.contains('test_param: 123')),
+        isTrue);
   });
 
   test('track does not call debugPrint when disabled', () {
-    String? printedMessage;
+    final printed = <String>[];
     final originalDebugPrint = debugPrint;
     debugPrint = (String? message, {int? wrapWidth}) {
-      printedMessage = message;
+      if (message != null) printed.add(message);
     };
 
     service.setEnabled(false);
     service.trackScreen('Home');
 
-    expect(printedMessage, isNull);
-
     debugPrint = originalDebugPrint;
+
+    expect(printed, isEmpty,
+        reason: 'with setEnabled(false), no debug output should be emitted');
   });
 
   test('trackButtonTap logs correct event', () {
-    String? printedMessage;
+    final printed = <String>[];
     final originalDebugPrint = debugPrint;
     debugPrint = (String? message, {int? wrapWidth}) {
-      printedMessage = message;
+      if (message != null) printed.add(message);
     };
 
     service.trackButtonTap('LoginButton', 'LoginScreen');
 
-    expect(printedMessage, contains('buttonTapped'));
-    expect(printedMessage, contains('button_name: LoginButton'));
-    expect(printedMessage, contains('screen_name: LoginScreen'));
-
     debugPrint = originalDebugPrint;
+
+    final combined = printed.join('\n');
+    expect(combined, contains('buttonTapped'));
+    expect(combined, contains('button_name: LoginButton'));
+    expect(combined, contains('screen_name: LoginScreen'));
   });
 
-  test('setUserProperties and clearUser log appropriately', () {
-    String? printedMessage;
+  // PR-11: setUserProperties now logs through MonitoringService.identifyUser
+  // (which prints "[Monitoring] Identify: hash=...") and clearUser goes
+  // through MonitoringService.resetUser (which prints "[Monitoring] User
+  // reset"). The pre-consolidation "User properties set for X" message is
+  // no longer emitted — that's the canonical layer's job now.
+  test('setUserProperties routes through MonitoringService.identifyUser', () {
+    final printed = <String>[];
     final originalDebugPrint = debugPrint;
     debugPrint = (String? message, {int? wrapWidth}) {
-      printedMessage = message;
+      if (message != null) printed.add(message);
     };
 
     service.setUserProperties('RIDER_123', {'vip': true});
-    expect(printedMessage, contains('User properties set for RIDER_123'));
-
-    service.clearUser();
-    expect(printedMessage, contains('User cleared'));
 
     debugPrint = originalDebugPrint;
+
+    expect(
+        printed.any((m) => m.contains('[Monitoring] Identify: hash=')), isTrue,
+        reason: 'identify should go through the canonical layer');
+  });
+
+  test('clearUser routes through MonitoringService.resetUser', () {
+    final printed = <String>[];
+    final originalDebugPrint = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message != null) printed.add(message);
+    };
+
+    service.clearUser();
+
+    debugPrint = originalDebugPrint;
+
+    expect(printed.any((m) => m.contains('[Monitoring] User reset')), isTrue,
+        reason: 'clearUser should route through the canonical layer');
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {
