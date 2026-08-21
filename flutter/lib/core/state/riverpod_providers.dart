@@ -21,6 +21,8 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 // symbol names.
 export 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
     show walletProvider, filesRepositoryProvider, walletRepositoryProvider;
+export 'package:voltium_rider/features/wallet/presentation/providers/top_up_flow_provider.dart'
+    show topUpFlowProvider;
 export 'package:voltium_rider/features/support/presentation/providers/support_provider.dart'
     show supportProvider, supportRepositoryProvider;
 export 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart'

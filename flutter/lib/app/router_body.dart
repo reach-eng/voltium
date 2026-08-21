@@ -355,9 +355,17 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     case AuthState.topUpAmount:
       final rider =
           ProviderScope.containerOf(context).read(riderProvider).rider;
+      // PR-9 (2026-08-21): the in-flight amount is now in
+      // `topUpFlowProvider` instead of `_AppRouterState._topUpAmount`.
+      // Backing out of the amount screen and re-entering now resumes
+      // the same value rather than re-defaulting to 2000.
+      final topUpNotifier =
+          ProviderScope.containerOf(context).read(topUpFlowProvider.notifier);
+      final topUpAmount =
+          ProviderScope.containerOf(context).read(topUpFlowProvider).amount;
       currentScreen = TopUpAmountScreen(
         key: const ValueKey('topUpAmount'),
-        initialAmount: state._topUpAmount > 0 ? state._topUpAmount : null,
+        initialAmount: topUpAmount > 0 ? topUpAmount : null,
         securityDeposit: rider?.activeRentalPlanSecurityDeposit.toInt(),
         rentalPrice: rider?.activeRentalPlanPrice.toInt(),
         onBack: () => state._navigateToLocal(
@@ -368,16 +376,16 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           state._isOnboarding ? AuthState.choosePlan : AuthState.dashboard,
         ),
         onProceed: (amount) {
-          state._topUpAmount = amount;
+          topUpNotifier.setAmount(amount);
           state._navigateToLocal(AuthState.topUpProof);
         },
         // ONBOARDING-AUDIT 2026-08-14 P1-7: previously the active path
         // never wired this callback, so the proof screen would render
         // with a stale amount if the user backed out, edited, then
-        // re-proceeded. Capture edits live so `_topUpAmount` always
-        // reflects the latest textbox value.
+        // re-proceeded. Capture edits live so the top-up amount
+        // always reflects the latest textbox value.
         onAmountChanged: (amount) {
-          state._topUpAmount = amount;
+          topUpNotifier.setAmount(amount);
         },
       );
       break;
@@ -570,9 +578,15 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
 
     case AuthState.topUpUpi:
     case AuthState.topUpProof:
+      // PR-9 (2026-08-21): read the in-flight amount from the
+      // topUpFlowProvider so a backout + re-enter preserves the
+      // value the rider just typed.
+      final topUpContainer = ProviderScope.containerOf(context);
+      final topUpAmount = topUpContainer.read(topUpFlowProvider).amount;
+      final topUpNotifier = topUpContainer.read(topUpFlowProvider.notifier);
       currentScreen = TopUpProofScreen(
         key: const ValueKey('topUpProof'),
-        amount: state._topUpAmount,
+        amount: topUpAmount,
         onBack: () => state._navigateToLocal(AuthState.topUpAmount),
         onEditAmount: () => state._navigateToLocal(AuthState.topUpAmount),
         onSubmit: (file, method, upiRef) async {
@@ -616,12 +630,15 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           try {
             await wProvider.topUpWallet(
               riderId: riderId,
-              amount: state._topUpAmount.toDouble(),
+              amount: topUpAmount.toDouble(),
               method: method ?? 'CASH',
               upiRef: upiRef,
               image: file,
               purpose: purpose,
             );
+            // PR-9 (2026-08-21): the in-flight amount is no longer on
+            // the router state, so reset the provider instead.
+            topUpNotifier.reset();
             // Pull fresh rider so balance + KYC state reflect the new
             // pending transaction.
             await riderNotifier.refreshFromApi();
@@ -652,9 +669,13 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       break;
 
     case AuthState.topUpReceipt:
+      // PR-9 (2026-08-21): read the in-flight amount from the
+      // topUpFlowProvider so the receipt reflects what was submitted.
+      final topUpAmount =
+          ProviderScope.containerOf(context).read(topUpFlowProvider).amount;
       currentScreen = TopUpReceiptScreen(
         key: const ValueKey('topUpReceipt'),
-        amount: state._topUpAmount,
+        amount: topUpAmount,
         purpose: state._isOnboarding ? 'SECURITY_DEPOSIT' : 'TOP_UP',
         onBackToDashboard: () {
           // PR-ONBOARDING-FLOW-2026-08-13: after the security-deposit

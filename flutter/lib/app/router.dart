@@ -110,8 +110,13 @@ class _AppRouterState extends ConsumerState<AppRouter>
   bool _isOnboarding = false;
   AuthState? _postOtpTargetState;
 
-  // Top-up flow state
-  int _topUpAmount = 2000;
+  // PR-9 (2026-08-21): the in-flight top-up amount used to live here
+  // as `int _topUpAmount = 2000`. It's now in
+  // `topUpFlowProvider` (see
+  // lib/features/wallet/presentation/providers/top_up_flow_provider.dart),
+  // so backing out of the amount screen and re-entering resumes the
+  // same value rather than re-defaulting to 2000. Pickup state below
+  // is unchanged.
 
   // Pickup flow state
   String? _pickupHubId;
