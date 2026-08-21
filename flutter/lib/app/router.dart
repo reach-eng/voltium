@@ -19,7 +19,7 @@ import '../core/state/rider_provider.dart' show kPickupDraftCacheKey;
 import '../core/network/api_error_messages.dart';
 import '../services/cache_service.dart';
 import '../services/voltium_api_service.dart';
-import '../main.dart' show AppShell;
+import '../widgets/app_shell.dart';
 
 // Relocated screens
 import '../features/auth/presentation/screens/login_screen.dart';
