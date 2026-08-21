@@ -4,6 +4,7 @@ import '../services/voltium_api_service.dart';
 import '../core/platform/platform_info.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import '../theme/app_theme.dart';
@@ -65,11 +66,15 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
     if (_loading) return;
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
-      setState(() => _error = 'Please enter password.');
+      setState(() => _error =
+          AppLocalizations.of(context)?.txtlockedOverlayEnterPassword ??
+              'Please enter password.');
       return;
     }
     if (!RegExp(r'^\d{12}$').hasMatch(password)) {
-      setState(() => _error = 'Password must be a 12 digit number.');
+      setState(() => _error = AppLocalizations.of(context)
+              ?.txtlockedOverlayPasswordMustBe12Digits ??
+          'Password must be a 12 digit number.');
       return;
     }
 
@@ -95,6 +100,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
           });
         } else {
           final msg = response['message'] as String? ??
+              AppLocalizations.of(context)?.txtlockedOverlayIncorrectPassword ??
               'Incorrect Password. Contact Voltium support.';
           setState(() {
             _error = msg;
@@ -106,7 +112,8 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error =
+          _error = AppLocalizations.of(context)
+                  ?.txtlockedOverlayVerificationFailed ??
               'Verification failed. Please check your network and try again.';
           _loading = false;
         });

@@ -1812,5 +1812,17 @@
   "txtfailedToDeleteNotification": "Failed to delete notification",
   "@txtfailedToDeleteNotification": { "description": "Toast shown when notification delete fails on the server" },
   "txterrWalletLoadFailed": "Couldn't load your transactions. Pull to retry.",
-  "@txterrWalletLoadFailed": { "description": "Wallet lastError when transactions fetch fails" }
+  "@txterrWalletLoadFailed": { "description": "Wallet lastError when transactions fetch fails" },
+  "txtlockedOverlayEnterPassword": "Please enter password.",
+  "@txtlockedOverlayEnterPassword": { "description": "Locked overlay password-empty validation message" },
+  "txtlockedOverlayPasswordMustBe12Digits": "Password must be a 12 digit number.",
+  "@txtlockedOverlayPasswordMustBe12Digits": { "description": "Locked overlay password-format validation message" },
+  "txtlockedOverlayIncorrectPassword": "Incorrect Password. Contact Voltium support.",
+  "@txtlockedOverlayIncorrectPassword": { "description": "Locked overlay when the entered password is wrong" },
+  "txtlockedOverlayVerificationFailed": "Verification failed. Please check your network and try again.",
+  "@txtlockedOverlayVerificationFailed": { "description": "Locked overlay when the unlock API call fails" },
+  "txtlockedOverlayAccountLocked": "Your account has been locked by Voltium.",
+  "@txtlockedOverlayAccountLocked": { "description": "Locked overlay headline when admin lock is active" },
+  "txtlockedOverlayContactSupportToUnlock": "Please contact support to unlock.",
+  "@txtlockedOverlayContactSupportToUnlock": { "description": "Locked overlay body when admin lock is active" }
 }

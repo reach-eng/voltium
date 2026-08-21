@@ -2421,4 +2421,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txterrWalletLoadFailed =>
       'Couldn\'t load your transactions. Pull to retry.';
+
+  @override
+  String get txtlockedOverlayEnterPassword => 'Please enter password.';
+
+  @override
+  String get txtlockedOverlayPasswordMustBe12Digits =>
+      'Password must be a 12 digit number.';
+
+  @override
+  String get txtlockedOverlayIncorrectPassword =>
+      'Incorrect Password. Contact Voltium support.';
+
+  @override
+  String get txtlockedOverlayVerificationFailed =>
+      'Verification failed. Please check your network and try again.';
+
+  @override
+  String get txtlockedOverlayAccountLocked =>
+      'Your account has been locked by Voltium.';
+
+  @override
+  String get txtlockedOverlayContactSupportToUnlock =>
+      'Please contact support to unlock.';
 }

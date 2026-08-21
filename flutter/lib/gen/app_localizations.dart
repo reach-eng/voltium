@@ -4569,6 +4569,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t load your transactions. Pull to retry.'**
   String get txterrWalletLoadFailed;
+
+  /// Locked overlay password-empty validation message
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter password.'**
+  String get txtlockedOverlayEnterPassword;
+
+  /// Locked overlay password-format validation message
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be a 12 digit number.'**
+  String get txtlockedOverlayPasswordMustBe12Digits;
+
+  /// Locked overlay when the entered password is wrong
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect Password. Contact Voltium support.'**
+  String get txtlockedOverlayIncorrectPassword;
+
+  /// Locked overlay when the unlock API call fails
+  ///
+  /// In en, this message translates to:
+  /// **'Verification failed. Please check your network and try again.'**
+  String get txtlockedOverlayVerificationFailed;
+
+  /// Locked overlay headline when admin lock is active
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been locked by Voltium.'**
+  String get txtlockedOverlayAccountLocked;
+
+  /// Locked overlay body when admin lock is active
+  ///
+  /// In en, this message translates to:
+  /// **'Please contact support to unlock.'**
+  String get txtlockedOverlayContactSupportToUnlock;
 }
 
 class _AppLocalizationsDelegate

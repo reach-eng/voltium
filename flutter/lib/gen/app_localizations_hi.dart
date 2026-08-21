@@ -2427,4 +2427,27 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get txterrWalletLoadFailed =>
       'आपके लेन-देन लोड नहीं हो सके। पुनः प्रयास के लिए नीचे खींचें।';
+
+  @override
+  String get txtlockedOverlayEnterPassword => 'कृपया पासवर्ड दर्ज करें।';
+
+  @override
+  String get txtlockedOverlayPasswordMustBe12Digits =>
+      'पासवर्ड 12 अंकों की संख्या होनी चाहिए।';
+
+  @override
+  String get txtlockedOverlayIncorrectPassword =>
+      'गलत पासवर्ड। वोल्टियम सपोर्ट से संपर्क करें।';
+
+  @override
+  String get txtlockedOverlayVerificationFailed =>
+      'सत्यापन विफल। कृपया अपना नेटवर्क जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get txtlockedOverlayAccountLocked =>
+      'वोल्टियम द्वारा आपका खाता लॉक कर दिया गया है।';
+
+  @override
+  String get txtlockedOverlayContactSupportToUnlock =>
+      'अनलॉक करने के लिए कृपया सपोर्ट से संपर्क करें।';
 }
