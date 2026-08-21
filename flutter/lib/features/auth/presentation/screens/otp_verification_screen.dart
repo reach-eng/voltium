@@ -463,8 +463,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         children: [
           Text(
             title,
-            style: AppTypography.headingMedium
-                .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
+            style: AppTypography.headingMedium.copyWith(
+                color: AppColors.of(context).onSurface, letterSpacing: -0.5),
           ),
           const SizedBox(height: 12),
           RichText(

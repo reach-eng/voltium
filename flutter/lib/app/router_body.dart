@@ -694,7 +694,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       // Terminal state for terminated riders. Renders a dedicated
       // surface (logout + support contact) so a terminated rider is
       // never offered onboarding CTAs.
-      currentScreen = _buildAccountClosedScreen(state);
+      currentScreen = _buildAccountClosedScreen(context, state);
       break;
     // PR-ONBOARDING-FLOW-2026-08-13: `AuthState.pickupSuccess` is
     // preserved in the enum for back-compat with admin-side
@@ -734,7 +734,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
 /// `AuthState.accountClosed`. The rider is given a clear explanation, a
 /// "Contact support" link, and a "Log out" button. There is no path
 /// forward into the rest of the app from this surface.
-Widget _buildAccountClosedScreen(_AppRouterState state) {
+Widget _buildAccountClosedScreen(BuildContext context, _AppRouterState state) {
   return SafeArea(
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -752,7 +752,7 @@ Widget _buildAccountClosedScreen(_AppRouterState state) {
             'Account closed',
             textAlign: TextAlign.center,
             style: AppTypography.headingMedium.copyWith(
-              color: AppColors.onSurface,
+              color: AppColors.of(context).onSurface,
             ),
           ),
           const SizedBox(height: 12),

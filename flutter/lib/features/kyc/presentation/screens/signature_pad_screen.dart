@@ -129,7 +129,10 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                             _addPoint(details.localPosition),
                         onPanEnd: (_) => _endStroke(),
                         child: CustomPaint(
-                          painter: _SignaturePainter(_points),
+                          painter: _SignaturePainter(
+                            _points,
+                            color: AppColors.of(context).onSurface,
+                          ),
                           size: Size.infinite,
                         ),
                       ),
@@ -147,12 +150,13 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
 
 class _SignaturePainter extends CustomPainter {
   final List<Offset?> points;
-  _SignaturePainter(this.points);
+  final Color color;
+  _SignaturePainter(this.points, {required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.onSurface
+      ..color = color
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
     for (int i = 0; i < points.length - 1; i++) {

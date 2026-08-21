@@ -181,7 +181,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     final pageState = ref.watch(legalPageNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.of(context).surface,
       appBar: _buildAppBar(context),
       body: FadeTransition(
         opacity: CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut),

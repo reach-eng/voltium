@@ -349,7 +349,7 @@ class _SparkOtpBox extends StatelessWidget {
                       ],
                       onChanged: onChanged,
                       style: AppTypography.headingMedium
-                          .copyWith(color: AppColors.onSurface),
+                          .copyWith(color: AppColors.of(context).onSurface),
                       decoration: const InputDecoration(
                         counterText: '',
                         border: InputBorder.none,

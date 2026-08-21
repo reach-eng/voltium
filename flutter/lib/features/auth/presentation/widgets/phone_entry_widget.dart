@@ -174,8 +174,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                             padding: const EdgeInsets.only(left: 24, right: 12),
                             child: Text(
                               '+91',
-                              style: AppTypography.titleSmall
-                                  .copyWith(color: AppColors.onSurface),
+                              style: AppTypography.titleSmall.copyWith(
+                                  color: AppColors.of(context).onSurface),
                             ),
                           ),
                         ),
@@ -210,7 +210,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                       onChanged: _onPhoneChanged,
                       onFieldSubmitted: (_) => widget.onPhoneSubmitted(),
                       style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.onSurface, letterSpacing: 1.5),
+                          color: AppColors.of(context).onSurface,
+                          letterSpacing: 1.5),
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -306,7 +307,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     },
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(color: AppColors.onSurface),
+                        .copyWith(color: AppColors.of(context).onSurface),
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,

@@ -1053,7 +1053,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Text(
                   'Phone verified',
                   style: AppTypography.labelSmall
-                      .copyWith(color: AppColors.onSurface),
+                      .copyWith(color: AppColors.of(context).onSurface),
                 ),
               ],
             ),

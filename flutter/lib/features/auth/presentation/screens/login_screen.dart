@@ -263,7 +263,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 Text(
                   'Voltium',
                   style: AppTypography.headingLarge.copyWith(
-                      color: AppColors.onSurface,
+                      color: AppColors.of(context).onSurface,
                       letterSpacing: -0.5,
                       height: 1.2),
                 ),
@@ -310,8 +310,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             children: [
               Text(
                 AppLocalizations.of(context)?.txtwelcome ?? 'Welcome',
-                style: AppTypography.headingSmall
-                    .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
+                style: AppTypography.headingSmall.copyWith(
+                    color: AppColors.of(context).onSurface,
+                    letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
               Text(

@@ -201,7 +201,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                         .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
                         .copyWith(
                           color: step.isDone
-                              ? AppColors.onSurface
+                              ? colors.onSurface
                               : step.isRejected
                                   ? AppColors.errorDark
                                   : colors.onSurface,

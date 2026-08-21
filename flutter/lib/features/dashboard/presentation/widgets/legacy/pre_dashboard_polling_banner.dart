@@ -35,7 +35,7 @@ class PreDashboardPollingBanner extends StatelessWidget {
                 child: Text(
                   'Status taking longer than expected. Pull down to refresh.',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.onSurface,
+                    color: AppColors.of(context).onSurface,
                   ),
                 ),
               ),
@@ -43,7 +43,7 @@ class PreDashboardPollingBanner extends StatelessWidget {
                 key: const Key('preDashboardPollingTimeoutRefresh'),
                 onPressed: onRefresh,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.onSurface,
+                  foregroundColor: AppColors.of(context).onSurface,
                   textStyle: AppTypography.titleSmall,
                 ),
                 child: const Text('Refresh'),

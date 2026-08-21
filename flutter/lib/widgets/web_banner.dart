@@ -23,7 +23,7 @@ class WebPlatformBanner extends StatelessWidget {
             child: Text(
               'Web mode — device admin, background location, and push notifications are not available.',
               style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11, color: AppColors.onSurface),
+                  fontSize: 11, color: AppColors.of(context).onSurface),
             ),
           ),
         ],
