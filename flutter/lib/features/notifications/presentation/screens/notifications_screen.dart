@@ -238,7 +238,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                           if (!ok && context.mounted) {
                                             Toast.error(
                                               context,
-                                              'Failed to delete notification',
+                                              AppLocalizations.of(context)
+                                                      ?.txtfailedToDeleteNotification ??
+                                                  'Failed to delete notification',
                                             );
                                           }
                                           return ok;

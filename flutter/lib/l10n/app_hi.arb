@@ -750,6 +750,13 @@
   "txtverificationVideo": "सत्यापन वीडियो",
   "txtguarantorSignatureDoc": "गारंटर के हस्ताक्षर",
   "txtverifiedAndActive": "सत्यापित और सक्रिय",
-  "txtopenExternal": "बाहर खोलें"
+  "txtopenExternal": "बाहर खोलें",
+  "txtriderNotFound": "राइडर नहीं मिला। कृपया सपोर्ट से संपर्क करें।",
+  "txtriderSessionNotReady": "सबमिट नहीं किया जा सका: राइडर सत्र अभी तैयार नहीं है। कृपया कुछ देर बाद पुनः प्रयास करें।",
+  "txtsessionExpiredPleaseLogIn": "आपका सत्र समाप्त हो गया है। जारी रखने के लिए कृपया फिर से लॉग इन करें।",
+  "txtsecurityDepositProofSubmitted": "सिक्योरिटी डिपॉज़िट रसीद सबमिट हो गई — हम जल्द ही इसकी समीक्षा करेंगे।",
+  "txttopUpProofSubmitted": "टॉप-अप रसीद सफलतापूर्वक सबमिट हो गई!",
+  "txtfailedToDeleteNotification": "नोटिफ़िकेशन हटाने में विफल",
+  "txterrWalletLoadFailed": "आपके लेन-देन लोड नहीं हो सके। पुनः प्रयास के लिए नीचे खींचें।"
 }
 

@@ -1798,5 +1798,19 @@
   "txtverifiedAndActive": "Verified & Active",
   "@txtverifiedAndActive": { "description": "Document verified and active status subtitle" },
   "txtopenExternal": "Open External",
-  "@txtopenExternal": { "description": "Open external document viewer button label" }
+  "@txtopenExternal": { "description": "Open external document viewer button label" },
+  "txtriderNotFound": "Rider not found. Please contact support.",
+  "@txtriderNotFound": { "description": "Toast when an authenticated call returns 404 rider" },
+  "txtriderSessionNotReady": "Could not submit: rider session is not ready yet. Please try again in a moment.",
+  "@txtriderSessionNotReady": { "description": "Toast when a top-up / submission is attempted before the rider is fully initialized" },
+  "txtsessionExpiredPleaseLogIn": "Your session expired. Please log in again to continue.",
+  "@txtsessionExpiredPleaseLogIn": { "description": "Toast shown when the API returns 401 mid-session" },
+  "txtsecurityDepositProofSubmitted": "Security deposit proof submitted — we'll review it shortly.",
+  "@txtsecurityDepositProofSubmitted": { "description": "Toast shown after security-deposit proof upload succeeds" },
+  "txttopUpProofSubmitted": "Top-up proof submitted successfully!",
+  "@txttopUpProofSubmitted": { "description": "Toast shown after a regular top-up proof upload succeeds" },
+  "txtfailedToDeleteNotification": "Failed to delete notification",
+  "@txtfailedToDeleteNotification": { "description": "Toast shown when notification delete fails on the server" },
+  "txterrWalletLoadFailed": "Couldn't load your transactions. Pull to retry.",
+  "@txterrWalletLoadFailed": { "description": "Wallet lastError when transactions fetch fails" }
 }

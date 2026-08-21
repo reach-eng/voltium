@@ -2401,4 +2401,30 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtopenExternal => 'बाहर खोलें';
+
+  @override
+  String get txtriderNotFound =>
+      'राइडर नहीं मिला। कृपया सपोर्ट से संपर्क करें।';
+
+  @override
+  String get txtriderSessionNotReady =>
+      'सबमिट नहीं किया जा सका: राइडर सत्र अभी तैयार नहीं है। कृपया कुछ देर बाद पुनः प्रयास करें।';
+
+  @override
+  String get txtsessionExpiredPleaseLogIn =>
+      'आपका सत्र समाप्त हो गया है। जारी रखने के लिए कृपया फिर से लॉग इन करें।';
+
+  @override
+  String get txtsecurityDepositProofSubmitted =>
+      'सिक्योरिटी डिपॉज़िट रसीद सबमिट हो गई — हम जल्द ही इसकी समीक्षा करेंगे।';
+
+  @override
+  String get txttopUpProofSubmitted => 'टॉप-अप रसीद सफलतापूर्वक सबमिट हो गई!';
+
+  @override
+  String get txtfailedToDeleteNotification => 'नोटिफ़िकेशन हटाने में विफल';
+
+  @override
+  String get txterrWalletLoadFailed =>
+      'आपके लेन-देन लोड नहीं हो सके। पुनः प्रयास के लिए नीचे खींचें।';
 }

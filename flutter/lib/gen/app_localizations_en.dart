@@ -2396,4 +2396,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtopenExternal => 'Open External';
+
+  @override
+  String get txtriderNotFound => 'Rider not found. Please contact support.';
+
+  @override
+  String get txtriderSessionNotReady =>
+      'Could not submit: rider session is not ready yet. Please try again in a moment.';
+
+  @override
+  String get txtsessionExpiredPleaseLogIn =>
+      'Your session expired. Please log in again to continue.';
+
+  @override
+  String get txtsecurityDepositProofSubmitted =>
+      'Security deposit proof submitted — we\'ll review it shortly.';
+
+  @override
+  String get txttopUpProofSubmitted => 'Top-up proof submitted successfully!';
+
+  @override
+  String get txtfailedToDeleteNotification => 'Failed to delete notification';
+
+  @override
+  String get txterrWalletLoadFailed =>
+      'Couldn\'t load your transactions. Pull to retry.';
 }

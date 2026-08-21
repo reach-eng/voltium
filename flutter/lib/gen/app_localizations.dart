@@ -4527,6 +4527,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open External'**
   String get txtopenExternal;
+
+  /// Toast when an authenticated call returns 404 rider
+  ///
+  /// In en, this message translates to:
+  /// **'Rider not found. Please contact support.'**
+  String get txtriderNotFound;
+
+  /// Toast when a top-up / submission is attempted before the rider is fully initialized
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit: rider session is not ready yet. Please try again in a moment.'**
+  String get txtriderSessionNotReady;
+
+  /// Toast shown when the API returns 401 mid-session
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired. Please log in again to continue.'**
+  String get txtsessionExpiredPleaseLogIn;
+
+  /// Toast shown after security-deposit proof upload succeeds
+  ///
+  /// In en, this message translates to:
+  /// **'Security deposit proof submitted — we\'ll review it shortly.'**
+  String get txtsecurityDepositProofSubmitted;
+
+  /// Toast shown after a regular top-up proof upload succeeds
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up proof submitted successfully!'**
+  String get txttopUpProofSubmitted;
+
+  /// Toast shown when notification delete fails on the server
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete notification'**
+  String get txtfailedToDeleteNotification;
+
+  /// Wallet lastError when transactions fetch fails
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your transactions. Pull to retry.'**
+  String get txterrWalletLoadFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/rider_model.dart' show AccountStatus;
+import '../gen/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/app_constants.dart';
@@ -395,7 +396,8 @@ class _AppRouterState extends ConsumerState<AppRouter>
       if (!mounted) return;
       Toast.info(
         context,
-        'Your session expired. Please log in again to continue.',
+        AppLocalizations.of(context)?.txtsessionExpiredPleaseLogIn ??
+            'Your session expired. Please log in again to continue.',
       );
     });
   }

@@ -244,7 +244,11 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           final rider = provider.rider;
 
           if (rider == null) {
-            Toast.error(context, 'Rider not found. Please contact support.');
+            final l10n = AppLocalizations.of(context);
+            Toast.error(
+                context,
+                l10n?.txtriderNotFound ??
+                    'Rider not found. Please contact support.');
             return;
           }
 
@@ -602,8 +606,9 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           if (riderId == null) {
             Toast.info(
               context,
-              'Could not submit: rider session is not ready yet. '
-              'Please try again in a moment.',
+              AppLocalizations.of(context)?.txtriderSessionNotReady ??
+                  'Could not submit: rider session is not ready yet. '
+                      'Please try again in a moment.',
             );
             return;
           }
@@ -624,8 +629,12 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
               Toast.success(
                 state.context,
                 state._isOnboarding
-                    ? 'Security deposit proof submitted — we\'ll review it shortly.'
-                    : 'Top-up proof submitted successfully!',
+                    ? (AppLocalizations.of(state.context)
+                            ?.txtsecurityDepositProofSubmitted ??
+                        'Security deposit proof submitted — we\'ll review it shortly.')
+                    : (AppLocalizations.of(state.context)
+                            ?.txttopUpProofSubmitted ??
+                        'Top-up proof submitted successfully!'),
               );
             }
             state._navigateToLocal(
