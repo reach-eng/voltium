@@ -554,13 +554,26 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.iconBackground,
+        // PR-10 (2026-08-21): make the resting border visible (1px,
+        // low-opacity outline) so input fields are obviously distinct
+        // from the surrounding surface even before focus. WCAG 2.1
+        // SC 1.4.11 (non-text contrast) wants ≥3:1 against adjacent
+        // colors; the previous `BorderSide.none` made the field
+        // disappear in light mode and forced the focus state to
+        // serve as the *only* visual border. Focus now ADDS a 2px
+        // primary border on top of the resting 1px outline so the
+        // focus transition is clearly distinguishable.
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+            color: ThemeColors.light.outline.withValues(alpha: 0.45),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+            color: ThemeColors.light.outline.withValues(alpha: 0.45),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

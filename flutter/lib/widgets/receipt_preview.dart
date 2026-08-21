@@ -24,7 +24,6 @@ class ReceiptPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isCredit = type.toUpperCase() == 'CREDIT';
 
     return Container(
@@ -61,8 +60,7 @@ class ReceiptPreview extends StatelessWidget {
                     '#${transactionId.substring(0, 8).toUpperCase()}',
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(
-                            color: isDark ? Colors.white : AppColors.onSurface),
+                        .copyWith(color: colors.onSurface),
                   ),
                 ],
               ),
@@ -86,13 +84,11 @@ class ReceiptPreview extends StatelessWidget {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
-          _buildRow(context, 'Date', _formatDate(date),
-              colors.onSurfaceMuted.hashCode == 0),
-          _buildRow(context, 'Time', _formatTime(date),
-              colors.onSurfaceMuted.hashCode == 0),
-          if (riderName != null) _buildRow(context, 'Rider', riderName!, false),
+          _buildRow(context, 'Date', _formatDate(date)),
+          _buildRow(context, 'Time', _formatTime(date)),
+          if (riderName != null) _buildRow(context, 'Rider', riderName!),
           if (vehicleNumber != null)
-            _buildRow(context, 'Vehicle', vehicleNumber!, false),
+            _buildRow(context, 'Vehicle', vehicleNumber!),
           const SizedBox(height: 16),
           Container(
             padding: Spacing.paddingMd,
@@ -109,8 +105,7 @@ class ReceiptPreview extends StatelessWidget {
                   isCredit ? 'Amount Credited' : 'Amount Debited',
                   style: AppTypography.bodyMedium
                       .copyWith(fontWeight: FontWeight.w600)
-                      .copyWith(
-                          color: isDark ? Colors.white : AppColors.onSurface),
+                      .copyWith(color: colors.onSurface),
                 ),
                 Text(
                   '₹${(amount / 100).toStringAsFixed(2)}',
@@ -143,8 +138,11 @@ class ReceiptPreview extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(
-      BuildContext context, String label, String value, bool isDark) {
+  Widget _buildRow(BuildContext context, String label, String value) {
+    // PR-10 (2026-08-21): the `isDark` parameter was a leftover from
+    // the pre-ThemeColors era; the row's text color now comes from
+    // `AppColors.of(context).onSurface` so it reads in both modes.
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -154,13 +152,12 @@ class ReceiptPreview extends StatelessWidget {
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.of(context).onSurfaceMuted,
+              color: colors.onSurfaceMuted,
             ),
           ),
           Text(
             value,
-            style: AppTypography.bodyMedium
-                .copyWith(color: isDark ? Colors.white : AppColors.onSurface),
+            style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           ),
         ],
       ),
