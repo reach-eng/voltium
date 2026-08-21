@@ -8,7 +8,8 @@
 
 ## Status (2026-08-21)
 
-Phase 1 (PR-1..5) and Phase 2 Tier 1 (PR-6..9) are **all shipped** on
+Phase 1 (PR-1..5), Phase 2 Tier 1 (PR-6..9), and Phase 2 Tier 2
+(PR-10..12) are **all shipped** on
 `fix/consolidated-audit-fixes-2026-08-16`:
 
 | PR | Title | Commit |
@@ -22,8 +23,12 @@ Phase 1 (PR-1..5) and Phase 2 Tier 1 (PR-6..9) are **all shipped** on
 | 7 | Move `AppShell` to its own file | `1762904a` |
 | 8 | Finalize the provider migration | `ada10ca3` |
 | 9 | Top-up flow state → Riverpod | `bb25c60a` |
+| 10 | Deep dark-mode coverage + visible focus indicators | `15f2954` |
+| 11 | Telemetry consolidation | `597ce51` |
+| 12 | FCM command secret robustness audit | `de5e4199` |
 
-Tier 2 (PR-10..12) and Tier 3 (PR-13..14) remain for a follow-up cycle.
+Tier 3 (PR-13..14) remains deferred past release per the
+2026-08-21 product call.
 
 ---
 
