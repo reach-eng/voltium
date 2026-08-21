@@ -18,7 +18,6 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
-import 'package:voltium_rider/utils/date_formatters.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {

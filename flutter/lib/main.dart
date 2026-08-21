@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'gen/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
 import 'core/state/riverpod_providers.dart';
-import 'services/emergency_contacts_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/analytics_service.dart';
