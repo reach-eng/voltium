@@ -1,8 +1,12 @@
+// PR-8 (2026-08-21): rename `ConnectivityNotifier` → `ConnectivityProvider`.
+// The class is the canonical provider; the previous `typedef` alias
+// was a leftover from the legacy `ChangeNotifier` migration.
+//
 // R4.3c-3 — Riverpod v3 `ConnectivityProvider` (Notifier + state).
 //
 // The previous `ChangeNotifier`-based class held a
 // `StreamSubscription<bool>` and a `ConnectivityService` binding.
-// The new `ConnectivityNotifier` keeps the same external surface
+// The new `ConnectivityProvider` keeps the same external surface
 // (`isOnline`, `pendingSyncCount`, `setOnline`,
 // `setPendingSyncCount`, `bindConnectivityService`, `logout`)
 // so call sites and the FCM/initialization code in `main.dart`
@@ -34,7 +38,7 @@ class ConnectivityState {
       );
 }
 
-class ConnectivityNotifier extends Notifier<ConnectivityState> {
+class ConnectivityProvider extends Notifier<ConnectivityState> {
   StreamSubscription<bool>? _connectivitySubscription;
 
   @override
@@ -130,11 +134,8 @@ class ConnectivityNotifier extends Notifier<ConnectivityState> {
   }
 }
 
-/// Backwards-compat type alias.
-typedef ConnectivityProvider = ConnectivityNotifier;
-
 /// Riverpod v3 provider for connectivity state.
 final connectivityProvider =
-    NotifierProvider<ConnectivityNotifier, ConnectivityState>(
-  ConnectivityNotifier.new,
+    NotifierProvider<ConnectivityProvider, ConnectivityState>(
+  ConnectivityProvider.new,
 );

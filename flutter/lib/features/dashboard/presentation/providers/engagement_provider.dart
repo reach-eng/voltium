@@ -1,3 +1,7 @@
+// PR-8 (2026-08-21): rename `EngagementNotifier` → `EngagementProvider`.
+// The class is the canonical provider; the previous `typedef` alias
+// was a leftover from the legacy `ChangeNotifier` migration.
+//
 // R4.3c-4 — Riverpod v3 `EngagementProvider` (Notifier + state).
 //
 // Same surface as the previous `ChangeNotifier`:
@@ -81,7 +85,7 @@ class EngagementState {
       );
 }
 
-class EngagementNotifier extends Notifier<EngagementState> {
+class EngagementProvider extends Notifier<EngagementState> {
   @override
   EngagementState build() => const EngagementState();
 
@@ -284,13 +288,10 @@ class EngagementNotifier extends Notifier<EngagementState> {
   }
 }
 
-/// Backwards-compat type alias.
-typedef EngagementProvider = EngagementNotifier;
-
 /// Riverpod v3 provider for the engagement feature.
 final engagementProvider =
-    NotifierProvider<EngagementNotifier, EngagementState>(
-  EngagementNotifier.new,
+    NotifierProvider<EngagementProvider, EngagementState>(
+  EngagementProvider.new,
 );
 
 /// API service provider — overridden in `main.dart` with the real impl.

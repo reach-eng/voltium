@@ -11,7 +11,7 @@ void main() {
 
   // R4.3c-4: EngagementProvider is now a Riverpod v3 Notifier.
   late ProviderContainer container;
-  late EngagementNotifier notifier;
+  late EngagementProvider notifier;
 
   setUp(() {
     container = ProviderContainer();

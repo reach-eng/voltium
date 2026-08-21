@@ -37,7 +37,7 @@ void main() {
 
   // R4.3c-5: DevicePolicyProvider is now a Riverpod v3 Notifier.
   late ProviderContainer container;
-  late DevicePolicyNotifier notifier;
+  late DevicePolicyProvider notifier;
 
   setUp(() {
     container = ProviderContainer();

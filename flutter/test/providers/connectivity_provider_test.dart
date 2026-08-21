@@ -7,7 +7,7 @@ void main() {
   // Tests use a ProviderContainer to drive the notifier and read
   // its state.
   late ProviderContainer container;
-  late ConnectivityNotifier provider;
+  late ConnectivityProvider provider;
 
   ConnectivityState readState() => container.read(connectivityProvider);
 

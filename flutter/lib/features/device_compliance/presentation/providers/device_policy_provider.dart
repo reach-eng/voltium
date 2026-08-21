@@ -1,3 +1,7 @@
+// PR-8 (2026-08-21): rename `DevicePolicyNotifier` → `DevicePolicyProvider`.
+// The class is the canonical provider; the previous `typedef` alias
+// was a leftover from the legacy `ChangeNotifier` migration.
+//
 // R4.3c-5 — Riverpod v3 `DevicePolicyProvider` (Notifier + state).
 //
 // The previous `ChangeNotifier` had three concurrent timers
@@ -78,7 +82,7 @@ class DevicePolicyState {
       );
 }
 
-class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
+class DevicePolicyProvider extends Notifier<DevicePolicyState> {
   static const _platform =
       MethodChannel('com.voltiumelectric.voltium/device_policy');
 
@@ -120,7 +124,7 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
     try {
       await _platform.invokeMethod('isDeviceAdminActive');
     } catch (e) {
-      log('DevicePolicyNotifier: MethodChannel self-check failed: $e');
+      log('DevicePolicyProvider: MethodChannel self-check failed: $e');
     }
   }
 
@@ -135,7 +139,7 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
         });
       }
     } catch (e) {
-      log('DevicePolicyNotifier: Failed to initialize lock state: $e');
+      log('DevicePolicyProvider: Failed to initialize lock state: $e');
     }
   }
 
@@ -287,7 +291,7 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
         setLockedByAdmin(false);
       }
     } catch (e) {
-      log('DevicePolicyNotifier: Security flag poll failed: $e');
+      log('DevicePolicyProvider: Security flag poll failed: $e');
     }
   }
 
@@ -327,7 +331,7 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
 
       _onIntegrityResult(locationOk && cameraOk);
     } catch (e) {
-      log('DevicePolicyNotifier: Integrity check failed: $e');
+      log('DevicePolicyProvider: Integrity check failed: $e');
       _onIntegrityResult(false);
     }
   }
@@ -378,7 +382,7 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
         },
       );
     } catch (e) {
-      log('DevicePolicyNotifier: Violation report failed: $e');
+      log('DevicePolicyProvider: Violation report failed: $e');
     }
   }
 
@@ -396,11 +400,8 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
   }
 }
 
-/// Backwards-compat type alias.
-typedef DevicePolicyProvider = DevicePolicyNotifier;
-
 /// Riverpod v3 provider for the device-policy feature.
 final devicePolicyProvider =
-    NotifierProvider<DevicePolicyNotifier, DevicePolicyState>(
-  DevicePolicyNotifier.new,
+    NotifierProvider<DevicePolicyProvider, DevicePolicyState>(
+  DevicePolicyProvider.new,
 );
