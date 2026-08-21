@@ -6,7 +6,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/legacy/pre_dashboard_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
@@ -33,7 +32,6 @@ void main() {
   Widget createScreenWithRider(RiderModel rider, Function(AuthState) onNav) {
     return ProviderScope(
       overrides: [
-        appProvider.overrideWith((ref) => AppProvider()),
         riderRepositoryProvider.overrideWithValue(mockRiderRepo),
         rentalRepositoryProvider.overrideWithValue(mockRentalRepo),
         filesRepositoryProvider.overrideWithValue(mockFilesRepo),

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -14,7 +13,6 @@ void main() {
   Widget buildTestApp({required Widget child}) {
     return ProviderScope(
       overrides: [
-        appProvider.overrideWith((ref) => AppProvider()),
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
       ],

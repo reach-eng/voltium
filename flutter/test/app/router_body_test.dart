@@ -8,7 +8,6 @@ import 'package:voltium_rider/features/notifications/presentation/providers/noti
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/app/router.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
@@ -33,13 +32,11 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final appInstance = AppProvider();
       final client = ApiClient();
       final vClient = VoltiumApiClient(client);
 
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => appInstance),
           riderRepositoryProvider
               .overrideWithValue(RiderRepositoryImpl(client, vClient)),
           rentalRepositoryProvider

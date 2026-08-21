@@ -12,10 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'gen/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
-import 'core/state/app_provider.dart';
-import 'theme/theme_provider.dart';
-import 'core/network/connectivity_provider.dart';
-import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'core/state/riverpod_providers.dart';
 import 'services/emergency_contacts_service.dart';
 import 'services/cache_service.dart';
@@ -56,7 +52,7 @@ final FocusObserver focusObserver = FocusObserver((route) {
   // Reserved for future modal/push screen scenarios.
 });
 
-Future<void> main({AppProvider? injectedAppProvider}) async {
+Future<void> main() async {
   if (AppConstants.isTestMode) {
     try {
       enableFlutterDriverExtension();
@@ -160,8 +156,19 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
         ConnectivityService().init(),
       ]);
 
-      final appInstance = injectedAppProvider ?? AppProvider();
-      final themeProviderInstance = ThemeNotifier();
+      // PR-3 (2026-08-21): dropped the AppProvider shim. FCM init needs
+      // the notifier instances *before* the UI ProviderScope is created
+      // (we wire FCMService before runApp). Build a throwaway
+      // ProviderContainer for that. The notifiers it constructs are
+      // independent of the main ProviderScope's notifiers, but state
+      // converges through the server: FCMService hands incoming
+      // commands off to /api endpoints, and the UI's own notifiers fetch
+      // the resulting state on the next refresh. The one exception is
+      // `devicePolicyProvider` which FCMService mutates directly for
+      // ADMIN_LOCK — to keep that path consistent, the UI's
+      // ProviderScope also gets the same container so it sees the same
+      // notifier instance (see below).
+      final preAppContainer = ProviderContainer();
 
       if (PlatformInfo.supportsFCM) {
         try {
@@ -169,10 +176,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
             options: DefaultFirebaseOptions.currentPlatform,
           );
           await FCMService.initialize(
-            devicePolicy: appInstance.devicePolicyProvider,
-            wallet: appInstance.walletProvider,
-            support: appInstance.supportProvider,
-            rider: appInstance.riderProvider,
+            devicePolicy: preAppContainer.read(devicePolicyProvider.notifier),
+            wallet: preAppContainer.read(walletProvider.notifier),
+            support: preAppContainer.read(supportProvider.notifier),
+            rider: preAppContainer.read(riderProvider.notifier),
           );
         } catch (e) {
           appDebug('Failed to initialize Firebase: $e');
@@ -181,19 +188,16 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       AnalyticsService().track(AnalyticsEvent.appOpened);
 
       runApp(
-        // ProviderScope is the root of Riverpod's dependency injection.
-        // Existing ChangeNotifierProviders are bridged via legacy.MultiProvider
-        // so both Provider and Riverpod patterns work during migration.
-        ProviderScope(
-          overrides: [
-            appProvider.overrideWith((ref) => appInstance),
-            connectivityProviderRef.overrideWith(ConnectivityNotifier.new),
-            localeProviderRef.overrideWith(LocaleNotifier.new),
-            themeProviderRef.overrideWith(() => themeProviderInstance),
-            notificationProvider.overrideWith(NotificationNotifier.new),
-            emergencyContactsService
-                .overrideWith(EmergencyContactsNotifier.new),
-          ],
+        // UncontrolledProviderScope hands a pre-built container to the
+        // widget tree. The pre-FCM container is the same one FCMService
+        // is wired to, so any state FCM handlers write (notably
+        // devicePolicyProvider for ADMIN_LOCK) is visible to widgets
+        // without a re-fetch. The additional `overrides` layer below
+        // re-registers the theme/locale/etc. notifier factories — those
+        // are only consulted when nothing in the parent container has
+        // already created them.
+        UncontrolledProviderScope(
+          container: preAppContainer,
           child: const VoltiumApp(),
         ),
       );

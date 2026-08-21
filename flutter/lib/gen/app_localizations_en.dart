@@ -2313,6 +2313,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtrequestTlChange => 'Request Team Leader change';
 
   @override
+  String get txtback => 'Back';
+
+  @override
   String get txtselectTeamLeader => 'Select Team Leader';
 
   @override

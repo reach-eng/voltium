@@ -4366,6 +4366,12 @@ abstract class AppLocalizations {
   /// **'Request Team Leader change'**
   String get txtrequestTlChange;
 
+  /// No description provided for @txtback.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get txtback;
+
   /// Select Team Leader placeholder
   ///
   /// In en, this message translates to:

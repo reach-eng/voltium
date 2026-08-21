@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
@@ -44,7 +43,6 @@ void main() {
       overrides: [
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
-        appProvider.overrideWith((ref) => AppProvider()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [

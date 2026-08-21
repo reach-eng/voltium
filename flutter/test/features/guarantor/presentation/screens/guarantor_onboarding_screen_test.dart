@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
@@ -36,17 +35,8 @@ void main() {
     });
 
     Widget createTestWidget({VoidCallback? onNext}) {
-      final testAppProvider = AppProvider();
-      testAppProvider.riderProvider.setRider(const RiderModel(
-        id: 'test_rider_123',
-        riderId: 'test_rider_123',
-        name: 'Test Rider',
-        phone: '9999999999',
-        lifecycleStatus: 'NEW',
-      ));
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => testAppProvider),
           riderProvider.overrideWith(() => _SeededRiderNotifier(
                 const RiderModel(
                   id: 'test_rider_123',
@@ -125,18 +115,8 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final testAppProvider = AppProvider();
-      testAppProvider.riderProvider.setRider(const RiderModel(
-        id: 'test_rider_banner',
-        riderId: 'test_rider_banner',
-        name: 'Test Rider',
-        phone: '9999999999',
-        lifecycleStatus: 'NEW',
-      ));
       return ProviderScope(
-        overrides: [
-          appProvider.overrideWith((ref) => testAppProvider),
-        ],
+        overrides: [],
         child: const MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(),
@@ -181,17 +161,8 @@ void main() {
     });
 
     Widget createTestWidget({VoidCallback? onNext}) {
-      final testAppProvider = AppProvider();
-      testAppProvider.riderProvider.setRider(const RiderModel(
-        id: 'test_rider_skip',
-        riderId: 'test_rider_skip',
-        name: 'Test Rider',
-        phone: '9999999999',
-        lifecycleStatus: 'NEW',
-      ));
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => testAppProvider),
           riderProvider.overrideWith(() => _SeededRiderNotifier(
                 const RiderModel(
                   id: 'test_rider_skip',
@@ -304,17 +275,8 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final testAppProvider = AppProvider();
-      testAppProvider.riderProvider.setRider(const RiderModel(
-        id: 'test_rider_123',
-        riderId: 'test_rider_123',
-        name: 'Test Rider',
-        phone: '9999999999',
-        lifecycleStatus: 'NEW',
-      ));
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => testAppProvider),
           riderProvider.overrideWith(() => _SeededRiderNotifier(
                 const RiderModel(
                   id: 'test_rider_123',
@@ -419,17 +381,8 @@ void main() {
     });
 
     Widget createTestWidget({VoidCallback? onNext, VoidCallback? onBack}) {
-      final testAppProvider = AppProvider();
-      testAppProvider.riderProvider.setRider(const RiderModel(
-        id: 'test_rider_step',
-        riderId: 'test_rider_step',
-        name: 'Test Rider',
-        phone: '9999999999',
-        lifecycleStatus: 'NEW',
-      ));
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => testAppProvider),
           riderProvider.overrideWith(() => _SeededRiderNotifier(
                 const RiderModel(
                   id: 'test_rider_step',

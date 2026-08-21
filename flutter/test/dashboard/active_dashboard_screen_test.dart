@@ -6,20 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
-class _TestAppProvider extends AppProvider {
-  @override
-  Future<void> refreshTransactions() async {}
-  @override
-  Future<void> refresh() async {}
-  @override
-  Future<void> refreshFromApi() async {}
-}
 
 class _TestRiderNotifier extends RiderNotifier {
   final RiderModel? _initialRider;
@@ -52,7 +42,6 @@ Widget buildTestApp(
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => _TestAppProvider()),
       riderProvider.overrideWith(() => _TestRiderNotifier(rider)),
       engagementProvider.overrideWith(_StubEngagementNotifier.new),
     ],

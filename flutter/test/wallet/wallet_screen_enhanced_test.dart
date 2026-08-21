@@ -8,7 +8,6 @@ import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 
@@ -20,35 +19,6 @@ import 'package:voltium_rider/features/wallet/presentation/providers/wallet_prov
 /// - Transaction history section
 /// - Empty state
 /// - RefreshIndicator
-
-class _TestAppProvider extends AppProvider {
-  @override
-  Future<void> refreshTransactions() async {}
-
-  @override
-  Future<void> refresh() async {}
-
-  @override
-  Future<void> refreshFromApi() async {}
-
-  @override
-  DataState get dataState => DataState.fresh;
-
-  @override
-  List<TransactionModel> get transactions => [];
-
-  @override
-  bool get isRefreshingTransactions => false;
-
-  @override
-  RiderModel? get rider => const RiderModel(
-        riderId: 'test',
-        name: 'Test Rider',
-        phone: '1234567890',
-        walletBalance: 1000,
-        depositStatus: DepositStatus.notSubmitted,
-      );
-}
 
 /// WalletScreen consumes `riderProvider` / `walletProvider` directly (Riverpod
 /// migration), so those must be overridden too — otherwise the real notifiers
@@ -73,12 +43,11 @@ class _StaticWalletNotifier extends WalletNotifier {
   WalletState build() => const WalletState(transactions: []);
 }
 
-Widget buildTestApp({AppProvider? provider}) {
+Widget buildTestApp() {
   return ProviderScope(
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => provider ?? _TestAppProvider()),
       riderProvider.overrideWith(() => _StaticRiderNotifier()),
       walletProvider.overrideWith(() => _StaticWalletNotifier()),
     ],

@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 
 Widget buildTestApp() {
-  final appState = AppProvider();
   return ProviderScope(
-    overrides: [
-      appProvider.overrideWith((ref) => appState),
-    ],
+    overrides: [],
     child: const MaterialApp(home: EmergencySOSScreen()),
   );
 }

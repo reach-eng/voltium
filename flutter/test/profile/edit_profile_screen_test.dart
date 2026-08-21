@@ -6,19 +6,9 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-class _TestAppProvider extends AppProvider {
-  @override
-  Future<void> refreshTransactions() async {}
-  @override
-  Future<void> refresh() async {}
-  @override
-  Future<void> refreshFromApi() async {}
-}
 
 class _SeededRiderNotifier extends RiderNotifier {
   _SeededRiderNotifier(this._seed);
@@ -48,7 +38,6 @@ Widget buildTestApp({RiderModel? initialRider}) {
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => _TestAppProvider()),
       riderProvider.overrideWith(() => _SeededRiderNotifier(seed)),
     ],
     child: const MaterialApp(

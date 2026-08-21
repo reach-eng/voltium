@@ -5,23 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
-
-class _TestAppProvider extends AppProvider {
-  @override
-  Future<void> refreshTransactions() async {}
-  @override
-  Future<void> refresh() async {}
-  @override
-  Future<void> refreshFromApi() async {}
-}
 
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => _TestAppProvider()),
     ],
     child: const MaterialApp(home: VehiclePhotosScreen()),
   );

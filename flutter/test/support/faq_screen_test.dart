@@ -6,18 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
-
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
-
-class _TestAppProvider extends AppProvider {
-  @override
-  Future<void> refreshTransactions() async {}
-  @override
-  Future<void> refresh() async {}
-  @override
-  Future<void> refreshFromApi() async {}
-}
 
 class _SeededSupportNotifier extends SupportNotifier {
   final List<FaqItem> _faqs;
@@ -35,7 +24,6 @@ Widget buildTestApp({
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => _TestAppProvider()),
       if (faqs != null)
         supportProvider.overrideWith(() => _SeededSupportNotifier(faqs)),
     ],

@@ -1739,6 +1739,7 @@
   "@txtrequestTlChange": { "description": "Request Team Leader change button label" },
   "txtbackToDashboard": "Back to Dashboard",
   "@txtbackToDashboard": { "description": "Back to dashboard button label" },
+  "txtback": "Back",
   "txtselectTeamLeader": "Select Team Leader",
   "@txtselectTeamLeader": { "description": "Select Team Leader placeholder" },
   "txtcall": "Call",

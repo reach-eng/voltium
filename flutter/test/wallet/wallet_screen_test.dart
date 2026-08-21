@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -16,27 +15,9 @@ import 'package:voltium_rider/models/rider_model.dart';
 ///
 /// Tests the WalletScreen display, balance formatting, and top-up flow entry.
 
-/// Test-friendly AppProvider that doesn't make real HTTP calls.
-class _TestAppProvider extends AppProvider {
-  @override
-  RiderModel? get rider => RiderModel(
-      riderId: '1', name: 'Test Rider', phone: '123', walletBalance: 100);
-
-  @override
-  DataState get dataState => DataState.fresh;
-
-  @override
-  Future<void> refreshTransactions() async {}
-
-  @override
-  Future<void> refresh() async {}
-
-  @override
-  Future<void> refreshFromApi() async {}
-}
-
-/// WalletScreen consumes `riderProvider` / `walletProvider` directly — see
-/// wallet_screen_enhanced_test.dart for why these overrides are required.
+/// PR-3 (2026-08-21): removed the `_TestAppProvider extends AppProvider` shim
+/// — WalletScreen reads `riderProvider` / `walletProvider` directly. The static
+/// notifiers below provide the seed data the screen expects.
 class _StaticRiderNotifier extends RiderNotifier {
   @override
   RiderState build() => RiderState(
@@ -62,7 +43,6 @@ void main() {
       overrides: [
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
-        appProvider.overrideWith((ref) => _TestAppProvider()),
         riderProvider.overrideWith(() => _StaticRiderNotifier()),
         walletProvider.overrideWith(() => _StaticWalletNotifier()),
       ],

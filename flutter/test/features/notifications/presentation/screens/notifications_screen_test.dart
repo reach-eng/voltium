@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import '../../../../helpers/golden_test_helper.dart';
 
 void main() {
@@ -14,7 +13,6 @@ void main() {
     // ignore: prefer_const_constructors
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [appProvider.overrideWith((ref) => AppProvider())],
         child: wrapForGolden(NotificationsScreen()),
       ),
     );

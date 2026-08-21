@@ -2318,6 +2318,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtrequestTlChange => 'टीम लीडर बदलने का अनुरोध करें';
 
   @override
+  String get txtback => 'वापस';
+
+  @override
   String get txtselectTeamLeader => 'टीम लीडर चुनें';
 
   @override

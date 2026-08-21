@@ -8,7 +8,6 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -46,7 +45,6 @@ void main() {
       overrides: [
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
-        appProvider.overrideWith((ref) => AppProvider()),
         riderProvider.overrideWith(() => _SeededRiderNotifier(seedRider)),
       ],
       child: MaterialApp(

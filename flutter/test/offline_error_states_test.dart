@@ -5,7 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
@@ -21,32 +20,20 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 /// - Null data handling
 /// - AppProvider state transitions
 
-/// A test AppProvider that simulates various states.
-/// Overrides the `rider` and `transactions` getters so consumers see test data.
-class _MockAppProvider extends AppProvider {
-  final RiderModel? _mockRider;
-  final List<TransactionModel> _mockTransactions;
+/// A test data holder that simulates a rider state. PR-3 (2026-08-21)
+/// removed the AppProvider shim — this is now a plain data class, no
+/// longer extends AppProvider. The `transactions` field is preserved
+/// for backward-compatible call sites that still pass it, but it's not
+/// used by the new wrapInApp (the wallet screen reads `walletProvider`
+/// directly, not the shim's transactions list).
+class _MockAppProvider {
+  final RiderModel? rider;
+  final List<TransactionModel> transactions;
 
   _MockAppProvider({
-    RiderModel? rider,
+    this.rider,
     List<TransactionModel>? transactions,
-  })  : _mockRider = rider,
-        _mockTransactions = transactions ?? [];
-
-  @override
-  RiderModel? get rider => _mockRider;
-
-  @override
-  List<TransactionModel> get transactions => _mockTransactions;
-
-  @override
-  Future<void> refreshTransactions() async {}
-
-  @override
-  Future<void> refresh() async {}
-
-  @override
-  Future<void> refreshFromApi() async {}
+  }) : transactions = transactions ?? [];
 }
 
 /// A minimal RiderModel for tests that don't need a full model
@@ -89,17 +76,24 @@ class _StaticRiderNotifier extends RiderNotifier {
   }
 }
 
+// PR-3 (2026-08-21): wrapInApp now takes a `RiderModel? rider` directly
+// instead of a full AppProvider. The `provider` param is kept for
+// backward-compat with existing call sites — it extracts the rider
+// from the legacy _MockAppProvider. New code should prefer `rider:`
+// directly. `transactions` from the legacy provider is silently dropped
+// (it was never read by the screens; the wallet reads walletProvider
+// directly, the profile reads riderProvider).
 Widget wrapInApp({
   required Widget child,
-  AppProvider? provider,
+  RiderModel? rider,
+  _MockAppProvider? provider, // legacy: extract .rider if `rider:` not given
 }) {
-  final mock = provider ?? _MockAppProvider();
+  final actualRider = rider ?? provider?.rider;
   return ProviderScope(
     overrides: [
       localeProviderRef.overrideWith(() => LocaleProvider()),
       themeProviderRef.overrideWith(() => ThemeProvider()),
-      appProvider.overrideWith((ref) => mock),
-      riderProvider.overrideWith(() => _StaticRiderNotifier(mock.rider)),
+      riderProvider.overrideWith(() => _StaticRiderNotifier(actualRider)),
     ],
     child: MaterialApp(
       localizationsDelegates: const [

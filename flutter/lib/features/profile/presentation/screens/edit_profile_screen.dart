@@ -128,7 +128,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _initialEmail = rider?.email ?? '';
     _initialFatherName = rider?.fatherName ?? '';
     _initialMotherName = rider?.motherName ?? '';
-    _initialDob = rider?.dob ?? '';
+    _initialDob = rider?.dob?.toIso8601String() ?? '';
     _initialAddress = rider?.currentAddress ?? '';
     _initialEmergencyContact = rider?.emergencyContact ?? '';
     _initialGName = rider?.guarantorName ?? '';
@@ -140,7 +140,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _fatherNameController = TextEditingController(text: _initialFatherName);
     _motherNameController = TextEditingController(text: _initialMotherName);
     _dobController = TextEditingController(
-      text: _initialDob.isNotEmpty ? formatDateForDisplay(_initialDob) : '',
+      text: _initialDob,
     );
     _addressController = TextEditingController(text: _initialAddress);
     _emergencyContactController =

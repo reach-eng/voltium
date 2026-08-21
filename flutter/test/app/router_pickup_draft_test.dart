@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:voltium_rider/app/router.dart';
 import 'package:voltium_rider/app/app_state.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -249,13 +248,11 @@ Map<String, Object> _pickupDraftMap() => {
 // `main()`). `createRouter` builds a full router with provider overrides;
 // `buildScreen` builds a bare PickupHubScreen for draft-prefill tests.
 Widget createRouter() {
-  final appInstance = AppProvider();
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
 
   return ProviderScope(
     overrides: [
-      appProvider.overrideWith((ref) => appInstance),
       riderRepositoryProvider.overrideWithValue(_MockRiderRepository()),
       rentalRepositoryProvider.overrideWithValue(RentalRepositoryImpl(vClient)),
       walletRepositoryProvider
