@@ -6,6 +6,27 @@
 
 ---
 
+## Status (2026-08-21)
+
+Phase 1 (PR-1..5) and Phase 2 Tier 1 (PR-6..9) are **all shipped** on
+`fix/consolidated-audit-fixes-2026-08-16`:
+
+| PR | Title | Commit |
+|---|---|---|
+| 1 | `isNewRider` default → `true` | `90d7190d` |
+| 2 | Drop `provider` package from pubspec | `90d7190d` |
+| 3 | Delete `AppProvider` shim | `90d7190d` |
+| 4 | Full en+hi translation sweep | `c59c6213`, `747e1f11` |
+| 5 | Dark-mode coverage audit | `5564c085`, `60e8f632` |
+| 6 | Reconcile permissions UI vs router gating | `f977a16a` |
+| 7 | Move `AppShell` to its own file | `1762904a` |
+| 8 | Finalize the provider migration | `ada10ca3` |
+| 9 | Top-up flow state → Riverpod | `bb25c60a` |
+
+Tier 2 (PR-10..12) and Tier 3 (PR-13..14) remain for a follow-up cycle.
+
+---
+
 ## How to read this plan
 
 The original audit and the focused 5-PR plan covered the highest-value items. This file is **everything else**, organized in 3 tiers:
