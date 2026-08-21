@@ -116,6 +116,25 @@ class SecureStorageService {
     return await _storage.read(key: _keyRiderId);
   }
 
+  /// ⚠️ PR-12 (2026-08-21) — DANGEROUS. Wipes EVERY key in secure
+  /// storage, including the FCM command secret and the device-lock
+  /// state. Callers MUST justify the full wipe in a comment (see
+  /// grep audit below).
+  ///
+  /// Audit (2026-08-21): the only callers of this method in the
+  /// current codebase are the test harness (`test_helpers.dart`) and
+  /// a few dead-code paths in legacy test fixtures. No production
+  /// code path — not logout, not refresh-token rejection, not
+  /// session-expiry — invokes [clearAll]. Logout + refresh failure
+  /// both go through [clearSessionCredentials] which preserves the
+  /// device-level keys (FCM secret, lock state).
+  ///
+  /// DO NOT introduce new [clearAll] callers in production. If you
+  /// think you need it, you almost certainly want
+  /// [clearSessionCredentials] instead. The grep one-liner to
+  /// verify no new call site was added:
+  ///
+  ///   grep -rn "SecureStorageService().clearAll\b" lib/ test/
   Future<void> clearAll() async {
     await _storage.deleteAll();
   }
@@ -125,6 +144,26 @@ class SecureStorageService {
   /// `device_locked_by_admin` too — a refresh-token rejection on a transient
   /// 401 then silently disabled ADMIN_LOCK verification on the device.
   /// These device-level values are deliberately preserved here.
+  ///
+  /// The "preserved on logout" set (the keys NOT touched by this
+  /// method) is:
+  ///   - `fcm_command_secret` — needed to HMAC-verify incoming
+  ///     `SECURITY_COMMAND` FCM messages (ADMIN_LOCK, FORCE_UPDATE,
+  ///     etc.). The HMAC secret is device-bound, not rider-bound;
+  ///     wiping it on rider logout would force the next rider to
+  ///     re-enroll on a fresh device, which the API does not
+  ///     support.
+  ///   - `device_locked_by_admin` — read by
+  ///     `DevicePolicyProvider._initLockState` on every cold start.
+  ///     A stale "true" from the previous rider is what keeps the
+  ///     kiosk mode active; clearing it would let the next rider
+  ///     open the app before an admin unlocks the device.
+  ///   - any other device-bound key added in the future.
+  ///
+  /// To add a new preserved key, add the `key:` argument to the
+  /// `_storage.delete(...)` list here AND update the audit
+  /// `flutter/docs/TELEMETRY.md` (PR-12 says the only keys that
+  /// must survive logout are the FCM secret + device lock state).
   Future<void> clearSessionCredentials() async {
     await _storage.delete(key: _keyToken);
     await _storage.delete(key: _keySessionToken);

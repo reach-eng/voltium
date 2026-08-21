@@ -80,6 +80,135 @@ void main() {
     });
   });
 
+  // PR-12 (2026-08-21) — pins the FCM command secret + device-lock
+  // preservation contract on logout / refresh-token rejection. The
+  // 2026-08-06 fix introduced `clearSessionCredentials` to keep these
+  // device-level values alive across a rider session; this test
+  // makes sure that contract is not accidentally regressed.
+  group('SecureStorageService — preserved keys on logout (PR-12)', () {
+    late _MockKeychain keychain;
+
+    setUp(() {
+      keychain = _MockKeychain();
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage')
+          .setMockMethodCallHandler(keychain.handle);
+      const MethodChannel('plugins.flutter.io/secure_storage')
+          .setMockMethodCallHandler(keychain.handle);
+    });
+
+    tearDown(() {
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage')
+          .setMockMethodCallHandler(null);
+      const MethodChannel('plugins.flutter.io/secure_storage')
+          .setMockMethodCallHandler(null);
+    });
+
+    test(
+        'clearSessionCredentials preserves the FCM command secret + device lock state',
+        () async {
+      // Set up a realistic pre-logout storage state: rider is logged
+      // in, has a token + phone + riderId, AND has a device-bound
+      // FCM HMAC secret + lock flag.
+      //
+      // Note on the test surface: we read the keychain directly
+      // (instead of `svc.getToken()`) because the singleton's
+      // `_sessionTokenMigrationDone` flag is sticky across tests in
+      // the same process — the RA-F-5 group below depends on the
+      // flag being `false` when its first test runs. Avoiding
+      // `getToken()` keeps the migration contract testable.
+      final svc = SecureStorageService();
+      await svc.setToken('rider-access-token-abc');
+      await svc.setRefreshToken('rider-refresh-token-xyz');
+      await svc.setPhone('+919876543210');
+      await svc.saveRiderId('rider_42');
+      await svc.writeFcmCommandSecret('fcm-hmac-secret-DEVICE-BOUND');
+      await svc.setDeviceLocked(true);
+
+      // Sanity-check pre-state via the keychain directly.
+      expect(keychain.store['auth_token'], 'rider-access-token-abc');
+      expect(keychain.store['refresh_token'], 'rider-refresh-token-xyz');
+      expect(keychain.store['user_phone'], '+919876543210');
+      expect(keychain.store['rider_id'], 'rider_42');
+      expect(
+          keychain.store['fcm_command_secret'], 'fcm-hmac-secret-DEVICE-BOUND');
+      expect(keychain.store['device_locked_by_admin'], 'true');
+
+      // Logout: clear session credentials only.
+      await svc.clearSessionCredentials();
+
+      // Rider-bound keys MUST be gone.
+      expect(keychain.store.containsKey('auth_token'), isFalse,
+          reason: 'auth token should be cleared on logout');
+      expect(keychain.store.containsKey('refresh_token'), isFalse,
+          reason: 'refresh token should be cleared on logout');
+      expect(keychain.store.containsKey('user_phone'), isFalse,
+          reason: 'phone should be cleared on logout');
+      expect(keychain.store.containsKey('rider_id'), isFalse,
+          reason: 'riderId should be cleared on logout');
+
+      // Device-bound keys MUST be preserved.
+      expect(
+          keychain.store['fcm_command_secret'], 'fcm-hmac-secret-DEVICE-BOUND',
+          reason: 'FCM command secret must survive logout (used to HMAC-verify '
+              'SECURITY_COMMAND messages like ADMIN_LOCK)');
+      expect(keychain.store['device_locked_by_admin'], 'true',
+          reason: 'device_locked_by_admin must survive logout so the next '
+              'rider sees the kiosk mode the previous admin left in place');
+    });
+
+    test('deleteRefreshToken preserves the FCM command secret', () async {
+      // DEEP-AUDIT D-P1-6 (2026-08-08) path: a refresh-token
+      // rejection (e.g. 401 on /api/auth/refresh) should NOT touch
+      // the FCM secret. deleteRefreshToken is the local-only half of
+      // logout used by RiderLogoutOrchestrator when the network
+      // /api/auth/logout call fails.
+      final svc = SecureStorageService();
+      await svc.setToken('access-token');
+      await svc.setRefreshToken('refresh-token');
+      await svc.writeFcmCommandSecret('fcm-hmac-secret-DEVICE-BOUND');
+
+      // Sanity check BEFORE the delete.
+      expect(keychain.store.containsKey('refresh_token'), isTrue,
+          reason: 'pre-condition: refresh token was set up before delete');
+
+      await svc.deleteRefreshToken();
+
+      expect(keychain.store.containsKey('refresh_token'), isFalse,
+          reason: 'refresh token must be deleted by deleteRefreshToken');
+      expect(keychain.deletedKeys, contains('refresh_token'),
+          reason: 'deleteRefreshToken must issue a delete on refresh_token');
+      expect(
+          keychain.store['fcm_command_secret'], 'fcm-hmac-secret-DEVICE-BOUND',
+          reason: 'FCM secret must survive deleteRefreshToken (used for the '
+              'next admin SECURITY_COMMAND even after a 401-driven refresh)');
+      expect(keychain.store['auth_token'], 'access-token',
+          reason: 'auth token must survive deleteRefreshToken — only the '
+              'refresh token is wiped, not the whole session');
+    });
+
+    test(
+        'clearSessionCredentials preserves the FCM command secret even when set AFTER a setToken call (ordering independence)',
+        () async {
+      // Sanity check: order of writes should not change the
+      // preservation semantics. We still avoid `getToken()` here so
+      // the RA-F-5 migration test below keeps its `_sessionTokenMigrationDone
+      // == false` precondition.
+      final svc = SecureStorageService();
+      await svc.writeFcmCommandSecret('secret-first');
+      await svc.setToken('token-second');
+      await svc.setDeviceLocked(true);
+
+      await svc.clearSessionCredentials();
+
+      expect(keychain.store['fcm_command_secret'], 'secret-first',
+          reason: 'FCM secret must survive clearSessionCredentials');
+      expect(keychain.store['device_locked_by_admin'], 'true',
+          reason: 'device lock state must survive clearSessionCredentials');
+      expect(keychain.store.containsKey('auth_token'), isFalse,
+          reason: 'auth_token must be cleared on logout (post-condition)');
+    });
+  });
+
   // PR-93 (RA-F-5) — verifies the one-time migration from the legacy
   // `session_token` key into the canonical `auth_token` key. The mock
   // keychain below backs the platform channel and lets the test inject
