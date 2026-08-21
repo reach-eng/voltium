@@ -17,13 +17,11 @@ import 'package:voltium_rider/theme/app_typography.dart';
 class _PermissionItem {
   final String id;
   final IconData icon;
-  final bool isRequired;
   bool isEnabled;
 
   _PermissionItem({
     required this.id,
     required this.icon,
-    this.isRequired = true,
   }) : isEnabled = false;
 }
 
@@ -46,13 +44,16 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       icon: Icons.location_on_outlined,
     ),
     _PermissionItem(
+      id: 'background_location',
+      icon: Icons.my_location_outlined,
+    ),
+    _PermissionItem(
       id: 'notifications',
       icon: Icons.notifications_active_outlined,
     ),
     _PermissionItem(
       id: 'battery',
       icon: Icons.battery_saver_outlined,
-      isRequired: false,
     ),
     _PermissionItem(
       id: 'camera',
@@ -61,22 +62,22 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     _PermissionItem(
       id: 'phone',
       icon: Icons.phone_outlined,
-      isRequired: false,
+    ),
+    _PermissionItem(
+      id: 'call_log',
+      icon: Icons.call_outlined,
     ),
     _PermissionItem(
       id: 'contacts',
       icon: Icons.contacts_outlined,
-      isRequired: false,
     ),
     _PermissionItem(
       id: 'mic',
       icon: Icons.mic_outlined,
-      isRequired: false,
     ),
     _PermissionItem(
       id: 'device_admin',
       icon: Icons.security_outlined,
-      isRequired: false,
     ),
   ];
 
@@ -113,9 +114,12 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   ConsentType? _consentTypeFor(String permissionId) {
     switch (permissionId) {
       case 'location':
+      case 'background_location':
         return ConsentType.location;
       case 'contacts':
         return ConsentType.contacts;
+      case 'call_log':
+        return ConsentType.callLogs;
       case 'camera':
         return ConsentType.camera;
       case 'phone':
@@ -138,6 +142,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     switch (id) {
       case 'location':
         return l10n.txtlocationPermName;
+      case 'background_location':
+        return l10n.txtbackgroundLocationPermName;
       case 'notifications':
         return l10n.txtnotificationsPermName;
       case 'battery':
@@ -146,6 +152,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         return l10n.txtcameraPermName;
       case 'phone':
         return l10n.txtphonePermName;
+      case 'call_log':
+        return l10n.txtcallLogPermName;
       case 'contacts':
         return l10n.txtcontactsPermName;
       case 'mic':
@@ -162,6 +170,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     switch (id) {
       case 'location':
         return l10n.txtlocationPermDesc;
+      case 'background_location':
+        return l10n.txtbackgroundLocationPermDesc;
       case 'notifications':
         return l10n.txtnotificationsPermDesc;
       case 'battery':
@@ -170,6 +180,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         return l10n.txtcameraPermDesc;
       case 'phone':
         return l10n.txtphonePermDesc;
+      case 'call_log':
+        return l10n.txtcallLogPermDesc;
       case 'contacts':
         return l10n.txtcontactsPermDesc;
       case 'mic':
@@ -194,7 +206,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       PermissionStatus status;
       switch (perm.id) {
         case 'location':
-          status = await Permission.location.status;
+          status = await Permission.locationWhenInUse.status;
+          break;
+        case 'background_location':
+          status = await Permission.locationAlways.status;
           break;
         case 'camera':
           status = await Permission.camera.status;
@@ -210,6 +225,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           break;
         case 'phone':
           status = await Permission.phone.status;
+          break;
+        case 'call_log':
+          status = await Permission
+              .phone.status; // callLog piggybacks on phone perms
           break;
         case 'battery':
           status = await Permission.ignoreBatteryOptimizations.status;
@@ -266,6 +285,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           }
         }
         break;
+      case 'background_location':
+        status = await Permission.locationAlways.request();
+        break;
       case 'camera':
         status = await Permission.camera.request();
         break;
@@ -279,6 +301,11 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         status = await Permission.contacts.request();
         break;
       case 'phone':
+        status = await Permission.phone.request();
+        break;
+      case 'call_log':
+        // READ_CALL_LOG rides on the same runtime permission as PHONE
+        // on Android API 33+; permission_handler exposes it under phone.
         status = await Permission.phone.request();
         break;
       case 'battery':
@@ -508,10 +535,11 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    // Only required permissions gate the Continue button. Battery
-    // optimization is optional (see _PermissionItem.isRequired).
-    final allRequiredGranted =
-        _permissions.where((p) => p.isRequired).every((p) => p.isEnabled);
+    // Every permission on this screen is now compulsory (PR-6
+    // 2026-08-21). The Continue button stays disabled until all tiles
+    // are green; the router's `_areAllRequiredPermissionsGranted`
+    // enforces the same set on the way out.
+    final allRequiredGranted = _permissions.every((p) => p.isEnabled);
     final isTestMode = AppConstants.isTestMode;
     final canProceed = allRequiredGranted || isTestMode;
 

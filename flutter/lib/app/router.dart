@@ -76,9 +76,6 @@ import '../features/dashboard/presentation/screens/hang_tight_screen.dart';
 // in case the older flow needs to be brought back.
 
 import '../features/support/presentation/screens/faq_screen.dart';
-import '../features/support/presentation/screens/feedback_screen.dart';
-import '../utils/app_navigator.dart';
-
 import '../features/referrals/presentation/screens/referral_screen.dart';
 
 import 'app_state.dart';
@@ -318,24 +315,41 @@ class _AppRouterState extends ConsumerState<AppRouter>
     CacheService().remove(_kPickupDraftKey);
   }
 
-  /// Required permissions gate. `ignoreBatteryOptimizations` is NOT
-  /// included here because it requires a multi-tap detour into Android
-  /// Settings and is only a recommendation. Users who skip it on the
-  /// permissions screen can still use the app; the app just won't be
-  /// excluded from battery optimization.
+  /// Required permissions gate. PR-6 (2026-08-21): every permission
+  /// listed on the onboarding permissions screen is now compulsory.
+  /// This mirrors the user-facing onboarding contract: a rider cannot
+  /// proceed past `AuthState.permissions` until all tiles are green.
   ///
-  /// `phone` is also optional — it is shown in the permissions UI for
-  /// ride-safety transparency but the app degrades gracefully when the
-  /// runner grants location/camera/notifications only.
+  /// `ignoreBatteryOptimizations` IS included now (per user direction)
+  /// even though the OS requires a multi-tap detour into Settings.
+  /// `phone` is included; `call_log` rides on the same runtime
+  /// permission as `phone` on Android API 33+. `device_admin` is
+  /// tracked via `DevicePolicyProvider.isAdminActive` (not the
+  /// permission_handler enum).
   Future<bool> _areAllRequiredPermissionsGranted() async {
     final isTestMode = AppConstants.isTestMode;
     if (isTestMode || kIsWeb) return true;
 
-    final location = await Permission.location.isGranted;
+    final location = await Permission.locationWhenInUse.isGranted;
+    final backgroundLocation = await Permission.locationAlways.isGranted;
     final camera = await Permission.camera.isGranted;
     final notifications = await Permission.notification.isGranted;
+    final phone = await Permission.phone.isGranted;
+    final contacts = await Permission.contacts.isGranted;
+    final mic = await Permission.microphone.isGranted;
+    final battery = await Permission.ignoreBatteryOptimizations.isGranted;
 
-    return location && camera && notifications;
+    final deviceAdmin = ref.read(devicePolicyProvider).isAdminActive;
+
+    return location &&
+        backgroundLocation &&
+        camera &&
+        notifications &&
+        phone &&
+        contacts &&
+        mic &&
+        battery &&
+        deviceAdmin;
   }
 
   @override

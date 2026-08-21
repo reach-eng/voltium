@@ -23,6 +23,8 @@ import 'package:voltium_rider/features/wallet/presentation/providers/wallet_prov
 
 import 'package:voltium_rider/utils/app_constants.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
+
 void main() {
   group('Router Body Test', () {
     setUp(() async {
@@ -49,6 +51,8 @@ void main() {
               .overrideWithValue(FilesRepository(client, vClient)),
         ],
         child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: AppRouter(),
         ),
       );

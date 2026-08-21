@@ -1937,6 +1937,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Required for fleet security and remote lock features';
 
   @override
+  String get txtbackgroundLocationPermName => 'Background Location';
+
+  @override
+  String get txtbackgroundLocationPermDesc =>
+      'Required for trip tracking when the app is in the background.';
+
+  @override
+  String get txtcallLogPermName => 'Call Log';
+
+  @override
+  String get txtcallLogPermDesc =>
+      'Used for ride-safety verification and emergency contact confirmation.';
+
+  @override
   String get txtpreciseLocationRequired =>
       'Precise location is required. Please enable it in Settings.';
 

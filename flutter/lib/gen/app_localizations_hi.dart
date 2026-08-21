@@ -1941,6 +1941,20 @@ class AppLocalizationsHi extends AppLocalizations {
       'फ्लीट सुरक्षा और रिमोट लॉक सुविधाओं के लिए आवश्यक';
 
   @override
+  String get txtbackgroundLocationPermName => 'Background Location';
+
+  @override
+  String get txtbackgroundLocationPermDesc =>
+      'Required for trip tracking when the app is in the background.';
+
+  @override
+  String get txtcallLogPermName => 'Call Log';
+
+  @override
+  String get txtcallLogPermDesc =>
+      'Used for ride-safety verification and emergency contact confirmation.';
+
+  @override
   String get txtpreciseLocationRequired =>
       'सटीक स्थान आवश्यक है। कृपया सेटिंग्स में इसे सक्षम करें।';
 

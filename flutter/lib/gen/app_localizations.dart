@@ -3705,6 +3705,30 @@ abstract class AppLocalizations {
   /// **'Required for fleet security and remote lock features'**
   String get txtdeviceAdminPermDesc;
 
+  /// Background location permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Background Location'**
+  String get txtbackgroundLocationPermName;
+
+  /// Background location permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Required for trip tracking when the app is in the background.'**
+  String get txtbackgroundLocationPermDesc;
+
+  /// Call log permission tile name
+  ///
+  /// In en, this message translates to:
+  /// **'Call Log'**
+  String get txtcallLogPermName;
+
+  /// Call log permission tile description
+  ///
+  /// In en, this message translates to:
+  /// **'Used for ride-safety verification and emergency contact confirmation.'**
+  String get txtcallLogPermDesc;
+
   /// Precise location warning snackbar
   ///
   /// In en, this message translates to:
