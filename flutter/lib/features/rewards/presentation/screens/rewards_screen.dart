@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +5,12 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+
+// AUDIT FIX: tier thresholds extracted from inline literals in build()
+// into named constants so the tier math has a single source of truth.
+const int kBronzeThreshold = 500;
+const int kSilverThreshold = 2000;
+const int kGoldThreshold = 5000;
 
 class RewardsScreen extends ConsumerStatefulWidget {
   const RewardsScreen({super.key});
@@ -28,6 +33,21 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // AUDIT FIX: honor the OS "remove animations" accessibility setting —
+    // previously the infinite pulse ran unconditionally, rebuilding the
+    // BoxShadow containers every frame even when animations were
+    // disabled system-wide.
+    final disabled = MediaQuery.of(context).disableAnimations;
+    if (disabled) {
+      if (_pulseCtrl.isAnimating) _pulseCtrl.stop();
+    } else if (!_pulseCtrl.isAnimating) {
+      _pulseCtrl.repeat(reverse: true);
+    }
+  }
+
+  @override
   void dispose() {
     _pulseCtrl.dispose();
     super.dispose();
@@ -37,14 +57,25 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   Widget build(BuildContext context) {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final points = rider?.totalRewardPoints ?? 0;
+    // AUDIT FIX: freeze the pulse at its neutral pose when the user has
+    // disabled animations; the AnimatedBuilders below then stop firing.
+    final animate = !MediaQuery.of(context).disableAnimations;
 
     // Tier calculation logic
-    final currentTier =
-        points < 500 ? 'Bronze' : (points < 2000 ? 'Silver' : 'Gold');
-    final nextTierThreshold =
-        points < 500 ? 500 : (points < 2000 ? 2000 : 5000);
-    final progress = points / nextTierThreshold;
-    final pointsToNext = nextTierThreshold - points;
+    final currentTier = points < kBronzeThreshold
+        ? 'Bronze'
+        : (points < kSilverThreshold ? 'Silver' : 'Gold');
+    final nextTierThreshold = points < kBronzeThreshold
+        ? kBronzeThreshold
+        : (points < kSilverThreshold ? kSilverThreshold : kGoldThreshold);
+    final progress = (points / nextTierThreshold).clamp(0.0, 1.0);
+    // AUDIT FIX: gold tier previously produced a NEGATIVE
+    // pointsToNext (>5000 pts rendered "-500 pts to next"). At max
+    // tier the label is hidden instead.
+    final isMaxTier = points >= kGoldThreshold;
+    final pointsToNext = isMaxTier
+        ? 0
+        : (nextTierThreshold - points).clamp(0, nextTierThreshold);
 
     return Scaffold(
       backgroundColor: AppColors.of(context).iconBackground,
@@ -83,16 +114,17 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     child: AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder: (context, child) {
+                        final t = animate ? _pulseCtrl.value : 0.0;
                         return Container(
                           decoration: BoxDecoration(
                             borderRadius:
                                 BorderRadius.circular(AppRadius.radiusModal),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.accentPurple.withValues(
-                                    alpha: 0.2 + (_pulseCtrl.value * 0.15)),
-                                blurRadius: 30 + (_pulseCtrl.value * 20),
-                                spreadRadius: 2 + (_pulseCtrl.value * 5),
+                                color: AppColors.accentPurple
+                                    .withValues(alpha: 0.2 + (t * 0.15)),
+                                blurRadius: 30 + (t * 20),
+                                spreadRadius: 2 + (t * 5),
                               )
                             ],
                           ),
@@ -101,140 +133,143 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     ),
                   ),
                 ),
-                // Glass Card
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: Spacing.paddingLg,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.accentPurple.withValues(alpha: 0.8),
-                            AppColors.accentPurple.withValues(alpha: 0.9),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.radiusModal),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 1.5),
-                      ),
-                      child: Column(
+                // AUDIT FIX: static BackdropFilter removed — this screen
+                // has no moving content behind the card, so the blur was
+                // a permanent GPU cost with no visual payoff. The card's
+                // gradient alone carries the look.
+                Container(
+                  padding: Spacing.paddingLg,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.accentPurple.withValues(alpha: 0.8),
+                        AppColors.accentPurple.withValues(alpha: 0.9),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              // Pulse Star
-                              AnimatedBuilder(
-                                animation: _pulseCtrl,
-                                builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: 1.0 + (_pulseCtrl.value * 0.1),
-                                    child: Container(
-                                      padding: Spacing.paddingMd,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.2),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.white.withValues(
-                                                alpha: 0.2 * _pulseCtrl.value),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          )
-                                        ],
-                                      ),
-                                      child: const Icon(Icons.star_rounded,
-                                          color: Colors.white, size: 40),
-                                    ),
-                                  );
-                                },
-                              ),
-                              SizedBox(width: 20),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Total Points',
-                                    style: AppTypography.bodyLarge
-                                        .copyWith(color: Colors.white70),
+                          // Pulse Star
+                          AnimatedBuilder(
+                            animation: _pulseCtrl,
+                            builder: (context, child) {
+                              final t = animate ? _pulseCtrl.value : 0.0;
+                              return Transform.scale(
+                                scale: 1.0 + (t * 0.1),
+                                child: Container(
+                                  padding: Spacing.paddingMd,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.2 * t),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      )
+                                    ],
                                   ),
-                                  Text(
-                                    '$points',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: Colors.white,
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  child: const Icon(Icons.star_rounded,
+                                      color: Colors.white, size: 40),
+                                ),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 24),
-                          // Tier Progression
+                          SizedBox(width: 20),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    '$currentTier Tier',
-                                    style: AppTypography.bodyMedium
-                                        .copyWith(fontWeight: FontWeight.w600)
-                                        .copyWith(color: Colors.white),
-                                  ),
-                                  Text(
-                                    '$pointsToNext pts to next',
-                                    style: AppTypography.bodySmall
-                                        .copyWith(color: Colors.white70),
-                                  ),
-                                ],
+                              Text(
+                                'Total Points',
+                                style: AppTypography.bodyLarge
+                                    .copyWith(color: Colors.white70),
                               ),
-                              const SizedBox(height: 8),
-                              Stack(
-                                children: [
-                                  Container(
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.2),
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.xs),
-                                    ),
-                                  ),
-                                  FractionallySizedBox(
-                                    widthFactor: progress.clamp(0.0, 1.0),
-                                    child: Container(
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(AppRadius.xs),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.5),
-                                            blurRadius: 8,
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                '$points',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -1,
+                                ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      // Tier Progression
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '$currentTier Tier',
+                                style: AppTypography.bodyMedium
+                                    .copyWith(fontWeight: FontWeight.w600)
+                                    .copyWith(color: Colors.white),
+                              ),
+                              // AUDIT FIX: hidden at max tier — was
+                              // previously negative above the gold
+                              // threshold.
+                              if (!isMaxTier)
+                                Text(
+                                  '$pointsToNext pts to next',
+                                  style: AppTypography.bodySmall
+                                      .copyWith(color: Colors.white70),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Semantics(
+                            // AUDIT FIX: expose the progress value to
+                            // screen readers.
+                            label: '$currentTier tier progress',
+                            value: '$points of $nextTierThreshold points',
+                            child: Stack(
+                              children: [
+                                Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.xs),
+                                  ),
+                                ),
+                                FractionallySizedBox(
+                                  widthFactor: progress.clamp(0.0, 1.0),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.xs),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.5),
+                                          blurRadius: 8,
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],

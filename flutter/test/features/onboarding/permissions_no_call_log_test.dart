@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/permissions_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// PR-A (§6.4 / audit #6 P0-3): the call-log permission was removed from the
 /// onboarding permission list (it was never used for functionality and
@@ -43,7 +46,19 @@ void main() {
           () => _AdminActivePolicyNotifier(),
         ),
       ],
-      child: MaterialApp(home: PermissionsScreen(onNext: onNext ?? () {})),
+      // AUDIT FIX: the screen force-unwraps `AppLocalizations.of(context)!`
+      // — the harness must provide localization delegates or build throws.
+      child: MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: LocaleProvider.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: PermissionsScreen(onNext: onNext ?? () {}),
+      ),
     );
   }
 
@@ -95,7 +110,10 @@ void main() {
   });
 }
 
-class _AdminActivePolicyNotifier extends DevicePolicyNotifier {
+// AUDIT FIX: the notifier class was consolidated to `DevicePolicyProvider`
+// (Riverpod v3 Notifier); the stub must extend the current class or this
+// test file fails to compile (same rename-drift as the dashboard stub).
+class _AdminActivePolicyNotifier extends DevicePolicyProvider {
   @override
   DevicePolicyState build() => const DevicePolicyState(isAdminActive: true);
 }

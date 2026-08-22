@@ -425,10 +425,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // The generated method returns a typed `ListVehiclesResponse`,
       // so re-encode it to JSON to preserve the `{ success, data }`
       // envelope shape the caller already expects.
-      final response = (await ref
-              .read(voltiumApiClientProvider)
-              .getVehicles(hubId))
-          .toJson();
+      final response =
+          (await ref.read(voltiumApiClientProvider).getVehicles(hubId))
+              .toJson();
       if (!mounted) return;
       // The API wraps the response in { success, data }. The data may
       // be a list directly (GET /api/vehicles) or nested under a key.

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     // P1-5 (2026-08-05 legal/device audit): the 403 must say WHICH permission
     // is missing — a generic "Insufficient permissions" left operators guessing
     // whether they lack riders_update or device_remote_control.
-    if (!hasPermission(session.adminRole || '', 'riders_update')) {
+    if (!hasPermission(session, 'riders_update')) {
       return adminForbidden('Requires riders_update permission');
     }
 
@@ -94,7 +94,7 @@ async function handleSecurityAction(
 ): Promise<any> {
   // P1-5: same permission-signature convention as the top-level gate
   // (session.adminRole string, not the session object).
-  if (!hasPermission(session.adminRole || '', 'device_remote_control')) {
+  if (!hasPermission(session, 'device_remote_control')) {
     return adminForbidden('Requires device_remote_control permission');
   }
 

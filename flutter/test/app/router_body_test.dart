@@ -32,6 +32,13 @@ void main() {
       await CacheService().init();
       AppConstants.isTestModeOverride = true;
     });
+    // PR-1 (F-001): reset the test-mode override so it doesn't leak
+    // into the next suite (the assert in `AppConstants.isTestMode` only
+    // trips in release, but a leaking override can change behavior in
+    // the next test's `flutter test` run).
+    tearDown(() {
+      AppConstants.isTestModeOverride = false;
+    });
 
     Widget createTestWidget() {
       final client = ApiClient();

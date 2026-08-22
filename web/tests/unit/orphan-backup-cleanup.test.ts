@@ -6,7 +6,12 @@
  * IST-date idempotency key.
  */
 
+import path from 'path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// AUDIT FIX (N-3) companion: the job's deletes are now containment-checked,
+// so test fixtures must use paths INSIDE the allowed backup root (cwd/data).
+const containedPath = (...segs: string[]) => path.join(process.cwd(), 'data', ...segs);
 
 const mocks = vi.hoisted(() => {
   const findMany = vi.fn();
@@ -59,7 +64,7 @@ describe('orphanBackupCleanupJob.process — PR-7 orphan purge', () => {
     mocks.findMany.mockResolvedValue([
       {
         id: 'backup_old',
-        backupPath: '/data/backups/pre_restore/backup_old',
+        backupPath: containedPath('backups', 'pre_restore', 'backup_old'),
         errorMessage: 'ORPHANED_BY_FAILED_RESTORE:restore_42',
       },
     ]);
@@ -68,8 +73,10 @@ describe('orphanBackupCleanupJob.process — PR-7 orphan purge', () => {
     const result = await orphanBackupCleanupJob.process({ id: 'scheduled' });
 
     expect(result).toEqual({ purged: 1 });
+    // AUDIT FIX (N-3): deletes go through safeRmBackupPath, which passes
+    // the RESOLVED absolute path to rmSync.
     expect(mocks.rmSync).toHaveBeenCalledWith(
-      '/data/backups/pre_restore/backup_old',
+      path.resolve(containedPath('backups', 'pre_restore', 'backup_old')),
       { recursive: true, force: true }
     );
     expect(mocks.deleteBackup).toHaveBeenCalledWith({ where: { id: 'backup_old' } });
@@ -112,8 +119,8 @@ describe('orphanBackupCleanupJob.process — PR-7 orphan purge', () => {
 
   it('keeps sweeping when a single orphan fails to purge', async () => {
     mocks.findMany.mockResolvedValue([
-      { id: 'backup_bad', backupPath: '/data/bad', errorMessage: 'ORPHANED_BY_FAILED_RESTORE:r1' },
-      { id: 'backup_good', backupPath: '/data/good', errorMessage: 'ORPHANED_BY_FAILED_RESTORE:r2' },
+      { id: 'backup_bad', backupPath: containedPath('backups', 'bad'), errorMessage: 'ORPHANED_BY_FAILED_RESTORE:r1' },
+      { id: 'backup_good', backupPath: containedPath('backups', 'good'), errorMessage: 'ORPHANED_BY_FAILED_RESTORE:r2' },
     ]);
     mocks.deleteBackup
       .mockRejectedValueOnce(new Error('row gone'))

@@ -9,7 +9,7 @@ export const GET = withApiHandler(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await requireAdmin();
     if (!session) return adminUnauthorized();
-    if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+    if (!hasPermission(session, 'riders_view')) return adminForbidden();
 
     const { id } = await params;
     if (!id) return errors.badRequest('Rider ID is required');

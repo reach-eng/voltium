@@ -19,7 +19,7 @@ function errorMessage(error: unknown): string {
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
+  if (!hasPermission(session, 'hubs_manage')) return adminForbidden();
   try {
     // DEEP-AUDIT D-P1-1: parsePositiveInt (NaN-safe) replaces the removed
     // parsePaginationParams helper.
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
+  if (!hasPermission(session, 'hubs_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(createHubSchema, body);
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
+  if (!hasPermission(session, 'hubs_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(
@@ -84,7 +84,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
+  if (!hasPermission(session, 'hubs_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(deleteHubSchema, body);

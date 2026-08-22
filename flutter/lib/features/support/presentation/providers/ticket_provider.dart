@@ -8,11 +8,17 @@ enum TicketFilter { all, open, assigned, inProgress, resolved, closed }
 
 class TicketState {
   final bool isLoading;
+
+  /// AUDIT FIX: fetch failures were indistinguishable from "no tickets" —
+  /// riders saw an empty state instead of an error. Non-null when the last
+  /// fetch failed.
+  final String? error;
   final List<TicketEntity> tickets;
   final TicketFilter filter;
 
   TicketState({
     this.isLoading = false,
+    this.error,
     this.tickets = const [],
     this.filter = TicketFilter.all,
   });
@@ -27,11 +33,14 @@ class TicketState {
 
   TicketState copyWith({
     bool? isLoading,
+    String? error,
+    bool clearError = false,
     List<TicketEntity>? tickets,
     TicketFilter? filter,
   }) {
     return TicketState(
       isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
       tickets: tickets ?? this.tickets,
       filter: filter ?? this.filter,
     );
@@ -46,7 +55,7 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   }
 
   Future<void> fetchTickets() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final repository = SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
       final response = await repository.fetchTickets();
@@ -55,12 +64,13 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
         final parsed = data
             .map((e) => TicketEntity.fromJson(e as Map<String, dynamic>))
             .toList();
-        state = state.copyWith(isLoading: false, tickets: parsed);
+        state =
+            state.copyWith(isLoading: false, tickets: parsed, clearError: true);
       } else {
-        state = state.copyWith(isLoading: false);
+        state = state.copyWith(isLoading: false, clearError: true);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      state = state.copyWith(isLoading: false, error: 'Failed to load tickets');
     }
   }
 

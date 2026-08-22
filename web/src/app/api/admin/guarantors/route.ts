@@ -13,7 +13,7 @@ import { withApiHandler } from '@/lib/api-handler';
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'guarantor_view_limited')) return adminForbidden();
+  if (!hasPermission(session, 'guarantor_view_limited')) return adminForbidden();
 
   const url = request.nextUrl;
   const status = url.searchParams.get('status') || undefined;
@@ -82,7 +82,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     // decision, not a read. Drop `ops_read` here so read-only staff
     // cannot silently suspend riders. `guarantor_view_limited` is
     // also removed from the write path; it should only grant GET.
-    !hasPermission(session.adminRole || '', 'kyc_approve')
+    !hasPermission(session, 'kyc_approve')
   ) {
     return adminForbidden();
   }

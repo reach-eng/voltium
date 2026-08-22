@@ -13,7 +13,7 @@ const deleteCouponSchema = z.object({ id: z.string().min(1) });
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'offers_manage')) return adminForbidden();
+  if (!hasPermission(session, 'offers_manage')) return adminForbidden();
 
   try {
     // DEEP-AUDIT D-P1-1: parsePositiveInt (NaN-safe) replaces the removed
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'offers_manage')) return adminForbidden();
+  if (!hasPermission(session, 'offers_manage')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'offers_manage')) return adminForbidden();
+  if (!hasPermission(session, 'offers_manage')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -73,7 +73,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'offers_manage')) return adminForbidden();
+  if (!hasPermission(session, 'offers_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

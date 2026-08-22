@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +11,6 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/spark_otp_input.dart';
@@ -97,6 +95,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   final GlobalKey _otpKey = GlobalKey();
 
   bool _isLoading = false;
+
+  /// AUDIT FIX: in-flight guard for the resend action (double-tap race).
+  bool _isResending = false;
   bool _isOtpComplete = false;
   int _resendCountdown = 30;
   Timer? _countdownTimer;
@@ -145,9 +146,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    // CONSOLIDATED-FIX-2026-08-16 §4.11: skip the bounce animation in
-    // production (a release with isTestMode=true should behave normally).
-    if (kDebugMode && AppConstants.isTestMode) {
+    // PR-1 (F-001 / FC31): the previous `kDebugMode && AppConstants.isTestMode`
+    // gate let a debug-built sideload with `isTestModeOverride = true` skip
+    // the bounce animation. The new gate is `kDebugMode` only — the
+    // integration-test harness still gets the optimization in `flutter test`,
+    // but a release build (or a release-style debug build) animates
+    // normally. The FC31 audit finding noted that profile builds (which are
+    // neither debug nor release) still animated; the `kDebugMode`-only gate
+    // closes that gap.
+    if (kDebugMode) {
       _bounceCtrl.value = 0.0;
     } else {
       _bounceCtrl.repeat(reverse: true);
@@ -203,10 +210,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   void _startCountdown() {
-    if (kDebugMode && AppConstants.isTestMode) {
-      setState(() => _resendCountdown = 0);
-      return;
-    }
+    // PR-1 (F-001): the previous `kDebugMode && AppConstants.isTestMode`
+    // short-circuit let a debug-built sideload skip the resend cooldown
+    // entirely. The countdown now runs in every build; the
+    // integration-test harness uses `tester.pump(Duration(seconds: 30))`
+    // to advance the wall clock and observe the button enabling.
     // ONBOARDING-AUDIT 2026-08-14 P2-6: anchor the countdown to the
     // wall clock so the resume handler can recompute the actual
     // remaining seconds if the app was backgrounded.
@@ -270,6 +278,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               'referral_code': widget.referralCode!,
           });
         }
+        // AUDIT FIX: the awaited PostHog platform-channel calls above
+        // introduce async gaps — if the rider popped during them, touching
+        // `ref`/navigating here threw on a disposed element and was
+        // swallowed as a bogus "verify failed", losing navigation.
+        if (!mounted) return;
         final nextAppState = result.determineAppState(rider);
         ref.read(appStateProvider.notifier).replaceState(nextAppState);
         widget.onNext?.call(isNewRider);
@@ -297,6 +310,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
   Future<void> _handleResend() async {
     if (_resendCountdown > 0) return;
+    // AUDIT FIX: in-flight guard — once the countdown hits 0, a fast
+    // double-tap fired two `sendOtp` calls before either completed.
+    if (_isResending) return;
+    _isResending = true;
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
       await ref.read(authRepositoryProvider).sendOtp(phone);
@@ -315,6 +332,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         );
       }
     } catch (e) {
+      appDebug('[OtpScreen] resend failed: $e', tag: 'AUTH');
       if (mounted) {
         String errorMsg = AppLocalizations.of(context)?.txtotpResendError ??
             'Failed to resend OTP';
@@ -323,6 +341,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         }
         Toast.error(context, errorMsg);
       }
+    } finally {
+      _isResending = false;
     }
   }
 
@@ -412,29 +432,26 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               offset: Offset(0, _bounceAnim.value),
               child: child,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: AppColors.of(context).card.withValues(alpha: 0.8),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color:
-                          AppColors.of(context).outline.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                    boxShadow: AppShadows.card,
-                  ),
-                  child: const Icon(
-                    Icons.smartphone,
-                    size: 40,
-                    color: AppColors.primary,
-                  ),
+            // AUDIT FIX: the BackdropFilter(blur 16) used to sit inside the
+            // bouncing transform, forcing an expensive saveLayer+blur
+            // re-sample EVERY animation frame for the screen's lifetime.
+            // Removed — the 0.8-alpha card surface already reads as glass.
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: AppColors.of(context).card.withValues(alpha: 0.8),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.of(context).outline.withValues(alpha: 0.2),
+                  width: 1.5,
                 ),
+                boxShadow: AppShadows.card,
+              ),
+              child: const Icon(
+                Icons.smartphone,
+                size: 40,
+                color: AppColors.primary,
               ),
             ),
           ),

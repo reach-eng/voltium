@@ -14,6 +14,11 @@ class TicketEntity {
   final DateTime updatedAt;
   final List<TicketMessageEntity> messages;
 
+  /// AUDIT FIX: photo evidence URLs uploaded at ticket creation were sent
+  /// to the server but never surfaced — riders couldn't see their own
+  /// attachments. Parsed from `attachments` (string array of URLs).
+  final List<String> attachments;
+
   const TicketEntity({
     required this.id,
     required this.ticketId,
@@ -25,6 +30,7 @@ class TicketEntity {
     required this.createdAt,
     required this.updatedAt,
     this.messages = const [],
+    this.attachments = const [],
   });
 
   factory TicketEntity.fromJson(Map<String, dynamic> json) {
@@ -44,6 +50,11 @@ class TicketEntity {
               ?.map(
                 (m) => TicketMessageEntity.fromJson(m as Map<String, dynamic>),
               )
+              .toList() ??
+          [],
+      attachments: (json['attachments'] as List<dynamic>?)
+              ?.map((a) => a.toString())
+              .where((a) => a.isNotEmpty)
               .toList() ??
           [],
     );

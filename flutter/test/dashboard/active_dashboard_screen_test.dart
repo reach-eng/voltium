@@ -28,7 +28,11 @@ class _TestRiderNotifier extends RiderNotifier {
   }
 }
 
-class _StubEngagementNotifier extends EngagementNotifier {
+// AUDIT FIX: `EngagementNotifier` was renamed to `EngagementProvider`
+// (Riverpod v3 Notifier); the stub must extend the current class or the
+// test file fails to compile (same fix as the notifications comprehensive
+// test).
+class _StubEngagementNotifier extends EngagementProvider {
   @override
   EngagementState build() => const EngagementState();
 

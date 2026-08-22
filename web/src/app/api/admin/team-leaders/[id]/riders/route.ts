@@ -19,7 +19,7 @@ export async function GET(
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   // We can use riders_view as permission
-  if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+  if (!hasPermission(session, 'riders_view')) return adminForbidden();
 
   try {
     const { id } = await context.params;

@@ -105,6 +105,7 @@ export async function checkRateLimit(
          VALUES (${key}, ${key}, 1, ${resetAt}, NOW(), NOW())
          ON CONFLICT (key) DO UPDATE SET
            points = CASE
+             WHEN "rate_limit_buckets"."resetAt" <= NOW() THEN 1
              WHEN "rate_limit_buckets".points < ${config.maxRequests} + 1 THEN "rate_limit_buckets".points + 1
              ELSE "rate_limit_buckets".points
            END,

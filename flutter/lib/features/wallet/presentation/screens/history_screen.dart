@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
@@ -83,23 +85,49 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }).toList();
   }
 
-  double _totalCredits(List<TransactionModel> transactions) => transactions
+  // AUDIT FIX 2026-08-22 (HIST-a/HIST-e): totals accumulate in integer
+  // paise over ALL loaded transactions (the provider pages through up to
+  // 500), not just the first page, and never via lossy double adds.
+  int _totalCreditsPaise(List<TransactionModel> transactions) => transactions
       .where(
         (t) =>
             t.isCredit &&
             (t.status == TransactionStatus.approved ||
                 t.status == TransactionStatus.success),
       )
-      .fold(0.0, (sum, t) => sum + t.amount);
+      .fold(0, (sum, t) => sum + (t.amount * 100).round());
 
-  double _totalDebits(List<TransactionModel> transactions) => transactions
+  int _totalDebitsPaise(List<TransactionModel> transactions) => transactions
       .where(
         (t) =>
             !t.isCredit &&
             (t.status == TransactionStatus.approved ||
                 t.status == TransactionStatus.success),
       )
-      .fold(0.0, (sum, t) => sum + t.amount);
+      .fold(0, (sum, t) => sum + (t.amount * 100).round());
+
+  /// AUDIT FIX 2026-08-22 (HIST-f): same 'Jan 21, 2026' style as the
+  /// wallet recent list, instead of a raw ISO `substring(0, 10)`.
+  String _formatDate(DateTime? dt) {
+    if (dt == null) return '';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final local = dt.toLocal();
+    return '${months[local.month - 1]} '
+        '${local.day.toString().padLeft(2, '0')}, ${local.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,9 +135,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         ref.watch(walletProvider.select((p) => p.transactions));
     final isRefreshing =
         ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
+    // AUDIT FIX 2026-08-22 (HIST-b): surface provider errors instead of
+    // silently rendering the empty state.
+    final lastError = ref.watch(walletProvider.select((p) => p.lastError));
+    final isLoadingMore =
+        ref.watch(walletProvider.select((p) => p.isLoadingMore));
+    final serverTotal =
+        ref.watch(walletProvider.select((p) => p.serverTotalTransactions));
     final filtered = _filteredTx(transactions);
-    final credits = _totalCredits(transactions);
-    final debits = _totalDebits(transactions);
+    final creditsPaise = _totalCreditsPaise(transactions);
+    final debitsPaise = _totalDebitsPaise(transactions);
     final colors = AppColors.of(context);
 
     return Scaffold(
@@ -121,7 +156,60 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             Expanded(
               child: isRefreshing && transactions.isEmpty
                   ? _buildLoading()
-                  : _buildContent(filtered, credits, debits),
+                  : (lastError != null && transactions.isEmpty)
+                      ? _buildErrorState(lastError)
+                      : _buildContent(
+                          filtered,
+                          creditsPaise,
+                          debitsPaise,
+                          loadedCount: transactions.length,
+                          serverTotal: serverTotal,
+                          isLoadingMore: isLoadingMore,
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// AUDIT FIX 2026-08-22 (HIST-b): failed loads now render an explicit
+  /// error state with a retry action, not "No transactions found".
+  Widget _buildErrorState(String message) {
+    final colors = AppColors.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded,
+                size: 48, color: colors.onSurfaceMuted),
+            const SizedBox(height: 16),
+            Text(
+              'Couldn\'t load your transactions',
+              style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: colors.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Semantics(
+              button: true,
+              label: 'Retry loading transactions',
+              child: FilledButton.icon(
+                key: const Key('historyRetryButton'),
+                onPressed: _fetchTransactions,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(AppLocalizations.of(context)!.txttryAgain),
+              ),
             ),
           ],
         ),
@@ -135,20 +223,27 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: widget.onBack ?? () => Navigator.maybePop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                boxShadow: AppShadows.glass,
-              ),
-              child: Icon(
-                Icons.arrow_back,
-                size: 18,
-                color: colors.onSurface,
+          // AUDIT FIX 2026-08-22 (HIST-g): bumped to ≥48dp and given a
+          // Semantics label (was a bare 40dp GestureDetector).
+          Semantics(
+            button: true,
+            label: 'Go back',
+            child: GestureDetector(
+              onTap: widget.onBack ?? () => Navigator.maybePop(context),
+              child: Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.glass,
+                ),
+                child: Icon(
+                  Icons.arrow_back,
+                  size: 20,
+                  color: colors.onSurface,
+                ),
               ),
             ),
           ),
@@ -160,20 +255,29 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 .copyWith(color: colors.onSurface),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: _fetchTransactions,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                boxShadow: AppShadows.glass,
-              ),
-              child: Icon(
-                Icons.refresh,
-                size: 16,
-                color: colors.onSurfaceMuted,
+          // AUDIT FIX 2026-08-22 (HIST-g): bumped to ≥48dp + tooltip.
+          Semantics(
+            button: true,
+            label: 'Refresh transactions',
+            child: Tooltip(
+              message: 'Refresh',
+              child: GestureDetector(
+                onTap: _fetchTransactions,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    shape: BoxShape.circle,
+                    boxShadow: AppShadows.glass,
+                  ),
+                  child: Icon(
+                    Icons.refresh,
+                    size: 20,
+                    color: colors.onSurfaceMuted,
+                  ),
+                ),
               ),
             ),
           ),
@@ -189,7 +293,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildContent(
-      List<TransactionModel> filtered, double credits, double debits) {
+    List<TransactionModel> filtered,
+    int creditsPaise,
+    int debitsPaise, {
+    required int loadedCount,
+    required int? serverTotal,
+    required bool isLoadingMore,
+  }) {
+    // AUDIT FIX 2026-08-22 (HIST-a): true when the provider hasn't paged
+    // through the rider's full history yet.
+    final hasMore = serverTotal != null && loadedCount < serverTotal;
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -197,7 +310,20 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           sliver: SliverToBoxAdapter(
             child: Column(
               children: [
-                _buildSummaryCards(credits, debits),
+                _buildSummaryCards(creditsPaise, debitsPaise),
+                // Label totals as partial when more pages exist server-side.
+                if (hasMore)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      'Totals based on $loadedCount of $serverTotal transactions',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.of(context).onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
                 _buildSearchBar(),
                 const SizedBox(height: 16),
@@ -221,43 +347,94 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               ),
             ),
           )
-        else
+        else ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
             sliver: SliverList.separated(
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final tx = filtered[index];
-                final id = tx.id ?? index.toString();
+                // AUDIT FIX 2026-08-22 (HIST-i): stable composite key so
+                // expansion state doesn't jump when filters change (a
+                // pure index key shifts as the filtered list re-orders).
+                final id =
+                    '${tx.id ?? ''}_${tx.createdAt?.millisecondsSinceEpoch ?? index}';
                 final isExpanded = _expandedId == id;
                 return _buildTransactionCard(tx, isExpanded);
               },
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              child: Center(
+                child: hasMore
+                    ? Semantics(
+                        button: true,
+                        label: 'Load more transactions',
+                        child: OutlinedButton.icon(
+                          key: const Key('loadMoreTransactionsButton'),
+                          onPressed: isLoadingMore
+                              ? null
+                              : () => _loadMoreTransactions(),
+                          icon: isLoadingMore
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.expand_more, size: 18),
+                          label: Text(isLoadingMore
+                              ? 'Loading…'
+                              : 'Load more transactions'),
+                        ),
+                      )
+                    : Text(
+                        'End of transaction history',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppColors.of(context).onSurfaceMuted,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildSummaryCards(double credits, double debits) {
+  Future<void> _loadMoreTransactions() async {
+    final riderId = ref.read(riderProvider).riderId;
+    if (riderId != null) {
+      await ref
+          .read(walletProvider.notifier)
+          .loadMoreTransactions(riderId: riderId);
+    }
+  }
+
+  Widget _buildSummaryCards(int creditsPaise, int debitsPaise) {
+    final netPaise = creditsPaise - debitsPaise;
     return Row(
       children: [
         _buildSummaryItem(
           'Credits',
-          '+₹${credits.toInt()}',
+          MoneyFormat.rupees(creditsPaise / 100).replaceFirst('₹', '+₹'),
           AppColors.success,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
           'Debits',
-          '-₹${debits.toInt()}',
+          MoneyFormat.rupees(debitsPaise / 100).replaceFirst('₹', '-₹'),
           AppColors.error,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
           'Net',
-          '₹${(credits - debits).toInt()}',
-          (credits - debits) >= 0 ? AppColors.success : AppColors.error,
+          MoneyFormat.rupees(netPaise / 100),
+          netPaise >= 0 ? AppColors.success : AppColors.error,
         ),
       ],
     );
@@ -402,9 +579,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final isCredit = tx.isCredit;
     final amount = tx.amount;
     final status = tx.status.value.toUpperCase();
-    final date = tx.createdAt != null
-        ? tx.createdAt!.toIso8601String().substring(0, 10)
-        : '';
+    // AUDIT FIX 2026-08-22 (HIST-f): consistent 'Jan 21, 2026' date style.
+    final date = _formatDate(tx.createdAt);
     final id = tx.id ?? '';
     final colors = AppColors.of(context);
 
@@ -475,12 +651,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             const SizedBox(width: 8),
                             Text(
                               status,
+                              // AUDIT FIX 2026-08-22 (HIST-h):
+                              // REJECTED/FAILED are errors, not warnings.
                               style: AppTypography.labelSmall.copyWith(
                                   color: status == 'SUCCESS' ||
                                           status == 'APPROVED' ||
                                           status == 'COMPLETED'
                                       ? AppColors.success
-                                      : AppColors.warning),
+                                      : status == 'REJECTED' ||
+                                              status == 'FAILED'
+                                          ? AppColors.error
+                                          : AppColors.warning),
                             ),
                           ],
                         ),
@@ -500,7 +681,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '₹${amount.toInt()}',
+                        // AUDIT FIX 2026-08-22 (HIST-d): rounding +
+                        // grouping via the shared formatter.
+                        '${isCredit ? '+' : '-'}${MoneyFormat.rupees(amount.abs())}',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w800)
                             .copyWith(
@@ -556,7 +739,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     .copyWith(color: colors.onSurfaceVariant),
               ),
               Text(
-                '₹${tx.amount.toInt()}',
+                // AUDIT FIX 2026-08-22 (HIST-d): shared formatter.
+                MoneyFormat.rupees(tx.amount),
                 style: AppTypography.bodyMedium
                     .copyWith(fontWeight: FontWeight.w800)
                     .copyWith(color: colors.onSurface),
@@ -625,7 +809,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             ],
           ),
           Text(
-            '$prefix₹${amount.toInt()}',
+            // AUDIT FIX 2026-08-22 (HIST-d): shared formatter.
+            '$prefix${MoneyFormat.rupees(amount.abs())}',
             style: AppTypography.labelMedium.copyWith(color: color),
           ),
         ],

@@ -14,7 +14,10 @@ export async function DELETE(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await requirePermission('admin:write');
+  // AUDIT FIX (N-6): 'admin:write' is not a real permission key — it
+  // silently failed closed to SUPER_ADMIN-only. This endpoint CREATES a
+  // deletion request, so the request permission is the right key.
+  const session = await requirePermission('riders_delete_request');
   if (!session) {
     return errors.forbidden('Insufficient permissions to delete rider data');
   }

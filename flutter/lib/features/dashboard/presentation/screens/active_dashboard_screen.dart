@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,7 +15,7 @@ import 'package:voltium_rider/features/dashboard/widgets/dashboard_profile_card.
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_referral_card.dart';
-import 'package:voltium_rider/widgets/error_state_widget.dart';
+import '../../../../widgets/error_state.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_tl_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_scooter_banner.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
@@ -102,7 +102,7 @@ class _DashboardErrorWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ErrorStateWidget.network(
+    return ErrorState.network(
       message: errorMessage != null
           ? 'Unable to connect: $errorMessage'
           : 'Unable to connect to command center.',

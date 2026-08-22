@@ -51,13 +51,45 @@ class AppConstants {
         delta <= emergencyContactVerificationWindow.inMilliseconds;
   }
 
+  // PR-1 (F-001): the test-mode surface has three separate gates:
+  //   1. `TEST_MODE=true` build-time dart-define (compile-time, no runtime flip)
+  //   2. `KYC_TEST_AUTOFILL=true` build-time dart-define (compile-time,
+  //      unblocks the KYC form auto-fill + mock-URL branches so the
+  //      integration-test harness can run without a real Aadhaar photo)
+  //   3. `isTestModeOverride` runtime static (set by `driver_main.dart` and
+  //      by widget tests; debug builds only — see the assert below)
+  //
+  // The previous `isTestMode` getter conflated (1) and (3) and let (3) leak
+  // into release: any future refactor that dropped the outer `!kReleaseMode`
+  // gate would silently enable all six test-mode short-circuits (OTP verify,
+  // OTP send, KYC submit, permissions continue, KYC auto-fill, driver
+  // extension). The 2026-08-22 deep audit (F-001) closed that gap by
+  // asserting in release and by replacing the OTP / KYC / permissions
+  // bypasses with their real form-completeness checks.
   static bool isTestModeOverride = false;
 
-  static bool get isTestMode =>
-      !kReleaseMode &&
-      (isTestModeOverride ||
-          (!kReleaseMode &&
-              const String.fromEnvironment('TEST_MODE') == 'true'));
+  static const bool _isTestModeBuildTime =
+      bool.fromEnvironment('TEST_MODE', defaultValue: false);
+
+  /// Build-time flag that unblocks the KYC test auto-fill + mock-URL
+  /// branches in `user_onboarding_screen.dart`. Off by default; the
+  /// integration test harness passes `--dart-define=KYC_TEST_AUTOFILL=true`.
+  static const bool kycTestAutofill =
+      bool.fromEnvironment('KYC_TEST_AUTOFILL', defaultValue: false);
+
+  /// True only when running in a debug build AND one of the three gates
+  /// is set. In release builds, even an explicit `isTestModeOverride = true`
+  /// will trip the assert below — that's the F-001 hardening.
+  static bool get isTestMode {
+    assert(
+      !isTestModeOverride || !kReleaseMode,
+      'isTestModeOverride must never be true in a release build. '
+      'This is the F-001 release-build gate; the previous test-mode flag '
+      'leaked into a debug-built sideload and bypassed OTP, KYC, '
+      'permissions, and the KYC form-completeness check.',
+    );
+    return !kReleaseMode && (isTestModeOverride || _isTestModeBuildTime);
+  }
 
   // Plan durations — kept here because they're a static app config
   // (not user-modifiable). The plan name → days mapping mirrors the
@@ -99,4 +131,33 @@ class AppConstants {
   // new `currentPlanRef.securityDepositInPaise` join on the rider
   // dashboard). The old fallbacks drifted from server truth and were
   // the root cause of the audit's hardcoded-price finding.
+
+  // ── AUDIT-FIX CONSTANTS (2026-08-22 screen audit) ──────────────────
+  // NOTE: a concurrent session rewrote this file mid-flight and dropped
+  // these; they were restored because multiple fixed screens reference
+  // them. Keep them when refactoring.
+
+  /// UPI VPA riders pay top-ups to.
+  /// TODO(config): serve from settings/config endpoint (remote kill-switch).
+  static const String companyUpiVpa = 'payments.voltium@icici';
+
+  /// Default pre-filled top-up amount (rupees).
+  static const int walletDefaultTopUpAmount = 1000;
+
+  /// Quick-select chips on the top-up amount screen (rupees).
+  static const List<int> walletQuickTopUpAmounts = [500, 1000, 2000, 5000];
+
+  /// Minimum accepted top-up (rupees).
+  static const int walletMinTopUpAmount = 100;
+
+  /// Base URL for referral deep links (code is appended verbatim).
+  static const String referralDeepLinkBaseUrl = 'https://voltium.app/ref/';
+
+  /// Reward copy shown on the referral hero card.
+  static const String referralBonusCopy =
+      'you both get 50 bonus points when they take their first ride.';
+
+  /// Play Store listing used by the in-app "Rate us" prompt.
+  static const String playStoreListingUrl =
+      'https://play.google.com/store/apps/details?id=com.voltiumelectric.voltium';
 }

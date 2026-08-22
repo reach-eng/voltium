@@ -31,7 +31,7 @@ import { DepositStateError } from '@/lib/services/deposit-service';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'transactions_view')) return adminForbidden();
+  if (!hasPermission(session, 'transactions_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
 async function putHandler(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'transactions_approve')) return adminForbidden();
+  if (!hasPermission(session, 'transactions_approve')) return adminForbidden();
 
   const adminId = session.adminId || '';
 

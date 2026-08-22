@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/consent_service.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart'
+    show DevicePolicyState;
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 import '../../../../core/platform/platform_info.dart';
@@ -63,10 +65,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       id: 'phone',
       icon: Icons.phone_outlined,
     ),
-    _PermissionItem(
-      id: 'call_log',
-      icon: Icons.call_outlined,
-    ),
+    // PR-A §6.4: READ_CALL_LOG was removed from the onboarding list —
+    // it was never used for functionality and violates least privilege.
+    // `phone` already rides on the same runtime permission.
     _PermissionItem(
       id: 'contacts',
       icon: Icons.contacts_outlined,
@@ -84,16 +85,21 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   @override
   void initState() {
     super.initState();
+    // AUDIT FIX: the controller MUST be created before the web early-return.
+    // Previously `build()` (`parent: _entryCtrl`) and `dispose()` threw a
+    // LateInitializationError on web because the controller was never
+    // created on that path.
+    _entryCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+
     if (PlatformInfo.isWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (widget.onNext != null) widget.onNext!();
       });
       return;
     }
-    _entryCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..forward();
 
     _checkInitialStatuses();
     WidgetsBinding.instance.addObserver(this);
@@ -200,6 +206,19 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     return null;
   }
 
+  /// Records a consent grant/revocation. `ConsentService.setConsent` writes
+  /// to secure storage OUTSIDE its internal try/catch — a storage failure
+  /// must not crash the permission flow, so every call site goes through
+  /// this guarded wrapper.
+  Future<void> _recordConsent(ConsentType? type, bool granted) async {
+    if (type == null) return;
+    try {
+      await ConsentService().setConsent(type, granted: granted);
+    } catch (e) {
+      appDebug('Failed to record consent for $type: $e', tag: 'PERMISSIONS');
+    }
+  }
+
   Future<void> _checkInitialStatuses() async {
     for (var perm in _permissions) {
       if (!mounted) return;
@@ -226,27 +245,36 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         case 'phone':
           status = await Permission.phone.status;
           break;
-        case 'call_log':
-          status = await Permission
-              .phone.status; // callLog piggybacks on phone perms
-          break;
         case 'battery':
           status = await Permission.ignoreBatteryOptimizations.status;
           break;
         case 'device_admin':
           if (!mounted) return;
-          perm.isEnabled = ref.read(devicePolicyProvider).isAdminActive;
+          final wasAdminActive = perm.isEnabled;
+          final adminActive = ref.read(devicePolicyProvider).isAdminActive;
+          if (adminActive != wasAdminActive) {
+            setState(() => perm.isEnabled = adminActive);
+            // AUDIT FIX: record the consent transition (grant or revoke)
+            // instead of silently ignoring device_admin.
+            await _recordConsent(_consentTypeFor(perm.id), adminActive);
+          }
           continue;
         default:
           status = PermissionStatus.denied;
       }
 
-      if (status.isGranted && mounted) {
-        setState(() => perm.isEnabled = true);
-        final consent = _consentTypeFor(perm.id);
-        if (consent != null) {
-          await ConsentService().setConsent(consent, granted: true);
-        }
+      // AUDIT FIX (revoke detection): this previously only ever set
+      // `isEnabled = true` with no else-branch — a rider who revoked a
+      // permission in OS Settings and returned still saw the tile green,
+      // keeping `allRequiredGranted` true and bypassing the compulsory
+      // permissions gate. Assign the real status and record consent only
+      // on state transitions.
+      final wasEnabled = perm.isEnabled;
+      final isGranted = status.isGranted;
+      if (!mounted) return;
+      if (isGranted != wasEnabled) {
+        setState(() => perm.isEnabled = isGranted);
+        await _recordConsent(_consentTypeFor(perm.id), isGranted);
       }
     }
   }
@@ -303,19 +331,24 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       case 'phone':
         status = await Permission.phone.request();
         break;
-      case 'call_log':
-        // READ_CALL_LOG rides on the same runtime permission as PHONE
-        // on Android API 33+; permission_handler exposes it under phone.
-        status = await Permission.phone.request();
-        break;
       case 'battery':
         status = await Permission.ignoreBatteryOptimizations.request();
         if (mounted) {
           setState(() => item.isEnabled = status.isGranted);
         }
+        // AUDIT FIX: battery previously `return`ed before the consent
+        // block, so its grant was never recorded even though it maps to
+        // ConsentType.battery.
+        await _recordConsent(_consentTypeFor(item.id), status.isGranted);
         return;
       case 'device_admin':
         await ref.read(devicePolicyProvider.notifier).requestDeviceAdmin();
+        if (mounted) {
+          final adminActive = ref.read(devicePolicyProvider).isAdminActive;
+          setState(() => item.isEnabled = adminActive);
+          // AUDIT FIX: same consent gap as battery.
+          await _recordConsent(_consentTypeFor(item.id), adminActive);
+        }
         return;
       default:
         status = PermissionStatus.granted;
@@ -325,10 +358,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       setState(() => item.isEnabled = status.isGranted);
     }
 
-    final consent = _consentTypeFor(item.id);
-    if (consent != null) {
-      await ConsentService().setConsent(consent, granted: status.isGranted);
-    }
+    await _recordConsent(_consentTypeFor(item.id), status.isGranted);
 
     if (status.isPermanentlyDenied) {
       openAppSettings();
@@ -341,10 +371,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    // Sync reactive state to local list
-    for (var p in _permissions) {
-      if (p.id == 'device_admin') p.isEnabled = devPolicy.isAdminActive;
-    }
+    // AUDIT FIX: removed the side-effectful `_permissions` mutation that
+    // used to run during build. Device-admin state is now read from the
+    // provider at the point of use (see `_effectiveEnabled` / footer).
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -392,7 +421,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                             begin: const Offset(0, 0.15),
                             end: Offset.zero,
                           ).animate(animation),
-                          child: _buildPermissionCard(entry.value),
+                          child: _buildPermissionCard(
+                            entry.value,
+                            devPolicy: devPolicy,
+                          ),
                         ),
                       );
                     }),
@@ -400,14 +432,23 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 ),
               ),
             ),
-            _buildFooter(),
+            _buildFooter(devPolicy: devPolicy),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPermissionCard(_PermissionItem perm) {
+  /// Device-admin state lives in the provider, not the local list — read
+  /// it at the point of use instead of mutating during build.
+  bool _effectiveEnabled(_PermissionItem perm, DevicePolicyState devPolicy) {
+    return perm.id == 'device_admin' ? devPolicy.isAdminActive : perm.isEnabled;
+  }
+
+  Widget _buildPermissionCard(
+    _PermissionItem perm, {
+    required DevicePolicyState devPolicy,
+  }) {
     final colors = AppColors.of(context);
     final name = _getPermName(context, perm.id);
     final description = _getPermDesc(context, perm.id);
@@ -477,61 +518,71 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             ),
           ),
           const SizedBox(width: 12),
-          _buildToggle(perm),
+          _buildToggle(perm, devPolicy: devPolicy),
         ],
       ),
     );
   }
 
-  Widget _buildToggle(_PermissionItem perm) {
+  Widget _buildToggle(
+    _PermissionItem perm, {
+    required DevicePolicyState devPolicy,
+  }) {
     final colors = AppColors.of(context);
-    return GestureDetector(
-        key: Key('allow${perm.id.capitalize()}Button'),
-        onTap: () => _togglePermission(perm),
-        child: Container(
-          color: Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 48,
-            height: 24,
-            decoration: BoxDecoration(
-              color: perm.isEnabled
-                  ? AppColors.primary
-                  : colors.outline.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Stack(
-              children: [
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 200),
-                  alignment: perm.isEnabled
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    width: 20,
-                    height: 20,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 2,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
+    final isEnabled = _effectiveEnabled(perm, devPolicy);
+    return Semantics(
+        toggled: isEnabled,
+        button: true,
+        label: '${_getPermName(context, perm.id)} permission',
+        child: GestureDetector(
+            key: Key('allow${perm.id.capitalize()}Button'),
+            onTap: () => _togglePermission(perm),
+            child: Container(
+              color: Colors.transparent,
+              // AUDIT FIX: 12px vertical padding + 24px track = 48dp
+              // minimum touch target (was 44dp).
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 48,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isEnabled
+                      ? AppColors.primary
+                      : colors.outline.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-              ],
-            ),
-          ),
-        ));
+                child: Stack(
+                  children: [
+                    AnimatedAlign(
+                      duration: const Duration(milliseconds: 200),
+                      alignment: isEnabled
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 2,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )));
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter({required DevicePolicyState devPolicy}) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
@@ -539,9 +590,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     // 2026-08-21). The Continue button stays disabled until all tiles
     // are green; the router's `_areAllRequiredPermissionsGranted`
     // enforces the same set on the way out.
-    final allRequiredGranted = _permissions.every((p) => p.isEnabled);
-    final isTestMode = AppConstants.isTestMode;
-    final canProceed = allRequiredGranted || isTestMode;
+    final allRequiredGranted =
+        _permissions.every((p) => _effectiveEnabled(p, devPolicy));
+    // PR-1 (F-001): the `|| isTestMode` short-circuit was removed. The
+    // Continue button is now enabled only when every required permission
+    // (foreground_location, notifications, contacts) is granted. The
+    // integration-test harness grants permissions via
+    // `Permission.locationWhenInUse.request()` / `mock` shims in test
+    // setup; the screen no longer lies about the user's actual grants.
+    final canProceed = allRequiredGranted;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),

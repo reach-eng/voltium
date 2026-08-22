@@ -10,7 +10,7 @@ import { scoreUseCases } from '@/server/modules/scores/score.use-cases';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+  if (!hasPermission(session, 'riders_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_manage')) return adminForbidden();
+  if (!hasPermission(session, 'riders_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

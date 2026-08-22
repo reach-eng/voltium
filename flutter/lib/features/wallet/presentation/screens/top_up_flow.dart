@@ -98,6 +98,9 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
               onBack: _prevPage,
               onEditAmount: _prevPage,
               onImageSelected: (img) => setState(() => _proofImage = img),
+              // AUDIT FIX 2026-08-22 (PROOF-a): img is now nullable —
+              // instant pay submits with no photo, so no fabricated file.
+              // `topUpWallet` skips the upload when image is null.
               onSubmit: (img, method, upiRef) async {
                 setState(() => _proofImage = img);
                 final riderState = ref.read(riderProvider);
@@ -115,6 +118,15 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                 }
                 final wProvider = ref.read(walletProvider.notifier);
 
+                // Hoisted above the try so the catch can branch copy on it.
+                final securityDeposit = ref
+                    .read(riderProvider)
+                    .rider
+                    ?.activeRentalPlanSecurityDeposit
+                    .toInt();
+                final isDeposit =
+                    securityDeposit != null && _amount == securityDeposit;
+
                 try {
                   await wProvider.topUpWallet(
                     riderId: rId,
@@ -124,13 +136,6 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                     image: _proofImage,
                   );
                   await ref.read(riderProvider.notifier).refreshFromApi();
-                  final securityDeposit = ref
-                      .read(riderProvider)
-                      .rider
-                      ?.activeRentalPlanSecurityDeposit
-                      .toInt();
-                  final isDeposit =
-                      securityDeposit != null && _amount == securityDeposit;
                   PostHogService.capture('wallet_top_up_submitted',
                       properties: {
                         'amount': _amount.toString(),
@@ -157,7 +162,18 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    Toast.error(context, safeErrorMessage(e, 'top-up'));
+                    // AUDIT FIX: deposit path uses the deposit copy; proof
+                    // upload failures use the upload-specific copy (re-wires
+                    // ARB keys orphaned when the legacy deposit workflow
+                    // screen was deleted); everything else stays generic.
+                    final msg = e.toString().contains('upload_failed')
+                        ? AppLocalizations.of(context)!
+                            .txtfailedToUploadProof('connection error')
+                        : (isDeposit
+                            ? AppLocalizations.of(context)!
+                                .txtfailedToSubmitDeposit('connection error')
+                            : safeErrorMessage(e, 'top-up'));
+                    Toast.error(context, msg);
                   }
                 }
               },

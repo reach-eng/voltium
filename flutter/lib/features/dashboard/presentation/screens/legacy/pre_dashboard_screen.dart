@@ -10,6 +10,7 @@
 // routed to from the `LifecycleTarget.suspended` case and from admin
 // tooling, but never from the rider's normal onboarding journey.
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/app/app_state.dart';
@@ -52,8 +53,13 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isPollingTimedOut =
         ref.watch(riderProvider.select((p) => p.isPollingTimedOut));
-    appDebug(
-        'PreDashboardScreen: currentPlan = ${rider?.currentPlan}, isKycApproved = ${rider?.isKycApproved}, kycStatus = ${rider?.kycStatus}, isPlanDone = ${rider?.isPlanDone}, needsPlanSelection = ${rider?.needsPlanSelection}, isRegistrationDone = ${rider?.isRegistrationDone}');
+    // AUDIT FIX: gate behind kDebugMode so the 6-field string
+    // interpolation is not eagerly evaluated on every rebuild in
+    // release/profile builds.
+    if (kDebugMode) {
+      appDebug(
+          'PreDashboardScreen: currentPlan = ${rider?.currentPlan}, isKycApproved = ${rider?.isKycApproved}, kycStatus = ${rider?.kycStatus}, isPlanDone = ${rider?.isPlanDone}, needsPlanSelection = ${rider?.needsPlanSelection}, isRegistrationDone = ${rider?.isRegistrationDone}');
+    }
 
     if (rider == null) {
       return const PreDashboardSkeleton();
@@ -68,10 +74,11 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     // server has actually flipped the rider to ACTIVE.
     if (rider.pickupDone && !_redirected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_redirected) {
-          _redirected = true;
-          widget.onStepNavigation(AuthState.dashboard);
-        }
+        // AUDIT FIX: mounted check — the widget can be unmounted between
+        // the frame scheduling and the callback running.
+        if (!mounted || _redirected) return;
+        _redirected = true;
+        widget.onStepNavigation(AuthState.dashboard);
       });
     } else if (!rider.pickupDone && _redirected) {
       _redirected = false;
@@ -301,9 +308,14 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   }
 
   Widget _buildReferralCard(RiderModel rider) {
+    // AUDIT FIX: never fabricate a referral code. The previous
+    // hardcoded 'VOLT-RD-88' fallback showed riders a code that the
+    // backend does not recognise. When neither a real referral code
+    // nor a rider id exists, hide the card entirely.
     final code = (rider.referralCode?.isNotEmpty ?? false)
         ? rider.referralCode!
-        : (rider.riderId.isNotEmpty ? rider.riderId : 'VOLT-RD-88');
+        : (rider.riderId.isNotEmpty ? rider.riderId : null);
+    if (code == null) return const SizedBox.shrink();
     return FadeUpWidget(
       delay: 350,
       child: ReferralCard(referralCode: code),

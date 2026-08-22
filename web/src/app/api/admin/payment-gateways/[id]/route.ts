@@ -33,8 +33,8 @@ export async function PATCH(
   if (!session) return adminUnauthorized();
 
   if (
-    !hasPermission(session.adminRole || '', 'payment_gateways_manage') &&
-    !hasPermission(session.adminRole || '', 'transactions_manage')
+    !hasPermission(session, 'payment_gateways_manage') &&
+    !hasPermission(session, 'transactions_manage')
   ) {
     return errors.forbidden('Insufficient permission to update payment gateway');
   }
@@ -106,8 +106,8 @@ export async function DELETE(
   if (!session) return adminUnauthorized();
 
   if (
-    !hasPermission(session.adminRole || '', 'payment_gateways_manage') &&
-    !hasPermission(session.adminRole || '', 'transactions_manage')
+    !hasPermission(session, 'payment_gateways_manage') &&
+    !hasPermission(session, 'transactions_manage')
   ) {
     return errors.forbidden('Insufficient permission to delete payment gateway');
   }

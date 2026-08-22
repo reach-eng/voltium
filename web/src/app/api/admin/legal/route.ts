@@ -9,7 +9,7 @@ import { updateLegalAdminSchema } from '@/lib/validators/admin';
 export async function GET() {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'legal_manage')) return adminForbidden();
+  if (!hasPermission(session, 'legal_manage')) return adminForbidden();
 
   try {
     const documents = await legalUseCases.list();
@@ -28,7 +28,7 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'legal_manage')) return adminForbidden();
+  if (!hasPermission(session, 'legal_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

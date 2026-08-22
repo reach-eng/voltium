@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/dialer.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -15,6 +17,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
 class SupportCenterScreen extends ConsumerStatefulWidget {
@@ -59,10 +62,19 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
           ? const SupportSkeleton()
           : RefreshIndicator(
               onRefresh: () async {
-                await Future.wait([
-                  ref.read(supportTicketsProvider.notifier).fetchTickets(),
-                  ref.read(supportProvider.notifier).refreshFaqs(),
-                ]);
+                // AUDIT FIX: guard the refresh so a provider exception
+                // doesn't escape as an unhandled zone error.
+                try {
+                  await Future.wait([
+                    ref.read(supportTicketsProvider.notifier).fetchTickets(),
+                    ref.read(supportProvider.notifier).refreshFaqs(),
+                  ]);
+                } catch (e) {
+                  appDebug('Support refresh failed: $e', tag: 'SUPPORT');
+                  if (context.mounted) {
+                    Toast.error(context, 'Refresh failed. Please try again.');
+                  }
+                }
               },
               child: CustomScrollView(
                 slivers: [
@@ -247,11 +259,9 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                               actionIcon: Icons.call,
                               color: AppColors.primary,
                               onTap: tlPhone != null && tlPhone.isNotEmpty
-                                  ? () {
-                                      final sanitized = tlPhone.replaceAll(
-                                          RegExp(r'[^\d+]'), '');
-                                      launchUrl(Uri.parse('tel:$sanitized'));
-                                    }
+                                  // AUDIT FIX: guarded dialer with toast
+                                  // fallback (was fire-and-forget launchUrl).
+                                  ? () => launchDialer(context, tlPhone)
                                   : null,
                             ),
                             const SizedBox(height: 12),
@@ -264,8 +274,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                             actionLabel: 'Send',
                             actionIcon: Icons.open_in_new,
                             color: AppColors.primary,
-                            onTap: () =>
-                                launchUrl(Uri.parse('mailto:$supportEmail')),
+                            onTap: () => _launchExternal(
+                                context, 'mailto:$supportEmail'),
                           ),
                           const SizedBox(height: 12),
                           _buildContactCard(
@@ -275,11 +285,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                             actionLabel: 'Call',
                             actionIcon: Icons.call,
                             color: AppColors.success,
-                            onTap: () {
-                              final sanitized = supportPhone.replaceAll(
-                                  RegExp(r'[^\d+]'), '');
-                              launchUrl(Uri.parse('tel:$sanitized'));
-                            },
+                            onTap: () => launchDialer(context, supportPhone),
                           ),
                         ],
                       ),
@@ -291,6 +297,25 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     );
   }
 
+  /// AUDIT FIX: mailto/http links were fire-and-forget — a missing handler
+  /// silently no-oped and could raise unhandled Future errors.
+  Future<void> _launchExternal(BuildContext context, String raw) async {
+    final uri = Uri.tryParse(raw);
+    if (uri == null) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (context.mounted) {
+        Toast.error(context, 'Unable to open $raw');
+      }
+    } catch (e) {
+      appDebug('launchUrl($raw) failed: $e', tag: 'SUPPORT');
+      if (context.mounted) {
+        Toast.error(context, 'Unable to open $raw');
+      }
+    }
+  }
+
   Widget _buildQuickChip(IconData icon, String label, VoidCallback onTap) {
     return Material(
       color: AppColors.of(context).surfaceBright,
@@ -298,7 +323,9 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
-        child: Padding(
+        child: Container(
+          // AUDIT FIX: enforce a 48dp minimum touch target.
+          constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -371,6 +398,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
               onTap: onTap,
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: Container(
+                // AUDIT FIX: 48dp minimum touch target (was ~44dp).
+                constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
@@ -454,6 +483,34 @@ class RecentTicketsContainer extends ConsumerWidget {
             // PR #6: replaced raw spinner with a layout-matched skeleton
             // (4 list tiles) so the tickets area doesn't jump on load.
             const TicketListSkeleton()
+          else if (ticketState.error != null)
+            // AUDIT FIX: a failed fetch used to render "No tickets yet",
+            // conflating error with empty. Show an explicit error + retry.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  Icon(Icons.cloud_off_outlined,
+                      size: 36, color: colors.onSurfaceMuted),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load your tickets',
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: colors.onSurfaceVariant),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton.icon(
+                    key: const Key('ticketsRetryButton'),
+                    onPressed: () => ref
+                        .read(supportTicketsProvider.notifier)
+                        .fetchTickets(),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: Text(AppLocalizations.of(context)!.txtretry),
+                  ),
+                ],
+              ),
+            )
           else if (ticketState.filteredTickets.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),

@@ -3,18 +3,53 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/dialer.dart';
 
-class EmergencyContactsScreen extends ConsumerWidget {
+class EmergencyContactsScreen extends ConsumerStatefulWidget {
   const EmergencyContactsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EmergencyContactsScreen> createState() =>
+      _EmergencyContactsScreenState();
+}
+
+class _EmergencyContactsScreenState
+    extends ConsumerState<EmergencyContactsScreen> {
+  // AUDIT FIX: tri-state hydration guard. The notifier hydrates from
+  // SharedPreferences asynchronously (microtask kicked off in its own
+  // build()); without this flag the empty state flashed for a frame
+  // before the cached contacts landed.
+  bool _hydrationSettled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _awaitHydration();
+  }
+
+  /// Mirrors the notifier's SharedPreferences read and yields one extra
+  /// event-loop turn so the notifier's parallel hydration microtask has
+  /// landed before the loading placeholder is cleared.
+  Future<void> _awaitHydration() async {
+    try {
+      await SharedPreferences.getInstance();
+    } catch (_) {
+      // Test environments without the plugin: settle anyway — the
+      // notifier fails to the same empty state.
+    }
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) return;
+    setState(() => _hydrationSettled = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final service = ref.watch(emergencyContactsService);
     final colors = AppColors.of(context);
 
@@ -38,28 +73,29 @@ class EmergencyContactsScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: service.contacts.isEmpty
-          ? _buildEmptyState(context)
-          : ListView.builder(
-              addRepaintBoundaries: true,
-              addAutomaticKeepAlives: true,
-              itemExtent: 88.0,
-              padding: Spacing.paddingMd,
-              itemCount: service.contacts.length,
-              itemBuilder: (context, index) {
-                final contact = service.contacts[index];
-                return _ContactCard(
-                  contact: contact,
-                  onCall: () => _callContact(contact.phone),
-                  onSetPrimary: () => ref
-                      .read(emergencyContactsService.notifier)
-                      .setPrimaryContact(contact.id),
-                  onDelete: () => ref
-                      .read(emergencyContactsService.notifier)
-                      .removeContact(contact.id),
-                );
-              },
-            ),
+      body: !_hydrationSettled && service.contacts.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : service.contacts.isEmpty
+              ? _buildEmptyState(context)
+              : ListView.builder(
+                  addRepaintBoundaries: true,
+                  addAutomaticKeepAlives: true,
+                  itemExtent: 88.0,
+                  padding: Spacing.paddingMd,
+                  itemCount: service.contacts.length,
+                  itemBuilder: (context, index) {
+                    final contact = service.contacts[index];
+                    return _ContactCard(
+                      contact: contact,
+                      onCall: () => _callContact(context, contact.phone),
+                      onSetPrimary: () => ref
+                          .read(emergencyContactsService.notifier)
+                          .setPrimaryContact(contact.id),
+                      onDelete: () =>
+                          _confirmAndDeleteContact(context, ref, contact),
+                    );
+                  },
+                ),
       floatingActionButton: service.contacts.length < 5
           ? FloatingActionButton.extended(
               onPressed: () => _showAddContactDialog(context, ref),
@@ -102,11 +138,39 @@ class EmergencyContactsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _callContact(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+  Future<void> _callContact(BuildContext context, String phone) async {
+    // AUDIT FIX: shared guarded dialer — shows a toast fallback when no
+    // dialer is available instead of silently doing nothing.
+    await launchDialer(context, phone);
+  }
+
+  /// AUDIT FIX: deleting an emergency contact is destructive — require
+  /// explicit confirmation before removing.
+  Future<void> _confirmAndDeleteContact(
+    BuildContext context,
+    WidgetRef ref,
+    EmergencyContact contact,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.txtdelete),
+        content: Text('Remove ${contact.name} from your emergency contacts?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.txtcancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.txtdelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(emergencyContactsService.notifier).removeContact(contact.id);
   }
 
   Future<void> _showAddContactDialog(
@@ -116,6 +180,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     String relationship = 'Other';
+    String? errorText;
 
     // LANGUAGE-AUDIT (2026-08-16) #5: dialog title + button labels
     // + form labels all use existing `txt*` ARB keys.
@@ -123,41 +188,63 @@ class EmergencyContactsScreen extends ConsumerWidget {
 
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txtaddEmergencyContact),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: phoneController,
-              decoration: const InputDecoration(labelText: 'Phone Number'),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: relationship,
-              items: ['Parent', 'Spouse', 'Sibling', 'Friend', 'Other']
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-              onChanged: (v) => relationship = v ?? 'Other',
-              decoration: const InputDecoration(labelText: 'Relationship'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.txtcancel),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(l10n.txtaddEmergencyContact),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'Phone Number'),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: relationship,
+                items: ['Parent', 'Spouse', 'Sibling', 'Friend', 'Other']
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                    .toList(),
+                onChanged: (v) => relationship = v ?? 'Other',
+                decoration: const InputDecoration(labelText: 'Relationship'),
+              ),
+              if (errorText != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  errorText!,
+                  style:
+                      AppTypography.bodySmall.copyWith(color: AppColors.error),
+                ),
+              ],
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty &&
-                  phoneController.text.isNotEmpty) {
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.txtcancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                // AUDIT FIX: normalize before persisting — trim the name,
+                // strip non-digits from the phone (allowing a single
+                // leading '+') and require >= 10 digits so the stored
+                // value is always safe to embed in a tel: URI.
+                final name = nameController.text.trim();
+                final raw = phoneController.text.trim();
+                final digits = raw.replaceAll(RegExp(r'\D'), '');
+                final phone = raw.startsWith('+') ? '+$digits' : digits;
+                if (name.isEmpty || digits.length < 10) {
+                  setDialogState(() {
+                    errorText =
+                        'Enter a name and a phone number with at least 10 digits.';
+                  });
+                  return;
+                }
                 ref.read(emergencyContactsService.notifier).addContact(
                       EmergencyContact(
                         // PR-VER-2026-08-07 (EMERGENCY P1-2): two contacts added
@@ -166,17 +253,17 @@ class EmergencyContactsScreen extends ConsumerWidget {
                         // timestamp + random suffix is unique per contact.
                         id: '${DateTime.now().microsecondsSinceEpoch}'
                             '-${Random().nextInt(1 << 32)}',
-                        name: nameController.text,
-                        phone: phoneController.text,
+                        name: name,
+                        phone: phone,
                         relationship: relationship,
                       ),
                     );
                 Navigator.pop(ctx);
-              }
-            },
-            child: Text(l10n.txtadd),
-          ),
-        ],
+              },
+              child: Text(l10n.txtadd),
+            ),
+          ],
+        ),
       ),
     );
     nameController.dispose();
@@ -211,13 +298,16 @@ class _ContactCard extends ConsumerWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: contact.isPrimary
-              ? AppColors.primary
-              : AppColors.onSurfaceVariant,
+          // AUDIT FIX: theme-derived background for the non-primary
+          // avatar — the static onSurfaceVariant token was unreadable
+          // in dark mode.
+          backgroundColor:
+              contact.isPrimary ? AppColors.primary : colors.primarySurface,
           child: Text(
-            contact.name[0].toUpperCase(),
+            // AUDIT FIX: guard the RangeError on empty-string names.
+            contact.name.isNotEmpty ? contact.name[0].toUpperCase() : '?',
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
+              color: contact.isPrimary ? Colors.white : colors.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -256,8 +346,11 @@ class _ContactCard extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // AUDIT FIX: call affordance now exposes a tooltip (and the
+            // semantics label Tooltip provides) to screen readers.
             IconButton(
               icon: const Icon(Icons.phone, color: AppColors.success),
+              tooltip: 'Call ${contact.name}',
               onPressed: onCall,
             ),
             PopupMenuButton(

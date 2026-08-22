@@ -15,6 +15,11 @@ class NotificationService {
   /// toggles the setting in app_settings or notification_preferences.
   bool _notificationsEnabled = true;
 
+  /// AUDIT FIX: public read access to the cached master-switch flag so
+  /// FCM foreground presentation can honor the in-app preference (the
+  /// flag was previously write-only outside this class).
+  bool get notificationsEnabled => _notificationsEnabled;
+
   Future<void> init() async {
     if (_initialized) return;
 
@@ -41,6 +46,22 @@ class NotificationService {
       return granted ?? false;
     }
     return true;
+  }
+
+  /// AUDIT FIX: queries the CURRENT OS notification permission state so
+  /// the preferences screen can reflect reality (a stored "on" with a
+  /// revoked OS permission is effectively off). Defaults to true on
+  /// platforms where the check is unsupported or fails (fail-open, same
+  /// policy as [refreshNotificationPreference]).
+  Future<bool> areNotificationsEnabled() async {
+    try {
+      final android = _notifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      final enabled = await android?.areNotificationsEnabled();
+      return enabled ?? true;
+    } catch (_) {
+      return true; // fail-open
+    }
   }
 
   /// Refreshes the cached notification-enabled flag from SharedPreferences.

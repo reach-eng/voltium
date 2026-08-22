@@ -38,20 +38,31 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
     super.dispose();
   }
 
+  // AUDIT FIX (2026-08-22): double.tryParse accepts "Infinity"/"NaN", which
+  // poisoned the weekly folds downstream. Enforce a finite, positive amount
+  // under ₹1,00,00,000 with at most 2 decimal places (paise).
+  static final RegExp _amountPattern = RegExp(r'^\d{1,7}(\.\d{1,2})?$');
+
   void _submit() {
-    final amount = double.tryParse(_amountController.text);
+    final amountText = _amountController.text.trim();
+    final amount = double.tryParse(amountText);
     final trips = int.tryParse(_tripsController.text);
     final hours = double.tryParse(_hoursController.text);
 
-    if (amount == null || amount <= 0) {
-      Toast.error(context, 'Please enter a valid amount');
+    if (amount == null ||
+        !amount.isFinite ||
+        amount <= 0 ||
+        amount >= 10000000 ||
+        !_amountPattern.hasMatch(amountText)) {
+      Toast.error(context,
+          'Please enter a valid amount (up to 2 decimals, under ₹1 crore)');
       return;
     }
     if (trips == null || trips <= 0) {
       Toast.error(context, 'Please enter valid trips count');
       return;
     }
-    if (hours == null || hours <= 0) {
+    if (hours == null || !hours.isFinite || hours <= 0) {
       Toast.error(context, 'Please enter valid hours');
       return;
     }

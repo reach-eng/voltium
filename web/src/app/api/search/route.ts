@@ -26,7 +26,7 @@ import { toRupeesResponse } from '@/lib/api-money';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'analytics_view')) return adminForbidden();
+  if (!hasPermission(session, 'analytics_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;

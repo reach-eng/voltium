@@ -43,25 +43,25 @@ class LegalPageScreen extends ConsumerStatefulWidget {
 
 /// Filters which legal documents are shown on the page.
 /// `null` (or [all]) shows everything; a specific value shows only that doc.
-enum LegalDocumentType { all, terms, privacy, refund, guarantor }
+enum LegalDocumentType { all, terms, privacy, refund, guarantor, rentalSafety }
 
 /// State for LegalPageScreen managed via Riverpod Notifier.
 class LegalPageState {
-  final Set<int> expandedIndices;
-  final bool isGeneratingPdf;
+  // AUDIT FIX: expansion was keyed by POSITIONAL INDEX on a filtered list,
+  // so expanding section 2 in a terms-only view pre-expanded the wrong
+  // section in the all-documents view (state also leaked across screens).
+  // Keyed by stable SECTION ID now.
+  final Set<String> expandedSectionIds;
 
   const LegalPageState({
-    this.expandedIndices = const {},
-    this.isGeneratingPdf = false,
+    this.expandedSectionIds = const {},
   });
 
   LegalPageState copyWith({
-    Set<int>? expandedIndices,
-    bool? isGeneratingPdf,
+    Set<String>? expandedSectionIds,
   }) {
     return LegalPageState(
-      expandedIndices: expandedIndices ?? this.expandedIndices,
-      isGeneratingPdf: isGeneratingPdf ?? this.isGeneratingPdf,
+      expandedSectionIds: expandedSectionIds ?? this.expandedSectionIds,
     );
   }
 }
@@ -70,18 +70,14 @@ class LegalPageNotifier extends Notifier<LegalPageState> {
   @override
   LegalPageState build() => const LegalPageState();
 
-  void toggleExpanded(int index) {
-    final next = Set<int>.from(state.expandedIndices);
-    if (next.contains(index)) {
-      next.remove(index);
+  void toggleExpanded(String sectionId) {
+    final next = Set<String>.from(state.expandedSectionIds);
+    if (next.contains(sectionId)) {
+      next.remove(sectionId);
     } else {
-      next.add(index);
+      next.add(sectionId);
     }
-    state = state.copyWith(expandedIndices: next);
-  }
-
-  void setGeneratingPdf(bool value) {
-    state = state.copyWith(isGeneratingPdf: value);
+    state = state.copyWith(expandedSectionIds: next);
   }
 }
 
@@ -134,7 +130,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     super.dispose();
   }
 
-  String get _currentDate => DateFormat('dd MMMM yyyy').format(DateTime.now());
+  /// AUDIT FIX: this getter recomputed `DateTime.now()` on EVERY access —
+  /// the displayed signature date silently drifted to "today". Freeze it
+  /// once per screen instance instead.
+  ///
+  /// KNOWN LIMITATION: `RiderModel` carries no consent/signature timestamp,
+  /// so for a rider whose signature was captured earlier this still shows
+  /// today's date. The real fix is a server-side `consentAcceptedAt` field;
+  /// until then the copy should read as the acceptance-record date.
+  late final String _recordDate =
+      DateFormat('dd MMMM yyyy').format(DateTime.now());
 
   /// Sections the screen should show, based on the constructor filter.
   ///
@@ -144,22 +149,39 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
   /// we prefer the JSON content when available.
   List<_LegalSection> get _visibleSections {
     final type = widget.documentType;
-    final filtered = (type == null || type == LegalDocumentType.all)
-        ? List<_LegalSection>.from(_sections)
-        : _sections.where((s) {
-            switch (type) {
-              case LegalDocumentType.terms:
-                return s.id == 'terms';
-              case LegalDocumentType.privacy:
-                return s.id == 'privacy';
-              case LegalDocumentType.refund:
-                return s.id == 'refund';
-              case LegalDocumentType.guarantor:
-                return s.id == 'guarantor';
-              case LegalDocumentType.all:
-                return true;
-            }
-          }).toList();
+    List<_LegalSection> filtered =
+        (type == null || type == LegalDocumentType.all)
+            ? List<_LegalSection>.from(_sections)
+            : _sections.where((s) {
+                switch (type) {
+                  case LegalDocumentType.terms:
+                    return s.id == 'terms';
+                  case LegalDocumentType.privacy:
+                    return s.id == 'privacy';
+                  case LegalDocumentType.refund:
+                    return s.id == 'refund';
+                  case LegalDocumentType.guarantor:
+                    return s.id == 'guarantor';
+                  case LegalDocumentType.rentalSafety:
+                    return s.id == 'rentalSafety';
+                  case LegalDocumentType.all:
+                    return true;
+                }
+              }).toList();
+
+    // AUDIT FIX (rental_safety unreachable): the Rental & Safety Agreement
+    // lived only in the bundled JSON and in the checklist screen's inline
+    // section — the detail viewer's const `_sections` never contained it.
+    // Append it from the JSON when available so `all` and the new
+    // `rentalSafety` filter can render it.
+    if (_fallback['rentalSafety'] != null &&
+        !filtered.any((s) => s.id == 'rentalSafety')) {
+      final rf = _fallback['rentalSafety']!;
+      filtered = [
+        ...filtered,
+        _LegalSection(id: 'rentalSafety', title: rf.title, content: rf.content),
+      ];
+    }
 
     if (_fallback.isEmpty) return filtered;
     return filtered.map((s) {
@@ -191,7 +213,10 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
             // Document accordion cards
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                // AUDIT FIX: hardcoded `Colors.white` rendered light text on
+                // a white card in dark mode (unreadable). Use the
+                // theme-aware card surface.
+                color: AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: AppShadows.card,
               ),
@@ -202,7 +227,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                 itemCount: _visibleSections.length,
                 itemBuilder: (context, index) {
                   final section = _visibleSections[index];
-                  final isExpanded = pageState.expandedIndices.contains(index);
+                  final isExpanded =
+                      pageState.expandedSectionIds.contains(section.id);
                   final isGuarantor = section.id == 'guarantor';
                   final signerName = isGuarantor
                       ? (rider?.guarantorName ?? 'Guarantor')
@@ -222,7 +248,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                           key: Key('legal_section_${section.id}'),
                           onTap: () => ref
                               .read(legalPageNotifierProvider.notifier)
-                              .toggleExpanded(index),
+                              .toggleExpanded(section.id),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -370,7 +396,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          _currentDate,
+                                          _recordDate,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
@@ -628,6 +654,10 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
           break;
         case LegalDocumentType.guarantor:
           title = "Guarantor's Agreement";
+          break;
+        case LegalDocumentType.rentalSafety:
+          title =
+              _fallback['rentalSafety']?.title ?? 'Rental & Safety Agreement';
           break;
         case LegalDocumentType.all:
           title = l10n?.txtlegal ?? 'Legal';

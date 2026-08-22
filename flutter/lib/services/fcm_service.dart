@@ -12,6 +12,7 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
+import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 
@@ -241,6 +242,21 @@ class FCMService {
         handleSecurityCommand(message);
       } else if (data['type'] == 'OVERLAY_TRIGGER' &&
           await validatePayload(data, isSecurity: false)) {
+        // AUDIT FIX (notification prefs): honor the in-app push master
+        // switch for user-facing overlay presentation — previously the
+        // notif_push toggle was write-only for FCM. SECURITY_COMMANDs
+        // are still processed above: device lock/unlock and integrity
+        // actions must never depend on a mute preference.
+        //
+        // NOTE: this suppresses PRESENTATION only; server-side topic
+        // unsubscribe (so the backend stops sending to this token) is
+        // future work.
+        if (!NotificationService().notificationsEnabled) {
+          developer.log(
+            'FCM: Overlay presentation suppressed (push disabled by user): ${data['action']}',
+          );
+          return;
+        }
         handleOverlayTrigger(message);
       }
     });

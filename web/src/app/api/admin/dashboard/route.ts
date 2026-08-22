@@ -11,7 +11,7 @@ import { hasPermission } from '@/lib/auth';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'analytics_view')) return adminForbidden();
+  if (!hasPermission(session, 'analytics_view')) return adminForbidden();
 
   const includeTrend = req.nextUrl.searchParams.get('trend') === 'true';
   const cacheKey = includeTrend ? 'admin:dashboard:stats:trend' : 'admin:dashboard:stats';

@@ -216,8 +216,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
             Semantics(
               button: true,
               label: 'SOS',
-              onLongPressHint:
-                  'Press and hold to trigger an emergency alert',
+              onLongPressHint: 'Press and hold to trigger an emergency alert',
               child: GestureDetector(
                 onLongPress: _triggerSos,
                 child: Container(

@@ -14,11 +14,18 @@
  * Browser-safe: no DB/prisma imports.
  */
 
-import type { AdminRole } from './permissions-descriptors';
+import { PERMISSION_DESCRIPTORS, type AdminRole } from './permissions-descriptors';
 
 type RoleSet = readonly AdminRole[];
 
-export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
+// AUDIT FIX (N-6): the matrix was Record<string, RoleSet>, so permission-key
+// typos at call sites compiled silently and failed closed to SUPER_ADMIN-
+// only. Keys are now constrained to the canonical descriptor keys — an
+// unknown key anywhere is a compile error, and requirePermission('…')
+// arguments are checked against this keyof type via `Permission`.
+export type PermissionKey = (typeof PERMISSION_DESCRIPTORS)[number]['key'];
+
+export const ROLE_PERMISSIONS: Readonly<Record<PermissionKey, RoleSet>> = {
   // Riders
   riders_view: ['OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
   riders_create: ['OPERATIONS_ADMIN', 'TEAM_LEADER'],

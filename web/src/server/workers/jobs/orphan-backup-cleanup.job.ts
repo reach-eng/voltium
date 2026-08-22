@@ -28,7 +28,8 @@ import { clock } from '@/lib/clock';
 import { istDateKey } from '@/lib/date-keys';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 import { createAuditLog } from '@/lib/audit-log';
-import { existsSync, rmSync } from 'fs';
+import { safeRmBackupPath } from '@/server/modules/data-management/backup.service';
+import { existsSync } from 'fs';
 
 const ORPHAN_MARKER_PREFIX = 'ORPHANED_BY_FAILED_RESTORE';
 const CLEANUP_AFTER_DAYS = 7;
@@ -68,8 +69,10 @@ export const orphanBackupCleanupJob = {
         const restoreJobId = orphan.errorMessage?.split(':')[1] ?? null;
         try {
           // 1. Delete the primary backup folder from disk.
+          // AUDIT FIX (N-3): containment-checked delete (refuses DB-derived
+          // paths outside the allowed backup roots).
           if (orphan.backupPath && existsSync(orphan.backupPath)) {
-            rmSync(orphan.backupPath, { recursive: true, force: true });
+            safeRmBackupPath(orphan.backupPath);
           }
 
           // 2. Delete the BackupJob database row.

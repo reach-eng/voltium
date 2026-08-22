@@ -10,6 +10,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
 
 enum IntentType { delivery, personal }
 
@@ -29,6 +30,79 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
   // PUT /api/rider/profile. The previous implementation had no _isLoading
   // flag, so rapid double-tap issued a second PUT before the first returned.
   bool _isSubmitting = false;
+
+  /// AUDIT FIX (5a): the PUT and the provider refresh now live in separate
+  /// try/catch blocks. Previously a successful PUT followed by a refresh
+  /// failure showed "couldn't save" (false) and a retry issued a duplicate
+  /// PUT. A refresh failure is now a non-blocking warning — the selection
+  /// WAS saved.
+  Future<void> _submit() async {
+    // ONBOARDING-AUDIT 2026-08-14 P1-4:
+    // double-tap race guard. The button's onPressed is gated on
+    // `_isSubmitting`, but the framework may not have repainted yet when
+    // the second tap arrives — a fast double-tap can fire onPressed twice
+    // and call putRiderProfile() + refresh() twice. Bail early on the
+    // second tap.
+    if (_isSubmitting) return;
+    final intentStr =
+        _selectedIntent == IntentType.delivery ? 'deliver' : 'personal';
+    // AUDIT FIX (MINOR, 5c): read once instead of subscribing inside the
+    // submit closure.
+    final provider = ref.read(riderProvider.notifier);
+    final riderId =
+        ref.read(riderProvider).riderId ?? ref.read(riderProvider).rider?.id;
+    if (riderId == null) {
+      Toast.info(
+        context,
+        'Rider session not ready. Please try again.',
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      // 1. The actual save.
+      try {
+        await VoltiumApiClient(ApiClient()).putRiderProfile(
+          UpdateProfileRequest(intent: intentStr),
+        );
+      } catch (e) {
+        // AUDIT FIX (MINOR, 5b): never discard the exception silently.
+        appDebug('Intent of use save failed: $e');
+        if (!mounted) return;
+        Toast.error(
+          context,
+          'Couldn\'t save your selection. Please try again.',
+        );
+        return;
+      }
+
+      // 2. Post-save refresh — best-effort, never reported as a save
+      // failure and never retried with a duplicate PUT.
+      try {
+        await provider.refresh();
+      } catch (e) {
+        appDebug('Intent of use: refresh failed after save success: $e');
+        if (mounted) {
+          Toast.info(
+            context,
+            'Saved. We could not refresh your profile just now — '
+            'pull to refresh later.',
+          );
+        }
+      }
+
+      await PostHogService.capture(
+        'intent_of_use_submitted',
+        properties: {'intent': intentStr},
+      );
+      if (!mounted) return;
+      widget.onNext?.call();
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,59 +249,8 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 height: 52,
                 child: ElevatedButton(
                   key: const Key('confirmIntentButton'),
-                  onPressed: _selectedIntent == null || _isSubmitting
-                      ? null
-                      : () async {
-                          // ONBOARDING-AUDIT 2026-08-14 P1-4:
-                          // double-tap race guard. The button's
-                          // onPressed is gated on `_isSubmitting`,
-                          // but the framework may not have repainted
-                          // yet when the second tap arrives — a fast
-                          // double-tap can fire onPressed twice and
-                          // call putRiderProfile() + refresh() twice.
-                          // Bail early on the second tap.
-                          if (_isSubmitting) return;
-                          final intentStr =
-                              _selectedIntent == IntentType.delivery
-                                  ? 'deliver'
-                                  : 'personal';
-                          final provider = ref.read(riderProvider.notifier);
-                          final riderId = ref.watch(riderProvider).riderId ??
-                              ref.watch(riderProvider).rider?.id;
-                          if (riderId == null) {
-                            Toast.info(
-                              context,
-                              'Rider session not ready. Please try again.',
-                            );
-                            return;
-                          }
-                          setState(() => _isSubmitting = true);
-                          try {
-                            await VoltiumApiClient(ApiClient()).putRiderProfile(
-                              UpdateProfileRequest(intent: intentStr),
-                            );
-                            await provider.refresh();
-                            await PostHogService.capture(
-                              'intent_of_use_submitted',
-                              properties: {'intent': intentStr},
-                            );
-                            if (!mounted) return;
-                            widget.onNext?.call();
-                          } catch (_) {
-                            if (!mounted) return;
-                            if (context.mounted) {
-                              Toast.error(
-                                context,
-                                'Couldn\'t save your selection. Please try again.',
-                              );
-                            }
-                            return;
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isSubmitting = false);
-                            }
-                          }
-                        },
+                  onPressed:
+                      _selectedIntent == null || _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     disabledBackgroundColor:
@@ -275,90 +298,98 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
     final colors = AppColors.of(context);
     final isSelected = _selectedIntent == type;
 
-    return GestureDetector(
-      key: key,
-      onTap: () {
-        setState(() {
-          _selectedIntent = type;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(Spacing.md),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : colors.card,
-          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : colors.outlineVariant,
-            width: 2,
+    // AUDIT FIX (MINOR, 5d): bare GestureDetectors are invisible to screen
+    // readers. Expose the card as a selectable button and merge the radio
+    // state into the accessible label.
+    return Semantics(
+      selected: isSelected,
+      button: true,
+      label: isSelected ? '$title, selected' : title,
+      child: GestureDetector(
+        key: key,
+        onTap: () {
+          setState(() {
+            _selectedIntent = type;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(Spacing.md),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : colors.outlineVariant,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : iconBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                iconData,
-                color: isSelected ? AppColors.primary : iconColor,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // Text Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTypography.titleMedium.copyWith(
-                        color: isSelected ? Colors.white : colors.onSurface),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : colors.onSurfaceVariant,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // Radio Indicator
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? Colors.white : null,
-                border: Border.all(
-                  color: isSelected ? Colors.white : colors.outlineVariant,
-                  width: isSelected ? 6 : 2,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : iconBgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  iconData,
+                  color: isSelected ? AppColors.primary : iconColor,
+                  size: 28,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+
+              // Text Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.titleMedium.copyWith(
+                          color: isSelected ? Colors.white : colors.onSurface),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.85)
+                            : colors.onSurfaceVariant,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Radio Indicator
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? Colors.white : null,
+                  border: Border.all(
+                    color: isSelected ? Colors.white : colors.outlineVariant,
+                    width: isSelected ? 6 : 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -8,13 +8,45 @@ import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { DepositStateError } from '@/lib/services/deposit-service';
 import { toRupeesResponse } from '@/lib/api-money';
+import { z } from 'zod';
 
 import { invalidateCache } from '@/lib/cache';
+
+// AUDIT FIX (N-7): the PUT body was destructured raw — refundAmount /
+// bonusAmount flowed straight into `Math.round(x*100)` paise math with no
+// sign/type/bounds/precision checks (negative refund? NaN? float drift?).
+const MoneyRupees = z
+  .number()
+  .finite({ message: 'amount must be a finite number' })
+  .positive('amount must be positive')
+  .max(10_000_000, 'amount exceeds the maximum allowed')
+  .refine((v) => Number.isInteger(Math.round(v * 100)), {
+    message: 'amount supports at most 2 decimal places',
+  });
+
+// Route modules may only export handlers — schema stays file-local.
+const DepositActionSchema = z
+  .object({
+    riderId: z.string().min(1),
+    action: z.enum(['APPROVE', 'REJECT', 'REFUND', 'FORFEIT']),
+    reason: z.string().min(1).max(1000).optional(),
+    refundAmount: MoneyRupees.optional(),
+    bonusAmount: MoneyRupees.optional(),
+  })
+  .superRefine((v, ctx) => {
+    if ((v.action === 'REJECT' || v.action === 'FORFEIT') && !v.reason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reason'],
+        message: `reason is required for ${v.action}`,
+      });
+    }
+  });
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'transactions_view')) return adminForbidden();
+  if (!hasPermission(session, 'transactions_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;
@@ -50,12 +82,20 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'transactions_approve')) return adminForbidden();
+  if (!hasPermission(session, 'transactions_approve')) return adminForbidden();
 
   try {
-    const body = await req.json();
-    const { riderId, action, reason, refundAmount, bonusAmount } = body;
-    if (!riderId || !action) return errors.badRequest('riderId and action are required');
+    const raw = await req.json();
+    // AUDIT FIX (N-7): validated + typed body (see DepositActionSchema).
+    const parsed = DepositActionSchema.safeParse(raw);
+    if (!parsed.success) {
+      return errors.badRequest(
+        parsed.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ')
+      );
+    }
+    // `bonusAmount` is accepted-but-unused today (no consumer in the
+    // use-cases); it stays validated so clients can't smuggle junk.
+    const { riderId, action, reason, refundAmount } = parsed.data;
 
     const adminId = session.adminId || '';
 

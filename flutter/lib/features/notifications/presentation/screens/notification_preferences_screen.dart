@@ -46,9 +46,14 @@ class _NotificationPreferencesScreenState
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final storedPush = prefs.getBool(_keyPush) ?? true;
+      // AUDIT FIX: reflect the REAL OS notification permission in the
+      // master switch — a stored "on" with a revoked OS permission is
+      // effectively off.
+      final osGranted = await NotificationService().areNotificationsEnabled();
       if (!mounted) return;
       setState(() {
-        _pushEnabled = prefs.getBool(_keyPush) ?? true;
+        _pushEnabled = storedPush && osGranted;
         _soundEnabled = prefs.getBool(_keySound) ?? true;
         _vibrationEnabled = prefs.getBool(_keyVibration) ?? true;
         _paymentsEnabled = prefs.getBool(_keyPayments) ?? true;
@@ -61,8 +66,26 @@ class _NotificationPreferencesScreenState
     }
   }
 
+  /// AUDIT FIX: enabling push requests the underlying OS permission
+  /// first; if denied, the master switch snaps back to off.
+  Future<void> _onMasterSwitchChanged(bool value) async {
+    if (value) {
+      final granted = await NotificationService().requestPermission();
+      if (!mounted) return;
+      if (!granted) {
+        setState(() => _pushEnabled = false);
+        if (mounted) {
+          Toast.error(context, 'Notification permission was not granted');
+        }
+        return;
+      }
+    }
+    setState(() => _pushEnabled = value);
+  }
+
   Future<void> _savePreferences() async {
     setState(() => _isLoading = true);
+    bool saved = false;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_keyPush, _pushEnabled);
@@ -72,24 +95,35 @@ class _NotificationPreferencesScreenState
       await prefs.setBool(_keyKyc, _kycEnabled);
       await prefs.setBool(_keyMaintenance, _maintenanceEnabled);
       await prefs.setBool(_keyAnnouncements, _announcementsEnabled);
-      await NotificationService().refreshNotificationPreference();
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Toast.success(
-          context,
-          AppLocalizations.of(context)!.txtpreferencesSaved,
-        );
-      }
+      saved = true;
     } catch (e) {
       appDebug('Failed to save notification preferences: $e');
-      if (mounted) {
-        setState(() => _isLoading = false);
-        Toast.error(
-          context,
-          AppLocalizations.of(context)!.txtfailedToSavePreferences,
-        );
+    }
+
+    // AUDIT FIX: isolate the service-flag refresh in its own try/catch —
+    // previously a failure here was reported as a failed SAVE even when
+    // all seven preferences had persisted successfully.
+    if (saved) {
+      try {
+        await NotificationService().refreshNotificationPreference();
+      } catch (e) {
+        // Non-fatal: the cached flag is refreshed on next launch.
+        appDebug('Failed to refresh notification preference flag: $e');
       }
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    if (saved) {
+      Toast.success(
+        context,
+        AppLocalizations.of(context)!.txtpreferencesSaved,
+      );
+    } else {
+      Toast.error(
+        context,
+        AppLocalizations.of(context)!.txtfailedToSavePreferences,
+      );
     }
   }
 
@@ -119,7 +153,12 @@ class _NotificationPreferencesScreenState
                             title: 'Push Notifications',
                             subtitle: 'Receive push notifications from Voltium',
                             value: _pushEnabled,
-                            onChanged: (v) => setState(() => _pushEnabled = v),
+                            // AUDIT FIX: master switch now governs FCM
+                            // presentation (see NotificationService /
+                            // FCMService) and requests the OS permission
+                            // when enabled.
+                            enabled: !_isLoading,
+                            onChanged: _onMasterSwitchChanged,
                           ),
                           _buildToggleTile(
                             icon: Icons.volume_up,
@@ -128,6 +167,7 @@ class _NotificationPreferencesScreenState
                             title: 'Sound',
                             subtitle: 'Play sound for notifications',
                             value: _soundEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) => setState(() => _soundEnabled = v),
                           ),
                           _buildToggleTile(
@@ -137,12 +177,19 @@ class _NotificationPreferencesScreenState
                             title: 'Vibration',
                             subtitle: 'Vibrate for notifications',
                             value: _vibrationEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) =>
                                 setState(() => _vibrationEnabled = v),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
+                      // AUDIT FIX (write-only toggles): the four category
+                      // switches below are persisted to SharedPreferences
+                      // for FUTURE per-category filtering — no consumer
+                      // reads them yet, and they are deliberately NOT
+                      // presented as functional. Do not wire fake
+                      // behavior; server-side topic opt-out is future work.
                       _buildSection(
                         title: 'NOTIFICATION CATEGORIES',
                         children: [
@@ -153,6 +200,7 @@ class _NotificationPreferencesScreenState
                             title: 'Payments',
                             subtitle: 'Top-ups, rent deductions, refunds',
                             value: _paymentsEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) =>
                                 setState(() => _paymentsEnabled = v),
                           ),
@@ -163,6 +211,7 @@ class _NotificationPreferencesScreenState
                             title: 'KYC',
                             subtitle: 'Document verification updates',
                             value: _kycEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) => setState(() => _kycEnabled = v),
                           ),
                           _buildToggleTile(
@@ -172,6 +221,7 @@ class _NotificationPreferencesScreenState
                             title: 'Maintenance',
                             subtitle: 'Service reminders, battery swaps',
                             value: _maintenanceEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) =>
                                 setState(() => _maintenanceEnabled = v),
                           ),
@@ -182,6 +232,7 @@ class _NotificationPreferencesScreenState
                             title: 'Announcements',
                             subtitle: 'Promotions, offers, platform updates',
                             value: _announcementsEnabled,
+                            enabled: !_isLoading,
                             onChanged: (v) =>
                                 setState(() => _announcementsEnabled = v),
                           ),
@@ -318,6 +369,7 @@ class _NotificationPreferencesScreenState
     required String title,
     required String subtitle,
     required bool value,
+    required bool enabled,
     required ValueChanged<bool> onChanged,
   }) {
     final colors = AppColors.of(context);
@@ -356,11 +408,12 @@ class _NotificationPreferencesScreenState
               ],
             ),
           ),
+          // AUDIT FIX: disabled while saving; shrinkWrap removed — it
+          // produced a sub-48dp touch target.
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: enabled ? onChanged : null,
             activeThumbColor: AppColors.primary,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
       ),

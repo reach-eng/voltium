@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,6 +27,9 @@ class TutorialTip {
 
 class TutorialOverlay {
   static void show(BuildContext context, List<TutorialTip> tips) {
+    // AUDIT FIX: an empty tip list used to open a blank modal the user had
+    // to dismiss — no-op instead.
+    if (tips.isEmpty) return;
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -222,8 +228,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const SizedBox(height: 20),
+                        // AUDIT FIX: FadeUpWidget computes
+                        // `index * delay(seconds) * 1000` ms — the old call
+                        // sites passed millisecond ints with index 0, so
+                        // every stagger collapsed to 0ms (animations were
+                        // instant). Pass seconds + explicit index.
                         FadeUpWidget(
-                          delay: 0,
+                          index: 1,
+                          delay: 0.05,
                           child: Container(
                             height: 80,
                             width: 80,
@@ -252,7 +264,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         ),
                         const SizedBox(height: 32),
                         FadeUpWidget(
-                          delay: 100,
+                          index: 1,
+                          delay: 0.1,
                           child: Text(
                             'Share Your Thoughts',
                             style: AppTypography.headingMedium.copyWith(
@@ -261,7 +274,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         ),
                         const SizedBox(height: 12),
                         FadeUpWidget(
-                          delay: 150,
+                          index: 1,
+                          delay: 0.15,
                           child: Text(
                             'Your feedback helps us improve the Voltium experience for all riders.',
                             textAlign: TextAlign.center,
@@ -274,17 +288,20 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                         ),
                         const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 200,
+                          index: 1,
+                          delay: 0.2,
                           child: _buildRatingStars(),
                         ),
                         const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 250,
+                          index: 1,
+                          delay: 0.25,
                           child: _buildCommentField(),
                         ),
                         const SizedBox(height: 40),
                         FadeUpWidget(
-                          delay: 300,
+                          index: 1,
+                          delay: 0.3,
                           child: _buildSubmitButton(),
                         ),
                         const SizedBox(height: 24),
@@ -324,23 +341,29 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          InkWell(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: colors.outlineVariant.withValues(alpha: 0.5)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
+          // AUDIT FIX: 48dp hit target + tooltip (was ~38dp, no semantics).
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: InkWell(
+              onTap: () => Navigator.maybePop(context),
+              customBorder: const CircleBorder(),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: colors.outlineVariant.withValues(alpha: 0.5)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.close, size: 18, color: colors.onSurface),
               ),
-              child: Icon(Icons.close, size: 18, color: colors.onSurface),
             ),
           ),
           Text(
@@ -354,27 +377,33 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   }
 
   Widget _buildRatingStars() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(5, (index) {
-        final isSelected = index < _rating;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: InkWell(
-            onTap: () => setState(() => _rating = index + 1),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected
-                    ? AppColors.warning
-                    : AppColors.of(context).outlineVariant,
-                size: 48,
+    return Semantics(
+      // AUDIT FIX: expose rating state to screen readers.
+      button: true,
+      value: '$_rating of 5 stars',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(5, (index) {
+          final isSelected = index < _rating;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: InkWell(
+              onTap: () => setState(() => _rating = index + 1),
+              customBorder: const CircleBorder(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                  color: isSelected
+                      ? AppColors.warning
+                      : AppColors.of(context).outlineVariant,
+                  size: 48,
+                ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
@@ -390,6 +419,11 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
+        // AUDIT FIX: cap unbounded paste before it ships to the API.
+        maxLength: 2000,
+        buildCounter: (_,
+                {required currentLength, required isFocused, maxLength}) =>
+            null, // counter hidden; limit still enforced
         style:
             GoogleFonts.plusJakartaSans(fontSize: 15, color: colors.onSurface),
         decoration: InputDecoration(
@@ -426,13 +460,19 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   widget.onSubmit();
                 }
               } catch (e) {
+                appDebug('Feedback submission failed: $e', tag: 'SUPPORT');
                 if (mounted) {
-                  setState(() => _isSubmitting = false);
                   Toast.error(
                     context,
                     AppLocalizations.of(context)!
-                        .txtfailedToSubmitFeedback(e.toString()),
+                        .txtfailedToSubmitFeedback('please try again'),
                   );
+                }
+              } finally {
+                // AUDIT FIX: `_isSubmitting` was only reset in the catch —
+                // if a host's onSubmit didn't pop, the button spun forever.
+                if (mounted) {
+                  setState(() => _isSubmitting = false);
                 }
               }
             }
@@ -514,9 +554,29 @@ class RateAppPrompt {
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () {
-                    prefs.setBool('has_rated', true);
-                    Navigator.pop(context);
+                  // AUDIT FIX: the RATE US button previously only set
+                  // `has_rated = true` and popped — the store was never
+                  // opened and the user was permanently suppressed from the
+                  // prompt. Launch the Play Store listing first; only mark
+                  // as rated after a launch attempt.
+                  onPressed: () async {
+                    final uri = Uri.parse(AppConstants.playStoreListingUrl);
+                    var launched = false;
+                    try {
+                      if (await canLaunchUrl(uri)) {
+                        launched = await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      }
+                    } catch (e) {
+                      appDebug('Rate-us store launch failed: $e',
+                          tag: 'SUPPORT');
+                    }
+                    await prefs.setBool('has_rated', true);
+                    if (!launched && context.mounted) {
+                      Toast.error(context,
+                          'Could not open the Play Store. Please rate us on Google Play.');
+                    }
+                    if (context.mounted) Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

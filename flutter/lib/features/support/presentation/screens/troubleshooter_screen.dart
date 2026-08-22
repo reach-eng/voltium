@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -8,6 +7,8 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'troubleshooter_result.dart';
 import '../widgets/troubleshooter_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/utils/dialer.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -32,7 +33,7 @@ class TroubleshooterScreen extends ConsumerStatefulWidget {
 }
 
 class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   // ── Mode ───────────────────────────────────────────────────────────────────
 
   _Mode _mode = _Mode.categorySelect;
@@ -105,13 +106,16 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
     if (_currentNode == null) return;
 
     // Record this step.
-    _path.add(
-      TroubleshooterAnswer(
-        question: _currentNode!.question,
-        answer: answer,
-        nodeId: _currentNode!.id,
-      ),
-    );
+    // AUDIT FIX: mutate inside setState (was a bare list mutation).
+    setState(() {
+      _path.add(
+        TroubleshooterAnswer(
+          question: _currentNode!.question,
+          answer: answer,
+          nodeId: _currentNode!.id,
+        ),
+      );
+    });
 
     // Determine next node.
     final nextId = answer ? _currentNode!.yesNodeId : _currentNode!.noNodeId;
@@ -238,12 +242,15 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
             child: Text(AppLocalizations.of(context)!.txtcancel),
           ),
           FilledButton(
+            // AUDIT FIX: the emergency dial was fire-and-forget AFTER the
+            // dialog popped — a failed launch left the rider with zero
+            // feedback on an EMERGENCY action. Dial via the guarded helper
+            // so failures surface a toast with manual-dial guidance.
             onPressed: () async {
               Navigator.pop(context);
-              final uri = Uri.parse('tel:$sosNumber');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
+              await launchDialer(context, sosNumber,
+                  failureMessage:
+                      'Unable to dial $sosNumber. Please dial manually.');
             },
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(AppLocalizations.of(context)!.txtcallNow),
@@ -270,10 +277,13 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           'Diagnostic Resolution:\n${_result!.resolution}\n\nDiagnostic Steps:\n$pathText';
 
       final provider = ref.read(supportProvider.notifier);
+      // AUDIT FIX: pass the rider id like CreateTicketScreen does so the
+      // ticket is attributed to the right rider.
       await provider.createTicket(
         category: 'TROUBLESHOOTER',
         subject: subject.length < 5 ? '$subject (Diagnostic)' : subject,
         message: message.length < 10 ? '$message (Auto-generated)' : message,
+        riderId: ref.read(riderProvider).riderId,
       );
 
       if (mounted) {
@@ -281,8 +291,10 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
         _resetToCategories();
       }
     } catch (e) {
+      appDebug('Troubleshooter ticket failed: $e', tag: 'SUPPORT');
       if (mounted) {
-        Toast.error(context, e.toString().replaceAll('Exception: ', ''));
+        // AUDIT FIX: don't leak raw exception text into the toast.
+        Toast.error(context, 'Could not create the ticket. Please try again.');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -342,7 +354,8 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           : IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: _goBack,
-              tooltip: 'Close',
+              // AUDIT FIX: tooltip said "Close" for a back action.
+              tooltip: 'Back',
             ),
       actions: [
         if (_mode != _Mode.categorySelect)

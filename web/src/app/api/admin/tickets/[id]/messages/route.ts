@@ -34,7 +34,7 @@ export async function POST(
 ) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'tickets_view')) {
+  if (!hasPermission(session, 'tickets_view')) {
     return adminForbidden('Requires tickets_view permission');
   }
 

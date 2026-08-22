@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:voltium_rider/widgets/animated_success_glow.dart';
 import 'package:voltium_rider/widgets/electric_burst_success.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
-import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 /// Matches web TopUpReceiptScreen.tsx:
 /// - Success animation: green check circle with glow rings
@@ -46,10 +46,9 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
     _mainCtrl.forward();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _burstKey.currentState?.trigger();
-      PostHogService.capture('top_up_completed', properties: {
-        'amount': widget.amount.toString(),
-        'purpose': widget.purpose,
-      });
+      // AUDIT FIX 2026-08-22 (RECEIPT-a): the `top_up_completed` capture
+      // was duplicated here AND in TopUpFlow (which fires the richer
+      // event with has_proof_image / is_deposit). Removed here.
     });
   }
 
@@ -130,8 +129,9 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
               children: [
                 const TextSpan(text: 'Your payment of '),
                 TextSpan(
-                  text:
-                      '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                  // AUDIT FIX 2026-08-22 (RECEIPT-b): shared formatter
+                  // replaces the duplicated inline regex grouping.
+                  text: MoneyFormat.rupees(widget.amount),
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     color: colors.onSurface,
@@ -239,27 +239,32 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
     return FadeTransition(
       opacity:
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.8, 1.0)),
-      child: GestureDetector(
-        onTap: widget.onBackToDashboard,
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: AppGradients.primary,
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            boxShadow: AppShadows.primaryButton,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.home_outlined, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Back to Dashboard',
-                style: AppTypography.labelLarge
-                    .copyWith(fontWeight: FontWeight.w700)
-                    .copyWith(color: Colors.white),
-              ),
-            ],
+      // AUDIT FIX 2026-08-22 (RECEIPT-c): expose to accessibility services.
+      child: Semantics(
+        button: true,
+        label: 'Back to Dashboard',
+        child: GestureDetector(
+          onTap: widget.onBackToDashboard,
+          child: Container(
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: AppGradients.primary,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              boxShadow: AppShadows.primaryButton,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.home_outlined, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Back to Dashboard',
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(color: Colors.white),
+                ),
+              ],
+            ),
           ),
         ),
       ),

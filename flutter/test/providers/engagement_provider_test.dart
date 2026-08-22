@@ -8,6 +8,13 @@ void main() {
   setUpAll(() {
     AppConstants.isTestModeOverride = true;
   });
+  // PR-1 (F-001): reset the test-mode override so it doesn't leak
+  // into the next suite. The assert in `AppConstants.isTestMode` only
+  // trips in release, but a leaking override changes behavior in the
+  // next `flutter test` run.
+  tearDownAll(() {
+    AppConstants.isTestModeOverride = false;
+  });
 
   // R4.3c-4: EngagementProvider is now a Riverpod v3 Notifier.
   late ProviderContainer container;

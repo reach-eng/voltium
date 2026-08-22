@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/models/earnings_entry_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/date_helpers.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -173,8 +174,11 @@ class TotalEarningsCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 4),
+              // AUDIT FIX (2026-08-22): was toStringAsFixed(0) — paise were
+              // silently truncated. Route all money through MoneyFormat so
+              // the weekly total reconciles with the daily cards.
               Text(
-                total.toStringAsFixed(0),
+                MoneyFormat.grouped(total),
                 style: AppTypography.displayLarge
                     .copyWith(color: Colors.white, letterSpacing: -1),
               ),
@@ -353,8 +357,9 @@ class DayEarningsCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8),
+                  // AUDIT FIX (2026-08-22): was toStringAsFixed(0).
                   Text(
-                    '\u20B9${amount.toStringAsFixed(0)}',
+                    MoneyFormat.rupees(amount),
                     style: AppTypography.titleMedium
                         .copyWith(color: AppColors.success),
                   ),
@@ -517,7 +522,9 @@ class WeeklySummaryCard extends StatelessWidget {
               Expanded(
                 child: _buildSummaryStat(
                   'Total Earnings',
-                  '\u20B9${total.toStringAsFixed(0)}',
+                  // AUDIT FIX (2026-08-22): shared MoneyFormat so this total
+                  // matches the hero card above (single format, single round).
+                  MoneyFormat.rupees(total),
                 ),
               ),
               Expanded(
@@ -531,13 +538,13 @@ class WeeklySummaryCard extends StatelessWidget {
               Expanded(
                 child: _buildSummaryStat(
                   'Avg/Day',
-                  '\u20B9${avgPerDay.toStringAsFixed(0)}',
+                  MoneyFormat.rupees(avgPerDay),
                 ),
               ),
               Expanded(
                 child: _buildSummaryStat(
                   'Best Day',
-                  '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})',
+                  '${DateHelpers.dayName(bestDate)} (${MoneyFormat.rupees(bestAmount)})',
                 ),
               ),
             ],
@@ -555,7 +562,8 @@ class WeeklySummaryCard extends StatelessWidget {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'You earned \u20B9${total.toStringAsFixed(0)} this week. ${bestAmount > 0 ? 'Your best day was ${DateHelpers.dayName(bestDate)} with \u20B9${bestAmount.toStringAsFixed(0)}!' : 'Start logging to see insights!'}',
+                    // AUDIT FIX (2026-08-22): was toStringAsFixed(0).
+                    'You earned ${MoneyFormat.rupees(total)} this week. ${bestAmount > 0 ? 'Your best day was ${DateHelpers.dayName(bestDate)} with ${MoneyFormat.rupees(bestAmount)}!' : 'Start logging to see insights!'}',
                     style:
                         AppTypography.bodySmall.copyWith(color: Colors.white),
                   ),

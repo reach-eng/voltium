@@ -10,7 +10,7 @@ import { createFaqAdminSchema, updateFaqAdminSchema } from '@/lib/validators/adm
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'faq_manage')) return adminForbidden();
+  if (!hasPermission(session, 'faq_manage')) return adminForbidden();
 
   try {
     const url = req.nextUrl;
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'faq_manage')) return adminForbidden();
+  if (!hasPermission(session, 'faq_manage')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'faq_manage')) return adminForbidden();
+  if (!hasPermission(session, 'faq_manage')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -70,7 +70,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'faq_manage')) return adminForbidden();
+  if (!hasPermission(session, 'faq_manage')) return adminForbidden();
 
   try {
     const id = req.nextUrl.searchParams.get('id');

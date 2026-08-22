@@ -36,9 +36,12 @@ export async function POST(req: Request) {
       return errors.unauthorized();
     }
 
-    const canRunDrill = hasPermission(session, 'DATA_MANAGEMENT');
+    // AUDIT FIX (N-6): 'DATA_MANAGEMENT' is not a real permission key —
+    // it silently failed closed to SUPER_ADMIN-only. DR drills are the
+    // data-management "test" capability.
+    const canRunDrill = hasPermission(session, 'data_management_test');
     if (!canRunDrill) {
-      return errors.forbidden('Permission DATA_MANAGEMENT required to run DR drills');
+      return errors.forbidden('Permission data_management_test required to run DR drills');
     }
 
     const adminId = session.adminId ?? session.riderDbId ?? 'unknown';

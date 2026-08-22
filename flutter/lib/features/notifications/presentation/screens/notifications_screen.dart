@@ -64,28 +64,37 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             )
             .toList();
       case NotificationTab.kyc:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.system &&
-                  n.title.toLowerCase().contains('kyc'),
-            )
-            .toList();
+        // AUDIT FIX: prefer structured fields where they exist. The
+        // AppNotificationType enum has NO dedicated KYC value (server
+        // sends KYC items as `system`), so keyword matching on the title
+        // is unavoidable here. LIMITATION: this only matches
+        // English-language titles; localized titles will not match.
+        return all.where((n) {
+          if (n.type != AppNotificationType.system) return false;
+          final t = n.title.toLowerCase();
+          return t.contains('kyc') ||
+              t.contains('verification') ||
+              t.contains('document');
+        }).toList();
       case NotificationTab.maintenance:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.system &&
-                  (n.title.toLowerCase().contains('service') ||
-                      n.title.toLowerCase().contains('maintenance')),
-            )
-            .toList();
+        // AUDIT FIX: use the structured `vehicle` type when present and
+        // fall back to system-type keywords only for legacy records.
+        // Same English-title limitation as the KYC tab above.
+        return all.where((n) {
+          if (n.type == AppNotificationType.vehicle) return true;
+          if (n.type != AppNotificationType.system) return false;
+          final t = n.title.toLowerCase();
+          return t.contains('service') || t.contains('maintenance');
+        }).toList();
       case NotificationTab.announcements:
+        // AUDIT FIX: promo-only. System items stay in All / their own
+        // category tabs — previously every `system` notification was
+        // duplicated into Announcements.
         return all
             .where(
               (n) =>
                   n.type == AppNotificationType.promo ||
-                  n.type == AppNotificationType.system,
+                  n.type == AppNotificationType.promotion,
             )
             .toList();
     }
@@ -121,7 +130,31 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
   }
 
-  void _clearReadNotifications(EngagementState state) {
+  /// AUDIT FIX: bulk clear-read is destructive — require confirmation
+  /// (parity with single-item delete). The previously-unused
+  /// `EngagementState state` parameter was dropped.
+  Future<void> _clearReadNotifications() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.of(context).surface,
+        title: Text(AppLocalizations.of(context)!.txtclearReadNotifications),
+        content: Text(
+          AppLocalizations.of(context)!.txtdeleteAllReadNotificationsConfirm,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(AppLocalizations.of(context)!.txtcancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppLocalizations.of(context)!.txtdelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
     ref.read(engagementProvider.notifier).clearReadNotifications();
   }
 
@@ -146,14 +179,27 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     _buildHeader(context, engagementState, unreadCount),
                     _buildTabBar(),
                     Expanded(
-                      child: filtered.isEmpty
-                          ? _buildEmptyState()
-                          : RefreshIndicator(
-                              color: AppColors.primary,
-                              onRefresh: () async => ref
-                                  .read(engagementProvider.notifier)
-                                  .initEngagementData(),
-                              child: ListView.builder(
+                      // AUDIT FIX: RefreshIndicator now wraps the empty
+                      // state too, so pull-to-refresh works when the
+                      // list is empty or a refresh previously failed.
+                      child: RefreshIndicator(
+                        color: AppColors.primary,
+                        onRefresh: () async => ref
+                            .read(engagementProvider.notifier)
+                            .initEngagementData(),
+                        child: filtered.isEmpty
+                            ? LayoutBuilder(
+                                builder: (context, constraints) =>
+                                    SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  child: SizedBox(
+                                    height: constraints.maxHeight,
+                                    child: _buildEmptyState(),
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
                                 addRepaintBoundaries: true,
                                 addAutomaticKeepAlives: false,
                                 padding: const EdgeInsets.symmetric(
@@ -264,7 +310,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                   );
                                 },
                               ),
-                            ),
+                      ),
                     ),
                   ],
                 ),
@@ -293,12 +339,48 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     );
   }
 
+  /// AUDIT FIX: shared header icon button — 48dp minimum touch target,
+  /// Tooltip (which also supplies an accessibility label), circular
+  /// ink ripple. Previously ~42dp InkWells with no tooltips/Semantics.
+  Widget _headerIconButton({
+    required IconData icon,
+    required Color iconColor,
+    required String tooltip,
+    required VoidCallback onTap,
+    Key? tapKey,
+  }) {
+    final colors = AppColors.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        key: tapKey,
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: colors.card,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Icon(icon, size: 18, color: iconColor),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(
     BuildContext context,
     EngagementState provider,
     int unreadCount,
   ) {
-    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -306,32 +388,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         children: [
           Row(
             children: [
-              InkWell(
+              _headerIconButton(
+                icon: Icons.arrow_back,
+                iconColor: AppColors.of(context).onSurface,
+                tooltip: 'Back',
                 onTap: () => Navigator.maybePop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(Spacing.md2),
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.arrow_back,
-                    size: 18,
-                    color: colors.onSurface,
-                  ),
-                ),
               ),
               const SizedBox(width: 16),
               Text(
                 'Notifications',
                 style: AppTypography.headingSmall
-                    .copyWith(color: colors.onSurface),
+                    .copyWith(color: AppColors.of(context).onSurface),
               ),
               if (unreadCount > 0) ...[
                 const SizedBox(width: 8),
@@ -354,77 +421,32 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           Row(
             children: [
               if (provider.notifications.any((n) => n.isRead))
-                InkWell(
-                  onTap: () => _clearReadNotifications(provider),
-                  child: Container(
-                    padding: const EdgeInsets.all(Spacing.md2),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.delete_sweep,
-                      size: 18,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
+                _headerIconButton(
+                  icon: Icons.delete_sweep,
+                  iconColor: AppColors.of(context).onSurfaceVariant,
+                  tooltip: 'Clear read',
+                  onTap: () => _clearReadNotifications(),
                 ),
               if (provider.notifications.any((n) => n.isRead))
                 const SizedBox(width: 8),
               if (unreadCount > 0)
-                InkWell(
-                  key: const Key('markAllReadButton'),
+                _headerIconButton(
+                  tapKey: const Key('markAllReadButton'),
+                  icon: Icons.done_all,
+                  iconColor: AppColors.primary,
+                  tooltip: 'Mark all read',
                   onTap: () => ref
                       .read(engagementProvider.notifier)
                       .markAllNotificationsRead(),
-                  child: Container(
-                    padding: const EdgeInsets.all(Spacing.md2),
-                    decoration: BoxDecoration(
-                      color: colors.card,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.done_all,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                  ),
                 ),
               if (unreadCount > 0) const SizedBox(width: 8),
-              InkWell(
+              _headerIconButton(
+                icon: Icons.settings_outlined,
+                iconColor: AppColors.of(context).onSurfaceVariant,
+                tooltip: 'Notification settings',
                 onTap: () => AppNavigator.push(
                   context,
                   const NotificationPreferencesScreen(),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(Spacing.md2),
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.settings_outlined,
-                    size: 18,
-                    color: colors.onSurfaceVariant,
-                  ),
                 ),
               ),
             ],
@@ -717,7 +739,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   String _formatTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
+    var diff = DateTime.now().difference(dt);
+    // AUDIT FIX: future-dated timestamps (clock skew) produced
+    // "-5m ago" — clamp at zero.
+    if (diff.isNegative) diff = Duration.zero;
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';

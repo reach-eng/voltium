@@ -13,7 +13,11 @@ import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 
-class _SeededEngagementNotifier extends EngagementNotifier {
+// AUDIT FIX (2026-08-22): the notifier class was renamed to
+// `EngagementProvider` in the Riverpod v3 migration — the old
+// `EngagementNotifier` name no longer exists and this test did not
+// compile.
+class _SeededEngagementNotifier extends EngagementProvider {
   final EngagementState _seed;
   _SeededEngagementNotifier(this._seed);
 

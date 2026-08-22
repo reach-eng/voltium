@@ -19,6 +19,8 @@ import {
   SESSION_COOKIE_OPTIONS,
 } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { recordTokenBump, acceptStaleVersion } from '@/lib/session-rotation';
+import { logSecurityEvent } from '@/lib/security-events';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,23 +54,79 @@ export async function POST(request: NextRequest) {
       return errors.unauthorized('Rider not found');
     }
 
-    // Check token version hasn't been revoked
-    if (rider.tokenVersion !== (session as any).tokenVersion) {
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+
+    // AUDIT FIX (N-12): rotate with a COMPARE-AND-SET and reuse detection,
+    // mirroring the hardened admin refresh route.
+    //
+    // Old behavior: an unconditional `{ increment: 1 }` meant two
+    // concurrent refreshes of the same valid token BOTH minted new token
+    // pairs (family forking), and a replayed stale token just got a silent
+    // 401 — no security event, so stolen-token reuse was undetectable.
+    const presentedVersion = (session as any).tokenVersion ?? 1;
+    const currentVersion = rider.tokenVersion;
+    let issuedVersion: number;
+
+    if (presentedVersion === currentVersion) {
+      // CAS: only the FIRST concurrent refresh wins the rotation.
+      const updated = await db.rider.updateMany({
+        where: { id: rider.id, tokenVersion: currentVersion },
+        data: { tokenVersion: { increment: 1 } },
+      });
+      if (updated.count === 0) {
+        // Lost the race — another request already rotated. Re-read and
+        // fall into the sliding-window grace path so an innocent racing
+        // retry still succeeds.
+        const fresh = await db.rider.findUnique({
+          where: { id: rider.id },
+          select: { tokenVersion: true },
+        });
+        const freshVersion = fresh?.tokenVersion ?? currentVersion;
+        if (!acceptStaleVersion(rider.id, presentedVersion, freshVersion)) {
+          // Rotation we didn't perform → likely token theft.
+          void logSecurityEvent({
+            type: 'refresh_token_reuse',
+            severity: 'warning',
+            actorId: rider.id,
+            ip: clientIp,
+            details: { presentedVersion, currentVersion: freshVersion },
+          }).catch(() => {});
+          return errors.unauthorized('Session revoked');
+        }
+        issuedVersion = freshVersion;
+      } else {
+        issuedVersion = currentVersion + 1;
+        recordTokenBump(rider.id, currentVersion, issuedVersion);
+      }
+    } else if (acceptStaleVersion(rider.id, presentedVersion, currentVersion)) {
+      // Innocent retry of a token WE rotated within the last 60s — issue
+      // new tokens at the current version without rotating again.
+      issuedVersion = currentVersion;
+    } else {
+      // REUSE DETECTED: a token at least one version behind that we did
+      // NOT rotate is a replayed/stolen credential. Log it loudly so
+      // account-takeover monitoring can act.
+      void logSecurityEvent({
+        type: 'refresh_token_reuse',
+        severity: 'critical',
+        actorId: rider.id,
+        ip: clientIp,
+        details: { presentedVersion, currentVersion },
+      }).catch(() => {});
+      logger.warn('[AuthRefresh] Refresh-token reuse detected', {
+        riderDbId: rider.id,
+        presentedVersion,
+        currentVersion,
+      });
       return errors.unauthorized('Session revoked');
     }
-
-    // Increment token version to invalidate the old token
-    await db.rider.update({
-      where: { id: rider.id },
-      data: { tokenVersion: { increment: 1 } },
-    });
 
     const payload = {
       riderId: rider.riderId,
       riderDbId: rider.id,
       phone: rider.phone,
       role: 'rider',
-      tokenVersion: rider.tokenVersion + 1,
+      tokenVersion: issuedVersion,
     };
 
     // Issue new token and refresh token

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
 import 'dart:ui' as ui;
 
@@ -39,8 +38,11 @@ class OtpVerifyButton extends StatefulWidget {
 class _OtpVerifyButtonState extends State<OtpVerifyButton> {
   bool _isPressed = false;
 
-  bool get _isInteractive =>
-      AppConstants.isTestMode || (widget.canVerify && !widget.isLoading);
+  // PR-1 (F-001): the test-mode short-circuit was removed. The verify
+  // button now reflects the real form-completeness state (canVerify &&
+  // !isLoading). Integration tests drive the parent with `canVerify: true`
+  // and a populated OTP code; the widget itself is purely presentational.
+  bool get _isInteractive => widget.canVerify && !widget.isLoading;
 
   @override
   Widget build(BuildContext context) {

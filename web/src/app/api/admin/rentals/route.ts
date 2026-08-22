@@ -13,9 +13,9 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (
-    !hasPermission(session.adminRole || '', 'rentals_pickup_inspection') &&
-    !hasPermission(session.adminRole || '', 'rentals_return_inspection') &&
-    !hasPermission(session.adminRole || '', 'riders_view')
+    !hasPermission(session, 'rentals_pickup_inspection') &&
+    !hasPermission(session, 'rentals_return_inspection') &&
+    !hasPermission(session, 'riders_view')
   ) {
     return adminForbidden();
   }
@@ -114,7 +114,7 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   };
   const permission: Permission =
     ACTION_PERMISSION_MAP[action] || 'rentals_pickup_inspection';
-  if (!hasPermission(session.adminRole || '', permission)) return adminForbidden();
+  if (!hasPermission(session, permission)) return adminForbidden();
 
   const lease = await rentalRepository.findLeaseById(leaseId);
   if (!lease) return errors.notFound('Rental lease not found');

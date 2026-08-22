@@ -7,7 +7,7 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { backupRepository } from './backup.repository';
-import { backupService, calculateNextRun, getFreeDiskBytes } from './backup.service';
+import { backupService, calculateNextRun, getFreeDiskBytes, assertBackupPathAllowed } from './backup.service';
 import { restoreService } from './restore.service';
 import { backupPolicy } from './backup.policy';
 import type { AdminRole } from '../admin/admin.types';
@@ -265,10 +265,22 @@ export const dataManagementUseCases = {
     const issues: string[] = [];
     const warnings: string[] = [];
 
-    // Check primary backup folder
-    if (!existsSync(schedule.primaryBackupRoot)) {
+    // AUDIT FIX (N-3): admin-configured roots are containment-checked
+    // BEFORE any filesystem operation. A schedule pointing at an
+    // arbitrary path (e.g. C:\Windows or /etc) is reported as a config
+    // issue instead of being mkdir'd.
+    let primaryRoot: string;
+    try {
+      primaryRoot = assertBackupPathAllowed(schedule.primaryBackupRoot);
+    } catch (e) {
+      issues.push(
+        `Primary backup folder rejected: ${e instanceof Error ? e.message : String(e)}`
+      );
+      primaryRoot = '';
+    }
+    if (primaryRoot && !existsSync(primaryRoot)) {
       try {
-        mkdirSync(schedule.primaryBackupRoot, { recursive: true });
+        mkdirSync(primaryRoot, { recursive: true });
         warnings.push('Primary backup folder did not exist — created automatically');
       } catch {
         issues.push(`Cannot create primary backup folder: ${schedule.primaryBackupRoot}`);
@@ -299,9 +311,18 @@ export const dataManagementUseCases = {
 
     // Check secondary location if configured
     if (schedule.secondaryBackupRoot) {
-      if (!existsSync(schedule.secondaryBackupRoot)) {
+      let secondaryRoot: string;
+      try {
+        secondaryRoot = assertBackupPathAllowed(schedule.secondaryBackupRoot);
+      } catch (e) {
+        issues.push(
+          `Secondary backup folder rejected: ${e instanceof Error ? e.message : String(e)}`
+        );
+        secondaryRoot = '';
+      }
+      if (secondaryRoot && !existsSync(secondaryRoot)) {
         try {
-          mkdirSync(schedule.secondaryBackupRoot, { recursive: true });
+          mkdirSync(secondaryRoot, { recursive: true });
           warnings.push('Secondary backup folder did not exist — created automatically');
         } catch {
           warnings.push(`Cannot create secondary backup folder: ${schedule.secondaryBackupRoot}`);

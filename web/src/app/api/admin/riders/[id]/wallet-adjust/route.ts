@@ -34,8 +34,11 @@ export async function POST(
 
   const session = await getAdminSession();
   if (!session) return errors.unauthorized();
-  if (!hasPermission(session, 'riders_update')) {
-    return errors.forbidden('Insufficient permissions');
+  // AUDIT FIX (N-13): wallet credit/debit moves MONEY — it was gated by
+  // `riders_update` (so FLEET_MANAGER could move money while FINANCE_ADMIN
+  // couldn't). Use the finance permission.
+  if (!hasPermission(session, 'finance_reconcile')) {
+    return errors.forbidden('Finance permission required to adjust rider wallets');
   }
 
   try {

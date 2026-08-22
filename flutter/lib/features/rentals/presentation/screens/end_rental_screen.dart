@@ -179,10 +179,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
       _odometerValidationError(_odometerCtrl.text) == null;
 
   bool get _canSubmit =>
-      _allPhotosTaken &&
-      _odometerValid &&
-      _confirmed &&
-      !_submitting;
+      _allPhotosTaken && _odometerValid && _confirmed && !_submitting;
 
   Future<void> _handleReturn() async {
     if (!_canSubmit) return;
@@ -226,8 +223,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
       // now counted toward progress while the successful subset
       // proceeds to submission; already-uploaded slots are skipped.
       final pendingEntries = _photos.entries
-          .where(
-              (e) => e.value != null && !_uploadedUrls.containsKey(e.key))
+          .where((e) => e.value != null && !_uploadedUrls.containsKey(e.key))
           .toList(growable: false);
 
       await Future.wait(
@@ -538,64 +534,66 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
                 onTap: () => taken
                     ? _showPhotoOptionsDialog(key, slot['label']!)
                     : _takePhoto(key),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: taken ? colors.successLight : colors.card,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: taken ? AppColors.greenFill : colors.outlineVariant,
-                    width: taken ? 2 : 1,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    color: taken ? colors.successLight : colors.card,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color:
+                          taken ? AppColors.greenFill : colors.outlineVariant,
+                      width: taken ? 2 : 1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        taken
+                            ? ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.sm),
+                                child: Image.file(
+                                  File(photo.path),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : Icon(
+                                Icons.camera_alt_outlined,
+                                size: 24,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                        const SizedBox(height: 6),
+                        Text(
+                          slot['label']!,
+                          style: AppTypography.bodySmall
+                              .copyWith(fontWeight: FontWeight.w600)
+                              .copyWith(
+                                  color: taken
+                                      ? colors.onSurface
+                                      : colorScheme.onSurfaceVariant),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          slot['hint']!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9,
+                            color: colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.7),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      taken
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              child: Image.file(
-                                File(photo.path),
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Icon(
-                              Icons.camera_alt_outlined,
-                              size: 24,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                      const SizedBox(height: 6),
-                      Text(
-                        slot['label']!,
-                        style: AppTypography.bodySmall
-                            .copyWith(fontWeight: FontWeight.w600)
-                            .copyWith(
-                                color: taken
-                                    ? colors.onSurface
-                                    : colorScheme.onSurfaceVariant),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        slot['hint']!,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9,
-                          color: colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.7),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                     ],
-                   ),
-                 ),
-               ),
-             ),
-           );
+              ),
+            );
           }).toList(),
         ),
       ],
@@ -650,7 +648,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
           Builder(
             builder: (context) {
               final text = _odometerCtrl.text.trim();
-              final error = text.isEmpty ? null : _odometerValidationError(text);
+              final error =
+                  text.isEmpty ? null : _odometerValidationError(text);
               if (error == null) return const SizedBox.shrink();
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -760,46 +759,47 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
         key: const Key('confirmCheckbox'),
         onTap: () => setState(() => _confirmed = !_confirmed),
         child: Container(
-        padding: Spacing.paddingMd,
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: AppShadows.card,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 20,
-              height: 20,
-              margin: const EdgeInsets.only(top: 2),
-              decoration: BoxDecoration(
-                color: _confirmed ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-                border: Border.all(
-                  color: _confirmed ? AppColors.primary : colors.outlineVariant,
-                  width: 2,
+          padding: Spacing.paddingMd,
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: AppShadows.card,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 20,
+                height: 20,
+                margin: const EdgeInsets.only(top: 2),
+                decoration: BoxDecoration(
+                  color: _confirmed ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                  border: Border.all(
+                    color:
+                        _confirmed ? AppColors.primary : colors.outlineVariant,
+                    width: 2,
+                  ),
+                ),
+                child: _confirmed
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'I confirm the vehicle is returned in good condition with all accessories intact.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: colorScheme.onSurface,
+                    height: 1.6,
+                  ),
                 ),
               ),
-              child: _confirmed
-                  ? const Icon(Icons.check, color: Colors.white, size: 14)
-                  : null,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'I confirm the vehicle is returned in good condition with all accessories intact.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: colorScheme.onSurface,
-                  height: 1.6,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

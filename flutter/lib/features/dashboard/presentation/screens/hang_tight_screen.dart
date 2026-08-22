@@ -69,6 +69,13 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   bool _redirected = false;
   Timer? _refreshTimer;
 
+  // AUDIT FIX: once a 401 fires onSessionExpired, later timer ticks must
+  // not re-fire it (the router may take a frame to unmount this screen).
+  bool _sessionExpired = false;
+  // AUDIT FIX: prevents a manual refresh tap from overlapping an
+  // in-flight timer tick (and vice versa).
+  bool _refreshInFlight = false;
+
   @override
   void initState() {
     super.initState();
@@ -91,7 +98,8 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   }
 
   Future<void> _safeRefresh() async {
-    if (!mounted || _redirected) return;
+    if (!mounted || _redirected || _sessionExpired || _refreshInFlight) return;
+    _refreshInFlight = true;
     try {
       await ref.read(riderProvider.notifier).refreshFromApi();
     } on ApiException catch (e) {
@@ -101,11 +109,19 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
       // exception (network drop, 500, etc.) is swallowed — the next
       // 15s tick will retry.
       if (e.statusCode == 401) {
+        // AUDIT FIX: latch + cancel the periodic timer BEFORE invoking
+        // the callback — previously the timer kept ticking and every
+        // subsequent tick re-invoked onSessionExpired.
+        _sessionExpired = true;
+        _refreshTimer?.cancel();
+        _refreshTimer = null;
         if (mounted) widget.onSessionExpired?.call();
         return;
       }
     } catch (_) {
       // Offline / transient — the next tick will retry.
+    } finally {
+      _refreshInFlight = false;
     }
   }
 

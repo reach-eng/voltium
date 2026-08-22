@@ -31,6 +31,45 @@ class TopupRequest {
       };
 }
 
+/// Line-item breakdown (charge / tax / discount / penalty / adjustment)
+/// attached to a transaction by the server.
+///
+/// `type` is kept as the raw server string; the presentation layer
+/// normalises it into the `BreakdownType` enum.
+class TransactionBreakdownEntity {
+  final String? id;
+  final String label;
+  final double amountInRupees;
+  final String type;
+  final int sortOrder;
+
+  const TransactionBreakdownEntity({
+    this.id,
+    required this.label,
+    this.amountInRupees = 0,
+    this.type = 'charge',
+    this.sortOrder = 0,
+  });
+
+  factory TransactionBreakdownEntity.fromJson(Map<String, dynamic> json) {
+    return TransactionBreakdownEntity(
+      id: json['id'] as String?,
+      label: json['label'] as String? ?? '',
+      amountInRupees: _toDouble(json['amountInRupees'] ?? json['amount']),
+      type: json['type'] as String? ?? 'charge',
+      sortOrder: json['sortOrder'] as int? ?? 0,
+    );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+}
+
 /// Transaction history entry.
 ///
 /// All amounts are in **rupees** as received from the API. The DB
@@ -43,6 +82,7 @@ class TransactionEntity {
   final String purpose;
   final String status;
   final DateTime createdAt;
+  final List<TransactionBreakdownEntity> breakdowns;
 
   const TransactionEntity({
     required this.id,
@@ -51,6 +91,7 @@ class TransactionEntity {
     this.purpose = '',
     this.status = 'PENDING',
     required this.createdAt,
+    this.breakdowns = const [],
   });
 
   bool get isCredit => type == 'CREDIT';
@@ -80,6 +121,14 @@ class TransactionEntity {
       status: json['status'] as String? ?? 'PENDING',
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
+      // AUDIT FIX 2026-08-22 (HIST-c): the server includes `breakdowns`
+      // on every history entry — map them so the fee-breakdown UI works.
+      breakdowns: json['breakdowns'] is List
+          ? (json['breakdowns'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map(TransactionBreakdownEntity.fromJson)
+              .toList()
+          : const [],
     );
   }
 }

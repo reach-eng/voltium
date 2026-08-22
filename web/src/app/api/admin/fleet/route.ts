@@ -8,7 +8,7 @@ import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cas
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+  if (!hasPermission(session, 'riders_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;

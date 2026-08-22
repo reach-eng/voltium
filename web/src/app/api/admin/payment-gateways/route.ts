@@ -31,8 +31,8 @@ export async function GET() {
 
   // Allow admins with payment_gateways_manage, transactions_view, or SUPER_ADMIN
   if (
-    !hasPermission(session.adminRole || '', 'payment_gateways_manage') &&
-    !hasPermission(session.adminRole || '', 'transactions_view')
+    !hasPermission(session, 'payment_gateways_manage') &&
+    !hasPermission(session, 'transactions_view')
   ) {
     return errors.forbidden('Insufficient permission to view payment gateways');
   }
@@ -60,8 +60,8 @@ export async function POST(req: NextRequest) {
   if (!session) return adminUnauthorized();
 
   if (
-    !hasPermission(session.adminRole || '', 'payment_gateways_manage') &&
-    !hasPermission(session.adminRole || '', 'transactions_manage')
+    !hasPermission(session, 'payment_gateways_manage') &&
+    !hasPermission(session, 'transactions_manage')
   ) {
     return errors.forbidden('Insufficient permission to create payment gateway');
   }

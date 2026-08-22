@@ -7,7 +7,7 @@ import { supportUseCases } from '@/server/modules/support/support.use-cases';
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'tickets_view')) return adminForbidden();
+  if (!hasPermission(session, 'tickets_view')) return adminForbidden();
 
   try {
     const { id } = await params;

@@ -5,8 +5,6 @@ import 'package:voltium_rider/features/wallet/presentation/providers/wallet_prov
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/core/network/files_repository.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_client.dart';
 
 class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
@@ -33,25 +31,29 @@ class MockWalletRepository implements WalletRepository {
       )
     ];
   }
+
+  @override
+  Future<TransactionHistoryPage> getTransactionHistoryPage(String riderId,
+      {int page = 1, int limit = 20}) async {
+    final txs = await getTransactionHistory(riderId, page: page, limit: limit);
+    final isLastPage = txs.length < limit;
+    return TransactionHistoryPage(
+      transactions: txs,
+      total: isLastPage ? (page - 1) * limit + txs.length : null,
+      totalPages: isLastPage ? page : page + 1,
+    );
+  }
 }
 
 class MockFilesRepository implements FilesRepository {
   bool uploadCalled = false;
   @override
-  Future<String> uploadFile(File file, String type) async {
+  // FilesRepository.uploadFile takes a `dynamic category` (committed
+  // signature) — the mock previously declared `String type` and no
+  // longer compiled.
+  Future<String> uploadFile(File file, dynamic type) async {
     uploadCalled = true;
     return 'http://example.com/proof.jpg';
-  }
-
-  @override
-  ApiClient get apiClient => throw UnimplementedError();
-
-  @override
-  VoltiumApiClient get voltiumApiClient => throw UnimplementedError();
-
-  @override
-  Future<String> uploadProfileImage(File file) {
-    throw UnimplementedError();
   }
 }
 

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/dialer.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../widgets/profile_widgets.dart';
@@ -268,6 +268,9 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
     final notProvided = l10n?.txtnotProvided ?? 'Not provided';
     String dobFormatted = notProvided;
     if (rider?.dob != null) {
+      // AUDIT FIX (2026-08-22): format is intentionally left locale-agnostic
+      // for now — pass a locale to DateFormat (e.g. 'en_IN') during the
+      // i18n pass once ARB strings are wired up for dates.
       dobFormatted = DateFormat('dd MMM yyyy').format(rider!.dob!);
     }
 
@@ -331,18 +334,29 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
             value: rider?.currentAddress ?? notProvided,
           ),
           const CustomDivider(),
-          GestureDetector(
-            onTap: () {
-              final phone = rider?.emergencyContact;
-              if (phone != null && phone.isNotEmpty) {
-                HapticService.light();
-                launchUrl(Uri.parse('tel:$phone'));
-              }
-            },
-            child: ProfileDetailRow(
-              icon: Icons.phone_android_outlined,
-              title: l10n?.txtemergencyContact ?? 'Emergency Contact',
-              value: rider?.emergencyContact ?? notProvided,
+          // AUDIT FIX (2026-08-22): was a bare GestureDetector with an
+          // unawaited launchUrl — now an InkWell (ripple) inside Material,
+          // wrapped in Semantics, launching via the guarded launchDialer
+          // helper. Only tappable when a number exists.
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                final phone = rider?.emergencyContact;
+                if (phone != null && phone.isNotEmpty) {
+                  HapticService.light();
+                  launchDialer(context, phone);
+                }
+              },
+              child: Semantics(
+                button: true,
+                label: 'Call emergency contact',
+                child: ProfileDetailRow(
+                  icon: Icons.phone_android_outlined,
+                  title: l10n?.txtemergencyContact ?? 'Emergency Contact',
+                  value: rider?.emergencyContact ?? notProvided,
+                ),
+              ),
             ),
           ),
           if (rider?.assignedVehicle != null &&

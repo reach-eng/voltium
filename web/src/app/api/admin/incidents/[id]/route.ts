@@ -10,7 +10,7 @@ import { incidentUseCases } from '@/server/modules/incidents/incident.use-cases'
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'incidents_manage')) return adminForbidden();
+  if (!hasPermission(session, 'incidents_manage')) return adminForbidden();
 
   try {
     const { id } = await params;
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'incidents_manage')) return adminForbidden();
+  if (!hasPermission(session, 'incidents_manage')) return adminForbidden();
 
   try {
     const { id } = await params;

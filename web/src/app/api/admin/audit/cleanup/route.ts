@@ -8,7 +8,7 @@ import { deleteExpiredLogs, getRetentionStats } from '@/lib/audit-log';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'settings_manage')) return adminForbidden();
 
   try {
     const action = req.nextUrl.searchParams.get('action');
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'settings_manage')) return adminForbidden();
 
   try {
     const deletedCount = await deleteExpiredLogs();

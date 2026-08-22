@@ -11,7 +11,7 @@ import { offerUseCases } from '@/server/modules/offers/offer.use-cases';
 const deleteOfferSchema = z.object({ id: z.string().min(1) });
 
 function checkOfferPermission(session: any): boolean {
-  return hasPermission(session.adminRole || '', 'offers_manage');
+  return hasPermission(session, 'offers_manage');
 }
 
 export async function GET(req: NextRequest) {

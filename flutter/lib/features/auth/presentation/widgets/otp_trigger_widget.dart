@@ -3,7 +3,6 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
 
 /// The "Enter" / "Send OTP" pill button at the bottom of [LoginScreen].
@@ -40,7 +39,7 @@ class OtpTriggerWidget extends StatefulWidget {
 class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
   bool _isPressed = false;
 
-  bool get _isInteractive => widget.canSubmit || AppConstants.isTestMode;
+  bool get _isInteractive => widget.canSubmit;
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +55,13 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
           onTapUp:
               _isInteractive ? (_) => setState(() => _isPressed = false) : null,
           onTapCancel: () => setState(() => _isPressed = false),
-          onTap: AppConstants.isTestMode
+          onTap: _isInteractive
               ? () {
                   // PR #6: medium haptic on this high-stakes auth action.
                   HapticService.medium();
                   widget.onPressed();
                 }
-              : (widget.canSubmit
-                  ? () {
-                      HapticService.medium();
-                      widget.onPressed();
-                    }
-                  : null),
+              : null,
           child: AnimatedScale(
             scale: _isPressed ? 0.96 : 1.0,
             duration: const Duration(milliseconds: 150),

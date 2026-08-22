@@ -36,9 +36,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'utils/app_logger.dart';
 
-bool get isTestModeOverride => AppConstants.isTestModeOverride;
-set isTestModeOverride(bool val) => AppConstants.isTestModeOverride = val;
-
 final FocusObserver focusObserver = FocusObserver((route) {
   // Navigation is state-machine driven (setState), not Navigator-based.
   // Tab-switch refresh is handled by AppShell.onTap.
@@ -46,7 +43,15 @@ final FocusObserver focusObserver = FocusObserver((route) {
 });
 
 Future<void> main() async {
-  if (AppConstants.isTestMode) {
+  // PR-1 (F-001): `enableFlutterDriverExtension` is gated on its own
+  // build-time dart-define, NOT on `AppConstants.isTestMode`. The previous
+  // gate let a debug-built sideload (any non-release build) expose a
+  // driver port; the new gate requires an explicit
+  // `--dart-define=ENABLE_DRIVER=true` at build time. The integration-test
+  // driver (`driver_main.dart`) builds with that flag set.
+  const bool enableDriver =
+      bool.fromEnvironment('ENABLE_DRIVER', defaultValue: false);
+  if (enableDriver) {
     try {
       enableFlutterDriverExtension();
     } catch (e) {

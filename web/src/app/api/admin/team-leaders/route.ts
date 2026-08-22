@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
   // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
   // Accept both so admins with stored legacy permissions aren't locked out.
   const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
+    hasPermission(session, 'team_leaders_manage') ||
+    hasPermission(session, 'tl_manage');
   if (!canManage) return adminForbidden();
 
   try {
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
   // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
   // Accept both so admins with stored legacy permissions aren't locked out.
   const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
+    hasPermission(session, 'team_leaders_manage') ||
+    hasPermission(session, 'tl_manage');
   if (!canManage) return adminForbidden();
 
   try {
@@ -76,8 +76,8 @@ export async function PUT(req: NextRequest) {
   // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
   // Accept both so admins with stored legacy permissions aren't locked out.
   const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
+    hasPermission(session, 'team_leaders_manage') ||
+    hasPermission(session, 'tl_manage');
   if (!canManage) return adminForbidden();
 
   try {
@@ -115,8 +115,8 @@ export async function DELETE(req: NextRequest) {
   // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
   // Accept both so admins with stored legacy permissions aren't locked out.
   const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
+    hasPermission(session, 'team_leaders_manage') ||
+    hasPermission(session, 'tl_manage');
   if (!canManage) return adminForbidden();
 
   try {

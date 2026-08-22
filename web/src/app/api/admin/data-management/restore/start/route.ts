@@ -11,7 +11,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await getAdminSession(request);
   if (!session) return errors.unauthorized('Unauthorized');
 
-  if (!hasPermission(session.adminRole || '', 'data_management_restore')) {
+  if (!hasPermission(session, 'data_management_restore')) {
     return errors.forbidden('Forbidden');
   }
 

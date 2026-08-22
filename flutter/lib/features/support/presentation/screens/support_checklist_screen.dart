@@ -28,13 +28,31 @@ class _SupportChecklistScreenState
     _checkedItems = List<bool>.filled(checklist.length, false);
   }
 
-  bool get _allChecked => _checkedItems.every((item) => item);
+  /// AUDIT FIX: `_checkedItems` was sized once in initState while the
+  /// checklist arrives async (config still loading). If the live list grew
+  /// past the snapshot, indexing threw a RangeError. Resync the checked
+  /// state whenever the incoming list is longer, preserving prior ticks.
+  void _syncCheckedLength(int length) {
+    if (_checkedItems.length < length) {
+      final previous = _checkedItems;
+      _checkedItems = List<bool>.filled(length, false);
+      for (var i = 0; i < previous.length; i++) {
+        _checkedItems[i] = previous[i];
+      }
+    } else if (_checkedItems.length > length) {
+      _checkedItems = _checkedItems.sublist(0, length);
+    }
+  }
+
+  bool get _allChecked =>
+      _checkedItems.isNotEmpty && _checkedItems.every((item) => item);
 
   @override
   Widget build(BuildContext context) {
     final provider = ref.watch(supportProvider);
     final checklist = provider.supportConfig?.ticketChecklist ?? [];
     final colors = AppColors.of(context);
+    _syncCheckedLength(checklist.length);
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -110,10 +128,12 @@ class _SupportChecklistScreenState
         ],
       ),
       child: CheckboxListTile(
-        value: _checkedItems[index],
+        value: index < _checkedItems.length ? _checkedItems[index] : false,
         onChanged: (val) {
           setState(() {
-            _checkedItems[index] = val ?? false;
+            if (index < _checkedItems.length) {
+              _checkedItems[index] = val ?? false;
+            }
           });
         },
         title: Text(
@@ -136,6 +156,8 @@ class _SupportChecklistScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           ElevatedButton(
+            // AUDIT FIX: empty checklist no longer bypasses the gate —
+            // `_allChecked` requires at least one item to be present.
             onPressed: _allChecked
                 ? () {
                     AppNavigator.pushReplacement(
@@ -161,13 +183,15 @@ class _SupportChecklistScreenState
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Keep checking all items to proceed',
-            style: AppTypography.bodySmall
-                .copyWith(fontWeight: FontWeight.w600)
-                .copyWith(
-                    color: _allChecked ? Colors.transparent : AppColors.error),
-          ),
+          // AUDIT FIX: hide the hint instead of painting it transparent so
+          // it leaves the semantics tree.
+          if (!_allChecked)
+            Text(
+              'Keep checking all items to proceed',
+              style: AppTypography.bodySmall
+                  .copyWith(fontWeight: FontWeight.w600)
+                  .copyWith(color: AppColors.error),
+            ),
         ],
       ),
     );

@@ -11,7 +11,7 @@ import { toRupeesResponse } from '@/lib/api-money';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'rewards_manage')) return adminForbidden();
+  if (!hasPermission(session, 'rewards_manage')) return adminForbidden();
 
   try {
     const { searchParams } = req.nextUrl;
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: Request) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'rewards_manage')) return adminForbidden();
+  if (!hasPermission(session, 'rewards_manage')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'rewards_manage')) return adminForbidden();
+  if (!hasPermission(session, 'rewards_manage')) return adminForbidden();
 
   try {
     const id = req.nextUrl.searchParams.get('id');
@@ -69,7 +69,7 @@ export async function DELETE(req: NextRequest) {
 export async function PUT(req: Request) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'rewards_manage')) return adminForbidden();
+  if (!hasPermission(session, 'rewards_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

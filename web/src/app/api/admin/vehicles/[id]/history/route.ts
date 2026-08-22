@@ -8,7 +8,7 @@ import { logger } from '@/lib/logger';
 export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'vehicles_view')) return adminForbidden();
+  if (!hasPermission(session, 'vehicles_view')) return adminForbidden();
 
   try {
     const { id } = await context.params;

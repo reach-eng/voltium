@@ -21,12 +21,15 @@ import { createAuditLog } from '@/lib/audit-log';
  * `outbox.ts` (PR-89 (API N3)). The mapping is a const so a typo at
  * one site is a compile error.
  */
-export interface JobOutboxConfig {
+// AUDIT FIX: route modules may only export handlers/config — non-handler
+// exports fail the Next.js generated type check. These are file-local now
+// (verified: no external importers).
+interface JobOutboxConfig {
   eventType: OutboxEventType;
   priority: 'interactive' | 'background';
 }
 
-export const JOB_TO_OUTBOX_CONFIG: Record<string, JobOutboxConfig> = {
+const JOB_TO_OUTBOX_CONFIG: Record<string, JobOutboxConfig> = {
   'wallet-reconciliation': {
     eventType: OutboxEventTypes.ADMIN_JOB_WALLET_RECONCILIATION,
     // Admin-triggered reconciliation is a fast single-SQL run (post-unify) —

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -24,6 +24,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import '../../../../widgets/error_state.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Menu screen (formerly "Profile" tab).
@@ -55,6 +56,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           final rider = innerRef.watch(riderProvider.select((p) => p.rider));
           final dataState =
               innerRef.watch(riderProvider.select((p) => p.dataState));
+          final errorMessage =
+              innerRef.watch(riderProvider.select((p) => p.errorMessage));
           final localeProv = innerRef.watch(localeProvider);
           final currentLocale = localeProv.locale.languageCode;
           final isLoading = rider == null &&
@@ -63,6 +66,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
           if (isLoading) {
             return const ProfileSkeleton();
+          }
+
+          // AUDIT FIX (2026-08-22): there was no error state when the rider
+          // fetch failed with no cached rider â€” the screen rendered an empty
+          // shell. Mirror the dashboard's pattern: network error widget with
+          // a retry action via the provider refresh.
+          if (rider == null && dataState == DataState.error) {
+            return ErrorState.network(
+              message: errorMessage,
+              onRetry: () => innerRef.read(riderProvider.notifier).refresh(),
+            );
           }
 
           return RefreshIndicator(
@@ -75,14 +89,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── Compact rider header ──────────────────────────────────
+                  // â”€â”€ Compact rider header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   FadeUpWidget(
                     delay: 0,
                     child: _CompactRiderHeader(rider: rider),
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Menu sections ─────────────────────────────────────────
+                  // â”€â”€ Menu sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _SectionLabel(l10n?.menu_account ?? 'ACCOUNT'),
                   const SizedBox(height: 12),
 
@@ -222,7 +236,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     ? LocaleNotifier.displayNameFor(
                                         localeProv.locale, l10n)
                                     : (currentLocale == 'hi'
-                                        ? 'हिंदी'
+                                        ? 'à¤¹à¤¿à¤‚à¤¦à¥€'
                                         : 'English')),
                             style: GoogleFonts.plusJakartaSans(
                               color: colors.onSurfaceMuted,
@@ -237,7 +251,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       onTap: () {
                         PostHogService.capture('profile_menu_item_clicked',
                             properties: {'item': 'language'});
-                        _showLanguageDialog(context, ref);
+                        // AUDIT FIX (2026-08-22): the `_showLanguageDialog`
+                        // wrapper was dead indirection â€” call directly.
+                        showAppLanguageDialog(context, ref);
                       },
                     ),
                   ),
@@ -280,15 +296,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
   }
-
-  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
-    showAppLanguageDialog(context, ref);
-  }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Internal widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _SectionLabel extends StatelessWidget {
   final String label;
@@ -308,7 +320,7 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// Compact header showing avatar, name and KYC badge — no redundant detail.
+/// Compact header showing avatar, name and KYC badge â€” no redundant detail.
 class _CompactRiderHeader extends StatelessWidget {
   final RiderModel? rider;
   const _CompactRiderHeader({this.rider});

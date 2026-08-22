@@ -3,10 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
@@ -30,6 +31,10 @@ class _SeededRiderNotifier extends RiderNotifier {
 void main() {
   group('Widget and Cache Tests', () {
     setUp(() async {
+      // AUDIT FIX (encrypted-storage migration): the guarantor draft now
+      // persists in SecureStorageService, so tests must mock it too.
+      TestWidgetsFlutterBinding.ensureInitialized();
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
     });
@@ -97,10 +102,17 @@ void main() {
       await tester.enterText(nameField, 'New Name');
       await tester.pump(const Duration(seconds: 1));
 
-      // Read cache
-      final cachedStr = CacheService()
-          .getString('guarantor_onboarding_form_cache_test_rider_123');
+      // AUDIT FIX (encrypted-storage migration): drafts are persisted in
+      // secure storage now; the plaintext prefs copy must NOT exist.
+      final cachedStr = await SecureStorageService()
+          .readValue('guarantor_form:test_rider_123');
       expect(cachedStr, isNotNull);
+      expect(
+        CacheService()
+            .getString('guarantor_onboarding_form_cache_test_rider_123'),
+        isNull,
+        reason: 'PII draft must not persist in plaintext SharedPreferences',
+      );
 
       final cacheData = jsonDecode(cachedStr!);
       expect(cacheData['name'], 'New Name');
@@ -110,6 +122,8 @@ void main() {
   // ── Bug 25: liability banner ───────────────────────────────────────────
   group('Liability banner (Bug 25)', () {
     setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
     });
@@ -156,6 +170,8 @@ void main() {
   // end-to-end FIRST.
   group('Skip button (Bug 24) — REMOVED, see fix #5d', () {
     setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
     });
@@ -270,6 +286,8 @@ void main() {
     const cacheKey = 'guarantor_onboarding_form_cache_test_rider_123';
 
     setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
     });
@@ -376,6 +394,8 @@ void main() {
   // ── Step progression & navigation ───────────────────────────────────────
   group('Step progression & navigation', () {
     setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      FlutterSecureStorage.setMockInitialValues({});
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
     });

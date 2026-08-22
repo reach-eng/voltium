@@ -7,7 +7,7 @@ import { scoreUseCases } from '@/server/modules/scores/score.use-cases';
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_manage')) return adminForbidden();
+  if (!hasPermission(session, 'riders_manage')) return adminForbidden();
 
   try {
     const result = await scoreUseCases.recalculateAll(session.adminId || '');

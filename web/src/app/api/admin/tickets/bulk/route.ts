@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireAdmin();
     if (!session) return adminUnauthorized();
-    if (!hasPermission(session.adminRole || '', 'tickets_manage')) return adminForbidden();
+    if (!hasPermission(session, 'tickets_manage')) return adminForbidden();
 
     const body = await req.json();
     const validation = validateBody(ticketBulkActionSchema, body);

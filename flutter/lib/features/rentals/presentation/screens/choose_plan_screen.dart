@@ -375,8 +375,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                     Text(
                                       'No plans available',
                                       style: AppTypography.titleMedium
-                                          .copyWith(
-                                              color: colors.onSurface),
+                                          .copyWith(color: colors.onSurface),
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -390,353 +389,396 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                     const SizedBox(height: 16),
                                     ElevatedButton(
                                       onPressed: _fetchPlans,
-                                      child: Text(
-                                          l10n?.txtretry ?? 'Retry'),
+                                      child: Text(l10n?.txtretry ?? 'Retry'),
                                     ),
                                   ],
                                 ),
                               )
                             : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _plans.length,
-                          itemBuilder: (context, index) {
-                            final plan = _plans[index];
-                            final isSelected = _selectedPlanId == plan.id;
-                            final isCurrentPlan =
-                                currentPlanName != null &&
-                                    plan.name.toLowerCase() ==
-                                        currentPlanName.toLowerCase();
-                            final isBestValue = _isBestValuePlan(plan);
-
-                            // AUDIT FIX (MEDIUM): never invent marketing
-                            // features client-side when the API returns
-                            // none — only server-provided features render;
-                            // otherwise a single neutral line is shown.
-                            final planFeatures = plan.features;
-
-                            // AUDIT FIX (LOW): plan cards were bare
-                            // GestureDetectors invisible to screen readers.
-                            return MergeSemantics(
-                              key: Key('planCard_$index'),
-                              child: Semantics(
-                                selected: isSelected,
-                                button: true,
-                                child: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _selectedPlanId = plan.id),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : colors.card,
-                                  borderRadius: BorderRadius.circular(
-                                      AppRadius.radiusModal),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? Colors.transparent
-                                        : colors.outlineVariant,
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: isSelected
-                                          ? AppColors.primary
-                                              .withValues(alpha: 0.2)
-                                          : Colors.black
-                                              .withValues(alpha: 0.02),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
                                 ),
-                                child: Padding(
-                                  padding: Spacing.paddingLg,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Top Header row of Card
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: isSelected
-                                                ? Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        isCurrentPlan
-                                                            ? 'CURRENT PLAN'
-                                                            : 'SELECTED PLAN',
-                                                        style: AppTypography
-                                                            .bodySmall
-                                                            .copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w800)
-                                                            .copyWith(
+                                physics: const BouncingScrollPhysics(),
+                                itemCount: _plans.length,
+                                itemBuilder: (context, index) {
+                                  final plan = _plans[index];
+                                  final isSelected = _selectedPlanId == plan.id;
+                                  final isCurrentPlan =
+                                      currentPlanName != null &&
+                                          plan.name.toLowerCase() ==
+                                              currentPlanName.toLowerCase();
+                                  final isBestValue = _isBestValuePlan(plan);
+
+                                  // AUDIT FIX (MEDIUM): never invent marketing
+                                  // features client-side when the API returns
+                                  // none — only server-provided features render;
+                                  // otherwise a single neutral line is shown.
+                                  final planFeatures = plan.features;
+
+                                  // AUDIT FIX (LOW): plan cards were bare
+                                  // GestureDetectors invisible to screen readers.
+                                  return MergeSemantics(
+                                    key: Key('planCard_$index'),
+                                    child: Semantics(
+                                      selected: isSelected,
+                                      button: true,
+                                      child: GestureDetector(
+                                        onTap: () => setState(
+                                            () => _selectedPlanId = plan.id),
+                                        child: AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 250),
+                                          curve: Curves.easeInOut,
+                                          margin:
+                                              const EdgeInsets.only(bottom: 16),
+                                          decoration: BoxDecoration(
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : colors.card,
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.radiusModal),
+                                            border: Border.all(
+                                              color: isSelected
+                                                  ? Colors.transparent
+                                                  : colors.outlineVariant,
+                                              width: 1.5,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: isSelected
+                                                    ? AppColors.primary
+                                                        .withValues(alpha: 0.2)
+                                                    : Colors.black.withValues(
+                                                        alpha: 0.02),
+                                                blurRadius: 16,
+                                                offset: const Offset(0, 8),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Padding(
+                                            padding: Spacing.paddingLg,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // Top Header row of Card
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Expanded(
+                                                      child: isSelected
+                                                          ? Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  isCurrentPlan
+                                                                      ? 'CURRENT PLAN'
+                                                                      : 'SELECTED PLAN',
+                                                                  style: AppTypography
+                                                                      .bodySmall
+                                                                      .copyWith(
+                                                                          fontWeight:
+                                                                              FontWeight.w800)
+                                                                      .copyWith(
+                                                                        color: Colors
+                                                                            .white
+                                                                            .withValues(alpha: 0.8),
+                                                                        letterSpacing:
+                                                                            0.5,
+                                                                      ),
+                                                                ),
+                                                                const SizedBox(
+                                                                    height: 6),
+                                                                Row(
+                                                                  children: [
+                                                                    if (isBestValue) ...[
+                                                                      _buildBestValueBadge(
+                                                                        isSelected:
+                                                                            true,
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                    ],
+                                                                    Expanded(
+                                                                      child:
+                                                                          Text(
+                                                                        plan.name,
+                                                                        style: GoogleFonts
+                                                                            .plusJakartaSans(
+                                                                          fontSize:
+                                                                              18,
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          color:
+                                                                              Colors.white,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ],
+                                                            )
+                                                          : Row(
+                                                              children: [
+                                                                if (isBestValue) ...[
+                                                                  _buildBestValueBadge(
+                                                                    isSelected:
+                                                                        false,
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    width: 8,
+                                                                  ),
+                                                                ],
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    plan.name,
+                                                                    style: GoogleFonts
+                                                                        .plusJakartaSans(
+                                                                      fontSize:
+                                                                          16,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      color: colors
+                                                                          .onSurface,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    // Radio / Checkmark Icon
+                                                    isSelected
+                                                        ? Container(
+                                                            width: 32,
+                                                            height: 32,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
                                                               color: Colors
                                                                   .white
                                                                   .withValues(
                                                                       alpha:
-                                                                          0.8),
-                                                              letterSpacing:
-                                                                  0.5,
-                                                            ),
-                                                      ),
-                                                      const SizedBox(height: 6),
-                                                      Row(
-                                                        children: [
-                                                          if (isBestValue) ...[
-                                                            _buildBestValueBadge(
-                                                              isSelected: true,
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 8,
-                                                            ),
-                                                          ],
-                                                          Expanded(
-                                                            child: Text(
-                                                              plan.name,
-                                                              style: GoogleFonts
-                                                                  .plusJakartaSans(
-                                                                fontSize: 18,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
+                                                                          0.15),
+                                                              border:
+                                                                  Border.all(
                                                                 color: Colors
                                                                     .white,
+                                                                width: 2,
+                                                              ),
+                                                            ),
+                                                            child: const Center(
+                                                              child: Icon(
+                                                                Icons.check,
+                                                                size: 16,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                            ),
+                                                          )
+                                                        : Container(
+                                                            width: 32,
+                                                            height: 32,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                              border:
+                                                                  Border.all(
+                                                                color: colors
+                                                                    .outlineVariant,
+                                                                width: 2,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                  ],
+                                                ),
+                                                if (plan.description
+                                                        ?.isNotEmpty ==
+                                                    true) ...[
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    plan.description ?? '',
+                                                    style: GoogleFonts
+                                                        .plusJakartaSans(
+                                                      fontSize: 13,
+                                                      color: isSelected
+                                                          ? Colors.white
+                                                              .withValues(
+                                                                  alpha: 0.8)
+                                                          : colors
+                                                              .onSurfaceVariant,
+                                                    ),
+                                                  ),
+                                                ],
+                                                const SizedBox(height: 16),
+                                                // Features list — AUDIT FIX
+                                                // (MEDIUM): server features only.
+                                                // When the API returns none, show a
+                                                // single neutral line instead of
+                                                // fabricated marketing copy.
+                                                if (planFeatures.isNotEmpty)
+                                                  ...planFeatures.map(
+                                                    (feature) => Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                        bottom: 12,
+                                                      ),
+                                                      child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Icon(
+                                                            _getFeatureIcon(
+                                                                feature),
+                                                            size: 16,
+                                                            color: isSelected
+                                                                ? Colors.white
+                                                                    .withValues(
+                                                                        alpha:
+                                                                            0.9)
+                                                                : colors
+                                                                    .onSurfaceMuted,
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 12),
+                                                          Expanded(
+                                                            child: Text(
+                                                              feature,
+                                                              style: GoogleFonts
+                                                                  .plusJakartaSans(
+                                                                fontSize: 14,
+                                                                color: isSelected
+                                                                    ? Colors
+                                                                        .white
+                                                                        .withValues(
+                                                                            alpha:
+                                                                                0.9)
+                                                                    : colors
+                                                                        .onSurfaceVariant,
+                                                                height: 1.4,
                                                               ),
                                                             ),
                                                           ),
                                                         ],
                                                       ),
-                                                    ],
+                                                    ),
                                                   )
-                                                : Row(
-                                                    children: [
-                                                      if (isBestValue) ...[
-                                                        _buildBestValueBadge(
-                                                          isSelected: false,
+                                                else
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 12),
+                                                    child: Row(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .info_outline_rounded,
+                                                          size: 16,
+                                                          color: isSelected
+                                                              ? Colors.white
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.9)
+                                                              : colors
+                                                                  .onSurfaceMuted,
                                                         ),
                                                         const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                      ],
-                                                      Expanded(
-                                                        child: Text(
-                                                          plan.name,
-                                                          style: GoogleFonts
-                                                              .plusJakartaSans(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: colors
-                                                                .onSurface,
+                                                            width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Contact hub for details',
+                                                            style: GoogleFonts
+                                                                .plusJakartaSans(
+                                                              fontSize: 14,
+                                                              color: isSelected
+                                                                  ? Colors.white
+                                                                      .withValues(
+                                                                          alpha:
+                                                                              0.9)
+                                                                  : colors
+                                                                      .onSurfaceVariant,
+                                                              height: 1.4,
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          // Radio / Checkmark Icon
-                                          isSelected
-                                              ? Container(
-                                                  width: 32,
-                                                  height: 32,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white
-                                                        .withValues(
-                                                            alpha: 0.15),
-                                                    border: Border.all(
-                                                      color: Colors.white,
-                                                      width: 2,
+                                                      ],
                                                     ),
                                                   ),
-                                                  child: const Center(
-                                                    child: Icon(
-                                                      Icons.check,
-                                                      size: 16,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                )
-                                              : Container(
-                                                  width: 32,
-                                                  height: 32,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color:
-                                                          colors.outlineVariant,
-                                                      width: 2,
-                                                    ),
-                                                  ),
-                                                ),
-                                        ],
-                                      ),
-                                      if (plan.description?.isNotEmpty ==
-                                          true) ...[
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          plan.description ?? '',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            color: isSelected
-                                                ? Colors.white
-                                                    .withValues(alpha: 0.8)
-                                                : colors.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                      const SizedBox(height: 16),
-                                      // Features list — AUDIT FIX
-                                      // (MEDIUM): server features only.
-                                      // When the API returns none, show a
-                                      // single neutral line instead of
-                                      // fabricated marketing copy.
-                                      if (planFeatures.isNotEmpty)
-                                        ...planFeatures.map(
-                                          (feature) => Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 12,
-                                            ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Icon(
-                                                  _getFeatureIcon(feature),
-                                                  size: 16,
+                                                const SizedBox(height: 16),
+                                                // Divider
+                                                Divider(
                                                   color: isSelected
                                                       ? Colors.white.withValues(
-                                                          alpha: 0.9)
-                                                      : colors.onSurfaceMuted,
+                                                          alpha: 0.15)
+                                                      : colors.outlineVariant,
+                                                  height: 1,
                                                 ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Text(
-                                                    feature,
-                                                    style: GoogleFonts
-                                                        .plusJakartaSans(
-                                                      fontSize: 14,
-                                                      color: isSelected
-                                                          ? Colors.white
-                                                              .withValues(
-                                                                  alpha: 0.9)
-                                                          : colors
-                                                              .onSurfaceVariant,
-                                                      height: 1.4,
-                                                    ),
+                                                const SizedBox(height: 16),
+                                                // Pricing
+                                                RichText(
+                                                  text: TextSpan(
+                                                    children: [
+                                                      TextSpan(
+                                                        text: _formatPrice(
+                                                            plan.price),
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(
+                                                          fontSize: 18,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color: isSelected
+                                                              ? Colors.white
+                                                              : colors
+                                                                  .onSurface,
+                                                        ),
+                                                      ),
+                                                      TextSpan(
+                                                        text:
+                                                            ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
+                                                        style: AppTypography
+                                                            .bodyMedium
+                                                            .copyWith(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600)
+                                                            .copyWith(
+                                                              color: isSelected
+                                                                  ? Colors.white
+                                                                      .withValues(
+                                                                          alpha:
+                                                                              0.7)
+                                                                  : colors
+                                                                      .onSurfaceVariant,
+                                                            ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                        )
-                                      else
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 12),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Icon(
-                                                Icons.info_outline_rounded,
-                                                size: 16,
-                                                color: isSelected
-                                                    ? Colors.white.withValues(
-                                                        alpha: 0.9)
-                                                    : colors.onSurfaceMuted,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  'Contact hub for details',
-                                                  style: GoogleFonts
-                                                      .plusJakartaSans(
-                                                    fontSize: 14,
-                                                    color: isSelected
-                                                        ? Colors.white
-                                                            .withValues(
-                                                                alpha: 0.9)
-                                                        : colors
-                                                            .onSurfaceVariant,
-                                                    height: 1.4,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      const SizedBox(height: 16),
-                                      // Divider
-                                      Divider(
-                                        color: isSelected
-                                            ? Colors.white
-                                                .withValues(alpha: 0.15)
-                                            : colors.outlineVariant,
-                                        height: 1,
-                                      ),
-                                      const SizedBox(height: 16),
-                                      // Pricing
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: _formatPrice(plan.price),
-                                              style:
-                                                  GoogleFonts.plusJakartaSans(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w800,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                    : colors.onSurface,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text:
-                                                  ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
-                                              style: AppTypography.bodyMedium
-                                                  .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600)
-                                                  .copyWith(
-                                                    color: isSelected
-                                                        ? Colors.white
-                                                            .withValues(
-                                                                alpha: 0.7)
-                                                        : colors
-                                                            .onSurfaceVariant,
-                                                  ),
-                                            ),
-                                          ],
                                         ),
                                       ),
-                                     ],
-                                   ),
-                                 ),
-                               ),
-                             ),
-                           ),
-                          );
-                        },
+                                    ),
+                                  );
+                                },
+                              ),
                       ),
-                    ),
-                        Container(
+                      Container(
                         padding: Spacing.paddingLg,
                         decoration: BoxDecoration(
                           color: colors.card,

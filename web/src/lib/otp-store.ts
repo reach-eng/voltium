@@ -112,14 +112,15 @@ export async function generateOtp(rawPhone: string): Promise<string> {
   const resendCheck = await canResendOtp(phone);
   if (!resendCheck.allowed) throw new Error(resendCheck.error);
 
-  // PR-112 (SEC PR-5): the dev OTP shortcut (`'111111'`) only fires when the
-  // canonical APP_ENV is `development`. APP_ENV=staging always uses a real
-  // random OTP even if ENABLE_TEST_OTP is on, so a misconfigured prod with
-  // APP_ENV=staging + ENABLE_TEST_OTP=true cannot leak the dev shortcut.
+  // PR-112 (SEC PR-5) / AUDIT FIX (N-1): the dev OTP shortcut (`'111111'`)
+  // requires BOTH canonical APP_ENV and NODE_ENV to be exactly
+  // 'development'. The previous gate accepted `ENABLE_TEST_OTP=true` alone,
+  // enabling a universal master OTP for ANY phone number in staging — or in
+  // prod where APP_ENV was left unset (env.ts defaults it to development).
+  // Total account takeover via one env var.
   const isDev =
-    (process.env.APP_ENV === 'development' ||
-      process.env.NODE_ENV === 'development' ||
-      process.env.ENABLE_TEST_OTP === 'true') &&
+    process.env.APP_ENV === 'development' &&
+    process.env.NODE_ENV === 'development' &&
     process.env.ENABLE_TEST_OTP !== 'false';
   const code = isDev ? '111111' : generateRandomOtp();
 
@@ -210,7 +211,14 @@ export async function verifyOtp(
       return { valid: true };
     }
 
-    const valid = hashOtp(code, entry.salt) === entry.codeHash;
+    // AUDIT FIX (N-15): compare hashes in constant time. The plain string
+    // equality leaked OTP-guessing timing on the DB path (the memory path
+    // already used timingSafeEqual).
+    const computedHash = hashOtp(code, entry.salt);
+    const aBuf = Buffer.from(computedHash, 'utf8');
+    const bBuf = Buffer.from(entry.codeHash, 'utf8');
+    const valid =
+      aBuf.length === bBuf.length && crypto.timingSafeEqual(aBuf, bBuf);
     if (!valid) {
       const updated = await db.otpCode.update({
         where: { phone },

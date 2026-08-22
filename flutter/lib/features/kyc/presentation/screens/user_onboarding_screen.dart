@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -185,8 +186,21 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   final _bankAccountController = TextEditingController();
   final _bankIfscController = TextEditingController();
 
+  /// AUDIT FIX: debounce the encrypted cache write. The previous version
+  /// fired `KycRepository.saveFormCache` (JSON encode + encrypted disk
+  /// write) on EVERY keystroke.
+  Timer? _cacheDebounce;
+
+  /// AUDIT FIX: source-path → uploaded-URL ledger that survives across
+  /// submit attempts so a retry after a partial upload failure only
+  /// uploads the missing documents.
+  final Map<String, String> _uploadedUrlLedger = {};
+
   void _onFieldChanged() {
-    _saveCache();
+    _cacheDebounce?.cancel();
+    _cacheDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _saveCache();
+    });
     if (mounted) setState(() {});
   }
 
@@ -217,6 +231,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
     KycRepository.loadFormCache(riderId: riderId).then((cacheData) {
+      // AUDIT FIX: guard against use-after-dispose — the async secure-
+      // storage read can resolve after this screen has been popped.
+      if (!mounted) return;
       if (cacheData == null) return;
       _nameController.text = cacheData['name'] ?? '';
       _emailController.text = cacheData['email'] ?? '';
@@ -250,7 +267,14 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     _bankIfscController.addListener(_onFieldChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (kDebugMode && AppConstants.isTestMode) {
+      // PR-1 (F-001): the auto-fill is gated on the build-time
+      // `KYC_TEST_AUTOFILL` dart-define, NOT on `AppConstants.isTestMode`.
+      // The previous gate let a debug-built sideload with
+      // `isTestModeOverride = true` skip form completeness and submit
+      // mock URLs. The new gate requires an explicit
+      // `--dart-define=KYC_TEST_AUTOFILL=true` at build time and is
+      // additionally restricted to `kDebugMode`.
+      if (kDebugMode && AppConstants.kycTestAutofill) {
         if (_dobController.text.isEmpty) _dobController.text = '2000-01-01';
         if (_nameController.text.isEmpty) _nameController.text = 'Test Rider';
         if (_emailController.text.isEmpty) {
@@ -300,6 +324,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     _bankAccountController.removeListener(_onFieldChanged);
     _bankIfscController.removeListener(_onFieldChanged);
 
+    _cacheDebounce?.cancel();
     _nameController.dispose();
     _emailController.dispose();
     _addressController.dispose();
@@ -415,24 +440,12 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       _saveCache();
     }
   }
-
-  bool get _isFormComplete {
-    final state = ref.read(userOnboardingNotifierProvider);
-    return _nameController.text.trim().isNotEmpty &&
-        _dobController.text.trim().isNotEmpty &&
-        FormValidators.email(_emailController.text.trim()) == null &&
-        _fatherNameController.text.trim().isNotEmpty &&
-        _motherNameController.text.trim().isNotEmpty &&
-        _addressController.text.trim().isNotEmpty &&
-        state.aadhaarFrontUploaded &&
-        state.aadhaarBackUploaded &&
-        state.panUploaded &&
-        state.selfieUploaded &&
-        state.signatureUploaded &&
-        _bankNameController.text.trim().isNotEmpty &&
-        FormValidators.bankAccount(_bankAccountController.text) == null &&
-        FormValidators.ifsc(_bankIfscController.text) == null;
-  }
+  // PR-1 (F-001): removed the unused `_isFormComplete` getter. The
+  // form-completeness logic is now inline in `_handleNext` (the
+  // shared `final missing = <String>[];` block) and per-step in
+  // `_canProceedCurrentStep` (the `switch` on `state.currentStep`).
+  // Both paths read the controllers + state directly, so the old
+  // getter is dead.
 
   void _showBankDetailsDialog() {
     final l10n = AppLocalizations.of(context);
@@ -595,8 +608,12 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   Future<void> _handleNext() async {
     final state = ref.read(userOnboardingNotifierProvider);
     if (state.isUploading) return;
-    final isTestMode = AppConstants.isTestMode;
-    if (!isTestMode && !_isFormComplete) {
+    // PR-1 (F-001): the form-completeness check is now unconditional. The
+    // previous `if (!isTestMode)` gate let a debug-built sideload with
+    // `isTestModeOverride = true` submit an empty KYC form; the new
+    // check is the same one the production rider hits. The integration-
+    // test harness drives each step with the form fully populated.
+    {
       final missing = <String>[];
       if (_nameController.text.trim().isEmpty) missing.add('Name');
       if (_dobController.text.trim().isEmpty) missing.add('DOB');
@@ -621,8 +638,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         missing.add('Bank Details');
       }
 
-      _showError('Please complete: ${missing.join(', ')}');
-      return;
+      if (missing.isNotEmpty) {
+        _showError('Please complete: ${missing.join(', ')}');
+        return;
+      }
     }
 
     final riderId = ref.read(riderProvider).riderId;
@@ -647,7 +666,13 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       String selfieUrl = '';
       String signatureUrl = '';
 
-      if (isTestMode) {
+      // PR-1 (F-001): the mock-URL branch is gated on the build-time
+      // `KYC_TEST_AUTOFILL` dart-define, NOT on `AppConstants.isTestMode`.
+      // The previous gate let a debug-built sideload submit empty KYC
+      // (no Aadhaar, no PAN, no selfie, no signature) and have the server
+      // accept `mock_url_*.png` references. The new gate requires an
+      // explicit `--dart-define=KYC_TEST_AUTOFILL=true` at build time.
+      if (AppConstants.kycTestAutofill) {
         aadhaarFrontUrl = 'mock_url_front.png';
         aadhaarBackUrl = 'mock_url_back.png';
         panUrl = 'mock_url_pan.png';
@@ -679,23 +704,51 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         int completed = 0;
         final results = <String, String>{};
 
+        // AUDIT FIX (partial-submission recovery): each upload task
+        // returns '' on failure instead of throwing, so one failed
+        // document no longer discards the URLs of documents that already
+        // uploaded. `_uploadedUrlLedger` persists across submit attempts:
+        // a retry skips documents whose URL is already known.
+        Map<String, String?> sourcePaths = {
+          'Aadhaar Front': state.aadhaarFrontPath,
+          'Aadhaar Back': state.aadhaarBackPath,
+          'PAN': state.panPath,
+          'Selfie': state.selfiePath,
+          'Signature': state.signaturePath,
+        };
+
         final uploadTasks = tasks.entries.map((entry) async {
+          final srcPath = sourcePaths[entry.key];
+          if (srcPath != null && _uploadedUrlLedger[srcPath] != null) {
+            completed++;
+            return MapEntry(entry.key, _uploadedUrlLedger[srcPath]!);
+          }
           try {
             final url = await entry.value();
             completed++;
+            if (srcPath != null) _uploadedUrlLedger[srcPath] = url;
             ref.read(userOnboardingNotifierProvider.notifier).setUploading(
                   true,
                   'Uploaded $completed of ${tasks.length}',
                 );
             return MapEntry(entry.key, url);
           } catch (e) {
-            throw Exception(
-                'Failed to upload ${entry.key}: ${_formatKycError(e)}');
+            appDebug('Upload failed for ${entry.key}: $e', tag: 'KYC');
+            return const MapEntry('', '');
           }
         });
         final pairs = await Future.wait(uploadTasks);
+        var failedDoc = '';
         for (final p in pairs) {
+          if (p.key.isEmpty) continue;
+          if (p.value.isEmpty) {
+            failedDoc = p.key;
+            continue;
+          }
           results[p.key] = p.value;
+        }
+        if (failedDoc.isNotEmpty) {
+          throw Exception('Failed to upload $failedDoc');
         }
 
         aadhaarFrontUrl = results['Aadhaar Front'] ?? '';
@@ -897,7 +950,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   bool get _canProceedCurrentStep {
-    if (AppConstants.isTestMode) return true;
+    // PR-1 (F-001): the test-mode short-circuit was removed. Per-step
+    // gating now always derives from the real form state. The
+    // integration-test harness drives each step with the form fully
+    // populated; the screen no longer lies about the rider's actual
+    // progress.
     final state = ref.read(userOnboardingNotifierProvider);
     switch (state.currentStep) {
       case 1:

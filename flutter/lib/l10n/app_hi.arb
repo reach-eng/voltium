@@ -768,5 +768,9 @@
   "txtlockedOverlayVerificationFailed": "सत्यापन विफल। कृपया अपना नेटवर्क जाँचें और पुनः प्रयास करें।",
   "txtlockedOverlayAccountLocked": "वोल्टियम द्वारा आपका खाता लॉक कर दिया गया है।",
   "txtlockedOverlayContactSupportToUnlock": "अनलॉक करने के लिए कृपया सपोर्ट से संपर्क करें।"
+,
+  "txtclearReadNotifications": "पढ़ी गई सूचनाएँ हटाएँ",
+  "txtdeleteAllReadNotificationsConfirm": "सभी पढ़ी गई सूचनाएँ हटाएँ? इसे वापस नहीं किया जा सकता।",
+  "txtchooseNewLockPassword": "नया 4-अंकों का लॉक पासवर्ड चुनें।"
 }
 

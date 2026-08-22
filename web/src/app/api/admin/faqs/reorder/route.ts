@@ -14,7 +14,7 @@ const reorderFaqSchema = z.object({
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'faq_manage')) return adminForbidden();
+  if (!hasPermission(session, 'faq_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

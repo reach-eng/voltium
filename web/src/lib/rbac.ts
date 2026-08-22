@@ -27,7 +27,11 @@ export async function requireAdmin(): Promise<SessionPayload | null> {
 export async function requirePermission(permission: Permission): Promise<SessionPayload | null> {
   const session = await getAdminSession();
   if (!session) return null;
-  if (!hasPermission(session.adminRole || '', permission)) {
+  // AUDIT FIX (N-5): pass the SESSION OBJECT, not the bare role string.
+  // The string form ignored per-admin `adminPermissions`, so explicit
+  // grants were silently dropped (and revocations bypassed) at every
+  // route that used this helper.
+  if (!hasPermission(session, permission)) {
     return null;
   }
   return session;

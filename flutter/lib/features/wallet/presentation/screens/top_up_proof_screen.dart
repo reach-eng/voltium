@@ -13,13 +13,18 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 
 class TopUpProofScreen extends ConsumerStatefulWidget {
   final int amount;
   final VoidCallback? onBack;
   final VoidCallback? onEditAmount;
   final Function(File)? onImageSelected;
-  final Function(File image, String? method, String? upiRef)? onSubmit;
+  // AUDIT FIX 2026-08-22 (PROOF-a): image is nullable — the instant-pay
+  // flow legitimately submits with no photo, and the old non-nullable
+  // signature forced callers to fabricate a file path for a file that
+  // doesn't exist (upload then always failed in release).
+  final Function(File? image, String? method, String? upiRef)? onSubmit;
 
   const TopUpProofScreen({
     super.key,
@@ -144,6 +149,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     );
 
     if (proceed == true) {
+      // AUDIT FIX 2026-08-22 (PROOF-b): the dialog future resolves after
+      // an await — bail out if this State left the tree in the meantime.
+      if (!mounted) return;
       setState(() => _selectedPaymentMode = PaymentMode.instant);
     }
   }
@@ -170,128 +178,145 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedPaymentMode = PaymentMode.cash),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedPaymentMode == PaymentMode.cash
-                          ? colors.primarySurface
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                // AUDIT FIX 2026-08-22 (PROOF-g): expose the mode
+                // selectors to accessibility services.
+                child: Semantics(
+                  button: true,
+                  selected: _selectedPaymentMode == PaymentMode.cash,
+                  label: 'Cash payment mode',
+                  child: GestureDetector(
+                    onTap: () =>
+                        setState(() => _selectedPaymentMode = PaymentMode.cash),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
                         color: _selectedPaymentMode == PaymentMode.cash
-                            ? AppColors.primaryLight
-                            : colors.outlineVariant,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.payments_outlined,
+                            ? colors.primarySurface
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
                           color: _selectedPaymentMode == PaymentMode.cash
                               ? AppColors.primaryLight
-                              : colors.onSurfaceMuted,
-                          size: 22,
+                              : colors.outlineVariant,
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Cash',
-                          style: AppTypography.labelMedium.copyWith(
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.payments_outlined,
                             color: _selectedPaymentMode == PaymentMode.cash
                                 ? AppColors.primaryLight
-                                : colors.onSurface,
+                                : colors.onSurfaceMuted,
+                            size: 22,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Cash',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: _selectedPaymentMode == PaymentMode.cash
+                                  ? AppColors.primaryLight
+                                  : colors.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() => _selectedPaymentMode = PaymentMode.upi);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedPaymentMode == PaymentMode.upi
-                          ? colors.primarySurface
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                child: Semantics(
+                  button: true,
+                  selected: _selectedPaymentMode == PaymentMode.upi,
+                  label: 'UPI payment mode',
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _selectedPaymentMode = PaymentMode.upi);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
                         color: _selectedPaymentMode == PaymentMode.upi
-                            ? AppColors.primaryLight
-                            : colors.outlineVariant,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.qr_code_2,
+                            ? colors.primarySurface
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
                           color: _selectedPaymentMode == PaymentMode.upi
                               ? AppColors.primaryLight
-                              : colors.onSurfaceMuted,
-                          size: 22,
+                              : colors.outlineVariant,
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'UPI',
-                          style: AppTypography.labelMedium.copyWith(
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.qr_code_2,
                             color: _selectedPaymentMode == PaymentMode.upi
                                 ? AppColors.primaryLight
-                                : colors.onSurface,
+                                : colors.onSurfaceMuted,
+                            size: 22,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'UPI',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: _selectedPaymentMode == PaymentMode.upi
+                                  ? AppColors.primaryLight
+                                  : colors.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: GestureDetector(
-                  key: const Key('instantPaymentOption'),
-                  onTap: _showInstantPaymentAlert,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _selectedPaymentMode == PaymentMode.instant
-                          ? colors.primarySurface
-                          : colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                child: Semantics(
+                  button: true,
+                  selected: _selectedPaymentMode == PaymentMode.instant,
+                  label: 'Instant payment mode',
+                  child: GestureDetector(
+                    key: const Key('instantPaymentOption'),
+                    onTap: _showInstantPaymentAlert,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
                         color: _selectedPaymentMode == PaymentMode.instant
-                            ? AppColors.primaryLight
-                            : colors.outlineVariant,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.bolt_rounded,
+                            ? colors.primarySurface
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
                           color: _selectedPaymentMode == PaymentMode.instant
                               ? AppColors.primaryLight
-                              : colors.onSurfaceMuted,
-                          size: 22,
+                              : colors.outlineVariant,
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Instant',
-                          style: AppTypography.labelMedium.copyWith(
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.bolt_rounded,
                             color: _selectedPaymentMode == PaymentMode.instant
                                 ? AppColors.primaryLight
-                                : colors.onSurface,
+                                : colors.onSurfaceMuted,
+                            size: 22,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Instant',
+                            style: AppTypography.labelMedium.copyWith(
+                              color: _selectedPaymentMode == PaymentMode.instant
+                                  ? AppColors.primaryLight
+                                  : colors.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -357,11 +382,25 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         ? _upiRefCtrl.text.trim()
         : null;
 
-    final fileToSubmit = _imageFile ??
-        File('${Directory.systemTemp.path}/instant_payment_receipt.png');
-
+    // AUDIT FIX 2026-08-22 (PROOF-a): pass the image through as-is —
+    // null when the rider hasn't attached one (instant pay). The old
+    // code fabricated `.../instant_payment_receipt.png` for a file that
+    // never existed, so the upload always threw in release builds.
     try {
-      await widget.onSubmit?.call(fileToSubmit, methodStr, refVal);
+      await widget.onSubmit?.call(_imageFile, methodStr, refVal);
+    }
+    // AUDIT FIX 2026-08-22 (PROOF-e): `_submit` previously had a
+    // `finally` but no `catch` — an unhandled throw left the spinner
+    // reset but surfaced nothing to the rider.
+    catch (_) {
+      if (mounted) {
+        Toast.error(
+          context,
+          AppLocalizations.of(context)
+                  ?.txtfailedToSubmitDeposit('connection error') ??
+              'Couldn\'t submit your payment. Please check your connection and try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -501,7 +540,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
 
   Widget _buildUpiDetailsCard() {
     final colors = AppColors.of(context);
-    const companyUpiId = 'payments.voltium@icici';
+    // AUDIT FIX 2026-08-22 (PROOF-c): moved from an in-file literal to
+    // AppConstants.companyUpiVpa (see TODO(config) there).
+    const companyUpiId = AppConstants.companyUpiVpa;
 
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
@@ -687,7 +728,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
+                // AUDIT FIX 2026-08-22 (PROOF-f): shared formatter
+                // replaces the inline regex comma grouping.
+                MoneyFormat.rupees(widget.amount),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -951,14 +994,17 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
+                  // AUDIT FIX 2026-08-22 (PROOF-d): the client computes an
+                  // exact fee locally but the gateway is the source of
+                  // truth — label it an estimate.
                   isRiderBearer
-                      ? 'Gateway Fee ($_extraFeePercent%)'
+                      ? 'Gateway Fee (up to $_extraFeePercent%)'
                       : 'Gateway Fee',
                   style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
                       fontSize: 14)),
               Text(
-                isRiderBearer ? '+₹$fee' : '₹0 (Paid by Voltium)',
+                isRiderBearer ? '+₹$fee (est.)' : '₹0 (Paid by Voltium)',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w600,
                   color: isRiderBearer ? AppColors.warning : AppColors.success,
@@ -978,11 +1024,15 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                       fontWeight: FontWeight.bold,
                       color: AppColors.of(context).onSurface,
                       fontSize: 15)),
-              Text('₹$total',
-                  style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primaryLight,
-                      fontSize: 18)),
+              Text(
+                // AUDIT FIX 2026-08-22 (PROOF-d): total follows the
+                // estimated fee — keep the label honest.
+                '₹$total (est.)',
+                style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryLight,
+                    fontSize: 18),
+              ),
             ],
           ),
         ],
@@ -1032,44 +1082,65 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     final total = widget.amount + fee;
     final colors = AppColors.of(context);
 
-    return GestureDetector(
-      onTap: canSubmit ? _submit : null,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: canSubmit ? AppGradients.primary : null,
-          color: canSubmit ? null : colors.outlineVariant,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          boxShadow: canSubmit
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
+    // AUDIT FIX 2026-08-22 (PROOF-g): submit is a real button for
+    // accessibility services.
+    return Semantics(
+      button: true,
+      enabled: canSubmit,
+      label: isInstant
+          ? 'Proceed to instant pay, estimated total ₹$total'
+          : 'Submit proof',
+      child: GestureDetector(
+        onTap: canSubmit
+            ? _submit
+            : () {
+                // AUDIT FIX: a disabled submit used to be a silent no-op —
+                // tell the rider WHY (missing proof) when they tap.
+                if (!isInstant && _imageFile == null && mounted) {
+                  Toast.warning(
+                    context,
+                    AppLocalizations.of(context)!.txtpleaseUploadPaymentProof,
+                  );
+                }
+              },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 60,
+          decoration: BoxDecoration(
+            gradient: canSubmit ? AppGradients.primary : null,
+            color: canSubmit ? null : colors.outlineVariant,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            boxShadow: canSubmit
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: _isUploading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text(
+                    isInstant
+                        ? 'Proceed to Instant Pay (₹$total)'
+                        : 'Submit Proof',
+                    style: AppTypography.titleSmall.copyWith(
+                        letterSpacing: 0.5,
+                        color:
+                            canSubmit ? Colors.white : colors.onSurfaceMuted),
                   ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: _isUploading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
-                  ),
-                )
-              : Text(
-                  isInstant
-                      ? 'Proceed to Instant Pay (₹$total)'
-                      : 'Submit Proof',
-                  style: AppTypography.titleSmall.copyWith(
-                      letterSpacing: 0.5,
-                      color: canSubmit ? Colors.white : colors.onSurfaceMuted),
-                ),
+          ),
         ),
       ),
     );

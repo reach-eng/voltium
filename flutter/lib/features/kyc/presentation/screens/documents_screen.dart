@@ -87,9 +87,19 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                     child: InteractiveViewer(
                       minScale: 0.8,
                       maxScale: 3.0,
+                      // AUDIT FIX (MINOR, 4f): errorBuilder for deleted/
+                      // corrupt cached files + decode at a bounded width.
                       child: Image.file(
                         File(localPath),
                         fit: BoxFit.contain,
+                        cacheWidth: 512,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: colors.onSurfaceMuted,
+                            size: 48,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -106,7 +116,18 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                           try {
                             await launchUrl(uri,
                                 mode: LaunchMode.externalApplication);
-                          } catch (_) {}
+                          } catch (_) {
+                            // AUDIT FIX (MINOR, 4d): surface the failure
+                            // like the network path instead of swallowing it.
+                            if (context.mounted) {
+                              Toast.error(
+                                context,
+                                AppLocalizations.of(context)
+                                        ?.txtunableToOpenDocument ??
+                                    'Unable to open document',
+                              );
+                            }
+                          }
                         },
                         icon: const Icon(Icons.open_in_new, size: 16),
                         label: Text(l10n?.txtopenExternal ?? 'Open External'),
@@ -153,6 +174,11 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
     String? cacheKey,
     bool isVideo = false,
   }) async {
+    if (url == null || url.isEmpty) return;
+
+    // AUDIT FIX (MINOR, 4c): analytics only fires once we know there is a
+    // document to view — previously it fired before this early-return,
+    // inflating `document_viewed` counts for missing URLs.
     HapticService.light();
     PostHogService.capture('document_viewed', properties: {
       'title': title,
@@ -160,12 +186,12 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
       'has_cache_key': cacheKey != null,
     });
 
-    if (url == null || url.isEmpty) return;
-
     // 1. Prefer local cached file if available (from onboarding upload).
     if (cacheKey != null) {
       final localPath = await DocumentLocalCache.get(cacheKey);
-      if (localPath != null && File(localPath).existsSync()) {
+      // AUDIT FIX (MINOR, 4h): async exists() instead of blocking
+      // existsSync() on the UI thread.
+      if (localPath != null && await File(localPath).exists()) {
         final lower = localPath.toLowerCase();
         final isImage = lower.endsWith('.jpg') ||
             lower.endsWith('.jpeg') ||
@@ -186,6 +212,14 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
           return;
         } catch (_) {
+          if (context.mounted) {
+            Toast.error(
+              context,
+              AppLocalizations.of(context)?.txtunableToOpenDocument ??
+                  'Unable to open document',
+            );
+            return;
+          }
           // Fall through to network download below.
         }
       }
@@ -244,6 +278,9 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
       body: Consumer(
         builder: (context, ref, child) {
           final rider = ref.watch(riderProvider).rider;
+          // AUDIT FIX (MINOR, 4b): doc-row badges reflect the real KYC
+          // status instead of a hardcoded "Verified & Active".
+          final kycStatusLabel = rider?.kycStatus.name ?? 'PENDING';
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
@@ -298,6 +335,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                   ),
                 ],
                 150,
+                kycStatus: kycStatusLabel,
               ),
               const SizedBox(height: 32),
               FadeUpWidget(
@@ -354,6 +392,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                   ),
                 ],
                 450,
+                kycStatus: kycStatusLabel,
               ),
               const SizedBox(height: 32),
               FadeUpWidget(
@@ -375,8 +414,25 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
   Widget _buildVerificationStatusCard(BuildContext context, String status) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
-    final bool isApproved = status.toUpperCase() == 'APPROVED' ||
-        status.toUpperCase() == 'VERIFIED';
+    final normalized = status.toUpperCase();
+    final bool isApproved =
+        normalized == 'APPROVED' || normalized == 'VERIFIED';
+    // AUDIT FIX (MINOR, 4a): explicit REJECTED branch — it previously fell
+    // through to the "Under Review" copy, which is misleading for a rider
+    // whose KYC was rejected.
+    final bool isRejected = normalized == 'REJECTED';
+    final String statusTitle = isApproved
+        ? (l10n?.txtverifiedAndSecure ?? 'Verified & Secure')
+        : isRejected
+            ? (l10n?.txtkycRejected ?? 'KYC REJECTED')
+            : (l10n?.txtunderReview ?? 'Under Review');
+    final String statusDescription = isApproved
+        ? (l10n?.txtidentityGuarantorVerifiedDesc ??
+            'Your identity and guarantor information have been verified. You can view or download copies of your documents below.')
+        : isRejected
+            ? 'Your verification was not approved. Please review the rejection remarks and re-submit your documents, or contact support.'
+            : (l10n?.txtverificationInProgressDesc ??
+                'Your verification is in progress. Some documents may still be under review by our safety team.');
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
@@ -405,12 +461,17 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: colors.successLight,
+                      color:
+                          isRejected ? colors.errorLight : colors.successLight,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.shield_outlined,
-                      color: colors.success,
+                      isRejected
+                          ? Icons.gpp_bad_outlined
+                          : Icons.shield_outlined,
+                      color: isRejected
+                          ? colors.errorLightForeground
+                          : colors.success,
                       size: 20,
                     ),
                   ),
@@ -428,10 +489,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isApproved
-                            ? (l10n?.txtverifiedAndSecure ??
-                                'Verified & Secure')
-                            : (l10n?.txtunderReview ?? 'Under Review'),
+                        statusTitle,
                         style: AppTypography.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                           color: colors.onSurface,
@@ -445,7 +503,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: colors.successLight,
+                  color: isRejected ? colors.errorLight : colors.successLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -453,7 +511,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                   widthFactor: isApproved ? 1.0 : 0.6,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colors.success,
+                      color: isRejected ? colors.error : colors.success,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -463,11 +521,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            isApproved
-                ? (l10n?.txtidentityGuarantorVerifiedDesc ??
-                    'Your identity and guarantor information have been verified. You can view or download copies of your documents below.')
-                : (l10n?.txtverificationInProgressDesc ??
-                    'Your verification is in progress. Some documents may still be under review by our safety team.'),
+            statusDescription,
             style: AppTypography.bodySmall.copyWith(
               color: colors.onSurfaceMuted,
               height: 1.5,
@@ -514,11 +568,16 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
   Widget _buildDocList(
     BuildContext context,
     List<_DocModel> docs,
-    int baseDelay,
-  ) {
+    int baseDelay, {
+    String kycStatus = 'PENDING',
+  }) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
-    final filtered = docs.where((d) => d.url != null).toList();
+    final filtered =
+        // AUDIT FIX (MINOR, 4e): same non-empty predicate as the header
+        // count (_countDocs) — a blank-string URL previously rendered a row
+        // that could not be opened.
+        docs.where((d) => d.url != null && d.url!.isNotEmpty).toList();
     if (filtered.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -548,17 +607,29 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
           if (index > 0) const SizedBox(height: 12),
           FadeUpWidget(
             delay: baseDelay + (index * 50),
-            child: _buildDocItem(context, filtered[index]),
+            child:
+                _buildDocItem(context, filtered[index], kycStatus: kycStatus),
           ),
         ],
       ],
     );
   }
 
-  Widget _buildDocItem(BuildContext context, _DocModel doc) {
+  Widget _buildDocItem(
+    BuildContext context,
+    _DocModel doc, {
+    String kycStatus = 'PENDING',
+  }) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final bool isVideo = doc.isVideo;
+    final normalized = kycStatus.toUpperCase();
+    final bool isRejected = normalized == 'REJECTED';
+    // AUDIT FIX (MINOR, 4b): the badge previously hardcoded
+    // "Verified & Active" regardless of the rider's actual KYC status.
+    final String badgeLabel = isRejected
+        ? (l10n?.wallet_statusRejected ?? 'REJECTED')
+        : (l10n?.txtverifiedAndActive ?? 'Verified & Active');
 
     return InkWell(
       onTap: () => _viewDocument(
@@ -620,13 +691,17 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                         height: 6,
                         width: 6,
                         decoration: BoxDecoration(
-                          color: isVideo ? colors.warning : colors.success,
+                          color: isRejected
+                              ? colors.error
+                              : isVideo
+                                  ? colors.warning
+                                  : colors.success,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        l10n?.txtverifiedAndActive ?? 'Verified & Active',
+                        badgeLabel,
                         style: AppTypography.bodySmall.copyWith(
                           color: colors.onSurfaceMuted,
                         ),
@@ -702,29 +777,38 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                InkWell(
-                  onTap: () {
-                    HapticService.light();
-                    PostHogService.capture('documents_support_clicked');
-                    AppNavigator.push(context, const SupportCenterScreen());
-                  },
-                  child: Row(
-                    children: [
-                      Text(
-                        l10n?.txtcontactSupport ?? 'CONTACT SUPPORT',
-                        style: AppTypography.labelSmall.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
-                          color: AppColors.primary,
-                        ),
+                // AUDIT FIX (MINOR, 4g): enforce a 48dp-minimum touch
+                // target for the CONTACT SUPPORT action.
+                SizedBox(
+                  height: 48,
+                  child: InkWell(
+                    onTap: () {
+                      HapticService.light();
+                      PostHogService.capture('documents_support_clicked');
+                      AppNavigator.push(context, const SupportCenterScreen());
+                    },
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n?.txtcontactSupport ?? 'CONTACT SUPPORT',
+                            style: AppTypography.labelSmall.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.open_in_new,
+                            color: AppColors.primary,
+                            size: 14,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.open_in_new,
-                        color: AppColors.primary,
-                        size: 14,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],

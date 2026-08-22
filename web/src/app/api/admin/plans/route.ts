@@ -26,7 +26,7 @@ function checkPlansPermission(
   session: any,
   action: 'view' | 'create' | 'update' | 'delete'
 ): boolean {
-  return hasPermission(session.adminRole || '', PERM_MAP[action]);
+  return hasPermission(session, PERM_MAP[action]);
 }
 
 export async function GET(req: NextRequest) {

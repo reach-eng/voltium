@@ -109,7 +109,9 @@ void main() {
 
       // About Section
       expect(find.byKey(const Key('appVersionTile')), findsAtLeastNWidgets(1));
-      expect(find.text('v2.1.0'), findsAtLeastNWidgets(1));
+      // AUDIT FIX (2026-08-22): version now comes from AppInfo (pubspec
+      // 1.0.0+1) instead of the stale hardcoded 'v2.1.0'.
+      expect(find.text('v1.0.0'), findsAtLeastNWidgets(1));
       expect(find.byKey(const Key('rateUsTile')), findsAtLeastNWidgets(1));
 
       // Account / Danger Zone

@@ -106,6 +106,22 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
 }
 
 /**
+ * AUDIT FIX (N-8): single strict gate for impersonation-header trust.
+ *
+ * The old check (`APP_ENV !== 'production'`) FAILED OPEN when APP_ENV was
+ * unset — env.ts defaults it to 'development', so a prod deploy that forgot
+ * APP_ENV would trust unauthenticated `x-rider-id` / `x-rider-phone` /
+ * `x-admin-id` headers. Trust now requires BOTH env vars to be EXACTLY
+ * 'development' (mirrors the N-1 master-OTP gate).
+ */
+function trustImpersonationHeaders(): boolean {
+  return (
+    process.env.APP_ENV === 'development' &&
+    process.env.NODE_ENV === 'development'
+  );
+}
+
+/**
  * Get the authenticated rider's database ID.
  *
  * Priority:
@@ -113,12 +129,7 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
  * 2. Direct cookie read (fallback when called outside middleware context)
  */
 export async function getRiderId(request?: Request): Promise<string | null> {
-  // Only trust headers in non-production envs (set by middleware from
-  // verified cookie). Use APP_ENV (the canonical "where am I" env var)
-  // rather than NODE_ENV (the Next.js optimization flag) — a staging
-  // deploy with NODE_ENV=development for hot-reload would otherwise
-  // trust the impersonation header in prod-like traffic.
-  if (process.env.APP_ENV !== 'production' && request) {
+  if (trustImpersonationHeaders() && request) {
     const headerId = request.headers.get('x-rider-id');
     if (headerId) return headerId;
   }
@@ -132,7 +143,7 @@ export async function getRiderId(request?: Request): Promise<string | null> {
  * Get the authenticated rider's phone number.
  */
 export async function getRiderPhone(request?: Request): Promise<string | null> {
-  if (process.env.APP_ENV !== 'production' && request) {
+  if (trustImpersonationHeaders() && request) {
     const headerPhone = request.headers.get('x-rider-phone');
     if (headerPhone) return headerPhone;
   }
@@ -145,7 +156,7 @@ export async function getRiderPhone(request?: Request): Promise<string | null> {
  * Get the authenticated admin's database ID.
  */
 export async function getAdminId(request?: Request): Promise<string | null> {
-  if (process.env.APP_ENV !== 'production' && request) {
+  if (trustImpersonationHeaders() && request) {
     try {
       const url = new URL(request.url);
       // P2-20: EXACT path match only. The old `pathname.includes('/impersonate')`

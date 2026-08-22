@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
@@ -171,7 +172,9 @@ class TransactionListTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isCredit ? '+' : '-'}\u20B9${amount.abs().toStringAsFixed(0)}',
+                // AUDIT FIX 2026-08-22 (WALLET-f): shared formatter
+                // (rounds + groups) instead of toStringAsFixed(0).
+                '${isCredit ? '+' : '-'}${MoneyFormat.rupees(amount.abs())}',
                 style: AppTypography.bodyMedium
                     .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(
@@ -691,7 +694,11 @@ class WalletActionButtons extends StatelessWidget {
 // ── TransactionHistorySection ───────────────────────────────────────────────
 
 /// Recent-transaction list with filter chips.
-class TransactionHistorySection extends StatelessWidget {
+///
+/// AUDIT FIX 2026-08-22 (WALLET-a): converted to a [ConsumerWidget] so it
+/// can watch `walletProvider.lastError` — a failed refresh now renders an
+/// error banner with retry instead of a misleading "No transactions yet".
+class TransactionHistorySection extends ConsumerWidget {
   final List<TransactionModel> transactions;
   final String selectedFilter;
   final ValueChanged<String> onFilterChanged;
@@ -703,9 +710,24 @@ class TransactionHistorySection extends StatelessWidget {
     required this.onFilterChanged,
   });
 
+  void _openHistory(BuildContext context) {
+    final riderId =
+        ProviderScope.containerOf(context).read(riderProvider).riderId ?? '';
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => HistoryScreen(riderId: riderId),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
+    // AUDIT FIX 2026-08-22 (WALLET-a): failed refreshes previously fell
+    // through to the "No transactions yet" empty state.
+    final lastError = ref.watch(walletProvider.select((p) => p.lastError));
+    final isRefreshing =
+        ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
 
     final filtered = transactions.where((tx) {
       if (selectedFilter == 'All') return true;
@@ -760,27 +782,26 @@ class TransactionHistorySection extends StatelessWidget {
                 style: AppTypography.labelLarge
                     .copyWith(color: AppColors.of(context).onSurfaceMuted),
               ),
-              InkWell(
-                key: const Key('seeAllTransactionsButton'),
-                onTap: () {
-                  final riderId = ProviderScope.containerOf(context)
-                          .read(riderProvider)
-                          .riderId ??
-                      '';
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => HistoryScreen(riderId: riderId),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    'See All',
-                    style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.primaryLight,
-                      fontWeight: FontWeight.w600,
+              // AUDIT FIX 2026-08-22 (WALLET-e): ≥48dp touch target
+              // (was ~22px of tappable text).
+              Semantics(
+                button: true,
+                label: 'See all transactions',
+                child: InkWell(
+                  key: const Key('seeAllTransactionsButton'),
+                  onTap: () => _openHistory(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(minWidth: 48, minHeight: 48),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      'See All',
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.primaryLight,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -828,23 +849,75 @@ class TransactionHistorySection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // AUDIT FIX 2026-08-22 (WALLET-a): error banner with retry.
+          if (lastError != null && !isRefreshing) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.errorLight,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline,
+                      size: 18, color: colors.errorLightForeground),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      lastError,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: colors.errorLightForeground,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    key: const Key('walletRetryButton'),
+                    onPressed: () {
+                      final riderId = ProviderScope.containerOf(context)
+                              .read(riderProvider)
+                              .riderId ??
+                          '';
+                      if (riderId.isNotEmpty) {
+                        ProviderScope.containerOf(context)
+                            .read(walletProvider.notifier)
+                            .refreshTransactions(riderId: riderId);
+                      }
+                    },
+                    child: Text(
+                      'Retry',
+                      style: AppTypography.labelMedium.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.errorLightForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (filtered.isEmpty)
+            // AUDIT FIX 2026-08-22 (WALLET-a): with an error present, the
+            // banner above replaces the "No transactions yet" copy.
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text(
-                  selectedFilter == 'All'
-                      ? 'No transactions yet'
-                      : 'No transactions matching filter',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: colors.onSurfaceMuted,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+                child: lastError != null
+                    ? const SizedBox.shrink()
+                    : Text(
+                        selectedFilter == 'All'
+                            ? 'No transactions yet'
+                            : 'No transactions matching filter',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: colors.onSurfaceMuted,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
               ),
             )
-          else
+          else ...[
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -854,6 +927,33 @@ class TransactionHistorySection extends StatelessWidget {
                 return TransactionListTile(tx: filtered[index]);
               },
             ),
+            // AUDIT FIX 2026-08-22 (WALLET-b): the recent list caps at 10
+            // — make the truncation explicit with a "View all" affordance
+            // linking to the history screen instead of silently hiding rows.
+            if (filtered.length > 10)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Center(
+                  child: Semantics(
+                    button: true,
+                    label:
+                        'View all ${filtered.length} transactions in history',
+                    child: TextButton.icon(
+                      key: const Key('viewAllTransactionsButton'),
+                      onPressed: () => _openHistory(context),
+                      icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                      label: Text(
+                        'View all (${filtered.length})',
+                        style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.primaryLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );

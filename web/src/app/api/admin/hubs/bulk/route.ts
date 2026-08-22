@@ -15,7 +15,7 @@ function errorMessage(error: unknown): string {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
+  if (!hasPermission(session, 'hubs_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(hubBulkActionSchema, body);

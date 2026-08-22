@@ -22,7 +22,7 @@ import {
 
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
-import { join } from 'path';
+import { join, resolve, sep, isAbsolute } from 'path';
 import { createHash, createCipheriv, randomBytes } from 'crypto';
 import {
   dumpDatabase,
@@ -54,6 +54,72 @@ function encryptFile(filePath: string, keyHex: string): void {
 
 function getBackupRoot(): string {
   return process.env.BACKUP_ROOT || join(process.cwd(), 'data', 'backups');
+}
+
+// ── AUDIT FIX (N-3): backup-path containment ────────────────────────────
+// Admin-controlled roots (schedule.primaryBackupRoot / BACKUP_ROOT setting)
+// used to flow straight into mkdirSync/rmSync — an arbitrary
+// write/delete primitive for any settings_manage admin. Every backup path
+// must now resolve INSIDE a sanctioned root: the default ./data/backups,
+// ./data, or the operator-controlled BACKUP_ROOT / BACKUP_SECONDARY_ROOT
+// env vars. Changing disks is an operator (env) decision, not an
+// in-app admin decision.
+
+function getAllowedBackupRoots(): string[] {
+  const roots = new Set<string>([
+    resolve(join(process.cwd(), 'data')),
+    resolve(join(process.cwd(), 'data', 'backups')),
+  ]);
+  if (process.env.BACKUP_ROOT) roots.add(resolve(process.env.BACKUP_ROOT));
+  if (process.env.BACKUP_SECONDARY_ROOT) {
+    roots.add(resolve(process.env.BACKUP_SECONDARY_ROOT));
+  }
+  return [...roots];
+}
+
+/**
+ * Resolves `candidate` and asserts it stays under one of the allowed
+ * backup roots. Returns the resolved absolute path or throws.
+ */
+export function assertBackupPathAllowed(candidate: string): string {
+  if (!candidate || candidate.includes('\0')) {
+    throw new Error('Invalid backup path');
+  }
+  // Only absolute paths are accepted for admin-configured roots; relative
+  // input would resolve against cwd and could escape via symlinks.
+  if (!isAbsolute(candidate)) {
+    throw new Error(`Backup path must be absolute: "${candidate}"`);
+  }
+  const resolved = resolve(candidate);
+  const allowed = getAllowedBackupRoots();
+  const contained = allowed.some(
+    root => resolved === root || resolved.startsWith(root + sep)
+  );
+  if (!contained) {
+    throw new Error(
+      `Backup path "${candidate}" is outside the allowed backup roots`
+    );
+  }
+  return resolved;
+}
+
+/**
+ * Defense-in-depth wrapper around rmSync for DB-derived backup paths:
+ * refuses to delete anything outside the allowed backup roots.
+ * Returns true when the delete was performed.
+ */
+export function safeRmBackupPath(path: string): boolean {
+  try {
+    const resolved = assertBackupPathAllowed(path);
+    rmSync(resolved, { recursive: true, force: true });
+    return true;
+  } catch (e) {
+    logger.warn('[BackupService] Refused to delete path outside allowed backup roots', {
+      path,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    return false;
+  }
 }
 
 async function getBackupRootAsync(): Promise<string> {
@@ -191,8 +257,9 @@ export const backupService = {
     for (const job of oldJobs) {
       try {
         // 1. Delete primary backup folder
+        // AUDIT FIX (N-3): containment-checked delete.
         if (job.backupPath && existsSync(job.backupPath)) {
-          rmSync(job.backupPath, { recursive: true, force: true });
+          safeRmBackupPath(job.backupPath);
         }
 
         // 2. Delete secondary backup folder if configured
@@ -200,7 +267,7 @@ export const backupService = {
           const relativePath = job.backupPath.replace(primaryRoot, '');
           const secondaryPath = join(secondaryRoot, relativePath);
           if (existsSync(secondaryPath)) {
-            rmSync(secondaryPath, { recursive: true, force: true });
+            safeRmBackupPath(secondaryPath);
           }
         }
 
@@ -257,32 +324,34 @@ export const backupService = {
       );
     }
 
-    // Override backup root for this backup
-    const originalRoot = process.env.BACKUP_ROOT;
-    process.env.BACKUP_ROOT = schedule.primaryBackupRoot;
-    if (schedule.secondaryBackupRoot) {
-      process.env.BACKUP_SECONDARY_ROOT = schedule.secondaryBackupRoot;
-    }
+    // AUDIT FIX (N-3 + N-4): the schedule's admin-controlled roots are
+    // (a) contained to sanctioned roots and (b) passed as PARAMETERS
+    // through createBackup. The old implementation mutated the
+    // process-global `process.env.BACKUP_ROOT` around a long await — any
+    // concurrent backup or getBackupRoot() read the wrong root during the
+    // window, and overlapping schedules clobbered each other.
+    const primaryRoot = assertBackupPathAllowed(schedule.primaryBackupRoot);
+    const secondaryRoot = schedule.secondaryBackupRoot
+      ? assertBackupPathAllowed(schedule.secondaryBackupRoot)
+      : null;
 
-    try {
-      const result = await backupService.createBackup({
-        type: 'SCHEDULED',
-        scheduleType: schedule.frequency,
-      });
+    const result = await backupService.createBackup({
+      type: 'SCHEDULED',
+      scheduleType: schedule.frequency,
+      backupRootOverride: primaryRoot,
+      secondaryRootOverride: secondaryRoot,
+    });
 
-      // Apply retention policy after successful backup
-      await backupService.applyRetentionPolicy({
-        keepDaily: schedule.keepDaily,
-        keepWeekly: schedule.keepWeekly,
-        keepMonthly: schedule.keepMonthly,
-        keepManual: schedule.keepManual,
-        frequency: schedule.frequency,
-      });
+    // Apply retention policy after successful backup
+    await backupService.applyRetentionPolicy({
+      keepDaily: schedule.keepDaily,
+      keepWeekly: schedule.keepWeekly,
+      keepMonthly: schedule.keepMonthly,
+      keepManual: schedule.keepManual,
+      frequency: schedule.frequency,
+    });
 
-      return result;
-    } finally {
-      process.env.BACKUP_ROOT = originalRoot;
-    }
+    return result;
   },
 
   async createBackup(params: {
@@ -290,9 +359,17 @@ export const backupService = {
     scheduleType?: string;
     adminId?: string;
     notes?: string;
+    // AUDIT FIX (N-4): explicit root overrides replace the old
+    // process.env mutation. When omitted, the configured defaults apply.
+    // Overrides are containment-checked (assertBackupPathAllowed).
+    backupRootOverride?: string;
+    secondaryRootOverride?: string | null;
   }) {
     const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '').slice(0, 15)}`;
-    const backupRoot = await getBackupRootAsync();
+    const backupRoot =
+      params.backupRootOverride !== undefined
+        ? assertBackupPathAllowed(params.backupRootOverride)
+        : await getBackupRootAsync();
     const backupDir = join(backupRoot, params.type.toLowerCase(), backupId);
 
     // Pre-flight check for disk space on the backup drive partition
@@ -409,7 +486,12 @@ export const backupService = {
       });
 
       // 7. Copy to secondary location if configured (cross-platform)
-      const secondaryRoot = await getSecondaryRootAsync();
+      const secondaryRoot =
+        params.secondaryRootOverride !== undefined
+          ? params.secondaryRootOverride
+            ? assertBackupPathAllowed(params.secondaryRootOverride)
+            : null
+          : await getSecondaryRootAsync();
       if (secondaryRoot) {
         try {
           const secondaryDir = join(secondaryRoot, params.type.toLowerCase(), backupId);
@@ -527,8 +609,9 @@ export const backupService = {
     if (!job) throw new Error('Backup job not found');
 
     // Delete backup directory
+    // AUDIT FIX (N-3): containment-checked delete.
     if (job.backupPath && existsSync(job.backupPath)) {
-      rmSync(job.backupPath, { recursive: true, force: true });
+      safeRmBackupPath(job.backupPath);
     }
 
     // Delete from secondary location if exists
@@ -538,7 +621,7 @@ export const backupService = {
       const relativePath = job.backupPath.replace(primaryRoot, '');
       const secondaryPath = join(secondaryRoot, relativePath);
       if (existsSync(secondaryPath)) {
-        rmSync(secondaryPath, { recursive: true, force: true });
+        safeRmBackupPath(secondaryPath);
       }
     }
 

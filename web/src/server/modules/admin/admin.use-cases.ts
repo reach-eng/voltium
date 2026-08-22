@@ -11,6 +11,10 @@ import { LoginError } from './login-error';
 export { LoginError } from './login-error';
 export type { LoginErrorCode } from './login-error';
 
+/** AUDIT FIX (N-11): lazily-built Argon2id hash used only on the
+ * unknown-email path to equalize verify timing. */
+let dummyHashPromise: Promise<string> | null = null;
+
 export const adminUseCases = {
   async listAdmins(filters?: {
     role?: string;
@@ -121,8 +125,24 @@ export const adminUseCases = {
     // email (so a botnet got 1000×5 attempts), and leaked a setTimeout per
     // failure. Rate limiting now lives in the route layer, DB-backed
     // (per-IP + per-email).
+    // AUDIT FIX (N-11): unknown-email used to early-return BEFORE the
+    // ~80ms Argon2id verify -- a timing oracle for email enumeration. The
+    // miss path now burns a verification against a dummy hash so both
+    // paths take comparable time. The dummy is computed once, lazily.
     const admin = await adminRepository.findByEmail(email);
     if (!admin) {
+      try {
+        const pwModule = await import('@/lib/password');
+        if (!dummyHashPromise) {
+          dummyHashPromise = pwModule
+            .hashPassword('timing-equalizer-c7f4a19d2e8b')
+            .catch(() => '');
+        }
+        const hash = await dummyHashPromise;
+        if (hash) await pwModule.verifyPassword(password, hash);
+      } catch {
+        // never surface anything from the equalizer
+      }
       throw new LoginError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 

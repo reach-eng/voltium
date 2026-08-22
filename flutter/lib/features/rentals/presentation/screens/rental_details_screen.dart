@@ -11,6 +11,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class RentalDetailsScreen extends ConsumerStatefulWidget {
@@ -142,7 +143,10 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        '₹${price.toStringAsFixed(0)}',
+                        // AUDIT FIX (LOW): unified money formatting — the
+                        // old `toStringAsFixed(0)` truncated instead of
+                        // rounding and had no digit grouping.
+                        MoneyFormat.rupees(price),
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontSize: 24,
@@ -195,8 +199,15 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                   Divider(height: 1, color: colors.outlineVariant),
                   if (endDate != null) ...[
                     Builder(builder: (context) {
-                      final daysRemaining =
-                          endDate.difference(DateTime.now()).inDays;
+                      // AUDIT FIX (LOW): date-only difference. The old
+                      // `endDate.difference(DateTime.now()).inDays` counted
+                      // time-of-day, producing off-by-one day counts for
+                      // rentals ending later in the day.
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      final endDay =
+                          DateTime(endDate.year, endDate.month, endDate.day);
+                      final daysRemaining = endDay.difference(today).inDays;
                       final String remainingText = daysRemaining < 0
                           ? (l10n?.txtexpired ?? 'Expired')
                           : (daysRemaining == 0
@@ -240,7 +251,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                     context,
                     Icons.account_balance_wallet_rounded,
                     l10n?.txtwalletBalance ?? 'Wallet Balance',
-                    '₹${wallet.toStringAsFixed(0)}',
+                    // AUDIT FIX (LOW): unified money formatting.
+                    MoneyFormat.rupees(wallet),
                     valueColor: AppColors.success,
                   ),
                   Divider(height: 1, color: colors.outlineVariant),
@@ -248,7 +260,8 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
                     context,
                     Icons.shield_rounded,
                     l10n?.txtsecurityDeposit ?? 'Security Deposit',
-                    '₹${deposit.toStringAsFixed(0)}',
+                    // AUDIT FIX (LOW): unified money formatting.
+                    MoneyFormat.rupees(deposit),
                   ),
                   Divider(height: 1, color: colors.outlineVariant),
                   _buildDetailRow(
@@ -387,9 +400,16 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
     );
   }
 
-  DateTime? _calculateEndDate(DateTime? startDate, String? plan) {
+  /// AUDIT FIX (LOW): prefers an explicit plan-record `durationDays` when
+  /// one is available (e.g. a fetched PlanModel); the plan-NAME map in
+  /// AppConstants is kept only as the last-resort fallback. Today
+  /// RiderModel carries no plan record / duration field, so callers have
+  /// nothing richer to pass — the optional parameter keeps the correct
+  /// precedence encoded for when a record source lands.
+  DateTime? _calculateEndDate(DateTime? startDate, String? planName,
+      {int? planDurationDays}) {
     if (startDate == null) return null;
-    return startDate
-        .add(Duration(days: AppConstants.getPlanDurationDays(plan)));
+    final days = planDurationDays ?? AppConstants.getPlanDurationDays(planName);
+    return startDate.add(Duration(days: days));
   }
 }

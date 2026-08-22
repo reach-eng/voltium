@@ -12,6 +12,15 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { withIdempotency } from '@/lib/api-middleware';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { z } from 'zod';
+
+// AUDIT FIX (N-7): `ids` / `action` / `value` were destructured raw into
+// bulk rider mutations. Now schema-validated with a hard cap on batch size.
+const BulkActionSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(200),
+  action: z.enum(['updateStatus', 'delete', 'bulkKyc']),
+  value: z.union([z.string().max(30), z.undefined()]),
+});
 
 async function postHandler(req: NextRequest) {
   try {
@@ -19,11 +28,14 @@ async function postHandler(req: NextRequest) {
     if (!session) return adminUnauthorized();
 
     const body = await req.json();
-    const { ids, action, value } = body;
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return errors.badRequest('ids must be a non-empty array');
+    const parsed = BulkActionSchema.safeParse(body);
+    if (!parsed.success) {
+      return errors.badRequest(
+        parsed.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ')
+      );
     }
+    const { ids, action } = parsed.data;
+    const value = parsed.data.value as string | undefined;
 
     const requiredPerm = action === 'delete' ? 'riders_delete' : 'riders_update';
     if (!hasPermission(session, requiredPerm as any)) return adminForbidden();
@@ -62,7 +74,17 @@ async function postHandler(req: NextRequest) {
       }
 
       case 'bulkKyc': {
-        const kycStatus = value as 'APPROVED' | 'REJECTED' | 'INFO_REQUIRED';
+        // AUDIT FIX (N-7): value is validated against the KYC state enum
+        // instead of a blind cast.
+        const parsedKyc = z
+          .enum(['APPROVED', 'REJECTED', 'INFO_REQUIRED'])
+          .safeParse(value);
+        if (!parsedKyc.success) {
+          return errors.badRequest(
+            'bulkKyc requires value: APPROVED | REJECTED | INFO_REQUIRED'
+          );
+        }
+        const kycStatus = parsedKyc.data;
         for (const id of ids) {
           try {
             await adminRiderUseCases.update(

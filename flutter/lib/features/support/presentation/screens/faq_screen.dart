@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/utils/dialer.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/models/support_model.dart' show FaqItem;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -24,19 +28,25 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   Future<void> _callSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
     final phone = supportConfig?.supportPhone ?? '+919876543210';
-    final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
-    final uri = Uri.parse('tel:$sanitized');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+    // AUDIT FIX: guarded dialer with toast fallback (was silent no-op).
+    await launchDialer(context, phone);
   }
 
   Future<void> _emailSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
     final email = supportConfig?.supportEmail ?? 'support@voltium.app';
     final uri = Uri.parse('mailto:$email');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        Toast.error(context, 'Unable to open your email app');
+      }
+    } catch (e) {
+      appDebug('Email launch failed: $e', tag: 'SUPPORT');
+      if (mounted) {
+        Toast.error(context, 'Unable to open your email app');
+      }
     }
   }
 
@@ -77,14 +87,20 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              // AUDIT FIX: FadeUpWidget computes
+                              // `index * delay(seconds) * 1000` — the old
+                              // ms-int delays with default index collapsed
+                              // every stagger to 0ms.
                               FadeUpWidget(
-                                delay: 0,
+                                index: 1,
+                                delay: 0.05,
                                 child: _buildSearchBar(),
                               ),
                               const SizedBox(height: 24),
                               if (categories.length > 2)
                                 FadeUpWidget(
-                                  delay: 100,
+                                  index: 1,
+                                  delay: 0.1,
                                   child: _buildCategoryScroller(categories),
                                 ),
                               const SizedBox(height: 24),
@@ -109,7 +125,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: FadeUpWidget(
-                                  delay: 150 + (idx * 50),
+                                  index: 3 + idx,
+                                  delay: 0.05,
                                   child: _buildFaqItem(faq),
                                 ),
                               );
@@ -120,7 +137,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 32, 20, 48),
                         sliver: SliverToBoxAdapter(
                           child: FadeUpWidget(
-                            delay: 400,
+                            index: 1,
+                            delay: 0.2,
                             child: _buildContactSection(),
                           ),
                         ),
@@ -166,32 +184,38 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       ),
       child: Row(
         children: [
-          InkWell(
-            key: const Key('backButton'),
-            onTap: widget.onBack ??
-                () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-            child: Container(
-              padding: const EdgeInsets.all(Spacing.md2),
-              decoration: BoxDecoration(
-                color: colors.card,
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: colors.outlineVariant.withValues(alpha: 0.4)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.arrow_back,
-                size: 18,
-                color: colors.onSurface,
+          // AUDIT FIX: 48dp touch target + tooltip (was ~46dp, no semantics).
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: InkWell(
+              key: const Key('backButton'),
+              onTap: widget.onBack ??
+                  () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+              customBorder: const CircleBorder(),
+              child: Container(
+                padding: const EdgeInsets.all(Spacing.md2),
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: colors.outlineVariant.withValues(alpha: 0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.arrow_back,
+                  size: 18,
+                  color: colors.onSurface,
+                ),
               ),
             ),
           ),
@@ -310,7 +334,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     );
   }
 
-  Widget _buildFaqItem(dynamic faq) {
+  Widget _buildFaqItem(FaqItem faq) {
     final isExpanded = _expandedId == faq.id;
     final colors = AppColors.of(context);
     return Material(

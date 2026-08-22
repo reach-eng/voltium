@@ -15,7 +15,7 @@ import { signRiderUrls } from '@/lib/sign-rider';
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'kyc_view')) {
+  if (!hasPermission(session, 'kyc_view')) {
     return adminForbiddenWithLog({
       session,
       permission: 'kyc_view',
@@ -107,7 +107,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'kyc_approve')) return adminForbidden();
+  if (!hasPermission(session, 'kyc_approve')) return adminForbidden();
 
   const body = await request.json();
   const riderId = body.riderId || body.riderDbId;

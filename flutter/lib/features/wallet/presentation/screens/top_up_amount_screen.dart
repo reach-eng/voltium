@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/models/rider_model.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/money_format.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -43,23 +46,19 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   @override
   void initState() {
     super.initState();
-    final isAdvanceRentPaid =
-        ref.read(riderProvider).rider?.advanceRentPaid ?? false;
-    final secDeposit = widget.securityDeposit ?? 0;
-    final rentPrice = widget.rentalPrice ?? 0;
+    final rider = ref.read(riderProvider).rider;
 
-    // Auto-fill required top-up amount:
-    // If Advance Rent was ticked during plan selection -> Security Deposit + Advance Rent Price
-    // Otherwise -> Security Deposit only
-    final planTotal = isAdvanceRentPaid
-        ? (secDeposit + rentPrice)
-        : (secDeposit > 0 ? secDeposit : (rentPrice > 0 ? rentPrice : 0));
+    // AUDIT FIX 2026-08-22 (AMOUNT-a): the "Required amount" business rule
+    // was implemented three times in this file — it now flows through the
+    // single [_planTotalFor] helper below.
+    final planTotal = _planTotalFor(rider);
 
     final initial = widget.initialAmount;
     if (initial != null && initial > 0) {
       _selectedAmount = initial;
     } else {
-      _selectedAmount = planTotal > 0 ? planTotal : 1000;
+      _selectedAmount =
+          planTotal > 0 ? planTotal : AppConstants.walletDefaultTopUpAmount;
     }
     _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
 
@@ -72,7 +71,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         (planTotal * 3).round(),
       ];
     } else {
-      _quickAmounts = [500, 1000, 2000, 5000];
+      // AUDIT FIX 2026-08-22 (AMOUNT-d): named constant instead of a
+      // magic literal list.
+      _quickAmounts = AppConstants.walletQuickTopUpAmounts;
     }
 
     _entryCtrl = AnimationController(
@@ -98,24 +99,60 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   int get _finalAmount => int.tryParse(_customAmountCtrl.text) ?? 0;
 
-  int get _requiredMinAmount {
-    final rider = ref.watch(riderProvider.select((p) => p.rider));
+  /// AUDIT FIX 2026-08-22 (AMOUNT-a): single implementation of the
+  /// "Required amount" rule. Primary source is the rider record's plan
+  /// values (mirroring `RiderModel.requiredPaymentAmount`); the explicit
+  /// widget params passed by the flow act as a local fallback while the
+  /// rider record hydrates. Advance-rent riders owe deposit + rent;
+  /// everyone else owes the deposit (or the plan price when there is no
+  /// separate deposit).
+  int _planTotalFor(RiderModel? rider) {
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
+    final riderSecDeposit =
+        rider != null ? rider.activeRentalPlanSecurityDeposit.toInt() : 0;
+    final riderPlanPrice =
+        rider != null ? rider.activeRentalPlanPrice.toInt() : 0;
+
     final secDeposit =
         (widget.securityDeposit != null && widget.securityDeposit! > 0)
             ? widget.securityDeposit!
-            : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
+            : riderSecDeposit;
     final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
         ? widget.rentalPrice!
-        : (rider?.activeRentalPlanPrice.toInt() ?? 0);
+        : riderPlanPrice;
 
-    final planTotal = isAdvanceRentPaid
+    return isAdvanceRentPaid
         ? (secDeposit + rentPrice)
         : (secDeposit > 0 ? secDeposit : rentPrice);
+  }
+
+  /// Resolved security-deposit component for the breakdown card.
+  int _secDepositFor(RiderModel? rider) {
+    final riderSecDeposit =
+        rider != null ? rider.activeRentalPlanSecurityDeposit.toInt() : 0;
+    return (widget.securityDeposit != null && widget.securityDeposit! > 0)
+        ? widget.securityDeposit!
+        : riderSecDeposit;
+  }
+
+  /// Resolved rent-price component for the breakdown card.
+  int _rentPriceFor(RiderModel? rider) {
+    final riderPlanPrice =
+        rider != null ? rider.activeRentalPlanPrice.toInt() : 0;
+    return (widget.rentalPrice != null && widget.rentalPrice! > 0)
+        ? widget.rentalPrice!
+        : riderPlanPrice;
+  }
+
+  int get _requiredMinAmount {
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final planTotal = _planTotalFor(rider);
+    if (planTotal > 0) return planTotal;
 
     final minTopup =
         ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt();
-    return planTotal > 0 ? planTotal : (minTopup > 0 ? minTopup : 100);
+    // AUDIT FIX 2026-08-22 (AMOUNT-d): named constant instead of magic 100.
+    return minTopup > 0 ? minTopup : AppConstants.walletMinTopUpAmount;
   }
 
   bool get _canProceed {
@@ -123,7 +160,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   }
 
   void _selectQuickAmount(int amount) {
-    HapticFeedback.lightImpact();
+    // AUDIT FIX 2026-08-22 (AMOUNT-c): route through HapticService like
+    // the rest of the file (raw HapticFeedback bypassed test-mode guard).
+    HapticService.light();
     FocusScope.of(context).unfocus();
     setState(() {
       _selectedAmount = amount;
@@ -134,19 +173,14 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   Widget _buildTopUpBreakdownCard() {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
-    final secDeposit =
-        (widget.securityDeposit != null && widget.securityDeposit! > 0)
-            ? widget.securityDeposit!
-            : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
-    final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
-        ? widget.rentalPrice!
-        : (rider?.activeRentalPlanPrice.toInt() ?? 0);
+    // AUDIT FIX 2026-08-22 (AMOUNT-a): reuse the consolidated helpers —
+    // this card no longer re-implements the required-amount rule.
+    final secDeposit = _secDepositFor(rider);
+    final rentPrice = _rentPriceFor(rider);
 
     if (secDeposit <= 0 && rentPrice <= 0) return const SizedBox.shrink();
 
-    final totalRequired = isAdvanceRentPaid
-        ? (secDeposit + rentPrice)
-        : (secDeposit > 0 ? secDeposit : rentPrice);
+    final totalRequired = _planTotalFor(rider);
 
     final colors = AppColors.of(context);
     return Container(
@@ -300,6 +334,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                 keyboardType: TextInputType.number,
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
+                                  // AUDIT FIX 2026-08-22 (AMOUNT-b):
+                                  // cap entry at ₹9,999,999.
+                                  LengthLimitingTextInputFormatter(7),
                                 ],
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.plusJakartaSans(
@@ -392,7 +429,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Current Balance: ₹${currentBalance.toInt()}',
+                              // AUDIT FIX 2026-08-22 (AMOUNT-d follow-up):
+                              // shared rounding/grouping formatter.
+                              'Current Balance: ${MoneyFormat.rupees(currentBalance)}',
                               style: AppTypography.bodyMedium
                                   .copyWith(color: colors.onSurfaceMuted),
                             ),

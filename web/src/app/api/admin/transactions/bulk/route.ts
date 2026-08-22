@@ -48,7 +48,7 @@ async function mapWithConcurrency<T, R>(
 async function postHandler(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'transactions_approve')) return adminForbidden();
+  if (!hasPermission(session, 'transactions_approve')) return adminForbidden();
 
   try {
     const body = await req.json();

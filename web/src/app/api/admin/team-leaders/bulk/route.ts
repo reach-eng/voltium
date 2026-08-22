@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
     // legacy fallback so admins whose stored permission column still lists
     // `tl_manage` keep access (explicit adminPermissions win in hasPermission).
     const canManage =
-      hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-      hasPermission(session.adminRole || '', 'tl_manage');
+      hasPermission(session, 'team_leaders_manage') ||
+      hasPermission(session, 'tl_manage');
     if (!canManage) return adminForbidden();
 
     const body = await req.json();

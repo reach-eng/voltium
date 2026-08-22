@@ -53,4 +53,42 @@ class WalletRepositoryImpl implements WalletRepository {
         .map((e) => TransactionEntity.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  @override
+  Future<TransactionHistoryPage> getTransactionHistoryPage(
+    String riderDbId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _apiClient.getTransactionHistory(page, limit);
+    List<dynamic> data = [];
+    if (response['data'] is Map<String, dynamic> &&
+        response['data']['transactions'] is List) {
+      data = response['data']['transactions'] as List<dynamic>;
+    } else if (response['data'] is List) {
+      data = response['data'] as List<dynamic>;
+    } else if (response['transactions'] is List) {
+      data = response['transactions'] as List<dynamic>;
+    }
+
+    // Server envelope: `success({ transactions, pagination }, msg)` where
+    // pagination = { page, limit, total, totalPages }.
+    final pagination = response['data'] is Map<String, dynamic>
+        ? response['data']['pagination'] as Map<String, dynamic>?
+        : response['pagination'] as Map<String, dynamic>?;
+    final serverTotal = pagination?['total'];
+    final serverTotalPages = pagination?['totalPages'];
+
+    final txs = data
+        .map((e) => TransactionEntity.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    return TransactionHistoryPage(
+      transactions: txs,
+      total: serverTotal is num ? serverTotal.toInt() : txs.length,
+      totalPages: serverTotalPages is num
+          ? serverTotalPages.toInt()
+          : (txs.length < limit ? page : page + 1),
+    );
+  }
 }

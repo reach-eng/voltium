@@ -8,7 +8,6 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 class _SeededRiderNotifier extends RiderNotifier {
@@ -127,44 +126,60 @@ void main() {
       expect(find.byKey(const Key('nextOnboardingButton')), findsOneWidget);
     });
 
-    testWidgets('advances to Step 2 and opens Bank Details dialog',
+    testWidgets('does not advance to Step 2 when Step 1 form is empty',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 1.0;
-      AppConstants.isTestModeOverride = true;
       addTearDown(() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
-        AppConstants.isTestModeOverride = false;
       });
 
-      await tester
-          .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
+      const rider = RiderModel(
+        id: 'rider_99',
+        riderId: 'R-99',
+        name: 'Siddharth Rao',
+        phone: '+919988776655',
+        lifecycleStatus: 'NEW',
+      );
+
+      await tester.pumpWidget(buildTestApp(
+        child: const UserOnboardingScreen(),
+        rider: rider,
+      ));
       await tester.pumpAndSettle();
 
-      // In test mode, _canProceedCurrentStep is true, click Confirm & Proceed
+      // PR-1 (F-001): the previous version of this test set
+      // `AppConstants.isTestModeOverride = true` to bypass the
+      // form-completeness check. That bypass is gone (release-build
+      // hardened). The new test verifies the actual production
+      // behavior: an empty form does NOT advance to Step 2.
+      //
+      // Advancing to Step 2 requires the date picker + Aadhaar + PAN
+      // + selfie + signature + bank details to be populated, which
+      // is covered by the integration test harness (which builds
+      // with `--dart-define=KYC_TEST_AUTOFILL=true` to skip the
+      // photo + signature capture and provides a date-picker helper).
       final nextButton = find.byKey(const Key('nextOnboardingButton'));
+      await tester.ensureVisible(nextButton);
+      await tester.pumpAndSettle();
       await tester.tap(nextButton);
       await tester.pumpAndSettle();
 
-      // Should now be on Step 2 (Identity & Bank Verification)
-      expect(find.byKey(const Key('aadhaarFrontTile')), findsOneWidget);
-      expect(find.byKey(const Key('aadhaarBackTile')), findsOneWidget);
-      expect(find.byKey(const Key('panTile')), findsOneWidget);
-      expect(find.byKey(const Key('bankTile')), findsOneWidget);
-
-      // Open Bank details dialog
-      await tester.tap(find.byKey(const Key('bankTile')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Bank Details'), findsOneWidget);
-      expect(find.text('Bank Name'), findsOneWidget);
-      expect(find.text('Account Number'), findsOneWidget);
-      expect(find.text('IFSC Code'), findsOneWidget);
-
-      // Tap Save
-      await tester.tap(find.text('Save'));
-      await tester.pumpAndSettle();
+      // Step 1 form is empty → screen does NOT advance to Step 2.
+      // Step 2's first widget is the Aadhaar upload tile; if it
+      // appeared, the form-completeness check is broken.
+      expect(
+        find.byKey(const Key('aadhaarFrontTile')),
+        findsNothing,
+        reason: 'must not advance to Step 2 with an empty form',
+      );
+      // The Step 1 "Next" button is still on the page.
+      expect(
+        find.byKey(const Key('nextOnboardingButton')),
+        findsOneWidget,
+        reason: 'must still be on Step 1',
+      );
     });
 
     testWidgets('renders cleanly in dark mode without throwing',

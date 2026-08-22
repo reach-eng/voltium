@@ -62,8 +62,10 @@ export async function requirePermission(permission: Permission, request?: NextRe
   }
 
   // Check the specific permission
-  const role = session.adminRole || '';
-  if (!hasPermission(role, permission)) {
+  // AUDIT FIX (N-5): pass the SESSION OBJECT. The string form dropped
+  // per-admin `adminPermissions` — explicit grants were ignored and
+  // revocations bypassed on every route using this policy helper.
+  if (!hasPermission(session, permission)) {
     throw new AdminForbiddenError(`Insufficient permissions: requires '${permission}'`);
   }
 

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   // READ_ONLY admin could enumerate every actor, their work hours, the
   // riders they touch (entityId), and financial events. audit_view is
   // granted to ops/finance roles only (READ_ONLY removed from the matrix).
-  if (!hasPermission(session.adminRole || '', 'audit_view')) return adminForbidden();
+  if (!hasPermission(session, 'audit_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;

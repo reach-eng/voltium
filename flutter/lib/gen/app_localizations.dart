@@ -4629,6 +4629,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please contact support to unlock.'**
   String get txtlockedOverlayContactSupportToUnlock;
+
+  /// Confirm dialog title for bulk-clearing read notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Clear read notifications'**
+  String get txtclearReadNotifications;
+
+  /// Confirm dialog body for bulk-clearing read notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all read notifications? This cannot be undone.'**
+  String get txtdeleteAllReadNotificationsConfirm;
+
+  /// Change-lock-password dialog instruction
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new 4-digit lock password.'**
+  String get txtchooseNewLockPassword;
 }
 
 class _AppLocalizationsDelegate

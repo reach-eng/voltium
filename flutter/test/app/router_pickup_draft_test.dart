@@ -318,6 +318,9 @@ void main() {
 
     tearDown(() {
       VoltiumApiService.instance = null;
+      // PR-1 (F-001): reset the test-mode override so it doesn't leak
+      // into the next suite.
+      AppConstants.isTestModeOverride = false;
     });
 
     Future<void> seedPickupState() async {
@@ -529,6 +532,9 @@ void main() {
 
     tearDown(() {
       VoltiumApiService.instance = null;
+      // PR-1 (F-001): reset the test-mode override so it doesn't leak
+      // into the next suite.
+      AppConstants.isTestModeOverride = false;
     });
 
     testWidgets('markEmergencyContactVerified persists a short-lived receipt',
@@ -688,6 +694,9 @@ void main() {
     tearDown(() {
       VoltiumApiService.instance = null;
       ApiClient.instanceForTest = null;
+      // PR-1 (F-001): reset the test-mode override so it doesn't leak
+      // into the next suite.
+      AppConstants.isTestModeOverride = false;
     });
 
     Future<void> seedHubDraft() async {

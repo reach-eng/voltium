@@ -8,7 +8,7 @@ import { analyticsUseCases } from '@/server/modules/analytics/analytics.use-case
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'analytics_view')) return adminForbidden();
+  if (!hasPermission(session, 'analytics_view')) return adminForbidden();
 
   try {
     const result = await analyticsUseCases.getOverview();

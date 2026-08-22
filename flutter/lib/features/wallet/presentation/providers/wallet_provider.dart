@@ -48,6 +48,30 @@ TransactionStatus _parseTransactionStatus(String status) {
   }
 }
 
+BreakdownType _parseBreakdownType(String type) {
+  switch (type.toLowerCase()) {
+    case 'tax':
+      return BreakdownType.tax;
+    case 'discount':
+      return BreakdownType.discount;
+    case 'penalty':
+      return BreakdownType.penalty;
+    case 'adjustment':
+      return BreakdownType.adjustment;
+    default:
+      return BreakdownType.charge;
+  }
+}
+
+/// Page size used when accumulating history for the summary cards.
+/// The server caps `limit` at 100 (`parsePositiveInt(..., 100)`).
+const int _kHistoryPageSize = 100;
+
+/// AUDIT FIX 2026-08-22 (HIST-a): sane cap on pages loaded for the
+/// summary — beyond 500 transactions the rider almost certainly wants
+/// the paginated "Load more" affordance instead of a giant fetch.
+const int _kMaxAutoLoadedTransactions = 500;
+
 /// State for the wallet feature.
 @immutable
 class WalletState {
@@ -59,6 +83,14 @@ class WalletState {
   final bool walletBalanceLow;
   final double currentBalance;
 
+  /// Total transactions known server-side (from pagination metadata).
+  /// `null` when unknown — the UI then labels totals as "of loaded
+  /// transactions".
+  final int? serverTotalTransactions;
+
+  /// True while an explicit "load more" page fetch is in flight.
+  final bool isLoadingMore;
+
   const WalletState({
     this.transactions = const [],
     this.isRefreshingTransactions = false,
@@ -67,6 +99,8 @@ class WalletState {
     this.walletMinTopup = 0.0,
     this.walletBalanceLow = false,
     this.currentBalance = 0.0,
+    this.serverTotalTransactions,
+    this.isLoadingMore = false,
   });
 
   WalletState copyWith({
@@ -77,6 +111,9 @@ class WalletState {
     double? walletMinTopup,
     bool? walletBalanceLow,
     double? currentBalance,
+    int? serverTotalTransactions,
+    bool clearServerTotal = false,
+    bool? isLoadingMore,
     bool clearLastError = false,
   }) =>
       WalletState(
@@ -88,6 +125,10 @@ class WalletState {
         walletMinTopup: walletMinTopup ?? this.walletMinTopup,
         walletBalanceLow: walletBalanceLow ?? this.walletBalanceLow,
         currentBalance: currentBalance ?? this.currentBalance,
+        serverTotalTransactions: clearServerTotal
+            ? null
+            : (serverTotalTransactions ?? this.serverTotalTransactions),
+        isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       );
 }
 
@@ -123,7 +164,13 @@ class WalletNotifier extends Notifier<WalletState> {
     try {
       var uploadedUrl = screenshotUrl;
       if (image != null) {
-        uploadedUrl = await _files.uploadFile(image, 'TOPUP_PROOF');
+        try {
+          uploadedUrl = await _files.uploadFile(image, 'TOPUP_PROOF');
+        } catch (e) {
+          // AUDIT FIX: surface an upload-specific failure so the flow can
+          // tell the rider their PROOF failed (vs the submit itself).
+          throw Exception('upload_failed: $e');
+        }
       }
       final req = entity.TopupRequest(
         riderId: riderId,
@@ -164,34 +211,114 @@ class WalletNotifier extends Notifier<WalletState> {
 
   Future<void> _doRefreshTransactions({required String riderId}) async {
     try {
-      final txs = await _repo.getTransactionHistory(riderId);
-      final sorted = txs
-          .map(
-            (t) => TransactionModel(
-              id: t.id,
-              riderId: riderId,
-              amount: t.amountInRupees,
-              type: t.type == 'CREDIT'
-                  ? TransactionType.credit
-                  : TransactionType.debit,
-              purpose: t.purpose,
-              status: _parseTransactionStatus(t.status),
-              createdAt: t.createdAt,
-            ),
-          )
-          .toList()
+      // AUDIT FIX 2026-08-22 (HIST-a): page through the history endpoint
+      // (100/page, capped at 500) so the Credits/Debits/Net summary is
+      // computed over the rider's real history, not just page 1.
+      final all = <entity.TransactionEntity>[];
+      int? serverTotal;
+      var page = 1;
+      while (all.length < _kMaxAutoLoadedTransactions) {
+        final result = await _repo.getTransactionHistoryPage(
+          riderId,
+          page: page,
+          limit: _kHistoryPageSize,
+        );
+        all.addAll(result.transactions);
+        if (result.total != null) serverTotal = result.total;
+        final reachedEnd =
+            result.transactions.isEmpty || page >= result.totalPages;
+        if (reachedEnd) break;
+        page++;
+      }
+
+      final sorted = all.map((t) => _toModel(t, riderId)).toList()
         ..sort((a, b) {
           if (a.createdAt == null && b.createdAt == null) return 0;
           if (a.createdAt == null) return 1;
           if (b.createdAt == null) return -1;
           return b.createdAt!.compareTo(a.createdAt!);
         });
-      state = state.copyWith(transactions: sorted, clearLastError: true);
+      state = state.copyWith(
+        transactions: sorted,
+        serverTotalTransactions: serverTotal,
+        clearLastError: true,
+      );
     } catch (e) {
       state = state.copyWith(
         lastError: 'Couldn\'t load your transactions. Pull to retry.',
       );
       appDebug('WalletNotifier: refresh failed: $e');
+    }
+  }
+
+  TransactionModel _toModel(entity.TransactionEntity t, String riderId) {
+    return TransactionModel(
+      id: t.id,
+      riderId: riderId,
+      amount: t.amountInRupees,
+      type: t.type == 'CREDIT' ? TransactionType.credit : TransactionType.debit,
+      purpose: t.purpose,
+      status: _parseTransactionStatus(t.status),
+      createdAt: t.createdAt,
+      // AUDIT FIX 2026-08-22 (HIST-c): map the server's breakdown
+      // line-items so the Charge/Tax/Discount UI can render.
+      breakdowns: t.breakdowns
+          .map((b) => TransactionBreakdown(
+                id: b.id,
+                label: b.label,
+                amount: b.amountInRupees,
+                type: _parseBreakdownType(b.type),
+                sortOrder: b.sortOrder,
+              ))
+          .toList(),
+    );
+  }
+
+  /// AUDIT FIX 2026-08-22 (HIST-a): fetches the next history page and
+  /// appends it (dedup by id+createdAt) so the history screen can page
+  /// past the auto-loaded cap.
+  Future<void> loadMoreTransactions({required String riderId}) async {
+    final s = state;
+    if (s.isLoadingMore || s.isRefreshingTransactions) return;
+    final total = s.serverTotalTransactions;
+    if (total != null && s.transactions.length >= total) return;
+    if (s.transactions.isEmpty) return;
+
+    final nextPage = (s.transactions.length / _kHistoryPageSize).floor() + 1;
+    state = s.copyWith(isLoadingMore: true);
+    try {
+      final result = await _repo.getTransactionHistoryPage(
+        riderId,
+        page: nextPage,
+        limit: _kHistoryPageSize,
+      );
+      final existingKeys = s.transactions
+          .map((t) => '${t.id ?? ''}_${t.createdAt?.toIso8601String() ?? ''}')
+          .toSet();
+      final fresh = <TransactionModel>[];
+      for (final e in result.transactions) {
+        final m = _toModel(e, riderId);
+        final key = '${m.id ?? ''}_${m.createdAt?.toIso8601String() ?? ''}';
+        if (existingKeys.add(key)) fresh.add(m);
+      }
+      final merged = [...s.transactions, ...fresh]..sort((a, b) {
+          if (a.createdAt == null && b.createdAt == null) return 0;
+          if (a.createdAt == null) return 1;
+          if (b.createdAt == null) return -1;
+          return b.createdAt!.compareTo(a.createdAt!);
+        });
+      state = state.copyWith(
+        transactions: merged,
+        serverTotalTransactions: result.total,
+        clearLastError: true,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        lastError: 'Couldn\'t load more transactions. Tap to retry.',
+      );
+      appDebug('WalletNotifier: load-more failed: $e');
+    } finally {
+      state = state.copyWith(isLoadingMore: false);
     }
   }
 

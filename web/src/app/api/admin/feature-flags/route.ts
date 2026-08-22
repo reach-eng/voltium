@@ -11,7 +11,7 @@ import { updateFeatureFlagSchema } from '@/lib/validators/admin';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'settings_manage')) return adminForbidden();
 
   try {
     // Feature flags are static for long stretches — but P3-11 (2026-08-05 ops
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'settings_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

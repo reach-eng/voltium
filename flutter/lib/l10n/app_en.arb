@@ -1832,5 +1832,11 @@
   "txtlockedOverlayAccountLocked": "Your account has been locked by Voltium.",
   "@txtlockedOverlayAccountLocked": { "description": "Locked overlay headline when admin lock is active" },
   "txtlockedOverlayContactSupportToUnlock": "Please contact support to unlock.",
-  "@txtlockedOverlayContactSupportToUnlock": { "description": "Locked overlay body when admin lock is active" }
+  "@txtlockedOverlayContactSupportToUnlock": { "description": "Locked overlay body when admin lock is active" },
+  "txtclearReadNotifications": "Clear read notifications",
+  "@txtclearReadNotifications": { "description": "Confirm dialog title for bulk-clearing read notifications" },
+  "txtdeleteAllReadNotificationsConfirm": "Delete all read notifications? This cannot be undone.",
+  "@txtdeleteAllReadNotificationsConfirm": { "description": "Confirm dialog body for bulk-clearing read notifications" },
+  "txtchooseNewLockPassword": "Choose a new 4-digit lock password.",
+  "@txtchooseNewLockPassword": { "description": "Change-lock-password dialog instruction" }
 }

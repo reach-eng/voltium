@@ -2458,4 +2458,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txtlockedOverlayContactSupportToUnlock =>
       'Please contact support to unlock.';
+
+  @override
+  String get txtclearReadNotifications => 'Clear read notifications';
+
+  @override
+  String get txtdeleteAllReadNotificationsConfirm =>
+      'Delete all read notifications? This cannot be undone.';
+
+  @override
+  String get txtchooseNewLockPassword => 'Choose a new 4-digit lock password.';
 }

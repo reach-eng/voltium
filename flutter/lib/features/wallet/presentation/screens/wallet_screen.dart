@@ -50,6 +50,15 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final isLoading =
         rider == null && (dataState == DataState.initial || isRefreshing);
 
+    // AUDIT FIX 2026-08-22 (WALLET-d): if the rider profile hydrates after
+    // this screen's first frame, riderId was null and transactions were
+    // never fetched — refetch as soon as it becomes non-null.
+    ref.listen<String?>(riderProvider.select((p) => p.riderId), (prev, next) {
+      if (prev == null && next != null) {
+        ref.read(walletProvider.notifier).refreshTransactions(riderId: next);
+      }
+    });
+
     // DARK-MODE-AUDIT 2026-08-14 P0-6 + P0-7: the previous
     // version used static `AppColors.of(context).iconBackground` (#F1F5F9,
     // light) for the scaffold AND the AppBar AND
@@ -83,15 +92,24 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 Expanded(
                   child: RefreshIndicator(
                     color: AppColors.primary,
+                    // AUDIT FIX 2026-08-22 (WALLET-c): a throw here would
+                    // propagate out of the RefreshIndicator's future and
+                    // crash the pull-to-refresh gesture — swallow it; the
+                    // providers record `lastError` which the UI renders.
                     onRefresh: () async {
-                      final riderId = ref.read(riderProvider).riderId;
-                      await Future.wait<dynamic>([
-                        ref.read(riderProvider.notifier).refreshFromApi(),
-                        if (riderId != null)
-                          ref
-                              .read(walletProvider.notifier)
-                              .refreshTransactions(riderId: riderId),
-                      ]);
+                      try {
+                        final riderId = ref.read(riderProvider).riderId;
+                        await Future.wait<dynamic>([
+                          ref.read(riderProvider.notifier).refreshFromApi(),
+                          if (riderId != null)
+                            ref
+                                .read(walletProvider.notifier)
+                                .refreshTransactions(riderId: riderId),
+                        ]);
+                      } catch (_) {
+                        // Swallowed intentionally — error state is surfaced
+                        // via provider `lastError` / next rider build.
+                      }
                     },
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),

@@ -81,7 +81,7 @@ function rejectCsrf(message: string): NextResponse {
   return NextResponse.json({ error: message }, { status: 403 });
 }
 
-import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth';
+import { ADMIN_SESSION_COOKIE_NAME, verifySessionToken } from './lib/auth';
 // PR-3 (2026-08-06 fix plan): the maintenance cache moved to a shared
 // module so the admin PUT route can invalidate it (see maintenance-cache.ts).
 import { getMaintenanceState } from './lib/maintenance-cache';
@@ -98,7 +98,16 @@ export async function middleware(request: NextRequest) {
     (pathname.startsWith('/api/rider/') || pathname.startsWith('/api/auth/')) &&
     pathname !== '/api/rider/maintenance-status'
   ) {
-    const isAdmin = request.cookies.has(ADMIN_SESSION_COOKIE_NAME);
+    // AUDIT FIX (N-10): the old check trusted cookie PRESENCE
+    // (`cookies.has(...)`), so forging `document.cookie='voltium-admin-session=x'`
+    // kept rider APIs reachable during a maintenance freeze. Verify the
+    // session token instead — an admin bypass requires a VALID admin JWT.
+    const adminToken = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+    let isAdmin = false;
+    if (adminToken) {
+      const adminSession = await verifySessionToken(adminToken);
+      isAdmin = adminSession?.role === 'admin';
+    }
     if (!isAdmin) {
       const maintenanceState = await getMaintenanceState();
       if (maintenanceState.enabled) {
@@ -191,8 +200,17 @@ export async function middleware(request: NextRequest) {
       origin.startsWith('http://192.168.') ||
       origin.startsWith('http://10.'));
 
+  // AUDIT FIX (N-9): localhost/LAN origin reflection is now dev-only.
+  // Previously it was reflected WITH credentials in every env, so one
+  // cookie-flag regression away from credentialed cross-origin reads
+  // from any LAN host in production. ALLOWED_ORIGINS remains the only
+  // cross-origin mechanism in prod.
+  const isProdEnv =
+    process.env.APP_ENV === 'production' ||
+    process.env.NODE_ENV === 'production';
+
   // P1-S4: Restrict CORS origins strictly to ALLOWED_ORIGINS or localhost/local IP in dev
-  if (origin && (allowedOrigins.includes(origin) || isLocalhost)) {
+  if (origin && (allowedOrigins.includes(origin) || (!isProdEnv && isLocalhost))) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-correlation-id, Idempotency-Key, Api-Version, Accept, Origin, X-Requested-With');
