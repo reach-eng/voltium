@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/kyc_preflight_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 void main() {
   testWidgets('KycPreflightScreen renders checklist items and handles action',
@@ -10,6 +12,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         home: KycPreflightScreen(
           onNext: () => nextTapped = true,
           onSkip: () => skipTapped = true,

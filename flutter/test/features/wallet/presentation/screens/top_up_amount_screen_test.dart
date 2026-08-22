@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_amount_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
@@ -41,6 +43,13 @@ void main() {
       ],
       child: MaterialApp(
         theme: AppTheme.lightTheme,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         home: TopUpAmountScreen(
           onProceed: onProceed,
           onBack: onBack,
@@ -65,7 +74,8 @@ void main() {
       await tester.pumpWidget(buildTestHost(onBack: () => backCalled = true));
       await tester.pumpAndSettle();
 
-      final backButton = find.byType(IconButton).first;
+      final backButton = find.byKey(const Key('backButton'));
+      expect(backButton, findsOneWidget);
       await tester.tap(backButton);
       await tester.pumpAndSettle();
 
@@ -82,7 +92,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the Proceed / Top Up button
-      final proceedButton = find.byType(ElevatedButton);
+      final proceedButton = find.byKey(const Key('proceedToPaymentButton'));
       expect(proceedButton, findsOneWidget);
 
       await tester.tap(proceedButton);

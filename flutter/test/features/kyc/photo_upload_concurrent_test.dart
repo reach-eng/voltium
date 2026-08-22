@@ -47,7 +47,7 @@ class _HoldingFilesRepository implements FilesRepository {
   }
 
   @override
-  Future<String> uploadFile(File file, String type) async {
+  Future<String> uploadFile(File file, dynamic type) async {
     calls++;
     active++;
     if (active > maxActive) maxActive = active;

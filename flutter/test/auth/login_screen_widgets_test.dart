@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 // Voltium — LoginScreen widget split smoke tests
 //
@@ -24,21 +26,33 @@ import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.da
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
 
+/// MaterialApp with the project's AppLocalizations loaded so the widgets
+/// can call `AppLocalizations.of(context)!` without throwing.
+Widget _l10nApp(Widget body) {
+  return MaterialApp(
+    localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    supportedLocales: const [Locale('en'), Locale('hi')],
+    home: Scaffold(body: body),
+  );
+}
+
 void main() {
   group('PhoneEntryWidget', () {
     testWidgets('renders phone, referral, and OTP note', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PhoneEntryWidget(
+        _l10nApp(PhoneEntryWidget(
               entryController: AnimationController(
                 vsync: const TestVSync(),
                 duration: const Duration(milliseconds: 800),
               ),
               onPhoneChanged: (_) {},
-              onPhoneSubmitted: () {},
-            ),
-          ),
+              onPhoneSubmitted: () {}),
+          
         ),
       );
       await tester.pump();
@@ -55,14 +69,11 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PhoneEntryWidget(
+        _l10nApp(PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: (_) {},
-              onPhoneSubmitted: () {},
-            ),
-          ),
+              onPhoneSubmitted: () {}),
+          
         ),
       );
       await tester.pump();
@@ -92,14 +103,11 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PhoneEntryWidget(
+        _l10nApp(PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: (_) {},
-              onPhoneSubmitted: () {},
-            ),
-          ),
+              onPhoneSubmitted: () {}),
+          
         ),
       );
       await tester.pump();
@@ -126,14 +134,11 @@ void main() {
       );
       final changes = <String>[];
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: PhoneEntryWidget(
+        _l10nApp(PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: changes.add,
-              onPhoneSubmitted: () {},
-            ),
-          ),
+              onPhoneSubmitted: () {}),
+          
         ),
       );
       await tester.pump();
@@ -152,14 +157,11 @@ void main() {
   group('OtpTriggerWidget', () {
     testWidgets('renders with "Enter" label and key', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: OtpTriggerWidget(
+        _l10nApp(OtpTriggerWidget(
               canSubmit: false,
               isLoading: false,
-              onPressed: () {},
-            ),
-          ),
+              onPressed: () {}),
+          
         ),
       );
       await tester.pump();
@@ -170,14 +172,11 @@ void main() {
 
     testWidgets('shows spinner when isLoading=true', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: OtpTriggerWidget(
+        _l10nApp(OtpTriggerWidget(
               canSubmit: true,
               isLoading: true,
-              onPressed: () {},
-            ),
-          ),
+              onPressed: () {}),
+          
         ),
       );
       await tester.pump();
@@ -190,14 +189,11 @@ void main() {
         (tester) async {
       var taps = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: OtpTriggerWidget(
+        _l10nApp(OtpTriggerWidget(
               canSubmit: true,
               isLoading: false,
-              onPressed: () => taps++,
-            ),
-          ),
+              onPressed: () => taps++),
+          
         ),
       );
       await tester.pump();
@@ -211,14 +207,11 @@ void main() {
         (tester) async {
       var taps = 0;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: OtpTriggerWidget(
+        _l10nApp(OtpTriggerWidget(
               canSubmit: false,
               isLoading: false,
-              onPressed: () => taps++,
-            ),
-          ),
+              onPressed: () => taps++),
+          
         ),
       );
       await tester.pump();
@@ -236,13 +229,10 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoginFooter(
+        _l10nApp(LoginFooter(
               entryController: controller,
-              onLaunchUrl: (_) async {},
-            ),
-          ),
+              onLaunchUrl: (_) async {}),
+          
         ),
       );
       await tester.pump();
@@ -259,13 +249,10 @@ void main() {
       );
       final urls = <String>[];
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: LoginFooter(
+        _l10nApp(LoginFooter(
               entryController: controller,
-              onLaunchUrl: (u) async => urls.add(u),
-            ),
-          ),
+              onLaunchUrl: (u) async => urls.add(u)),
+          
         ),
       );
       await tester.pump();

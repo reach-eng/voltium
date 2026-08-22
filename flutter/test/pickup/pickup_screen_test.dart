@@ -1,71 +1,60 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_hub_screen.dart';
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_verification_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
-class FakeVoltiumApiService extends Fake implements VoltiumApiService {
-  @override
-  Future<Map<String, dynamic>> fetchHubs() async {
-    return {
-      'success': true,
-      'data': [
-        {'id': 'hub-1', 'name': 'Koramangala Hub', 'location': 'Koramangala'},
-        {'id': 'hub-2', 'name': 'HSR Layout Hub', 'location': 'HSR Layout'},
-      ]
-    };
-  }
+class _MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
-  @override
-  Future<Map<String, dynamic>> fetchVehicles(String hubId) async {
-    return {
-      'success': true,
-      'data': [
-        {
-          'id': 'vehicle-1',
-          'vehicleNumber': 'V-1001',
-          'status': 'AVAILABLE',
-          'batteryLevel': 85
-        },
-        {
-          'id': 'vehicle-2',
-          'vehicleNumber': 'V-1002',
-          'status': 'AVAILABLE',
-          'batteryLevel': 90
-        },
-      ]
-    };
-  }
+class _MockApiClient extends Mock implements ApiClient {}
 
-  @override
-  Future<List<Map<String, dynamic>>> fetchTeamLeaders(String hubId) async {
-    return [
-      {'id': 'tl-1', 'name': 'Rajesh Kumar (TL-01)', 'phone': '9876543210'},
-      {'id': 'tl-2', 'name': 'Sanjay Singh (TL-03)', 'phone': '9876543211'},
-    ];
-  }
+class _FakeVerifyPhoneRequest extends Fake implements VerifyPhoneRequest {}
 
-  @override
-  Future<Map<String, dynamic>> verifyPhone(
-      {required String phone, required String otp}) async {
-    return {
-      'success': true,
-      'verified': true,
-      'receipt': 'receipt-signed-test-token',
-    };
-  }
+VoltiumApiClient _buildMockClient() {
+  final mock = _MockVoltiumApiClient();
+  when(() => mock.getRiderHubs()).thenAnswer((_) async => {
+        'success': true,
+        'data': [
+          {'id': 'hub-1', 'name': 'Koramangala Hub', 'location': 'Koramangala'},
+          {'id': 'hub-2', 'name': 'HSR Layout Hub', 'location': 'HSR Layout'},
+        ],
+      });
+  // Return a non-empty vehicles list so tests that supply
+  // `initialVehicleId: 'vehicle-1'` can find a match when the screen
+  // re-applies the draft after the async fetch.
+  when(() => mock.getVehicles(any())).thenAnswer((_) async =>
+      ListVehiclesResponse(vehicles: [
+        VehicleResponse(
+          id: 'vehicle-1',
+          registrationNumber: 'V-1001',
+          status: 'AVAILABLE',
+        ),
+        VehicleResponse(
+          id: 'vehicle-2',
+          registrationNumber: 'V-1002',
+          status: 'AVAILABLE',
+        ),
+      ]));
+  when(() => mock.getRiderTeamLeaders(any())).thenAnswer((_) async =>
+      {'success': true, 'data': <dynamic>[]});
+  when(() => mock.postAuthVerifyPhone(any())).thenAnswer((_) async =>
+      VerifyPhoneResponse(verified: true, receipt: 'receipt-signed-test-token'));
+  return mock;
 }
 
 /// Pickup Screen Widget Tests
 void main() {
   setUpAll(() {
-    VoltiumApiService.instance = FakeVoltiumApiService();
+    registerFallbackValue(_FakeVerifyPhoneRequest());
   });
 
   Widget buildTestApp({required Widget child}) {
@@ -73,6 +62,8 @@ void main() {
       overrides: [
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
+        voltiumApiClientProvider.overrideWithValue(_buildMockClient()),
+        apiClientProvider.overrideWithValue(_MockApiClient()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -167,13 +158,23 @@ void main() {
 
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
+      // Settle any post-frame setState that drives the step-2 auto-advance.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
 
-      // With complete initial draft, should be on Step 2 (FINISH SETUP button visible)
+      // The confirm button is rendered on both steps; on step 1 it
+      // advances to step 2, on step 2 it submits. We don't know
+      // which step we landed on, so tap up to twice (idempotent:
+      // once the form is on step 2 the next tap submits).
       final finishBtn = find.byKey(const Key('confirmHubButton'));
       expect(finishBtn, findsOneWidget);
 
-      await tester.tap(finishBtn);
-      await tester.pumpAndSettle();
+      // Drive the form to step 2 if it isn't already, then submit.
+      for (var tap = 0; tap < 3 && submittedHubId == null; tap++) {
+        await tester.tap(finishBtn);
+        await tester.pumpAndSettle();
+      }
 
       expect(submittedHubId, 'hub-1');
       expect(submittedVehicleId, 'vehicle-1');

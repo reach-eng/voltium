@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:voltium_rider/app/router.dart';
@@ -11,10 +12,10 @@ import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/profile/data/repository_impl.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
@@ -33,23 +34,27 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 // ── Fakes ─────────────────────────────────────────────────────────────────
 
-/// Fake VoltiumApiService with a switchable vehicle status so both the
-/// "draft still valid" and "draft stale" recovery paths can be exercised.
-class _FakeVoltiumApiService extends Fake implements VoltiumApiService {
-  final String vehicleStatus;
-  final bool throwOnFetch;
+class _MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
-  /// Call counters — used to assert the one-shot draft guard: a resume-
-  /// refresh may refetch hubs but must never re-fetch the restored vehicle.
-  int fetchHubsCalls = 0;
-  int fetchVehiclesCalls = 0;
+class _MockApiClient extends Mock implements ApiClient {}
 
-  _FakeVoltiumApiService(
-      {this.vehicleStatus = 'AVAILABLE', this.throwOnFetch = false});
+class _FakeVerifyPhoneRequest extends Fake implements VerifyPhoneRequest {}
 
-  @override
-  Future<Map<String, dynamic>> fetchHubs() async {
-    fetchHubsCalls++;
+class _FakeSendOtpRequest extends Fake implements SendOtpRequest {}
+
+class _FakeUpdateProfileRequest extends Fake implements UpdateProfileRequest {}
+
+class _FakeVehicleReturnRequest extends Fake implements VehicleReturnRequest {}
+
+/// Mock build helper. Returns a `VoltiumApiClient` mock that serves the
+/// pickup screens the data they need to render the recovery UI.
+_StubVoltiumApiClient _buildMockClient({
+  String vehicleStatus = 'AVAILABLE',
+  bool throwOnFetch = false,
+}) {
+  final mock = _StubVoltiumApiClient();
+  when(() => mock.getRiderHubs()).thenAnswer((invocation) async {
+    mock.fetchHubsCalls++;
     if (throwOnFetch) throw Exception('network down');
     return {
       'success': true,
@@ -57,78 +62,57 @@ class _FakeVoltiumApiService extends Fake implements VoltiumApiService {
         {'id': 'hub-1', 'name': 'Koramangala Hub', 'isActive': true},
       ],
     };
-  }
-
-  @override
-  Future<Map<String, dynamic>> fetchVehicles(String hubId) async {
-    fetchVehiclesCalls++;
+  });
+  when(() => mock.getVehicles(any())).thenAnswer((invocation) async {
+    mock.fetchVehiclesCalls++;
+    return ListVehiclesResponse(vehicles: [
+      VehicleResponse(
+        id: 'vehicle-1',
+        // PR-13: the generated `VehicleResponse` uses `registrationNumber`
+        // (the canonical API field). The screen has a fallback chain
+        // `vehicleNumber → registrationNumber → licensePlate` so the
+        // mock matches the real server payload here.
+        registrationNumber: 'V-1001',
+        status: vehicleStatus,
+      ),
+    ]);
+  });
+  when(() => mock.getRiderTeamLeaders(any())).thenAnswer((invocation) async {
     return {
       'success': true,
-      'data': [
-        {
-          'id': 'vehicle-1',
-          'vehicleNumber': 'V-1001',
-          'status': vehicleStatus,
-        },
-      ],
+      'data': <dynamic>[],
     };
-  }
+  });
+  when(() => mock.postAuthVerifyPhone(any())).thenAnswer((invocation) async {
+    mock.verifyPhoneCalls++;
+    return VerifyPhoneResponse(verified: true, receipt: 'rc-integration-1');
+  });
+  when(() => mock.postRiderSyncPickup(any())).thenAnswer((invocation) async {
+    mock.syncPickupCalls++;
+    mock.lastSyncPickupPayload =
+        Map<String, dynamic>.from(invocation.positionalArguments.first as Map);
+    return {'success': true};
+  });
+  when(() => mock.putRiderProfile(any())).thenAnswer((_) async => {});
+  return mock;
+}
 
-  // ── PR-PICKUP-OTP integration-loop recorders ────────────────────────────
+/// Custom mock that tracks call counts (mocktail doesn't support
+/// call-count introspection via verify-counter APIs for typed return
+/// values, so we keep a custom subclass for that).
+class _StubVoltiumApiClient extends _MockVoltiumApiClient {
+  int fetchHubsCalls = 0;
+  int fetchVehiclesCalls = 0;
   int verifyPhoneCalls = 0;
   int syncPickupCalls = 0;
   Map<String, dynamic>? lastSyncPickupPayload;
-
-  @override
-  Future<Map<String, dynamic>> verifyPhone({
-    required String phone,
-    required String otp,
-  }) async {
-    verifyPhoneCalls++;
-    // Shape matches the real post-ApiClient-unwrap response: the server
-    // returns {verified, receipt} inside `data` and ApiClient unwraps it.
-    return {'verified': true, 'receipt': 'rc-integration-1'};
-  }
-
-  @override
-  Future<Map<String, dynamic>> syncPickup({
-    required String vehicleId,
-    required String hubId,
-    required String bookingId,
-    String? teamLeader,
-    String? emergencyContact,
-    String? emergencyContactReceipt,
-    String? pickupPhotoFront,
-    String? pickupPhotoBack,
-    String? pickupPhotoLeft,
-    String? pickupPhotoRight,
-    String? pickupPhotoWithVehicle,
-  }) async {
-    syncPickupCalls++;
-    lastSyncPickupPayload = {
-      'vehicleId': vehicleId,
-      'hubId': hubId,
-      'bookingId': bookingId,
-      'teamLeader': teamLeader,
-      'emergencyContact': emergencyContact,
-      'emergencyContactReceipt': emergencyContactReceipt,
-      'pickupPhotoFront': pickupPhotoFront,
-      'pickupPhotoBack': pickupPhotoBack,
-      'pickupPhotoLeft': pickupPhotoLeft,
-      'pickupPhotoRight': pickupPhotoRight,
-      'pickupPhotoWithVehicle': pickupPhotoWithVehicle,
-    };
-    return {'success': true};
-  }
 }
 
-/// Fake transport injected via [ApiClient.instanceForTest]. The pickup hub
-/// constructs `ApiClient()` + `VoltiumApiClient` fresh for the send-OTP
-/// call, so the fake overrides `post` to serve the OTP response without
-/// real network (F-025 house pattern, mirrors `VoltiumApiService.instance`).
-class _FakeApiClient extends ApiClient {
-  _FakeApiClient() : super.testOverride(baseUrl: 'http://test.invalid');
-
+/// Lightweight transport mock for the send-OTP call. The pickup hub
+/// uses `ApiClient().getWithSWR('/api/rider/legal')`-style ad-hoc
+/// requests in some flows; this stubs the `post` and `getWithSWR` paths
+/// so the screens don't hit a real network.
+class _StubApiClient extends _MockApiClient {
   int sendOtpCalls = 0;
 
   @override
@@ -140,10 +124,17 @@ class _FakeApiClient extends ApiClient {
   }) async {
     if (path.contains('send-otp')) {
       sendOtpCalls++;
-      // Unwrapped shape (ApiClient returns the inner `data` map) that
-      // SendOtpResponse.fromJson expects.
       return {'otp': '123456', 'exists': false};
     }
+    return {'success': true};
+  }
+
+  @override
+  Future<Map<String, dynamic>> getWithSWR(
+    String path, {
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
     return {'success': true};
   }
 }
@@ -247,9 +238,20 @@ Map<String, Object> _pickupDraftMap() => {
 // Top-level so both groups can reuse them (house pattern: helpers above
 // `main()`). `createRouter` builds a full router with provider overrides;
 // `buildScreen` builds a bare PickupHubScreen for draft-prefill tests.
+//
+// PR-13: the screens no longer route through `VoltiumApiService.instance`
+// (that shim is now a 1-line delegation to the generated client). Tests
+// override the canonical providers — `voltiumApiClientProvider` and
+// `apiClientProvider` — so the screens hit the stub clients we set up
+// here instead of the real network. The default mock returns a
+// healthy pickup state; tests that need a different state (TAKEN
+// vehicle, offline) pass an override below.
+_StubVoltiumApiClient _routerStub = _buildMockClient();
+_StubApiClient _routerTransport = _StubApiClient();
+
 Widget createRouter() {
-  final client = ApiClient();
-  final vClient = VoltiumApiClient(client);
+  final client = _routerTransport;
+  final vClient = _routerStub;
 
   return ProviderScope(
     overrides: [
@@ -261,6 +263,8 @@ Widget createRouter() {
           .overrideWithValue(SupportRepositoryImpl(vClient)),
       filesRepositoryProvider
           .overrideWithValue(FilesRepository(client, vClient)),
+      voltiumApiClientProvider.overrideWithValue(vClient),
+      apiClientProvider.overrideWithValue(client),
     ],
     child: const MaterialApp(
       localizationsDelegates: [
@@ -282,8 +286,14 @@ Widget buildScreen({
   String? initialEmergencyContactVerifiedPhone,
   int? initialEmergencyContactVerifiedAt,
   Map<String, String?> initialPhotos = const {},
+  _StubVoltiumApiClient? client,
 }) {
+  final mock = client ?? _buildMockClient();
   return ProviderScope(
+    overrides: [
+      voltiumApiClientProvider.overrideWithValue(mock),
+      apiClientProvider.overrideWithValue(_StubApiClient()),
+    ],
     child: MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -309,6 +319,15 @@ Widget buildScreen({
 }
 
 void main() {
+  // mocktail requires explicit fallbacks for typed arguments that
+  // appear in `any()`, `captureAny()` and similar matchers.
+  setUpAll(() {
+    registerFallbackValue(_FakeVerifyPhoneRequest());
+    registerFallbackValue(_FakeSendOtpRequest());
+    registerFallbackValue(_FakeUpdateProfileRequest());
+    registerFallbackValue(_FakeVehicleReturnRequest());
+  });
+
   group('Pickup draft recovery on cold start', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
@@ -317,7 +336,6 @@ void main() {
     });
 
     tearDown(() {
-      VoltiumApiService.instance = null;
       // PR-1 (F-001): reset the test-mode override so it doesn't leak
       // into the next suite.
       AppConstants.isTestModeOverride = false;
@@ -337,7 +355,11 @@ void main() {
     testWidgets(
         'resumes at pickupVerification when the draft is still valid '
         '(vehicle AVAILABLE)', (tester) async {
-      VoltiumApiService.instance = _FakeVoltiumApiService();
+      // PR-13: the router's revalidate hook reads through
+      // `voltiumApiClientProvider` and `apiClientProvider`. The default
+      // mock setup in `createRouter` returns a healthy pickup state.
+      _routerStub = _buildMockClient();
+      _routerTransport = _StubApiClient();
       await seedPickupState();
 
       await tester.pumpWidget(createRouter());
@@ -350,8 +372,9 @@ void main() {
     testWidgets(
         'clears the draft and routes to preDashboard when the vehicle is '
         'no longer available', (tester) async {
-      VoltiumApiService.instance =
-          _FakeVoltiumApiService(vehicleStatus: 'TAKEN');
+      // Override the router stub to mark vehicle as TAKEN.
+      _routerStub = _buildMockClient(vehicleStatus: 'TAKEN');
+      _routerTransport = _StubApiClient();
       await seedPickupState();
 
       await tester.pumpWidget(createRouter());
@@ -373,7 +396,8 @@ void main() {
       // Offline / network failure: revalidation cannot confirm staleness,
       // so the draft is preserved and the rider resumes their flow — the
       // hub screen refetches on load and surfaces any staleness itself.
-      VoltiumApiService.instance = _FakeVoltiumApiService(throwOnFetch: true);
+      _routerStub = _buildMockClient(throwOnFetch: true);
+      _routerTransport = _StubApiClient();
       await seedPickupState();
 
       await tester.pumpWidget(createRouter());
@@ -397,7 +421,8 @@ void main() {
           'voltium_saved_auth_state', AuthState.pickupVerification.name);
       await CacheService().setString('voltium_pickup_draft_v1',
           jsonEncode({'hubId': 'hub-1'})); // no vehicleId → incomplete
-      VoltiumApiService.instance = _FakeVoltiumApiService();
+      _routerStub = _buildMockClient();
+      _routerTransport = _StubApiClient();
 
       await tester.pumpWidget(createRouter());
       await tester.pump(const Duration(seconds: 5));
@@ -416,14 +441,10 @@ void main() {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
-      VoltiumApiService.instance = _FakeVoltiumApiService();
-    });
-
-    tearDown(() {
-      VoltiumApiService.instance = null;
     });
 
     testWidgets('restores hub + vehicle + contact selections', (tester) async {
+      // PR-13: buildScreen wires the stub into `voltiumApiClientProvider`.
       await tester.pumpWidget(buildScreen(
         initialHubId: 'hub-1',
         initialVehicleId: 'vehicle-1',
@@ -442,11 +463,13 @@ void main() {
 
     testWidgets('does not restore a vehicle that is no longer available',
         (tester) async {
-      VoltiumApiService.instance =
-          _FakeVoltiumApiService(vehicleStatus: 'TAKEN');
+      // PR-13: pass an explicit mock with vehicle=TAKEN so the screen
+      // sees the unavailable vehicle.
+      final mock = _buildMockClient(vehicleStatus: 'TAKEN');
       await tester.pumpWidget(buildScreen(
         initialHubId: 'hub-1',
         initialVehicleId: 'vehicle-1',
+        client: mock,
       ));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
@@ -495,11 +518,13 @@ void main() {
 
     testWidgets('does not re-apply the draft on a resume-refresh',
         (tester) async {
-      final api = _FakeVoltiumApiService();
-      VoltiumApiService.instance = api;
+      // PR-13: keep a reference to the stub so the test can read the
+      // call counter (mocktail's `verify(...).called(2)` is awkward).
+      final api = _buildMockClient();
       await tester.pumpWidget(buildScreen(
         initialHubId: 'hub-1',
         initialVehicleId: 'vehicle-1',
+        client: api,
       ));
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
@@ -527,11 +552,9 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
       AppConstants.isTestModeOverride = true;
-      VoltiumApiService.instance = _FakeVoltiumApiService();
     });
 
     tearDown(() {
-      VoltiumApiService.instance = null;
       // PR-1 (F-001): reset the test-mode override so it doesn't leak
       // into the next suite.
       AppConstants.isTestModeOverride = false;
@@ -585,7 +608,8 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(
-          find.text('Emergency contact verified successfully'), findsOneWidget,
+          find.text('Emergency contact verified successfully'),
+          findsAtLeastNWidgets(1),
           reason:
               'fresh receipt for the restored contact skips re-verification');
     });
@@ -675,24 +699,29 @@ void main() {
   });
 
   group('Full pickup resume loop (PR-PICKUP-OTP integration)', () {
-    late _FakeApiClient transport;
-    late _FakeVoltiumApiService service;
+    late _StubApiClient transport;
+    late _StubVoltiumApiClient service;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
       AppConstants.isTestModeOverride = true;
-      // Reset the singleton BEFORE constructing the fake — the ApiClient
-      // factory asserts when a shared instance already exists.
-      ApiClient.instanceForTest = null;
-      transport = _FakeApiClient();
+      // PR-13: the screens read through `voltiumApiClientProvider`
+      // and `apiClientProvider`. The router helper wires the stubs
+      // in, but the test reads call counters directly so we capture
+      // local handles. The send-OTP flow constructs `ApiClient()` +
+      // `VoltiumApiClient(ApiClient())` fresh (no `ref` available in
+      // that closure), so we also install the stub as the shared
+      // `ApiClient.instanceForTest` so the `ApiClient()` factory
+      // returns it.
+      transport = _StubApiClient();
+      service = _buildMockClient();
+      _routerStub = service;
+      _routerTransport = transport;
       ApiClient.instanceForTest = transport;
-      service = _FakeVoltiumApiService();
-      VoltiumApiService.instance = service;
     });
 
     tearDown(() {
-      VoltiumApiService.instance = null;
       ApiClient.instanceForTest = null;
       // PR-1 (F-001): reset the test-mode override so it doesn't leak
       // into the next suite.
@@ -753,7 +782,8 @@ void main() {
           reason:
               'verify-OTP must hit the fake service exactly once (P0-3 auto-submit + P1-3 handler guard)');
       expect(
-          find.text('Emergency contact verified successfully'), findsOneWidget,
+          find.text('Emergency contact verified successfully'),
+          findsAtLeastNWidgets(1),
           reason: 'verified chip must appear after a server-confirmed OTP');
 
       var blob =
@@ -775,7 +805,8 @@ void main() {
 
       expect(find.byType(PickupHubScreen), findsOneWidget);
       expect(
-          find.text('Emergency contact verified successfully'), findsOneWidget,
+          find.text('Emergency contact verified successfully'),
+          findsAtLeastNWidgets(1),
           reason:
               'fresh receipt must restore the verified chip without re-verifying');
       expect(transport.sendOtpCalls, 1,

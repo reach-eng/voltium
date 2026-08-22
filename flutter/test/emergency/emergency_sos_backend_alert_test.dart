@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 // PR-VER-2026-08-06 (EMERGENCY P0-1): the SOS long-press used to only dial
 // 112 locally. This test asserts the trigger now shows the "Sending SOS..."
@@ -14,7 +16,16 @@ import 'package:voltium_rider/features/device_compliance/presentation/screens/em
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [],
-    child: const MaterialApp(home: EmergencySOSScreen()),
+    child: const MaterialApp(
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [Locale('en'), Locale('hi')],
+      home: EmergencySOSScreen(),
+    ),
   );
 }
 

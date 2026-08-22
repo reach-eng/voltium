@@ -20,12 +20,14 @@
 // fully drive for these tests).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/hang_tight_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 
 /// Minimal stub notifier — `refreshFromApi` is a no-op so widget tests
@@ -76,6 +78,13 @@ Widget _buildHarness({required RiderModel rider}) {
       riderProvider.overrideWith(_StubRiderNotifier.new),
     ],
     child: MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       home: _Harness(rider: rider),
     ),
   );
@@ -160,7 +169,7 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('hangTightSupportButton')), findsOneWidget);
       expect(find.byKey(const Key('hangTightRefreshButton')), findsOneWidget);
-      expect(find.text('Contact support'), findsOneWidget);
+      expect(find.text('Contact Support'), findsOneWidget);
       expect(find.text('Refresh'), findsOneWidget);
     });
 

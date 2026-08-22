@@ -2,9 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_screen.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// 2026-08-05 legal/device audit P0-3: the legal screen must render documents
 /// served by the admin-managed legal module, with the bundled JSON fallback
@@ -17,54 +22,62 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 /// (a) asserts the fallback *titles* render in-widget and (b) verifies the
 /// bundled asset on disk still carries the offline legal copy.
 
-class _FakeVoltiumApiService extends Fake implements VoltiumApiService {
-  _FakeVoltiumApiService(this._docs);
+class _MockApiClient extends Mock implements ApiClient {}
 
-  final Map<String, dynamic>? _docs;
-
+class _ThrowingApiClient extends Mock implements ApiClient {
   @override
-  Future<Map<String, dynamic>> fetchLegalDocuments() async {
-    if (_docs == null) throw Exception('offline');
-    return _docs!;
+  Future<Map<String, dynamic>> getWithSWR(
+    String path, {
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
+    throw Exception('offline');
   }
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
-    VoltiumApiService.instance = null;
-  });
-
-  tearDown(() {
-    VoltiumApiService.instance = null;
-  });
-
-  Widget buildScreen() {
-    return const MaterialApp(home: LegalScreen(onNext: null, onBack: null));
+  Widget buildScreen(ApiClient apiClient) {
+    return ProviderScope(
+      overrides: [
+        apiClientProvider.overrideWithValue(apiClient),
+      ],
+      child: const MaterialApp(
+        localizationsDelegates: [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: [Locale('en'), Locale('hi')],
+        home: LegalScreen(onNext: null, onBack: null),
+      ),
+    );
   }
 
   testWidgets('renders API-served documents over the fallback copy',
       (tester) async {
-    VoltiumApiService.instance = _FakeVoltiumApiService({
-      'success': true,
-      'data': [
-        {
-          'type': 'terms',
-          'title': 'Terms of Service',
-          'content': 'SERVER-MANAGED TERMS TEXT',
-          'updatedAt': '2026-08-05T10:00:00.000Z',
-        },
-        {
-          'type': 'lease',
-          'title': 'Lease Agreement',
-          'content': 'LEASE CONTENT FROM API',
-          'updatedAt': '2026-08-05T10:00:00.000Z',
-        },
-      ],
-    });
+    final mock = _MockApiClient();
+    when(() => mock.getWithSWR(any())).thenAnswer((_) async => {
+          'success': true,
+          'data': [
+            {
+              'type': 'terms',
+              'title': 'Terms of Service',
+              'content': 'SERVER-MANAGED TERMS TEXT',
+              'updatedAt': '2026-08-05T10:00:00.000Z',
+            },
+            {
+              'type': 'lease',
+              'title': 'Lease Agreement',
+              'content': 'LEASE CONTENT FROM API',
+              'updatedAt': '2026-08-05T10:00:00.000Z',
+            },
+          ],
+        });
 
-    await tester.pumpWidget(buildScreen());
+    await tester.pumpWidget(buildScreen(mock));
     // Let the async fetch resolve.
     await tester.pumpAndSettle();
 
@@ -80,9 +93,9 @@ void main() {
 
   testWidgets('falls back to the bundled fallback when the API is unreachable',
       (tester) async {
-    VoltiumApiService.instance = _FakeVoltiumApiService(null);
+    final mock = _ThrowingApiClient();
 
-    await tester.pumpWidget(buildScreen());
+    await tester.pumpWidget(buildScreen(mock));
     await tester.pumpAndSettle();
 
     // Fallback sections still render (titles are the hardcoded last-resort).

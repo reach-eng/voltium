@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_proof_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 Widget buildTestApp({ThemeMode themeMode = ThemeMode.light}) {
   return ProviderScope(
@@ -9,6 +11,13 @@ Widget buildTestApp({ThemeMode themeMode = ThemeMode.light}) {
       themeMode: themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       home: const TopUpProofScreen(amount: 500),
     ),
   );
@@ -55,7 +64,7 @@ void main() {
       expect(find.text('Instant Payment'), findsAtLeastNWidgets(1));
       expect(find.textContaining('2.5%'), findsAtLeastNWidgets(1));
 
-      final proceedBtn = find.text('Proceed');
+      final proceedBtn = find.text('PROCEED TO PAYMENT');
       expect(proceedBtn, findsOneWidget);
       await tester.tap(proceedBtn);
       await tester.pumpAndSettle();

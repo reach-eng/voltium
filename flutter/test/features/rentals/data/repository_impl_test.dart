@@ -3,29 +3,24 @@ import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
-class MockVoltiumApiService extends Mock implements VoltiumApiService {}
-
 void main() {
   late MockVoltiumApiClient mockVoltiumApiClient;
-  late MockVoltiumApiService mockApiService;
   late RentalRepositoryImpl repository;
 
   setUp(() {
     mockVoltiumApiClient = MockVoltiumApiClient();
-    mockApiService = MockVoltiumApiService();
-
-    // Inject mock into singleton
-    VoltiumApiService.instance = mockApiService;
-
     repository = RentalRepositoryImpl(mockVoltiumApiClient);
   });
 
-  tearDown(() {
-    VoltiumApiService.instance = null;
+  setUpAll(() {
+    // Register a fallback for VehicleReturnRequest so mocktail can
+    // capture/call it by value.
+    registerFallbackValue(
+      VehicleReturnRequest(returnPhotos: const <String>[]),
+    );
   });
 
   group('RentalRepositoryImpl', () {
@@ -209,28 +204,31 @@ void main() {
     // PR-VER-2026-08-06 (RENTAL P0-1 + P0-3): the canonical body is now
     // `{ returnPhotos, reason }` — vehicleId/hubId/riderId were dropped;
     // the server resolves rider + vehicle from the session.
-    test('submitVehicleReturn delegates to VoltiumApiService', () async {
-      when(() => mockApiService.submitVehicleReturn(
-            returnPhotos: any(named: 'returnPhotos'),
-            reason: any(named: 'reason'),
-          )).thenAnswer((_) async => {'returnStatus': 'success'});
+    //
+    // PR-13: was a wrapper call to `VoltiumApiService.submitVehicleReturn`;
+    // now calls the generated `postRiderRentalReturn(VehicleReturnRequest(...))`
+    // directly on the injected `VoltiumApiClient`.
+    test('submitVehicleReturn delegates to VoltiumApiClient.postRiderRentalReturn',
+        () async {
+      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
+          .thenAnswer((_) async => {'returnStatus': 'success'});
 
       final result = await repository.submitVehicleReturn(
         photos: ['photo1.jpg', 'photo2.jpg'],
       );
 
       expect(result['returnStatus'], 'success');
-      verify(() => mockApiService.submitVehicleReturn(
-            returnPhotos: ['photo1.jpg', 'photo2.jpg'],
-            reason: null,
-          )).called(1);
+      final captured = verify(
+              () => mockVoltiumApiClient.postRiderRentalReturn(captureAny()))
+          .captured;
+      final request = captured.first as VehicleReturnRequest;
+      expect(request.returnPhotos, ['photo1.jpg', 'photo2.jpg']);
+      expect(request.reason, isNull);
     });
 
     test('submitVehicleReturn throws when service throws', () async {
-      when(() => mockApiService.submitVehicleReturn(
-            returnPhotos: any(named: 'returnPhotos'),
-            reason: any(named: 'reason'),
-          )).thenThrow(Exception('Return error'));
+      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
+          .thenThrow(Exception('Return error'));
 
       expect(
         () => repository.submitVehicleReturn(photos: []),
@@ -239,21 +237,20 @@ void main() {
     });
 
     test('submitVehicleReturn passes empty photos array correctly', () async {
-      when(() => mockApiService.submitVehicleReturn(
-            returnPhotos: any(named: 'returnPhotos'),
-            reason: any(named: 'reason'),
-          )).thenAnswer((_) async => {});
+      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
+          .thenAnswer((_) async => {});
 
       await repository.submitVehicleReturn(photos: []);
-      verify(() => mockApiService
-          .submitVehicleReturn(returnPhotos: [], reason: null)).called(1);
+      final captured = verify(
+              () => mockVoltiumApiClient.postRiderRentalReturn(captureAny()))
+          .captured;
+      final request = captured.first as VehicleReturnRequest;
+      expect(request.returnPhotos, isEmpty);
     });
 
     test('submitVehicleReturn returns full response payload', () async {
-      when(() => mockApiService.submitVehicleReturn(
-            returnPhotos: any(named: 'returnPhotos'),
-            reason: any(named: 'reason'),
-          )).thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
+      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
+          .thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
 
       final result = await repository.submitVehicleReturn(photos: ['p1']);
       expect(result['key1'], 'val1');

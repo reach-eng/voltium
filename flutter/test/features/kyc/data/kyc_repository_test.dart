@@ -211,7 +211,12 @@ void main() {
         final r1Cache = await KycRepository.loadFormCache(riderId: 'r1');
         expect(r1Cache!['name'], 'Alice');
         expect(r1Cache['aadhaarFrontPath'], '/uploads/r1-aadhaar.jpg');
-        expect(r1Cache['bankAccount'], '1234567890');
+        // PR-VER-2026-08-06 (KYC cache PII leak): financial PII
+        // (`bankAccount`, `bankIfsc`) is stripped at write time. The
+        // rider's name and Aadhaar path persist; the bank account does
+        // not. This is the security contract; do not relax.
+        expect(r1Cache.containsKey('bankAccount'), isFalse,
+            reason: 'bankAccount must be stripped from persistent storage');
       },
     );
 

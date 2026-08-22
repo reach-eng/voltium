@@ -407,8 +407,10 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   }
 
   String _vehicleLabel(Map<String, dynamic> v) {
-    final number =
-        v['vehicleNumber'] as String? ?? v['licensePlate'] as String? ?? '';
+    final number = v['vehicleNumber'] as String? ??
+        v['registrationNumber'] as String? ??
+        v['licensePlate'] as String? ??
+        '';
     final model = v['model'] as String? ?? '';
     return '$number${model.isNotEmpty ? ' • $model' : ''}';
   }

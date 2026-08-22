@@ -8,15 +8,28 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/kyc_preflight_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 void main() {
+  Widget app({required Widget home}) {
+    return MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
+      home: home,
+    );
+  }
+
   testWidgets('KycPreflightScreen renders 3 checklist items', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: KycPreflightScreen(onNext: _noop, onSkip: _noop),
-      ),
+      app(home: KycPreflightScreen(onNext: _noop, onSkip: _noop)),
     );
     await tester.pumpAndSettle();
 
@@ -30,9 +43,7 @@ void main() {
   testWidgets("'I'm Ready' button triggers onNext callback", (tester) async {
     var nextCount = 0;
     await tester.pumpWidget(
-      MaterialApp(
-        home: KycPreflightScreen(onNext: () => nextCount++),
-      ),
+      app(home: KycPreflightScreen(onNext: () => nextCount++)),
     );
     await tester.pumpAndSettle();
 
@@ -47,7 +58,7 @@ void main() {
       (tester) async {
     var skipCount = 0;
     await tester.pumpWidget(
-      MaterialApp(
+      app(
         home: KycPreflightScreen(
           onNext: _noop,
           onSkip: () => skipCount++,
@@ -65,9 +76,7 @@ void main() {
 
   testWidgets('Skip button is hidden when onSkip is null', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: KycPreflightScreen(onNext: _noop),
-      ),
+      app(home: KycPreflightScreen(onNext: _noop)),
     );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('skipPreflightButton')), findsNothing);

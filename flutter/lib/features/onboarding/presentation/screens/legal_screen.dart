@@ -1,29 +1,30 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:voltium_rider/gen/app_localizations.dart';
-import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/cache_service.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'legal_page_screen.dart';
 import '../legal_fallback_loader.dart';
-import 'package:voltium_rider/theme/app_typography.dart';
 
-class LegalScreen extends StatefulWidget {
+class LegalScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
 
   const LegalScreen({super.key, this.onNext, this.onBack});
 
   @override
-  State<LegalScreen> createState() => _LegalScreenState();
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
 }
 
-class _LegalScreenState extends State<LegalScreen>
+class _LegalScreenState extends ConsumerState<LegalScreen>
     with TickerProviderStateMixin {
   final Set<String> _expandedIds = {};
   bool _accepted = false;
@@ -88,12 +89,14 @@ class _LegalScreenState extends State<LegalScreen>
     setState(() => _loadingDocs = true);
     try {
       // PR-13: was a wrapper call to
-      // `VoltiumApiService.fetchLegalDocuments`, which is a 1-line
+      // `VoltiumApiService.fetchLegalDocuments`, which was a 1-line
       // pass-through to `ApiClient.getWithSWR('/api/rider/legal')`.
-      // This screen is `StatefulWidget` (no `ref`); construct the
-      // transport ad hoc. The new-instance allocation is cheap
-      // (it shares the shared pinned HTTP client).
-      final envelope = await ApiClient().getWithSWR('/api/rider/legal');
+      // Now uses the Riverpod `apiClientProvider` so tests can
+      // override the transport without monkey-patching the global
+      // `ApiClient` instance.
+      final envelope = await ref
+          .read(apiClientProvider)
+          .getWithSWR('/api/rider/legal');
       final data = envelope['data'];
       if (data is List) {
         final docs = <String, ({String title, String content})>{};

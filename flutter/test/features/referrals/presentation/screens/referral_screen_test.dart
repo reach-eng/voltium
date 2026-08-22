@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import '../../../../helpers/golden_test_helper.dart';
+
+/// MaterialApp + ProviderScope with AppLocalizations loaded, so screens
+/// that call `AppLocalizations.of(context)!` don't throw a null-check.
+Widget _l10nApp({
+  required Widget home,
+  required _SeededRiderNotifier notifier,
+}) {
+  return ProviderScope(
+    overrides: [riderProvider.overrideWith(() => notifier)],
+    child: MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
+      home: home,
+    ),
+  );
+}
 
 void main() {
   testWidgets('Golden test for ReferralScreen', (WidgetTester tester) async {
@@ -51,9 +74,9 @@ void main() {
       ), // referralCode: null — the P0-7 case
     );
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+    await tester.pumpWidget(_l10nApp(
+      home: const ReferralScreen(),
+      notifier: notifier,
     ));
     // Let the post-frame lazy fetch attempt the (stubbed-out) API call.
     await tester.pump(const Duration(milliseconds: 500));
@@ -80,9 +103,9 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+    await tester.pumpWidget(_l10nApp(
+      home: const ReferralScreen(),
+      notifier: notifier,
     ));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
@@ -105,9 +128,9 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(ProviderScope(
-      overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+    await tester.pumpWidget(_l10nApp(
+      home: const ReferralScreen(),
+      notifier: notifier,
     ));
     await tester.pump(const Duration(milliseconds: 100));
 
