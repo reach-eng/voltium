@@ -697,8 +697,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         // AUDIT-FIX 2026-08-22: hardcoded English; routed through
         // the existing `txtemergencyContactVerifiedSuccessfully`
         // ARB key.
-        AppLocalizations.of(context)
-                ?.txtemergencyContactVerifiedSuccessfully ??
+        AppLocalizations.of(context)?.txtemergencyContactVerifiedSuccessfully ??
             'Emergency contact verified successfully',
       );
     } catch (e) {
@@ -706,8 +705,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       _showError(
         // AUDIT-FIX 2026-08-22: hardcoded English; routed through
         // the existing `txtinvalidOtp` ARB key.
-        AppLocalizations.of(context)?.txtinvalidOtp ??
-            'Invalid OTP',
+        AppLocalizations.of(context)?.txtinvalidOtp ?? 'Invalid OTP',
       );
     } finally {
       if (mounted) setState(() => _isVerifyingOtp = false);

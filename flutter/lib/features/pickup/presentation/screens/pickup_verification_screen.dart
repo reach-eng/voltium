@@ -165,7 +165,8 @@ class _PickupVerificationScreenState
               Text(
                 // AUDIT-FIX 2026-08-22: hardcoded English title; routed
                 // through the pre-staged `txtreadyToRoll` ARB key.
-                AppLocalizations.of(context)?.txtreadyToRoll ?? 'Ready to Roll?',
+                AppLocalizations.of(context)?.txtreadyToRoll ??
+                    'Ready to Roll?',
                 style: AppTypography.headingLarge
                     .copyWith(color: colors.onSurface),
               ),

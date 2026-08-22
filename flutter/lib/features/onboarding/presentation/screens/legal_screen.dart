@@ -94,9 +94,8 @@ class _LegalScreenState extends ConsumerState<LegalScreen>
       // Now uses the Riverpod `apiClientProvider` so tests can
       // override the transport without monkey-patching the global
       // `ApiClient` instance.
-      final envelope = await ref
-          .read(apiClientProvider)
-          .getWithSWR('/api/rider/legal');
+      final envelope =
+          await ref.read(apiClientProvider).getWithSWR('/api/rider/legal');
       final data = envelope['data'];
       if (data is List) {
         final docs = <String, ({String title, String content})>{};
