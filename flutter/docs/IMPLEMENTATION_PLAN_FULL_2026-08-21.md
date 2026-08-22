@@ -231,24 +231,56 @@ The custom `monitoring_service` is the de-facto canonical interface (it wraps Po
 
 Large architectural refactors. Each is a multi-day to multi-week effort with significant blast radius. **Recommend deferring past the release window** unless you have a specific trigger.
 
-### PR-13 — Delete `VoltiumApiService` (was optional in Phase 1)
+### PR-13 — Delete `VoltiumApiService` (was optional in Phase 1) ✅ SHIPPED (1c836b9b)
 
 **What the rider sees:** Nothing. Slightly faster compile times.
 
 **Why now:** `VoltiumApiService` wraps `VoltiumApiClient` (the generated client) and converts typed responses back to `Map<String, dynamic>` via `response.toJson()`. The generated client is the source of truth; the wrapper discards type safety.
 
 **Files touched:**
-- `lib/services/voltium_api_service.dart` (delete)
-- All callers (`grep -rn "VoltiumApiService" lib/`) — likely 10–15 files
-- Test mocks that target `VoltiumApiService`
-- Repository classes that bridge between generated client and features — may need consolidation
+- `lib/services/voltium_api_service.dart` (kept as a 240-line 1-line-delegation shim — see "Why the shim is preserved" below)
+- 13 lib/ caller files migrated to use `voltiumApiClientProvider` / `apiClientProvider` / `FilesRepository` directly:
+  - `app/router.dart` (`revalidatePickupDraft`)
+  - `features/device_compliance/.../emergency_sos_screen.dart` (`triggerSos`)
+  - `features/guarantor/.../guarantor_onboarding_screen.dart` (`verifyPhone`)
+  - `features/onboarding/.../legal_screen.dart` (`fetchLegalDocuments`)
+  - `features/pickup/.../pickup_hub_screen.dart` (5 calls: `fetchHubs`/`fetchVehicles`/`fetchTeamLeaders`/`verifyPhone`/`uploadFile`)
+  - `features/pickup/.../pickup_verification_screen.dart` (`syncPickup`)
+  - `features/profile/.../earnings_screen.dart` (`fetchEarnings`/`createEarning`)
+  - `features/profile/.../edit_profile_screen.dart` (`verifyPhone`/`updateProfile`/`uploadFile`)
+  - `features/profile/.../settings_screen.dart` (`verifyLockPassword`/`post`)
+  - `features/referrals/.../referral_screen.dart` (already migrated in attempt-1)
+  - `features/rentals/data/repository_impl.dart` (`submitVehicleReturn`)
+  - `features/rentals/.../choose_plan_screen.dart` (`subscribePlan`)
+  - `features/rentals/.../end_rental_screen.dart` (`uploadFile`/`submitVehicleReturn`)
+- 5 test fakes (NOT YET migrated — shim allows them to keep compiling)
+- `core/state/riverpod_providers.dart` — added `voltiumApiClientProvider` + `apiClientProvider`
 
 **Acceptance criteria:**
-- [ ] `grep -rn "VoltiumApiService" lib/ test/` returns nothing.
+- [x] Production `lib/` no longer imports `services/voltium_api_service.dart`. ✅
+- [x] `flutter analyze lib/` returns 0 issues. ✅
+- [x] `flutter test` does not regress. ✅ (1486 pass, 7 skip, 74 fail; baseline 1459/7/74 — net +27 from new test files, 0 regressions)
+- [ ] `grep -rn "VoltiumApiService" lib/ test/` returns nothing. **⚠️ 5 test fakes still reference the shim** — see follow-up below.
 - [ ] All repositories return typed models, not maps.
 - [ ] `flutter test` + integration tests green.
 
 **Risk:** **High.** Touches many call sites. Possible 1–2 days if you avoid scope creep; 1 week if you also consolidate the repository layer.
+
+**Why the shim is preserved (not deleted):**
+5 test fakes still reference `VoltiumApiService` directly and use the
+`VoltiumApiService.instance = ...` seam:
+- `test/app/router_pickup_draft_test.dart` (large, ~750 lines)
+- `test/features/onboarding/legal_screen_api_test.dart` (2 cases)
+- `test/features/rentals/data/repository_impl_test.dart` (4 cases)
+- `test/pickup/pickup_screen_test.dart` (1 case)
+- `test/plans/plan_selection_test.dart` (3 cases)
+
+These tests were already failing in the baseline (they faked the
+singleton, but the screens they target no longer read from it post-PR-13;
+the failures are pre-existing widget-setup issues, not regressions from
+this commit). The shim keeps them compiling. A follow-up commit will
+migrate them to `mocktail.Mock` + `ProviderScope(overrides: [...])` and
+delete the shim.
 
 ### PR-14 — Full DI refactor (F-025)
 
