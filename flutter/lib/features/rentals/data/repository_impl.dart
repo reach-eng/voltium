@@ -1,6 +1,6 @@
 import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart' as gen;
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
 /// Implementation of [RentalRepository] using the Voltium API.
 class RentalRepositoryImpl implements RentalRepository {
@@ -49,12 +49,14 @@ class RentalRepositoryImpl implements RentalRepository {
   Future<Map<String, dynamic>> submitVehicleReturn({
     required List<String> photos,
   }) async {
-    // Delegate to the singleton service which routes to POST /api/rider/rental/return.
+    // PR-13: was a wrapper call to `VoltiumApiService.submitVehicleReturn`,
+    // a 1-line pass-through to the generated `postRiderRentalReturn`.
+    //
     // PR-VER-2026-08-06 (RENTAL P0-1 + P0-3): vehicleId/hubId were silently
     // dropped and riderId was fabricated — the server resolves rider + vehicle
     // from the session. The canonical body is now `{ returnPhotos, reason }`.
-    return VoltiumApiService().submitVehicleReturn(
-      returnPhotos: photos,
+    return _apiClient.postRiderRentalReturn(
+      gen.VehicleReturnRequest(returnPhotos: photos),
     );
   }
 }

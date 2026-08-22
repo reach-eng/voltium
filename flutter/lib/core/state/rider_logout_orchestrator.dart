@@ -29,6 +29,11 @@ import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_
     show userOnboardingNotifierProvider;
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart'
     show guarantorOnboardingNotifierProvider;
+// AUDIT FIX (HIGH SECURITY): the guarantor draft now lives in encrypted
+// storage (GuarantorCache); logout must clear it alongside the notifier
+// reset or the next rider on a shared device can resume the previous
+// rider's guarantor PII.
+import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart'
     show authRepositoryProvider;
@@ -49,7 +54,10 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart'
 ///      support, tickets, guarantor).
 ///   4. Wipe the in-progress pickup draft so a fresh login on a shared
 ///      device doesn't resume the previous rider's half-completed pickup.
-///   5. Clear document cache and stop all background sync.
+///   5. Clear the persisted guarantor draft (encrypted storage) — AUDIT
+///      FIX: previously only the in-memory notifier was reset, leaving
+///      the rider's guarantor PII draft on disk for the next user.
+///   6. Clear document cache and stop all background sync.
 ///
 /// This notifier has no state of its own — it is a coordinator. The actual
 /// state reset is delegated to the per-feature notifiers via their
@@ -132,6 +140,16 @@ class RiderLogoutOrchestrator {
       // concerning — log it so silent partial-logout drift is
       // visible.
       appDebug('[logout-orchestrator] pickup draft clear failed: $e');
+    }
+
+    // AUDIT FIX (HIGH SECURITY): wipe the persisted guarantor draft
+    // (encrypted storage) so the next rider on a shared device cannot
+    // resume the previous rider's guarantor PII. GuarantorCache tracks the
+    // draft owner itself, so this needs no rider state.
+    try {
+      await GuarantorCache.clearCurrentDraft();
+    } catch (e) {
+      appDebug('[logout-orchestrator] guarantor cache clear failed: $e');
     }
 
     _onResetRefreshInFlight();

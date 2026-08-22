@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../theme/app_theme.dart';
@@ -11,7 +10,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/utils/dialer.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
@@ -26,18 +25,15 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
   Timer? _cancelTimer;
   bool _sosInFlight = false;
 
+  /// Set by the overlay's Cancel button. The alert sequence checks this
+  /// after every await so a rider who cancels within the countdown window
+  /// does NOT get their location sent, contacts alerted, or 112 dialed.
+  bool _cancelled = false;
+
   @override
   void dispose() {
     _cancelTimer?.cancel();
     super.dispose();
-  }
-
-  Future<void> _callNumber(String number) async {
-    final sanitizedNumber = number.replaceAll(RegExp(r'[^\d+]'), '');
-    final uri = Uri.parse('tel:$sanitizedNumber');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
   }
 
   /// Best-effort location capture. NEVER blocks the emergency path: a
@@ -84,11 +80,18 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
           .map((c) => {'name': c.name, 'phone': c.phone})
           .toList(growable: false);
 
-      await VoltiumApiService().triggerSos(
-        latitude: latitude,
-        longitude: longitude,
-        triggeredVia: 'long_press',
-        contacts: contacts.isEmpty ? null : contacts,
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.triggerSos`, which is a 1-line
+      // pass-through to `ApiClient.post('/api/emergency/sos', body: ...)`.
+      // Call the transport directly.
+      await ref.read(apiClientProvider).post(
+        '/api/emergency/sos',
+        body: {
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
+          'triggeredVia': 'long_press',
+          if (contacts.isNotEmpty) 'contacts': contacts,
+        },
       );
     } catch (_) {
       // Swallow: analytics + audit row are best-effort.
@@ -97,7 +100,9 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
 
   Future<void> _triggerSos() async {
     if (_sosInFlight) return;
+    if (!mounted) return;
     _sosInFlight = true;
+    _cancelled = false;
 
     // Material destructive pattern: firm haptic on trigger start.
     HapticService.medium();
@@ -106,35 +111,67 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
     PostHogService.capture('emergency_sos_triggered');
 
     // "Sending SOS..." overlay with a 5-second cancel option.
-    // ignore: use_build_context_synchronously
+    //
+    // SAFETY FIX: capture the dialog's own builder context so the
+    // auto-dismiss timer always pops THIS dialog — never a foreign route
+    // (permission prompt, FCM overlay) that happens to sit above it.
+    BuildContext? overlayCtx;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => _SosSendingOverlay(onCancel: () {
-        _cancelTimer?.cancel();
-        Navigator.of(ctx).pop();
-      }),
+      builder: (ctx) {
+        overlayCtx = ctx;
+        return _SosSendingOverlay(onCancel: () {
+          _cancelled = true;
+          _cancelTimer?.cancel();
+          Navigator.of(ctx).pop();
+        });
+      },
     );
 
     // Auto-dismiss the overlay after 5s — the alert keeps going even if
-    // the rider walks away from the phone.
+    // the rider walks away from the phone. Pops via the dialog's own
+    // context, not the root navigator.
     _cancelTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted && Navigator.of(context, rootNavigator: true).canPop()) {
-        Navigator.of(context, rootNavigator: true).pop();
+      final ctx = overlayCtx;
+      if (ctx != null && Navigator.of(ctx).canPop()) {
+        Navigator.of(ctx).pop();
       }
     });
 
-    // Capture location best-effort, then alert the backend, then dial 112.
-    final loc = await _captureLocation();
-    await _alertBackend(latitude: loc.lat, longitude: loc.lng);
-    await _callNumber('112');
+    try {
+      // Capture location best-effort (bounded by its 5s timeLimit).
+      final loc = await _captureLocation();
 
-    if (!mounted) return;
-    Toast.error(
-      context,
-      AppLocalizations.of(context)!.txtsosAlertTriggeredDialing,
-    );
-    _sosInFlight = false;
+      // SAFETY FIX: honour Cancel. If the rider backed out during the
+      // countdown window, abort before any side effect leaves the device.
+      if (_cancelled || !mounted) return;
+
+      // SAFETY FIX: the 112 dial is the PRIMARY emergency path and must
+      // never be delayed behind network I/O. The backend fanout (SMS to
+      // contacts + Slack alert) runs in parallel, fire-and-forget; a slow
+      // or failed POST can no longer hold the dial hostage for up to 30s+.
+      unawaited(_alertBackend(latitude: loc.lat, longitude: loc.lng));
+
+      final dialed = await launchDialer(
+        context,
+        '112',
+        failureMessage: 'Unable to dial 112. Please dial manually.',
+      );
+
+      if (_cancelled || !mounted) return;
+      if (dialed) {
+        Toast.info(
+          context,
+          AppLocalizations.of(context)?.txtsosAlertTriggeredDialing ??
+              'SOS alert triggered, dialing...',
+        );
+      }
+    } finally {
+      // Reset in `finally` so a platform exception can never brick the
+      // SOS button for the rest of the screen's lifetime.
+      _sosInFlight = false;
+    }
   }
 
   @override
@@ -176,30 +213,36 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(height: 40),
-            GestureDetector(
-              onLongPress: _triggerSos,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.error.withValues(alpha: 0.4),
-                      blurRadius: 30,
-                      spreadRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'SOS',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
+            Semantics(
+              button: true,
+              label: 'SOS',
+              onLongPressHint:
+                  'Press and hold to trigger an emergency alert',
+              child: GestureDetector(
+                onLongPress: _triggerSos,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.error.withValues(alpha: 0.4),
+                        blurRadius: 30,
+                        spreadRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'SOS',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -222,7 +265,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
                       number: c.phone,
                       color: c.isPrimary ? AppColors.error : AppColors.primary,
                       isFullWidth: true,
-                      onTap: () => _callNumber(c.phone),
+                      onTap: () => launchDialer(context, c.phone),
                     ),
                   ),
                 ),
@@ -236,7 +279,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
                 number: emergencyContact.toString(),
                 color: AppColors.error,
                 isFullWidth: true,
-                onTap: () => _callNumber(emergencyContact.toString()),
+                onTap: () => launchDialer(context, emergencyContact.toString()),
               ),
               const SizedBox(height: 16),
             ],
@@ -248,7 +291,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
                     title: 'Police',
                     number: '100',
                     color: AppColors.primary,
-                    onTap: () => _callNumber('100'),
+                    onTap: () => launchDialer(context, '100'),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -258,7 +301,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
                     title: 'Ambulance',
                     number: '108',
                     color: AppColors.error,
-                    onTap: () => _callNumber('108'),
+                    onTap: () => launchDialer(context, '108'),
                   ),
                 ),
               ],
@@ -270,7 +313,7 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
               number: '1800-865-8486',
               color: AppColors.primary,
               isFullWidth: true,
-              onTap: () => _callNumber('18008658486'),
+              onTap: () => launchDialer(context, '18008658486'),
             ),
           ],
         ),
@@ -340,8 +383,9 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
 }
 
 /// Modal overlay shown while the SOS alert is being sent. Offers a
-/// 5-second cancel option (Material destructive pattern) — after the
-/// timer fires the alert is irrevocable and 112 is dialed.
+/// 5-second cancel option (Material destructive pattern) — cancelling
+/// aborts the whole sequence (location, backend fanout, 112 dial). After
+/// the timer fires, or once the dial has started, the alert proceeds.
 class _SosSendingOverlay extends StatelessWidget {
   const _SosSendingOverlay({required this.onCancel});
 

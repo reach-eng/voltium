@@ -18,7 +18,6 @@ import '../core/state/riverpod_providers.dart';
 import '../core/state/rider_provider.dart' show kPickupDraftCacheKey;
 import '../core/network/api_error_messages.dart';
 import '../services/cache_service.dart';
-import '../services/voltium_api_service.dart';
 import '../widgets/app_shell.dart';
 
 // Relocated screens
@@ -268,15 +267,14 @@ class _AppRouterState extends ConsumerState<AppRouter>
     final vehicleId = _pickupVehicleId;
     if (hubId == null || vehicleId == null) return true; // nothing to resume
     try {
-      // PR-13: route through the (now-thin) VoltiumApiService shim
-      // so the existing test fakes (which set
-      // `VoltiumApiService.instance = _FakeVoltiumApiService(...)`)
-      // keep working. The shim is a 1-line delegation; this is the
-      // only production lib/ call site that still uses it. A
-      // follow-up will migrate the test suite to mock
-      // `VoltiumApiClient` directly and drop the shim.
-      final api = VoltiumApiService();
-      final hubsResp = await api.fetchHubs();
+      // PR-13: was a wrapper call to `VoltiumApiService.fetchHubs` /
+      // `.fetchVehicles` (both 1-line pass-throughs to the generated
+      // `getRiderHubs` / `getVehicles`). The generated `getVehicles`
+      // returns a typed `ListVehiclesResponse`, so re-encode it to JSON
+      // to preserve the `{success, data, ...}` envelope shape the
+      // caller parses.
+      final genClient = ref.read(voltiumApiClientProvider);
+      final hubsResp = await genClient.getRiderHubs();
       final hubs = (hubsResp['data'] as List?) ?? const [];
       final hubOk = hubs.any((h) {
         final map = h as Map;
@@ -287,7 +285,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
         return false;
       }
 
-      final vehResp = await api.fetchVehicles(hubId);
+      final vehResp = (await genClient.getVehicles(hubId)).toJson();
       final data = vehResp['data'];
       final rawList = data is List
           ? data

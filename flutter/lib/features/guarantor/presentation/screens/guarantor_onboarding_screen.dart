@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
@@ -144,7 +143,11 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
   GuarantorOnboardingState build() => const GuarantorOnboardingState();
 
   void setStep(int step) => state = state.copyWith(currentStep: step);
-  void nextStep() => state = state.copyWith(currentStep: state.currentStep + 1);
+
+  // AUDIT FIX (1i): nextStep now carries the same upper clamp as prevStep so
+  // a stray tap can never push the step indicator past the last step.
+  void nextStep() =>
+      state = state.copyWith(currentStep: (state.currentStep + 1).clamp(1, 3));
   void prevStep() =>
       state = state.copyWith(currentStep: (state.currentStep - 1).clamp(1, 3));
 
@@ -181,6 +184,16 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
         verifiedGuarantorPhoneAt: null,
         guarantorPhoneReceipt: null,
       );
+    }
+  }
+
+  /// AUDIT FIX (1b): this notifier is app-lifetime. If a previous screen
+  /// instance unmounted mid-request, its success-path reset never ran and
+  /// the flags stayed true forever, permanently disabling Send/Verify.
+  /// Clear any stale in-flight flags when a fresh screen mounts.
+  void resetInFlightFlags() {
+    if (state.isSendingOtp || state.isVerifyingOtp) {
+      state = state.copyWith(isSendingOtp: false, isVerifyingOtp: false);
     }
   }
 
@@ -292,6 +305,12 @@ class _GuarantorOnboardingScreenState
   int _resendCooldown = 0;
   Timer? _cooldownTimer;
 
+  /// AUDIT FIX (1d): local file path → uploaded server URL. Persisted in the
+  /// form cache so an interrupted submit retries only the documents that are
+  /// not already on the server, and a re-picked document (new path) is
+  /// correctly re-uploaded.
+  final Map<String, String> _uploadedUrls = {};
+
   void _saveCache() {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
@@ -316,15 +335,18 @@ class _GuarantorOnboardingScreenState
       'videoPath': state.videoPath,
       'signaturePath': state.signaturePath,
       'photoPath': state.photoPath,
+      // AUDIT FIX (1d): already-uploaded URLs survive a failed submit.
+      ..._uploadedUrls.map((path, url) => MapEntry('uploadedUrl:$path', url)),
     };
     GuarantorCache.saveFormCache(riderId, cacheData);
   }
 
-  void _loadCache() {
+  Future<void> _loadCache() async {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
 
-    final cacheData = GuarantorCache.loadFormCache(riderId);
+    final cacheData = await GuarantorCache.loadFormCache(riderId);
+    if (!mounted) return;
     if (cacheData != null) {
       try {
         _nameController.text = cacheData['name'] ?? '';
@@ -337,6 +359,14 @@ class _GuarantorOnboardingScreenState
         _fatherNameController.text = cacheData['fatherName'] ?? '';
         _motherNameController.text = cacheData['motherName'] ?? '';
         _addressController.text = cacheData['address'] ?? '';
+
+        // AUDIT FIX (1d): hydrate the uploaded-URL ledger.
+        _uploadedUrls.clear();
+        cacheData.forEach((key, value) {
+          if (key.startsWith('uploadedUrl:') && value is String) {
+            _uploadedUrls[key.substring('uploadedUrl:'.length)] = value;
+          }
+        });
 
         ref
             .read(guarantorOnboardingNotifierProvider.notifier)
@@ -376,8 +406,13 @@ class _GuarantorOnboardingScreenState
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadCache();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadCache();
+      // AUDIT FIX (1b): clear OTP flags a previous (unmounted) screen
+      // instance may have left stuck true on this app-lifetime notifier.
+      ref
+          .read(guarantorOnboardingNotifierProvider.notifier)
+          .resetInFlightFlags();
       // CONSOLIDATED-FIX-2026-08-16 §4.11: gate the test-mode auto-fill on
       // kDebugMode so a misconfigured production build (isTestMode=true env
       // leak) can never silently mark a real rider's phone as verified
@@ -494,34 +529,45 @@ class _GuarantorOnboardingScreenState
     }
   }
 
+  /// Normalizes a raw phone string to its last 10 digits (AUDIT FIX 1f:
+  /// single comparison rule shared by _sendOtp and the submit validator).
+  String _last10Digits(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    return digits.length > 10 ? digits.substring(digits.length - 10) : digits;
+  }
+
   Future<void> _sendOtp() async {
     if (_resendCooldown > 0) return;
+    // AUDIT FIX (1c): in-flight guard — a double-tap before the first
+    // request resolves must not fire a second sendOtp call.
+    if (ref.read(guarantorOnboardingNotifierProvider).isSendingOtp) return;
 
-    final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final phone = _last10Digits(_phoneController.text);
     if (phone.length < 10) {
       _showError('Please enter a valid 10-digit phone number');
       return;
     }
 
     // Prevent guarantor phone from being the same as rider phone
-    final riderPhone = (ref.read(riderProvider).rider?.phone ?? '')
-        .replaceAll(RegExp(r'\D'), '');
-    final tenDigitRiderPhone = riderPhone.length > 10
-        ? riderPhone.substring(riderPhone.length - 10)
-        : riderPhone;
+    final tenDigitRiderPhone = _last10Digits(
+        ref.read(riderProvider).rider?.phone ?? '');
     if (phone == tenDigitRiderPhone) {
       _showError('Guarantor phone cannot be the same as your phone');
       return;
     }
 
-    ref.read(guarantorOnboardingNotifierProvider.notifier).setSendingOtp(true);
+    final notifier = ref.read(guarantorOnboardingNotifierProvider.notifier);
+    notifier.setSendingOtp(true);
     try {
       final client = ApiClient();
       final response = await VoltiumApiClient(client)
           .postAuthSendOtp(SendOtpRequest(phone: phone));
       final result = response.toJson();
+      // AUDIT FIX (1b): state resets are unmounted-safe — only UI work is
+      // gated on mounted, so the flags can never stick true after an
+      // unmount mid-request.
+      notifier.setOtpSent(true);
       if (mounted) {
-        ref.read(guarantorOnboardingNotifierProvider.notifier).setOtpSent(true);
         _resendCooldown = 30;
         _cooldownTimer?.cancel();
         _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -555,12 +601,12 @@ class _GuarantorOnboardingScreenState
         }
       }
     } catch (e) {
+      appDebug('Guarantor send OTP failed: $e');
+      notifier.setSendingOtp(false);
+      // AUDIT FIX (1g): typed exception check instead of toString sniffing.
       if (mounted) {
-        ref
-            .read(guarantorOnboardingNotifierProvider.notifier)
-            .setSendingOtp(false);
         _showError(
-          e.toString().contains('ApiException')
+          e is ApiException
               ? 'Failed to send OTP. Please try again.'
               : 'Network error. Check your connection.',
         );
@@ -574,23 +620,36 @@ class _GuarantorOnboardingScreenState
       _showError('Please enter all 6 OTP digits');
       return;
     }
+    // AUDIT FIX (1c): in-flight guard — mirrors _handleSubmit's early
+    // return so a double-tap cannot fire two verify calls.
+    if (ref.read(guarantorOnboardingNotifierProvider).isVerifyingOtp) return;
 
-    final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    ref
-        .read(guarantorOnboardingNotifierProvider.notifier)
-        .setVerifyingOtp(true);
+    final phone = _last10Digits(_phoneController.text);
+    final notifier = ref.read(guarantorOnboardingNotifierProvider.notifier);
+    notifier.setVerifyingOtp(true);
     try {
       // PR-A: trust the server's verdict — the response carries
       // `{ verified: false, message }` for a wrong OTP and the UI must not
       // mark the phone verified unless the server confirms it (audit #7 P0-2).
-      final response =
-          await VoltiumApiService().verifyPhone(phone: phone, otp: otp);
+      //
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.verifyPhone`, which was a 1-line
+      // pass-through to `postAuthVerifyPhone` with a typed
+      // request. The generated method returns a typed
+      // `VerifyPhoneResponse`; the wrapper did `.toJson()` so
+      // callers see a `Map<String, dynamic>`. Preserve that
+      // shape here.
+      final response = (await ref
+              .read(voltiumApiClientProvider)
+              .postAuthVerifyPhone(
+                VerifyPhoneRequest(phone: phone, otp: otp),
+              ))
+          .toJson();
       final verified = verifyPhoneResponseVerified(response);
       if (!verified) {
+        // AUDIT FIX (1b): reset regardless of mounted.
+        notifier.setVerifyingOtp(false);
         if (mounted) {
-          ref
-              .read(guarantorOnboardingNotifierProvider.notifier)
-              .setVerifyingOtp(false);
           _showError(response['data']?['message']?.toString() ??
               'Invalid OTP. Please try again.');
         }
@@ -598,24 +657,29 @@ class _GuarantorOnboardingScreenState
       }
       final receipt = response['data']?['receipt']?.toString() ??
           response['receipt']?.toString();
+      // AUDIT FIX (1b): success-path state writes are unmounted-safe.
+      _cooldownTimer?.cancel();
+      _resendCooldown = 0;
+      notifier.setPhoneVerified(true, phone, receipt);
+      _saveCache();
       if (mounted) {
-        _cooldownTimer?.cancel();
-        setState(() => _resendCooldown = 0);
-        ref
-            .read(guarantorOnboardingNotifierProvider.notifier)
-            .setPhoneVerified(true, phone, receipt);
-        _saveCache();
+        setState(() {});
         Toast.success(
           context,
           AppLocalizations.of(context)!.txtphoneVerifiedSuccessfully,
         );
       }
     } catch (e) {
+      appDebug('Guarantor verify OTP failed: $e');
+      notifier.setVerifyingOtp(false);
+      // AUDIT FIX (1e): differentiate network failures from API failures —
+      // not every exception means "Invalid OTP".
       if (mounted) {
-        ref
-            .read(guarantorOnboardingNotifierProvider.notifier)
-            .setVerifyingOtp(false);
-        _showError('Invalid OTP. Please try again.');
+        _showError(
+          e is ApiException
+              ? 'Verification failed. Please check the OTP and try again.'
+              : 'Network error. Check your connection.',
+        );
       }
     }
   }
@@ -630,13 +694,17 @@ class _GuarantorOnboardingScreenState
     if (state.isUploading) return;
     final isTestMode = AppConstants.isTestMode;
     final provider = ref.read(riderProvider.notifier);
-    final rider = ref.watch(riderProvider).rider;
+    // AUDIT FIX (1h): read once instead of subscribing inside a callback.
+    final rider = ref.read(riderProvider).rider;
 
     if (!isTestMode) {
+      // AUDIT FIX (1f): normalize both sides to last-10 digits so the
+      // submit-time same-phone check matches _sendOtp's comparison rule
+      // (a +91-prefixed rider phone previously slipped past).
       final missing = GuarantorFormValidator.validate(
         name: _nameController.text,
         dob: _dobController.text,
-        phone: _phoneController.text,
+        phone: _last10Digits(_phoneController.text),
         isPhoneVerified: state.isPhoneVerified,
         fatherName: _fatherNameController.text,
         motherName: _motherNameController.text,
@@ -647,7 +715,7 @@ class _GuarantorOnboardingScreenState
         photoUploaded: state.photoUploaded,
         videoUploaded: state.videoUploaded,
         signatureUploaded: state.signatureUploaded,
-        riderPhone: rider?.phone,
+        riderPhone: _last10Digits(rider?.phone ?? ''),
       );
 
       if (missing.isNotEmpty) {
@@ -685,53 +753,64 @@ class _GuarantorOnboardingScreenState
       } else {
         final client = ApiClient();
         final filesRepo = FilesRepository(client, VoltiumApiClient(client));
-        final Map<String, dynamic> tasks = {};
-        if (state.aadhaarFrontPath != null)
-          tasks['Aadhaar Front'] = () => filesRepo.uploadFile(
-              File(state.aadhaarFrontPath!), 'kyc_document');
-        if (state.aadhaarBackPath != null)
-          tasks['Aadhaar Back'] = () => filesRepo.uploadFile(
-              File(state.aadhaarBackPath!), 'kyc_document');
-        if (state.panPath != null)
-          tasks['PAN'] =
-              () => filesRepo.uploadFile(File(state.panPath!), 'kyc_document');
-        if (state.photoPath != null)
-          tasks['Photo'] = () =>
-              filesRepo.uploadFile(File(state.photoPath!), 'profile_photo');
-        if (state.videoPath != null)
-          tasks['Video'] = () =>
-              filesRepo.uploadFile(File(state.videoPath!), 'kyc_document');
-        if (state.signaturePath != null)
-          tasks['Signature'] = () =>
-              filesRepo.uploadFile(File(state.signaturePath!), 'kyc_document');
+
+        // AUDIT FIX (1d): only queue uploads for documents whose current
+        // local path has no persisted URL — a retry after a partial
+        // failure re-uploads only the missing pieces.
+        final Map<String, MapEntry<String, Future<String> Function()>>
+            tasks = {};
+        void queue(String label, String? path, String category) {
+          if (path == null || path.isEmpty) return;
+          if (_uploadedUrls.containsKey(path)) return;
+          tasks[label] =
+              MapEntry(path, () => filesRepo.uploadFile(File(path), category));
+        }
+
+        queue('Aadhaar Front', state.aadhaarFrontPath, 'kyc_document');
+        queue('Aadhaar Back', state.aadhaarBackPath, 'kyc_document');
+        queue('PAN', state.panPath, 'kyc_document');
+        queue('Photo', state.photoPath, 'profile_photo');
+        queue('Video', state.videoPath, 'kyc_document');
+        queue('Signature', state.signaturePath, 'kyc_document');
 
         int completed = 0;
-        final results = <String, String>{};
+        // AUDIT FIX (1d): per-entry collection instead of all-or-nothing
+        // Future.wait — already-uploaded URLs are recorded immediately and
+        // survive a failure; the first error is rethrown afterwards so the
+        // user still sees a failure.
+        Object? firstError;
 
-        final uploadTasks = tasks.entries.map((entry) async {
+        await Future.wait(tasks.values.map((task) async {
           try {
-            final url = await entry.value();
+            final url = await task.value();
             completed++;
+            _uploadedUrls[task.key] = url;
             ref.read(guarantorOnboardingNotifierProvider.notifier).setUploading(
                   true,
                   'Uploaded $completed of ${tasks.length}',
                 );
-            return MapEntry(entry.key, url);
           } catch (e) {
-            throw Exception('Failed to upload ${entry.key}: $e');
+            // AUDIT FIX (1g): raw exception text is logged, never embedded
+            // in the thrown/user-facing message.
+            appDebug('Guarantor upload failed: ${e.toString()}');
+            firstError ??= e;
           }
-        });
-        final pairs = await Future.wait(uploadTasks);
-        for (final p in pairs) {
-          results[p.key] = p.value;
-        }
+        }));
 
-        aadhaarFrontUrl = results['Aadhaar Front'] ?? '';
-        aadhaarBackUrl = results['Aadhaar Back'] ?? '';
-        panUrl = results['PAN'] ?? '';
-        photoUrl = results['Photo'] ?? '';
-        videoUrl = results['Video'] ?? '';
-        signatureUrl = results['Signature'] ?? '';
+        if (firstError != null) {
+          throw firstError!;
+        }
+        _saveCache();
+
+        String urlFor(String? path) =>
+            path != null ? (_uploadedUrls[path] ?? '') : '';
+
+        aadhaarFrontUrl = urlFor(state.aadhaarFrontPath);
+        aadhaarBackUrl = urlFor(state.aadhaarBackPath);
+        panUrl = urlFor(state.panPath);
+        photoUrl = urlFor(state.photoPath);
+        videoUrl = urlFor(state.videoPath);
+        signatureUrl = urlFor(state.signaturePath);
 
         // Cache guarantor documents locally.
         if (state.aadhaarFrontPath != null)
@@ -772,6 +851,9 @@ class _GuarantorOnboardingScreenState
         ),
       );
       await GuarantorCache.clearFormCache(riderId);
+      // AUDIT FIX (1d): submit succeeded — drop the uploaded-URL ledger so
+      // a future re-submission starts clean.
+      _uploadedUrls.clear();
       await provider.refresh();
       PostHogService.capture('guarantor_form_submitted');
       if (mounted) {
@@ -783,16 +865,43 @@ class _GuarantorOnboardingScreenState
       }
     } catch (e) {
       if (mounted) {
-        String userMessage = 'Something went wrong. Please try again.';
-        final msg = e.toString();
-        appDebug('Guarantor update error: $msg');
-
-        if (msg.contains('422') || msg.contains('VALIDATION')) {
-          userMessage = 'Please check your documents and try uploading again.';
-        } else if (msg.contains('401') || msg.contains('unauthorized')) {
-          userMessage = 'Session expired. Please log in again.';
-        } else if (msg.contains('network') || msg.contains('timeout')) {
-          userMessage = 'No internet connection. Please check and retry.';
+        // AUDIT FIX (1g): typed ApiException checks instead of string
+        // sniffing; user-facing messages stay static (no raw exception text).
+        String userMessage;
+        if (e is ApiException) {
+          switch (e.statusCode) {
+            case 422:
+            case 400:
+              userMessage =
+                  'Please check your documents and try uploading again.';
+              break;
+            case 401:
+            case 403:
+              userMessage = 'Session expired. Please log in again.';
+              break;
+            case 408:
+            case 504:
+              userMessage = 'No internet connection. Please check and retry.';
+              break;
+            default:
+              userMessage = 'Something went wrong. Please try again.';
+          }
+        } else {
+          final msg = e.toString().toLowerCase();
+          appDebug('Guarantor update error: ${e.toString()}');
+          if (msg.contains('validation')) {
+            userMessage =
+                'Please check your documents and try uploading again.';
+          } else if (msg.contains('unauthorized')) {
+            userMessage = 'Session expired. Please log in again.';
+          } else if (msg.contains('network') ||
+              msg.contains('timeout') ||
+              msg.contains('socket') ||
+              msg.contains('connection')) {
+            userMessage = 'No internet connection. Please check and retry.';
+          } else {
+            userMessage = 'Something went wrong. Please try again.';
+          }
         }
         _showError(userMessage);
       }

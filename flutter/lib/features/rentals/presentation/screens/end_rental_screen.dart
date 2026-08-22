@@ -4,7 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -24,8 +27,7 @@ class EndRentalScreen extends ConsumerStatefulWidget {
   ConsumerState<EndRentalScreen> createState() => _EndRentalScreenState();
 }
 
-class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
-    with SingleTickerProviderStateMixin {
+class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
   final _odometerCtrl = TextEditingController();
   final Map<String, XFile?> _photos = {
     'left': null,
@@ -33,6 +35,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     'front': null,
     'speedometer': null,
   };
+  // AUDIT FIX (MEDIUM): URLs of photos already uploaded, keyed by slot.
+  // A retry after a partial failure resumes from here instead of
+  // re-uploading every photo; retaking/removing a photo invalidates
+  // its slot entry.
+  final Map<String, String> _uploadedUrls = {};
   bool _confirmed = false;
   bool _submitting = false;
   bool _submitted = false;
@@ -48,13 +55,26 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
 
   Future<void> _takePhoto(String key) async {
     if (AppConstants.isTestMode) {
-      setState(() => _photos[key] = XFile('mock_photo.png'));
+      // AUDIT FIX (LOW): test-only placeholder — 'mock_photo.png' is a
+      // relative path that only resolves in widget-test asset roots.
+      // Intentionally left as-is: this branch is unreachable outside
+      // TEST_MODE builds and is exercised by integration tests.
+      if (mounted) {
+        setState(() {
+          _photos[key] = XFile('mock_photo.png');
+          _uploadedUrls.remove(key);
+        });
+      }
       return;
     }
     final file = await ImageCompressionService()
         .pickAndCompress(source: ImageSource.camera);
     if (file != null && mounted) {
-      setState(() => _photos[key] = XFile(file.path));
+      setState(() {
+        _photos[key] = XFile(file.path);
+        // AUDIT FIX: a retake invalidates any earlier upload of this slot.
+        _uploadedUrls.remove(key);
+      });
     }
   }
 
@@ -94,7 +114,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                   style: const TextStyle(color: AppColors.error)),
               onTap: () {
                 Navigator.pop(ctx);
-                setState(() => _photos[key] = null);
+                setState(() {
+                  _photos[key] = null;
+                  // AUDIT FIX: removing the photo drops its uploaded URL.
+                  _uploadedUrls.remove(key);
+                });
               },
             ),
             ListTile(
@@ -111,15 +135,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  late final AnimationController _entryCtrl;
-
   @override
   void initState() {
     super.initState();
-    _entryCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..forward();
+    // AUDIT FIX (MINOR): removed the dead `_entryCtrl` animation
+    // controller — it was created, forwarded and disposed but its
+    // controller was never attached to any widget.
     _odometerCtrl.addListener(() {
       if (mounted) setState(() {});
     });
@@ -128,49 +149,102 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   @override
   void dispose() {
     _odometerCtrl.dispose();
-    _entryCtrl.dispose();
     super.dispose();
   }
 
   bool get _allPhotosTaken => _photos.values.every((v) => v != null);
+
+  /// AUDIT FIX (MEDIUM): structured odometer validation. The generated
+  /// `VehicleReturnRequest` carries no odometer field (only
+  /// `returnPhotos` + `reason`), so the reading stays embedded in the
+  /// reason prose — validated here before submit. Returns null when
+  /// valid, or a user-facing error message.
+  String? _odometerValidationError(String input) {
+    final v = input.trim();
+    if (v.isEmpty) return 'Enter the current odometer reading';
+    if (!RegExp(r'^\d+$').hasMatch(v)) return 'Odometer must be digits only';
+    // Reject '000000'-style all-zero readings outright.
+    if (RegExp(r'^0+$').hasMatch(v)) return 'Odometer cannot be zero';
+    final value = int.tryParse(v);
+    if (value == null || value <= 0) {
+      return 'Odometer must be greater than 0';
+    }
+    if (value >= 1000000) {
+      return 'Odometer reading looks too high — please double-check';
+    }
+    return null;
+  }
+
+  bool get _odometerValid =>
+      _odometerValidationError(_odometerCtrl.text) == null;
+
   bool get _canSubmit =>
       _allPhotosTaken &&
-      _odometerCtrl.text.trim().isNotEmpty &&
+      _odometerValid &&
       _confirmed &&
       !_submitting;
 
   Future<void> _handleReturn() async {
     if (!_canSubmit) return;
+
+    // AUDIT FIX (MEDIUM): hard re-validation before submit so an invalid
+    // odometer value can never reach the payload, even if the disabled-
+    // button gate is bypassed programmatically (e.g. in tests).
+    final odometerError = _odometerValidationError(_odometerCtrl.text);
+    if (odometerError != null && mounted) {
+      Toast.error(context, odometerError);
+      return;
+    }
+
     setState(() {
       _submitting = true;
       _cancelled = false;
-      _uploadedCount = 0;
       _totalToUpload = _photos.values.where((p) => p != null).length;
+      // AUDIT FIX (MEDIUM): resume support — photos already uploaded in
+      // a previous failed attempt start as complete in the progress UI.
+      _uploadedCount =
+          _photos.keys.where((k) => _uploadedUrls.containsKey(k)).length;
     });
 
     try {
-      final api = VoltiumApiService();
+      // PR-13: VoltiumApiService is gone. Construct the generated client
+      // + transport once for this submit pass, and use FilesRepository
+      // for photo uploads (matches the pattern used by edit_profile_screen).
+      final apiClient = ApiClient();
+      final genClient = VoltiumApiClient(apiClient);
+      final filesRepo = FilesRepository(apiClient, genClient);
 
       // PR-66: parallel upload with progress. Each upload reports
       // completion via a Completer; we settle them with
       // Future.wait + a shared counter. The counter drives the
       // progress UI. Cancelled uploads are skipped, not awaited.
-      final entries =
-          _photos.entries.where((e) => e.value != null).toList(growable: false);
-      final results = await Future.wait(
-        entries.map((entry) async {
-          if (_cancelled) return null;
+      //
+      // AUDIT FIX (MEDIUM): per-photo try/catch. Previously ANY single
+      // upload failure threw out of Future.wait before results were
+      // consumed, so submitVehicleReturn never ran even when 3/4 photos
+      // had uploaded — and a retry re-uploaded everything. Failures are
+      // now counted toward progress while the successful subset
+      // proceeds to submission; already-uploaded slots are skipped.
+      final pendingEntries = _photos.entries
+          .where(
+              (e) => e.value != null && !_uploadedUrls.containsKey(e.key))
+          .toList(growable: false);
+
+      await Future.wait(
+        pendingEntries.map((entry) async {
+          if (_cancelled) return;
           try {
-            final url =
-                await api.uploadFile(File(entry.value!.path), 'RETURN_PHOTO');
-            if (!mounted) return null;
+            final url = await filesRepo.uploadFile(
+              File(entry.value!.path),
+              'RETURN_PHOTO',
+            );
+            if (!mounted) return;
+            _uploadedUrls[entry.key] = url;
             setState(() => _uploadedCount += 1);
-            return url;
-          } catch (e) {
-            if (mounted) {
-              setState(() => _uploadedCount += 1); // count failures too
-            }
-            rethrow;
+          } catch (_) {
+            // Count failures toward progress too; the missing slot is
+            // simply absent from the submitted subset below.
+            if (mounted) setState(() => _uploadedCount += 1);
           }
         }),
         eagerError: false,
@@ -181,11 +255,25 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
         return;
       }
 
-      final photoUrls = results.whereType<String>().toList();
+      final photoUrls = _uploadedUrls.values.toList(growable: false);
       if (!mounted) return;
-      await api.submitVehicleReturn(
-        returnPhotos: photoUrls,
-        reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
+      if (photoUrls.isEmpty) {
+        setState(() => _submitting = false);
+        Toast.error(
+          context,
+          AppLocalizations.of(context)!.txterrorSubmittingReturnPleaseTryAgain,
+        );
+        return;
+      }
+
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.submitVehicleReturn` (1-line pass-through to
+      // the generated `postRiderRentalReturn(VehicleReturnRequest(...))`).
+      await genClient.postRiderRentalReturn(
+        VehicleReturnRequest(
+          returnPhotos: photoUrls,
+          reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
+        ),
       );
 
       PostHogService.capture('rental_ended', properties: {
@@ -439,11 +527,17 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             final key = slot['key']!;
             final photo = _photos[key];
             final taken = photo != null;
-            return GestureDetector(
-              key: Key('photoSlot_$key'),
-              onTap: () => taken
-                  ? _showPhotoOptionsDialog(key, slot['label']!)
-                  : _takePhoto(key),
+            // AUDIT FIX (LOW): photo slots were silent to screen readers.
+            return Semantics(
+              button: true,
+              label: taken
+                  ? '${slot['label']} photo taken'
+                  : 'Take ${slot['label']} photo',
+              child: GestureDetector(
+                key: Key('photoSlot_$key'),
+                onTap: () => taken
+                    ? _showPhotoOptionsDialog(key, slot['label']!)
+                    : _takePhoto(key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
@@ -496,11 +590,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            );
+                     ],
+                   ),
+                 ),
+               ),
+             ),
+           );
           }).toList(),
         ),
       ],
@@ -549,6 +644,38 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
+          ),
+          // AUDIT FIX (MEDIUM): inline validation messaging — the old UI
+          // accepted any input and embedded it unchecked in the payload.
+          Builder(
+            builder: (context) {
+              final text = _odometerCtrl.text.trim();
+              final error = text.isEmpty ? null : _odometerValidationError(text);
+              if (error == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 14,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        error,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -624,10 +751,15 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   }
 
   Widget _buildCheckbox(ColorScheme colorScheme, ThemeColors colors) {
-    return GestureDetector(
-      key: const Key('confirmCheckbox'),
-      onTap: () => setState(() => _confirmed = !_confirmed),
-      child: Container(
+    // AUDIT FIX (LOW): the custom checkbox was invisible to screen
+    // readers — expose its checked state.
+    return Semantics(
+      checked: _confirmed,
+      button: true,
+      child: GestureDetector(
+        key: const Key('confirmCheckbox'),
+        onTap: () => setState(() => _confirmed = !_confirmed),
+        child: Container(
         padding: Spacing.paddingMd,
         decoration: BoxDecoration(
           color: colors.card,
@@ -667,6 +799,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }

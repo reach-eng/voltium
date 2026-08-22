@@ -116,12 +116,19 @@ class VoltiumApiService {
     required String planId,
     required double securityDeposit,
     bool advanceRentPaid = false,
+    // AUDIT FIX (2026-08-22, MEDIUM): client-generated idempotency key
+    // so a killed-app/timeout retry cannot double-charge the security
+    // deposit. Mirrors the `idempotency_key` column already used by
+    // OfflineStorageService.pending_operations. Optional keeps every
+    // existing call site and test fake source-compatible.
+    String? idempotencyKey,
   }) =>
       _apiClient.postRiderPlans({
         'hubId': hubId,
         'planId': planId,
         'securityDeposit': securityDeposit,
         'advanceRentPaid': advanceRentPaid,
+        if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
       });
 
   Future<Map<String, dynamic>> fetchEarnings() async =>

@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
@@ -127,7 +127,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _initialEmail = rider?.email ?? '';
     _initialFatherName = rider?.fatherName ?? '';
     _initialMotherName = rider?.motherName ?? '';
-    _initialDob = rider?.dob?.toIso8601String() ?? '';
+    // AUDIT FIX: the API returns a full ISO timestamp
+    // (1990-01-01T00:00:00.000) — display only the yyyy-MM-dd date part so
+    // existing riders don't see a machine timestamp in the form, and so
+    // `_isDirty` string comparison matches what the picker writes.
+    _initialDob = rider?.dob == null
+        ? ''
+        : '${rider!.dob!.year.toString().padLeft(4, '0')}-${rider.dob!.month.toString().padLeft(2, '0')}-${rider.dob!.day.toString().padLeft(2, '0')}';
     _initialAddress = rider?.currentAddress ?? '';
     _initialEmergencyContact = rider?.emergencyContact ?? '';
     _initialGName = rider?.guarantorName ?? '';
@@ -144,10 +150,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _addressController = TextEditingController(text: _initialAddress);
     _emergencyContactController =
         TextEditingController(text: _initialEmergencyContact);
+    // AUDIT FIX: `_phoneController` was declared `late` but never
+    // initialized — guaranteed LateInitializationError on first build.
+    _phoneController = TextEditingController(text: rider?.phone ?? '');
     _gNameController = TextEditingController(text: _initialGName);
     _gPhoneController = TextEditingController(text: _initialGPhone);
     _gAddressController = TextEditingController(text: _initialGAddress);
     _gOtpController = TextEditingController();
+
+    // AUDIT FIX: `_originalGPhone` was never assigned (always null), which
+    // made `phoneChanged` true for ANY non-empty value and forced OTP
+    // re-verification — blocking save even when the number was untouched.
+    _originalGPhone = _initialGPhone;
 
     _isGPhoneVerified = _initialGPhone.isNotEmpty;
 
@@ -279,8 +293,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     setState(() => _isVerifyingGOtp = true);
     try {
-      final response = await VoltiumApiService()
-          .verifyPhone(phone: phone, otp: _gOtpController.text);
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.verifyPhone`, which was a 1-line
+      // pass-through to `postAuthVerifyPhone` with a typed
+      // request. The generated method returns a typed
+      // `VerifyPhoneResponse`; the wrapper did `.toJson()` so
+      // callers see a `Map<String, dynamic>`. Preserve that
+      // shape here.
+      final response = (await ref
+              .read(voltiumApiClientProvider)
+              .postAuthVerifyPhone(
+                VerifyPhoneRequest(
+                  phone: phone,
+                  otp: _gOtpController.text,
+                ),
+              ))
+          .toJson();
       final verified =
           response['data']?['verified'] == true || response['verified'] == true;
       if (!verified) {
@@ -318,7 +346,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _saveProfile() async {
     final provider = ref.read(riderProvider.notifier);
-    final rider = ref.watch(riderProvider).rider;
+    // AUDIT FIX: `ref.watch` inside an event handler registers a spurious
+    // build dependency — use `ref.read` in callbacks.
+    final rider = ref.read(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
     if (!_formKey.currentState!.validate()) {
@@ -338,29 +368,44 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       String? uploadedPhotoUrl;
       if (_profileImage != null) {
-        uploadedPhotoUrl = await VoltiumApiService().uploadFile(
+        // PR-13: was a wrapper call to
+        // `VoltiumApiService.uploadFile`, which is a 1-line
+        // pass-through to `FilesRepository.uploadFile(file, type)`.
+        // The pre-existing parameter type mismatch (`String` vs
+        // `dynamic` in `FilesRepository.uploadFile`) is being
+        // preserved for now to keep the diff scoped. The
+        // `dynamic` form is the one that matches the actual server
+        // contract; call with the same value the wrapper did.
+        uploadedPhotoUrl = await FilesRepository(
+          ApiClient(),
+          VoltiumApiClient(ApiClient()),
+        ).uploadFile(
           File(_profileImage!.path),
           'profile_photo',
         );
       }
 
-      await VoltiumApiService().updateProfile(
-        riderId: rider.riderId,
-        data: {
-          'fullName': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'fatherName': _fatherNameController.text.trim(),
-          'motherName': _motherNameController.text.trim(),
-          'dob': _dobController.text.isNotEmpty ? _dobController.text : null,
-          'currentAddress': _addressController.text.trim(),
-          'emergencyContact': _emergencyContactController.text.trim(),
-          'guarantorName': _gNameController.text.trim(),
-          'guarantorPhone': _gPhoneController.text.trim(),
-          'guarantorAddress': _gAddressController.text.trim(),
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.updateProfile`, a 1-line pass-through
+      // to `putRiderProfile(UpdateProfileRequest.fromJson(data))`.
+      // The body shape is identical to the wrapper's input.
+      await ref.read(voltiumApiClientProvider).putRiderProfile(
+        UpdateProfileRequest(
+          riderId: rider.riderId,
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          fatherName: _fatherNameController.text.trim(),
+          motherName: _motherNameController.text.trim(),
+          dob: _dobController.text.isNotEmpty ? _dobController.text : null,
+          currentAddress: _addressController.text.trim(),
+          emergencyContact: _emergencyContactController.text.trim(),
+          guarantorName: _gNameController.text.trim(),
+          guarantorPhone: _gPhoneController.text.trim(),
+          guarantorAddress: _gAddressController.text.trim(),
           // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
-          if (uploadedPhotoUrl != null) 'profilePhoto': uploadedPhotoUrl,
-          if (uploadedPhotoUrl != null) 'riderPhoto': uploadedPhotoUrl,
-        },
+          profilePhoto: uploadedPhotoUrl,
+          riderPhoto: uploadedPhotoUrl,
+        ),
       );
 
       await provider.refreshFromApi();
@@ -789,6 +834,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         width: 108,
                         height: 108,
                         fit: BoxFit.cover,
+                        // AUDIT FIX: decode at display resolution — the
+                        // picked capture can be 1600×1600 (~10MB RGBA) but
+                        // renders into a 108px circle.
+                        cacheWidth: 216,
                       ),
                     )
                   : avatarUrl != null

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/network/api_error_messages.dart';
@@ -103,19 +102,28 @@ class _PickupVerificationScreenState
     final onNext = widget.onNext;
 
     try {
-      await VoltiumApiService().syncPickup(
-        vehicleId: widget.vehicleId,
-        hubId: widget.hubId,
-        bookingId: riderId,
-        teamLeader: widget.teamLeader,
-        emergencyContact: widget.emergencyContact,
-        emergencyContactReceipt: widget.emergencyContactReceipt,
-        pickupPhotoFront: widget.pickupPhotoFront,
-        pickupPhotoBack: widget.pickupPhotoBack,
-        pickupPhotoLeft: widget.pickupPhotoLeft,
-        pickupPhotoRight: widget.pickupPhotoRight,
-        pickupPhotoWithVehicle: widget.pickupPhotoWithVehicle,
-      );
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.syncPickup`, a 1-line pass-through to the
+      // generated `postRiderSyncPickup({...})` with the same body shape.
+      await ref.read(voltiumApiClientProvider).postRiderSyncPickup({
+        'vehicleId': widget.vehicleId,
+        'hubId': widget.hubId,
+        'bookingId': riderId,
+        if (widget.teamLeader != null) 'teamLeader': widget.teamLeader!,
+        'emergencyContact': widget.emergencyContact,
+        if (widget.emergencyContactReceipt != null)
+          'emergencyContactReceipt': widget.emergencyContactReceipt!,
+        if (widget.pickupPhotoFront != null)
+          'pickupPhotoFront': widget.pickupPhotoFront!,
+        if (widget.pickupPhotoBack != null)
+          'pickupPhotoBack': widget.pickupPhotoBack!,
+        if (widget.pickupPhotoLeft != null)
+          'pickupPhotoLeft': widget.pickupPhotoLeft!,
+        if (widget.pickupPhotoRight != null)
+          'pickupPhotoRight': widget.pickupPhotoRight!,
+        if (widget.pickupPhotoWithVehicle != null)
+          'pickupPhotoWithVehicle': widget.pickupPhotoWithVehicle!,
+      });
 
       // If we reach here, the API call was successful
       await provider.refreshFromApi();

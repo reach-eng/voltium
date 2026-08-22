@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -58,7 +58,10 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
       _fetchFailed = false;
     });
     try {
-      final data = await VoltiumApiService().get('/api/rider/referral');
+      // PR-13: was a wrapper call to the legacy `VoltiumApiService.get`.
+      // The wrapper was a pass-through to `ApiClient.get` so call
+      // the transport directly via the Riverpod provider.
+      final data = await ref.read(apiClientProvider).get('/api/rider/referral');
       final code = data['data']?['referralCode'] as String?;
       if (mounted) {
         setState(() {
@@ -134,7 +137,9 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
               padding: Spacing.paddingXl,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
+                // AUDIT FIX 2026-08-22 (REF-b): was hardcoded Colors.white —
+                // unreadable against the dark scaffold in dark mode.
+                color: AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.radiusModal),
                 boxShadow: [
                   BoxShadow(
@@ -201,7 +206,10 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'Share your referral code with friends and you both get 50 bonus points when they take their first ride.',
+                    // AUDIT FIX 2026-08-22 (REF-b): reward copy lives in
+                    // AppConstants.referralBonusCopy.
+                    'Share your referral code with friends and '
+                    '${AppConstants.referralBonusCopy}',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
@@ -306,7 +314,9 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                             return;
                           }
                           Share.share(
-                            'Join Voltium EV Mobility! Use my referral code $referralCode to earn bonus reward points on your first ride: https://voltium.app/ref/$referralCode',
+                            // AUDIT FIX 2026-08-22 (REF-b): deep-link
+                            // domain moved to AppConstants.
+                            'Join Voltium EV Mobility! Use my referral code $referralCode to earn bonus reward points on your first ride: ${AppConstants.referralDeepLinkBaseUrl}$referralCode',
                             subject: 'Voltium Referral Code',
                           );
                         },

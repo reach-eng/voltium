@@ -5,10 +5,10 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_models.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart' as gen;
 import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
@@ -269,7 +269,10 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
 
   Future<void> _fetchHubs() async {
     try {
-      final response = await VoltiumApiService().fetchHubs();
+      // PR-13: was a wrapper call to `VoltiumApiService.fetchHubs`,
+      // a 1-line pass-through to the generated `getRiderHubs` which
+      // already returns `Map<String, dynamic>`.
+      final response = await ref.read(voltiumApiClientProvider).getRiderHubs();
       if (!mounted) return;
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
@@ -417,7 +420,15 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       _selectedVehicleLabel = null;
     });
     try {
-      final response = await VoltiumApiService().fetchVehicles(hubId);
+      // PR-13: was a wrapper call to `VoltiumApiService.fetchVehicles`,
+      // a 1-line pass-through to the typed generated `getVehicles`.
+      // The generated method returns a typed `ListVehiclesResponse`,
+      // so re-encode it to JSON to preserve the `{ success, data }`
+      // envelope shape the caller already expects.
+      final response = (await ref
+              .read(voltiumApiClientProvider)
+              .getVehicles(hubId))
+          .toJson();
       if (!mounted) return;
       // The API wraps the response in { success, data }. The data may
       // be a list directly (GET /api/vehicles) or nested under a key.
@@ -501,8 +512,16 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   // "Not assigned" so a rider can opt out of a TL match.
   Future<void> _fetchTeamLeaders(String hubId) async {
     try {
-      final rows = await VoltiumApiService().fetchTeamLeaders(hubId);
+      // PR-13: was a wrapper call to `VoltiumApiService.fetchTeamLeaders`,
+      // a 1-line pass-through to the generated `getRiderTeamLeaders(hubId)`.
+      // The generated method returns the `{success, data}` envelope; the
+      // caller already extracts the team-leader list from `data`.
+      final response =
+          await ref.read(voltiumApiClientProvider).getRiderTeamLeaders(hubId);
       if (!mounted) return;
+      final data = response['data'];
+      final raw = data is List ? data : <dynamic>[];
+      final rows = raw.cast<Map<String, dynamic>>();
       final names = rows
           .map((t) => (t['name'] as String?)?.trim() ?? '')
           .where((n) => n.isNotEmpty)
@@ -581,7 +600,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     try {
       final client = ApiClient();
       final res = await VoltiumApiClient(client)
-          .postAuthSendOtp(SendOtpRequest(phone: digits));
+          .postAuthSendOtp(gen.SendOtpRequest(phone: digits));
       final response = res.toJson();
       if (!mounted) return;
       setState(() {
@@ -617,10 +636,18 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     setState(() => _isVerifyingOtp = true);
 
     try {
-      final response = await VoltiumApiService().verifyPhone(
-        phone: phone,
-        otp: otp,
-      );
+      // PR-13: was a wrapper call to `VoltiumApiService.verifyPhone`,
+      // a 1-line pass-through to the typed `postAuthVerifyPhone`.
+      // The generated method returns `VerifyPhoneResponse`; convert
+      // back to the `{success, data, receipt}` JSON envelope the
+      // caller already parses via `verifyPhoneResponseReceipt`/`verified`.
+      final response = (await ref
+              .read(voltiumApiClientProvider)
+              .postAuthVerifyPhone(gen.VerifyPhoneRequest(
+                phone: phone,
+                otp: otp,
+              )))
+          .toJson();
       if (!mounted) return;
       // PR-ONBOARDING-2026-08-11 (audit 1.6): the previous code trusted any
       // 2xx response and flipped `_isOtpVerified = true`. A misconfigured
@@ -686,8 +713,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         entry.isUploading = true;
       });
 
-      final url = await VoltiumApiService()
-          .uploadFile(File(compressed.path), 'pickup_verification');
+      // PR-13: was a wrapper call to `VoltiumApiService.uploadFile`,
+      // which was a 1-line pass-through to `FilesRepository.uploadFile`.
+      final url = await FilesRepository(
+        ApiClient(),
+        VoltiumApiClient(ApiClient()),
+      ).uploadFile(File(compressed.path), 'pickup_verification');
       if (!mounted) return;
 
       setState(() {

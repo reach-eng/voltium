@@ -1,8 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/plan_model.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -43,7 +44,12 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       _error = null;
     });
     try {
-      final response = await VoltiumApiService().fetchPlans();
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.fetchPlans`, which is a 1-line
+      // pass-through to `VoltiumApiClient.getRiderPlans()`. The
+      // generated method already returns `Map<String, dynamic>`,
+      // so the call shape is identical to the wrapper's output.
+      final response = await ref.read(voltiumApiClientProvider).getRiderPlans();
       if (!mounted) return;
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
@@ -82,20 +88,57 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         if (e is ApiException) {
           _error = e.message;
         } else {
-          _error = 'Connection error: $e';
+          // AUDIT FIX (LOW): raw exception text leaked to users. The
+          // full detail is logged above via appDebug for diagnosis.
+          _error =
+              'Could not reach Voltium servers. Please check your connection and try again.';
         }
         _isLoading = false;
       });
     }
   }
 
+  /// AUDIT FIX (MEDIUM): client-generated idempotency key for the plan
+  /// subscribe POST. A killed app or network timeout followed by a retry
+  /// previously re-posted the request and could double-charge the
+  /// security deposit. The key is v4-UUID-shaped (`uuid` is not in
+  /// pubspec.yaml, so it is derived from secure randomness here) and
+  /// mirrors the `idempotency_key` concept already stored by
+  /// OfflineStorageService.pending_operations.
+  String _generateIdempotencyKey() {
+    final rnd = Random.secure();
+    final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+    // Set version (4) and variant (RFC 4122) bits.
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
+        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+  }
+
   Future<void> _subscribe() async {
     if (_selectedPlanId == null) return;
+
+    // AUDIT FIX (MEDIUM): one idempotency key per subscribe ATTEMPT —
+    // regenerated on every explicit user tap, reused across automatic
+    // transport-level retries inside the attempt (the key travels in
+    // the request body, so a replayed request dedupes server-side).
+    //
+    // STAGED: the key is generated here but the body field is not yet
+    // sent because the backend doesn't honor it (audit plan PR-2 calls
+    // for filing a backend ticket first). Once the API accepts
+    // `idempotencyKey`, fold it into the `postRiderPlans` body below.
+    // ignore: unused_local_variable
+    final idempotencyKey = _generateIdempotencyKey();
 
     setState(() => _isSubmitting = true);
     try {
       final provider = ref.read(riderProvider.notifier);
-      final riderId = ref.watch(riderProvider).riderId;
+      // AUDIT FIX (MEDIUM): ref.watch inside an async handler can read
+      // a disposed/stale container after await points; read is the
+      // correct accessor here.
+      final riderState = ref.read(riderProvider);
+      final riderId = riderState.riderId;
       if (riderId == null) {
         if (mounted) {
           Toast.error(
@@ -105,15 +148,37 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         }
         return;
       }
-      final hubId = ref.watch(riderProvider).rider?.pickupHub ?? '';
-      final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
+      final hubId = riderState.rider?.pickupHub ?? '';
+      // AUDIT FIX (MEDIUM): null-safe lookup — the old firstWhere threw
+      // a StateError that surfaced as a generic toast when the plan
+      // list changed between fetch and submit.
+      PlanModel? selectedPlan;
+      for (final p in _plans) {
+        if (p.id == _selectedPlanId) {
+          selectedPlan = p;
+          break;
+        }
+      }
+      if (selectedPlan == null) {
+        if (mounted) {
+          setState(() => _selectedPlanId = null);
+          Toast.error(
+            context,
+            'The selected plan is no longer available. Please choose a plan again.',
+          );
+        }
+        return;
+      }
       final securityDeposit = selectedPlan.securityDeposit;
-      await VoltiumApiService().subscribePlan(
-        hubId: hubId,
-        planId: _selectedPlanId!,
-        securityDeposit: securityDeposit,
-        advanceRentPaid: _payAdvanceRent,
-      );
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.subscribePlan`, a 1-line pass-through
+      // to `postRiderPlans({...})` with the same body shape.
+      await ref.read(voltiumApiClientProvider).postRiderPlans({
+        'hubId': hubId,
+        'planId': _selectedPlanId!,
+        'securityDeposit': securityDeposit,
+        'advanceRentPaid': _payAdvanceRent,
+      });
 
       // If no exception was thrown, the API call succeeded.
       // Refresh profile to update planDone flag
@@ -190,31 +255,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     );
   }
 
-  List<String> _getPlanFeatures(PlanModel plan) {
-    if (plan.features.isNotEmpty) return plan.features;
+  /// AUDIT FIX (LOW): extracted the old inline "name contains monthly/
+  /// elite" heuristic into a named helper. TODO(server): replace with a
+  /// server-provided flag (e.g. `plan.isBestValue`) once the backend
+  /// exposes one — name matching silently breaks on renames/i18n.
+  bool _isBestValuePlan(PlanModel plan) {
     final name = plan.name.toLowerCase();
-    if (name.contains('weekly')) {
-      return [
-        'Unlimited Supercharging',
-        'Premium Insurance Included',
-        'Priority 24/7 Support',
-      ];
-    } else if (name.contains('daily')) {
-      return [
-        'Standard Charging Rates',
-        'Basic Liability Coverage',
-      ];
-    } else if (name.contains('monthly')) {
-      return [
-        'Free Airport Concierge',
-        'Unlimited Supercharging',
-        'Weekly Full Wash',
-      ];
-    }
-    return [
-      'Standard Charging Rates',
-      'Basic Liability Coverage',
-    ];
+    return name.contains('monthly') || name.contains('elite');
   }
 
   @override
@@ -226,6 +273,11 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     // `surfaceBright` token has no dark variant in `ThemeColors`,
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
+    // AUDIT FIX (LOW): hoisted out of the ListView itemBuilder — a
+    // ref.read inside an item builder never rebuilds when the rider's
+    // current plan changes. select() scopes the rebuild to this value.
+    final currentPlanName =
+        ref.watch(riderProvider.select((s) => s.rider?.currentPlan));
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -306,7 +358,45 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                       ),
                       const SizedBox(height: 24),
                       Expanded(
-                        child: ListView.builder(
+                        // AUDIT FIX (LOW): zero-plans empty state — the
+                        // old UI rendered a blank list with a permanently
+                        // disabled button and no way forward.
+                        child: _plans.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 48,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No plans available',
+                                      style: AppTypography.titleMedium
+                                          .copyWith(
+                                              color: colors.onSurface),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Plans could not be loaded right now. Please try again.',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: _fetchPlans,
+                                      child: Text(
+                                          l10n?.txtretry ?? 'Retry'),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 10,
@@ -316,19 +406,26 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                           itemBuilder: (context, index) {
                             final plan = _plans[index];
                             final isSelected = _selectedPlanId == plan.id;
-                            final currentPlanName =
-                                ref.read(riderProvider).rider?.currentPlan;
-                            final isCurrentPlan = currentPlanName != null &&
-                                plan.name.toLowerCase() ==
-                                    currentPlanName.toLowerCase();
-                            final isBestValue =
-                                plan.name.toLowerCase().contains('monthly') ||
-                                    plan.name.toLowerCase().contains('elite');
+                            final isCurrentPlan =
+                                currentPlanName != null &&
+                                    plan.name.toLowerCase() ==
+                                        currentPlanName.toLowerCase();
+                            final isBestValue = _isBestValuePlan(plan);
 
-                            final planFeatures = _getPlanFeatures(plan);
+                            // AUDIT FIX (MEDIUM): never invent marketing
+                            // features client-side when the API returns
+                            // none — only server-provided features render;
+                            // otherwise a single neutral line is shown.
+                            final planFeatures = plan.features;
 
-                            return GestureDetector(
+                            // AUDIT FIX (LOW): plan cards were bare
+                            // GestureDetectors invisible to screen readers.
+                            return MergeSemantics(
                               key: Key('planCard_$index'),
+                              child: Semantics(
+                                selected: isSelected,
+                                button: true,
+                                child: GestureDetector(
                               onTap: () =>
                                   setState(() => _selectedPlanId = plan.id),
                               child: AnimatedContainer(
@@ -505,28 +602,70 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         ),
                                       ],
                                       const SizedBox(height: 16),
-                                      // Features list
-                                      ...planFeatures.map(
-                                        (feature) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 12,
+                                      // Features list — AUDIT FIX
+                                      // (MEDIUM): server features only.
+                                      // When the API returns none, show a
+                                      // single neutral line instead of
+                                      // fabricated marketing copy.
+                                      if (planFeatures.isNotEmpty)
+                                        ...planFeatures.map(
+                                          (feature) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Icon(
+                                                  _getFeatureIcon(feature),
+                                                  size: 16,
+                                                  color: isSelected
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.9)
+                                                      : colors.onSurfaceMuted,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    feature,
+                                                    style: GoogleFonts
+                                                        .plusJakartaSans(
+                                                      fontSize: 14,
+                                                      color: isSelected
+                                                          ? Colors.white
+                                                              .withValues(
+                                                                  alpha: 0.9)
+                                                          : colors
+                                                              .onSurfaceVariant,
+                                                      height: 1.4,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 12),
                                           child: Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Icon(
-                                                _getFeatureIcon(feature),
+                                                Icons.info_outline_rounded,
                                                 size: 16,
                                                 color: isSelected
-                                                    ? Colors.white
-                                                        .withValues(alpha: 0.9)
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.9)
                                                     : colors.onSurfaceMuted,
                                               ),
                                               const SizedBox(width: 12),
                                               Expanded(
                                                 child: Text(
-                                                  feature,
+                                                  'Contact hub for details',
                                                   style: GoogleFonts
                                                       .plusJakartaSans(
                                                     fontSize: 14,
@@ -543,7 +682,6 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             ],
                                           ),
                                         ),
-                                      ),
                                       const SizedBox(height: 16),
                                       // Divider
                                       Divider(
@@ -588,15 +726,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                           ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                                     ],
+                                   ),
+                                 ),
+                               ),
+                             ),
+                           ),
+                          );
+                        },
                       ),
-                      Container(
+                    ),
+                        Container(
                         padding: Spacing.paddingLg,
                         decoration: BoxDecoration(
                           color: colors.card,

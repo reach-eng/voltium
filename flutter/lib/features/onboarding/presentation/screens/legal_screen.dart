@@ -6,8 +6,9 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'legal_page_screen.dart';
 import '../legal_fallback_loader.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -27,6 +28,12 @@ class _LegalScreenState extends State<LegalScreen>
   final Set<String> _expandedIds = {};
   bool _accepted = false;
   bool _isContinuing = false;
+
+  // AUDIT FIX: recognizers were created INLINE in build() on every rebuild
+  // (checkbox toggle, section expand, doc load) and never disposed — a
+  // GestureBinding leak per rebuild. Created once here, disposed in dispose.
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
 
   Map<String, ({String title, String content})> _apiDocs = const {};
   bool _loadingDocs = false;
@@ -48,6 +55,22 @@ class _LegalScreenState extends State<LegalScreen>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
+
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        AppNavigator.push(
+          context,
+          const LegalPageScreen(documentType: LegalDocumentType.terms),
+        );
+      };
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        AppNavigator.push(
+          context,
+          const LegalPageScreen(documentType: LegalDocumentType.privacy),
+        );
+      };
+
     _loadFallback();
     _loadDocs();
   }
@@ -64,7 +87,13 @@ class _LegalScreenState extends State<LegalScreen>
   Future<void> _loadDocs() async {
     setState(() => _loadingDocs = true);
     try {
-      final envelope = await VoltiumApiService().fetchLegalDocuments();
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.fetchLegalDocuments`, which is a 1-line
+      // pass-through to `ApiClient.getWithSWR('/api/rider/legal')`.
+      // This screen is `StatefulWidget` (no `ref`); construct the
+      // transport ad hoc. The new-instance allocation is cheap
+      // (it shares the shared pinned HTTP client).
+      final envelope = await ApiClient().getWithSWR('/api/rider/legal');
       final data = envelope['data'];
       if (data is List) {
         final docs = <String, ({String title, String content})>{};
@@ -93,6 +122,8 @@ class _LegalScreenState extends State<LegalScreen>
   void dispose() {
     _entryCtrl.dispose();
     _checkCtrl.dispose();
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
     super.dispose();
   }
 
@@ -112,6 +143,19 @@ class _LegalScreenState extends State<LegalScreen>
       await CacheService().setBool('legal_accepted_v1', true);
       PostHogService.capture('legal_accepted');
       widget.onNext?.call();
+    } catch (e) {
+      // AUDIT FIX: a failed consent write used to propagate unhandled out
+      // of the tap handler (or silently no-op) — the rider believed they
+      // accepted. Surface the failure and let them retry.
+      appDebug('[legalScreen] consent write failed: $e');
+      if (mounted) {
+        Toast.error(
+          context,
+          'Could not save your acceptance. Please try again.',
+        );
+      }
+      setState(() => _accepted = false);
+      _checkCtrl.reverse();
     } finally {
       if (mounted) _isContinuing = false;
     }
@@ -575,15 +619,7 @@ class _LegalScreenState extends State<LegalScreen>
                                     .copyWith(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    AppNavigator.push(
-                                      context,
-                                      const LegalPageScreen(
-                                        documentType: LegalDocumentType.terms,
-                                      ),
-                                    );
-                                  },
+                                recognizer: _termsRecognizer,
                               ),
                               const TextSpan(text: ' and '),
                               TextSpan(
@@ -595,15 +631,7 @@ class _LegalScreenState extends State<LegalScreen>
                                     .copyWith(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    AppNavigator.push(
-                                      context,
-                                      const LegalPageScreen(
-                                        documentType: LegalDocumentType.privacy,
-                                      ),
-                                    );
-                                  },
+                                recognizer: _privacyRecognizer,
                               ),
                             ],
                           ),

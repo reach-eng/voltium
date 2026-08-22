@@ -5,10 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/notification_service.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
@@ -23,6 +24,8 @@ import 'package:voltium_rider/features/onboarding/presentation/screens/legal_pag
 import 'package:voltium_rider/widgets/dialogs.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/utils/app_info.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -169,6 +172,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 24),
 
             // ── Security ─────────────────────────────────────────────────
+            // TODO(audit 2026-08-22): BiometricService integration (biometric
+            // unlock / step-up auth for this section) is planned but
+            // deliberately deferred — tracked in the audit follow-ups.
             _SectionLabel(l10n?.settings_securitySection ?? 'Security'),
             const SizedBox(height: 12),
             FadeUpWidget(
@@ -192,7 +198,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconColor: AppColors.warning,
                 iconBgColor: colors.warningSurface,
                 title: l10n?.txtchangeLockPassword ?? 'Change Lock Password',
-                onTap: () => _showVerifyLockPasswordDialog(context),
+                // AUDIT FIX (2026-08-22, HIGH): this tile used to verify
+                // identity and then do NOTHING. After a successful verify it
+                // now opens the in-dialog lock-password change flow below.
+                onTap: () => _showVerifyLockPasswordDialog(
+                  context,
+                  onVerified: () {
+                    if (!context.mounted) return;
+                    Toast.success(
+                      context,
+                      'Identity verified',
+                    );
+                    _showChangeLockPasswordDialog(context);
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -257,7 +276,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconBgColor: colors.iconBackground,
                 title: l10n?.settings_appVersion ?? 'App version',
                 trailing: Text(
-                  'v2.1.0',
+                  // AUDIT FIX (2026-08-22): was a hardcoded 'v2.1.0' that
+                  // drifted from pubspec (1.0.0+1). Read from AppInfo.
+                  'v${AppInfo.version}',
                   style: AppTypography.bodyMedium
                       .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(color: colors.onSurfaceMuted),
@@ -278,7 +299,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       'https://play.google.com/store/apps/details?id=com.voltium.rider');
                   try {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
-                  } catch (_) {}
+                  } catch (e) {
+                    // AUDIT FIX (2026-08-22): was a silent `catch (_) {}`.
+                    appDebug('SettingsScreen: failed to open store listing: $e');
+                  }
                 },
               ),
             ),
@@ -305,7 +329,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () async {
                   final confirmed = await showLogoutConfirmation(context);
                   if (confirmed == true && context.mounted) {
-                    ref.read(riderProvider.notifier).logout();
+                    // AUDIT FIX (2026-08-22): logout() is async — await it so
+                    // popUntil can't race the session teardown / cache wipe.
+                    await ref.read(riderProvider.notifier).logout();
                     if (context.mounted) {
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     }
@@ -320,105 +346,113 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _showVerifyLockPasswordDialog(BuildContext context) {
-    final controller = TextEditingController();
-    final colors = AppColors.of(context);
-    // LANGUAGE-AUDIT (2026-08-16) T-66: every string in the
-    // dialog body, the actions row, and the error snackbar is
-    // now routed through `l10n`. Three new ARB keys
-    // (`txtchangeLockPassword`, `txtlockPassword`,
-    // `txtlockPasswordVerifyFailed`, `txtlockPasswordSubtitle`)
-    // were added in this PR; `txtchangeLockPassword` is shared
-    // with the tile label above.
-    final l10n = AppLocalizations.of(context);
-
+  /// Opens the lock-password verification dialog.
+  ///
+  /// AUDIT FIX (2026-08-22): converted from a StatefulBuilder with a leaked
+  /// TextEditingController to a proper StatefulWidget that disposes its
+  /// controllers. The dialog now only pops on SUCCESS; failures stay open
+  /// with a friendly mapped message (raw server strings are never shown).
+  /// [onVerified] runs after a successful verification — used both by the
+  /// change-password flow and as step-up auth for account deletion.
+  void _showVerifyLockPasswordDialog(
+    BuildContext context, {
+    VoidCallback? onVerified,
+  }) {
     showDialog(
       context: context,
-      builder: (ctx) {
-        bool isSubmitting = false;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: colors.surface,
-              title:
-                  Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n?.txtlockPasswordSubtitle ??
-                          'Enter your 4-digit lock password to verify your identity.',
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      key: const Key('lockPasswordInput'),
-                      controller: controller,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: l10n?.txtlockPassword ?? 'Lock Password',
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                  child: Text(l10n?.txtcancel ?? 'Cancel'),
-                ),
-                ElevatedButton(
-                  key: const Key('confirmVerifyLockButton'),
-                  onPressed: isSubmitting
-                      ? null
-                      : () async {
-                          final pw = controller.text.trim();
-                          if (pw.isEmpty) return;
-                          setDialogState(() => isSubmitting = true);
-                          try {
-                            final result = await VoltiumApiService()
-                                .verifyLockPassword(pw);
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            final isSuccess =
-                                result['data']?['success'] == true ||
-                                    result['success'] == true;
-                            final msg = result['message'] as String? ??
-                                (isSuccess
-                                    ? 'Lock password verified successfully'
-                                    : 'Verification failed');
-                            if (context.mounted) {
-                              if (isSuccess) {
-                                Toast.success(context, msg);
-                              } else {
-                                Toast.error(context, msg);
-                              }
-                            }
-                          } catch (e) {
-                            if (ctx.mounted) Navigator.pop(ctx);
-                            if (context.mounted) {
-                              Toast.error(
-                                context,
-                                l10n?.txtlockPasswordVerifyFailed ??
-                                    'Lock password verification failed',
-                              );
-                            }
-                          }
-                        },
-                  child: isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n?.txtverify ?? 'Verify'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => _VerifyLockPasswordDialog(onVerified: onVerified),
     );
+  }
+
+  /// AUDIT FIX (2026-08-22, HIGH): minimal in-dialog change flow. The lock
+  /// PIN is stored server-side as `lockPasswordHash` (admin-managed today);
+  /// this dialog validates a new 4-digit PIN and POSTs it to
+  /// `/api/rider/device/set-lock`, which the backend is expected to hash and
+  /// persist. Failures map to friendly text — never a raw server message.
+  void _showChangeLockPasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const _ChangeLockPasswordDialog(),
+    );
+  }
+
+  /// AUDIT FIX (2026-08-22): account deletion now requires lock-password
+  /// step-up verification before the request is submitted.
+  void _showDeleteAccountDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surface,
+        title: Text(l10n?.settings_deleteConfirmTitle ?? 'Delete Account'),
+        content: Text(
+          l10n?.settings_deleteConfirmBody ??
+              'Are you sure you want to delete your account? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('cancelDeleteButton'),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+          ),
+          FilledButton(
+            key: const Key('confirmDeleteButton'),
+            // PR-3 (2026-08-07 verification report, Section 2): the request
+            // goes to the dedicated delete-request endpoint (audit log +
+            // rider marker). AUDIT FIX (2026-08-22): gated behind lock
+            // password step-up verification.
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showVerifyLockPasswordDialog(
+                context,
+                onVerified: () =>
+                    _submitAccountDeletionRequest(context, l10n),
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: Text(l10n?.settings_delete ?? 'Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submitAccountDeletionRequest(
+    BuildContext context,
+    AppLocalizations? l10n,
+  ) async {
+    // In-flight feedback (replaced by the result toast below).
+    Toast.info(context, 'Submitting account deletion request…');
+    try {
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.post` (a 1-line pass-through to
+      // `ApiClient.post`). Call the transport directly.
+      await ref.read(apiClientProvider).post(
+        '/api/rider/account/delete-request',
+        body: {
+          'reason':
+              l10n?.settings_deleteReason ?? 'Rider requested account deletion',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (_) {
+      if (context.mounted) {
+        Toast.error(
+          context,
+          'Failed to submit deletion request. Please try again or contact support.',
+        );
+      }
+      return;
+    }
+    if (context.mounted) {
+      Toast.success(
+        context,
+        'Account deletion request submitted successfully. An administrator will review and process it.',
+      );
+    }
   }
 
   void _showLanguageDialog(BuildContext context, WidgetRef ref) {
@@ -507,68 +541,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return l10n?.settings_followSystem ?? 'Follow system';
     }
   }
-
-  void _showDeleteAccountDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text(l10n?.settings_deleteConfirmTitle ?? 'Delete Account'),
-        content: Text(
-          l10n?.settings_deleteConfirmBody ??
-              'Are you sure you want to delete your account? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            key: const Key('cancelDeleteButton'),
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
-          ),
-          FilledButton(
-            key: const Key('confirmDeleteButton'),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              // PR-3 (2026-08-07 verification report, Section 2): the old
-              // code POSTed `{action: 'DELETE_REQUEST'}` to /api/rider/profile
-              // which had no handler — the request was silently dropped while
-              // the app showed a success snackbar. Now records the request via
-              // the dedicated endpoint (audit log + rider marker).
-              try {
-                await VoltiumApiService().post(
-                  '/api/rider/account/delete-request',
-                  body: {
-                    'reason': l10n?.settings_deleteReason ??
-                        'Rider requested account deletion',
-                    'timestamp': DateTime.now().toIso8601String(),
-                  },
-                );
-              } catch (_) {
-                if (context.mounted) {
-                  Toast.error(
-                    context,
-                    'Failed to submit deletion request. Please try again or contact support.',
-                  );
-                }
-                return;
-              }
-              if (context.mounted) {
-                Toast.success(
-                  context,
-                  'Account deletion request submitted successfully. An administrator will review and process it.',
-                );
-              }
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: Text(l10n?.settings_delete ?? 'Delete'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SectionLabel extends StatelessWidget {
@@ -580,9 +552,13 @@ class _SectionLabel extends StatelessWidget {
     final colors = AppColors.of(context);
     return Text(
       label,
-      style: AppTypography.bodySmall
-          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-          .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
+      // AUDIT FIX (2026-08-22): letterSpacing was chained twice via two
+      // copyWith calls — collapsed into one.
+      style: AppTypography.bodySmall.copyWith(
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: colors.onSurfaceMuted,
+      ),
     );
   }
 }
@@ -764,6 +740,270 @@ class _NotificationsTileState extends State<_NotificationsTile> {
       ),
       onTap: () =>
           AppNavigator.push(context, const NotificationPreferencesScreen()),
+    );
+  }
+}
+
+/// Lock-password verification dialog.
+///
+/// AUDIT FIX (2026-08-22): a StatefulWidget (instead of the old
+/// StatefulBuilder) so the TextEditingController is properly disposed.
+/// Behaviour contract:
+///   - pops ONLY on successful verification (failures keep the dialog open);
+///   - failure messages are mapped to friendly text — raw server strings are
+///     never rendered;
+///   - the confirm button is disabled while the request is in flight;
+///   - [onVerified] (optional) runs after a successful verification.
+class _VerifyLockPasswordDialog extends StatefulWidget {
+  final VoidCallback? onVerified;
+
+  const _VerifyLockPasswordDialog({this.onVerified});
+
+  @override
+  State<_VerifyLockPasswordDialog> createState() =>
+      _VerifyLockPasswordDialogState();
+}
+
+class _VerifyLockPasswordDialogState extends State<_VerifyLockPasswordDialog> {
+  final _controller = TextEditingController();
+  bool _submitting = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verify() async {
+    final pw = _controller.text.trim();
+    if (pw.isEmpty || _submitting) return;
+    setState(() {
+      _submitting = true;
+      _errorText = null;
+    });
+    final l10n = AppLocalizations.of(context);
+    try {
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.verifyLockPassword`, which was a 1-line
+      // pass-through to `postRiderDeviceVerifyLock`. The generated
+      // method already returns `Map<String, dynamic>` so the
+      // call shape is identical. Ad-hoc client (not Riverpod) because
+      // this dialog is a plain StatefulWidget, not ConsumerStatefulWidget.
+      final result = await VoltiumApiClient(ApiClient())
+          .postRiderDeviceVerifyLock({'password': pw});
+      final isSuccess = result['data']?['success'] == true ||
+          result['success'] == true;
+      if (!mounted) return;
+      if (isSuccess) {
+        Navigator.of(context).pop();
+        widget.onVerified?.call();
+      } else {
+        // AUDIT FIX: friendly mapped message — never the raw server string.
+        setState(() {
+          _submitting = false;
+          _errorText = 'Incorrect lock password. Please try again.';
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText = l10n?.txtlockPasswordVerifyFailed ??
+            'Lock password verification failed. Please try again.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      title: Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n?.txtlockPasswordSubtitle ??
+                  'Enter your 4-digit lock password to verify your identity.',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              key: const Key('lockPasswordInput'),
+              controller: _controller,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              enabled: !_submitting,
+              decoration: InputDecoration(
+                labelText: l10n?.txtlockPassword ?? 'Lock Password',
+                border: const OutlineInputBorder(),
+                errorText: _errorText,
+                errorMaxLines: 2,
+              ),
+              onSubmitted: (_) => _verify(),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: Text(l10n?.txtcancel ?? 'Cancel'),
+        ),
+        ElevatedButton(
+          key: const Key('confirmVerifyLockButton'),
+          onPressed: _submitting ? null : _verify,
+          child: _submitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n?.txtverify ?? 'Verify'),
+        ),
+      ],
+    );
+  }
+}
+
+/// New-lock-PIN entry dialog (second step of the change flow).
+///
+/// AUDIT FIX (2026-08-22, HIGH): implements the previously-missing change
+/// flow. Validates a 4-digit PIN (same shape the backend verify flow
+/// expects), requires the confirmation field to match, then POSTs to
+/// `/api/rider/device/set-lock` for the server to hash + persist. Success and
+/// failure are surfaced via toast; failures keep the dialog open with
+/// friendly text.
+class _ChangeLockPasswordDialog extends StatefulWidget {
+  const _ChangeLockPasswordDialog();
+
+  @override
+  State<_ChangeLockPasswordDialog> createState() =>
+      _ChangeLockPasswordDialogState();
+}
+
+class _ChangeLockPasswordDialogState extends State<_ChangeLockPasswordDialog> {
+  static final RegExp _pinPattern = RegExp(r'^\d{4}$');
+
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _submitting = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    final newPin = _newController.text.trim();
+    final confirmPin = _confirmController.text.trim();
+    if (!_pinPattern.hasMatch(newPin) || !_pinPattern.hasMatch(confirmPin)) {
+      setState(() => _errorText = 'Enter a 4-digit lock password.');
+      return;
+    }
+    if (newPin != confirmPin) {
+      setState(() => _errorText = 'Passwords do not match.');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _errorText = null;
+    });
+    try {
+      // PR-13: was a wrapper call to
+      // `VoltiumApiService.post` (a 1-line pass-through to
+      // `ApiClient.post`). Call the transport directly. Ad-hoc
+      // client (not Riverpod) because this dialog is a plain
+      // StatefulWidget, not ConsumerStatefulWidget.
+      await ApiClient().post(
+        '/api/rider/device/set-lock',
+        body: {'password': newPin},
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      Toast.success(context, 'Lock password updated successfully');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _errorText =
+            "Couldn't update the lock password right now. Please try again or contact support.";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      title: Text(l10n?.txtchangeLockPassword ?? 'Change Lock Password'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n?.txtchooseNewLockPassword ??
+                'Choose a new 4-digit lock password.'),
+            const SizedBox(height: 16),
+            TextField(
+              key: const Key('newLockPasswordInput'),
+              controller: _newController,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              enabled: !_submitting,
+              decoration: const InputDecoration(
+                labelText: 'New Lock Password',
+                border: OutlineInputBorder(),
+                counterText: '',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('confirmNewLockPasswordInput'),
+              controller: _confirmController,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              maxLength: 4,
+              enabled: !_submitting,
+              decoration: InputDecoration(
+                labelText: 'Confirm New Lock Password',
+                border: const OutlineInputBorder(),
+                counterText: '',
+                errorText: _errorText,
+                errorMaxLines: 2,
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
+          child: Text(l10n?.txtcancel ?? 'Cancel'),
+        ),
+        ElevatedButton(
+          key: const Key('confirmChangeLockButton'),
+          onPressed: _submitting ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(l10n?.txtsave ?? 'Save'),
+        ),
+      ],
     );
   }
 }
