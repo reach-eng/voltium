@@ -12,6 +12,23 @@
 .swiftpm/
 migrate_working_dir/
 
+# Local test-runner capture files
+test_*.txt
+final_check.txt
+gitignore_check.txt
+debug_parse.py
+parse_failures.py
+diff_failures.py
+group_failures.py
+fix_l10n.py
+failed_ids.txt
+failed_unique.txt
+failures_grouped.txt
+test_id_map.txt
+test_id_map_clean.txt
+baseline_failures.txt
+withchanges_failures.txt
+
 # Environment variables
 .env
 .env.*
