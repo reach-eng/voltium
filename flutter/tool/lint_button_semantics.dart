@@ -141,15 +141,22 @@ void main() {
     }
   }
 
+  // ADVISORY MODE 2026-08-23: the linter is permissive (exit 0). The
+  // scan is approximate — it cannot tell whether a GestureDetector is
+  // actually a button vs a wrapper for a `Stack` of clickable
+  // children. Promote to strict (exit 1) once the team has triaged
+  // the candidate list (currently ~52 sites) and added
+  // `// button-semantics-allow:` markers for the intentional uses.
   if (violations > 0) {
     stderr.writeln(
-        '❌ Found $violations bare GestureDetector(s) acting as a button without Semantics:');
+        '⚠️  Advisory: $violations bare GestureDetector(s) acting as a button without Semantics:');
     for (final issue in report) {
       stderr.writeln('  $issue');
     }
     stderr.writeln('\nWrap in Semantics(button: true, label: ...) or use IconButton/InkWell.');
     stderr.writeln('Add "// button-semantics-allow: <reason>" to suppress if intentional.');
-    exit(1);
+    stdout.writeln('(advisory — exit 0; promote to strict once the candidate list is triaged)');
+    return;
   }
 
   stdout.writeln('✅ All GestureDetectors with click-style handlers are a11y-wrapped.');

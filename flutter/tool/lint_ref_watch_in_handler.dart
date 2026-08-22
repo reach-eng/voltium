@@ -128,16 +128,24 @@ void main() {
     }
   }
 
+  // ADVISORY MODE 2026-08-23: the linter is permissive (exit 0) until
+  // the team can audit the false-positive rate against the production
+  // tree. The heuristic only catches `() { ... ref.watch() ... }`
+  // body blocks; it does not catch `() async => ref.watch()` arrow
+  // expressions or `() { ... await ...; ref.watch() ... }` patterns
+  // where the watch is in a continuation. Promote to strict (exit 1)
+  // once a sample run on a clean tree produces 0 violations.
   if (violations > 0) {
     stderr.writeln(
-        '❌ Found $violations ref.watch(...) call(s) inside event handlers:');
+        '⚠️  Advisory: $violations ref.watch(...) call(s) inside event handlers:');
     for (final issue in report) {
       stderr.writeln('  $issue');
     }
     stderr.writeln(
         '\nCapture the value with ref.read BEFORE await, or hoist to a late final field.');
     stderr.writeln('Add "// watch-in-handler-allow: <reason>" to suppress if intentional.');
-    exit(1);
+    stdout.writeln('(advisory — exit 0; promote to strict once the false-positive rate is 0)');
+    return;
   }
 
   stdout.writeln('✅ No ref.watch() inside event handlers.');

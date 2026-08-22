@@ -103,6 +103,28 @@ jobs:
         # All user notifications must use `Toast.success / .error / .info / .warning`.
         run: dart run tool/lint_raw_toast_calls.dart
 
+      - name: Run ref.watch-in-handler ratchet (advisory)
+        # DART-LINT 2026-08-23 (PR-5): catches `ref.watch(...)` calls inside
+        # event-handler callback bodies. Currently advisory (exit 0) until
+        # a sample run on a clean tree produces 0 violations. Promote to
+        # strict (remove `|| true`) once the false-positive rate is 0.
+        run: cd flutter && (dart run tool/lint_ref_watch_in_handler.dart || true)
+
+      - name: Run bare-GestureDetector ratchet (advisory)
+        # DART-LINT 2026-08-23 (PR-5): catches GestureDetectors that act as
+        # buttons without Semantics/Tooltip/InkWell. Advisory until the
+        # ~52 candidate sites have been triaged. Promote to strict once
+        # `// button-semantics-allow:` markers are in place.
+        run: cd flutter && (dart run tool/lint_button_semantics.dart || true)
+
+      - name: Run provider-error consumption ratchet (advisory)
+        # DART-LINT 2026-08-23 (PR-5): catches screens that watch a
+        # provider's data without a companion `lastError` / `error` /
+        # `errorMessage` watch — a 5xx fetch failure silently renders the
+        # empty state. Advisory until the field-name dictionary covers
+        # the rest of the team's error-state patterns.
+        run: cd flutter && (dart run tool/lint_consume_provider_error.dart || true)
+
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
