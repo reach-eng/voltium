@@ -20,6 +20,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 class PickupHubScreen extends ConsumerStatefulWidget {
   final Function(
@@ -606,7 +607,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         _isOtpSent = true;
         _isOtpVerified = false;
       });
-      _showSuccess('OTP sent to emergency contact');
+      _showSuccess(
+        // AUDIT-FIX 2026-08-22: hardcoded English; routed through
+        // the existing `txtotpSentToGuarantorPhone` ARB key.
+        AppLocalizations.of(context)?.txtotpSentToGuarantorPhone ??
+            'OTP sent to emergency contact',
+      );
       if (AppConstants.isTestMode) {
         final testOtp =
             response['data'] is Map ? (response['data'] as Map)['otp'] : null;
@@ -685,10 +691,22 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // can never diverge (a fresh marker without a receipt would show
       // "verified" but 403 on submit in enforced mode).
       widget.onEmergencyContactVerified?.call(phone, receipt);
-      _showSuccess('Emergency contact verified successfully ✓');
+      _showSuccess(
+        // AUDIT-FIX 2026-08-22: hardcoded English; routed through
+        // the existing `txtemergencyContactVerifiedSuccessfully`
+        // ARB key.
+        AppLocalizations.of(context)
+                ?.txtemergencyContactVerifiedSuccessfully ??
+            'Emergency contact verified successfully',
+      );
     } catch (e) {
       if (!mounted) return;
-      _showError('OTP verification failed. Please try again.');
+      _showError(
+        // AUDIT-FIX 2026-08-22: hardcoded English; routed through
+        // the existing `txtinvalidOtp` ARB key.
+        AppLocalizations.of(context)?.txtinvalidOtp ??
+            'Invalid OTP',
+      );
     } finally {
       if (mounted) setState(() => _isVerifyingOtp = false);
     }
@@ -725,7 +743,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         entry.isUploading = false;
       });
       DocumentLocalCache.save('pickup_$type', compressed.path);
-      _showSuccess('Photo uploaded successfully');
+      _showSuccess(
+        // AUDIT-FIX 2026-08-22: hardcoded English; routed through
+        // the existing `txtphotoUploadedSuccessfully` ARB key.
+        AppLocalizations.of(context)?.txtphotoUploadedSuccessfully ??
+            'Photo uploaded successfully',
+      );
     } catch (e) {
       if (mounted) {
         final entry = _photos[type]!;

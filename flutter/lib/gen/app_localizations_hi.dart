@@ -1038,6 +1038,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtpickupPhotos => 'पिकअप फ़ोटो';
 
   @override
+  String get txtvehiclePhotosCaptured => 'वाहन की फ़ोटो ली गईं';
+
+  @override
   String get txtbackToDashboard => 'डैशबोर्ड पर वापस जाएं';
 
   @override

@@ -1983,6 +1983,12 @@ abstract class AppLocalizations {
   /// **'PICKUP PHOTOS'**
   String get txtpickupPhotos;
 
+  /// No description provided for @txtvehiclePhotosCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle photos captured'**
+  String get txtvehiclePhotosCaptured;
+
   /// Back to dashboard button label
   ///
   /// In en, this message translates to:

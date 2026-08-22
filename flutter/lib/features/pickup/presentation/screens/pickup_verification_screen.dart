@@ -163,13 +163,17 @@ class _PickupVerificationScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ready to Roll?',
+                // AUDIT-FIX 2026-08-22: hardcoded English title; routed
+                // through the pre-staged `txtreadyToRoll` ARB key.
+                AppLocalizations.of(context)?.txtreadyToRoll ?? 'Ready to Roll?',
                 style: AppTypography.headingLarge
                     .copyWith(color: colors.onSurface),
               ),
               SizedBox(height: 8),
               Text(
-                'Please review the digital rental agreement before collecting your vehicle.',
+                AppLocalizations.of(context)
+                        ?.txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle ??
+                    'Please review and sign the digital rental agreement before collecting your vehicle.',
                 style:
                     GoogleFonts.plusJakartaSans(color: colors.onSurfaceVariant),
               ),
@@ -188,7 +192,12 @@ class _PickupVerificationScreenState
                           color: AppColors.success, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        'Vehicle photos captured',
+                        // AUDIT-FIX 2026-08-22: hardcoded English
+                        // status text; routed through the new
+                        // `txtvehiclePhotosCaptured` ARB key.
+                        AppLocalizations.of(context)
+                                ?.txtvehiclePhotosCaptured ??
+                            'Vehicle photos captured',
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w500,
                           color: colors.onSurface,
@@ -211,7 +220,12 @@ class _PickupVerificationScreenState
                   ),
                   Expanded(
                     child: Text(
-                      'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.',
+                      // AUDIT-FIX 2026-08-22: hardcoded English
+                      // agreement copy; routed through the pre-
+                      // staged `txtiConfirmThatIHave...` ARB key.
+                      AppLocalizations.of(context)
+                              ?.txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance ??
+                          'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         height: 1.4,

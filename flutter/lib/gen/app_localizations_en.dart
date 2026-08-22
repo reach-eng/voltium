@@ -1033,6 +1033,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtpickupPhotos => 'PICKUP PHOTOS';
 
   @override
+  String get txtvehiclePhotosCaptured => 'Vehicle photos captured';
+
+  @override
   String get txtbackToDashboard => 'Back to Dashboard';
 
   @override
