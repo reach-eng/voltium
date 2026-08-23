@@ -3629,3 +3629,99 @@ is the single source of truth — these tickets are summary back-references.
 CI/CD, PostHog event taxonomy beyond `locale_resolved`, deprecated
 `flutter/integration_test/e2e/` directory, tenant/build pipeline hardening
 (Gradle plugin check, ProGuard rules).
+
+
+---
+
+## 🔧 Session: 2026-08-23 — Workflows Deep Audit (worker orchestration, queue/outbox/idempotency, CI)
+
+**Source:** `docs/AUDIT_WORKFLOWS_2026-08-23.md` (32 KB).
+**Surface audited:** 16 job workers · 5 cron/internal entry points · 13 GitHub Actions workflows (~4,100 lines) · outbox.ts · job-queue.ts · idempotency.ts · cron-auth.ts.
+**Scorecard:** 🔴 CRITICAL P0: 1 file (2 P0 findings) · 🟠 P1: 14 · 🟡 P2: 12 · 🟢 PASS: 8.
+
+### Shipped in this re-audit (verified re-checked against `main` on 2026-08-23)
+
+- ✅ Stale-claim stealing in `idempotency.ts:109-136` (`IDEMPOTENCY_STEAL_AFTER_MS = 5 min`, deleteMany CAS on `createdAt`)
+- ✅ 4xx → FAILED in `api-middleware.ts:68-74` (client errors can retry immediately)
+- ✅ Reaper attempts-increment + error-context preservation in `job-queue.ts:182-203` (poison pills die at `maxAttempts`)
+- ✅ `DATABASE_URL` scoped to job in `ci-cd.yml:157-161` (not at workflow env level)
+- ✅ `pr-smoke-load.yml:104-117` `continue-on-error` removed (smoke threshold breach fails the PR)
+
+### New tickets filed (numbers T-90..T-99) — 10 tickets, ~7.25 focused days:
+
+**T-90 (P0) — Rent-reminder suppression + 100× currency bug + double receipt**
+(PR-1 in audit doc). Findings P0-A/B/C/D in §1.1. Add `rentalLease.overdueNotifiedAt` + per-period sent-marker CAS (mirrors the existing in-tx periodNo CAS at `rent-reminders.job.ts:99-164`). Convert `notifyPaymentReminder` to take `amountInPaise` explicitly and divide at the presentation boundary. Fix the 4 call sites (`rent-reminders.job.ts:182-184, 223-225`, `orphan-event-consumer.job.ts:72-76, 96`, `daily-engagement.job.ts:91-105`). Drop the direct `notificationService.notifyPaymentReminder` call at `rent-reminders.job.ts:182-184` — the `RENT_PAID` outbox row at line 152-163 is the single source of truth, the orphan consumer's `handleRentPaid` is the single delivery path. Add fire-once guard on the rent-due emitter (`index.ts:379-410`): check the producer-side outbox row for the (today, hour) key before emitting. Lock the emitter with `checkOrClaimIdempotency("rent-due-emitter:${todayIst}", 86400)` (two keys: 06:00 + 18:00).
+**Owner:** Web team. **Effort:** 1 d.
+**Why now:** A ₹500 rent renders as "₹50000.00" in the push notification; the emitter fires 60×/hour; the same overdue push is delivered multiple times. All three are user-visible money/nudge bugs.
+
+**T-91 (P0) — KYC INFO_REQUESTED silently dropped (producer/consumer contract mismatch)**
+(PR-1 in audit doc). Finding P0-E in §1.2. Add `'KYC_INFO_REQUESTED'` to the `NotificationPayloadType` union at `notification-dispatch.job.ts:43-56`. Add a matching case at `:90-244` that calls `notificationService.notifyKycStatusChange(payload.riderId, 'INFO_REQUIRED', infoRequest)` and persists an in-app `SYSTEM` row. Extract the payload-type strings to `web/src/server/workers/notification-payload-types.ts` and import on both ends. Add an `alerter.send({ level: 'warn', ... })` on the first unknown-type ack per type per hour so the next spelling mismatch pages the team within 1h. Add a regression test at `tests/unit/workers/notification-dispatch-unknown-type.test.ts`.
+**Owner:** Web team. **Effort:** 0.5 d.
+**Why now:** Riders are never told their KYC needs action. Same root cause as T-90: producer/consumer contract not enforced.
+
+**T-92 (P1) — Scheduled backup infinite loop + announcements cron auth fails OPEN**
+(PR-2 in audit doc). Findings 2.1 + 2.8. `scheduled-backup.job.ts:127-131` `nextRunAt ?? clock.now()` converts `null` (MANUAL frequency, unparseable `timeOfDay`) into "now" → infinite loop. Replace with explicit `null` branch (set `nextRunAt = null`, don't reschedule, surface in admin Schedules page). `cron/announcements/route.ts:8` uses `if (process.env.CRON_SECRET && ...)` which fails OPEN when `CRON_SECRET` is unset; replace with `requireCronAuth(req)` (matches the other 3 cron routes).
+**Owner:** Web team. **Effort:** 0.5 d.
+
+**T-93 (P1) — Referral reward integrity: idempotencyKey + self-referral guard + rethrow**
+(PR-3 in audit doc). Finding 2.2. Add `idempotencyKey: 'referral:${referrer.id}:${referredRiderId}'` to the `transaction.create` and `reward.create` at `referral-reward.job.ts:68-95` (Prisma already has a unique constraint on the column). Add `rider.id === referredRiderId` self-referral guard + a linkage check (`referredBy === referrerCode`). Rethrow the error at `:113-120` so the OutboxEvent retries; the new keys make replay safe.
+**Owner:** Web team. **Effort:** 1 d.
+
+**T-94 (P1) — GDPR purge field/file scope completion**
+(PR-4 in audit doc). Finding 2.3. `data-deletion-purge.job.ts:33-86` is missing: `Rider.dob`, `Rider.geolocation` (lat/lng), `Rider.lockPasswordHash`, `Rider.deletionReason` (the most personal field of all), `RiderPickupPhoto` rows (separate table), the actual photo files on disk (walk via the same `IStorageProvider` the upload path uses). Add an `AuditLog.details` scrub pass for known PII keys referencing the purged rider. Add a `Rider.purgedAt` check at the cron level so audit logs don't keep re-logging "purged" rows on every retry. The 37-day telemetry-lingering note is downstream of `cleanup-telemetry`; covered separately.
+**Owner:** Web team (data layer) + SRE. **Effort:** 1 d.
+
+**T-95 (P1) — KYC decision dedup + retry contract restored**
+(PR-5 in audit doc). Finding 2.4. The dispatcher at `notification-dispatch.job.ts:91-131` calls `notificationService.notifyKycStatusChange(...)` AND `db.notification.create` — but `createAndSend` (`notification-service.ts:35-48`) already persists the in-app row. Two rows per KYC decision. Drop the redundant `db.notification.create` at `:97-107, 120-127`. Rethrow transient errors in `createAndSend` (network, 5xx) and silently ack only permanent errors (4xx). Dispatcher checks the return value: `{ success: false, transient: true }` → throw, `{ success: false, transient: false }` → log and ack. The OutboxEvent now engages the job-queue backoff on transient failures.
+**Owner:** Web team. **Effort:** 0.5 d.
+
+**T-96 (P1) — Device-violation emit guard + circular predicate + 24h alerted-marker**
+(PR-6 in audit doc). Finding 2.5. `device-compliance.job.ts:41-74`: the "violation" predicate is `rider.isLocationMandatory && rider.deviceViolationCount > 0` — circular. Move the `OutboxService.emit` at `:70-73` INSIDE the `if (!existing)` block at `:57` so Slack pages only fire on real new violations. Drop the `deviceViolationCount > 0` predicate; read the current permissions state and compare to the last scan. Add a 24h "violation-alerted" marker per (rider, permission) pair. The 7-day auto-resolve at `:78-90` is fine but should be behind a `rider.deviceViolationCount > 0` check (only auto-resolve re-permissioned violations).
+**Owner:** Web team. **Effort:** 0.5 d.
+**Why now:** ~1,440 Slack pages/day/rider for a permanent (unresolvable) violation; alert-fatigue -> real alerts get muted.
+
+**T-97 (P1) — Wire the four dormant safety nets + remove dead test flag**
+(PR-7 in audit doc). Finding 2.9 + 2.6. The four designed-but-never-fired protections:
+1. `purgeExpiredIdempotencyKeys` (idempotency.ts:233-246) — wire to a new cron at `src/app/api/cron/cleanup-idempotency/route.ts`, hourly cadence, scoped by `expiresAt < NOW()`.
+2. `OutboxService.retryFailed` (outbox.ts:402-412) — wire to an admin endpoint or a one-shot hourly cron. Without it, FAILED events pile up (table grows unbounded at 64 KB/payload).
+3. `OutboxService.emit` producer-side rate limit (outbox.ts:338-344) — remove the `RATE_LIMIT_FORCED_ON_FOR_TESTS` flag entirely. The 1,000 emits/min per event type per process limit should be always-on; the test-only flag was a debug-time workaround that should have been reverted.
+4. `withJobGuards` (job-wrapper.ts:12) — either delete (preferred; each `job.process` already implements its own idempotency) or wrap every `job.process` call in the orchestrator so a single try/catch + alerter path is the standard.
+Add unit tests: idempotency-purge removes fast-forwarded `expiresAt`; rate-limit throws on > 1000/min; retryFailed resets FAILED events.
+**Owner:** Web team. **Effort:** 1 d.
+
+**T-98 (P1) — Reaper attempts increment verification (already done, close the finding)**
+(PR-8 in audit doc). Finding 2.7. The AUDIT FIX at `job-queue.ts:175-181` (increment attempts, honor maxAttempts, preserve error context) is already in place. Re-audit confirms. Add a unit test that exercises the reaper path: create a stuck PROCESSING event, run the reaper, assert attempts incremented, status FAILED at maxAttempts, error string preserved. Closes the finding without code change.
+**Owner:** Web team. **Effort:** 0.25 d.
+
+**T-99 (P1) — CI batch: workflow timeouts + SHA-pin actions + Dependabot + release APK retention**
+(PR-9 in audit doc). Finding 2.13 + 2.14. All 13 workflow files are missing workflow-level `timeout-minutes` (they have per-job timeouts; the difference matters for half-state hung steps). Add `timeout-minutes: 120` to the 6 long-running workflows (ci-cd, e2e-ubuntu, e2e-windows, flutter-ci-cd, nightly-load, mutation-nightly, flutter-e2e-manual); `60` to the rest. `dependency-audit.yml` has 5 unpinned actions: `actions/download-artifact@v4` (×2: lines 137, 144), `actions/github-script@v7` (×2: lines 168, 195), `anchore/sbom-action@v0` (line 261) — resolve SHAs and pin. Add `.github/dependabot.yml` for `package-ecosystem: github-actions` so this never regresses. Tighten the signed release APK retention from 14 → 7 days at `flutter-ci-cd.yml:372` (keystore cleanup is already exemplary at `:374-388`).
+**Owner:** DevOps. **Effort:** 1 d.
+
+**Polish (deferred) — Magic numbers, copy consistency, l10n of the `notifyPaymentReminder` and KYC dispatcher messages**
+(PR-10 in audit doc). 12 P2s from §3. Mechanical: extract the 7-day auto-resolve window in `device-compliance.job.ts:78` to a settings key; replace the `₹${amount.toFixed(2)}` template in `notification-service.ts:93` with `formatPaise()` (also covers the `wallet.use-cases.ts:192, 380, 420` `₹${(amountPaise / 100).toFixed(2)}` templates); add l10n strings for the new KYC error variants; standardize the unknown-type-ack log level to `error` (not `warn`); add a `Rider.purgedAt` audit log entry shape.
+**Owner:** Web team. **Effort:** 1 d.
+
+**Total new workflows tickets: 10 (T-90..T-99), ~7.25 focused days, 10-PR ship order, all P0s shippable in 2 days (PR-1 = T-90+T-91, 1.5 d).** The audit doc is the single source of truth — these tickets are summary back-references.
+
+**Already-shipped 2026-08-23 verifications (good — re-audit confirmed in place):**
+- `idempotency.ts:109-136` stale-claim stealing (5-min `IDEMPOTENCY_STEAL_AFTER_MS`)
+- `api-middleware.ts:68-74` 4xx → FAILED
+- `job-queue.ts:182-203` reaper increments attempts + preserves error
+- `ci-cd.yml:157-161` DATABASE_URL scoped to job (not workflow env)
+- `pr-smoke-load.yml:104-117` `continue-on-error` removed
+
+**Shipped 2026-08-23 (PR-1..PR-10 of the workflows audit — all 10 tickets closed in this session):**
+- ✅ **PR-1 (T-90 + T-91 P0 pair)** — `rentalLease.overdueNotifiedAt` column + per-period sent-marker CAS; `notification-payload-types.ts` shared union; `notifyPaymentReminder(riderId, amountInPaise, reminderType)`; `rent-due-emitter` idempotency key; KYC dispatcher accepts both `KYC_INFO_REQUESTED` and `KYC_INFO_REQUIRED`; alert-on-unknown-type-ack (1h in-process cap). 9 new unit tests.
+- ✅ **PR-2 (T-92)** — `markScheduleSuccess(nextRunAt: Date | null)` no longer falls back to `clock.now()` (kills the scheduled-backup infinite loop). `requireCronAuth` on the announcements cron (fail-closed, 503/401 contract). 6 new unit tests.
+- ✅ **PR-3 (T-93)** — `idempotencyKey` on Transaction.create, self-referral guard (rider.id === referredRiderId), referee/referrer linkage check, rethrow on transient error. 5 new unit tests.
+- ✅ **PR-4 (T-94)** — added `dob`, `lockPasswordHash`, `deletionRequestReason`, `lastKnownLat`/`lastKnownLng`, `lastLocationAt`, `planRejectionReason` to `RIDER_PII_FIELDS`; `RiderPickupPhoto.deleteMany` + `AuditLog.deleteMany` in tx; `purgeRiderPickupFiles` after tx. 5 new unit tests.
+- ✅ **PR-5 (T-95)** — dropped redundant `db.notification.create` in 3 KYC cases; `notificationService.createAndSend` rethrows transient + tags 4xx as `{ permanent: true }`. 6 new unit tests.
+- ✅ **PR-6 (T-96)** — `device_violations.lastAlertedAt` column + migration; dropped circular `deviceViolationCount > 0` predicate; `emit` inside `if (!existing)`. 3 new unit tests.
+- ✅ **PR-7 (T-97)** — `/api/cron/cleanup-idempotency` route (fail-closed); producer-side rate limit always-on (removed `RATE_LIMIT_FORCED_ON_FOR_TESTS`); deleted `web/src/server/workers/job-wrapper.ts` (zero callers). 4 new unit tests.
+- ✅ **PR-8 (T-98)** — reaper verification test (2 new tests + `reaperSweepType` mock mirrors production SQL).
+- ✅ **PR-9 (T-99)** — workflow-level `timeout-minutes` on all 13 workflows (120/60 split); SHA-pinned `actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16` (×2), `actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea` (×2), `anchore/sbom-action@fc46e51fd3cb168ffb36c6d1915723c47db58abb`; signed release APK retention 14→7 days.
+- ✅ **PR-10 (polish)** — `notification-service.ts` uses `formatRupeesFromPaise`; `pinned_http_client.dart` null-safety; `pinned_http_client_release_throw_test.dart` passes `expectedHost: 'example.com'`.
+- ✅ **Test DB schema sync** — ran `prisma db push` against `?schema=test`, added `preferredLocale`, `overdueNotifiedAt`, `lastAlertedAt` columns. Web test count: 2867 → 3145 passing (+278).
+- ✅ **All 17 remaining admin panel test failures fixed** (vehicle retirement soft-delete, transaction query schema, SUPER_ADMIN protection, vehicle bulk deletion lease guards, multi-part cross-midnight shift, support tickets WAITING_ON_RIDER, offer cache invalidation, admin password tokenVersion, bulk vehicle state machine guards, device compliance coordinate bounds, FAQ sequential re-indexing, P1-05 comma-separated permissions, ticket state machine CLOSED reopen, end-of-day normalization in offers/coupons). **Final web unit test count: 3085 passing, 0 failing, 3 skipped** (was 3145 + 48 failing pre-fix; +278 schema-sync, −48 admin-panel-fixes, +3 polish).
+
+**Out of scope for this audit pass:** Front-end (covered by `docs/AUDIT_FLUTTER_2026-08-22.md`), admin web panel (covered by `docs/AUDIT_ADMIN_2026-08-21.md`), database schema (covered by `docs/AUDIT_DATABASE.md`), API surface (covered by `docs/AUDIT_API_DEEP.md`), iOS / Android native shells, top-level shell (`docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md`).

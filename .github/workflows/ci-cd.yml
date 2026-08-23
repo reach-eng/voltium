@@ -19,13 +19,14 @@ permissions:
 
 env:
   NODE_VERSION: '20'
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
+  timeout-minutes: 120
   # ─── Secret Scanning ─────────────────────────────────────────────────────
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       security-events: write
@@ -33,6 +34,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
@@ -43,6 +45,7 @@ jobs:
   sast:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       security-events: write
@@ -76,6 +79,7 @@ jobs:
   no-docker-check:
     name: No-Docker Enforcement
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -91,6 +95,7 @@ jobs:
   regression-gates-check:
     name: Regression Gates Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -106,6 +111,7 @@ jobs:
   lint-and-typecheck:
     name: Lint & TypeScript
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -146,8 +152,14 @@ jobs:
   prisma-check:
     name: Prisma Validate & Migration Status
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
+    # DATABASE_URL is scoped here (moved from the workflow-level env):
+    # `prisma migrate status` and check-secret-rotation.sh both query the
+    # live database. No other job in this workflow consumes it.
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -179,6 +191,7 @@ jobs:
   openapi-check:
     name: OpenAPI Spec Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -207,6 +220,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     needs: [lint-and-typecheck, prisma-check, openapi-check, no-docker-check, regression-gates-check, sast]
@@ -235,6 +249,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
     needs: [build]
@@ -313,7 +328,7 @@ jobs:
           MIN_COVERAGE: '85.0'
 
       - name: Upload combined coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
           path: web/coverage-combined/lcov.info
@@ -322,6 +337,7 @@ jobs:
   workflow-gates:
     name: Workflow Coverage Gates
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -350,9 +366,12 @@ jobs:
   flutter-test:
     name: Flutter Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       - run: cd flutter && flutter pub get
       - name: Run i18n localization tests
         run: cd flutter && flutter test test/core/i18n_test.dart
@@ -365,7 +384,7 @@ jobs:
             echo "::error::Coverage ($COVERAGE%) is below the required 85%"
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: flutter-coverage
           path: flutter/coverage/lcov.info

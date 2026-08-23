@@ -33,9 +33,11 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  timeout-minutes: 60
   smoke-load:
     name: PR Smoke k6 (50 VUs / 1 min)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16
@@ -56,9 +58,9 @@ jobs:
       API_URL: http://127.0.0.1:8081
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -84,28 +86,40 @@ jobs:
       - name: Wait for server
         run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
 
-      - name: Setup k6
+      - name: Setup k6 (pinned release)
+        # Same hardening as nightly-load.yml: replaces the deprecated
+        # `apt-key adv --keyserver` flow with a pinned release tarball
+        # verified against the release checksums file.
+        # TODO(pin): hardcode the expected SHA256 digest once independently
+        # verified (see nightly-load.yml).
+        env:
+          K6_VERSION: '0.49.0'
         run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          curl -fsSL -o /tmp/k6.tar.gz "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-amd64.tar.gz"
+          curl -fsSL -o /tmp/k6-checksums.txt "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-checksums.txt"
+          grep "k6-v${K6_VERSION}-linux-amd64.tar.gz" /tmp/k6-checksums.txt | sha256sum --check --status
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+          sudo mv "/tmp/k6-v${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
+          k6 version
 
       - name: Run smoke k6 (50 VUs / 1 min)
         # Thresholds are intentionally loose — the smoke is for
         # catching catastrophic regressions (5xx spike, infinite
         # hangs), not for SLO evaluation. Real SLOs run in
         # nightly-load.yml.
+        #
+        # SECURITY-AUDIT FIX: continue-on-error removed. A threshold
+        # breach is a PR-blocking failure; the artifact upload below
+        # keeps if: always() so diagnostics are preserved on failure.
         run: |
           k6 run --vus 50 --duration 60s \
             --threshold http_req_failed:rate<0.05 \
             --threshold http_req_duration:p(95)<2000 \
             tests/load/k6-load.js --out json=k6-smoke.json
-        continue-on-error: true
 
       - name: Upload k6 smoke artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pr-k6-smoke-summary
           path: web/k6-smoke.json

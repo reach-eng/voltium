@@ -5,11 +5,6 @@ on:
     # Run at 06:00 UTC (11:30 AM IST) every day
     - cron: '0 6 * * *'
   workflow_dispatch:
-    inputs:
-      api_url:
-        description: 'API URL to test against'
-        required: true
-        default: 'http://localhost:8081'
 
 # R10 polish #15 (Infra 4.17) — concurrency group so we don't run multiple
 # smoke tests on rapid pushes to the same branch.
@@ -24,12 +19,14 @@ env:
   FLUTTER_VERSION: '3.41.4'
   DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
   JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  # NOTE: SLACK_WEBHOOK_URL is scoped to the notification step below.
 
 jobs:
+  timeout-minutes: 60
   smoke-test:
     name: Critical Path Smoke Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
 
@@ -116,11 +113,13 @@ jobs:
 
       - name: Slack/Email Notification on Failure
         if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
-          if [ -n "${{ env.SLACK_WEBHOOK_URL }}" ]; then
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
             curl -X POST -H 'Content-type: application/json' \
               --data "{\"text\":\"⚠️ Daily Smoke Test Failed! Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-              "${{ env.SLACK_WEBHOOK_URL }}"
+              "$SLACK_WEBHOOK_URL"
           else
             echo "SLACK_WEBHOOK_URL not configured. Notification skipped."
           fi

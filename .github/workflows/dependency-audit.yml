@@ -27,14 +27,20 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  security-events: write
+
+# R10 polish (Infra 4.17) — weekly runs never cancel each other; manual
+# dispatches queue behind the scheduled run instead of racing it.
+concurrency:
+  group: dependency-audit
+  cancel-in-progress: false
 
 jobs:
+  timeout-minutes: 60
   # ─── Web (npm) audit ─────────────────────────────────────────────────────
   web-audit:
     name: Web (npm) Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ./web
@@ -42,7 +48,7 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -53,9 +59,11 @@ jobs:
 
       - name: Run npm audit (json)
         id: audit
+        env:
+          AUDIT_LEVEL: ${{ inputs.severity_threshold }}
         run: |
           set +e
-          npm audit --json --audit-level=${{ inputs.severity_threshold || 'moderate' }} > npm-audit.json 2> npm-audit.stderr
+          npm audit --json --audit-level="${AUDIT_LEVEL:-moderate}" > npm-audit.json 2> npm-audit.stderr
           EXIT=$?
           echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
           # Treat 0 (no vulns) and 1 (audit ran, vulns found) as success;
@@ -69,7 +77,7 @@ jobs:
 
       - name: Upload npm audit artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-npm-audit
           path: web/npm-audit.json
@@ -80,6 +88,7 @@ jobs:
   flutter-audit:
     name: Flutter (pub) Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ./flutter
@@ -87,9 +96,9 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.41.4'
           channel: 'stable'
 
       - name: Install Flutter dependencies
@@ -107,7 +116,7 @@ jobs:
 
       - name: Upload pub outdated artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: flutter-pub-outdated
           path: flutter/flutter-pub-outdated.json
@@ -120,16 +129,20 @@ jobs:
     needs: [web-audit, flutter-audit]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Download web audit
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8 — T-99 (PR-9, 2026-08-23)
         with:
           name: web-npm-audit
           path: artifacts/web
         continue-on-error: true
 
       - name: Download flutter audit
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8 — T-99 (PR-9, 2026-08-23)
         with:
           name: flutter-pub-outdated
           path: artifacts/flutter
@@ -153,7 +166,7 @@ jobs:
 
       - name: Close existing open weekly audit issue
         if: steps.detect.outputs.web_vulns == 0 && steps.detect.outputs.flutter_outdated == 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1 — T-99 (PR-9, 2026-08-23)
         with:
           script: |
             const issues = await github.rest.issues.listForRepo({
@@ -180,12 +193,15 @@ jobs:
 
       - name: Open / update weekly audit issue
         if: steps.detect.outputs.web_vulns != 0 || steps.detect.outputs.flutter_outdated != 0
-        uses: actions/github-script@v7
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1 — T-99 (PR-9, 2026-08-23)
+        env:
+          WEB_VULNS: ${{ steps.detect.outputs.web_vulns }}
+          FLUTTER_OUTDATED: ${{ steps.detect.outputs.flutter_outdated }}
         with:
           script: |
             const fs = require('fs');
-            const webVulns = '${{ steps.detect.outputs.web_vulns }}';
-            const flutterOutdated = '${{ steps.detect.outputs.flutter_outdated }}';
+            const webVulns = process.env.WEB_VULNS;
+            const flutterOutdated = process.env.FLUTTER_OUTDATED;
             const date = new Date().toISOString().slice(0, 10);
 
             let body = `## Weekly dependency audit — ${date}\n\n`;
@@ -236,18 +252,21 @@ jobs:
     runs-on: ubuntu-latest
     needs: [web-audit]
     if: always()
+    timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Generate web SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@fc46e51fd3cb168ffb36c6d1915723c47db58abb # v0.17.7 — T-99 (PR-9, 2026-08-23)
         with:
           format: cyclonedx-json
           artifact-name: web-sbom.cdx.json
           path: web/package.json
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-sbom
           path: web-sbom.cdx.json

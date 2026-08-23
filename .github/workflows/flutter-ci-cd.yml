@@ -33,13 +33,21 @@ on:
 permissions:
   contents: read
 
+# R10 polish (Infra 4.17) — superseded PR runs are cancelled; pushes to
+# protected branches (main / develop) are never cancelled mid-flight.
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   FLUTTER_VERSION: '3.41.4'
 
 jobs:
+  timeout-minutes: 120
   analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -128,6 +136,7 @@ jobs:
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     needs: [analyze]
@@ -159,6 +168,7 @@ jobs:
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     needs: [analyze]
@@ -201,6 +211,7 @@ jobs:
   e2e-test:
     name: Flutter E2E Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     permissions:
       contents: read
     needs: [build-debug]
@@ -298,6 +309,7 @@ jobs:
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
     needs: [build-debug, e2e-test]
@@ -356,6 +368,11 @@ jobs:
         with:
           name: voltium-release.apk
           path: flutter/build/app/outputs/flutter-apk/*-release.apk
+          # T-99 (PR-9, 2026-08-23): tightened from 14 to 7 days.
+          # Signed release artifact — short retention; reproducible from the
+          # pinned commit + signing key, and avoids long-lived signed
+          # binaries sitting in GitHub artifact storage.
+          retention-days: 7
 
       - name: Clean up keystore
         if: always()

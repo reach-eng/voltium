@@ -21,9 +21,11 @@ env:
   NODE_VERSION: '20'
 
 jobs:
+  timeout-minutes: 120
   load-test:
     name: k6 Load Test
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     services:
       postgres:
         image: postgres:16
@@ -44,9 +46,9 @@ jobs:
       API_URL: http://127.0.0.1:8081
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -72,19 +74,39 @@ jobs:
       - name: Wait for server
         run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
 
-      - name: Setup k6
+      - name: Setup k6 (pinned release)
+        # Replaces the deprecated `apt-key adv --keyserver` flow (apt-key is
+        # removed in Ubuntu 22.04+ and the keyserver hop was an unverified
+        # supply-chain path). Downloads the pinned k6 release tarball and
+        # verifies it against the release's own checksums file.
+        # TODO(pin): hardcode the expected SHA256 digest below (instead of
+        # trusting the release-time checksums.txt) once the digest for
+        # K6_VERSION has been independently verified.
+        env:
+          K6_VERSION: '0.49.0'
         run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          curl -fsSL -o /tmp/k6.tar.gz "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-amd64.tar.gz"
+          curl -fsSL -o /tmp/k6-checksums.txt "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-checksums.txt"
+          grep "k6-v${K6_VERSION}-linux-amd64.tar.gz" /tmp/k6-checksums.txt | sha256sum --check --status
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+          sudo mv "/tmp/k6-v${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
+          k6 version
 
       - name: Run k6 load tests
-        run: k6 run tests/load/k6-load.js --out json=k6-summary.json
+        id: k6
+        # Capture the real exit code so the Slack summary can report SLO
+        # breaches explicitly instead of only job.status.
+        run: |
+          set +e
+          k6 run tests/load/k6-load.js --out json=k6-summary.json
+          K6_EXIT=$?
+          echo "exit_code=$K6_EXIT" >> "$GITHUB_OUTPUT"
+          exit $K6_EXIT
         continue-on-error: true # Do not fail the whole build if SLO fails, we want to review artifact
 
       - name: Upload k6 artifact
-        uses: actions/upload-artifact@v4
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: k6-summary
           path: web/k6-summary.json
@@ -98,12 +120,15 @@ jobs:
       # we explicitly post a Slack summary so the team sees SLO drift.
       - name: Notify Slack with k6 summary
         if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          K6_EXIT_CODE: ${{ steps.k6.outputs.exit_code }}
         run: |
-          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
             STATUS="${{ job.status }}"
             curl -X POST -H 'Content-type: application/json' \
-              --data "{\"text\":\"📊 Weekly Load Test: ${STATUS}. Artifact: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-              "${{ secrets.SLACK_WEBHOOK_URL }}"
+              --data "{\"text\":\"📊 Weekly Load Test: ${STATUS}. k6 exit code: ${K6_EXIT_CODE}. Artifact: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              "$SLACK_WEBHOOK_URL"
           else
             echo "SLACK_WEBHOOK_URL not configured. Notification skipped."
           fi
