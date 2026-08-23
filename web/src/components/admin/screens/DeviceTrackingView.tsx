@@ -122,8 +122,17 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
       <SecurityConfirmDialog
         state={t.confirmDialog}
         onOpenChange={t.closeConfirmDialog}
-        onConfirm={(action, extra) => {
-          void t.handleSecurityAction(action, extra);
+        onConfirm={(action, extra, options) => {
+          // P0-2 + P1-1 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): the
+          // dialog supplies a fresh idempotency key (via the
+          // requestSecurityAction wrapper) and a free-text reason.
+          // Use the wrapper so the key is generated here and replayed
+          // by the server's 5-minute cache.
+          void t.requestSecurityAction({
+            action: action as Parameters<typeof t.requestSecurityAction>[0]['action'],
+            reason: options.reason,
+            extra,
+          });
         }}
       />
 

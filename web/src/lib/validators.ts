@@ -238,7 +238,20 @@ export const updateVehicleSchema = z.object({
 export const sendNotificationSchema = z.object({
   title: z.string().min(3).max(200),
   message: z.string().min(5).max(1000),
-  type: z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE']).default('INFO'),
+  // Align with the canonical `NotificationType` Prisma enum at
+  // prisma/schema.prisma:1479. The previous list (5 values) was
+  // missing SOS / SYSTEM / BIRTHDAY_WISH, which broke the
+  // `sendNotificationSchema` admin panel phase 1 re-verification
+  // tests for KYC update notifications, SOS alerts, and birthday
+  // wishes. Accept the lowercase form, normalize to the canonical
+  // uppercase enum, and validate the result is in the enum. A raw
+  // `z.enum([...]).transform(toUpperCase)` would fail with
+  // "invalid_enum_value" BEFORE the transform runs — the
+  // `z.preprocess` lifts the input to upper first.
+  type: z.preprocess(
+    (v) => (typeof v === 'string' ? v.toUpperCase() : v),
+    z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SOS', 'SYSTEM', 'BIRTHDAY_WISH'])
+  ).default('INFO'),
   riderIds: z.array(z.string()).optional(),
   // P1-13/P2-11 (2026-08-05 ops audit): the legacy singular `riderId` was
   // read straight off the raw body with no validation — a non-string value
@@ -249,41 +262,182 @@ export const sendNotificationSchema = z.object({
 });
 
 // ==================== ADMIN - OFFERS ====================
-export const createOfferSchema = z.object({
-  title: z.string().min(2, 'Title is required').max(200),
-  description: z.string().min(5, 'Description is required').max(2000),
-  validFrom: z.string().min(1, 'validFrom is required'),
-  validUntil: z.string().min(1, 'validUntil is required'),
-  isSponsored: z.boolean().optional().default(false),
-  isActive: z.boolean().optional().default(true),
-  icon: z.string().max(100).optional(),
-});
+// Admin Panel Phase 3 P2-15 (2026-08-23): a YYYY-MM-DD
+// `validUntil` represents "valid through the END of that
+// day" (the operator's mental model), not "midnight at the
+// START of that day" (the JS Date default). Normalize
+// YYYY-MM-DD inputs to 23:59:59.999Z of the same day so a
+// coupon/offer stays valid through its last day. Inputs with
+// a time component (full ISO strings, etc.) pass through
+// unchanged.
+function normalizeDateOnlyToEndOfDay(s: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    return `${s}T23:59:59.999Z`;
+  }
+  return s;
+}
+
+export const createOfferSchema = z
+  .object({
+    title: z.string().min(2, 'Title is required').max(200),
+    description: z.string().min(5, 'Description is required').max(2000),
+    validFrom: z
+      .string()
+      .min(1, 'validFrom is required')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s)),
+    validUntil: z
+      .string()
+      .min(1, 'validUntil is required')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s)),
+    isSponsored: z.boolean().optional().default(false),
+    isActive: z.boolean().optional().default(true),
+    icon: z.string().max(100).optional(),
+  })
+  // Admin Panel Phase 3 / Growth-01b: same cross-field checks
+  // as the coupon schema — validUntil must be on/after
+  // validFrom. The percentage-cap rule doesn't apply (offers
+  // have no discount value).
+  .superRefine((val, ctx) => {
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom);
+      const until = new Date(val.validUntil);
+      if (!Number.isNaN(from.getTime()) && !Number.isNaN(until.getTime()) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
+    }
+  });
+
+// Admin Panel Phase 4 / Batch C (2026-08-23): separate update schema
+// (Zod v4 forbids `.partial()` on a schema with `.superRefine()` —
+// it would throw at request time). All fields optional; same
+// end-of-day date normalization + cross-field `validUntil >=
+// validFrom` check as the create schema.
+export const updateOfferSchema = z
+  .object({
+    id: z.string().min(1, 'id is required'),
+    title: z.string().min(2).max(200).optional(),
+    description: z.string().min(5).max(2000).optional(),
+    validFrom: z
+      .string()
+      .min(1, 'validFrom cannot be empty')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s))
+      .optional(),
+    validUntil: z
+      .string()
+      .min(1, 'validUntil cannot be empty')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s))
+      .optional(),
+    isSponsored: z.boolean().optional(),
+    isActive: z.boolean().optional(),
+    icon: z.string().max(100).optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom);
+      const until = new Date(val.validUntil);
+      if (!Number.isNaN(from.getTime()) && !Number.isNaN(until.getTime()) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
+    }
+  });
 
 // ==================== ADMIN - COUPONS ====================
-export const createCouponSchema = z.object({
-  code: z.string().min(2, 'Code is required').max(50),
-  description: z.string().min(2, 'Description is required').max(500),
-  discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
-  discountValue: z.number().positive('discountValue must be positive'),
-  minAmount: z.number().min(0).optional(),
-  maxUses: z.number().int().positive().optional(),
-  validFrom: z.string().min(1, 'validFrom is required'),
-  validUntil: z.string().min(1, 'validUntil is required'),
-  isActive: z.boolean().optional().default(true),
-});
+export const createCouponSchema = z
+  .object({
+    code: z.string().min(2, 'Code is required').max(50),
+    description: z.string().min(2, 'Description is required').max(500),
+    discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
+    discountValue: z.number().positive('discountValue must be positive'),
+    minAmount: z.number().min(0).optional(),
+    maxUses: z.number().int().positive().optional(),
+    validFrom: z
+      .string()
+      .min(1, 'validFrom is required')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s)),
+    validUntil: z
+      .string()
+      .min(1, 'validUntil is required')
+      .transform((s) => normalizeDateOnlyToEndOfDay(s)),
+    isActive: z.boolean().optional().default(true),
+  })
+  // Admin Panel Phase 3 / Growth-01b: percentage cap (100%) +
+  // validFrom/validUntil cross-field sanity. Same rules as
+  // updateCouponSchema, applied at CREATE time so a
+  // malformed coupon never reaches the DB.
+  .superRefine((val, ctx) => {
+    if (
+      val.discountType === 'PERCENTAGE' &&
+      val.discountValue > 100
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'Percentage discount cannot exceed 100%',
+      });
+    }
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom);
+      const until = new Date(val.validUntil);
+      if (!Number.isNaN(from.getTime()) && !Number.isNaN(until.getTime()) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
+    }
+  });
 
-export const updateCouponSchema = z.object({
-  id: z.string().min(1, 'id is required'),
-  code: z.string().min(2).max(50).optional(),
-  description: z.string().min(2).max(500).optional(),
-  discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
-  discountValue: z.number().positive().optional(),
-  minAmount: z.number().min(0).optional(),
-  maxUses: z.number().int().positive().optional(),
-  validFrom: z.string().min(1).optional(),
-  validUntil: z.string().min(1).optional(),
-  isActive: z.boolean().optional(),
-});
+export const updateCouponSchema = z
+  .object({
+    id: z.string().min(1, 'id is required'),
+    code: z.string().min(2).max(50).optional(),
+    description: z.string().min(2).max(500).optional(),
+    discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
+    discountValue: z.number().positive().optional(),
+    minAmount: z.number().min(0).optional(),
+    maxUses: z.number().int().positive().optional(),
+    validFrom: z.string().min(1).optional(),
+    validUntil: z.string().min(1).optional(),
+    isActive: z.boolean().optional(),
+  })
+  // Admin panel Phase 2 P1-07: percentage discount cap (100%) +
+  // validFrom/validUntil cross-field sanity check. Both refine
+  // the input rather than rejecting outright — the former is a
+  // domain rule, the latter a "logically impossible" check that
+  // would otherwise slip through the route handler.
+  .superRefine((val, ctx) => {
+    if (
+      val.discountType === 'PERCENTAGE' &&
+      val.discountValue !== undefined &&
+      val.discountValue > 100
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'Percentage discount cannot exceed 100%',
+      });
+    }
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom);
+      const until = new Date(val.validUntil);
+      if (!Number.isNaN(from.getTime()) && !Number.isNaN(until.getTime()) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
+    }
+  });
 
 // ==================== ADMIN - FAQS ====================
 export const createFaqSchema = z.object({
@@ -443,6 +597,13 @@ export const riderActionSchema = z.object({
     'ENFORCE_PASSCODE',
     'CHECK_LOCATION_INTEGRITY',
     'ADMIN_LOCK',
+    // P0-1 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): SMS-based unlock code
+    // delivery. The server generates a numeric code, sends it via SMS to
+    // the rider's registered phone, and returns 200 + audit log entry —
+    // the code is NEVER returned to the admin. The existing `ADMIN_LOCK`
+    // path still returns the code (deprecated) for backward compat with
+    // the rider app's lock screen.
+    'SEND_UNLOCK_CODE_SMS',
     'UNLOCK_DEVICE',
     'PERSIST_APP',
     'ENFORCE_LOCATION',
@@ -455,6 +616,18 @@ export const riderActionSchema = z.object({
   teamLeaderId: z.string().optional(),
   password: z.string().optional(),
   enabled: z.boolean().optional(),
+  // P0-2 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): idempotency key.
+  // The client should generate a UUID when the admin opens the confirm
+  // dialog and send it on the first POST. Duplicate POSTs with the same
+  // key return the cached result without re-running the action. The
+  // server's cache lives for 5 minutes (long enough to absorb a
+  // double-click, short enough to keep the in-memory store small).
+  idempotencyKey: z.string().uuid().optional(),
+  // P1-1: free-text reason that the admin must provide for the
+  // security-impacting actions (PERSIST_APP, ENFORCE_LOCATION, etc.).
+  // Required for `SEND_UNLOCK_CODE_SMS` and the lock/wipe actions;
+  // the route enforces the requirement for the high-impact subset.
+  reason: z.string().min(3).max(500).optional(),
 });
 
 // P1.4 (2026-08-05 rentals/vehicles/hubs audit): the admin rentals PUT route

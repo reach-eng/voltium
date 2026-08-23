@@ -42,8 +42,13 @@ export interface DeviceData {
 // P1-13 (2026-08-05 legal/device audit): LOCK_DEVICE removed — the route
 // rejected it unconditionally, so the enum value was a footgun. Keep the
 // enum in lockstep with `riderActionSchema` in lib/validators.ts.
+//
+// ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24 (P0-1): SEND_UNLOCK_CODE_SMS
+// added — server-side unlock-code delivery via SMS. The code is never
+// returned to the admin.
 export type SecurityAction =
   | 'ADMIN_LOCK'
+  | 'SEND_UNLOCK_CODE_SMS'
   | 'UNLOCK_DEVICE'
   | 'PERSIST_APP'
   | 'ENFORCE_LOCATION'

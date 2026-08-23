@@ -38,6 +38,12 @@ export function useDeviceTracking(riderId: string | undefined) {
   const [isActionPending, setIsActionPending] = useState(false);
   const [unlockPasswordInput, setUnlockPasswordInput] = useState('');
   const [generatedUnlockCode, setGeneratedUnlockCode] = useState<string | null>(null);
+  // P0-1 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): when the admin uses
+  // the SMS path, the server returns 200 with `smsSent: true` and
+  // never returns the code. The hook tracks this so the screen can
+  // show a confirmation toast instead of the deprecated unlock-code
+  // dialog.
+  const [smsCodeSent, setSmsCodeSent] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
     open: false,
     title: '',
@@ -98,6 +104,20 @@ export function useDeviceTracking(riderId: string | undefined) {
     void fetchSession();
   }, [fetchSession]);
 
+  // P1-3 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): re-fetch the session
+  // every 60s so a demoted admin can't keep triggering actions on a
+  // mounted device-tracking screen. The server's permission check is
+  // the final guard (the API rejects with 403 even if the cached
+  // session still has the old role) — this interval is just to make
+  // the client UI reflect the demotion promptly.
+  useEffect(() => {
+    if (!riderId) return;
+    const interval = setInterval(() => {
+      void fetchSession();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [riderId, fetchSession]);
+
   useEffect(() => {
     if (riderId) {
       void fetchData();
@@ -108,14 +128,24 @@ export function useDeviceTracking(riderId: string | undefined) {
   }, [riderId, fetchData]);
 
   const handleSecurityAction = useCallback(
-    async (action: SecurityAction | '', extra: Record<string, unknown> = {}) => {
+    async (
+      action: SecurityAction | '',
+      extra: Record<string, unknown> = {},
+      options: { idempotencyKey?: string; reason?: string } = {}
+    ) => {
       if (!riderId || !action) return;
       setIsActionPending(true);
       try {
         const res = await fetch('/api/admin/riders/actions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, riderId, ...extra }),
+          body: JSON.stringify({
+            action,
+            riderId,
+            ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
+            ...(options.reason ? { reason: options.reason } : {}),
+            ...extra,
+          }),
         });
         // P1-14: a non-JSON error (proxy 502, network reset) previously
         // threw inside res.json() and fell into the catch — now handled
@@ -127,8 +157,16 @@ export function useDeviceTracking(riderId: string | undefined) {
         const json = await res.json();
         if (json.success) {
           toast.success(json.message || `${action} triggered successfully`);
+          // P0-1 (ADMIN_DEVICE_TRACKING_AUDIT_2026-08-24): the
+          // ADMIN_LOCK response still returns the unlock code for the
+          // rider app's lock screen to consume, but we mark it as
+          // deprecated. The new SEND_UNLOCK_CODE_SMS path sends the
+          // code via SMS and does NOT return it. The UI surfaces this
+          // distinction to the admin.
           if (action === 'ADMIN_LOCK' && json.data?.unlockCode) {
             setGeneratedUnlockCode(json.data.unlockCode);
+          } else if (action === 'SEND_UNLOCK_CODE_SMS' && json.data?.smsSent) {
+            setSmsCodeSent(true);
           }
           setUnlockPasswordInput('');
           await fetchData();
@@ -160,6 +198,26 @@ export function useDeviceTracking(riderId: string | undefined) {
     []
   );
 
+  // P0-2: every trigger generates a fresh idempotency key. The key
+  // lives for 5 minutes on the server — long enough to absorb a
+  // double-click on the confirm button, short enough to keep the
+  // in-memory store small.
+  const requestSecurityAction = useCallback(
+    (options: {
+      action: SecurityAction;
+      reason?: string;
+      extra?: Record<string, unknown>;
+    }) => {
+      const idempotencyKey = crypto.randomUUID();
+      handleSecurityAction(
+        options.action,
+        options.extra ?? {},
+        { idempotencyKey, reason: options.reason }
+      );
+    },
+    [handleSecurityAction]
+  );
+
   const closeConfirmDialog = useCallback((open: boolean) => {
     setConfirmDialog((prev) => ({ ...prev, open }));
   }, []);
@@ -182,9 +240,12 @@ export function useDeviceTracking(riderId: string | undefined) {
     setUnlockPasswordInput,
     generatedUnlockCode,
     setGeneratedUnlockCode,
+    smsCodeSent,
+    setSmsCodeSent,
     confirmDialog,
     closeConfirmDialog,
     triggerSecurityAction,
+    requestSecurityAction,
     handleSecurityAction,
     // revalidation
     fetchData,
