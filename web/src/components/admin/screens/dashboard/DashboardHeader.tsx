@@ -10,6 +10,14 @@ interface DashboardHeaderProps {
   onRefresh: () => void;
   onExport: () => void;
   onSystemHealth: () => void;
+  // P1-1 (ADMIN_DASHBOARD_AUDIT_2026-08-24): permission gates. Both default
+  // to `true` so existing callers (e.g. a future admin panel feature that
+  // hides the dashboard entirely) keep working without breaking changes.
+  // When `false`, the corresponding button is hidden (not just disabled)
+  // because the audit's intent is to keep read-only roles from
+  // triggering side-effectful actions.
+  canViewSystemHealth?: boolean;
+  canExportReport?: boolean;
 }
 
 /**
@@ -21,6 +29,8 @@ export function DashboardHeader({
   onRefresh,
   onExport,
   onSystemHealth,
+  canViewSystemHealth = true,
+  canExportReport = true,
 }: DashboardHeaderProps) {
   const today = formatDateDDMMYYYY(new Date().toISOString());
 
@@ -62,21 +72,25 @@ export function DashboardHeader({
         >
           <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
         </Button>
-        <Button
-          variant="outline"
-          size="default"
-          className="rounded-full px-5 h-11 font-medium transition-all duration-200"
-          onClick={onExport}
-        >
-          Export Report
-        </Button>
-        <Button
-          size="default"
-          className="rounded-full px-5 h-11 font-medium transition-all duration-200"
-          onClick={onSystemHealth}
-        >
-          System Health
-        </Button>
+        {canExportReport && (
+          <Button
+            variant="outline"
+            size="default"
+            className="rounded-full px-5 h-11 font-medium transition-all duration-200"
+            onClick={onExport}
+          >
+            Export Report
+          </Button>
+        )}
+        {canViewSystemHealth && (
+          <Button
+            size="default"
+            className="rounded-full px-5 h-11 font-medium transition-all duration-200"
+            onClick={onSystemHealth}
+          >
+            System Health
+          </Button>
+        )}
       </div>
     </div>
   );
