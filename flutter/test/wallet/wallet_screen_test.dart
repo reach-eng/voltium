@@ -66,6 +66,17 @@ void main() {
 
       // Screen should render without throwing
       expect(find.byType(WalletScreen), findsOneWidget);
+
+      // Exhaust FadeUpWidget timers to prevent 'Timer still pending' error
+      // (PR-5 followup 2026-08-23: the new `ref.watch(walletProvider.select(
+      // (p) => p.lastError))` introduces an extra rebuild path that can
+      // re-schedule FadeUpWidget's `_startAnimation` timer; the
+      // graduated pump pattern below drains it deterministically).
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
     });
 
     testWidgets('wallet screen has a title', (tester) async {
@@ -99,6 +110,17 @@ void main() {
           addMoneyFinder.evaluate().isNotEmpty ||
           topupFinder.evaluate().isNotEmpty;
       expect(hasTopupAction, isTrue);
+
+      // Exhaust FadeUpWidget timers to prevent 'Timer still pending' error
+      // (PR-5 followup 2026-08-23: the new `ref.watch(walletProvider.select(
+      // (p) => p.lastError))` introduces an extra rebuild path that can
+      // re-schedule FadeUpWidget's `_startAnimation` timer; the
+      // graduated pump pattern below drains it deterministically).
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
     });
   });
 }

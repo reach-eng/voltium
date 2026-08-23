@@ -47,6 +47,14 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final isRefreshing =
         ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
     final dataState = ref.watch(riderProvider.select((p) => p.dataState));
+    // AUDIT-FIX 2026-08-23 (WALLET-e): the previous build read
+    // `walletProvider.transactions` and `isRefreshingTransactions`
+    // but never `lastError` — a 5xx fetch failure silently rendered
+    // the empty state to a rider with money. The watch below makes
+    // `lastError` part of the build; the inline error banner (only
+    // rendered when there's no cached transaction data to fall back
+    // to) surfaces the failure with a retry button.
+    final lastError = ref.watch(walletProvider.select((p) => p.lastError));
     final isLoading =
         rider == null && (dataState == DataState.initial || isRefreshing);
 
@@ -129,6 +137,28 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           child: SecurityDepositCard(rider: rider),
                         ),
                         const SizedBox(height: 12),
+
+                        // AUDIT-FIX 2026-08-23 (WALLET-e): surface a fetch
+                        // error inline so a 5xx doesn't masquerade as
+                        // the empty state. Only rendered when there's
+                        // no cached transaction data to fall back to;
+                        // once the rider pulls to refresh and the
+                        // error clears, the banner disappears.
+                        if (lastError != null && transactions.isEmpty) ...[
+                          _ErrorBanner(
+                            message: lastError,
+                            onRetry: () {
+                              final riderId =
+                                  ref.read(riderProvider).riderId;
+                              if (riderId != null) {
+                                ref
+                                    .read(walletProvider.notifier)
+                                    .refreshTransactions(riderId: riderId);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         if (rider != null &&
                             (rider.depositStatus ==
                                     DepositStatus.pendingVerification ||
@@ -166,6 +196,49 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// AUDIT-FIX 2026-08-23 (WALLET-e): inline error banner with a retry
+/// button. Used by `WalletScreen` when `walletProvider.lastError` is
+/// set and there's no cached transaction data to fall back to.
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorBanner({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: colors.errorLight,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.errorBorder),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTypography.bodySmall.copyWith(color: colors.onSurface),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 12),
+          TextButton(
+            key: const Key('walletErrorRetry'),
+            onPressed: onRetry,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
     );
   }
 }
