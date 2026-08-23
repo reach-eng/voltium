@@ -24,6 +24,12 @@ import {
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { Admin } from './types';
 
+// P2-1 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): the audit suggested dedup'ing
+// with ROLE_COLORS in lib/role-config.ts, but the two maps serve different
+// visual intents — the AdminSidebar uses light pill bg-* colors, this table
+// uses a higher-contrast outlined Badge style. Kept local. If a new role
+// is added, both must be updated (intentional, the divergence is a feature
+// not a bug).
 const roleColors: Record<string, string> = {
   SUPER_ADMIN: 'border-red-500/20 text-red-600 bg-red-500/5 dark:text-red-400',
   OPERATIONS_ADMIN: 'border-primary/20 text-primary bg-primary/5',

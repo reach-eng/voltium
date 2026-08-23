@@ -120,8 +120,31 @@ export function withAdmin(handler: (req: NextRequest, session: SessionPayload) =
 /**
  * Create an audit log entry for a sensitive admin action.
  * Non-blocking — failures are logged but don't abort the request.
+ *
+ * P0-2 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): when a `request` is provided,
+ * the audit entry is enriched with the actor's IP, user-agent, and the
+ * server-side session id (from the cookie/JWT). The enrichment is
+ * opt-in so callers that don't have a request (e.g. a cron job) can
+ * still call this without fake data.
  */
 import { createAuditLog } from '@/lib/audit-log';
+
+/**
+ * Extract a best-effort IP address and user-agent from a request, taking
+ * the standard `x-forwarded-for` chain (first hop is the original client)
+ * and the standard `user-agent` header. Returns nulls for either if the
+ * headers are missing (e.g. server-to-server test calls).
+ */
+export function extractRequestContext(req: NextRequest | undefined | null): {
+  ip: string | null;
+  userAgent: string | null;
+} {
+  if (!req) return { ip: null, userAgent: null };
+  const fwd = req.headers.get('x-forwarded-for');
+  const ip = fwd ? fwd.split(',')[0].trim() : req.headers.get('x-real-ip') || null;
+  const userAgent = req.headers.get('user-agent') || null;
+  return { ip, userAgent };
+}
 
 export async function logAdminAction(params: {
   actorId: string;
@@ -129,13 +152,28 @@ export async function logAdminAction(params: {
   entity: string;
   entityId?: string;
   details?: Record<string, unknown>;
+  request?: NextRequest;
 }): Promise<void> {
+  // P0-2: enrich the audit log entry with IP / UA when the request is
+  // available. This is the compliance-investigation trail — "who
+  // deactivated admin X, and from where?" must be answerable from the
+  // audit log alone. The `actorSessionId` field is intentionally not
+  // included: the JWT does not currently carry a `jti`, so we have no
+  // stable per-session id to record. Add when JWTs are re-minted with
+  // a `jti` claim.
+  const ctx = params.request ? extractRequestContext(params.request) : { ip: null, userAgent: null };
+  const enrichedDetails: Record<string, unknown> = {
+    ...(params.details ?? {}),
+    ...(ctx.ip ? { actorIp: ctx.ip } : {}),
+    ...(ctx.userAgent ? { actorUserAgent: ctx.userAgent } : {}),
+  };
+
   await createAuditLog({
     actorId: params.actorId,
     actorType: 'ADMIN',
     action: params.action,
     entity: params.entity,
     entityId: params.entityId,
-    details: params.details ? JSON.stringify(params.details) : undefined,
+    details: Object.keys(enrichedDetails).length > 0 ? JSON.stringify(enrichedDetails) : undefined,
   });
 }

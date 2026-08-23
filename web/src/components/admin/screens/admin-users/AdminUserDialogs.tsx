@@ -95,6 +95,14 @@ export function AdminUserDialog({
                   <Label>Password</Label>
                   <Input
                     type="password"
+                    // P1-2 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): set
+                    // autoComplete="new-password" so the browser
+                    // doesn't prefill with the *actor's* saved password
+                    // (which would be a real security issue — a super
+                    // admin could create a new admin whose initial
+                    // password is auto-suggested from the super
+                    // admin's own saved credentials).
+                    autoComplete="new-password"
                     value={form.password || ''}
                     onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                     placeholder="Min 8 characters"

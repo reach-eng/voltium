@@ -7,6 +7,11 @@ import {
   useAdminUsers,
   AdminUserTable,
 } from './admin-users';
+import {
+  DeactivateConfirmDialog,
+  RoleChangeWarningDialog,
+  CorruptionWarningBanner,
+} from './admin-users/ConfirmAdminDialogs';
 
 // Dynamic code-splitting for heavy tab contents and dialogs
 const RolePermissionManagement = dynamic(() => import('./RolePermissionManagement'), {
@@ -24,6 +29,11 @@ const AdminUserDialog = dynamic(
  * AdminUserManagement — Main coordinator screen shell.
  * Delegates state management to useAdminUsers() and layout rendering
  * to modular components under ./admin-users/
+ *
+ * 2026-08-24 audit updates (ADMIN_ADMIN_USERS_AUDIT_2026-08-24):
+ *   - P0-1: DeactivateConfirmDialog (requires typed email + reason)
+ *   - P1-1: CorruptionWarningBanner shown when stored perms were bad
+ *   - P1-3: RoleChangeWarningDialog when role change drops permissions
  */
 export default function AdminUserManagement() {
   const adminState = useAdminUsers();
@@ -45,6 +55,10 @@ export default function AdminUserManagement() {
           </TabsList>
 
           <TabsContent value="admins" className="mt-6">
+            <CorruptionWarningBanner
+              message={adminState.editCorruptionWarning}
+              onDismiss={adminState.dismissEditCorruptionWarning}
+            />
             <AdminUserTable
               loading={adminState.loading}
               admins={adminState.admins}
@@ -65,7 +79,7 @@ export default function AdminUserManagement() {
                 adminState.setDialogOpen(true);
               }}
               onEdit={adminState.handleEdit}
-              onToggleActive={adminState.toggleActive}
+              onToggleActive={adminState.requestToggleActive}
             />
 
             <AdminUserDialog
@@ -74,9 +88,26 @@ export default function AdminUserManagement() {
               editingId={adminState.editingId}
               form={adminState.form}
               setForm={adminState.setForm}
-              onRoleChange={adminState.handleRoleChange}
+              onRoleChange={adminState.requestRoleChange}
               onTogglePermission={adminState.togglePermission}
               onSave={adminState.saveAdmin}
+            />
+
+            <DeactivateConfirmDialog
+              admin={adminState.pendingToggle?.admin ?? null}
+              onClose={adminState.cancelToggle}
+              onConfirm={async (reason) => {
+                const target = adminState.pendingToggle?.admin;
+                if (!target) return;
+                await adminState.toggleActive(target, { reason });
+                adminState.cancelToggle();
+              }}
+            />
+
+            <RoleChangeWarningDialog
+              state={adminState.pendingRoleChange}
+              onClose={adminState.cancelRoleChange}
+              onConfirm={adminState.confirmRoleChange}
             />
           </TabsContent>
 

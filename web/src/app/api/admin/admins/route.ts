@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
 
     const result = await adminUseCases.createAdmin(
       { name, email, password, role: role as AdminRole, permissions },
-      actorId
+      actorId,
+      { request: req }
     );
 
     return success(result, 'Admin created', 201);
@@ -132,7 +133,7 @@ export async function PUT(req: NextRequest) {
       return errors.validation(validationMessage(validation.error.issues));
     }
 
-    const { id, password, currentPassword, email, name, role, permissions, isActive } =
+    const { id, password, currentPassword, email, name, role, permissions, isActive, reason } =
       validation.data;
 
     // P0-3 (2026-08-05 ops audit): self-update guard. A SUPER_ADMIN must not
@@ -150,6 +151,14 @@ export async function PUT(req: NextRequest) {
     // P1-1: same no-escalation rule applies to role changes.
     if (role && !canGrantRole(session.adminRole, role as AdminRole)) {
       return adminForbidden('Cannot assign a role ranked above your own');
+    }
+
+    // P0-1 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): require a `reason` when
+    // deactivating any admin. Activations and other edits are unchanged. The
+    // min(3) length is enforced by the Zod schema; the route enforces the
+    // deactivation branch.
+    if (isActive === false && !reason) {
+      return errors.badRequest('A reason is required to deactivate an admin (P0-1)');
     }
 
     // P1-2: rate limit — hashing on every password change is CPU-bound.
@@ -197,7 +206,10 @@ export async function PUT(req: NextRequest) {
       updateData.password = await hashPassword(password);
     }
 
-    const admin = await adminUseCases.updateAdmin(id, updateData, actorId);
+    const admin = await adminUseCases.updateAdmin(id, updateData, actorId, {
+      reason,
+      request: req,
+    });
     // Never return the password hash to the client (same rule as /me).
     const { password: _pw, ...safe } = admin as { password?: string } & Record<string, unknown>;
     return success(safe);

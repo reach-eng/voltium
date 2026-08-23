@@ -123,6 +123,11 @@ export const updateAdminSchema = z
     role: z.enum(ADMIN_ROLES).optional(),
     permissions: z.array(z.string()).optional(),
     isActive: z.boolean().optional(),
+    // P0-1 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): a free-text reason captured
+    // in the client confirm dialog and persisted to the audit log. Required
+    // by the route when isActive flips false (deactivation); optional
+    // otherwise.
+    reason: z.string().min(3, 'reason must be at least 3 characters').max(500).optional(),
   })
   .strict();
 

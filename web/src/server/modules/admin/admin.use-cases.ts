@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import {
   adminRepository,
   type CreateAdminParams,
@@ -7,6 +8,17 @@ import { AUDIT_ACTIONS } from './admin.types';
 import { logAdminAction } from './admin.policy';
 import { parsePermissions } from '@/lib/permissions';
 import { LoginError } from './login-error';
+
+/**
+ * P0-2 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): audit context that's threaded
+ * through the admin mutations so the audit log can record who did what
+ * from where. The `request` is optional so unit tests / cron jobs can
+ * call the use cases without a fake NextRequest.
+ */
+export interface AdminActionContext {
+  reason?: string;
+  request?: NextRequest;
+}
 
 export { LoginError } from './login-error';
 export type { LoginErrorCode } from './login-error';
@@ -41,7 +53,7 @@ export const adminUseCases = {
     return admin;
   },
 
-  async createAdmin(params: CreateAdminParams, actorId: string) {
+  async createAdmin(params: CreateAdminParams, actorId: string, ctx: AdminActionContext = {}) {
     const existing = await adminRepository.findByEmail(params.email);
     if (existing) {
       throw new Error('An admin with this email already exists');
@@ -55,12 +67,13 @@ export const adminUseCases = {
       entity: 'admin',
       entityId: admin.id,
       details: { email: params.email, role: params.role, permissions: params.permissions ?? [] },
+      request: ctx.request,
     });
 
     return admin;
   },
 
-  async updateAdmin(id: string, params: UpdateAdminParams, actorId: string) {
+  async updateAdmin(id: string, params: UpdateAdminParams, actorId: string, ctx: AdminActionContext = {}) {
     const existing = await adminRepository.findById(id);
     if (!existing) {
       throw new Error('Admin not found');
@@ -99,13 +112,20 @@ export const adminUseCases = {
       action: AUDIT_ACTIONS.ADMIN_UPDATE,
       entity: 'admin',
       entityId: id,
-      details: { changes: (({ password, ...safe }) => safe)(params) },
+      // P0-2: include the `reason` (P0-1 client-side) in the audit details so
+      // compliance can read it back. Strip the password hash from `changes`
+      // to avoid logging the hashed credential.
+      details: {
+        changes: (({ password, ...safe }) => safe)(params),
+        ...(ctx.reason ? { reason: ctx.reason } : {}),
+      },
+      request: ctx.request,
     });
 
     return admin;
   },
 
-  async deleteAdmin(id: string, actorId: string) {
+  async deleteAdmin(id: string, actorId: string, ctx: AdminActionContext = {}) {
     if (id === actorId) {
       throw new Error('Cannot delete or deactivate your own admin account');
     }
@@ -130,7 +150,12 @@ export const adminUseCases = {
       action: AUDIT_ACTIONS.ADMIN_DELETE,
       entity: 'admin',
       entityId: id,
-      details: { email: existing.email, softDeactivated: true },
+      details: {
+        email: existing.email,
+        softDeactivated: true,
+        ...(ctx.reason ? { reason: ctx.reason } : {}),
+      },
+      request: ctx.request,
     });
   },
 

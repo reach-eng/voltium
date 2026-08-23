@@ -91,12 +91,36 @@ export function useAdminUsers() {
     }
   };
 
+  // P1-1 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): surface corrupted permissions
+  // JSON. The previous behaviour silently fell back to role defaults, which
+  // destroys the admin's custom grants on the next save. Now: log the
+  // parse error, set a banner state, and the parent screen can show a
+  // "permissions were corrupted — restored from role defaults" warning so
+  // the super-admin knows to escalate to engineering.
+  const [editCorruptionWarning, setEditCorruptionWarning] = useState<string | null>(null);
+  // P0-1: state for the deactivate-confirm dialog (admin + reason input).
+  const [pendingToggle, setPendingToggle] = useState<{ admin: Admin; isDeactivate: boolean } | null>(null);
+  // P1-3: state for the role-change warning dialog (admin + prev perms + new role).
+  const [pendingRoleChange, setPendingRoleChange] = useState<{
+    admin: Admin;
+    nextRole: string;
+    removed: string[];
+  } | null>(null);
+
   const handleEdit = (admin: Admin) => {
     let perms: string[] = [];
+    let corrupted = false;
     try {
-      perms = JSON.parse(admin.permissions || '[]');
-    } catch {
+      const raw = admin.permissions || '[]';
+      const parsed = JSON.parse(raw);
+      perms = Array.isArray(parsed) ? parsed.filter((p) => typeof p === 'string') : [];
+    } catch (err) {
+      // P1-1: corrupted JSON. Log and fall back to role defaults — the
+      // super-admin will see a warning so the loss is visible.
+      // eslint-disable-next-line no-console
+      console.error('[useAdminUsers] Corrupted permissions JSON for admin', admin.id, err);
       perms = getPermissionsForRole(admin.role);
+      corrupted = true;
     }
 
     setForm({
@@ -108,6 +132,11 @@ export function useAdminUsers() {
     });
     setEditingId(admin.id);
     setDialogOpen(true);
+    setEditCorruptionWarning(
+      corrupted
+        ? 'The stored permissions were corrupted and have been restored from the role defaults. Please verify before saving.'
+        : null
+    );
   };
 
   const handleRoleChange = (role: string) => {
@@ -124,12 +153,26 @@ export function useAdminUsers() {
     }));
   };
 
-  const toggleActive = async (admin: Admin) => {
+  // P0-1 (ADMIN_ADMIN_USERS_AUDIT_2026-08-24): `reason` is required when
+  // deactivating (the confirm dialog enforces it on the client) and forwarded
+  // to the server so the audit log entry has a human-readable justification
+  // alongside the actorId / ip / sessionId. Activation does not require a
+  // reason.
+  const toggleActive = async (admin: Admin, { reason }: { reason?: string } = {}) => {
+    const willDeactivate = admin.isActive;
+    if (willDeactivate && !reason) {
+      toast.error('A reason is required to deactivate an admin');
+      return;
+    }
     try {
       const res = await fetch('/api/admin/admins', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: admin.id, isActive: !admin.isActive }),
+        body: JSON.stringify({
+          id: admin.id,
+          isActive: !admin.isActive,
+          ...(reason ? { reason } : {}),
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
@@ -163,5 +206,43 @@ export function useAdminUsers() {
     handleRoleChange,
     togglePermission,
     toggleActive,
+    // P1-1: warning banner when the stored permissions JSON was corrupted.
+    editCorruptionWarning,
+    dismissEditCorruptionWarning: () => setEditCorruptionWarning(null),
+    // P0-1: state for the deactivate-confirm dialog.
+    pendingToggle,
+    setPendingToggle,
+    requestToggleActive: (admin: Admin) =>
+      setPendingToggle({ admin, isDeactivate: admin.isActive }),
+    cancelToggle: () => setPendingToggle(null),
+    // P1-3: state for the role-change warning dialog.
+    pendingRoleChange,
+    setPendingRoleChange,
+    requestRoleChange: (nextRole: string) => {
+      if (!editingId) {
+        handleRoleChange(nextRole);
+        return;
+      }
+      const currentPerms = new Set(form.permissions);
+      const nextPerms = new Set(getPermissionsForRole(nextRole));
+      const removed = form.permissions.filter((p) => !nextPerms.has(p));
+      if (removed.length > 0 && currentPerms.size > nextPerms.size) {
+        // Show warning if the change actually drops custom permissions.
+        setPendingRoleChange({
+          admin: { id: editingId } as Admin,
+          nextRole,
+          removed,
+        });
+        return;
+      }
+      handleRoleChange(nextRole);
+    },
+    cancelRoleChange: () => setPendingRoleChange(null),
+    confirmRoleChange: () => {
+      if (pendingRoleChange) {
+        handleRoleChange(pendingRoleChange.nextRole);
+        setPendingRoleChange(null);
+      }
+    },
   };
 }

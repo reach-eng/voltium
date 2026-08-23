@@ -201,6 +201,61 @@ describe('TG-5: password change requires currentPassword', () => {
     expect(mocks.updateAdmin).not.toHaveBeenCalled();
   });
 
+  it('P0-1 (2026-08-24): deactivation requires a `reason`', async () => {
+    const res = await PUT(
+      makeRequest({ id: 'admin_target_42', isActive: false })
+    );
+    expect(res.status).toBe(400);
+    expect(mocks.updateAdmin).not.toHaveBeenCalled();
+  });
+
+  it('P0-1 (2026-08-24): deactivation with a reason succeeds', async () => {
+    mocks.updateAdmin.mockResolvedValue({
+      id: 'admin_target_42',
+      email: 'target@voltium.in',
+      name: 'Target',
+      role: 'OPERATIONS_ADMIN',
+      isActive: false,
+      password: 'hashed',
+      permissions: '[]',
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+    });
+    const res = await PUT(
+      makeRequest({
+        id: 'admin_target_42',
+        isActive: false,
+        reason: 'left the company, security review',
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(mocks.updateAdmin).toHaveBeenCalledWith(
+      'admin_target_42',
+      expect.objectContaining({ isActive: false }),
+      ACTOR_ID,
+      expect.objectContaining({ reason: 'left the company, security review' })
+    );
+  });
+
+  it('P0-1 (2026-08-24): activation does NOT require a reason', async () => {
+    mocks.updateAdmin.mockResolvedValue({
+      id: 'admin_target_42',
+      email: 'target@voltium.in',
+      name: 'Target',
+      role: 'OPERATIONS_ADMIN',
+      isActive: true,
+      password: 'hashed',
+      permissions: '[]',
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+    });
+    const res = await PUT(
+      makeRequest({ id: 'admin_target_42', isActive: true })
+    );
+    expect(res.status).toBe(200);
+    expect(mocks.updateAdmin).toHaveBeenCalled();
+  });
+
   it('response never contains the password hash', async () => {
     const res = await PUT(
       makeRequest({ id: ACTOR_ID, password: 'ValidPass123!@#', currentPassword: 'oldpass123' })
