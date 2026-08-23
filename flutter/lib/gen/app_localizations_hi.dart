@@ -629,6 +629,16 @@ class AppLocalizationsHi extends AppLocalizations {
       'SOS अलर्ट सक्रिय! आपातकालीन सेवाओं (112) को डायल किया जा रहा है...';
 
   @override
+  String get txtsosHoldHint => 'आपातकालीन अलर्ट भेजने के लिए दबाकर रखें';
+
+  @override
+  String get txtsosSending => 'SOS भेजा जा रहा है...';
+
+  @override
+  String get txtsosSharingLocation =>
+      'आपकी लोकेशन वोल्टियम के साथ साझा की जा रही है और 112 डायल किया जा रहा है।';
+
+  @override
   String get txttakeAPhoto => 'फ़ोटो लें';
 
   @override
@@ -1192,6 +1202,29 @@ class AppLocalizationsHi extends AppLocalizations {
       'वापसी जमा करने में गड़बड़ी। कृपया फिर से कोशिश करें।';
 
   @override
+  String get kycFailedCaptureDocument =>
+      'दस्तावेज़ कैप्चर करने में विफल। कृपया फिर से कोशिश करें।';
+
+  @override
+  String get rewardsEmptyTitle => 'अभी तक कोई पुरस्कार अनलॉक नहीं हुआ';
+
+  @override
+  String get rewardsEmptySubtitle =>
+      'सवारी जारी रखें और मील के पत्थर पूरे करें\\nविशेष पुरस्कार अनलॉक करने के लिए।';
+
+  @override
+  String kycPleaseComplete(String missing) {
+    return 'कृपया पूरा करें: $missing';
+  }
+
+  @override
+  String get kycSessionInvalid => 'सत्र अमान्य है। कृपया फिर से लॉगिन करें।';
+
+  @override
+  String get kycRefreshFailedAfterUpload =>
+      'प्रोफ़ाइल सहेज ली गई है, लेकिन हम आपका सत्र रिफ्रेश नहीं कर सके। पुनः प्रयास के लिए नीचे खींचें, या ऐप पुनः आरंभ करें।';
+
+  @override
   String get txtrequestSubmitted => 'अनुरोध भेजा गया!';
 
   @override
@@ -1226,6 +1259,42 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtconfirmReturn => 'वापसी की पुष्टि करें';
+
+  @override
+  String get endRentalSubmittedBody =>
+      'आपके वाहन की वापसी का अनुरोध स्वीकृति के लिए भेज दिया गया है।';
+
+  @override
+  String get endRentalConfirmTitle => 'क्या आप निश्चित हैं?';
+
+  @override
+  String get endRentalConfirmBody =>
+      'अपना वाहन लौटाने से आपकी वर्तमान किराये की अवधि समाप्त हो जाएगी। कृपया सभी निरीक्षण चरण पूरे करें।';
+
+  @override
+  String get endRentalVehicleConditionPhotos => 'वाहन की स्थिति की तस्वीरें *';
+
+  @override
+  String get endRentalConfirmInGoodCondition =>
+      'मैं पुष्टि करता हूँ कि वाहन सभी सहायक उपकरणों के साथ अच्छी स्थिति में लौटाया गया है।';
+
+  @override
+  String get endRentalPhotosMissingHint =>
+      'कृपया जारी रखने के लिए सभी निरीक्षण फ़ोटो लें और ओडोमीटर रीडिंग दर्ज करें';
+
+  @override
+  String get bankDetailsDiscardChangesTitle =>
+      'क्या आप परिवर्तन छोड़ना चाहते हैं?';
+
+  @override
+  String get bankDetailsDiscardChangesBody =>
+      'आपके असहेजे बैंक विवरण हैं। बंद करने से वे छोड़ दिए जाएंगे।';
+
+  @override
+  String get commonKeepEditing => 'संपादन जारी रखें';
+
+  @override
+  String get commonDiscard => 'छोड़ें';
 
   @override
   String get txtpleaseTakeAllInspectionPhotosToContinue =>
@@ -1400,6 +1469,23 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtstep1Of3 => 'कदम 1 का 3';
+
+  @override
+  String get txtpaymentModeInstant => 'तत्काल';
+
+  @override
+  String topUpWillBeInstantRiderBearer(int fee) {
+    return 'टॉप-अप तत्काल होगा। 2.5% अतिरिक्त (₹$fee) गेटवे शुल्क आपकी टॉप-अप राशि में जोड़ा जाएगा।';
+  }
+
+  @override
+  String get topUpWillBeInstantVoltiumBearer =>
+      'टॉप-अप तत्काल होगा। गेटवे शुल्क 100% वोल्टियम द्वारा वहन किया जाता है (₹0 अतिरिक्त शुल्क)।';
+
+  @override
+  String txtproceedToInstantPay(int total) {
+    return 'तत्काल भुगतान के लिए आगे बढ़ें, अनुमानित कुल ₹$total';
+  }
 
   @override
   String get txtselectPurpose => 'उद्देश्य चुनें';

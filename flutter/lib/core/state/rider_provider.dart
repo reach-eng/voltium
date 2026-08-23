@@ -23,7 +23,7 @@
 //     `refresh`, `routeAfterLogin`
 
 import 'dart:async';
-import 'dart:developer' show log;
+import 'package:voltium_rider/utils/app_logger.dart' show appDebug;
 import 'dart:io' show File;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -318,14 +318,14 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
       // `api_client.dart:_refreshToken`) and gave up — this is the
       // terminal 401.
       if (e.statusCode == 401) {
-        log('Rider profile refresh: session expired (401)');
+        appDebug('Rider profile refresh: session expired (401)');
         state = state.copyWith(
           lastSessionExpiredAt: DateTime.now().millisecondsSinceEpoch,
           dataState:
               state.rider != null ? DataState.fromCache : DataState.error,
         );
       } else {
-        log('Error refreshing rider profile: $e');
+        appDebug('Error refreshing rider profile: $e');
         state = state.copyWith(
           errorMessage: 'Couldn\'t refresh your profile. Pull to retry.',
           dataState:
@@ -333,7 +333,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
         );
       }
     } catch (e) {
-      log('Error refreshing rider profile: $e');
+      appDebug('Error refreshing rider profile: $e');
       state = state.copyWith(
         errorMessage: 'Couldn\'t refresh your profile. Pull to retry.',
         dataState: state.rider != null ? DataState.fromCache : DataState.error,
@@ -357,6 +357,13 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     // instance fields.
     final orchestrator = RiderLogoutOrchestrator(
       ref: ref,
+      // PR-2 (F-002): pass riderId synchronously from the caller's
+      // state. The orchestrator cannot `_ref.read(riderProvider)`
+      // because `ref` is owned by this very notifier — Riverpod v3
+      // rejects that as a self-dependency. The state is still
+      // populated here (we reset it AFTER `orchestrator.run()`
+      // returns), so `state.riderId` is the correct source of truth.
+      riderId: state.riderId,
       onStopPolling: stopPolling,
       onStopDeviceDataSync: _stopDeviceDataSync,
       onResetRefreshInFlight: () => _refreshInFlight = null,
@@ -399,7 +406,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     try {
       await _riderRepository.registerFCMToken(token);
     } catch (e) {
-      log('Failed to register FCM token: $e');
+      appDebug('Failed to register FCM token: $e');
     }
   }
 
@@ -488,7 +495,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     if (_onboardingPollCount > maxPolls) {
       _onboardingPoller.stop();
       state = state.copyWith(isPollingTimedOut: true);
-      log('RiderNotifier: Polling timeout reached.');
+      appDebug('RiderNotifier: Polling timeout reached.');
       return;
     }
 
@@ -611,5 +618,7 @@ final riderRepositoryProvider = Provider<RiderRepository>((ref) {
 final rentalRepositoryProvider = Provider<RentalRepository>((ref) {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return RentalRepositoryImpl(vClient);
+  // PR-4 (F-011): the impl now needs both the Idempotency-Key-aware
+  // `ApiClient` and the generated `VoltiumApiClient`.
+  return RentalRepositoryImpl(client, vClient);
 });

@@ -74,7 +74,8 @@ void main() {
         reason: 'This test runs in debug mode. The release-mode throw '
             'is verified by code review and via integration testing '
             'of the release build.');
-    final client = PinnedHttpInterceptor.createClient();
+    final client =
+        PinnedHttpInterceptor.createClient(expectedHost: 'example.com');
     expect(client, isNotNull);
   });
 

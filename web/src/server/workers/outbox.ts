@@ -246,16 +246,14 @@ const emitWindowMs = 60_000;
 const emitCounters = new Map<string, { count: number; resetAt: number }>();
 
 /**
- * Test-only flag: when `true`, the rate limit is enforced on `emit()`.
- * The default is `false` so that production code is rate-limited while
- * test code (which may run in parallel against the same in-memory
- * counter) is not. The dedicated rate-limit test in
- * `tests/unit/outbox-emit-rate-limit.test.ts` sets this flag via
- * `__forceEmitRateLimitOnForTests()` so the cap is only checked when
- * the test explicitly asks for it.
+ * T-97 (PR-7, 2026-08-23): the producer-side rate limit is now
+ * ALWAYS enforced. The previous code gated the check behind
+ * `RATE_LIMIT_FORCED_ON_FOR_TESTS` (default `false`) so production
+ * NEVER exercised the cap — a runaway cron could fill the outbox
+ * table. The dedicated rate-limit test resets the in-process
+ * counters via `__resetEmitRateLimitCountersForTests()` so the
+ * cap doesn't trip during unit tests.
  */
-let RATE_LIMIT_FORCED_ON_FOR_TESTS = false;
-
 function checkEmitRateLimit(eventType: string): boolean {
   const now = Date.now();
   const existing = emitCounters.get(eventType);
@@ -278,17 +276,6 @@ function checkEmitRateLimit(eventType: string): boolean {
  */
 export function __resetEmitRateLimitCountersForTests(): void {
   emitCounters.clear();
-}
-
-/**
- * Test-only hook: enable the rate limit check for the current test.
- * The rate-limit test suite (`outbox-emit-rate-limit.test.ts`) calls
- * this in `beforeEach` so the production behavior is exercised without
- * polluting other test files that share the in-process counter via
- * parallel vitest workers.
- */
-export function __forceEmitRateLimitOnForTests(): void {
-  RATE_LIMIT_FORCED_ON_FOR_TESTS = true;
 }
 
 export const OutboxService = {
@@ -331,11 +318,10 @@ export const OutboxService = {
     tx?: TxClient,
     priority: OutboxPriority = 'background'
   ): Promise<string> {
-    // The rate limit is enforced only when the test opt-in flag is set.
-    // Production code is always rate-limited (the flag defaults to false
-    // but never gets set in production). Test code that wants to verify
-    // the limit sets the flag explicitly via `__forceEmitRateLimitOnForTests`.
-    if (RATE_LIMIT_FORCED_ON_FOR_TESTS && !checkEmitRateLimit(eventType)) {
+    // T-97 (PR-7, 2026-08-23): the rate limit is ALWAYS enforced
+    // (was previously gated behind a test-only flag that defaulted
+    // to false — so production never actually exercised the cap).
+    if (!checkEmitRateLimit(eventType)) {
       logger.error('[Outbox] Producer-side rate limit hit', {
         eventType,
         limitPerMinute: EMIT_RATE_LIMIT_PER_MINUTE,

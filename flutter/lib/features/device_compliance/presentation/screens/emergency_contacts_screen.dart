@@ -10,6 +10,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/dialer.dart';
+import 'package:voltium_rider/widgets/dialogs.dart';
 
 class EmergencyContactsScreen extends ConsumerStatefulWidget {
   const EmergencyContactsScreen({super.key});
@@ -151,25 +152,21 @@ class _EmergencyContactsScreenState
     WidgetRef ref,
     EmergencyContact contact,
   ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
+    // PR-4 (F-007 — 2026-08-22 deep audit): a yes/no confirm was
+    // previously one tap away from a permanent delete of a
+    // safety-critical contact. Require the rider to type the
+    // contact's name to confirm — kid's playful taps and mis-taps
+    // on adjacent rows are no longer enough.
+    final confirmed = await showDestructivePhraseDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.txtdelete),
-        content: Text('Remove ${contact.name} from your emergency contacts?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.txtcancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.txtdelete),
-          ),
-        ],
-      ),
+      title: 'Remove ${contact.name}?',
+      message: 'This contact will no longer be reachable from the SOS screen. '
+          'A future emergency on the road could be made worse by '
+          'removing a contact by accident.',
+      phrase: contact.name,
+      confirmText: 'Remove',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     await ref.read(emergencyContactsService.notifier).removeContact(contact.id);
   }
 

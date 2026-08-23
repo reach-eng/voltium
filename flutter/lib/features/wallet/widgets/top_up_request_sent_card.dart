@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:universal_io/io.dart';
 import '../../../models/rider_model.dart';
 import '../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/config/app_config.dart';
 
 class TopUpRequestSentCard extends StatelessWidget {
   final RiderModel rider;
@@ -125,7 +125,10 @@ class TopUpRequestSentCard extends StatelessWidget {
                 Builder(
                   builder: (ctx) {
                     var imgUrl = record.proofUrl!;
-                    final host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
+                    // PR-7 (F-065): single source of truth for the
+                    // dev host. Was a `Platform.isAndroid ? ... : ...`
+                    // ternary that drifted from api_client.dart.
+                    final host = AppConfig.localDevHost;
                     if (imgUrl.startsWith('http')) {
                       imgUrl = imgUrl.replaceAll('localhost', host);
                     } else if (imgUrl.startsWith('/')) {

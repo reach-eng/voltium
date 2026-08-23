@@ -65,6 +65,12 @@ export function withIdempotency(handler: (req: NextRequest) => Promise<NextRespo
     } else if (response.status >= 500) {
       // Server error — allow retry by marking as failed
       await failIdempotency(key).catch(() => {});
+    } else if (response.status >= 400) {
+      // AUDIT FIX (workflows N-liveness): client errors used to leave the
+      // key PROCESSING for the full 24h TTL — a replay of the same request
+      // got a 409 Conflict instead of the original validation error. Mark
+      // FAILED so the client can retry with corrected input immediately.
+      await failIdempotency(key).catch(() => {});
     }
 
     return response;

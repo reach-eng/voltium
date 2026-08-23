@@ -2,13 +2,26 @@ import 'package:universal_io/io.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/app_logger.dart';
 
+/// PR-9 (F-079 — 2026-08-22 deep audit): the previous
+/// implementation was a singleton holding a shared
+/// `ImagePicker`. The picker itself is fine to share (it's
+/// stateless, just a plugin handle) but the singleton pattern
+/// made the service impossible to substitute in tests, AND
+/// every concurrent `pickAndCompress` call would share state
+/// (the picker's `requestFullMetadata: false` flag, the active
+/// source, etc.). Now a regular class — callers construct a
+/// fresh instance (or use `ImageCompressionService()` in widgets
+/// that have no DI). The class is still cheap to construct
+/// (no I/O, just plugin-handle lookup).
+///
+/// Existing call sites that use `ImageCompressionService()`
+/// (factory) keep compiling — `ImageCompressionService.new` is
+/// equivalent for the no-args constructor.
 class ImageCompressionService {
-  static final ImageCompressionService _instance =
-      ImageCompressionService._internal();
-  factory ImageCompressionService() => _instance;
-  ImageCompressionService._internal();
+  final ImagePicker _picker;
 
-  final ImagePicker _picker = ImagePicker();
+  ImageCompressionService({ImagePicker? picker})
+      : _picker = picker ?? ImagePicker();
 
   Future<File?> pickAndCompress({
     ImageSource source = ImageSource.camera,

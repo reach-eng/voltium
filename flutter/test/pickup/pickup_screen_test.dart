@@ -31,23 +31,24 @@ VoltiumApiClient _buildMockClient() {
   // Return a non-empty vehicles list so tests that supply
   // `initialVehicleId: 'vehicle-1'` can find a match when the screen
   // re-applies the draft after the async fetch.
-  when(() => mock.getVehicles(any())).thenAnswer((_) async =>
-      ListVehiclesResponse(vehicles: [
-        VehicleResponse(
-          id: 'vehicle-1',
-          registrationNumber: 'V-1001',
-          status: 'AVAILABLE',
-        ),
-        VehicleResponse(
-          id: 'vehicle-2',
-          registrationNumber: 'V-1002',
-          status: 'AVAILABLE',
-        ),
-      ]));
-  when(() => mock.getRiderTeamLeaders(any())).thenAnswer((_) async =>
-      {'success': true, 'data': <dynamic>[]});
+  when(() => mock.getVehicles(any()))
+      .thenAnswer((_) async => ListVehiclesResponse(vehicles: [
+            VehicleResponse(
+              id: 'vehicle-1',
+              registrationNumber: 'V-1001',
+              status: 'AVAILABLE',
+            ),
+            VehicleResponse(
+              id: 'vehicle-2',
+              registrationNumber: 'V-1002',
+              status: 'AVAILABLE',
+            ),
+          ]));
+  when(() => mock.getRiderTeamLeaders(any()))
+      .thenAnswer((_) async => {'success': true, 'data': <dynamic>[]});
   when(() => mock.postAuthVerifyPhone(any())).thenAnswer((_) async =>
-      VerifyPhoneResponse(verified: true, receipt: 'receipt-signed-test-token'));
+      VerifyPhoneResponse(
+          verified: true, receipt: 'receipt-signed-test-token'));
   return mock;
 }
 

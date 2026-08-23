@@ -148,8 +148,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           _ErrorBanner(
                             message: lastError,
                             onRetry: () {
-                              final riderId =
-                                  ref.read(riderProvider).riderId;
+                              final riderId = ref.read(riderProvider).riderId;
                               if (riderId != null) {
                                 ref
                                     .read(walletProvider.notifier)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -108,25 +109,19 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   /// AUDIT FIX 2026-08-22 (HIST-f): same 'Jan 21, 2026' style as the
   /// wallet recent list, instead of a raw ISO `substring(0, 10)`.
+  ///
+  /// PR-5 (F-034 — 2026-08-22 deep audit): the previous
+  /// implementation used a hardcoded English month name list, so a
+  /// Hindi-locale rider still saw "Jan 21, 2026" instead of the
+  /// locale-formatted "21 जन॰ 2026". Switched to
+  /// `DateFormat.yMMMd(locale)` from the `intl` package (already a
+  /// dependency). The format style ('MMM d, y') matches the prior
+  /// English output for parity.
   String _formatDate(DateTime? dt) {
     if (dt == null) return '';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
     final local = dt.toLocal();
-    return '${months[local.month - 1]} '
-        '${local.day.toString().padLeft(2, '0')}, ${local.year}';
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.yMMMd(locale).format(local);
   }
 
   @override

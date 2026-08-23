@@ -125,10 +125,27 @@ export const scheduledBackupJob = {
 
         // Calculate next run time
         const nextRunAt = scheduleService.calculateNextRun(schedule);
+        // T-92 (PR-2, 2026-08-23): `calculateNextRun` returns `null`
+        // for MANUAL frequency or unparseable `timeOfDay`. The
+        // previous code did `nextRunAt ?? clock.now()`, which
+        // converted `null` to "now" and turned the schedule into
+        // a tight loop that filled the disk with backup files
+        // (every minute the worker ticked, the schedule was
+        // "due now" again). Persist `nextRunAt = null` and
+        // DON'T reschedule — the schedule stays dormant until an
+        // admin updates the frequency / timeOfDay. The admin
+        // Schedules UI surfaces the un-runnable schedule in the
+        // "Needs attention" section.
+        if (nextRunAt === null) {
+          logger.warn(
+            '[ScheduledBackup] calculateNextRun returned null — schedule is not auto-runnable',
+            { scheduleId: schedule.id, frequency: schedule.frequency }
+          );
+        }
         await backupRepository.markScheduleSuccess(
           schedule.id,
           clock.now(),
-          nextRunAt ?? clock.now()
+          nextRunAt
         );
 
         // Clear any previous failure alert

@@ -8,18 +8,44 @@ import '../../utils/app_logger.dart';
 
 /// TLS Certificate Pinning Interceptor.
 ///
-/// Implements certificate pinning by checking the SHA-256 hash of the server's
-/// certificate against a list of known fingerprints.
+/// AUDIT FIX (workflows P0-D — TLS pinning was fail-open): the previous
+/// implementation built the context with `withTrustedRoots: true` and only
+/// compared pins inside `badCertificateCallback`. Dart invokes that callback
+/// EXCLUSIVELY when default chain validation fails — so any certificate that
+/// chained to a system root completed the handshake without the pin ever
+/// being evaluated. A mis-issued CA certificate for our API host was a full
+/// MITM with zero enforcement.
 ///
-/// In debug mode, pinning is disabled to allow local development.
-/// In release builds, a warning is logged if no fingerprints are configured.
+/// NEW MODEL — trust nothing, pin everything:
+///   * The context is created with `withTrustedRoots: false` and no anchors,
+///     so default validation ALWAYS fails and the callback adjudicates EVERY
+///     handshake.
+///   * The callback accepts a connection only when BOTH hold:
+///       1. `host == pinnedHost`  (set from the API base URL)
+///       2. SHA-256(cert DER) matches one of the configured fingerprints
+///   * Cross-origin hosts (e.g. signed-URL uploads to S3/GCS) must NOT use
+///     this client — use [createExternalClient], which keeps standard system
+///     validation and never carries the API bearer token.
+///
+/// Debug builds bypass pinning entirely. Release builds with zero
+/// configured fingerprints throw at startup (D-P0-1) rather than shipping
+/// unpinned.
 class PinnedHttpInterceptor {
   /// Default production SHA-256 certificate fingerprints for Voltium's TLS cert.
   /// Includes backup/next-rotation certificate fingerprints to prevent bricking on cert rotation.
   static const List<String> productionFingerprints = [];
 
-  /// Dynamically registered certificate fingerprints (e.g. loaded from secure storage or server).
+  /// Dynamically registered certificate fingerprints.
+  ///
+  /// SECURITY NOTE: pins received over the channel they protect are circular
+  /// (a first-connection MITM can register its own fingerprint). If dynamic
+  /// provisioning is ever enabled, the payload MUST be verified against an
+  /// out-of-band signature/HMAC before reaching this method.
   static final List<String> _dynamicFingerprints = [];
+
+  /// The single hostname this client is allowed to talk to. Set by
+  /// `ApiClient` from the resolved base URL before the first request.
+  static String? pinnedHost;
 
   /// Register dynamic pins received from a verified server configuration.
   static void setDynamicPins(List<String> pins) {
@@ -48,8 +74,11 @@ class PinnedHttpInterceptor {
     return pins.toSet().toList(); // Deduplicate
   }
 
-  /// Creates an [http.Client] with certificate pinning awareness.
-  static http.Client createClient() {
+  /// Creates the PINNED client for the Voltium API host.
+  ///
+  /// [expectedHost] is enforced inside the pin callback — a mismatched host
+  /// is rejected regardless of certificate validity.
+  static http.Client createClient({required String expectedHost}) {
     if (kDebugMode) {
       return http.Client();
     }
@@ -57,12 +86,6 @@ class PinnedHttpInterceptor {
     final activeFingerprints = configuredFingerprints;
     if (activeFingerprints.isEmpty) {
       // DEEP-AUDIT D-P0-1: never silently disable TLS pinning in release.
-      // A build that ships without a fingerprint set is a security incident
-      // waiting to happen (MITM via rogue CA / fraudulent proxy). The
-      // pre-fix behavior of falling back to a plain http.Client with only
-      // a debug log let misconfigured release builds ship unprotected with
-      // zero signal to the operator. Throw loudly so the app crashes on
-      // first network call rather than running with no pinning.
       throw StateError(
         'PinnedHttpClient: no production TLS fingerprints configured. '
         'Build the release with --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>" '
@@ -71,13 +94,22 @@ class PinnedHttpInterceptor {
       );
     }
 
+    pinnedHost = expectedHost;
+
+    // Trust NOTHING: every handshake fails default validation and is
+    // adjudicated below. This is what makes the pin enforce on every
+    // connection instead of only on already-broken chains.
     final httpClient = HttpClient(
-        context: SecurityContext(withTrustedRoots: true))
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        // Calculate the SHA-256 hash of the DER-encoded certificate
+      context: SecurityContext(withTrustedRoots: false),
+    )..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        if (host != pinnedHost) {
+          appDebug(
+            '[PinnedHttpClient] Rejected unexpected host $host (pinned: $pinnedHost)',
+          );
+          return false;
+        }
         final digest = sha256.convert(cert.der);
         final extractedFingerprint = base64.encode(digest.bytes);
-
         final isValid = activeFingerprints.contains(extractedFingerprint);
         if (!isValid) {
           appDebug(
@@ -90,4 +122,9 @@ class PinnedHttpInterceptor {
 
     return IOClient(httpClient);
   }
+
+  /// Plain system-validated client for CROSS-ORIGIN hosts (signed-URL
+  /// uploads to storage providers). Never used for the pinned API host and
+  /// never given the session bearer token (see ApiClient.putRaw/uploadFile).
+  static http.Client createExternalClient() => http.Client();
 }

@@ -1,3 +1,22 @@
+﻿/// PR-7 (F-066 â€” 2026-08-22 deep audit): the previous `String`
+/// `resolutionType` was compared against string literals at every
+/// call site, so a typo (`'SUCCES'`, `'NEEDS_SUPPPORT'`) silently
+/// fell through to the default branch. Switching to an enum gives
+/// compile-time exhaustiveness checking in `switch` statements.
+enum TroubleshooterResolutionType {
+  /// The rider can resolve the issue themselves with the
+  /// provided guidance.
+  success,
+
+  /// The issue requires human support intervention â€” surface a
+  /// "Contact support" CTA on the result screen.
+  needsSupport,
+
+  /// The vehicle is unsafe to ride â€” surface the rider the
+  /// danger warning + the SOS button on the result screen.
+  danger,
+}
+
 /// A category of issues the rider can select for troubleshooting.
 class TroubleshooterCategory {
   final String id;
@@ -23,7 +42,7 @@ class TroubleshooterNode {
   final String? noNodeId;
   final bool isLeaf;
   final String? resolution;
-  final String? resolutionType;
+  final TroubleshooterResolutionType? resolutionType;
   final String? category;
 
   const TroubleshooterNode({
@@ -57,7 +76,7 @@ class TroubleshooterAnswer {
       };
 }
 
-// ── Decision tree ───────────────────────────────────────────────────────────
+// â”€â”€ Decision tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 final List<TroubleshooterCategory> troubleshooterCategories = [
   TroubleshooterCategory(
@@ -112,7 +131,7 @@ final List<TroubleshooterCategory> troubleshooterCategories = [
 ];
 
 final Map<String, TroubleshooterNode> _tree = {
-  // ── Battery tree ─────────────────────────────────────────────────────────
+  // â”€â”€ Battery tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'battery_root': TroubleshooterNode(
     id: 'battery_root',
     question: 'Does the vehicle turn on at all?',
@@ -144,7 +163,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Your battery seems fine. The low charge was a temporary state. '
         'Make it a habit to charge overnight for a full experience.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'battery',
   ),
   'battery_dead': TroubleshooterNode(
@@ -167,7 +186,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Please ensure the charging cable is firmly connected on both ends. '
         'Check that the power outlet is switched on.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'battery',
   ),
   'battery_charger_fault': TroubleshooterNode(
@@ -178,7 +197,7 @@ final Map<String, TroubleshooterNode> _tree = {
         'The charger indicator is not lighting up. This could indicate a faulty charger '
         'or power supply issue. Try a different power outlet. If the problem persists, '
         'you may need a replacement charger.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'battery',
   ),
   'battery_not_charging': TroubleshooterNode(
@@ -188,7 +207,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'The battery is not accepting charge. This could require a battery diagnostic. '
         'Please contact support to schedule a battery check.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'battery',
   ),
   'battery_charge_advice': TroubleshooterNode(
@@ -198,11 +217,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Please charge the vehicle for at least 30 minutes and check the battery '
         'indicator again. If still below 20%, contact support.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'battery',
   ),
 
-  // ── Speed tree ──────────────────────────────────────────────────────────
+  // â”€â”€ Speed tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'speed_root': TroubleshooterNode(
     id: 'speed_root',
     question: 'Does the vehicle accelerate from a standstill?',
@@ -221,7 +240,7 @@ final Map<String, TroubleshooterNode> _tree = {
     isLeaf: true,
     resolution:
         'Your vehicle\'s speed and acceleration appear normal. No further action needed.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'speed',
   ),
   'speed_slow': TroubleshooterNode(
@@ -231,7 +250,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Reduced top speed may indicate a battery or motor issue. Please contact support '
         'to schedule a performance check.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'speed',
   ),
   'speed_no_accel': TroubleshooterNode(
@@ -241,11 +260,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'The vehicle is not responding to throttle input. This could be a motor controller '
         'or throttle sensor issue. Please contact support immediately.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'speed',
   ),
 
-  // ── Display tree ────────────────────────────────────────────────────────
+  // â”€â”€ Display tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'display_root': TroubleshooterNode(
     id: 'display_root',
     question: 'Is the display completely blank (black screen)?',
@@ -265,7 +284,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Please try restarting the vehicle by turning it off, waiting 10 seconds, '
         'and turning it back on.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'display',
   ),
   'display_restarted': TroubleshooterNode(
@@ -275,7 +294,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'The display remains blank after restart. This could indicate a loose display '
         'connector or a hardware fault. Please contact support.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'display',
   ),
   'display_glitch': TroubleshooterNode(
@@ -285,11 +304,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Display glitches or unresponsive touch may require a firmware update or calibration. '
         'Please try restarting. If the issue persists, contact support.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'display',
   ),
 
-  // ── Noise tree ──────────────────────────────────────────────────────────
+  // â”€â”€ Noise tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'noise_root': TroubleshooterNode(
     id: 'noise_root',
     question: 'Does the noise occur while the vehicle is stationary?',
@@ -303,7 +322,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Unusual noises while stationary may indicate a loose component or electrical issue. '
         'Please inspect the vehicle visually and contact support if the noise persists.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'noise',
   ),
   'noise_moving': TroubleshooterNode(
@@ -319,7 +338,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Wheel or brake noises may indicate worn brake pads or debris in the brake assembly. '
         'Please inspect and contact support if the noise persists.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'noise',
   ),
   'noise_motor': TroubleshooterNode(
@@ -329,11 +348,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Motor noises could indicate a mechanical issue with the drivetrain. '
         'Please avoid riding and contact support immediately.',
-    resolutionType: 'DANGER',
+    resolutionType: TroubleshooterResolutionType.danger,
     category: 'noise',
   ),
 
-  // ── Lock tree ───────────────────────────────────────────────────────────
+  // â”€â”€ Lock tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'lock_root': TroubleshooterNode(
     id: 'lock_root',
     question: 'Is the vehicle\'s steering lock engaged?',
@@ -347,7 +366,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Gently turn the handlebars while pressing the unlock button to disengage '
         'the steering lock.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'lock',
   ),
   'lock_unlock_issue': TroubleshooterNode(
@@ -357,11 +376,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'If you\'re having trouble locking/unlocking the vehicle, the lock mechanism '
         'may need servicing. Please contact support.',
-    resolutionType: 'NEEDS_SUPPORT',
+    resolutionType: TroubleshooterResolutionType.needsSupport,
     category: 'lock',
   ),
 
-  // ── GPS tree ────────────────────────────────────────────────────────────
+  // â”€â”€ GPS tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'gps_root': TroubleshooterNode(
     id: 'gps_root',
     question: 'Does the app show your current location accurately?',
@@ -375,7 +394,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'GPS appears to be working correctly. If you\'re still experiencing issues, '
         'try restarting the app.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'gps',
   ),
   'gps_offline': TroubleshooterNode(
@@ -385,11 +404,11 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'GPS signal may be weak. Ensure you\'re outdoors with a clear view of the sky. '
         'Check that location services are enabled in your device settings.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'gps',
   ),
 
-  // ── Tires tree ──────────────────────────────────────────────────────────
+  // â”€â”€ Tires tree â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   'tires_root': TroubleshooterNode(
     id: 'tires_root',
     question: 'Do the tires appear visibly flat or damaged?',
@@ -403,7 +422,7 @@ final Map<String, TroubleshooterNode> _tree = {
     resolution:
         'Visibly damaged or flat tires need immediate attention. Do not ride the vehicle. '
         'Please contact support for tire replacement.',
-    resolutionType: 'DANGER',
+    resolutionType: TroubleshooterResolutionType.danger,
     category: 'tires',
   ),
   'tires_pressure': TroubleshooterNode(
@@ -412,7 +431,7 @@ final Map<String, TroubleshooterNode> _tree = {
     isLeaf: true,
     resolution: 'Tires may need inflation. Recommended pressure is 30-35 PSI. '
         'Please inflate and check again. If the issue persists, contact support.',
-    resolutionType: 'SUCCESS',
+    resolutionType: TroubleshooterResolutionType.success,
     category: 'tires',
   ),
 };

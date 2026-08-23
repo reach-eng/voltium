@@ -7,12 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart'
+    show rentalRepositoryProvider;
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -262,15 +263,22 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
         return;
       }
 
-      // PR-13: was a wrapper call to
-      // `VoltiumApiService.submitVehicleReturn` (1-line pass-through to
-      // the generated `postRiderRentalReturn(VehicleReturnRequest(...))`).
-      await genClient.postRiderRentalReturn(
-        VehicleReturnRequest(
-          returnPhotos: photoUrls,
-          reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
-        ),
-      );
+      // PR-4 (F-013 — 2026-08-22 deep audit): the odometer is now a
+      // top-level typed `int` field, not a substring stuffed into the
+      // `reason` prose. The server is expected to recompute
+      // `{ odometerEnd - odometerStart } × rate/km` for excess-mileage
+      // billing; a free-text field was unauditable and let a rider
+      // type `0` to walk away owing nothing for 1,800 km.
+      //
+      // PR-4 (F-011 — 2026-08-22 deep audit): the typed `int` submit
+      // also goes through `_client.post('/api/rental/return', ...)`
+      // with an Idempotency-Key header, so a retry on a 504 cannot
+      // double-bill the rider for damages.
+      final odometerValue = int.tryParse(_odometerCtrl.text.trim());
+      await ref.read(rentalRepositoryProvider).submitVehicleReturn(
+            photos: photoUrls,
+            odometer: odometerValue,
+          );
 
       PostHogService.capture('rental_ended', properties: {
         'photo_count': photoUrls.length.toString(),
@@ -334,7 +342,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 48),
                   child: Text(
-                    'Your vehicle return request has been sent for approval.',
+                    // PR-5 (F-022): Localised via
+                    // `endRentalSubmittedBody`.
+                    AppLocalizations.of(context)?.endRentalSubmittedBody ??
+                        'Your vehicle return request has been sent for approval.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
@@ -508,7 +519,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'VEHICLE CONDITION PHOTOS *',
+          // PR-5 (F-022): Localised via
+          // `endRentalVehicleConditionPhotos`.
+          AppLocalizations.of(context)?.endRentalVehicleConditionPhotos ??
+              'VEHICLE CONDITION PHOTOS *',
           style: AppTypography.labelMedium.copyWith(
               color: colorScheme.onSurfaceVariant, letterSpacing: 1.2),
         ),
@@ -623,7 +637,18 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
             key: const Key('odometerField'),
             controller: _odometerCtrl,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            // PR-10 (F-088): cap the odometer at 7 digits. A
+            // real-world 2-wheeler/4-wheeler odometer tops out
+            // around 999,999 km; 7 digits is the largest
+            // accepted value the server's `odometer` int field
+            // can hold without silent truncation. The
+            // `digitsOnly` filter handles the format; this
+            // caps the length so a paste-from-clipboard full
+            // of digits can't overflow the int field.
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(7),
+            ],
             style: AppTypography.bodyMedium
                 .copyWith(fontWeight: FontWeight.w600)
                 .copyWith(color: colorScheme.onSurface),
@@ -789,7 +814,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'I confirm the vehicle is returned in good condition with all accessories intact.',
+                  // PR-5 (F-022): Localised via
+                  // `endRentalConfirmInGoodCondition`.
+                  AppLocalizations.of(context)
+                          ?.endRentalConfirmInGoodCondition ??
+                      'I confirm the vehicle is returned in good condition with all accessories intact.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: colorScheme.onSurface,
@@ -895,7 +924,10 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
         if (!_canSubmit && !_allPhotosTaken) ...[
           const SizedBox(height: 8),
           Text(
-            'Please take all inspection photos and enter odometer reading to continue',
+            // PR-5 (F-022): Localised via
+            // `endRentalPhotosMissingHint`.
+            AppLocalizations.of(context)?.endRentalPhotosMissingHint ??
+                'Please take all inspection photos and enter odometer reading to continue',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               color: AppColors.error,

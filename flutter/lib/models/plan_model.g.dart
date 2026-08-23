@@ -18,6 +18,8 @@ PlanModel _$PlanModelFromJson(Map<String, dynamic> json) => PlanModel(
               .toList() ??
           [],
       category: json['category'] as String? ?? '',
+      bestValue: json['bestValue'] as bool? ?? false,
+      iconKey: json['iconKey'] as String? ?? '',
     );
 
 Map<String, dynamic> _$PlanModelToJson(PlanModel instance) => <String, dynamic>{
@@ -29,4 +31,6 @@ Map<String, dynamic> _$PlanModelToJson(PlanModel instance) => <String, dynamic>{
       'durationDays': instance.durationDays,
       'features': instance.features,
       'category': instance.category,
+      'bestValue': instance.bestValue,
+      'iconKey': instance.iconKey,
     };

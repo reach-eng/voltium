@@ -64,18 +64,24 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
           instance.lastDeviceViolationAt?.toIso8601String(),
       'deviceViolationCount': instance.deviceViolationCount,
       'currentPlan': instance.currentPlan,
+      'currentPlanId': instance.currentPlanId,
       'currentPlanPrice': instance.currentPlanPrice,
+      'currentPlanSecurityDepositInRupees':
+          instance.currentPlanSecurityDepositInRupees,
       'planStartDate': instance.planStartDate?.toIso8601String(),
       'planEndDate': instance.planEndDate?.toIso8601String(),
+      'advanceRentPaid': instance.advanceRentPaid,
       'rentalStatus': instance.rentalStatus,
       'assignedVehicle': instance.assignedVehicle,
       'vehicleModel': instance.vehicleModel,
       'pickupHub': instance.pickupHub,
       'teamLeader': instance.teamLeader,
+      'teamLeaderPhone': instance.teamLeaderPhone,
       'emergencyContact': instance.emergencyContact,
       'intent': instance.intent,
       'submissionDate': instance.submissionDate?.toIso8601String(),
       'returnPending': instance.returnPending,
+      'preferredLocale': instance.preferredLocale,
       'pickupPhotoFront': instance.pickupPhotoFront,
       'pickupPhotoBack': instance.pickupPhotoBack,
       'pickupPhotoLeft': instance.pickupPhotoLeft,
@@ -88,13 +94,13 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'pickupDone': instance.pickupDone,
       'accountStatus': _$AccountStatusEnumMap[instance.accountStatus]!,
       'lifecycleStatus': instance.lifecycleStatus,
+      'lifecycleStage': _$RiderLifecycleStageEnumMap[instance.lifecycleStage]!,
       'isNewRider': instance.isNewRider,
       'referralCode': instance.referralCode,
       'totalRewardPoints': instance.totalRewardPoints,
+      'upcomingRentPrompt': instance.upcomingRentPrompt,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
-      'activeRentalPlanSecurityDeposit':
-          instance.activeRentalPlanSecurityDeposit,
     };
 
 const _$KycStatusEnumMap = {
@@ -137,4 +143,12 @@ const _$AccountStatusEnumMap = {
   AccountStatus.suspended: 'SUSPENDED',
   AccountStatus.terminated: 'TERMINATED',
   AccountStatus.inactive: 'INACTIVE',
+};
+
+const _$RiderLifecycleStageEnumMap = {
+  RiderLifecycleStage.newRider: 'newRider',
+  RiderLifecycleStage.inProgress: 'inProgress',
+  RiderLifecycleStage.active: 'active',
+  RiderLifecycleStage.paused: 'paused',
+  RiderLifecycleStage.closed: 'closed',
 };

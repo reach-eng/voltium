@@ -1023,7 +1023,14 @@ class _GuarantorOnboardingScreenState
             initial = DateTime(
                 int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
           }
-        } catch (_) {}
+        } catch (e) {
+          // PR-8 (F-063): was `catch (_) {}`. A malformed stored
+          // DOB string would have silently left `initial` null
+          // and the date field empty, with no signal to the
+          // rider. Now logs a single debug line so a backend
+          // format regression surfaces.
+          appDebug('GuarantorOnboarding: stored DOB parse failed: $e');
+        }
       }
     }
     final firstDate = DateTime(1940);

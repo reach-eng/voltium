@@ -735,6 +735,18 @@
   "@txtsosAlertTriggeredDialing": {
     "description": "SnackBar shown after the rider triggers Emergency SOS"
   },
+  "txtsosHoldHint": "Press and hold to trigger an emergency alert",
+  "@txtsosHoldHint": {
+    "description": "PR-5 (F-024): helper text under the SOS long-press circle on the emergency screen"
+  },
+  "txtsosSending": "Sending SOS...",
+  "@txtsosSending": {
+    "description": "PR-5 (F-024): title in the 'sending' overlay while the SOS countdown runs"
+  },
+  "txtsosSharingLocation": "Sharing your location with Voltium and dialing 112.",
+  "@txtsosSharingLocation": {
+    "description": "PR-5 (F-024): body text in the 'sending' overlay"
+  },
   "txttakeAPhoto": "Take a Photo",
   "txtchooseFromGallery": "Choose from Gallery",
   "txtotpSentToGuarantorPhone": "OTP sent to guarantor phone",
@@ -1044,6 +1056,36 @@
   "txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime": "Choose the rental duration that best fits your needs. You can change this at any time.",
   "txtconfirmNewPlan": "Confirm New Plan",
   "txterrorSubmittingReturnPleaseTryAgain": "Error submitting return. Please try again.",
+  "kycFailedCaptureDocument": "Failed to capture document. Please try again.",
+  "rewardsEmptyTitle": "No rewards unlocked yet",
+  "@rewardsEmptyTitle": {
+    "description": "PR-6 (F-017): title of the empty-state on the rewards screen"
+  },
+  "rewardsEmptySubtitle": "Keep riding and completing milestones\\nto unlock exclusive rewards.",
+  "@rewardsEmptySubtitle": {
+    "description": "PR-6 (F-017): subtitle of the empty-state on the rewards screen"
+  },
+  "@kycFailedCaptureDocument": {
+    "description": "PR-5 (F-021): KYC capture failure toast"
+  },
+  "kycPleaseComplete": "Please complete: {missing}",
+  "@kycPleaseComplete": {
+    "description": "PR-5 (F-021): toast listing missing KYC fields before submit",
+    "placeholders": {
+      "missing": {
+        "type": "String",
+        "example": "full name, date of birth, Aadhaar front"
+      }
+    }
+  },
+  "kycSessionInvalid": "Session invalid. Please login again.",
+  "@kycSessionInvalid": {
+    "description": "PR-5 (F-021): toast shown when riderId is null at submit time"
+  },
+  "kycRefreshFailedAfterUpload": "Profile saved, but we couldn't refresh your session. Pull to retry, or restart the app.",
+  "@kycRefreshFailedAfterUpload": {
+    "description": "PR-5 (F-021): toast shown when the KYC upload succeeded but the post-upload refresh failed"
+  },
   "txtrequestSubmitted": "Request Submitted!",
   "txtyourVehicleReturnRequestHasBeenSentForApproval": "Your vehicle return request has been sent for approval.",
   "txtendRental": "End Rental",
@@ -1055,6 +1097,46 @@
   "txtbatteryLevel": "Battery Level",
   "txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact": "I confirm the vehicle is returned in good condition with all accessories intact.",
   "txtconfirmReturn": "Confirm Return",
+  "endRentalSubmittedBody": "Your vehicle return request has been sent for approval.",
+  "@endRentalSubmittedBody": {
+    "description": "PR-5 (F-022): success-overlay body on the End Rental screen"
+  },
+  "endRentalConfirmTitle": "Are you sure?",
+  "@endRentalConfirmTitle": {
+    "description": "PR-5 (F-022): title of the confirm-End-Rental dialog"
+  },
+  "endRentalConfirmBody": "Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.",
+  "@endRentalConfirmBody": {
+    "description": "PR-5 (F-022): body of the confirm-End-Rental dialog"
+  },
+  "endRentalVehicleConditionPhotos": "VEHICLE CONDITION PHOTOS *",
+  "@endRentalVehicleConditionPhotos": {
+    "description": "PR-5 (F-022): section label for the 4-photo upload grid"
+  },
+  "endRentalConfirmInGoodCondition": "I confirm the vehicle is returned in good condition with all accessories intact.",
+  "@endRentalConfirmInGoodCondition": {
+    "description": "PR-5 (F-022): label of the legal confirmation checkbox"
+  },
+  "endRentalPhotosMissingHint": "Please take all inspection photos and enter odometer reading to continue",
+  "@endRentalPhotosMissingHint": {
+    "description": "PR-5 (F-022): helper text shown when the submit button is disabled"
+  },
+  "bankDetailsDiscardChangesTitle": "Discard changes?",
+  "@bankDetailsDiscardChangesTitle": {
+    "description": "PR-10 (F-072): title of the unsaved-changes confirm in the bank-details dialog"
+  },
+  "bankDetailsDiscardChangesBody": "You have unsaved bank details. Closing will discard them.",
+  "@bankDetailsDiscardChangesBody": {
+    "description": "PR-10 (F-072): body of the unsaved-changes confirm in the bank-details dialog"
+  },
+  "commonKeepEditing": "Keep editing",
+  "@commonKeepEditing": {
+    "description": "PR-10 (F-072): 'cancel the discard' button label"
+  },
+  "commonDiscard": "Discard",
+  "@commonDiscard": {
+    "description": "PR-10 (F-072): 'confirm the discard' button label"
+  },
   "txtpleaseTakeAllInspectionPhotosToContinue": "Please take all inspection photos to continue",
   "txtsubscriptionConfirmed": "Subscription Confirmed!",
   "txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle": "Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.",
@@ -1110,6 +1192,34 @@
   "txtcameraOrGallery": "Camera or gallery",
   "txtsubmitProof": "Submit Proof",
   "txtstep1Of3": "Step 1 of 3",
+  "txtpaymentModeInstant": "Instant",
+  "@txtpaymentModeInstant": {
+    "description": "Label for the Instant payment mode chip on the top-up screen"
+  },
+  "topUpWillBeInstantRiderBearer": "Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.",
+  "@topUpWillBeInstantRiderBearer": {
+    "description": "PR-5 (F-029): breakdown shown under the Instant option when the rider bears the gateway fee",
+    "placeholders": {
+      "fee": {
+        "type": "int",
+        "example": "13"
+      }
+    }
+  },
+  "topUpWillBeInstantVoltiumBearer": "Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
+  "@topUpWillBeInstantVoltiumBearer": {
+    "description": "PR-5 (F-029): breakdown shown under the Instant option when Voltium bears the gateway fee"
+  },
+  "txtproceedToInstantPay": "Proceed to instant pay, estimated total ₹{total}",
+  "@txtproceedToInstantPay": {
+    "description": "PR-5 (F-029): submit-button Semantics label for the Instant-pay branch",
+    "placeholders": {
+      "total": {
+        "type": "int",
+        "example": "1013"
+      }
+    }
+  },
   "txtselectPurpose": "Select Purpose",
   "txtstandardAmount": "Standard Amount",
   "txtimportantInformation": "Important Information",

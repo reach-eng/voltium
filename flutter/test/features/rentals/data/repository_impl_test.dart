@@ -1,18 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
 
+class MockApiClient extends Mock implements ApiClient {}
+
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
 void main() {
+  late MockApiClient mockApiClient;
   late MockVoltiumApiClient mockVoltiumApiClient;
   late RentalRepositoryImpl repository;
 
   setUp(() {
+    mockApiClient = MockApiClient();
     mockVoltiumApiClient = MockVoltiumApiClient();
-    repository = RentalRepositoryImpl(mockVoltiumApiClient);
+    // PR-4 (F-011): the submitVehicleReturn path now goes through
+    // `_client.post(...)` with an Idempotency-Key header; the
+    // generated `postRiderRentalReturn` is no longer called.
+    repository = RentalRepositoryImpl(mockApiClient, mockVoltiumApiClient);
   });
 
   setUpAll(() {
@@ -201,34 +209,63 @@ void main() {
     });
 
     // submitVehicleReturn
-    // PR-VER-2026-08-06 (RENTAL P0-1 + P0-3): the canonical body is now
-    // `{ returnPhotos, reason }` — vehicleId/hubId/riderId were dropped;
-    // the server resolves rider + vehicle from the session.
-    //
-    // PR-13: was a wrapper call to `VoltiumApiService.submitVehicleReturn`;
-    // now calls the generated `postRiderRentalReturn(VehicleReturnRequest(...))`
-    // directly on the injected `VoltiumApiClient`.
-    test('submitVehicleReturn delegates to VoltiumApiClient.postRiderRentalReturn',
+    // PR-4 (F-011 — 2026-08-22 deep audit): the impl now goes through
+    // `_client.post('/api/rental/return', ...)` with an Idempotency-Key
+    // header, NOT the generated `postRiderRentalReturn`. The
+    // generated method had no idempotency parameter and the
+    // end-of-rental path triggers the security-deposit refund
+    // branch — a double-submit on a 504 retry would double-bill
+    // the rider for damages.
+    test('submitVehicleReturn posts with Idempotency-Key header (F-011)',
         () async {
-      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
-          .thenAnswer((_) async => {'returnStatus': 'success'});
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'returnStatus': 'success'});
 
       final result = await repository.submitVehicleReturn(
         photos: ['photo1.jpg', 'photo2.jpg'],
       );
 
       expect(result['returnStatus'], 'success');
-      final captured = verify(
-              () => mockVoltiumApiClient.postRiderRentalReturn(captureAny()))
-          .captured;
-      final request = captured.first as VehicleReturnRequest;
-      expect(request.returnPhotos, ['photo1.jpg', 'photo2.jpg']);
-      expect(request.reason, isNull);
+      final captured = verify(() => mockApiClient.post(
+            '/api/rental/return',
+            body: captureAny(named: 'body'),
+            idempotencyKey: captureAny(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body['returnPhotos'], ['photo1.jpg', 'photo2.jpg']);
     });
 
-    test('submitVehicleReturn throws when service throws', () async {
-      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
-          .thenThrow(Exception('Return error'));
+    test('submitVehicleReturn passes a fresh UUID v4 idempotency key',
+        () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'returnStatus': 'success'});
+
+      await repository.submitVehicleReturn(photos: ['p1']);
+      await repository.submitVehicleReturn(photos: ['p2']);
+      final captured = verify(() => mockApiClient.post(
+            '/api/rental/return',
+            body: any(named: 'body'),
+            idempotencyKey: captureAny(named: 'idempotencyKey'),
+          )).captured;
+      final keys = captured.cast<String?>();
+      expect(keys[0], isNotNull);
+      expect(keys[0]!.length, 36);
+      expect(keys[0], isNot(equals(keys[1])),
+          reason: 'F-011: every submit MUST get a fresh key');
+    });
+
+    test('submitVehicleReturn throws when post throws', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenThrow(Exception('Return error'));
 
       expect(
         () => repository.submitVehicleReturn(photos: []),
@@ -237,24 +274,82 @@ void main() {
     });
 
     test('submitVehicleReturn passes empty photos array correctly', () async {
-      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
-          .thenAnswer((_) async => {});
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {});
 
       await repository.submitVehicleReturn(photos: []);
-      final captured = verify(
-              () => mockVoltiumApiClient.postRiderRentalReturn(captureAny()))
-          .captured;
-      final request = captured.first as VehicleReturnRequest;
-      expect(request.returnPhotos, isEmpty);
+      final captured = verify(() => mockApiClient.post(
+            '/api/rental/return',
+            body: captureAny(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body['returnPhotos'], isEmpty);
     });
 
     test('submitVehicleReturn returns full response payload', () async {
-      when(() => mockVoltiumApiClient.postRiderRentalReturn(any()))
-          .thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
 
       final result = await repository.submitVehicleReturn(photos: ['p1']);
       expect(result['key1'], 'val1');
       expect(result['key2'], 2);
+    });
+
+    // PR-4 (F-013 — 2026-08-22 deep audit): the odometer is now a
+    // typed top-level `int` field, NOT a substring stuffed into
+    // the `reason` prose. The server is expected to recompute
+    // `{ odometerEnd - odometerStart } × rate/km` for excess-
+    // mileage billing; the previous free-text field let a rider
+    // type `0` and walk away owing nothing for 1,800 km.
+    test('submitVehicleReturn posts odometer as a typed int (F-013)', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'returnStatus': 'success'});
+
+      await repository.submitVehicleReturn(
+        photos: ['p1'],
+        odometer: 12345,
+      );
+      final captured = verify(() => mockApiClient.post(
+            '/api/rental/return',
+            body: captureAny(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body['odometer'], 12345,
+          reason: 'F-013: odometer must be a typed int, not a string in '
+              'reason');
+      expect(body['returnPhotos'], ['p1']);
+    });
+
+    test('submitVehicleReturn omits odometer when null (back-compat)',
+        () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'returnStatus': 'success'});
+
+      await repository.submitVehicleReturn(photos: ['p1']);
+      final captured = verify(() => mockApiClient.post(
+            '/api/rental/return',
+            body: captureAny(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body.containsKey('odometer'), isFalse,
+          reason: 'F-013: the odometer key is omitted when null so the '
+              'pre-F-013 server (which has no odometer column) keeps '
+              'accepting the request');
     });
   });
 }

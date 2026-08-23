@@ -83,9 +83,17 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
+              // PR-5 (F-029 — 2026-08-22 deep audit): hardcoded
+              // English breakdown. Localised via
+              // topUpWillBeInstant{Rider,Voltium}Bearer so the
+              // Hindi translation can branch on the bearer.
               isRiderBearer
-                  ? 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.'
-                  : 'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).',
+                  ? (AppLocalizations.of(context)
+                          ?.topUpWillBeInstantRiderBearer(fee) ??
+                      'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.')
+                  : (AppLocalizations.of(context)
+                          ?.topUpWillBeInstantVoltiumBearer ??
+                      'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 height: 1.4,
@@ -308,7 +316,15 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Instant',
+                            // PR-5 (F-029): Localised via the
+                            // `txtpaymentModeInstant` ARB key
+                            // (added in the same PR). Falls back to
+                            // "Instant" if the localizations delegate
+                            // is null (e.g. tests that don't pump the
+                            // localised app).
+                            AppLocalizations.of(context)
+                                    ?.txtpaymentModeInstant ??
+                                'Instant',
                             style: AppTypography.labelMedium.copyWith(
                               color: _selectedPaymentMode == PaymentMode.instant
                                   ? AppColors.primaryLight
@@ -1087,9 +1103,12 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     return Semantics(
       button: true,
       enabled: canSubmit,
+      // PR-5 (F-029): hardcoded English Semantics label
+      // → ARB key `txtproceedToInstantPay`.
       label: isInstant
-          ? 'Proceed to instant pay, estimated total ₹$total'
-          : 'Submit proof',
+          ? (AppLocalizations.of(context)?.txtproceedToInstantPay(total) ??
+              'Proceed to instant pay, estimated total ₹$total')
+          : (AppLocalizations.of(context)?.txtsubmitProof ?? 'Submit proof'),
       child: GestureDetector(
         onTap: canSubmit
             ? _submit

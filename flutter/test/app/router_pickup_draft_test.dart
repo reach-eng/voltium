@@ -32,7 +32,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// ── Fakes ─────────────────────────────────────────────────────────────────
+// â”€â”€ Fakes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
@@ -70,7 +70,7 @@ _StubVoltiumApiClient _buildMockClient({
         id: 'vehicle-1',
         // PR-13: the generated `VehicleResponse` uses `registrationNumber`
         // (the canonical API field). The screen has a fallback chain
-        // `vehicleNumber → registrationNumber → licensePlate` so the
+        // `vehicleNumber â†’ registrationNumber â†’ licensePlate` so the
         // mock matches the real server payload here.
         registrationNumber: 'V-1001',
         status: vehicleStatus,
@@ -187,6 +187,9 @@ class _MockRentalRepository implements RentalRepository {
   @override
   Future<Map<String, dynamic>> submitVehicleReturn({
     required List<String> photos,
+    String? idempotencyKey,
+    int? odometer,
+    String? odometerPhotoUrl,
   }) async =>
       {};
 
@@ -221,7 +224,7 @@ class _MockFilesRepository implements FilesRepository {
   Future<String> uploadProfileImage(File file) => throw UnimplementedError();
 }
 
-// ── Draft seed helpers ────────────────────────────────────────────────────
+// â”€â”€ Draft seed helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 Map<String, Object> _pickupDraftMap() => {
       'hubId': 'hub-1',
@@ -241,8 +244,8 @@ Map<String, Object> _pickupDraftMap() => {
 //
 // PR-13: the screens no longer route through `VoltiumApiService.instance`
 // (that shim is now a 1-line delegation to the generated client). Tests
-// override the canonical providers — `voltiumApiClientProvider` and
-// `apiClientProvider` — so the screens hit the stub clients we set up
+// override the canonical providers â€” `voltiumApiClientProvider` and
+// `apiClientProvider` â€” so the screens hit the stub clients we set up
 // here instead of the real network. The default mock returns a
 // healthy pickup state; tests that need a different state (TAKEN
 // vehicle, offline) pass an override below.
@@ -256,7 +259,8 @@ Widget createRouter() {
   return ProviderScope(
     overrides: [
       riderRepositoryProvider.overrideWithValue(_MockRiderRepository()),
-      rentalRepositoryProvider.overrideWithValue(RentalRepositoryImpl(vClient)),
+      rentalRepositoryProvider
+          .overrideWithValue(RentalRepositoryImpl(client, vClient)),
       walletRepositoryProvider
           .overrideWithValue(WalletRepositoryImpl(client, vClient)),
       supportRepositoryProvider
@@ -394,7 +398,7 @@ void main() {
     testWidgets('keeps the draft and resumes when the API is unreachable',
         (tester) async {
       // Offline / network failure: revalidation cannot confirm staleness,
-      // so the draft is preserved and the rider resumes their flow — the
+      // so the draft is preserved and the rider resumes their flow â€” the
       // hub screen refetches on load and surfaces any staleness itself.
       _routerStub = _buildMockClient(throwOnFetch: true);
       _routerTransport = _StubApiClient();
@@ -414,13 +418,13 @@ void main() {
         'state is pickupVerification but no complete draft exists',
         (tester) async {
       // Rider was killed on the verification screen, but the persisted
-      // draft is incomplete (e.g. only a hub id) — must not resume a
+      // draft is incomplete (e.g. only a hub id) â€” must not resume a
       // verification screen with empty vehicle data.
       await CacheService().cacheRider({'id': 'r1', 'pickupDone': false});
       await CacheService().setString(
           'voltium_saved_auth_state', AuthState.pickupVerification.name);
       await CacheService().setString('voltium_pickup_draft_v1',
-          jsonEncode({'hubId': 'hub-1'})); // no vehicleId → incomplete
+          jsonEncode({'hubId': 'hub-1'})); // no vehicleId â†’ incomplete
       _routerStub = _buildMockClient();
       _routerTransport = _StubApiClient();
 
@@ -484,7 +488,7 @@ void main() {
       // DEBUG-FIX-2026-08-12: the step-2 FINISH SETUP button is also
       // gated on `_isOtpVerified` (the submit guard requires a fresh
       // emergency-contact receipt). The test only restores photos
-      // here — supply a fresh verified contact so the form can
+      // here â€” supply a fresh verified contact so the form can
       // actually advance to step 2.
       //
       // DEBUG-FIX-2026-08-13: `_applyInitialDraft` now requires the
@@ -510,10 +514,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
-      // With all 5 photos restored the form resumes on step 2 — the
+      // With all 5 photos restored the form resumes on step 2 â€” the
       // FINISH SETUP button is the step-2 CTA.
       expect(find.text('FINISH SETUP'), findsOneWidget,
-          reason: 'all photos restored ⇒ resume on the photo-review step');
+          reason: 'all photos restored â‡’ resume on the photo-review step');
     });
 
     testWidgets('does not re-apply the draft on a resume-refresh',
@@ -533,7 +537,7 @@ void main() {
           reason: 'draft applied on first load');
       final vehiclesFetchedAtFirstLoad = api.fetchVehiclesCalls;
 
-      // Background → resume fires the lifecycle observer, which refetches
+      // Background â†’ resume fires the lifecycle observer, which refetches
       // hubs. The one-shot draft guard must prevent the draft from being
       // re-applied (and its vehicle refetched) on this second load.
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -564,7 +568,7 @@ void main() {
         (tester) async {
       // Seed a full draft so the router lands on pickupVerification (the
       // pre-dashboard path would leave entry-animation timers pending at
-      // teardown — the house pattern seeds a complete draft instead).
+      // teardown â€” the house pattern seeds a complete draft instead).
       await CacheService().cacheRider({'id': 'r1', 'pickupDone': false});
       await CacheService().setString(
           'voltium_saved_auth_state', AuthState.pickupVerification.name);
@@ -577,7 +581,7 @@ void main() {
       // for testing the router's public pickup-draft surface).
       final state = tester.state(find.byType(AppRouter)) as dynamic;
       expect(state.hasFreshEmergencyContactVerification, isFalse,
-          reason: 'no receipt yet ⇒ nothing fresh');
+          reason: 'no receipt yet â‡’ nothing fresh');
 
       state.markEmergencyContactVerified('9876543210');
 
@@ -607,8 +611,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
 
-      expect(
-          find.text('Emergency contact verified successfully'),
+      expect(find.text('Emergency contact verified successfully'),
           findsAtLeastNWidgets(1),
           reason:
               'fresh receipt for the restored contact skips re-verification');
@@ -639,7 +642,7 @@ void main() {
         initialHubId: 'hub-1',
         initialVehicleId: 'vehicle-1',
         initialEmergencyContact: '9876543210',
-        // Receipt was issued for a different number — the rider edited the
+        // Receipt was issued for a different number â€” the rider edited the
         // contact after verifying, so the old proof is inert.
         initialEmergencyContactVerifiedPhone: '9999000000',
         initialEmergencyContactVerifiedAt: freshAt,
@@ -730,7 +733,7 @@ void main() {
 
     Future<void> seedHubDraft() async {
       // Rider cache so the splash restore has a live rider context; saved
-      // state pickupHub + a draft WITHOUT photos or receipt — the form
+      // state pickupHub + a draft WITHOUT photos or receipt â€” the form
       // resumes on step 1 where the OTP UI is reachable.
       await CacheService().cacheRider({'id': 'r1', 'pickupDone': false});
       await CacheService()
@@ -746,9 +749,9 @@ void main() {
     }
 
     testWidgets(
-        'verify OTP → kill → resume without re-verify → submit syncPickup '
+        'verify OTP â†’ kill â†’ resume without re-verify â†’ submit syncPickup '
         'with the signed receipt', (tester) async {
-      // ── Phase 1: drive the emergency-contact OTP UI on the hub form ──
+      // â”€â”€ Phase 1: drive the emergency-contact OTP UI on the hub form â”€â”€
       await seedHubDraft();
       await tester.pumpWidget(createRouter());
       await tester.pump(const Duration(seconds: 5));
@@ -781,8 +784,7 @@ void main() {
       expect(service.verifyPhoneCalls, 1,
           reason:
               'verify-OTP must hit the fake service exactly once (P0-3 auto-submit + P1-3 handler guard)');
-      expect(
-          find.text('Emergency contact verified successfully'),
+      expect(find.text('Emergency contact verified successfully'),
           findsAtLeastNWidgets(1),
           reason: 'verified chip must appear after a server-confirmed OTP');
 
@@ -794,7 +796,7 @@ void main() {
               'the signed receipt must be persisted atomically with the marker');
       expect(blob['emergencyVerifiedPhone'], '9876543210');
 
-      // ── Phase 2: kill app → resume → no re-verification ──
+      // â”€â”€ Phase 2: kill app â†’ resume â†’ no re-verification â”€â”€
       // Tear the tree down first so the next pump is a genuine cold start
       // (a same-structure pumpWidget reuses the AppRouter State, which would
       // not exercise the SharedPreferences restore path).
@@ -804,8 +806,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(PickupHubScreen), findsOneWidget);
-      expect(
-          find.text('Emergency contact verified successfully'),
+      expect(find.text('Emergency contact verified successfully'),
           findsAtLeastNWidgets(1),
           reason:
               'fresh receipt must restore the verified chip without re-verifying');
@@ -814,9 +815,9 @@ void main() {
       expect(service.verifyPhoneCalls, 1,
           reason: 'resume must not re-verify the contact');
 
-      // ── Phase 3: complete the draft (photo-step outcome via the router's
-      // public updatePickupData — the exact call the hub onNext performs) and
-      // drive the REAL FINISH SETUP to reach the verification screen ──
+      // â”€â”€ Phase 3: complete the draft (photo-step outcome via the router's
+      // public updatePickupData â€” the exact call the hub onNext performs) and
+      // drive the REAL FINISH SETUP to reach the verification screen â”€â”€
       final state = tester.state(find.byType(AppRouter)) as dynamic;
       state.updatePickupData(
         hubId: 'hub-1',
@@ -849,8 +850,8 @@ void main() {
           reason:
               'a resumed rider re-submitting must not drop the signed receipt');
 
-      // ── Phase 4: kill again → resume lands directly on the verification
-      // screen with the receipt, never bounced back to the form ──
+      // â”€â”€ Phase 4: kill again â†’ resume lands directly on the verification
+      // screen with the receipt, never bounced back to the form â”€â”€
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(createRouter());
       await tester.pump(const Duration(seconds: 5));
@@ -866,7 +867,7 @@ void main() {
               'the receipt rides the draft across a kill to the submit screen');
       expect(find.text('Vehicle photos captured'), findsOneWidget);
 
-      // ── Phase 5: submit syncPickup with the fake API ──
+      // â”€â”€ Phase 5: submit syncPickup with the fake API â”€â”€
       await tester.tap(find.byKey(const Key('rentalAgreementCheckbox')));
       await tester.pump();
       await tester.tap(find.byKey(const Key('completePickupButton')));

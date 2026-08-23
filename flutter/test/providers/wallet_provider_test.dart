@@ -10,7 +10,10 @@ class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
 
   @override
-  Future<entity.TopupRequest> submitTopup(entity.TopupRequest request) async {
+  Future<entity.TopupRequest> submitTopup(
+    entity.TopupRequest request, {
+    String? idempotencyKey,
+  }) async {
     submitCalled = true;
     return request;
   }

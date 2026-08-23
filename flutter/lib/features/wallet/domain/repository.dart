@@ -25,7 +25,17 @@ class TransactionHistoryPage {
 /// Abstract repository for wallet operations.
 abstract class WalletRepository {
   /// Submits a top-up request.
-  Future<TopupRequest> submitTopup(TopupRequest request);
+  ///
+  /// PR-4 (F-011 — 2026-08-22 deep audit): pass [idempotencyKey] (a
+  /// fresh UUID per user-initiated submit) to enable safe retry on
+  /// network failure. Without a key, a retry after a transient 504
+  /// could double-credit the rider's wallet. The server already
+  /// honours the `Idempotency-Key` header on `/api/transaction/topup`
+  /// and returns `idempotent: true` for the second request.
+  Future<TopupRequest> submitTopup(
+    TopupRequest request, {
+    String? idempotencyKey,
+  });
 
   /// Returns transaction history.
   Future<List<TransactionEntity>> getTransactionHistory(

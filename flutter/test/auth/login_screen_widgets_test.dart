@@ -45,14 +45,14 @@ void main() {
   group('PhoneEntryWidget', () {
     testWidgets('renders phone, referral, and OTP note', (tester) async {
       await tester.pumpWidget(
-        _l10nApp(PhoneEntryWidget(
+        _l10nApp(
+          PhoneEntryWidget(
               entryController: AnimationController(
                 vsync: const TestVSync(),
                 duration: const Duration(milliseconds: 800),
               ),
               onPhoneChanged: (_) {},
               onPhoneSubmitted: () {}),
-          
         ),
       );
       await tester.pump();
@@ -69,11 +69,11 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        _l10nApp(PhoneEntryWidget(
+        _l10nApp(
+          PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: (_) {},
               onPhoneSubmitted: () {}),
-          
         ),
       );
       await tester.pump();
@@ -103,11 +103,11 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        _l10nApp(PhoneEntryWidget(
+        _l10nApp(
+          PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: (_) {},
               onPhoneSubmitted: () {}),
-          
         ),
       );
       await tester.pump();
@@ -134,11 +134,11 @@ void main() {
       );
       final changes = <String>[];
       await tester.pumpWidget(
-        _l10nApp(PhoneEntryWidget(
+        _l10nApp(
+          PhoneEntryWidget(
               entryController: controller,
               onPhoneChanged: changes.add,
               onPhoneSubmitted: () {}),
-          
         ),
       );
       await tester.pump();
@@ -157,11 +157,9 @@ void main() {
   group('OtpTriggerWidget', () {
     testWidgets('renders with "Enter" label and key', (tester) async {
       await tester.pumpWidget(
-        _l10nApp(OtpTriggerWidget(
-              canSubmit: false,
-              isLoading: false,
-              onPressed: () {}),
-          
+        _l10nApp(
+          OtpTriggerWidget(
+              canSubmit: false, isLoading: false, onPressed: () {}),
         ),
       );
       await tester.pump();
@@ -172,11 +170,8 @@ void main() {
 
     testWidgets('shows spinner when isLoading=true', (tester) async {
       await tester.pumpWidget(
-        _l10nApp(OtpTriggerWidget(
-              canSubmit: true,
-              isLoading: true,
-              onPressed: () {}),
-          
+        _l10nApp(
+          OtpTriggerWidget(canSubmit: true, isLoading: true, onPressed: () {}),
         ),
       );
       await tester.pump();
@@ -189,11 +184,9 @@ void main() {
         (tester) async {
       var taps = 0;
       await tester.pumpWidget(
-        _l10nApp(OtpTriggerWidget(
-              canSubmit: true,
-              isLoading: false,
-              onPressed: () => taps++),
-          
+        _l10nApp(
+          OtpTriggerWidget(
+              canSubmit: true, isLoading: false, onPressed: () => taps++),
         ),
       );
       await tester.pump();
@@ -207,11 +200,9 @@ void main() {
         (tester) async {
       var taps = 0;
       await tester.pumpWidget(
-        _l10nApp(OtpTriggerWidget(
-              canSubmit: false,
-              isLoading: false,
-              onPressed: () => taps++),
-          
+        _l10nApp(
+          OtpTriggerWidget(
+              canSubmit: false, isLoading: false, onPressed: () => taps++),
         ),
       );
       await tester.pump();
@@ -229,10 +220,8 @@ void main() {
         duration: const Duration(milliseconds: 800),
       );
       await tester.pumpWidget(
-        _l10nApp(LoginFooter(
-              entryController: controller,
-              onLaunchUrl: (_) async {}),
-          
+        _l10nApp(
+          LoginFooter(entryController: controller, onLaunchUrl: (_) async {}),
         ),
       );
       await tester.pump();
@@ -249,10 +238,10 @@ void main() {
       );
       final urls = <String>[];
       await tester.pumpWidget(
-        _l10nApp(LoginFooter(
+        _l10nApp(
+          LoginFooter(
               entryController: controller,
               onLaunchUrl: (u) async => urls.add(u)),
-          
         ),
       );
       await tester.pump();

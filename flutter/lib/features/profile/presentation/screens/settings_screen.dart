@@ -15,13 +15,13 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/language_toggle.dart';
+import 'package:voltium_rider/widgets/dialogs.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/widgets/profile_widgets.dart';
 
 import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
-import 'package:voltium_rider/widgets/dialogs.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/app_info.dart';
@@ -379,45 +379,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   /// AUDIT FIX (2026-08-22): account deletion now requires lock-password
   /// step-up verification before the request is submitted.
+  ///
+  /// PR-4 (F-007 — 2026-08-22 deep audit): the previous one-tap
+  /// confirm was a mis-tap away from a permanent delete. We now
+  /// require the user to TYPE the literal word "delete" before the
+  /// confirm button enables, then chain the lock-password step-up
+  /// (defence in depth) before the request is submitted.
   void _showDeleteAccountDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = AppColors.of(context);
-    showDialog(
+    // PR-4 (F-007): chain the lock-password step-up after the
+    // typed-phrase confirmation. Two independent safety mechanisms:
+    // typed phrase (deliberate) + lock password (auth). The
+    // dialog future resolves after an await — guard the trailing
+    // `context` uses with a `mounted` check.
+    showDestructivePhraseDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text(l10n?.settings_deleteConfirmTitle ?? 'Delete Account'),
-        content: Text(
-          l10n?.settings_deleteConfirmBody ??
-              'Are you sure you want to delete your account? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            key: const Key('cancelDeleteButton'),
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
-          ),
-          FilledButton(
-            key: const Key('confirmDeleteButton'),
-            // PR-3 (2026-08-07 verification report, Section 2): the request
-            // goes to the dedicated delete-request endpoint (audit log +
-            // rider marker). AUDIT FIX (2026-08-22): gated behind lock
-            // password step-up verification.
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showVerifyLockPasswordDialog(
-                context,
-                onVerified: () => _submitAccountDeletionRequest(context, l10n),
-              );
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: Text(l10n?.settings_delete ?? 'Delete'),
-          ),
-        ],
-      ),
-    );
+      title: l10n?.settings_deleteConfirmTitle ?? 'Delete Account',
+      message: l10n?.settings_deleteConfirmBody ??
+          'Are you sure you want to delete your account? This action cannot be undone.',
+      phrase: 'delete',
+      confirmText: l10n?.settings_delete ?? 'Delete',
+    ).then((confirmed) {
+      if (!confirmed) return;
+      // `context.mounted` is the modern guard for "is this BuildContext
+      // still attached to a live Element after an async gap?". The
+      // dialog future resolves after an await so we cannot reuse
+      // the bare `context` reference without checking.
+      if (!context.mounted) return;
+      _showVerifyLockPasswordDialog(
+        context,
+        onVerified: () => _submitAccountDeletionRequest(context, l10n),
+      );
+    });
   }
 
   Future<void> _submitAccountDeletionRequest(

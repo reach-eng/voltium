@@ -1,43 +1,51 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
 
+class MockApiClient extends Mock implements ApiClient {}
+
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
 void main() {
-  late MockVoltiumApiClient mockApiClient;
+  late MockApiClient mockApiClient;
+  late MockVoltiumApiClient mockVoltiumApiClient;
   late RentalRepositoryImpl repository;
 
   setUp(() {
-    mockApiClient = MockVoltiumApiClient();
-    repository = RentalRepositoryImpl(mockApiClient);
+    mockApiClient = MockApiClient();
+    mockVoltiumApiClient = MockVoltiumApiClient();
+    // PR-4 (F-011): the impl now takes both `ApiClient` (for the
+    // Idempotency-Key-aware `_client.post` path) and the generated
+    // `VoltiumApiClient` (kept for backwards-compat / future use).
+    repository = RentalRepositoryImpl(mockApiClient, mockVoltiumApiClient);
   });
 
   group('RentalRepositoryImpl', () {
     test('fetchHubs calls getRiderHubs', () async {
       // The impl delegates to the rider-facing getRiderHubs (raw Map), not
       // the admin-typed getAdminHubs.
-      when(() => mockApiClient.getRiderHubs())
+      when(() => mockVoltiumApiClient.getRiderHubs())
           .thenAnswer((_) async => {'hubs': <dynamic>[]});
 
       final result = await repository.fetchHubs();
       expect(result['hubs'], isEmpty);
-      verify(() => mockApiClient.getRiderHubs()).called(1);
+      verify(() => mockVoltiumApiClient.getRiderHubs()).called(1);
     });
 
     test('fetchVehicles calls getVehicles', () async {
-      when(() => mockApiClient.getVehicles(any()))
+      when(() => mockVoltiumApiClient.getVehicles(any()))
           .thenAnswer((_) async => ListVehiclesResponse(vehicles: []));
 
       final result = await repository.fetchVehicles('hub123');
       expect(result['vehicles'], isEmpty);
-      verify(() => mockApiClient.getVehicles('hub123')).called(1);
+      verify(() => mockVoltiumApiClient.getVehicles('hub123')).called(1);
     });
 
     test('subscribePlan calls postRiderPlans', () async {
-      when(() => mockApiClient.postRiderPlans(any()))
+      when(() => mockVoltiumApiClient.postRiderPlans(any()))
           .thenAnswer((_) async => {'success': true});
 
       final result = await repository.subscribePlan(
@@ -48,7 +56,8 @@ void main() {
 
       expect(result['success'], true);
       final captured =
-          verify(() => mockApiClient.postRiderPlans(captureAny())).captured;
+          verify(() => mockVoltiumApiClient.postRiderPlans(captureAny()))
+              .captured;
       final request = captured.first as Map<String, dynamic>;
       expect(request['hubId'], 'hub123');
       expect(request['planId'], 'plan123');
@@ -56,7 +65,7 @@ void main() {
     });
 
     test('syncPickup calls postRiderSyncPickup', () async {
-      when(() => mockApiClient.postRiderSyncPickup(any()))
+      when(() => mockVoltiumApiClient.postRiderSyncPickup(any()))
           .thenAnswer((_) async => {'success': true});
 
       final result = await repository.syncPickup(
@@ -67,7 +76,7 @@ void main() {
 
       expect(result['success'], true);
       final captured =
-          verify(() => mockApiClient.postRiderSyncPickup(captureAny()))
+          verify(() => mockVoltiumApiClient.postRiderSyncPickup(captureAny()))
               .captured;
       final request = captured.first as Map<String, dynamic>;
       expect(request['vehicleId'], 'v123');

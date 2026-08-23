@@ -23,7 +23,7 @@ import {
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
 import { join, resolve, sep, isAbsolute } from 'path';
-import { createHash, createCipheriv, randomBytes } from 'crypto';
+import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import {
   dumpDatabase,
   createArchive,
@@ -37,8 +37,15 @@ import { env } from '@/lib/env';
  *   [12-byte IV][16-byte GCM auth tag][ciphertext...]
  * The original file is replaced with the encrypted version.
  * Returns the new file path (unchanged; content is replaced in-place).
+ *
+ * Exported for the admin panel Phase 1 AES-256-GCM verification test
+ * (tests/unit/admin-panel-phase1-fixes.test.ts). The test exercises
+ * the round-trip: encrypt in-place, decrypt to a destination path,
+ * assert plaintext recovered. Both helpers stay in this file (not
+ * split into a separate module) because they share the IV/tag format
+ * contract.
  */
-function encryptFile(filePath: string, keyHex: string): void {
+export function encryptFile(filePath: string, keyHex: string): void {
   const key = Buffer.from(keyHex, 'hex');
   if (key.length !== 32) {
     throw new Error('BACKUP_ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
@@ -50,6 +57,47 @@ function encryptFile(filePath: string, keyHex: string): void {
   const authTag = cipher.getAuthTag();
   // Write: IV (12) + auth tag (16) + ciphertext
   writeFileSync(filePath, Buffer.concat([iv, authTag, encrypted]));
+}
+
+/**
+ * Decrypt a file encrypted by `encryptFile`. Reads IV (12) +
+ * auth tag (16) + ciphertext from `srcPath`, verifies the
+ * GCM tag, and writes the plaintext.
+ *
+ * Two modes:
+ *   - With `destPath`: write plaintext to the destination path
+ *     (caller controls where the decrypted file lands).
+ *   - Without `destPath` (or `destPath === srcPath`): decrypt
+ *     in-place. The original ciphertext is replaced with the
+ *     plaintext.
+ *
+ * Throws on:
+ *   - wrong key length (must be 32 bytes / 64 hex chars)
+ *   - corrupt header (file < 28 bytes)
+ *   - GCM auth tag mismatch (wrong key OR tampered file)
+ *
+ * Returns the destination path on success.
+ */
+export function decryptFile(srcPath: string, keyHex: string, destPath?: string): string {
+  const key = Buffer.from(keyHex, 'hex');
+  if (key.length !== 32) {
+    throw new Error('BACKUP_ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+  }
+  const buf = readFileSync(srcPath);
+  if (buf.length < 28) {
+    throw new Error(
+      `decryptFile: file is too short to contain IV+tag+ciphertext (got ${buf.length} bytes, need >= 28)`
+    );
+  }
+  const iv = buf.subarray(0, 12);
+  const authTag = buf.subarray(12, 28);
+  const ciphertext = buf.subarray(28);
+  const decipher = createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  const out = destPath ?? srcPath;
+  writeFileSync(out, plaintext);
+  return out;
 }
 
 function getBackupRoot(): string {

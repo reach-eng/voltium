@@ -317,17 +317,25 @@ class ResolutionCard extends StatelessWidget {
   });
 
   final String resolution;
-  final String resolutionType;
+  // PR-7 (F-066): typed enum instead of String.
+  final TroubleshooterResolutionType resolutionType;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    // PR-7 (F-066): exhaustive enum switch (the `_` default is
+    // removed because the compiler now guarantees the switch
+    // covers every `TroubleshooterResolutionType` value).
     final (title, titleColor) = switch (resolutionType) {
-      'SUCCESS' => ('Issue Resolved', AppColors.success),
-      'FAILED' => ('Troubleshooting Tip', Colors.orange),
-      'NEEDS_SUPPORT' => ('Support Required', vfBlue),
-      'DANGER' => ('Safety Warning', AppColors.error),
-      _ => ('Result', colors.onSurfaceVariant),
+      TroubleshooterResolutionType.success => (
+          'Issue Resolved',
+          AppColors.success
+        ),
+      TroubleshooterResolutionType.needsSupport => ('Support Required', vfBlue),
+      TroubleshooterResolutionType.danger => (
+          'Safety Warning',
+          AppColors.error
+        ),
     };
 
     return Container(
@@ -504,35 +512,27 @@ class TroubleshooterResultIcon extends StatelessWidget {
     required this.resolutionType,
   });
 
-  final String resolutionType;
+  // PR-7 (F-066): typed enum instead of String.
+  final TroubleshooterResolutionType resolutionType;
 
   @override
   Widget build(BuildContext context) {
+    // PR-7 (F-066): exhaustive enum switch.
     final (icon, color, bgColor) = switch (resolutionType) {
-      'SUCCESS' => (
+      TroubleshooterResolutionType.success => (
           Icons.check_circle_rounded,
           AppColors.success,
           AppColors.success.withValues(alpha: 0.12),
         ),
-      'FAILED' => (
-          Icons.error_outline,
-          Colors.orange,
-          Colors.orange.withValues(alpha: 0.12),
-        ),
-      'NEEDS_SUPPORT' => (
+      TroubleshooterResolutionType.needsSupport => (
           Icons.support_agent_rounded,
           vfBlue,
           AppColors.of(context).primarySurface,
         ),
-      'DANGER' => (
+      TroubleshooterResolutionType.danger => (
           Icons.warning_rounded,
           AppColors.error,
           AppColors.error.withValues(alpha: 0.12),
-        ),
-      _ => (
-          Icons.info_outline,
-          AppColors.of(context).onSurfaceVariant,
-          AppColors.of(context).onSurfaceVariant.withValues(alpha: 0.12),
         ),
     };
 

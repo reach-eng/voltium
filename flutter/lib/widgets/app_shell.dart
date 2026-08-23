@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/observability/posthog_service.dart';
 import '../core/state/riverpod_providers.dart';
 import '../features/dashboard/presentation/screens/active_dashboard_screen.dart';
+import '../services/monitoring_service.dart';
+import '../utils/app_logger.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/support/presentation/screens/support_center_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
-import '../services/monitoring_service.dart';
 import 'animated_bottom_nav.dart';
 import 'error_boundary.dart';
 import 'shell_banners.dart';
@@ -56,8 +57,19 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     // (asset-not-found) every cold start.
     try {
       precacheImage(const AssetImage('assets/logo.png'), context)
-          .catchError((_) {});
-    } catch (_) {}
+          // PR-8 (F-063 — 2026-08-22 deep audit): was an empty
+          // `catchError((_) {})` AND an empty `catch (_) {}`
+          // around it. A missing asset would have silently
+          // broken the AppBar logo with no signal. Now logs the
+          // failure so a `flutter pub get` + missing-png issue
+          // surfaces in the local log.
+          .catchError((Object e) {
+        appDebug('AppShell: logo precache failed: $e');
+      });
+    } catch (e, stack) {
+      MonitoringService.logError(e, stack,
+          reason: 'AppShell: precacheImage threw synchronously');
+    }
   }
 
   void _deferSecondaryInitializations() {
@@ -70,7 +82,16 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ProviderScope.containerOf(context)
               .read(supportProvider.notifier)
               .initSupportData();
-        } catch (_) {}
+        } catch (e, stack) {
+          // PR-8 (F-063 — 2026-08-22 deep audit): was `catch (_) {}`.
+          // A provider-not-found would have silently killed
+          // support-tab init, leaving the rider with a blank
+          // tab. Now logs so the failure is visible in
+          // monitoring without crashing the AppShell.
+          MonitoringService.logError(e, stack,
+              reason:
+                  'AppShell: deferSecondaryInitializations initSupportData failed');
+        }
       }
     });
   }

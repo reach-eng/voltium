@@ -1227,6 +1227,24 @@ abstract class AppLocalizations {
   /// **'SOS Alert Triggered! Dialing emergency services (112)...'**
   String get txtsosAlertTriggeredDialing;
 
+  /// PR-5 (F-024): helper text under the SOS long-press circle on the emergency screen
+  ///
+  /// In en, this message translates to:
+  /// **'Press and hold to trigger an emergency alert'**
+  String get txtsosHoldHint;
+
+  /// PR-5 (F-024): title in the 'sending' overlay while the SOS countdown runs
+  ///
+  /// In en, this message translates to:
+  /// **'Sending SOS...'**
+  String get txtsosSending;
+
+  /// PR-5 (F-024): body text in the 'sending' overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing your location with Voltium and dialing 112.'**
+  String get txtsosSharingLocation;
+
   /// Take a photo sheet action
   ///
   /// In en, this message translates to:
@@ -2273,6 +2291,42 @@ abstract class AppLocalizations {
   /// **'Error submitting return. Please try again.'**
   String get txterrorSubmittingReturnPleaseTryAgain;
 
+  /// PR-5 (F-021): KYC capture failure toast
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to capture document. Please try again.'**
+  String get kycFailedCaptureDocument;
+
+  /// PR-6 (F-017): title of the empty-state on the rewards screen
+  ///
+  /// In en, this message translates to:
+  /// **'No rewards unlocked yet'**
+  String get rewardsEmptyTitle;
+
+  /// PR-6 (F-017): subtitle of the empty-state on the rewards screen
+  ///
+  /// In en, this message translates to:
+  /// **'Keep riding and completing milestones\\nto unlock exclusive rewards.'**
+  String get rewardsEmptySubtitle;
+
+  /// PR-5 (F-021): toast listing missing KYC fields before submit
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete: {missing}'**
+  String kycPleaseComplete(String missing);
+
+  /// PR-5 (F-021): toast shown when riderId is null at submit time
+  ///
+  /// In en, this message translates to:
+  /// **'Session invalid. Please login again.'**
+  String get kycSessionInvalid;
+
+  /// PR-5 (F-021): toast shown when the KYC upload succeeded but the post-upload refresh failed
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved, but we couldn\'t refresh your session. Pull to retry, or restart the app.'**
+  String get kycRefreshFailedAfterUpload;
+
   /// No description provided for @txtrequestSubmitted.
   ///
   /// In en, this message translates to:
@@ -2340,6 +2394,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm Return'**
   String get txtconfirmReturn;
+
+  /// PR-5 (F-022): success-overlay body on the End Rental screen
+  ///
+  /// In en, this message translates to:
+  /// **'Your vehicle return request has been sent for approval.'**
+  String get endRentalSubmittedBody;
+
+  /// PR-5 (F-022): title of the confirm-End-Rental dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?'**
+  String get endRentalConfirmTitle;
+
+  /// PR-5 (F-022): body of the confirm-End-Rental dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.'**
+  String get endRentalConfirmBody;
+
+  /// PR-5 (F-022): section label for the 4-photo upload grid
+  ///
+  /// In en, this message translates to:
+  /// **'VEHICLE CONDITION PHOTOS *'**
+  String get endRentalVehicleConditionPhotos;
+
+  /// PR-5 (F-022): label of the legal confirmation checkbox
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm the vehicle is returned in good condition with all accessories intact.'**
+  String get endRentalConfirmInGoodCondition;
+
+  /// PR-5 (F-022): helper text shown when the submit button is disabled
+  ///
+  /// In en, this message translates to:
+  /// **'Please take all inspection photos and enter odometer reading to continue'**
+  String get endRentalPhotosMissingHint;
+
+  /// PR-10 (F-072): title of the unsaved-changes confirm in the bank-details dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get bankDetailsDiscardChangesTitle;
+
+  /// PR-10 (F-072): body of the unsaved-changes confirm in the bank-details dialog
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved bank details. Closing will discard them.'**
+  String get bankDetailsDiscardChangesBody;
+
+  /// PR-10 (F-072): 'cancel the discard' button label
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get commonKeepEditing;
+
+  /// PR-10 (F-072): 'confirm the discard' button label
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get commonDiscard;
 
   /// No description provided for @txtpleaseTakeAllInspectionPhotosToContinue.
   ///
@@ -2673,6 +2787,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Step 1 of 3'**
   String get txtstep1Of3;
+
+  /// Label for the Instant payment mode chip on the top-up screen
+  ///
+  /// In en, this message translates to:
+  /// **'Instant'**
+  String get txtpaymentModeInstant;
+
+  /// PR-5 (F-029): breakdown shown under the Instant option when the rider bears the gateway fee
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.'**
+  String topUpWillBeInstantRiderBearer(int fee);
+
+  /// PR-5 (F-029): breakdown shown under the Instant option when Voltium bears the gateway fee
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
+  String get topUpWillBeInstantVoltiumBearer;
+
+  /// PR-5 (F-029): submit-button Semantics label for the Instant-pay branch
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed to instant pay, estimated total ₹{total}'**
+  String txtproceedToInstantPay(int total);
 
   /// No description provided for @txtselectPurpose.
   ///

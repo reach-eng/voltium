@@ -37,6 +37,14 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        // The settings screen is a long list; the default
+        // 800x600 test surface causes a RenderFlex overflow
+        // when the screen tries to lay out at full height.
+        // Wrap in `MediaQuery` to give the Scaffold room.
+        builder: (context, child) => MediaQuery(
+          data: const MediaQueryData(size: Size(800, 2400)),
+          child: child!,
+        ),
         home: const SettingsScreen(),
       ),
     );
@@ -50,8 +58,8 @@ void main() {
   });
 
   testWidgets(
-      'delete account tile is gated to debug builds and opens the confirm '
-      'dialog', (tester) async {
+      'delete account tile is gated to debug builds and opens the '
+      'destructive-phrase confirm dialog (F-007)', (tester) async {
     await tester.pumpWidget(buildTestApp());
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -63,34 +71,45 @@ void main() {
     await tester.tap(tile);
     await tester.pumpAndSettle();
 
-    // The dialog opens (tile title + dialog title both say "Delete Account",
-    // so assert on the dialog's actions instead of the text).
+    // PR-4 (F-007): the previous one-tap confirm was replaced
+    // with `showDestructivePhraseDialog` (type the literal
+    // word "delete" to confirm). The dialog has a TextField +
+    // destructive button. Initially the button is disabled; the
+    // rider must type the exact phrase to enable it.
     expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.byKey(const Key('confirmDeleteButton')), findsOneWidget);
-    expect(find.byKey(const Key('cancelDeleteButton')), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byKey(const Key('destructivePhraseConfirmButton')),
+        findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('confirmDeleteButton')));
+    // Initially the destructive button is disabled (no match).
+    final destructiveBtn =
+        find.byKey(const Key('destructivePhraseConfirmButton'));
+    final FilledButton button = tester.widget(destructiveBtn);
+    expect(button.onPressed, isNull,
+        reason: 'PR-4 (F-007): the destructive button must be DISABLED '
+            'until the rider types the exact phrase');
+
+    // Type the phrase and verify the button enables.
+    await tester.enterText(find.byType(TextField), 'delete');
     await tester.pumpAndSettle();
-
-    // AUDIT FIX (2026-08-22): confirming now requires lock-password step-up
-    // verification before the delete-request call is submitted.
-    expect(find.byKey(const Key('lockPasswordInput')), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('lockPasswordInput')), '1234');
-    await tester.tap(find.byKey(const Key('confirmVerifyLockButton')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
-
-    // Verification fails without a backend. Per the audit fix the step-up
-    // dialog stays OPEN with a friendly inline error (no raw server string,
-    // no crash) and the deletion request is NOT submitted.
-    expect(tester.takeException(), isNull);
-    expect(find.byType(AlertDialog), findsOneWidget);
-    expect(
-        find.textContaining(RegExp('incorrect|failed', caseSensitive: false)),
-        findsAtLeastNWidgets(1));
+    final FilledButton enabledBtn = tester.widget(destructiveBtn);
+    expect(enabledBtn.onPressed, isNotNull,
+        reason: 'PR-4 (F-007): typing the exact phrase enables the '
+            'destructive button');
   });
 
   testWidgets('cancel leaves the screen untouched', (tester) async {
+    // The settings screen is a long list; the default
+    // 800x600 test surface causes a RenderFlex overflow
+    // before the dialog can even appear. Set a tall
+    // surface so the screen lays out cleanly.
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     await tester.pumpWidget(buildTestApp());
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -99,7 +118,17 @@ void main() {
     await tester.tap(tile);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('cancelDeleteButton')));
+    // PR-4 (F-007): the destructive-phrase dialog has no
+    // explicit "Cancel" button. The dialog is dismissed
+    // by tapping the modal scrim (barrierDismissible: true,
+    // the AlertDialog default) OR by the OS back gesture.
+    // Here we pop the dialog directly via Navigator (the
+    // same code path the scrim tap uses internally).
+    expect(find.byType(AlertDialog), findsOneWidget);
+    final navigator = Navigator.of(
+      tester.element(find.byType(AlertDialog).first),
+    );
+    navigator.pop();
     await tester.pumpAndSettle();
 
     expect(find.byType(AlertDialog), findsNothing);

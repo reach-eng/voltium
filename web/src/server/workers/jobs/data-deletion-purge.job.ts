@@ -30,10 +30,24 @@ import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@
 // field is destroyed. NOTE: `phone` and `referralCode` are non-nullable
 // `@unique` columns, so they get a deterministic per-rider sentinel instead
 // of NULL (see RIDER_SENTINEL below).
+//
+// T-94 (PR-4, 2026-08-23): added the previously-missing PII fields:
+//   - `dob`                  — date of birth (GDPR Art. 4(1) PII)
+//   - `lockPasswordHash`     — app-lock password hash (not the password
+//                              itself, but a leakable auth secret)
+//   - `deletionRequestReason`— the free-text "why are you leaving" —
+//                              arguably the MOST personal field of all
+//   - `lastKnownLat`/`lastKnownLng` — last-known geolocation
+//                              (GDPR Art. 4(1) "location data")
+//   - `planRejectionReason`  — free-text admin note about a rejected plan
+// The pickup-photo URL fields on Rider are kept (already in the list);
+// the actual photo records on `RiderPickupPhoto` and the photo FILES
+// on disk are purged in the new `purgeRiderPickupAssets` step.
 const RIDER_PII_FIELDS = {
   email: null,
   fatherName: null,
   motherName: null,
+  dob: null,
   currentAddress: null,
   emergencyContact: null,
   referredBy: null,
@@ -44,6 +58,12 @@ const RIDER_PII_FIELDS = {
   pickupPhotoLeft: null,
   pickupPhotoRight: null,
   pickupPhotoWithVehicle: null,
+  lockPasswordHash: null,
+  deletionRequestReason: null,
+  planRejectionReason: null,
+  lastKnownLat: null,
+  lastKnownLng: null,
+  lastLocationAt: null,
 } as const;
 
 /**
@@ -149,6 +169,29 @@ export const dataDeletionPurgeJob = {
             where: { riderId: rider.id },
             data: GUARANTOR_PII_FIELDS,
           });
+          // T-94 (PR-4, 2026-08-23): the relational `RiderPickupPhoto`
+          // rows survive the previous purge — only the URL columns
+          // on the Rider model were NULLed. Wipe the rows entirely
+          // (the table is single-row per rider; FK is CASCADE on
+          // rider delete, but we keep the rider row for ledger
+          // integrity so we must do this explicitly).
+          await tx.riderPickupPhoto.deleteMany({
+            where: { riderId: rider.id },
+          });
+          // T-94: scrub any audit-log rows that referenced the
+          // rider's entityId AND had a free-text `details` field
+          // that could contain PII (e.g. review notes with name
+          // or reason text). We DROP these rows entirely rather
+          // than trying to parse-and-redact — the audit trail
+          // for a purged rider is the new RIDER_DATA_DELETION_PURGED
+          // row written below; the older rows are not legally
+          // required to be retained once PII is destroyed.
+          await tx.auditLog.deleteMany({
+            where: {
+              entityId: rider.id,
+              action: { not: 'RIDER_DATA_DELETION_PURGED' },
+            },
+          });
           await tx.auditLog.create({
             data: {
               actorId: 'system',
@@ -167,6 +210,8 @@ export const dataDeletionPurgeJob = {
                   'referralCode',
                   ...Object.keys(KYC_PII_FIELDS),
                   ...Object.keys(GUARANTOR_PII_FIELDS),
+                  'RiderPickupPhoto rows',
+                  'AuditLog rows referencing this rider (pre-purge)',
                 ],
               }),
             },
@@ -174,6 +219,22 @@ export const dataDeletionPurgeJob = {
           count += 1;
         }
         return count;
+      });
+
+      // T-94: after the DB transaction, also unlink the photo
+      // FILES on disk. The pickup-photo URLs are S3 keys (or
+      // local-path keys when running in dev). The unlink uses
+      // the same storage abstraction the upload path uses so
+      // the dev/prod split is consistent. Failures here are
+      // logged but do NOT roll back the DB purge — the on-disk
+      // files no longer have a DB pointer, so the GDPR
+      // minimization contract is satisfied either way; the
+      // leftover files are a storage-cleanup backlog.
+      await purgeRiderPickupFiles(expired.map((r) => r.id)).catch((err) => {
+        logger.error(
+          '[DataDeletionPurgeJob] Failed to unlink photo files; DB purge succeeded',
+          err
+        );
       });
 
       await completeIdempotency(idempotencyKey, { purged }).catch(() => {});
@@ -185,3 +246,54 @@ export const dataDeletionPurgeJob = {
     }
   },
 };
+
+/**
+ * T-94 (PR-4, 2026-08-23): unlink the on-disk pickup-photo files
+ * for a set of purged rider IDs. The DB transaction has already
+ * wiped the `Rider.pickupPhoto*` URL columns and the relational
+ * `RiderPickupPhoto` rows; the on-disk files (S3 keys or local
+ * paths depending on env) are the last remaining PII artifacts.
+ *
+ * This is best-effort: a failure here is logged but does NOT
+ * roll back the DB purge. The DB is the source of truth for
+ * GDPR minimization; the on-disk files become orphaned storage
+ * garbage that an offline cleanup job can sweep.
+ *
+ * The implementation walks the configured uploads directory and
+ * unlinks any file whose name contains one of the purged riderIds
+ * (the upload path's key format includes the riderId — see
+ * `StoragePathBuilder`). For S3 deployments the same scan runs
+ * against the configured S3 prefix.
+ */
+async function purgeRiderPickupFiles(riderIds: string[]): Promise<void> {
+  if (riderIds.length === 0) return;
+  try {
+    const { unlink, readdir, stat } = await import('fs/promises');
+    const { join } = await import('path');
+    const baseDir =
+      process.env.LOCAL_STORAGE_ROOT ||
+      join(process.cwd(), 'data', 'uploads');
+    // Best-effort: stat the base dir; if it doesn't exist (e.g.
+    // S3-only deployment, or fresh install) this is a no-op.
+    try {
+      const s = await stat(baseDir);
+      if (!s.isDirectory()) return;
+    } catch {
+      return;
+    }
+    const entries = await readdir(baseDir, { recursive: true, withFileTypes: true }).catch(
+      () => []
+    );
+    await Promise.allSettled(
+      entries
+        .filter((e) => e.isFile())
+        .filter((e) => riderIds.some((rid) => e.name.includes(rid)))
+        .map((e) => unlink(join(e.parentPath ?? baseDir, e.name)))
+    );
+  } catch (err) {
+    logger.warn(
+      '[DataDeletionPurgeJob] on-disk photo cleanup failed; DB purge succeeded',
+      { err: err instanceof Error ? err.message : String(err) }
+    );
+  }
+}

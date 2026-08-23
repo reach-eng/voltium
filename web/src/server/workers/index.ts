@@ -393,19 +393,40 @@ const SCHEDULED_TASKS: Array<{
         timeZone: 'Asia/Kolkata',
       }).format(injectedClock.now());
 
-      const { OutboxService } = await import('./outbox');
-      // PR-75: rent-due check is interactive — the rent reminders
-      // worker is on the interactive list (see WORKERS above).
-      // Fire-once is the IST-hour window check above (P0-2); the emit
-      // signature takes `tx` (not an idempotency key) as the 4th arg, so
-      // pass undefined — the hour gate is the dedup.
-      await OutboxService.emit(
-        OutboxEventTypes.RENT_DUE_CHECK,
-        { triggeredAt: injectedClock.now().toISOString() },
-        3,
-        undefined,
-        'interactive'
-      ).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
+      // T-90 (PR-1, 2026-08-23): true fire-once guard. The previous
+      // "hour gate" only filtered WHICH HOUR to fire in — the emitter
+      // was called every minute during the 6/18 IST windows, so the
+      // downstream rent reminders ran ~60× per window with the same
+      // data. Wrap the emit in an idempotency key unique to (today,
+      // hour) so the first call claims the lock and the next 59 calls
+      // short-circuit on the COMPLETED check.
+      const { checkOrClaimIdempotency, completeIdempotency, failIdempotency } = await import('@/lib/idempotency');
+      const idempotencyKey = `rent-due-emitter:${todayIst}:${istHour}`;
+      const claim = await checkOrClaimIdempotency(idempotencyKey, 86400); // 24h TTL
+      if (claim.status !== 'not_found') {
+        // Already fired this hour-window today; skip.
+        return;
+      }
+
+      try {
+        const { OutboxService } = await import('./outbox');
+        // PR-75: rent-due check is interactive — the rent reminders
+        // worker is on the interactive list (see WORKERS above).
+        // T-90: the emit signature takes `tx` (not an idempotency
+        // key) as the 4th arg, so we pass undefined — the per-hour
+        // idempotency key above is the dedup.
+        await OutboxService.emit(
+          OutboxEventTypes.RENT_DUE_CHECK,
+          { triggeredAt: injectedClock.now().toISOString() },
+          3,
+          undefined,
+          'interactive'
+        ).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
+        await completeIdempotency(idempotencyKey, { emittedAt: injectedClock.now().toISOString() });
+      } catch (err) {
+        await failIdempotency(idempotencyKey).catch(() => {});
+        throw err;
+      }
     },
   },
   {

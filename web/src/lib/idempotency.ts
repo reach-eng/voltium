@@ -6,6 +6,14 @@ interface IdempotencyEntry {
   expiresAt: number;
 }
 
+/**
+ * AUDIT FIX (workflows N-liveness): a PROCESSING claim older than this is
+ * considered dead (owner crashed between claim and complete/fail) and may
+ * be stolen by a new caller. 5 minutes covers any legitimate handler while
+ * converting "bricked for the whole TTL after one crash" into a normal retry.
+ */
+export const IDEMPOTENCY_STEAL_AFTER_MS = 5 * 60 * 1000;
+
 const memoryStore = new Map<string, IdempotencyEntry>();
 
 // Keep memory store cleanup interval as fallback
@@ -72,7 +80,7 @@ export async function checkOrClaimIdempotency(
     // Key already existed — read its current state
     const row = await db.idempotencyKey.findUnique({
       where: { key },
-      select: { status: true, response: true, expiresAt: true },
+      select: { status: true, response: true, expiresAt: true, createdAt: true },
     });
 
     if (!row) {
@@ -98,11 +106,34 @@ export async function checkOrClaimIdempotency(
         logger.warn('[Idempotency] Corrupted response, returning processing', { key });
         return { status: 'processing' };
 
-      case 'PROCESSING':
-        // An earlier call claimed the lock but never completed. The
-        // caller should treat this as 409 Conflict and either poll or
-        // surface an error to the user.
+      case 'PROCESSING': {
+        // AUDIT FIX (workflows N-liveness): stale-claim stealing. If the
+        // claim is older than IDEMPOTENCY_STEAL_AFTER_MS and still
+        // PROCESSING, the owning process almost certainly died before it
+        // could complete/fail. Steal atomically (deleteMany CAS on
+        // updatedAt so concurrent stealers race safely) and give the
+        // caller a fresh chance instead of blocking for the whole TTL.
+        const claimedAt = row.createdAt?.getTime() ?? 0;
+        const ageMs = Date.now() - claimedAt;
+        if (ageMs > IDEMPOTENCY_STEAL_AFTER_MS) {
+          const stolen = await db.idempotencyKey
+            .deleteMany({
+              where: { key, status: 'PROCESSING', createdAt: row.createdAt },
+            })
+            .catch(() => ({ count: 0 }));
+          if (stolen.count > 0) {
+            logger.warn('[Idempotency] Stole stale PROCESSING claim', {
+              key,
+              ageMs,
+            });
+            memoryStore.delete(key);
+            return checkOrClaimIdempotency(key, ttlSeconds);
+          }
+        }
+        // Genuinely in-flight (or another stealer won the race) — caller
+        // treats this as 409 Conflict and either polls or surfaces an error.
         return { status: 'processing' };
+      }
 
       case 'FAILED':
         // Phase 3.3: the previous attempt failed (handler threw).
@@ -166,11 +197,17 @@ export async function completeIdempotency(
     logger.error(`[Idempotency] Failed to save to DB: ${(err instanceof Error ? err.message : String(err))}`);
   }
 
-  // 2. Always write to memory store as hot cache / fallback
-  memoryStore.set(key, {
-    response,
-    expiresAt: expiresAt.getTime(),
-  });
+  // 2. Write to memory store as hot cache / fallback.
+  // AUDIT FIX (workflows N-memory): cap retained responses — previously
+  // every complete response was mirrored into heap for the full TTL
+  // regardless of size (traffic-proportional retention of potentially
+  // PII-bearing payloads).
+  if (responseStr.length <= 64 * 1024) {
+    memoryStore.set(key, {
+      response,
+      expiresAt: expiresAt.getTime(),
+    });
+  }
 }
 
 /**

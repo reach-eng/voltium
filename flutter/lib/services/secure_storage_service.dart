@@ -1,5 +1,29 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'monitoring_service.dart';
+
+/// Strict secure-storage options shared by every secure-storage
+/// surface in the app. PR-3 (F-004, 2026-08-22 deep audit) collapses
+/// the previously-divergent `EncryptedCacheService` defaults into the
+/// same options as the primary `SecureStorageService` so KYC form
+/// snapshots and rider draft data are not readable by other apps on
+/// Android (legacy keystore) or by a stolen unlocked iOS device
+/// (`KeychainAccessibility.unlocked`).
+///
+///   - Android: `encryptedSharedPreferences: true` switches from the
+///     deprecated `AndroidKeyStore` to the AES-backed Jetpack
+///     `EncryptedSharedPreferences` (API 23+).
+///   - iOS: `first_unlock_this_device` keeps the key from being read
+///     by other apps with `READ_SECURE_SETTINGS` and from being
+///     available before the first device unlock since boot.
+const FlutterSecureStorage _kVoltiumSecureStorage = FlutterSecureStorage(
+  aOptions: AndroidOptions(
+    encryptedSharedPreferences: true,
+  ),
+  iOptions: IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+  ),
+);
 
 class SecureStorageService {
   static final SecureStorageService _instance =
@@ -7,14 +31,7 @@ class SecureStorageService {
   factory SecureStorageService() => _instance;
   SecureStorageService._internal();
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock_this_device,
-    ),
-  );
+  final FlutterSecureStorage _storage = _kVoltiumSecureStorage;
 
   /// Canonical session-token storage key. All reads and writes for the
   /// rider's auth token go through this single key.
@@ -136,6 +153,15 @@ class SecureStorageService {
   ///
   ///   grep -rn "SecureStorageService().clearAll\b" lib/ test/
   Future<void> clearAll() async {
+    // PR-10 (F-080 — 2026-08-22 deep audit): `clearAll` is a
+    // security-sensitive operation — it wipes the FCM command
+    // secret AND the device-lock state, which can disable
+    // ADMIN_LOCK on the device. Emit a structured telemetry
+    // event so a `clearAll` call shows up on the PostHog
+    // dashboard. The event name is the audit-trail breadcrumb;
+    // a real-world call would warrant an investigation.
+    MonitoringService.logInfo(
+        'SecureStorageService.clearAll invoked — wipes FCM secret + lock state');
     await _storage.deleteAll();
   }
 
@@ -209,7 +235,13 @@ class EncryptedCacheService {
   factory EncryptedCacheService() => _instance;
   EncryptedCacheService._internal();
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  // PR-3 (F-004): share the same strict options as SecureStorageService.
+  // The prior `const FlutterSecureStorage()` defaulted to the legacy
+  // AndroidKeyStore and iOS `KeychainAccessibility.unlocked`, which
+  // is readable by other apps with READ_SECURE_SETTINGS or by a
+  // stolen unlocked device. KYC form snapshots and rider draft data
+  // are sensitive enough to require the strict defaults.
+  final FlutterSecureStorage _storage = _kVoltiumSecureStorage;
 
   Future<void> write(String key, Map<String, dynamic> data) async {
     final jsonString = jsonEncode(data);

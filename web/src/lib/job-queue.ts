@@ -124,7 +124,14 @@ export const JobQueue = {
           },
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error';
+        // AUDIT FIX: the nested ternary discarded non-Error throwables as
+        // 'Unknown error'. Extract a message from anything.
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'string'
+              ? err
+              : JSON.stringify(err);
         const newAttempts = event.attempts + 1;
         const isMaxed = newAttempts >= event.maxAttempts;
 
@@ -164,14 +171,29 @@ export const JobQueue = {
    * Reaper: Reclaims stuck PROCESSING events that haven't been updated
    * in more than 5 minutes. Resets them to PENDING so they get retried.
    * Run this periodically (e.g. every 5 minutes).
+   *
+   * AUDIT FIX (workflows N-reaper): previously this reset `attempts = 0`,
+   * which gave process-killing poison pills an infinite retry budget
+   * (attempts never accumulated across reclaims) and overwrote the
+   * original error string, destroying forensic context. The reclaim now
+   * INCREMENTS attempts, honours maxAttempts (→ FAILED dead-letter), and
+   * preserves the prior error message as the prefix of the new one.
    */
   async runReaper(): Promise<number> {
     const now = clock.now();
     const result = await db.$executeRaw`
       UPDATE "outbox_events"
-      SET status = 'PENDING',
-          attempts = 0,
-          error = 'Reclaimed by reaper — stuck in PROCESSING'
+      SET status = CASE
+            WHEN attempts + 1 >= "maxAttempts" THEN 'FAILED'
+            ELSE 'PENDING'
+          END,
+          attempts = attempts + 1,
+          readyAt = CASE
+            WHEN attempts + 1 >= "maxAttempts" THEN NULL
+            ELSE ${new Date(now.getTime() + 60 * 1000)}
+          END,
+          error = 'Reclaimed by reaper — stuck in PROCESSING' ||
+                  COALESCE(' | previous error: ' || error, '')
       WHERE status = 'PROCESSING'
         AND (
           ("eventType" = 'sms.send' AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})
@@ -219,8 +241,10 @@ export const JobQueue = {
   },
 
   async clearQueue(type: string): Promise<void> {
+    // AUDIT FIX: never delete PROCESSING rows — a live worker's completion
+    // update would throw P2025 and its side effects are still in flight.
     await db.outboxEvent.deleteMany({
-      where: { eventType: type, status: { in: ['PENDING', 'PROCESSING'] } },
+      where: { eventType: type, status: 'PENDING' },
     });
   },
 

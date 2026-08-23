@@ -101,9 +101,51 @@ class PostHogService {
     final Map<String, Object> scrubbed = Map<String, Object>.from(properties);
     final piiKeys = ['phone', 'email', 'otp', 'aadhaar', 'pan', 'password'];
 
-    for (var key in scrubbed.keys) {
+    // PR-8 (F-043 — 2026-08-22 deep audit): the previous scrubber
+    // only matched on property *key* names. A legitimate-looking
+    // key like `name: 'Rahul Sharma'` or `address: 'Mumbai 400001'`
+    // would still be sent to PostHog unmasked, even though those
+    // values are PII under India's DPDP Act. The value-pattern
+    // scrubber below masks the most common patterns (Indian phone
+    // numbers, emails, Aadhaar-shaped 12-digit, PAN-shaped
+    // 10-alphanumeric) regardless of the key. Key-based scrubbing
+    // is still applied first as a fast path.
+    final phoneRe = RegExp(r'(\+91\s?)?\d{10}');
+    final emailRe =
+        RegExp(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}', caseSensitive: false);
+    final aadhaarRe = RegExp(r'\b\d{4}\s?\d{4}\s?\d{4}\b');
+    final panRe = RegExp(r'\b[A-Z]{5}\d{4}[A-Z]\b');
+
+    String scrubValue(String v) {
+      var s = v.replaceAll(phoneRe, '[PHONE]');
+      s = s.replaceAll(emailRe, '[EMAIL]');
+      s = s.replaceAll(aadhaarRe, '[AADHAAR]');
+      s = s.replaceAll(panRe, '[PAN]');
+      return s;
+    }
+
+    for (var key in scrubbed.keys.toList()) {
+      final v = scrubbed[key];
+      // 1. Key-based fast path.
       if (piiKeys.any((p) => key.toLowerCase().contains(p))) {
         scrubbed[key] = '[SCRUBBED]';
+        continue;
+      }
+      // 2. Value-pattern scrubber.
+      if (v is String) {
+        final masked = scrubValue(v);
+        if (masked != v) scrubbed[key] = masked;
+      } else if (v is Map) {
+        // Recurse one level deep for nested maps (e.g. user
+        // properties passed alongside an event).
+        scrubbed[key] = v.map(
+          (k, vv) => MapEntry(
+            k.toString(),
+            vv is String ? scrubValue(vv) : vv,
+          ),
+        );
+      } else if (v is List) {
+        scrubbed[key] = v.map((e) => e is String ? scrubValue(e) : e).toList();
       }
     }
 

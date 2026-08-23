@@ -515,13 +515,22 @@ class RiderModel {
 
   /// Helper to get the price of the active rental plan. Ideally this should come
   /// down from the backend, but mapped here for client logic.
+  ///
+  /// PR-8 (F-060 — 2026-08-22 deep audit): the previous return type
+  /// was `double` with a `0.0` fallback for "no plan". Callers
+  /// couldn't distinguish "plan exists with ₹0 price" (impossible
+  /// in production but a valid data shape during early onboarding)
+  /// from "no plan at all" (the common case). The dashboard sheet
+  /// would show "₹0 / day" for a rider without a plan. Now
+  /// returns `null` for the no-plan case; callers that want a
+  /// numeric default can `?? 0.0` at the call site (most already
+  /// do).
   @JsonKey(includeFromJson: false, includeToJson: false)
-  double get activeRentalPlanPrice {
-    // Use actual price from backend if available (already converted from paise in fromJson).
+  double? get activeRentalPlanPrice {
     if (currentPlanPrice != null && currentPlanPrice! > 0) {
       return currentPlanPrice!;
     }
-    return 0.0;
+    return null;
   }
 
   /// PR-RUPEES-2026-08-08: the security deposit for the active rental
@@ -626,7 +635,11 @@ class RiderModel {
   /// Calculate the required payment amount (security deposit + advance rent if advanceRentPaid is true, else security deposit).
   double requiredPaymentAmount(double walletMinTopup) {
     final secDeposit = activeRentalPlanSecurityDeposit;
-    final planPrice = activeRentalPlanPrice;
+    // PR-8 (F-060): the previous code used `planPrice > 0 ? planPrice
+    // : ...` which assumed `planPrice` was a double. Now nullable
+    // (returns null for "no plan"), so we use `?? 0.0` for the
+    // arithmetic and `?? walletMinTopup` for the fallback.
+    final planPrice = activeRentalPlanPrice ?? 0.0;
 
     if (advanceRentPaid) {
       return secDeposit + planPrice;

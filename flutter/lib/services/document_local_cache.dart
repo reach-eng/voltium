@@ -1,6 +1,7 @@
 import 'package:universal_io/io.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'monitoring_service.dart';
 
 /// Caches uploaded KYC/guarantor documents locally so they can be viewed
 /// offline without re-downloading from the server.
@@ -29,7 +30,15 @@ class DocumentLocalCache {
       final prefs = await SharedPreferences.getInstance();
       final path = prefs.getString('$_prefsPrefix$docKey');
       if (path != null && File(path).existsSync()) return path;
-    } catch (_) {}
+    } catch (e, stack) {
+      // PR-8 (F-063): was a silent `catch (_) {}`. A corrupted
+      // SharedPreferences would have made every document lookup
+      // return null and the rider would see an empty
+      // "documents" tab with no signal. Now logs so a
+      // prefs-encoding regression surfaces.
+      MonitoringService.logError(e, stack,
+          reason: 'DocumentLocalCache.get: prefs read failed');
+    }
     return null;
   }
 
@@ -45,7 +54,15 @@ class DocumentLocalCache {
       if (dir.existsSync()) {
         await dir.delete(recursive: true);
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      // PR-8 (F-063): was a silent `catch (_) {}`. A
+      // filesystem error during `clearAll` (called on
+      // logout) would leave the next rider's stale
+      // documents on disk. Now logs so a permission
+      // regression surfaces.
+      MonitoringService.logError(e, stack,
+          reason: 'DocumentLocalCache.clearAll: wipe failed');
+    }
   }
 
   static Future<Directory> _cacheDir() async {

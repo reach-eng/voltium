@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:universal_io/io.dart';
 
 import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/services/monitoring_service.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -183,7 +184,15 @@ class WalletNotifier extends Notifier<WalletState> {
         proofUrl: uploadedUrl,
         purpose: purpose,
       );
-      await _repo.submitTopup(req);
+      // PR-4 (F-011 — 2026-08-22 deep audit): send a fresh
+      // `Idempotency-Key` so a retry after a 504/network error
+      // cannot double-credit the rider's wallet. A new key per
+      // user-initiated submit is correct — re-using a key would
+      // conflate the dedup window with unrelated actions.
+      await _repo.submitTopup(
+        req,
+        idempotencyKey: ApiClient.newIdempotencyKey(),
+      );
       await refreshTransactions(riderId: riderId);
     } catch (e) {
       rethrow;
@@ -243,11 +252,20 @@ class WalletNotifier extends Notifier<WalletState> {
         serverTotalTransactions: serverTotal,
         clearLastError: true,
       );
-    } catch (e) {
+    } catch (e, stack) {
       state = state.copyWith(
         lastError: 'Couldn\'t load your transactions. Pull to retry.',
       );
+      // PR-8 (F-061 — 2026-08-22 deep audit): was `appDebug`
+      // only, which is kDebugMode-gated and invisible in
+      // release. Production builds had no observability for
+      // a recurring /transactions 5xx — the rider would see
+      // the lastError banner and silently never be able to
+      // load their history. Now logs via `MonitoringService`
+      // so a 504-storm is visible on the dashboard.
       appDebug('WalletNotifier: refresh failed: $e');
+      MonitoringService.logError(e, stack,
+          reason: 'WalletNotifier: transactions refresh failed');
     }
   }
 

@@ -136,23 +136,42 @@ class UserOnboardingNotifier extends Notifier<UserOnboardingState> {
   }
 
   void populateFromCache(Map<String, dynamic> cacheData) {
-    final afPath = cacheData['aadhaarFrontPath'] as String?;
-    final abPath = cacheData['aadhaarBackPath'] as String?;
-    final panP = cacheData['panPath'] as String?;
-    final selfieP = cacheData['selfiePath'] as String?;
-    final sigP = cacheData['signaturePath'] as String?;
+    // PR-10 (F-068 — 2026-08-22 deep audit): the previous
+    // implementation loaded every cached file path and set the
+    // `*Uploaded` flag to true, even when the file no longer
+    // existed on disk (the OS evicts /tmp on iOS in low-storage
+    // situations; Android may have revoked sandbox access after
+    // a permission change). The rider would then see a
+    // placeholder image AND pass the "all 5 photos uploaded"
+    // gate, but `FilesRepository.uploadFile` would fail at
+    // submit with a confusing "file not found" error. Now
+    // validate every path synchronously via `File.existsSync`
+    // and silently drop the dangling ones — the rider has to
+    // re-capture, but they get a clear visual signal
+    // (missing-photo placeholder) instead of a submit-time
+    // crash.
+    String? safePath(String? p) {
+      if (p == null || p.isEmpty) return null;
+      return File(p).existsSync() ? p : null;
+    }
+
+    final afPath = safePath(cacheData['aadhaarFrontPath'] as String?);
+    final abPath = safePath(cacheData['aadhaarBackPath'] as String?);
+    final panP = safePath(cacheData['panPath'] as String?);
+    final selfieP = safePath(cacheData['selfiePath'] as String?);
+    final sigP = safePath(cacheData['signaturePath'] as String?);
 
     state = state.copyWith(
       aadhaarFrontPath: afPath,
-      aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
+      aadhaarFrontUploaded: afPath != null,
       aadhaarBackPath: abPath,
-      aadhaarBackUploaded: abPath != null && abPath.isNotEmpty,
+      aadhaarBackUploaded: abPath != null,
       panPath: panP,
-      panUploaded: panP != null && panP.isNotEmpty,
+      panUploaded: panP != null,
       selfiePath: selfieP,
-      selfieUploaded: selfieP != null && selfieP.isNotEmpty,
+      selfieUploaded: selfieP != null,
       signaturePath: sigP,
-      signatureUploaded: sigP != null && sigP.isNotEmpty,
+      signatureUploaded: sigP != null,
     );
   }
 }
@@ -380,7 +399,13 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         _saveCache();
       }
     } catch (e) {
-      if (mounted) _showError('Failed to capture document. Please try again.');
+      if (mounted) {
+        // PR-5 (F-021): Localised via `kycFailedCaptureDocument`.
+        _showError(
+          AppLocalizations.of(context)?.kycFailedCaptureDocument ??
+              'Failed to capture document. Please try again.',
+        );
+      }
     }
   }
 
@@ -570,7 +595,50 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            // PR-10 (F-072 — 2026-08-22 deep audit): the
+            // previous "Close" button silently discarded any
+            // in-progress edits — a rider who typed their
+            // bank details and tapped Close by accident
+            // lost everything (the form fields were wired
+            // to `_bank*Controller` and only persisted via
+            // the "Save" branch). Now: if the form has
+            // unsaved changes, prompt the rider to confirm
+            // before discarding. No prompt if nothing was
+            // typed.
+            onPressed: () async {
+              final hasChanges = _bankNameController.text.trim().isNotEmpty ||
+                  _bankAccountController.text.trim().isNotEmpty ||
+                  _bankIfscController.text.trim().isNotEmpty;
+              if (!hasChanges) {
+                Navigator.pop(ctx);
+                return;
+              }
+              final discard = await showDialog<bool>(
+                context: ctx,
+                builder: (dctx) => AlertDialog(
+                  title: Text(AppLocalizations.of(dctx)
+                          ?.bankDetailsDiscardChangesTitle ??
+                      'Discard changes?'),
+                  content: Text(AppLocalizations.of(dctx)
+                          ?.bankDetailsDiscardChangesBody ??
+                      'You have unsaved bank details. Closing will discard them.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dctx, false),
+                      child: Text(
+                          AppLocalizations.of(dctx)?.commonKeepEditing ??
+                              'Keep editing'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(dctx, true),
+                      child: Text(AppLocalizations.of(dctx)?.commonDiscard ??
+                          'Discard'),
+                    ),
+                  ],
+                ),
+              );
+              if (discard == true && ctx.mounted) Navigator.pop(ctx);
+            },
             child: Text(
               l10n?.txtclose ?? 'Close',
               style: AppTypography.labelLarge
@@ -639,14 +707,22 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       }
 
       if (missing.isNotEmpty) {
-        _showError('Please complete: ${missing.join(', ')}');
+        // PR-5 (F-021): Localised via `kycPleaseComplete`.
+        _showError(
+          AppLocalizations.of(context)?.kycPleaseComplete(missing.join(', ')) ??
+              'Please complete: ${missing.join(', ')}',
+        );
         return;
       }
     }
 
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) {
-      _showError('Session invalid. Please login again.');
+      // PR-5 (F-021): Localised via `kycSessionInvalid`.
+      _showError(
+        AppLocalizations.of(context)?.kycSessionInvalid ??
+            'Session invalid. Please login again.',
+      );
       return;
     }
 
@@ -811,7 +887,16 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
               if (f.existsSync()) {
                 f.deleteSync();
               }
-            } catch (_) {}
+            } catch (e) {
+              // PR-8 (F-063): was `catch (_) {}`. A locked file
+              // (the OS still has an open handle on iOS, or
+              // a sandboxed Android file the rider revoked
+              // access to) would have silently leaked
+              // /var/mobile/Containers... storage. Now logs
+              // so a regression on the storage path is
+              // visible.
+              appDebug('KYC: temp file delete failed for $p: $e');
+            }
           }
         }
       } catch (e) {
@@ -826,8 +911,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         if (!mounted) return;
         appDebug('KYC submit: refresh failed after upload success: $e');
         _showError(
-          'Profile saved, but we couldn\'t refresh your session. '
-          'Pull to retry, or restart the app.',
+          // PR-5 (F-021): Localised via
+          // `kycRefreshFailedAfterUpload`.
+          AppLocalizations.of(context)?.kycRefreshFailedAfterUpload ??
+              'Profile saved, but we couldn\'t refresh your session. '
+                  'Pull to retry, or restart the app.',
         );
         return;
       }

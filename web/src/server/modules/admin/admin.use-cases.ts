@@ -66,6 +66,32 @@ export const adminUseCases = {
       throw new Error('Admin not found');
     }
 
+    // Admin Panel Phase 4 / Batch B (2026-08-23): last active SUPER_ADMIN
+    // guard. A SUPER_ADMIN who is the only remaining one cannot be
+    // deactivated OR demoted to a non-SUPER_ADMIN role. The check fires
+    // on the change being applied (isActive=false OR role!==SUPER_ADMIN)
+    // and uses the DB to count *other* active SUPER_ADMINs (the one
+    // we're editing still counts toward the pre-mutation total; we
+    // look at the *post*-change picture by checking the count BEFORE
+    // applying the mutation, then asking "is this admin still going
+    // to be an active SUPER_ADMIN after?". If not, the count of other
+    // active SUPER_ADMINs must be >= 1 to allow it.
+    if (existing.role === 'SUPER_ADMIN' && existing.isActive) {
+      const demoting = params.role !== undefined && params.role !== 'SUPER_ADMIN';
+      const deactivating = params.isActive === false;
+      if (demoting || deactivating) {
+        const activeSuperAdminCount = await adminRepository.count({
+          role: 'SUPER_ADMIN',
+          isActive: true,
+        });
+        if (activeSuperAdminCount <= 1) {
+          throw new Error(
+            'Cannot deactivate or demote the last active SUPER_ADMIN account'
+          );
+        }
+      }
+    }
+
     const admin = await adminRepository.update(id, params);
 
     await logAdminAction({

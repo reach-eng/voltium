@@ -35,10 +35,22 @@ export const deviceComplianceJob = {
     result.ridersChecked = activeRiders.length;
 
     for (const rider of activeRiders) {
-      // Check for missing permissions
+      // T-96 (PR-6, 2026-08-23): the previous "violation"
+      // predicate was `rider.isLocationMandatory &&
+      // rider.deviceViolationCount > 0` — circular. A violation
+      // exists because violations exist. The correct predicate
+      // is "the rider revoked a mandatory permission since the
+      // last scan" — derived from `rider.lastDeviceViolationAt`
+      // vs the per-permission violation `reportedAt`. For now
+      // we keep the location-mandatory flag (we don't yet have
+      // a granular "revoked since last scan" field) but drop
+      // the circular `deviceViolationCount > 0` clause. The
+      // deviceViolationCount field is now treated as a counter
+      // that's bumped when a NEW violation is created (not as
+      // a condition for emitting one).
       const missingPermissions: string[] = [];
 
-      if (rider.isLocationMandatory && rider.deviceViolationCount > 0) {
+      if (rider.isLocationMandatory) {
         missingPermissions.push('location');
       }
 
@@ -55,26 +67,52 @@ export const deviceComplianceJob = {
           });
 
           if (!existing) {
-            await db.deviceViolation.create({
+            // T-96: the emit MUST live inside the `if (!existing)`
+            // branch so a Slack page only fires on a real new
+            // violation. The previous code emitted outside this
+            // branch, so the device-violation-emitter (which
+            // fires every minute) caused the dispatcher to
+            // receive DEVICE_VIOLATION events for already-known
+            // violations ~1,440 times/day/rider.
+            const created = await db.deviceViolation.create({
               data: {
                 riderId: rider.id,
                 permissionId,
                 status: 'ACTIVE',
+                // T-96: stamp the 24h alerted-marker so the
+                // same violation doesn't re-alert within 24h if
+                // the rider goes in/out of compliance repeatedly.
+                lastAlertedAt: clock.now(),
               },
             });
             result.violationsFound++;
+            // T-96: emit happens ONLY for a fresh violation,
+            // never for the "still unresolved" case.
+            await OutboxService.emit(
+              OutboxEventTypes.DEVICE_VIOLATION,
+              {
+                riderId: rider.id,
+                violations: [permissionId],
+                violationId: created.id,
+              }
+            ).catch((e: Error) =>
+              logger.error(
+                '[DeviceComplianceJob] Failed to emit DEVICE_VIOLATION',
+                e
+              )
+            );
           }
         }
-
-        // Emit outbox event for admin notification
-        await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION, {
-          riderId: rider.id,
-          violations: missingPermissions,
-        }).catch(() => {});
       }
 
-      // Auto-resolve old violations if rider is now compliant
-      // (violations older than 7 days with no new violations get resolved)
+      // Auto-resolve old violations if rider is now compliant.
+      // T-96: the 7-day window is unchanged but we no longer
+      // require `deviceViolationCount > 0` (we dropped that
+      // circular check). The 7-day clock starts at
+      // `reportedAt`; after 7 days the violation auto-resolves
+      // even if the rider hasn't re-permissioned. (A future
+      // improvement is to extend the window or to gate on
+      // re-permissioning; out of scope for T-96.)
       const sevenDaysAgo = new Date(clock.now().getTime() - 7 * 24 * 60 * 60 * 1000);
       const oldViolations = await db.deviceViolation.updateMany({
         where: {

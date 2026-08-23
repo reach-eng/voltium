@@ -288,6 +288,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
   Future<void> _togglePermission(_PermissionItem item) async {
     if (item.isEnabled) {
+      // PR-10 (F-077 — 2026-08-22 deep audit): the previous
+      // tile was a no-op once the permission was already
+      // granted — tapping it did nothing. A rider who
+      // accidentally granted the wrong permission (e.g.
+      // location "always" instead of "while using") had no
+      // path to revoke it from the onboarding screen. Now
+      // open the OS app settings page so the rider can
+      // toggle it off.
+      await openAppSettings();
       return;
     }
     await _requestPermission(item);
@@ -590,8 +599,21 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     // 2026-08-21). The Continue button stays disabled until all tiles
     // are green; the router's `_areAllRequiredPermissionsGranted`
     // enforces the same set on the way out.
+    //
+    // PR-9 (F-070 — 2026-08-22 deep audit): `background_location`
+    // (Android `ACCESS_BACKGROUND_LOCATION`) is NOT required
+    // for the core rider flow — `locationWhenInUse` covers the
+    // "rider is on the dashboard" case. The previous
+    // implementation blocked onboarding on always-on location,
+    // which is a Play Store policy violation (Google requires
+    // a clear in-context trigger before requesting it). Now
+    // the tile is shown but excluded from the required set;
+    // the rider can grant it later from a settings tile if
+    // they want background trip-tracking.
+    final requiredPermissions =
+        _permissions.where((p) => p.id != 'background_location').toList();
     final allRequiredGranted =
-        _permissions.every((p) => _effectiveEnabled(p, devPolicy));
+        requiredPermissions.every((p) => _effectiveEnabled(p, devPolicy));
     // PR-1 (F-001): the `|| isTestMode` short-circuit was removed. The
     // Continue button is now enabled only when every required permission
     // (foreground_location, notifications, contacts) is granted. The

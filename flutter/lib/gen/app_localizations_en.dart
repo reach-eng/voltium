@@ -628,6 +628,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'SOS Alert Triggered! Dialing emergency services (112)...';
 
   @override
+  String get txtsosHoldHint => 'Press and hold to trigger an emergency alert';
+
+  @override
+  String get txtsosSending => 'Sending SOS...';
+
+  @override
+  String get txtsosSharingLocation =>
+      'Sharing your location with Voltium and dialing 112.';
+
+  @override
   String get txttakeAPhoto => 'Take a Photo';
 
   @override
@@ -1188,6 +1198,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Error submitting return. Please try again.';
 
   @override
+  String get kycFailedCaptureDocument =>
+      'Failed to capture document. Please try again.';
+
+  @override
+  String get rewardsEmptyTitle => 'No rewards unlocked yet';
+
+  @override
+  String get rewardsEmptySubtitle =>
+      'Keep riding and completing milestones\\nto unlock exclusive rewards.';
+
+  @override
+  String kycPleaseComplete(String missing) {
+    return 'Please complete: $missing';
+  }
+
+  @override
+  String get kycSessionInvalid => 'Session invalid. Please login again.';
+
+  @override
+  String get kycRefreshFailedAfterUpload =>
+      'Profile saved, but we couldn\'t refresh your session. Pull to retry, or restart the app.';
+
+  @override
   String get txtrequestSubmitted => 'Request Submitted!';
 
   @override
@@ -1223,6 +1256,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtconfirmReturn => 'Confirm Return';
+
+  @override
+  String get endRentalSubmittedBody =>
+      'Your vehicle return request has been sent for approval.';
+
+  @override
+  String get endRentalConfirmTitle => 'Are you sure?';
+
+  @override
+  String get endRentalConfirmBody =>
+      'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.';
+
+  @override
+  String get endRentalVehicleConditionPhotos => 'VEHICLE CONDITION PHOTOS *';
+
+  @override
+  String get endRentalConfirmInGoodCondition =>
+      'I confirm the vehicle is returned in good condition with all accessories intact.';
+
+  @override
+  String get endRentalPhotosMissingHint =>
+      'Please take all inspection photos and enter odometer reading to continue';
+
+  @override
+  String get bankDetailsDiscardChangesTitle => 'Discard changes?';
+
+  @override
+  String get bankDetailsDiscardChangesBody =>
+      'You have unsaved bank details. Closing will discard them.';
+
+  @override
+  String get commonKeepEditing => 'Keep editing';
+
+  @override
+  String get commonDiscard => 'Discard';
 
   @override
   String get txtpleaseTakeAllInspectionPhotosToContinue =>
@@ -1398,6 +1466,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtstep1Of3 => 'Step 1 of 3';
+
+  @override
+  String get txtpaymentModeInstant => 'Instant';
+
+  @override
+  String topUpWillBeInstantRiderBearer(int fee) {
+    return 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.';
+  }
+
+  @override
+  String get topUpWillBeInstantVoltiumBearer =>
+      'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
+
+  @override
+  String txtproceedToInstantPay(int total) {
+    return 'Proceed to instant pay, estimated total ₹$total';
+  }
 
   @override
   String get txtselectPurpose => 'Select Purpose';

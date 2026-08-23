@@ -115,16 +115,27 @@ class CacheService {
   //  Pattern-based invalidation
   // ════════════════════════════════════════════════════════════════════════
 
+  /// PR-8 (F-056 — 2026-08-22 deep audit): the previous
+  /// implementation was O(n) over all keys AND awaited each
+  /// `remove` serially — a rider with 200+ history entries had
+  /// to wait for 200 sequential SharedPreferences round-trips
+  /// on every cache wipe. Now collects all matches first, then
+  /// `Future.wait`s the removes in parallel. Worst-case still
+  /// O(n) (you have to look at every key to know which match),
+  /// but the round-trip count drops from N to 1.
   Future<int> invalidatePattern(Pattern pattern) async {
-    final keys = _prefs?.getKeys() ?? {};
-    int deleted = 0;
+    final keys = _prefs?.getKeys().toList() ?? const <String>[];
+    final toRemove = <String>[];
     for (final key in keys) {
       if (key.contains(pattern)) {
-        await _prefs?.remove(key);
-        deleted++;
+        toRemove.add(key);
       }
     }
-    return deleted;
+    if (toRemove.isEmpty) return 0;
+    final results = await Future.wait(
+      toRemove.map((k) => _prefs?.remove(k) ?? Future.value(false)),
+    );
+    return results.where((removed) => removed).length;
   }
 
   // ════════════════════════════════════════════════════════════════════════

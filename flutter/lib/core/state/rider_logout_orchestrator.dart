@@ -15,6 +15,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
+import 'package:voltium_rider/services/emergency_contacts_service.dart';
+import 'package:voltium_rider/services/monitoring_service.dart';
+import 'package:voltium_rider/services/offline_storage_service.dart';
 // D-P2-11: the pickup-draft cache key constant lives in rider_provider.dart
 // (single source of truth for router + orchestrator + main notifier). This
 // creates an import cycle (rider_provider imports this orchestrator), which
@@ -25,6 +28,7 @@ import 'package:voltium_rider/core/state/rider_provider.dart'
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
+import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_screen.dart'
     show userOnboardingNotifierProvider;
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart'
@@ -76,13 +80,24 @@ class RiderLogoutOrchestrator {
   final void Function() _onResetRefreshInFlight;
   final void Function() _onResetHasSyncedDeviceDataOnce;
 
+  /// Rider id captured from the caller's `RiderState` at logout time.
+  /// We cannot `_ref.read(riderProvider)` here — the orchestrator is
+  /// invoked from inside `RiderNotifier.logout()`, so its `ref` already
+  /// owns `riderProvider` and a `read` would trip Riverpod v3's
+  /// "A provider cannot depend on itself" assertion. The caller reads
+  /// `state.riderId` synchronously before the await and passes it in;
+  /// we use it after the await to clear the per-rider KYC form cache.
+  final String? _riderId;
+
   RiderLogoutOrchestrator({
     required Ref ref,
+    required String? riderId,
     required void Function() onStopPolling,
     required void Function() onStopDeviceDataSync,
     required void Function() onResetRefreshInFlight,
     required void Function() onResetHasSyncedDeviceDataOnce,
   })  : _ref = ref,
+        _riderId = riderId,
         _onStopPolling = onStopPolling,
         _onStopDeviceDataSync = onStopDeviceDataSync,
         _onResetRefreshInFlight = onResetRefreshInFlight,
@@ -92,11 +107,22 @@ class RiderLogoutOrchestrator {
   /// (main RiderNotifier) is responsible for clearing its own state after
   /// this method returns.
   Future<void> run() async {
+    // PR-2 (F-002, 2026-08-22 deep audit): capture every per-rider state
+    // holder BEFORE the await gap. Riverpod v3's "Ref used after dispose"
+    // check throws if `_ref.read(...)` is called after a dispose, so all
+    // notifier / state lookups must happen up front.
     final engagement = _ref.read(engagementProvider.notifier);
     final onboarding = _ref.read(userOnboardingNotifierProvider.notifier);
     final support = _ref.read(supportProvider.notifier);
     final tickets = _ref.read(supportTicketsProvider.notifier);
     final guarantor = _ref.read(guarantorOnboardingNotifierProvider.notifier);
+    final emergencyContacts =
+        _ref.read(emergencyContactsServiceProvider.notifier);
+    // The KYC form cache key is keyed by riderId; the caller hands us
+    // their `state.riderId` at construction time so we can clear it
+    // after the logout HTTP call completes. We intentionally do NOT
+    // re-read `riderProvider` here (see `_riderId` field doc above).
+    final riderIdForCache = _riderId;
 
     try {
       await _ref.read(authRepositoryProvider).logout();
@@ -127,6 +153,17 @@ class RiderLogoutOrchestrator {
     tickets.reset();
     guarantor.reset();
 
+    // PR-2 (F-002): reset the emergency-contacts notifier so the next
+    // rider on a shared device does not see the previous rider's
+    // emergency contacts. The notifier persists in plaintext to
+    // SharedPreferences (`volt_emergency_contacts` key); `clearAll`
+    // wipes both the in-memory state and the disk record.
+    try {
+      await emergencyContacts.clearAll();
+    } catch (e) {
+      appDebug('[logout-orchestrator] emergency contacts clear failed: $e');
+    }
+
     // PR-7 (PICKUP P0-2): clear any in-progress pickup draft so a fresh
     // login on a shared device doesn't resume the previous rider's
     // half-completed pickup. DEEP-AUDIT D-P2-11: key centralized in
@@ -140,6 +177,42 @@ class RiderLogoutOrchestrator {
       // concerning — log it so silent partial-logout drift is
       // visible.
       appDebug('[logout-orchestrator] pickup draft clear failed: $e');
+    }
+
+    // PR-2 (F-002): clear the rider cache (name, phone, KYC status,
+    // plan, team leader phone, emergency contact) so the next rider
+    // on a shared device does not see the previous rider's data on
+    // first paint. The 24-hour TTL on the rider cache means a stale
+    // entry would otherwise survive until the next cold start.
+    try {
+      await CacheService().clearRiderCache();
+    } catch (e) {
+      appDebug('[logout-orchestrator] rider cache clear failed: $e');
+    }
+
+    // PR-2 (F-002): clear the SQLite-backed offline storage
+    // (`cached_data`, `cached_transactions`, `cached_plans`,
+    // `pending_operations`). The ETag 304 store will repopulate on
+    // the next successful GET for the new rider, so the cost is one
+    // extra round-trip on first launch.
+    try {
+      await OfflineStorageService().clearAll();
+    } catch (e) {
+      appDebug('[logout-orchestrator] offline storage clear failed: $e');
+    }
+
+    // PR-2 (F-002): clear the KYC form draft (name, email, address,
+    // DOB, parents) so the next rider on a shared device does not see
+    // the previous rider's partially-filled KYC form on the next
+    // sign-in. `saveFormCache` deliberately strips financial PII
+    // (bankAccount/IFSC) but keeps identity fields; the full draft
+    // is only cleared here on logout.
+    if (riderIdForCache != null && riderIdForCache.isNotEmpty) {
+      try {
+        await KycRepository.clearFormCache(riderId: riderIdForCache);
+      } catch (e) {
+        appDebug('[logout-orchestrator] KYC cache clear failed: $e');
+      }
     }
 
     // AUDIT FIX (HIGH SECURITY): wipe the persisted guarantor draft
@@ -161,6 +234,19 @@ class RiderLogoutOrchestrator {
       DocumentLocalCache.clearAll();
     } catch (e) {
       appDebug('[logout-orchestrator] document cache clear failed: $e');
+    }
+
+    // PR-2 (F-002): reset the PostHog identity LAST. Until this point
+    // we may have been emitting structured events (the authRepository
+    // logout can log, the cache clear failures are debugged, etc.);
+    // PostHog should keep capturing those with the current rider's
+    // identity. After this reset, the next event belongs to the next
+    // rider (or to an anonymous session). The reset itself is
+    // best-effort — PostHog outages must not block local logout.
+    try {
+      await MonitoringService.resetUser();
+    } catch (e) {
+      appDebug('[logout-orchestrator] monitoring reset failed: $e');
     }
   }
 }

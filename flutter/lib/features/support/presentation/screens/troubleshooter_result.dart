@@ -10,13 +10,15 @@ class TroubleshooterResult {
 
   final List<TroubleshooterAnswer> path;
   final String resolution;
-  final String resolutionType;
+  // PR-7 (F-066): now a typed enum (not a String) so a typo
+  // like 'NEEDS_SUPPPORT' or 'DANGAR' is a compile error.
+  final TroubleshooterResolutionType resolutionType;
   final String? category;
 
   Map<String, dynamic> toJson() => {
         'path': path.map((a) => a.toJson()).toList(),
         'resolution': resolution,
-        'resolutionType': resolutionType,
+        'resolutionType': resolutionType.name,
         'category': category,
       };
 }

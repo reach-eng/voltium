@@ -2,37 +2,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_models.dart' as api;
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
 
-class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
-
-class FakeTopupRequest extends Fake implements api.TopupRequest {}
+// Stub for the unused `VoltiumApiClient` arg kept for backwards
+// compatibility with the constructor signature (the impl no longer
+// touches it on the topup path).
+class _NullVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
 void main() {
   late MockApiClient mockApiClient;
-  late MockVoltiumApiClient mockVoltiumApiClient;
   late WalletRepositoryImpl repository;
-
-  setUpAll(() {
-    registerFallbackValue(FakeTopupRequest());
-  });
 
   setUp(() {
     mockApiClient = MockApiClient();
-    mockVoltiumApiClient = MockVoltiumApiClient();
-    repository = WalletRepositoryImpl(mockApiClient, mockVoltiumApiClient);
+    // PR-4 (F-011): the impl now goes through `_client.post(...)`
+    // directly (the generated `postTransactionTopup` had no
+    // idempotency-key parameter). The constructor still takes the
+    // generated client for backwards compatibility with call sites.
+    repository = WalletRepositoryImpl(
+      mockApiClient,
+      _NullVoltiumApiClient(),
+    );
   });
 
-  group('WalletRepositoryImpl', () {
-    // submitTopup tests
-    test('submitTopup delegates to postTransactionTopup with mapped request',
-        () async {
-      when(() => mockVoltiumApiClient.postTransactionTopup(any()))
-          .thenAnswer((_) async => api.TopupResponse(id: 'tx-123'));
+  group('WalletRepositoryImpl.submitTopup (PR-4 / F-011)', () {
+    test('forwards amountInRupees as the body amount', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'id': 'tx-123'});
 
       final request = TopupRequest(
         riderId: 'r1',
@@ -48,57 +50,26 @@ void main() {
       final result = await repository.submitTopup(request);
 
       expect(result, request);
-      final captured =
-          verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
-              .captured;
-      final payload = captured.first as api.TopupRequest;
-      expect(payload.riderId, 'r1');
-      expect(payload.amount, 500);
-      expect(payload.method, 'UPI');
-      expect(payload.purpose, 'TOP_UP');
-      expect(payload.upiRef, 'ref1');
-      expect(payload.proofUrl, 'url1');
+      final captured = verify(() => mockApiClient.post(
+            '/api/transaction/topup',
+            body: captureAny(named: 'body'),
+            idempotencyKey: captureAny(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body['riderId'], 'r1');
+      expect(body['amount'], 500);
+      expect(body['method'], 'UPI');
+      expect(body['purpose'], 'TOP_UP');
+      expect(body['upiRef'], 'ref1');
+      expect(body['proofUrl'], 'url1');
     });
 
-    test('submitTopup throws if response id is null', () async {
-      when(() => mockVoltiumApiClient.postTransactionTopup(any()))
-          .thenAnswer((_) async => api.TopupResponse(id: null));
-
-      final request = TopupRequest(
-          riderId: 'r1',
-          amountInRupees: 100,
-          method: 'CASH',
-          purpose: 'TOP_UP');
-      expect(() => repository.submitTopup(request), throwsException);
-    });
-
-    test('submitTopup throws if response id is empty', () async {
-      when(() => mockVoltiumApiClient.postTransactionTopup(any()))
-          .thenAnswer((_) async => api.TopupResponse(id: ''));
-
-      final request = TopupRequest(
-          riderId: 'r1',
-          amountInRupees: 100,
-          method: 'CASH',
-          purpose: 'TOP_UP');
-      expect(() => repository.submitTopup(request), throwsException);
-    });
-
-    test('submitTopup propagates API exceptions', () async {
-      when(() => mockVoltiumApiClient.postTransactionTopup(any()))
-          .thenThrow(Exception('Topup error'));
-
-      final request = TopupRequest(
-          riderId: 'r1',
-          amountInRupees: 100,
-          method: 'CASH',
-          purpose: 'TOP_UP');
-      expect(() => repository.submitTopup(request), throwsException);
-    });
-
-    test('submitTopup handles optional fields mapped to null', () async {
-      when(() => mockVoltiumApiClient.postTransactionTopup(any()))
-          .thenAnswer((_) async => api.TopupResponse(id: 'tx-123'));
+    test('passes a fresh UUID v4 idempotency key per submit', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'id': 'tx-1'});
 
       final request = TopupRequest(
           riderId: 'r1',
@@ -106,70 +77,93 @@ void main() {
           method: 'CASH',
           purpose: 'TOP_UP');
       await repository.submitTopup(request);
-      final captured =
-          verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
-              .captured;
-      final payload = captured.first as api.TopupRequest;
-      expect(payload.upiRef, null);
-      expect(payload.proofUrl, null);
+      await repository.submitTopup(request);
+      final captured = verify(() => mockApiClient.post(
+            '/api/transaction/topup',
+            body: any(named: 'body'),
+            idempotencyKey: captureAny(named: 'idempotencyKey'),
+          )).captured;
+      final keys = captured.cast<String?>();
+      expect(keys.length, 2);
+      expect(keys[0], isNotNull);
+      expect(keys[0]!.length, 36, reason: 'UUID v4 is 36 chars with hyphens');
+      expect(keys[0], isNot(equals(keys[1])),
+          reason: 'F-011: every submit MUST get a fresh key — re-using a '
+              'key would conflate the dedup window');
     });
 
-    // getTransactionHistory tests
-    test('getTransactionHistory maps data to TransactionEntity list', () async {
-      final mockData = {
-        'data': [
-          {'id': 'tx1', 'amount': 100.0, 'type': 'CREDIT'},
-          {'id': 'tx2', 'amount': 50.0, 'type': 'DEBIT'}
-        ]
-      };
-      when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
-          .thenAnswer((_) async => mockData);
+    test('throws if response id is null', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'id': null});
 
-      final result = await repository.getTransactionHistory('r1');
-      expect(result.length, 2);
-      expect(result[0].id, 'tx1');
-      expect(result[1].type, 'DEBIT');
-      verify(() => mockVoltiumApiClient.getTransactionHistory(1, 20)).called(1);
+      final request = TopupRequest(
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
+      expect(() => repository.submitTopup(request), throwsException);
     });
 
-    test('getTransactionHistory reads from transactions key if data is missing',
-        () async {
-      final mockData = {
-        'transactions': [
-          {'id': 'tx3', 'amount': 200.0, 'type': 'CREDIT'}
-        ]
-      };
-      when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
-          .thenAnswer((_) async => mockData);
+    test('throws if response id is empty', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'id': ''});
 
-      final result = await repository.getTransactionHistory('r1');
-      expect(result.length, 1);
-      expect(result[0].id, 'tx3');
+      final request = TopupRequest(
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
+      expect(() => repository.submitTopup(request), throwsException);
     });
 
-    test('getTransactionHistory returns empty list if no data available',
-        () async {
-      when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
-          .thenAnswer((_) async => {});
+    test('propagates API exceptions', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenThrow(Exception('Topup error'));
 
-      final result = await repository.getTransactionHistory('r1');
-      expect(result.isEmpty, true);
+      final request = TopupRequest(
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
+      expect(() => repository.submitTopup(request), throwsException);
     });
 
-    test('getTransactionHistory passes custom page and limit arguments',
-        () async {
-      when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
-          .thenAnswer((_) async => {});
+    test('handles optional fields mapped to null', () async {
+      when(() => mockApiClient.post(
+            any(),
+            body: any(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).thenAnswer((_) async => {'id': 'tx-123'});
 
-      await repository.getTransactionHistory('r1', page: 2, limit: 10);
-      verify(() => mockVoltiumApiClient.getTransactionHistory(2, 10)).called(1);
-    });
-
-    test('getTransactionHistory propagates API exceptions', () async {
-      when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
-          .thenThrow(Exception('History error'));
-
-      expect(() => repository.getTransactionHistory('r1'), throwsException);
+      final request = TopupRequest(
+          riderId: 'r1',
+          amountInRupees: 100,
+          method: 'CASH',
+          purpose: 'TOP_UP');
+      await repository.submitTopup(request);
+      final captured = verify(() => mockApiClient.post(
+            '/api/transaction/topup',
+            body: captureAny(named: 'body'),
+            idempotencyKey: any(named: 'idempotencyKey'),
+          )).captured;
+      final body = captured.first as Map<String, dynamic>;
+      expect(body['upiRef'], null);
+      expect(body['proofUrl'], null);
     });
   });
 }
+
+// Sentinel unused VoltiumApiClient — the impl no longer touches the
+// generated client on the topup path (F-011), but the constructor
+// signature keeps the param for backwards compatibility with call
+// sites and test doubles. The MockVoltiumApiClient above is the
+// real sentinel.

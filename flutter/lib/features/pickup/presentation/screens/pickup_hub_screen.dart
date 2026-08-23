@@ -754,6 +754,15 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         final entry = _photos[type]!;
         setState(() {
           entry.imagePath = null;
+          // PR-9 (F-074 — 2026-08-22 deep audit): the previous
+          // error path only cleared `imagePath` but left the
+          // stale `photoUrl` from a prior successful upload on
+          // the entry. On retry, the form would then submit
+          // BOTH a new local file AND the stale remote URL,
+          // which the server's `syncPickup` interprets as a
+          // duplicated-photo signal. Clear both on failure so
+          // a retry always starts from a clean slate.
+          entry.photoUrl = null;
           entry.isUploading = false;
         });
         _showError(

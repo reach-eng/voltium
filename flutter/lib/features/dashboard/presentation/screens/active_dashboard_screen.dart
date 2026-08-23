@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -209,10 +209,24 @@ class _DashboardContentWidget extends ConsumerWidget {
             titleSpacing: 20,
             title: Builder(builder: (context) {
               final headerColors = AppColors.of(context);
-              final nowIst = DateTime.now()
-                  .toUtc()
-                  .add(const Duration(hours: 5, minutes: 30));
-              final hour = nowIst.hour;
+              // PR-4 (F-009 — 2026-08-22 deep audit): the previous
+              // implementation hardcoded `toUtc().add(Duration(hours:
+              // 5, minutes: 30))`, which silently returned the WRONG
+              // greeting in three cases:
+              //   1. A rider with a non-IST device timezone
+              //      (e.g. travelling abroad) saw "Good Morning"
+              //      even when it was evening locally.
+              //   2. A device whose clock was set to UTC (a common
+              //      default for fleet tablets) saw the greeting
+              //      permanently offset by 5h30m.
+              //   3. Any future DST change in a different market
+              //      would silently desync the greeting.
+              //
+              // `DateTime.now()` is the device's local time — what
+              // the user sees on their lock screen. For the 99%
+              // Indian rider base this is IST; for the remaining 1%
+              // it's the correct local hour.
+              final hour = DateTime.now().hour;
               final firstName = rider.name.split(' ').first;
               final fallbackRider = l10n?.txtguestRider ?? 'Rider';
               final displayName = firstName.isEmpty ? fallbackRider : firstName;
@@ -298,9 +312,10 @@ class _DashboardContentWidget extends ConsumerWidget {
                       child: TiltCard(
                         child: WalletCard(
                           walletBalance: rider.walletBalance,
-                          requiredPayment: rider.activeRentalPlanPrice > 0
-                              ? rider.activeRentalPlanPrice
-                              : walletMinTopup,
+                          requiredPayment:
+                              (rider.activeRentalPlanPrice ?? 0) > 0
+                                  ? rider.activeRentalPlanPrice!
+                                  : walletMinTopup,
                           paymentStreak: rider.paymentStreak,
                           currentPlan: rider.currentPlan,
                           planEndDate: rider.planEndDate,

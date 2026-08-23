@@ -367,7 +367,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         key: const ValueKey('topUpAmount'),
         initialAmount: topUpAmount > 0 ? topUpAmount : null,
         securityDeposit: rider?.activeRentalPlanSecurityDeposit.toInt(),
-        rentalPrice: rider?.activeRentalPlanPrice.toInt(),
+        rentalPrice: rider?.activeRentalPlanPrice?.toInt(),
         onBack: () => state._navigateToLocal(
           // PR-ONBOARDING-FLOW-2026-08-13: onboarding back returns to
           // plan selection; dashboard back returns to the dashboard.

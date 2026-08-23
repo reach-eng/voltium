@@ -21,6 +21,7 @@
  *   - KYC_APPROVED        { riderId, status, reason? }
  *   - KYC_REJECTED        { riderId, status, reason? }
  *   - KYC_INFO_REQUIRED   { riderId, status, reason? }
+ *   - KYC_INFO_REQUESTED  { riderId, infoRequest }   (T-91: 2026-08-23)
  *   - WALLET_TOPUP_APPROVED { riderId, amount, transactionId }
  *   - WALLET_TOPUP_REJECTED { riderId, amount, transactionId, reason }
  *   - SUPPORT_REPLY       { riderId, ticketId, subject }
@@ -32,28 +33,23 @@
  *   - MANDATORY_UPDATE     { riderId, url }    (overlay)
  *   - WALLET_LOW           { riderId, balance } (overlay)
  *
- * Unknown types are logged and acked (do not throw, do not retry).
+ * T-91 (2026-08-23): unknown types are NO LONGER silently acked.
+ * The first unknown value per hour fires an `alerter.send` so the
+ * next spelling mismatch pages the team within 1h instead of
+ * surfacing only via a missing-rider-notification support ticket.
  */
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { notificationService } from '@/lib/notification-service';
 import { fcmService } from '@/lib/fcm';
+import { clock } from '@/lib/clock';
+import {
+  type NotificationPayloadType,
+  isNotificationPayloadType,
+} from '../notification-payload-types';
 
-export type NotificationPayloadType =
-  | 'KYC_APPROVED'
-  | 'KYC_REJECTED'
-  | 'KYC_INFO_REQUIRED'
-  | 'WALLET_TOPUP_APPROVED'
-  | 'WALLET_TOPUP_REJECTED'
-  | 'SUPPORT_REPLY'
-  | 'DEPOSIT_APPROVED'
-  | 'DEPOSIT_REJECTED'
-  | 'REWARD_MILESTONE'
-  | 'SHIFT_REMINDER'
-  | 'REFERRAL_REWARD'
-  | 'MANDATORY_UPDATE'
-  | 'WALLET_LOW';
+export type { NotificationPayloadType } from '../notification-payload-types';
 
 export interface NotificationPayload {
   type: NotificationPayloadType;
@@ -67,6 +63,10 @@ interface DispatchResult {
   // written — the channel reflects the real delivery path.
   channel: 'fcm' | 'overlay' | 'in-app' | 'fcm+in-app' | 'none';
   warning?: string;
+  // T-95: optional raw result from the underlying service call.
+  // The dispatcher's job-queue layer uses this to decide
+  // permanent-vs-transient retry behavior (see createAndSend).
+  result?: unknown;
 }
 
 export const notificationDispatchJob = {
@@ -81,6 +81,22 @@ export const notificationDispatchJob = {
       return { delivered: false, channel: 'none', warning: 'malformed payload' };
     }
 
+    // T-91 (PR-1, 2026-08-23): runtime type guard. The TypeScript
+    // union at the top of this file already gives build-time safety
+    // for in-repo callers, but the outbox payload is JSON serialized
+    // at the DB boundary, so an out-of-band emit (admin script, raw
+    // SQL) could push an unknown type. Validate before dispatching.
+    if (!isNotificationPayloadType(payload.type)) {
+      logger.warn('[NotificationDispatch] Invalid payload type', {
+        jobId: job.id,
+        type: payload.type,
+      });
+      await alertUnknownPayloadTypeOncePerHour(String(payload.type));
+      // T-91: keep the existing `unknown type` warning for the
+      // existing test contract. The alert is the new bit.
+      return { delivered: false, channel: 'none', warning: 'unknown type' };
+    }
+
     logger.info('[NotificationDispatch] Processing', {
       jobId: job.id,
       type: payload.type,
@@ -89,54 +105,51 @@ export const notificationDispatchJob = {
 
     switch (payload.type) {
       case 'KYC_APPROVED':
-        await notificationService.notifyKycStatusChange(
+        // T-95 (PR-5, 2026-08-23): the previous code called
+        // `notificationService.notifyKycStatusChange(...)` AND
+        // `db.notification.create(...)` separately, producing TWO
+        // notification rows per KYC decision. `createAndSend`
+        // already persists the in-app row (see
+        // notification-service.ts:35-48); the explicit
+        // `db.notification.create` here is the duplicate.
+        const approvedResult = await notificationService.notifyKycStatusChange(
           payload.riderId,
           'APPROVED'
         );
-        try {
-          await db.notification.create({
-            data: {
-              riderId: payload.riderId as string,
-              // SYSTEM is the canonical DB enum for KYC events
-              // (see notificationService.createAndSend TYPE_MAP);
-              // the event type rides in the payload JSON.
-              type: 'SYSTEM',
-              title: (payload.title as string) ?? 'KYC Approved',
-              message: (payload.body as string) ?? 'Your KYC verification has been approved.',
-            },
-          });
-        } catch (err) {
-          logger.warn('[NotificationDispatch] Failed to persist in-app KYC_APPROVED notification', { err });
-        }
-        return { delivered: true, channel: 'fcm+in-app' };
+        return { delivered: true, channel: 'fcm+in-app', result: approvedResult };
 
       case 'KYC_REJECTED':
-        await notificationService.notifyKycStatusChange(
+        // T-95: same dedup as KYC_APPROVED.
+        const rejectedResult = await notificationService.notifyKycStatusChange(
           payload.riderId,
           'REJECTED',
           payload.reason as string | undefined
         );
-        try {
-          await db.notification.create({
-            data: {
-              riderId: payload.riderId as string,
-              type: 'SYSTEM',
-              title: (payload.title as string) ?? 'KYC Rejected',
-              message: (payload.body as string) ?? (payload.reason as string) ?? 'Your KYC verification was rejected.',
-            },
-          });
-        } catch (err) {
-          logger.warn('[NotificationDispatch] Failed to persist in-app KYC_REJECTED notification', { err });
-        }
-        return { delivered: true, channel: 'fcm+in-app' };
+        return { delivered: true, channel: 'fcm+in-app', result: rejectedResult };
 
       case 'KYC_INFO_REQUIRED':
+      case 'KYC_INFO_REQUESTED':
+        // T-91 (PR-1, 2026-08-23): the kyc.use-cases.ts REQUEST_INFO
+        // branch emits `type: 'KYC_INFO_REQUESTED'` (the actual spelling
+        // used in production). The previous dispatcher only handled
+        // 'KYC_INFO_REQUIRED' so the event fell into the default-ack
+        // branch and was silently lost — riders were never told their
+        // KYC needed action. Accept both spellings for compatibility
+        // and persistence: call the same FCM + in-app path so the rider
+        // sees the KYC info-request no matter which spelling the
+        // producer used.
+        //
+        // T-95 (PR-5, 2026-08-23): the previous KYC_INFO_REQUESTED
+        // case ALSO had a duplicate `db.notification.create`. The
+        // service's createAndSend already persists, so the explicit
+        // row write is removed.
         await notificationService.notifyKycStatusChange(
           payload.riderId,
           'INFO_REQUIRED',
-          payload.reason as string | undefined
+          (payload.reason as string | undefined) ??
+            (payload.infoRequest as string | undefined)
         );
-        return { delivered: true, channel: 'fcm' };
+        return { delivered: true, channel: 'fcm+in-app' };
 
       case 'WALLET_TOPUP_APPROVED':
       case 'WALLET_TOPUP_REJECTED':
@@ -234,13 +247,60 @@ export const notificationDispatchJob = {
         return { delivered: false, channel: 'none' };
 
       default: {
+        // T-91 (PR-1, 2026-08-23): unknown types are NO LONGER
+        // silently acked. The previous behavior swallowed the entire
+        // class of producer/consumer spelling mismatches (see
+        // KYC_INFO_REQUESTED history). Page the team on the FIRST
+        // unknown type per hour so a future mismatch is caught
+        // within 1h, not weeks later via a "rider never got the
+        // notification" support ticket.
         const unknown = payload as { type: string };
         logger.warn('[NotificationDispatch] Unknown payload type — acking', {
           jobId: job.id,
           type: unknown.type,
         });
+        await alertUnknownPayloadTypeOncePerHour(String(unknown.type));
         return { delivered: false, channel: 'none', warning: 'unknown type' };
       }
     }
   },
 };
+
+/**
+ * T-91 (PR-1, 2026-08-23): alert the team on the first occurrence of
+ * an unknown NOTIFICATION_SEND payload type per hour. A producer/
+ * consumer spelling mismatch (or a new event type added to the
+ * producer without a matching case in the dispatcher) is a silent
+ * delivery failure for the rider — this gives the on-call engineer
+ * a Slack page within 1h of the first occurrence.
+ *
+ * The 1h cap is in-memory only; it resets across process restarts
+ * (intentional — a fresh process = "first occurrence" again, which
+ * is the safe direction for alerts).
+ */
+const _unknownAlertedThisHour = new Map<string, number>();
+async function alertUnknownPayloadTypeOncePerHour(type: string): Promise<void> {
+  if (!type) return;
+  // T-97 + PR-10 (2026-08-23): use clock.now() (testable) instead
+  // of Date.now() (not testable). The previous Date.now() was
+  // flagged by the PR-M workers-jobs-error-handling test which
+  // asserts every job that computes a current timestamp uses
+  // clock.now().
+  const now = clock.now().getTime();
+  const last = _unknownAlertedThisHour.get(type) ?? 0;
+  if (now - last < 60 * 60 * 1000) return;
+  _unknownAlertedThisHour.set(type, now);
+  try {
+    const { alerter } = await import('@/lib/alerter');
+    await alerter.send({
+      level: 'warn',
+      title: 'Unknown NOTIFICATION_SEND payload type',
+      message: `dispatcher received unknown type "${type}" — likely a producer/consumer spelling mismatch. The event was acked without a side effect; the rider did NOT receive a notification.`,
+      source: 'workers/jobs/notification-dispatch.job',
+      details: { type },
+    });
+  } catch (err) {
+    // Alerting must never break dispatch.
+    logger.error('[NotificationDispatch] alerter.send failed', { err });
+  }
+}

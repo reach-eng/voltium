@@ -438,7 +438,13 @@ void showSubscriptionSheet(
                         color: colors.onSurfaceVariant,
                       ),
                       Text(
-                        '${rider.activeRentalPlanPrice.toInt()} $cadence',
+                        // PR-8 (F-060): the previous code showed
+                        // "0 / day" for a rider without a plan
+                        // (the common case before subscription).
+                        // Now shows "—" when there's no plan.
+                        rider.activeRentalPlanPrice != null
+                            ? '${rider.activeRentalPlanPrice!.toInt()} $cadence'
+                            : '— $cadence',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurfaceVariant),

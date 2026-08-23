@@ -189,7 +189,13 @@ void main() {
   // PR-47 (WALLET P1-1): the getter now reads the backend-joined
   // `currentPlanPrice` (already converted from paise in fromJson) instead
   // of the hardcoded AppConstants map — the server is the source of truth
-  // for plan pricing. Falls back to 0.0 when no price is available.
+  // for plan pricing.
+  //
+  // PR-8 (F-060 — 2026-08-22 deep audit): the previous return type
+  // was `double` with a `0.0` fallback. Now `double?` returning
+  // `null` for the no-plan case (a rider without a plan has no
+  // price, not a ₹0 price). Callers that want a numeric default
+  // `?? 0.0` at the call site.
   group('RiderModel.activeRentalPlanPrice', () {
     test('returns backend currentPlanPrice when set', () {
       final m = _base(currentPlanPrice: 1499.5);
@@ -211,9 +217,11 @@ void main() {
       expect(m.activeRentalPlanPrice, 250.0);
     });
 
-    test('null price → 0.0 (no backend price yet)', () {
+    test('null price → null (no plan, no price)', () {
+      // PR-8 (F-060): a rider with no plan has no price; the
+      // dashboard sheet now shows "—" instead of "₹0 / day".
       final m = _base(currentPlan: 'WEEKLY_MAX');
-      expect(m.activeRentalPlanPrice, 0.0);
+      expect(m.activeRentalPlanPrice, isNull);
     });
 
     test('unknown plan with price still uses the backend price', () {

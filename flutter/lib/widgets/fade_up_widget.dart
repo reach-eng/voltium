@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// A widget that implements a staggered 'fade up' entrance animation.
@@ -26,6 +28,12 @@ class _FadeUpWidgetState extends State<FadeUpWidget>
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<Offset> _slide;
+  // Use a cancellable [Timer] instead of [Future.delayed] so the
+  // pending delay can be cancelled in [dispose]. Otherwise the test
+  // framework complains "A Timer is still pending even after the
+  // widget tree was disposed." when a list with a high-index item
+  // is torn down before the delay fires.
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -53,17 +61,23 @@ class _FadeUpWidgetState extends State<FadeUpWidget>
     _startAnimation();
   }
 
-  Future<void> _startAnimation() async {
+  void _startAnimation() {
     final startDelay =
         Duration(milliseconds: (widget.index * widget.delay * 1000).toInt());
-    await Future.delayed(startDelay);
-    if (mounted) {
+    if (startDelay == Duration.zero) {
       _controller.forward();
+      return;
     }
+    _delayTimer = Timer(startDelay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

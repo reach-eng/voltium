@@ -81,8 +81,11 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   .rider
                   ?.activeRentalPlanSecurityDeposit
                   .toInt(),
-              rentalPrice:
-                  ref.watch(riderProvider).rider?.activeRentalPlanPrice.toInt(),
+              rentalPrice: ref
+                  .watch(riderProvider)
+                  .rider
+                  ?.activeRentalPlanPrice
+                  ?.toInt(),
               onBack: () => Navigator.pop(context),
               onAmountChanged: (amount) => setState(() => _amount = amount),
               onProceed: (amount) {

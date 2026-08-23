@@ -23,7 +23,7 @@ export const backupRepository = {
     return db.backupSchedule.create({ data });
   },
 
-  async markScheduleSuccess(id: string, lastRunAt: Date, nextRunAt: Date) {
+  async markScheduleSuccess(id: string, lastRunAt: Date, nextRunAt: Date | null) {
     return db.backupSchedule.update({
       where: { id },
       data: { lastRunAt, nextRunAt, lastStatus: 'COMPLETED', lastError: null },

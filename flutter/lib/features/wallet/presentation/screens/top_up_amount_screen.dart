@@ -110,8 +110,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
     final riderSecDeposit =
         rider != null ? rider.activeRentalPlanSecurityDeposit.toInt() : 0;
+    // PR-8 (F-060): nullable now — `?? 0` for the numeric
+    // arithmetic that follows.
     final riderPlanPrice =
-        rider != null ? rider.activeRentalPlanPrice.toInt() : 0;
+        rider != null ? (rider.activeRentalPlanPrice?.toInt() ?? 0) : 0;
 
     final secDeposit =
         (widget.securityDeposit != null && widget.securityDeposit! > 0)
@@ -138,7 +140,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   /// Resolved rent-price component for the breakdown card.
   int _rentPriceFor(RiderModel? rider) {
     final riderPlanPrice =
-        rider != null ? rider.activeRentalPlanPrice.toInt() : 0;
+        // PR-8 (F-060): nullable now — `?? 0` for the numeric
+        // arithmetic that follows.
+        rider != null ? (rider.activeRentalPlanPrice?.toInt() ?? 0) : 0;
     return (widget.rentalPrice != null && widget.rentalPrice! > 0)
         ? widget.rentalPrice!
         : riderPlanPrice;

@@ -4,7 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
-import 'dart:developer' as developer;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart' show appDebug;
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
@@ -24,8 +25,20 @@ class FCMService {
   static SupportProvider? _support;
   static RiderProvider? _rider;
   static StreamSubscription<RemoteMessage>? _foregroundSubscription;
-  static final Map<String, int> _seenSecurityChallenges = <String, int>{};
+
+  // PR-8 (F-062 — 2026-08-22 deep audit): the previous
+  // in-process-only map was reset on every process death, so a
+  // attacker who captured a valid `SECURITY_COMMAND` FCM could
+  // replay it 5+ minutes later (after the JWT TTL) by force-
+  // killing and re-launching the app. Persisted to SharedPreferences
+  // so the dedup window survives process restarts. Kept in
+  // SharedPreferences rather than SecureStorageService because
+  // (a) the entries are nonces (not credentials), and (b) the
+  // dedup window is short — they're pruned on every insert.
+  static const String _kSecurityChallengesKey = 'fcm_seen_security_challenges';
   static const _securityReplayWindow = Duration(minutes: 5);
+  static Map<String, int> _seenSecurityChallenges = <String, int>{};
+  static bool _seenSecurityChallengesLoaded = false;
 
   static String? _commandHmacSecret;
   static final _secureStorage = SecureStorageService();
@@ -68,13 +81,13 @@ class FCMService {
   }) async {
     final action = data['action'];
     if (action == null || action is! String || action.isEmpty) {
-      developer.log('FCM: Rejected payload with missing/invalid action');
+      appDebug('FCM: Rejected payload with missing/invalid action');
       return false;
     }
     final allowed =
         isSecurity ? _allowedSecurityActions : _allowedOverlayActions;
     if (!allowed.contains(action)) {
-      developer.log(
+      appDebug(
         'FCM: Rejected unknown ${isSecurity ? "security" : "overlay"} action: $action',
       );
       return false;
@@ -96,32 +109,32 @@ class FCMService {
 
     final secret = await _getCommandHmacSecret();
     if (secret == null || secret.isEmpty) {
-      developer.log('FCM: Rejected security command without HMAC secret');
+      appDebug('FCM: Rejected security command without HMAC secret');
       return false;
     }
 
     if (action == null || action is! String || action.isEmpty) {
-      developer.log('FCM: Rejected security command without action');
+      appDebug('FCM: Rejected security command without action');
       return false;
     }
 
     if (challenge == null || challenge is! String || challenge.isEmpty) {
-      developer.log('FCM: Rejected security command without challenge');
+      appDebug('FCM: Rejected security command without challenge');
       return false;
     }
 
     if (nonce == null || nonce is! String || nonce.isEmpty) {
-      developer.log('FCM: Rejected security command without nonce');
+      appDebug('FCM: Rejected security command without nonce');
       return false;
     }
 
     if (signature == null || signature is! String || signature.isEmpty) {
-      developer.log('FCM: Rejected security command without signature');
+      appDebug('FCM: Rejected security command without signature');
       return false;
     }
 
     if (ts == null || ts is! String || ts.isEmpty) {
-      developer.log('FCM: Rejected security command without timestamp');
+      appDebug('FCM: Rejected security command without timestamp');
       return false;
     }
 
@@ -131,14 +144,15 @@ class FCMService {
     );
     final age = DateTime.now().toUtc().difference(sentAt).abs();
     if (age > _securityReplayWindow) {
-      developer.log('FCM: Rejected stale security command');
+      appDebug('FCM: Rejected stale security command');
       return false;
     }
 
     final replayKey = '$nonce:$challenge:$ts';
+    await _loadSeenChallenges();
     pruneExpiredChallenges();
     if (_seenSecurityChallenges.containsKey(replayKey)) {
-      developer.log('FCM: Rejected replayed security command');
+      appDebug('FCM: Rejected replayed security command');
       return false;
     }
 
@@ -148,20 +162,61 @@ class FCMService {
     ).convert(utf8.encode('$action.$ts.$nonce.$challenge')).toString();
 
     if (!constantTimeEquals(signature, expectedSignature)) {
-      developer.log('FCM: Rejected security command with invalid signature');
+      appDebug('FCM: Rejected security command with invalid signature');
       return false;
     }
 
     _seenSecurityChallenges[replayKey] = DateTime.now().millisecondsSinceEpoch;
+    await _persistSeenChallenges();
 
     return true;
   }
 
   @visibleForTesting
-  static void pruneExpiredChallenges() {
+  static Future<void> pruneExpiredChallenges() async {
     final cutoff = DateTime.now().millisecondsSinceEpoch -
         _securityReplayWindow.inMilliseconds;
     _seenSecurityChallenges.removeWhere((_, added) => added < cutoff);
+    // PR-8 (F-062): persist after pruning so the on-disk copy
+    // doesn't grow unbounded.
+    await _persistSeenChallenges();
+  }
+
+  /// PR-8 (F-062): lazy-load the seen-challenges map from
+  /// SharedPreferences. The first replay check on a fresh
+  /// process triggers this; subsequent calls hit the in-memory
+  /// cache. Worst-case the load is a single SharedPreferences
+  /// string-decode on the FCM hot path.
+  static Future<void> _loadSeenChallenges() async {
+    if (_seenSecurityChallengesLoaded) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kSecurityChallengesKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          _seenSecurityChallenges = decoded.map(
+            (k, v) => MapEntry(k.toString(), (v as num).toInt()),
+          );
+        }
+      }
+    } catch (e) {
+      appDebug('FCM: failed to load seen challenges: $e');
+    } finally {
+      _seenSecurityChallengesLoaded = true;
+    }
+  }
+
+  static Future<void> _persistSeenChallenges() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _kSecurityChallengesKey,
+        jsonEncode(_seenSecurityChallenges),
+      );
+    } catch (e) {
+      appDebug('FCM: failed to persist seen challenges: $e');
+    }
   }
 
   @visibleForTesting
@@ -215,7 +270,7 @@ class FCMService {
     _rider = rider;
 
     if (PlatformInfo.isWeb) {
-      developer.log('FCM: Initialization skipped on web');
+      appDebug('FCM: Initialization skipped on web');
       return;
     }
 
@@ -235,7 +290,7 @@ class FCMService {
     await _foregroundSubscription?.cancel();
     _foregroundSubscription =
         FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      developer.log('Foreground message received: ${message.data}');
+      appDebug('Foreground message received: ${message.data}');
       final data = message.data;
       if (data['type'] == 'SECURITY_COMMAND' &&
           await validatePayload(data, isSecurity: true)) {
@@ -252,7 +307,7 @@ class FCMService {
         // unsubscribe (so the backend stops sending to this token) is
         // future work.
         if (!NotificationService().notificationsEnabled) {
-          developer.log(
+          appDebug(
             'FCM: Overlay presentation suppressed (push disabled by user): ${data['action']}',
           );
           return;
@@ -271,7 +326,7 @@ class FCMService {
         if (newToken.isNotEmpty) _syncTokenToBackend(newToken);
       });
     } catch (e) {
-      developer.log('FCM: Token retrieval failed: $e');
+      appDebug('FCM: Token retrieval failed: $e');
     }
   }
 
@@ -279,9 +334,9 @@ class FCMService {
     try {
       await VoltiumApiClient(ApiClient())
           .postRidersRegisterToken({'fcmToken': token});
-      developer.log('FCM: Token synced to backend successfully');
+      appDebug('FCM: Token synced to backend successfully');
     } catch (e) {
-      developer.log('FCM: Failed to sync token to backend: $e');
+      appDebug('FCM: Failed to sync token to backend: $e');
     }
   }
 
@@ -300,7 +355,7 @@ class FCMService {
     final data = message.data;
     if (data['type'] == 'SECURITY_COMMAND') {
       final action = data['action'];
-      developer.log('Security command received: $action');
+      appDebug('Security command received: $action');
 
       try {
         if (action == 'ADMIN_LOCK') {
@@ -336,7 +391,7 @@ class FCMService {
           }
         }
       } on PlatformException catch (e) {
-        developer.log('Error executing security command: ${e.message}');
+        appDebug('Error executing security command: ${e.message}');
       }
     }
   }
@@ -345,7 +400,7 @@ class FCMService {
   static void handleOverlayTrigger(RemoteMessage message) {
     final data = message.data;
     final action = data['action'];
-    developer.log('Overlay trigger received: $action');
+    appDebug('Overlay trigger received: $action');
 
     if (action == 'MANDATORY_UPDATE') {
       final url = data['url'];
@@ -375,7 +430,7 @@ class FCMService {
     try {
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
-      developer.log('Error getting FCM token: $e');
+      appDebug('Error getting FCM token: $e');
       return null;
     }
   }
@@ -388,7 +443,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (token != null) {
     BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   }
-  developer.log('Background message received: ${message.data}');
+  appDebug('Background message received: ${message.data}');
 
   final data = message.data;
   final isSecurity = data['type'] == 'SECURITY_COMMAND';
@@ -396,13 +451,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final action = data['action'];
 
   if (action == null || action is! String || action.isEmpty) {
-    developer
-        .log('FCM background: Rejected payload with missing/invalid action');
+    appDebug('FCM background: Rejected payload with missing/invalid action');
     return;
   }
 
   if (isSecurity && !FCMService._allowedSecurityActions.contains(action)) {
-    developer.log('FCM background: Rejected unknown security action: $action');
+    appDebug('FCM background: Rejected unknown security action: $action');
     return;
   }
 
@@ -411,7 +465,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 
   if (isOverlay && !FCMService._allowedOverlayActions.contains(action)) {
-    developer.log('FCM background: Rejected unknown overlay action: $action');
+    appDebug('FCM background: Rejected unknown overlay action: $action');
     return;
   }
 
@@ -421,24 +475,24 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     try {
       if (action == 'UNLOCK_DEVICE') {
         await SecureStorageService().setDeviceLocked(false);
-        developer.log('UNLOCK_DEVICE received in background');
+        appDebug('UNLOCK_DEVICE received in background');
       } else if (action == 'ADMIN_LOCK') {
         await SecureStorageService().setDeviceLocked(true);
         await channel.invokeMethod('lockDevice');
       } else if (action == 'DISABLE_CAMERA') {
-        developer.log('DISABLE_CAMERA received in background');
+        appDebug('DISABLE_CAMERA received in background');
       } else if (action == 'ENABLE_CAMERA') {
-        developer.log('ENABLE_CAMERA received in background');
+        appDebug('ENABLE_CAMERA received in background');
       } else if (action == 'ENFORCE_PASSCODE') {
-        developer.log('ENFORCE_PASSCODE received in background');
+        appDebug('ENFORCE_PASSCODE received in background');
       } else if (action == 'CHECK_LOCATION_INTEGRITY') {
-        developer.log('CHECK_LOCATION_INTEGRITY received in background');
+        appDebug('CHECK_LOCATION_INTEGRITY received in background');
       } else if (action == 'PERSIST_APP') {
-        developer.log('PERSIST_APP received in background');
+        appDebug('PERSIST_APP received in background');
       } else if (action == 'ENFORCE_LOCATION') {
-        developer.log('ENFORCE_LOCATION received in background');
+        appDebug('ENFORCE_LOCATION received in background');
       } else if (action == 'RESTRICT_APPS_CONTROL') {
-        developer.log('RESTRICT_APPS_CONTROL received in background');
+        appDebug('RESTRICT_APPS_CONTROL received in background');
       } else if (action == 'FACTORY_RESET') {
         await channel.invokeMethod('factoryReset');
       } else if (action == 'SYNC_DEVICE_DATA') {
@@ -448,7 +502,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         }
       }
     } catch (e) {
-      developer.log('Error in background security command: $e');
+      appDebug('Error in background security command: $e');
     }
   }
 }

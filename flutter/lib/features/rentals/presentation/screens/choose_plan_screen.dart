@@ -255,11 +255,14 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     );
   }
 
-  /// AUDIT FIX (LOW): extracted the old inline "name contains monthly/
-  /// elite" heuristic into a named helper. TODO(server): replace with a
-  /// server-provided flag (e.g. `plan.isBestValue`) once the backend
-  /// exposes one — name matching silently breaks on renames/i18n.
+  /// PR-7 (F-033 — 2026-08-22 deep audit): the old name-substring
+  /// heuristic (`name.contains('monthly') || name.contains('elite')`)
+  /// silently broke on plan renames and on Hindi-locale plan names.
+  /// The server now exposes a `bestValue: boolean` flag. The
+  /// heuristic is kept as a fallback so the rider UI still works
+  /// against a server that hasn't shipped the new field yet.
   bool _isBestValuePlan(PlanModel plan) {
+    if (plan.bestValue) return true;
     final name = plan.name.toLowerCase();
     return name.contains('monthly') || name.contains('elite');
   }

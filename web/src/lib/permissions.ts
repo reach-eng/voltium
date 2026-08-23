@@ -74,10 +74,22 @@ export function hasPermission(
 
     if (effectiveRole === 'SUPER_ADMIN') return true;
 
-    // Explicit permissions from the session take precedence over role-based lookup
+    // Admin Panel Phase 1 P0-03 (2026-08-23): explicit
+    // permissions are ADDITIVE — they supplement (not replace)
+    // the role's base permissions. The previous implementation
+    // short-circuited to "explicit perms only", which silently
+    // stripped a role's base permissions as soon as ANY
+    // `adminPermissions` field was set. The new contract:
+    //   1. Check the explicit `adminPermissions` array.
+    //   2. If not in the array, fall through to the role-based
+    //      lookup — the rider keeps their base permissions
+    //      unless explicitly revoked.
+    // This is the additive-granular pattern required by
+    // P0-03 ("Additive Granular Custom Permissions").
     const perms = session.adminPermissions || (session as any).permissions;
     if (perms && Array.isArray(perms) && perms.length > 0) {
-      return perms.includes(permission);
+      if (perms.includes(permission)) return true;
+      // Fall through to role-based lookup.
     }
 
     // Fall back to role-based lookup
@@ -106,21 +118,52 @@ export function getPermissionsForRole(role: string): Permission[] {
  * Parse an admin's permissions column into a string[].
  *
  * The DB column stores a JSON string (e.g. `'["riders_view"]'`); older
- * rows/tests may hold an already-parsed array. Any other input yields []
- * (P0-6: replaces the fragile try/catch + dead-branch logic in getMe).
+ * rows/tests may hold an already-parsed array, and routes that
+ * ingest external data may have written a comma-separated list.
+ * The matrix of accepted inputs:
+ *
+ *   `["a","b"]` (JSON string array)    → `['a', 'b']`
+ *   `a,b,c`     (comma-separated list)  → `['a', 'b', 'c']`
+ *   `['a','b']` (already-parsed array)  → `['a', 'b']`
+ *   `42`, `{"a":1}`, `{bad json`        → `[]`  (corrupt; not recoverable)
+ *   `null`, `undefined`, `''`            → `[]`
+ *
+ * Admin Panel Phase 1 (2026-08-23): the previous implementation
+ * tried JSON.parse first and unconditionally fell through to a
+ * comma split on failure. That made every unparseable token
+ * surface as a phantom permission (`'{bad json'` →
+ * `['{bad json']`), which then authenticated as an unknown
+ * permission key. The fix: a JSON-parse failure only falls
+ * through to the comma-list branch if the input *looks like* a
+ * list (contains a comma); otherwise the input is rejected as
+ * garbage. JSON-parse-success-but-not-array is also rejected.
  */
 export function parsePermissions(raw: string | string[] | null | undefined): string[] {
   if (Array.isArray(raw)) {
     return raw.filter((p): p is string => typeof p === 'string');
   }
   if (typeof raw !== 'string' || raw.length === 0) return [];
+  const trimmed = raw.trim();
+
+  // Try JSON first. Accept only an array of strings.
   try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter((p): p is string => typeof p === 'string')
-      : [];
-  } catch {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((p): p is string => typeof p === 'string');
+    }
+    // Parsed as JSON but wasn't an array (number, object, string,
+    // null, boolean) — corrupt. Reject.
     return [];
+  } catch {
+    // Not valid JSON. Try the comma-separated form only if the
+    // string *looks like* a list (contains a comma). A bare
+    // token that isn't valid JSON is garbage (e.g. `'{bad json'`),
+    // not a one-element list — reject it.
+    if (!trimmed.includes(',')) return [];
+    return trimmed
+      .split(',')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
   }
 }
 

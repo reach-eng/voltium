@@ -25,7 +25,7 @@
 //     startIntegrityCheck, clearViolation, logout
 
 import 'dart:async';
-import 'dart:developer' show log;
+import 'package:voltium_rider/utils/app_logger.dart' show appDebug;
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
@@ -124,7 +124,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     try {
       await _platform.invokeMethod('isDeviceAdminActive');
     } catch (e) {
-      log('DevicePolicyProvider: MethodChannel self-check failed: $e');
+      appDebug('DevicePolicyProvider: MethodChannel self-check failed: $e');
     }
   }
 
@@ -135,11 +135,11 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
       state = state.copyWith(lockedByAdmin: locked);
       if (locked && Platform.isAndroid) {
         _platform.invokeMethod('startLockTaskMode').catchError((e) {
-          log('Failed to startLockTaskMode: $e');
+          appDebug('Failed to startLockTaskMode: $e');
         });
       }
     } catch (e) {
-      log('DevicePolicyProvider: Failed to initialize lock state: $e');
+      appDebug('DevicePolicyProvider: Failed to initialize lock state: $e');
     }
   }
 
@@ -199,14 +199,14 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     if (!PlatformInfo.isWeb && Platform.isAndroid) {
       if (locked) {
         _platform.invokeMethod('startLockTaskMode').catchError((e) {
-          log('Failed to startLockTaskMode: $e');
+          appDebug('Failed to startLockTaskMode: $e');
         });
         _platform.invokeMethod('lockDevice').catchError((e) {
-          log('Failed to lockDevice: $e');
+          appDebug('Failed to lockDevice: $e');
         });
       } else {
         _platform.invokeMethod('stopLockTaskMode').catchError((e) {
-          log('Failed to stopLockTaskMode: $e');
+          appDebug('Failed to stopLockTaskMode: $e');
         });
       }
     }
@@ -220,7 +220,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
       final active = result is bool ? result : false;
       state = state.copyWith(isAdminActive: active);
     } catch (e) {
-      log('Error checking system permissions: $e');
+      appDebug('Error checking system permissions: $e');
     }
   }
 
@@ -230,7 +230,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     try {
       await _platform.invokeMethod('requestDeviceAdmin');
     } catch (e) {
-      log('Error requesting device admin: $e');
+      appDebug('Error requesting device admin: $e');
     }
   }
 
@@ -291,7 +291,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
         setLockedByAdmin(false);
       }
     } catch (e) {
-      log('DevicePolicyProvider: Security flag poll failed: $e');
+      appDebug('DevicePolicyProvider: Security flag poll failed: $e');
     }
   }
 
@@ -331,7 +331,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
 
       _onIntegrityResult(locationOk && cameraOk);
     } catch (e) {
-      log('DevicePolicyProvider: Integrity check failed: $e');
+      appDebug('DevicePolicyProvider: Integrity check failed: $e');
       _onIntegrityResult(false);
     }
   }
@@ -382,7 +382,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
         },
       );
     } catch (e) {
-      log('DevicePolicyProvider: Violation report failed: $e');
+      appDebug('DevicePolicyProvider: Violation report failed: $e');
     }
   }
 

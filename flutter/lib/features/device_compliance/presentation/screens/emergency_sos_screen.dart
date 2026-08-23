@@ -163,6 +163,8 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
       if (dialed) {
         Toast.info(
           context,
+          // PR-5 (F-024): hardcoded fallback string replaced with
+          // the existing `txtsosAlertTriggeredDialing` ARB key.
           AppLocalizations.of(context)?.txtsosAlertTriggeredDialing ??
               'SOS alert triggered, dialing...',
         );
@@ -249,7 +251,11 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
             ),
             SizedBox(height: 24),
             Text(
-              'Press and hold to trigger an emergency alert',
+              // PR-5 (F-024 — 2026-08-22 deep audit): hardcoded
+              // English helper text. Localised via the
+              // `txtsosHoldHint` ARB key.
+              AppLocalizations.of(context)?.txtsosHoldHint ??
+                  'Press and hold to trigger an emergency alert',
               style: GoogleFonts.plusJakartaSans(
                   color: AppColors.of(context).onSurfaceVariant, fontSize: 16),
             ),
@@ -411,13 +417,16 @@ class _SosSendingOverlay extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sending SOS...',
+              // PR-5 (F-024): Localised via `txtsosSending`.
+              AppLocalizations.of(context)?.txtsosSending ?? 'Sending SOS...',
               style: AppTypography.titleMedium
                   .copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Sharing your location with Voltium and dialing 112.',
+              // PR-5 (F-024): Localised via `txtsosSharingLocation`.
+              AppLocalizations.of(context)?.txtsosSharingLocation ??
+                  'Sharing your location with Voltium and dialing 112.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,

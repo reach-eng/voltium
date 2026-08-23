@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 import '../utils/app_logger.dart';
 import '../core/observability/posthog_service.dart';
 
@@ -95,14 +99,22 @@ class MonitoringService {
   }
 
   /// Identify the current user. Forwarded to PostHog with a
-  /// hashed riderId so the PostHog dashboard can join events
+  /// SHA-256-hashed riderId so the PostHog dashboard can join events
   /// across sessions for the same rider without storing the raw
   /// identifier.
+  ///
+  /// PR-8 (F-053 — 2026-08-22 deep audit): the previous
+  /// implementation used Dart's `String.hashCode`, which is a 32-bit
+  /// int on the web (and a 64-bit int on the VM). A 32-bit hash has
+  /// ~4.3B buckets — at 1M MAU a rider has a 12% chance of
+  /// collision; the PostHog dashboard would then group two
+  /// unrelated riders' events. SHA-256 is 64 hex chars (256 bits)
+  /// so the collision probability is effectively zero.
   static Future<void> identifyUser(
     String userId, {
     Map<String, dynamic>? properties,
   }) async {
-    final hashed = userId.hashCode.toString();
+    final hashed = sha256.convert(utf8.encode(userId)).toString();
     final safeProps = properties?.map(
       (k, v) => MapEntry(k, v as Object),
     );

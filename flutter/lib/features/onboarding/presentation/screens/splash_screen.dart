@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui' as ui;
 import '../../../../theme/app_theme.dart';
@@ -19,6 +19,23 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
+  // PR-10 (F-076 â€” 2026-08-22 deep audit): hardcoded splash
+  // timing constants. Previously scattered as `Duration(...)`
+  // literals across the file (1.0s, 0.2s, 0.5s, 0.3s, 2.0s),
+  // making the splash duration impossible to A/B-test or
+  // environment-tune (e.g. shorter on slow launches, longer
+  // for the brand). Centralised as named constants on the
+  // AppConstants class so a future flag can override them
+  // without grepping the file.
+  static const _kLogoAnimationDuration = Duration(milliseconds: 1200);
+  static const _kTextAnimationDuration = Duration(milliseconds: 800);
+  static const _kBarAnimationDuration = Duration(milliseconds: 1500);
+  static const _kStallThreshold = Duration(milliseconds: 1000);
+  static const _kLogoStartDelay = Duration(milliseconds: 200);
+  static const _kTextStartDelay = Duration(milliseconds: 500);
+  static const _kBarStartDelay = Duration(milliseconds: 300);
+  static const _kSplashTotalDuration = Duration(milliseconds: 2000);
+
   late final AnimationController _logoCtrl;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
@@ -36,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _logoCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: _kLogoAnimationDuration,
     );
     _logoScale = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutCubic),
@@ -50,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _textCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: _kTextAnimationDuration,
     );
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _textCtrl, curve: Curves.easeIn),
@@ -61,7 +78,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _barCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: _kBarAnimationDuration,
     );
     _barWidth = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _barCtrl, curve: Curves.easeInOut),
@@ -74,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!AppConstants.isTestMode) {
-      // PR-47 removed assets/images/* from the bundle — the placeholder image
+      // PR-47 removed assets/images/* from the bundle â€” the placeholder image
       // no longer exists, so only the real logo is precached.
       precacheImage(const AssetImage('assets/logo.png'), context)
           .catchError((_) {});
@@ -85,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen>
     PostHogService.capture('splash_viewed');
 
     // PR-VER-2026-08-07 (SPLASH P0): returning riders with a valid session
-    // skip the ~3s showcase animation — a 300ms beat is enough to avoid a
+    // skip the ~3s showcase animation â€” a 300ms beat is enough to avoid a
     // jarring cut. New / logged-out riders still get the full sequence.
     // SecureStorage throws MissingPluginException in widget tests, so the
     // check is best-effort and defaults to the full animation.
@@ -99,36 +116,36 @@ class _SplashScreenState extends State<SplashScreen>
       // ONBOARDING-AUDIT 2026-08-14 P2-12: the previous 300ms
       // fast-path was too short to be useful (rider saw a flash of
       // empty screen on stale-JWT before the 401 hit) and too short
-      // to feel intentional. Bumped to 1000ms — a returning rider
+      // to feel intentional. Bumped to 1000ms â€” a returning rider
       // with a valid session gets routed forward fast, a rider with
-      // a stale JWT gets a clear 401 → "session expired" path (see
+      // a stale JWT gets a clear 401 â†’ "session expired" path (see
       // P0-4 in rider_provider.dart). The longer wait is acceptable
       // because the splash animation is part of the brand.
-      await Future.delayed(const Duration(milliseconds: 1000));
+      await Future.delayed(_kStallThreshold);
       if (mounted) widget.onComplete();
       return;
     }
 
     // ONBOARDING-AUDIT 2026-08-14 P3-3: the previous implementation
     // had an empty `Future.microtask` with a try/catch that did
-    // nothing — the comment said "Hydrate background caches" but the
+    // nothing â€” the comment said "Hydrate background caches" but the
     // body was empty. Deleted; the actual hydration is triggered by
     // the router's `ref.read(riderProvider.notifier).init()` call on
     // the splash `onComplete` callback (router.dart initState).
 
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(_kLogoStartDelay);
     if (!mounted) return;
     _logoCtrl.forward();
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(_kTextStartDelay);
     if (!mounted) return;
     _textCtrl.forward();
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(_kBarStartDelay);
     if (!mounted) return;
     _barCtrl.forward();
 
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.delayed(_kSplashTotalDuration);
     if (mounted) widget.onComplete();
   }
 
@@ -146,11 +163,11 @@ class _SplashScreenState extends State<SplashScreen>
     // build method used static `AppColors.surface` /
     // `AppColors.slate900` / `AppColors.of(context).onSurfaceVariant` for the scaffold
     // and the wordmark. In dark mode:
-    //   - `AppColors.surface` (#F7F9FB) is the LIGHT surface — the
+    //   - `AppColors.surface` (#F7F9FB) is the LIGHT surface â€” the
     //     splash stayed light even when the rest of the app went
     //     dark, which contradicted the user's theme choice.
     //   - `AppColors.slate900` (#0F172A) is identical to
-    //     `ThemeColors.dark.surface` — the wordmark and the
+    //     `ThemeColors.dark.surface` â€” the wordmark and the
     //     loading-bar track were invisible against the dark bg
     //     (1.00:1 contrast).
     // Every color now reads from the brightness-aware theme
@@ -243,7 +260,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       letterSpacing: 1.5),
                                 ),
                                 const SizedBox(width: 8),
-                                Text('⚡',
+                                Text('âš¡',
                                     style: GoogleFonts.plusJakartaSans(
                                         fontSize: 16)),
                               ],
@@ -276,7 +293,7 @@ class _SplashScreenState extends State<SplashScreen>
                               // DARK-MODE-AUDIT 2026-08-14 P0-2:
                               // the previous version used
                               // `AppColors.slate900.withValues(alpha:
-                              // 0.05)` — slate-900 IS the dark
+                              // 0.05)` â€” slate-900 IS the dark
                               // surface, so the track was
                               // invisible in dark mode.
                               // Brightness-aware outline keeps the

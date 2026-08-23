@@ -69,7 +69,14 @@ class GlassKpiTile extends StatelessWidget {
 /// A glass KPI grid with 4 tiles for speed, wallet, battery, and renewal.
 class KpiGrid extends StatelessWidget {
   final double walletBalance;
-  final double batteryPercent;
+  // PR-10 (F-040 — 2026-08-22 deep audit): battery now flows
+  // through as nullable so the UI can show "Unavailable" when
+  // the device-data sync hasn't reported a reading yet, instead
+  // of silently displaying "0%" (which the rider reads as
+  // "battery dead, call support"). Callers that already have a
+  // value can pass it; the dashboard wires this from the rider
+  // model's nullable `batteryPercent`.
+  final double? batteryPercent;
   final double currentSpeed;
   final DateTime? planEndDate;
 
@@ -99,9 +106,15 @@ class KpiGrid extends StatelessWidget {
         ),
         GlassKpiTile(
           label: 'SYSTEM HEALTH',
-          value: '${batteryPercent.toInt()}%',
+          // PR-10 (F-040): show "Unavailable" instead of "0%"
+          // when no reading has arrived. The previous code
+          // displayed a silent "0%" which the rider reads as
+          // "battery dead, call support" — a false alarm.
+          value: batteryPercent != null ? '${batteryPercent!.toInt()}%' : '—',
           icon: Icons.battery_charging_full_rounded,
-          color: batteryPercent < 20 ? AppColors.error : AppColors.success,
+          color: batteryPercent == null
+              ? AppColors.of(context).onSurfaceVariant
+              : (batteryPercent! < 20 ? AppColors.error : AppColors.success),
         ),
         GlassKpiTile(
           label: 'VELOCITY',

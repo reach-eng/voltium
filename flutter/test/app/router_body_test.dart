@@ -49,7 +49,7 @@ void main() {
           riderRepositoryProvider
               .overrideWithValue(RiderRepositoryImpl(client, vClient)),
           rentalRepositoryProvider
-              .overrideWithValue(RentalRepositoryImpl(vClient)),
+              .overrideWithValue(RentalRepositoryImpl(client, vClient)),
           walletRepositoryProvider
               .overrideWithValue(WalletRepositoryImpl(client, vClient)),
           supportRepositoryProvider

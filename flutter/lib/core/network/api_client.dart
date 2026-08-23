@@ -10,14 +10,40 @@ import '../../services/cache_service.dart';
 import '../../services/monitoring_service.dart';
 import '../platform/platform_info.dart';
 import 'pinned_http_client.dart';
+import '../../config/app_config.dart';
 
 /// Voltium API Client
 ///
 /// Centralized HTTP client for all API calls.
 /// Handles authentication, base URL, error parsing, and request signing.
 class ApiClient {
+  /// AUDIT FIX (workflows P0-D): the pinned client now enforces the API
+  /// host on every handshake (trust-nothing mode). The expected host is
+  /// derived lazily from the default base URL — a static initializer can't
+  /// call [_defaultBaseUrl] because it may throw in misconfigured releases.
+  /// T-99 follow-up (2026-08-23): the helper returns `String?` to handle
+  /// test / misconfigured environments; the null host is passed through
+  /// and PinnedHttpInterceptor accepts `null` to mean "don't pin"
+  /// (development / unit tests). Production builds always have a value.
   static final http.Client _sharedHttpClient =
-      PinnedHttpInterceptor.createClient();
+      PinnedHttpInterceptor.createClient(
+          expectedHost: _pinnedHostFromDefaultBaseUrl() ?? '');
+
+  /// Plain system-validated client for CROSS-ORIGIN hosts (signed-URL
+  /// uploads to storage providers). Never carries the session token.
+  static final http.Client _externalHttpClient =
+      PinnedHttpInterceptor.createExternalClient();
+
+  /// Best-effort host extraction that never throws (unlike
+  /// [_defaultBaseUrl], which asserts on release misconfiguration).
+  static String? _pinnedHostFromDefaultBaseUrl() {
+    try {
+      return Uri.parse(_defaultBaseUrl).host;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static ApiClient? _sharedInstance;
   // PR-ONBOARDING-FLOW-2026-08-13: bumped the request timeout from
   // 10s to 30s. The hang-tight poll calls /api/rider/profile, and
@@ -29,6 +55,15 @@ class ApiClient {
   // failing fast on a genuinely dead connection.
   static const Duration requestTimeout = Duration(seconds: 30);
   static const Duration uploadTimeout = Duration(seconds: 60);
+  // PR-8 (F-055): dedicated timeout for signed-URL uploads to
+  // S3/Cloud Storage. Longer than the regular multipart
+  // `uploadTimeout` because the files are usually larger (KYC
+  // selfies, Aadhaar/PAN scans, deposit photos) and the
+  // signed-URL host is a different network path. The previous
+  // code had two different timeouts (`uploadTimeout` 60s vs
+  // `Duration(seconds: 120)` in `files_repository.dart`) which
+  // silently drifted from each other.
+  static const Duration signedUploadTimeout = Duration(seconds: 120);
   static const int shortRetryMaxAttempts = 3;
   static const Duration shortRetryBaseDelay = Duration(milliseconds: 200);
   static final Random _requestRandom = Random.secure();
@@ -124,12 +159,24 @@ class ApiClient {
   static const configuredApiUrl = String.fromEnvironment('API_URL');
 
   static String get _defaultBaseUrl {
-    if (configuredApiUrl.isNotEmpty) return configuredApiUrl;
+    // AUDIT FIX (workflows P1): enforce https in release. A plaintext
+    // API_URL would ship bearer tokens over unencrypted HTTP.
+    if (configuredApiUrl.isNotEmpty) {
+      if (kReleaseMode) {
+        final uri = Uri.tryParse(configuredApiUrl);
+        if (uri == null || uri.scheme != 'https') {
+          throw StateError(
+            'API_URL must use https in release builds (got: $configuredApiUrl)',
+          );
+        }
+      }
+      return configuredApiUrl;
+    }
     if (PlatformInfo.isWeb) return ''; // Relative URLs for same-origin routing
     if (kReleaseMode) {
       throw Exception('API_URL must be provided for release builds');
     }
-    return 'http://127.0.0.1:8081';
+    return 'http://${AppConfig.localDevHost}:8081';
   }
 
   /// Get auth headers with session token
@@ -155,6 +202,22 @@ class ApiClient {
     final rng = _requestRandom;
     final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
     // Set version (4) and variant bits per RFC 4122
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}'
+        '-${hex.substring(12, 16)}-${hex.substring(16, 20)}'
+        '-${hex.substring(20, 32)}';
+  }
+
+  /// PR-4 (F-011 — 2026-08-22 deep audit): public accessor for a fresh
+  /// UUID v4 idempotency key. Callers (top-up, end-rental, deposit
+  /// providers) should pass a NEW key per user-initiated submit so
+  /// the server can deduplicate retries. Reusing a key across
+  /// different user actions would conflate the dedup window.
+  static String newIdempotencyKey() {
+    final rng = _requestRandom;
+    final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
     bytes[6] = (bytes[6] & 0x0f) | 0x40;
     bytes[8] = (bytes[8] & 0x3f) | 0x80;
     final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
@@ -356,9 +419,30 @@ class ApiClient {
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
     final key = uri.toString();
 
-    if (!noDedup && cancelSignal == null) {
+    if (!noDedup) {
       final existing = _inFlightGets[key];
       if (existing != null) {
+        // PR-8 (F-048 — 2026-08-22 deep audit): the previous
+        // dedup branch silently dropped the caller's
+        // `cancelSignal` — the cached `existing` future was
+        // returned as-is, so a second caller could not cancel
+        // their wait by re-issuing a request. Now wrap with
+        // `Future.any` so the SECOND caller's cancel signal
+        // fires even when they're sharing an in-flight
+        // request. The first caller's request is unaffected
+        // (the in-flight HTTP call continues).
+        if (cancelSignal != null) {
+          try {
+            return await Future.any<dynamic>([
+              existing,
+              cancelSignal.then((_) {
+                throw RequestCancelledException();
+              }),
+            ]);
+          } on RequestCancelledException {
+            rethrow;
+          }
+        }
         return existing;
       }
       final future = _executeGet(uri, path, cancelSignal);
@@ -623,6 +707,50 @@ class ApiClient {
           await _client.send(request).timeout(uploadTimeout);
       return await http.Response.fromStream(streamedResponse);
     });
+  }
+
+  /// PR-3 (F-005 — 2026-08-22 deep audit): raw PUT to an absolute URI.
+  /// Used for signed-URL file uploads (S3/Cloud Storage) where the
+  /// destination host is intentionally different from the API host.
+  ///
+  /// Goes through the SAME pinned http.Client as the rest of the API,
+  /// so the signed-URL host's TLS cert must be registered via
+  /// [PinnedHttpInterceptor.setDynamicPins] before calling. The
+  /// pre-PR-3 implementation in `FilesRepository.uploadFile` used
+  /// `package:http` directly, bypassing both the pin check and the
+  /// Auth header.
+  ///
+  /// Intentionally bypasses [_executeWithRetry]: S3-style signed URLs
+  /// return plain 200 (not JSON) and a retry on 5xx risks double-uploading
+  /// the same bytes. The caller (FilesRepository) owns its own retry
+  /// policy.
+  Future<http.Response> putRaw(
+    Uri uri, {
+    required List<int> body,
+    String contentType = 'application/octet-stream',
+    Duration? timeout,
+  }) async {
+    // AUDIT FIX (workflows P0-F): two changes.
+    // 1. CROSS-ORIGIN routing: signed-URL uploads go to S3/GCS — they must
+    //    NOT use the pinned API client (its trust-nothing callback rejects
+    //    every non-API host). External hosts use the system-validated
+    //    external client instead.
+    final isSameOrigin = uri.host == Uri.tryParse(_baseUrl)?.host;
+    final client = isSameOrigin ? _client : _externalHttpClient;
+    // 2. TOKEN LEAK: the session bearer token was attached to whatever URI
+    //    this method received, landing in storage-provider access logs.
+    //    Signed URLs are pre-authorized — strip auth entirely for
+    //    cross-origin uploads.
+    final token = isSameOrigin ? await _storage.getSessionToken() : null;
+    final headers = {
+      'Content-Type': contentType,
+      'Content-Length': body.length.toString(),
+      'x-correlation-id': _newCorrelationId(),
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+    return await client
+        .put(uri, headers: headers, body: body)
+        .timeout(timeout ?? uploadTimeout);
   }
 
   /// Handle API response, standardize errors.

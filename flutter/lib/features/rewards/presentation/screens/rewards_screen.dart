@@ -5,6 +5,7 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 
 // AUDIT FIX: tier thresholds extracted from inline literals in build()
 // into named constants so the tier math has a single source of truth.
@@ -281,67 +282,19 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                   .copyWith(color: AppColors.of(context).onSurface),
             ),
             const SizedBox(height: 24),
-            // Custom Empty State
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.slate400.withValues(alpha: 0.1),
-                            blurRadius: 24,
-                            spreadRadius: 8,
-                          )
-                        ],
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(Icons.card_giftcard_rounded,
-                              size: 48,
-                              color: AppColors.slate400.withValues(alpha: 0.5)),
-                          Positioned(
-                            bottom: 24,
-                            right: 24,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: AppColors.accentPurple,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.lock_outline_rounded,
-                                  size: 16, color: Colors.white),
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                    Text(
-                      'No rewards unlocked yet',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: AppColors.of(context).onSurface),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Keep riding and completing milestones\nto unlock exclusive rewards.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceVariant,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // PR-6 (F-017 — 2026-08-22 deep audit): replaced the
+            // 60-line hand-rolled empty-state column with the
+            // canonical `IllustratedEmptyState` widget. Same look
+            // and feel, but the visual rules (icon size, circle
+            // dimensions, spacing, typography) now live in one
+            // place — `lib/widgets/illustrated_empty_state.dart` —
+            // instead of being duplicated per screen.
+            IllustratedEmptyState(
+              icon: Icons.card_giftcard_rounded,
+              title: AppLocalizations.of(context)?.rewardsEmptyTitle ??
+                  'No rewards unlocked yet',
+              subtitle: AppLocalizations.of(context)?.rewardsEmptySubtitle ??
+                  'Keep riding and completing milestones\nto unlock exclusive rewards.',
             ),
           ],
         ),

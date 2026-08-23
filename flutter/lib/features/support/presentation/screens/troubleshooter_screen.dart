@@ -124,7 +124,7 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
       // Should not happen in a well‑formed tree, but handle gracefully.
       _finishWithResult(
         resolution: 'Unable to determine the issue. Please contact support.',
-        resolutionType: 'NEEDS_SUPPORT',
+        resolutionType: TroubleshooterResolutionType.needsSupport,
       );
       return;
     }
@@ -132,12 +132,13 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
     if (nextNode == null) {
       _finishWithResult(
         resolution: 'Tree data error. Please contact support.',
-        resolutionType: 'NEEDS_SUPPORT',
+        resolutionType: TroubleshooterResolutionType.needsSupport,
       );
       return;
     }
 
-    final resolutionType = nextNode.resolutionType ?? 'UNKNOWN';
+    final resolutionType =
+        nextNode.resolutionType ?? TroubleshooterResolutionType.needsSupport;
 
     if (nextNode.isLeaf) {
       _path.add(
@@ -190,7 +191,7 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
 
   void _finishWithResult({
     required String resolution,
-    required String resolutionType,
+    required TroubleshooterResolutionType resolutionType,
     String? category,
   }) {
     setState(() {
@@ -523,9 +524,9 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
             ),
           ),
 
-          // Path taken (for NEEDS_SUPPORT / FAILED).
-          if (_result!.resolutionType == 'NEEDS_SUPPORT' ||
-              _result!.resolutionType == 'FAILED') ...[
+          // Path taken (for needsSupport).
+          if (_result!.resolutionType ==
+              TroubleshooterResolutionType.needsSupport) ...[
             const SizedBox(height: 16),
             FadeTransition(
               opacity: _resultOpacityAnim,
@@ -544,7 +545,8 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           ],
 
           // DANGER SOS prompt.
-          if (_result!.resolutionType == 'DANGER') ...[
+          if (_result!.resolutionType ==
+              TroubleshooterResolutionType.danger) ...[
             const SizedBox(height: 16),
             FadeTransition(
               opacity: _resultOpacityAnim,

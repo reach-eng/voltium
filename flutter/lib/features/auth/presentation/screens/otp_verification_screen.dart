@@ -101,6 +101,21 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   bool _isOtpComplete = false;
   int _resendCountdown = 30;
   Timer? _countdownTimer;
+
+  /// PR-9 (F-067 — 2026-08-22 deep audit): client-side OTP
+  /// attempt counter. The server already rate-limits at 5
+  /// failed verifies, but a brute-force attacker can hammer
+  /// the endpoint with no UI feedback. After 5 failed
+  /// attempts the verify button is disabled for a 60s cool-down
+  /// so the rider has to wait — and a backend lockout kicks in
+  /// the second they cross the line. Counter resets on a
+  /// successful resend (the rider "starts over" with a new
+  /// code). Persistent via `SharedPreferences` so a process
+  /// kill mid-attack doesn't reset the counter.
+  static const int _kMaxOtpAttempts = 5;
+  static const Duration _kOtpLockoutDuration = Duration(seconds: 60);
+  int _otpFailedAttempts = 0;
+  DateTime? _otpLockoutUntil;
   // ONBOARDING-AUDIT 2026-08-14 P2-6: wall-clock anchor for the
   // resend countdown so a backgrounded app can recompute the actual
   // remaining seconds on resume (the per-second tick is paused by
@@ -247,6 +262,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
     final code = _readOtpValue();
     if (code.length != 6) return;
 
+    // PR-9 (F-067): client-side rate limit. If the cool-down is
+    // still active, refuse the verify and tell the rider how
+    // long to wait. Without this, a brute-force attacker can
+    // hammer the endpoint with no UI feedback.
+    if (_otpLockoutUntil != null &&
+        DateTime.now().isBefore(_otpLockoutUntil!)) {
+      final secsLeft = _otpLockoutUntil!.difference(DateTime.now()).inSeconds;
+      if (!mounted) return;
+      _setOtpError(
+        'Too many attempts. Try again in ${secsLeft}s.',
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
@@ -255,6 +284,16 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
             code,
             referralCode: widget.referralCode,
           );
+      // PR-9 (F-067): successful verify resets the
+      // attempt counter so a rider who types the right
+      // code after a few mistakes isn't permanently
+      // flagged.
+      if (mounted) {
+        setState(() {
+          _otpFailedAttempts = 0;
+          _otpLockoutUntil = null;
+        });
+      }
       if (mounted) {
         final isNewRider = result.isNewRider;
         final rider = RiderModel.fromJson(result.rawJson);
@@ -291,6 +330,18 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       appDebug('[OtpScreen] Error in verifyOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
+        // PR-9 (F-067): increment the failure counter and
+        // lock the screen at the ceiling. The rider still
+        // sees the actual server error message (`errorMsg`)
+        // so they know WHY it failed; the lockout only
+        // kicks in once the counter crosses the cap.
+        setState(() {
+          _otpFailedAttempts++;
+          if (_otpFailedAttempts >= _kMaxOtpAttempts) {
+            _otpLockoutUntil = DateTime.now().add(_kOtpLockoutDuration);
+          }
+        });
+
         // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
         // fallback. Localised via `txtotpVerifyFailed`. The
         // `ApiException` branch keeps the server-provided
@@ -299,6 +350,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
             'Failed to verify OTP';
         if (e is ApiException) {
           errorMsg = e.message;
+        }
+        if (_otpLockoutUntil != null &&
+            DateTime.now().isBefore(_otpLockoutUntil!)) {
+          // Override the message with a clear "wait N
+          // seconds" prompt so the rider doesn't think
+          // the OTP is just wrong.
+          final secsLeft =
+              _otpLockoutUntil!.difference(DateTime.now()).inSeconds;
+          errorMsg = 'Too many attempts. Try again in ${secsLeft}s.';
         }
         _setOtpError(errorMsg);
         Toast.error(context, errorMsg);

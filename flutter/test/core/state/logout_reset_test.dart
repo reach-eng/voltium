@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +18,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
-/// PR-A (§4.1): on logout the ticket list and the guarantor form state must
+/// PR-A (Â§4.1): on logout the ticket list and the guarantor form state must
 /// not survive to the next rider on a shared device (audit #4 P0-1).
 /// Stubs the server logout call so `RiderNotifier.logout()` never hits the
 /// real network inside the test (which would race the teardown and leave the
@@ -81,6 +81,9 @@ class _MockRentalRepository implements RentalRepository {
   @override
   Future<Map<String, dynamic>> submitVehicleReturn({
     required List<String> photos,
+    String? idempotencyKey,
+    int? odometer,
+    String? odometerPhotoUrl,
   }) async =>
       {};
 

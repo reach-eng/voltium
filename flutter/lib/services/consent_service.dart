@@ -1,5 +1,6 @@
 import '../core/network/api_client.dart';
 import 'secure_storage_service.dart';
+import 'monitoring_service.dart';
 import '../utils/app_logger.dart';
 
 /// Consent types the rider can grant. PR-VER-2026-08-07 (FLUTTER_CONSENT
@@ -44,6 +45,16 @@ class ConsentService {
     await _storage.writeValue(_key(type), granted ? 'true' : 'false');
 
     try {
+      // PR-8 (F-059 — 2026-08-22 deep audit): the consent POST
+      // is idempotent-by-key. Without `Idempotency-Key`, a
+      // network failure between the local write and the server
+      // ack triggers `syncAllConsents` on next launch, which
+      // would re-POST the same consent — the server's
+      // deduplication is then undefined behavior. A per-call
+      // key (the consent type + a fresh UUID) makes the
+      // network call safely retryable: a 504 returns
+      // `idempotent: true` on the second attempt and the
+      // server stays in sync.
       await _client.post(
         '/api/rider/consent',
         body: {
@@ -51,9 +62,18 @@ class ConsentService {
           'granted': granted,
           'policyVersion': policyVersion,
         },
+        idempotencyKey: ApiClient.newIdempotencyKey(),
       );
-    } catch (e) {
+    } catch (e, stack) {
       appDebug('ConsentService: failed to sync consent: $e');
+      // PR-8 (F-059): log the failure so a server-side outage
+      // during a permission grant is visible. The local
+      // write is durable; `syncAllConsents` will retry on
+      // next launch. Without this log, a rider with the
+      // "permissions" tile stuck at "pending sync" had no
+      // observability path.
+      MonitoringService.logError(e, stack,
+          reason: 'ConsentService: consent sync POST failed');
     }
   }
 

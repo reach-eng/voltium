@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,6 +71,9 @@ class MockRentalRepository implements RentalRepository {
   @override
   Future<Map<String, dynamic>> submitVehicleReturn({
     required List<String> photos,
+    String? idempotencyKey,
+    int? odometer,
+    String? odometerPhotoUrl,
   }) async {
     submitReturnCalled = true;
     return {};
@@ -297,7 +300,7 @@ void main() {
   });
 
   // ONBOARDING-AUDIT 2026-08-14 P0-4: 401 from the profile endpoint
-  // used to be silently swallowed into "Pull to retry" — the rider
+  // used to be silently swallowed into "Pull to retry" â€” the rider
   // stayed on stale data forever. We now stamp a sessionExpired
   // timestamp that the router watches.
   group('P0-4: 401 session expiry routing', () {
@@ -316,7 +319,7 @@ void main() {
         DateTime.now().millisecondsSinceEpoch - state.lastSessionExpiredAt!,
         lessThan(5000),
       );
-      // The user-facing errorMessage stays null — the router renders
+      // The user-facing errorMessage stays null â€” the router renders
       // its own "Your session expired" snackbar from the timestamp.
       expect(state.errorMessage, isNull);
     });
