@@ -63,6 +63,21 @@ export const teamLeaderRepository = {
     return db.teamLeader.findUnique({ where: { id } });
   },
 
+  // ADMIN_TEAM_LEADERS_AUDIT_2026-08-24 P1-1: return the {id, isActive}
+  // pair for every requested id so the use case can capture the
+  // "before" snapshot for the bulk-action audit log. Missing rows
+  // (already deleted) are silently filtered — the audit log only
+  // records what's still in the table at the moment of the bulk
+  // call.
+  async findIsActiveByIds(ids: string[]): Promise<{ id: string; isActive: boolean }[]> {
+    if (ids.length === 0) return [];
+    const rows = await db.teamLeader.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, isActive: true },
+    });
+    return rows;
+  },
+
   async create(data: Prisma.TeamLeaderCreateInput) {
     return db.teamLeader.create({ data });
   },

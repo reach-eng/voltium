@@ -62,6 +62,13 @@ describe('Team Leader Soft Delete & Audit', () => {
   });
 
   it('bulkDelete() acts on multiple items and logs them', async () => {
+    // ADMIN_TEAM_LEADERS_AUDIT_2026-08-24 P1-1: the use case reads
+    // previousStates via findIsActiveByIds before the mutation. Mock it
+    // so the test doesn't crash on an undefined value.
+    vi.mocked(teamLeaderRepository.findIsActiveByIds).mockResolvedValue([
+      { id: 'tl-1', isActive: true },
+      { id: 'tl-2', isActive: false },
+    ]);
     vi.mocked(teamLeaderRepository.bulkDelete).mockResolvedValue(2);
     vi.mocked(auditLog.createAuditLog).mockResolvedValue(null as any);
 
@@ -73,7 +80,11 @@ describe('Team Leader Soft Delete & Audit', () => {
       action: 'team_leader.bulk_delete',
       entity: 'team_leader',
       entityId: 'multiple',
-      details: { ids: ['tl-1', 'tl-2'], count: 2 },
+      details: {
+        ids: ['tl-1', 'tl-2'],
+        count: 2,
+        previousStates: { 'tl-1': true, 'tl-2': false },
+      },
     });
   });
 });

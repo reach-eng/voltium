@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +22,7 @@ import { UndoToast } from './team-leaders/UndoToast';
 import { useTeamLeaders } from './team-leaders/useTeamLeaders';
 import { useTeamLeaderKeyboard } from './team-leaders/useTeamLeaderKeyboard';
 import type { TeamLeaderFormState } from './team-leaders/types';
+import type { SessionPayload } from '@/lib/permissions';
 
 /**
  * R3.7aa shell — composes the Team Leader Management screen from
@@ -29,6 +31,25 @@ import type { TeamLeaderFormState } from './team-leaders/types';
  */
 export default function TeamLeaderManagement() {
   const t = useTeamLeaders();
+  // ADMIN_TEAM_LEADERS_AUDIT_2026-08-24 P1-2: fetch the admin's
+  // session once on mount so the bulk bar can hide mutation buttons
+  // for admins without `team_leaders_manage`. Same pattern as
+  // `AdminSidebar.tsx` / `AdminLayout.tsx`. The state defaults to
+  // null so the bulk bar optimistically shows the buttons until the
+  // session resolves — the server is the source of truth and will
+  // 403 any unauthorised click.
+  const [session, setSession] = useState<SessionPayload | null>(null);
+  useEffect(() => {
+    fetch('/api/admin/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.data) setSession(data.data);
+      })
+      .catch(() => {
+        // non-critical — the server's permission check on each
+        // bulk action call is the security boundary.
+      });
+  }, []);
 
   useTeamLeaderKeyboard({
     visibleIds: t.leaders.map((l) => l.id),
@@ -67,6 +88,7 @@ export default function TeamLeaderManagement() {
           selectedLeaders={selectedLeaders}
           bulkLoading={t.bulkLoading}
           canUndo={!!t.lastAction}
+          session={session}
           onActivate={() => {
             void t.handleBulkAction('activate');
           }}

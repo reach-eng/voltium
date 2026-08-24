@@ -237,6 +237,9 @@ export function useTeamLeaders() {
         setShowUndoToast(true);
         setTimeout(() => setShowUndoToast(false), 5000);
         setSelectedIds(new Set());
+        // P2-2: invalidate any cached stats for the affected TLs so the
+        // next stats dialog open fetches fresh data.
+        invalidateStatsCache(Array.from(selectedIds));
         fetchLeaders();
         return true;
       } catch {
@@ -286,16 +289,33 @@ export function useTeamLeaders() {
     }
   }, [bulkDeleteTargets, handleBulkAction]);
 
+  // P2-2: stats dialog cache. The data doesn't change between opens
+  // for the same TL within a session. We keep a Map<tlId, payload> and
+  // serve from cache when the same TL is opened again. Cache is
+  // invalidated on bulk operations (any of the cached TLs may have
+  // changed isActive or riderCount).
+  const statsCacheRef = useRef<Map<string, TeamLeaderStatsPayload>>(new Map());
+
   const viewStats = useCallback(async (leader: TeamLeader) => {
     setStatsModalOpen(true);
-    setStatsLoading(true);
     setSelectedTlStats(null);
+    // P2-2: cache hit. The TL is still in the cache from a prior
+    // open; skip the network roundtrip and render immediately.
+    const cached = statsCacheRef.current.get(leader.id);
+    if (cached) {
+      setSelectedTlStats(cached);
+      setStatsLoading(false);
+      return;
+    }
+    setStatsLoading(true);
     try {
       const res = await fetch(`/api/admin/team-leaders/${leader.id}/riders`);
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          setSelectedTlStats({ leader, data: json.data });
+          const payload: TeamLeaderStatsPayload = { leader, data: json.data };
+          statsCacheRef.current.set(leader.id, payload);
+          setSelectedTlStats(payload);
         }
       }
     } catch {
@@ -303,6 +323,12 @@ export function useTeamLeaders() {
     } finally {
       setStatsLoading(false);
     }
+  }, []);
+
+  // P2-2: expose a cache-invalidation helper so the bulk action
+  // handlers can clear stale entries after activate/deactivate/delete.
+  const invalidateStatsCache = useCallback((ids: string[]) => {
+    for (const id of ids) statsCacheRef.current.delete(id);
   }, []);
 
   const selectAll = useCallback(() => {
@@ -372,6 +398,7 @@ export function useTeamLeaders() {
     statsLoading,
     selectedTlStats,
     viewStats,
+    invalidateStatsCache,
     // revalidation
     fetchLeaders,
   };
