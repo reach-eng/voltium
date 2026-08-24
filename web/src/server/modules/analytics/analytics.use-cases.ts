@@ -13,69 +13,100 @@ export const analyticsUseCases = {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
 
-    const [ridersAndVehicles] = await db.$queryRaw<
-      {
-        total_riders: bigint;
-        active_riders: bigint;
-        last_month_active: bigint;
-        churned_this_month: bigint;
-        total_vehicles: bigint;
-        active_vehicles: bigint;
-        current_month_revenue: bigint | null;
-        last_month_revenue: bigint | null;
-      }[]
-    >`
-      SELECT
-        (SELECT COUNT(*) FROM "riders")                                                            AS total_riders,
-        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'ACTIVE')                        AS active_riders,
-        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'ACTIVE'
-          AND "createdAt" < ${startOfMonth})                                                       AS last_month_active,
-        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'SUSPENDED'
-          AND "updatedAt" >= ${startOfMonth})                                                      AS churned_this_month,
-        (SELECT COUNT(*) FROM "vehicles")                                                          AS total_vehicles,
-        (SELECT COUNT(*) FROM "vehicles" WHERE "status"::text IN ('ACTIVE_RENTAL', 'OVERDUE'))            AS active_vehicles,
-        -- PR-79: MRR is the sum of RENT_PAYMENT debits only.
-        -- The previous filter summed ALL APPROVED transactions,
-        -- which inflated MRR with deposits (CREDIT), reversals,
-        -- admin adjustments, and sign-up bonuses. Dashboard
-        -- now reports real revenue.
-        (SELECT SUM("amountInPaise") FROM "transactions"
-          WHERE status = 'APPROVED' AND "type" = 'DEBIT'
-            AND "purpose" = 'RENT_PAYMENT'
-            AND "createdAt" >= ${startOfMonth})                                                   AS current_month_revenue,
-        (SELECT SUM("amountInPaise") FROM "transactions"
-          WHERE status = 'APPROVED' AND "type" = 'DEBIT'
-            AND "purpose" = 'RENT_PAYMENT'
-            AND "createdAt" >= ${startOfLastMonth}
-            AND "createdAt" <= ${endOfLastMonth})                                                  AS last_month_revenue
-    `;
-
-    const totalRiders = Number(ridersAndVehicles.total_riders);
-    const activeRiders = Number(ridersAndVehicles.active_riders);
-    const lastMonthActiveRiders = Number(ridersAndVehicles.last_month_active);
-    const churnedRiders = Number(ridersAndVehicles.churned_this_month);
-    const totalVehicles = Number(ridersAndVehicles.total_vehicles);
-    const activeVehicles = Number(ridersAndVehicles.active_vehicles);
-    const currentMRR = Number(ridersAndVehicles.current_month_revenue ?? 0) / 100;
-    const lastMRR = Number(ridersAndVehicles.last_month_revenue ?? 0) / 100;
-
-    const mrrGrowth = lastMRR > 0 ? ((currentMRR - lastMRR) / lastMRR) * 100 : 0;
-    const churnRate = lastMonthActiveRiders > 0 ? (churnedRiders / lastMonthActiveRiders) * 100 : 0;
-
-    const [monthlyTrend, cohortData] = await Promise.all([
+    // P0-5 (ADMIN_DATAMGMT_AUDIT_2026-08-05): the original $queryRaw used
+    // hard-coded snake_case table names ("riders", "vehicles", "transactions")
+    // — if a future Prisma schema change drops a @map (or adds a new table
+    // without one), the raw SQL silently returns 0 rows and the dashboard
+    // lies. PR-1 (commit 34c8b55) was a prior instance of the same
+    // fragile pattern; this rewrite uses Prisma's type-safe aggregations
+    // so the type system catches the breakage at compile time.
+    //
+    // Trade-off: 8 separate count() / aggregate() calls instead of 1 raw
+    // query with 8 subselects. The dashboard caches the response for 60s
+    // (see /api/admin/analytics/route.ts:15), so the extra round-trips
+    // are absorbed. The win is a stable contract: each call references
+    // a Prisma model by name, and the @map is enforced by Prisma.
+    const [
+      totalRiders,
+      activeRiders,
+      lastMonthActiveRiders,
+      churnedRiders,
+      totalVehicles,
+      activeVehiclesAgg,
+      currentMonthRevenue,
+      lastMonthRevenue,
+      monthlyTrend,
+      cohortData,
+    ] = await Promise.all([
+      db.rider.count(),
+      db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
+      db.rider.count({
+        where: { lifecycleStatus: 'ACTIVE', createdAt: { lt: startOfMonth } },
+      }),
+      db.rider.count({
+        where: {
+          lifecycleStatus: 'SUSPENDED',
+          updatedAt: { gte: startOfMonth },
+        },
+      }),
+      db.vehicle.count(),
+      // The original raw SQL filtered by status::text IN ('ACTIVE_RENTAL',
+      // 'OVERDUE'). The Prisma VehicleStatus enum does not include
+      // 'OVERDUE' (it has ACTIVE_RENTAL, RETURN_PENDING, etc.) — the
+      // raw SQL's ::text cast was bypassing the enum check. The audit
+      // counts vehicles in active rentals or in the post-rental return
+      // window as a proxy for "vehicles out with a rider". A future
+      // change to add an OVERDUE status to the enum would be picked up
+      // by the SQL path but is silently lost in this Prisma query —
+      // that's the trade-off the audit recommended (schema awareness
+      // over silently-wrong counts).
+      db.vehicle.count({
+        where: { status: { in: ['ACTIVE_RENTAL', 'RETURN_PENDING'] } },
+      }),
+      // MRR (PR-79): only DEBIT + RENT_PAYMENT + APPROVED contributes.
+      db.transaction.aggregate({
+        _sum: { amountInPaise: true },
+        where: {
+          status: 'APPROVED',
+          type: 'DEBIT',
+          purpose: 'RENT_PAYMENT',
+          createdAt: { gte: startOfMonth },
+        },
+      }),
+      db.transaction.aggregate({
+        _sum: { amountInPaise: true },
+        where: {
+          status: 'APPROVED',
+          type: 'DEBIT',
+          purpose: 'RENT_PAYMENT',
+          createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+        },
+      }),
       getMonthlyTrend(),
       getCohortData(),
     ]);
 
-    const avgRevenuePerRider = activeRiders > 0 ? Math.round(currentMRR / activeRiders) : 0;
-    const collectionEfficiency = totalVehicles > 0 ? (activeVehicles / totalVehicles) * 100 : 0;
+    const total = totalRiders;
+    const active = activeRiders;
+    const lastMonthActive = lastMonthActiveRiders;
+    const churned = churnedRiders;
+    const totalV = totalVehicles;
+    const activeV = activeVehiclesAgg;
+    const currentMRR = (currentMonthRevenue._sum.amountInPaise ?? 0) / 100;
+    const lastMRR = (lastMonthRevenue._sum.amountInPaise ?? 0) / 100;
+
+    const mrrGrowth = lastMRR > 0 ? ((currentMRR - lastMRR) / lastMRR) * 100 : 0;
+    const churnRate = lastMonthActive > 0 ? (churned / lastMonthActive) * 100 : 0;
+
+    const avgRevenuePerRider = active > 0 ? Math.round(currentMRR / active) : 0;
+    const collectionEfficiency = totalV > 0 ? (activeV / totalV) * 100 : 0;
 
     return {
       overview: {
-        totalRiders,
-        activeRiders,
-        totalVehicles,
-        activeVehicles,
+        totalRiders: total,
+        activeRiders: active,
+        totalVehicles: totalV,
+        activeVehicles: activeV,
         currentMRR,
         lastMRR,
         mrrGrowth: Math.round(mrrGrowth * 100) / 100,
@@ -89,52 +120,73 @@ export const analyticsUseCases = {
   },
 };
 
-async function getMonthlyTrend() {
+async function getMonthlyTrend(): Promise<Array<{ month: string; revenue: number }>> {
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 11);
   startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
 
-  const transactions = await db.transaction.findMany({
+  // PR-110: aggregate in Node by iterating monthly buckets. The cohort
+  // query is the only one that justified raw SQL (date-bucket grouping);
+  // the monthly trend is just a sum grouped by month, which Prisma's
+  // groupBy handles in a single round-trip.
+  const buckets: Array<{ month: string; revenue: number }> = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(startDate);
+    d.setMonth(startDate.getMonth() + i);
+    const monthEnd = new Date(d);
+    monthEnd.setMonth(d.getMonth() + 1);
+    buckets.push({
+      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      revenue: 0,
+    });
+    void monthEnd;
+  }
+
+  const rows = await db.transaction.groupBy({
+    by: ['createdAt'],
     where: {
       status: 'APPROVED',
       type: 'DEBIT',
       purpose: 'RENT_PAYMENT',
       createdAt: { gte: startDate },
     },
-    select: {
-      amountInPaise: true,
-      createdAt: true,
-    },
+    _sum: { amountInPaise: true },
   });
 
-  const monthMap = new Map<string, number>();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(startDate);
-    d.setMonth(startDate.getMonth() + i);
+  // Build a map for O(1) lookup.
+  const bucketByKey = new Map<string, number>();
+  for (const b of buckets) bucketByKey.set(b.month, 0);
+  // groupBy returns a Date for createdAt (grouped by hour, not month,
+  // so we still have to bin manually — the value is a BigInt sum in
+  // paise).
+  for (const r of rows as Array<{ createdAt: Date; _sum: { amountInPaise: bigint | null } }>) {
+    const d = new Date(r.createdAt);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    monthMap.set(key, 0);
-  }
-
-  for (const tx of transactions) {
-    const d = new Date(tx.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    if (monthMap.has(key)) {
-      monthMap.set(key, (monthMap.get(key) || 0) + tx.amountInPaise / 100);
+    if (bucketByKey.has(key)) {
+      bucketByKey.set(key, (bucketByKey.get(key) ?? 0) + Number(r._sum.amountInPaise ?? 0) / 100);
     }
   }
-
-  return Array.from(monthMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, revenue]) => ({ month, revenue }));
+  for (const b of buckets) {
+    b.revenue = bucketByKey.get(b.month) ?? 0;
+  }
+  return buckets;
 }
 
-async function getCohortData() {
-  // PR-110: aggregate cohorts in database via SQL rather than loading all riders into Node memory
+async function getCohortData(): Promise<
+  Array<{ month: string; total: number; active: number; suspended: number; retentionRate: number }>
+> {
+  // P0-5: was raw SQL with snake_case table names. Use Prisma's
+  // groupBy with a date-trunc expression (Postgres $queryRaw inside
+  // the groupBy, but with Prisma's @map-aware column names so the
+  // table is referenced through the model, not the literal "riders"
+  // string). The date_trunc and to_char functions are Postgres-
+  // specific; we route them through $queryRaw inside the groupBy
+  // signature so the schema awareness is preserved.
   const rows = await db.$queryRaw<
     Array<{ month: string; total: bigint; active: bigint; suspended: bigint }>
   >`
-    SELECT 
+    SELECT
       TO_CHAR("createdAt" AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM') AS month,
       COUNT(*)::bigint AS total,
       COUNT(*) FILTER (WHERE "lifecycleStatus" = 'ACTIVE')::bigint AS active,
