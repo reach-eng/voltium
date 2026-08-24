@@ -1,10 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { CreditCard, Zap, ShieldCheck, Edit3 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { CreditCard, Zap, ShieldCheck, Edit3, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PaymentGateway, MdrBearer } from './usePaymentGateways';
 
@@ -13,6 +22,11 @@ interface Props {
   onToggleActive: (gateway: PaymentGateway, newStatus: boolean) => void;
   onToggleMdrBearer: (gateway: PaymentGateway, bearer: MdrBearer) => void;
   onEdit: (gateway: PaymentGateway) => void;
+  // ADMIN_PAYMENT_GATEWAY_AUDIT_2026-08-24 P1-1 — Test Connection action.
+  // Returns ok/issues/checks from /api/admin/payment-gateways/:id/test-connection.
+  onTestConnection: (
+    gatewayId: string
+  ) => Promise<{ ok: boolean; issues: string[]; checks?: Record<string, { ok: boolean; reason?: string }> }>;
 }
 
 /**
@@ -26,7 +40,28 @@ export function PaymentGatewayCard({
   onToggleActive,
   onToggleMdrBearer,
   onEdit,
+  onTestConnection,
 }: Props) {
+  // ADMIN_PAYMENT_GATEWAY_AUDIT_2026-08-24 P1-1 — Test Connection dialog
+  // state. The card opens a small modal that shows the server's
+  // check results (credentials / apiEndpoint / decrypt).
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    ok: boolean;
+    issues: string[];
+    checks?: Record<string, { ok: boolean; reason?: string }>;
+  } | null>(null);
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      const result = await onTestConnection(gateway.id);
+      setTestResult(result);
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <Card
       className={`relative overflow-hidden transition-all border-2 ${
@@ -131,16 +166,80 @@ export function PaymentGatewayCard({
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
             {gateway.mdrBearer === 'RIDER' ? 'Surcharge added to Rider' : 'Merchant absorbs fee'}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 h-8 text-xs rounded-lg"
-            onClick={() => onEdit(gateway)}
-          >
-            <Edit3 className="h-3.5 w-3.5" /> Edit Details
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8 text-xs rounded-lg"
+              onClick={handleTest}
+              disabled={testing}
+            >
+              {testing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              Test Connection
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 h-8 text-xs rounded-lg"
+              onClick={() => onEdit(gateway)}
+            >
+              <Edit3 className="h-3.5 w-3.5" /> Edit Details
+            </Button>
+          </div>
         </div>
       </CardContent>
+
+      <Dialog open={!!testResult} onOpenChange={(open) => !open && setTestResult(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {testResult?.ok ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Test passed
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-amber-500" /> Test found issues
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {testResult?.ok
+                ? 'Configuration check passed. The gateway credentials decrypt and the endpoint is a public HTTPS URL.'
+                : 'Fix the following before enabling this gateway for riders:'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            {(testResult?.issues ?? []).map((issue, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-sm"
+              >
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <span className="text-foreground">{issue}</span>
+              </div>
+            ))}
+            {testResult?.ok && (
+              <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                <span>
+                  All checks passed. The server can decrypt the stored secret, the API endpoint is a
+                  public HTTPS URL, and the credentials are present.
+                </span>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setTestResult(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

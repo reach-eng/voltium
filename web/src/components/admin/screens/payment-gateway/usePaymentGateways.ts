@@ -166,6 +166,44 @@ export function usePaymentGateways() {
     [],
   );
 
+  /**
+   * ADMIN_PAYMENT_GATEWAY_AUDIT_2026-08-24 P1-1 — run a config-level
+   * "test connection" check. Returns the server's `data` payload (the
+   * `issues` array + per-check breakdown) on success OR failure. The
+   * caller decides how to display them.
+   *
+   * The check is intentionally a local config validator (not a real
+   * gateway API call) — this codebase doesn't have a per-gateway SDK
+   * wrapper, so we catch the structural problems that would block any
+   * real call: missing credentials for LIVE, non-HTTPS endpoints,
+   * private IP ranges, undecryptable stored secrets.
+   */
+  const testConnection = useCallback(
+    async (
+      gatewayId: string
+    ): Promise<{ ok: boolean; issues: string[]; checks?: Record<string, { ok: boolean; reason?: string }> }> => {
+      try {
+        const res = await fetch(
+          `/api/admin/payment-gateways/${gatewayId}/test-connection`,
+          { method: 'POST' }
+        );
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error?.message || 'Test connection request failed');
+        }
+        return {
+          ok: !!json.data?.ok,
+          issues: Array.isArray(json.data?.issues) ? json.data.issues : [],
+          checks: json.data?.checks,
+        };
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to test gateway connection');
+        return { ok: false, issues: [err.message || 'Network error'] };
+      }
+    },
+    [],
+  );
+
   return {
     gateways,
     loading,
@@ -174,5 +212,6 @@ export function usePaymentGateways() {
     patchGatewayFields,
     createGateway,
     deleteGateway,
+    testConnection,
   };
 }

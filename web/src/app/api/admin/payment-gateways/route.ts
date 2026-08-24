@@ -15,7 +15,11 @@ const createPaymentGatewaySchema = z
     provider: z.string().min(1).max(50),
     isActive: z.boolean().optional().default(false),
     mdrBearer: z.enum(['RIDER', 'MERCHANT']).optional().default('RIDER'),
-    extraFeePercent: z.number().min(0).max(100).optional().default(2.5),
+    // ADMIN_PAYMENT_GATEWAY_AUDIT_2026-08-24 P0-3: cap at 10% to
+    // match the UI input's min/max. The UI guards with HTML5
+    // validation, but a DevTools-modified POST can bypass the
+    // browser check. The server is the source of truth.
+    extraFeePercent: z.number().min(0).max(10).optional().default(2.5),
     keyId: z.string().nullable().optional(),
     keySecret: z.string().nullable().optional(),
     merchantId: z.string().nullable().optional(),

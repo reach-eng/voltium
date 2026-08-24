@@ -15,7 +15,10 @@ const updatePaymentGatewaySchema = z
     provider: z.string().min(1).max(50).optional(),
     isActive: z.boolean().optional(),
     mdrBearer: z.enum(['RIDER', 'MERCHANT']).optional(),
-    extraFeePercent: z.number().min(0).max(100).optional(),
+    // ADMIN_PAYMENT_GATEWAY_AUDIT_2026-08-24 P0-3: cap at 10% to
+    // match the create schema and the UI input's min/max. The
+    // create schema is the source of truth.
+    extraFeePercent: z.number().min(0).max(10).optional(),
     keyId: z.string().nullable().optional(),
     keySecret: z.string().nullable().optional(),
     merchantId: z.string().nullable().optional(),

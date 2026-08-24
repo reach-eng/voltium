@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     const rider = await adminRiderUseCases.getRiderWithWallet(riderId);
     if (!rider) return errors.notFound('Rider not found');
 
-    let result: { status: number; body: unknown };
+    let result: { status: number; body: Response };
 
     switch (action) {
       case 'ASSIGN_PLAN': {
@@ -211,11 +211,11 @@ export async function POST(req: NextRequest) {
     // the JSON body (not the NextResponse object) so the replay
     // constructs a fresh response with the same status.
     if (idempotencyKey && result.status >= 200 && result.status < 300) {
-      const body = await result.body.clone().json();
+      const body: unknown = await result.body.clone().json();
       setCachedIdempotent(idempotencyKey, result.status, body);
     }
 
-    return result.body;
+    return result.body as Response;
   } catch (error) {
     logger.error('Admin rider action error:', error);
     return errors.internal('Failed to perform admin action');
@@ -228,7 +228,7 @@ async function handleSecurityAction(
   data: any,
   session: any,
   reason: string | undefined
-): Promise<{ status: number; body: unknown }> {
+): Promise<{ status: number; body: Response }> {
   // P1-5: same permission-signature convention as the top-level gate
   // (session.adminRole string, not the session object).
   if (!hasPermission(session, 'device_remote_control')) {

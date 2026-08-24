@@ -21,6 +21,7 @@ export default function PaymentGatewayManagement() {
     patchGateway,
     patchGatewayFields,
     createGateway,
+    testConnection,
   } = usePaymentGateways();
 
   const [editingGateway, setEditingGateway] = useState<PaymentGateway | null>(null);
@@ -90,6 +91,7 @@ export default function PaymentGatewayManagement() {
               onToggleActive={handleToggleActive}
               onToggleMdrBearer={handleToggleMdrBearer}
               onEdit={setEditingGateway}
+              onTestConnection={testConnection}
             />
           ))}
         </div>
