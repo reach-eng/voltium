@@ -139,23 +139,32 @@ Across the 11 prior audits, the consistent patterns are:
 
 ## What's still open (highest-impact, lowest-effort)
 
-| # | Source | Item | Effort |
-|---|---|---|---|
-| 1 | `ADMIN_DATA_MANAGEMENT_DR` P0-4 | `auto-debit` + `rent-due-checker` map to same outbox event (duplicate label in 8-job list) | 30 min (1-line fix) |
-| 2 | `ADMIN_OPERATIONS_PLATFORM` P0-4 | `updateFeatureFlag` always writes `valueType: 'BOOLEAN'` | 30 min |
-| 3 | `ADMIN_DATA_MANAGEMENT_DR` P0-6 | All admin jobs posted as `priority: 'interactive'` — should differentiate | 2h |
-| 4 | `ADMIN_OPERATIONS_PLATFORM` P0-2 | `audit-logs` perm check missing | 15 min |
-| 5 | `ADMIN_OPERATIONS_PLATFORM` P0-7 | `pricing` endpoint unauthenticated | 30 min |
+| # | Source | Item | Status | Evidence |
+|---|---|---|---|---|
+| 1 | `ADMIN_DATA_MANAGEMENT_DR` P0-4 | `auto-debit` + `rent-due-checker` map to same outbox event (duplicate label in 8-job list) | ✅ **FIXED** (prior `PR-VER-2026-08-06` EVENT_BUS P0-6) | `web/src/lib/job-outbox-config.ts:31-36` — `auto-debit` now emits `OutboxEventTypes.ADMIN_JOB_AUTO_DEBIT` (its own event), separate from `rent-due-checker`'s `ADMIN_JOB_RENT_DUE_CHECK`. The comment at line 31-32 confirms: "PR-VER-2026-08-06 (EVENT_BUS P0-6): auto-debit is now its own event (debit-only mode) instead of silently sharing rent-due-checker's." |
+| 2 | `ADMIN_OPERATIONS_PLATFORM` P0-4 | `updateFeatureFlag` always writes `valueType: 'BOOLEAN'` | ✅ **FIXED** (prior PR) | `web/src/lib/feature-flags.ts:153-178` — `updateFeatureFlag` now uses `const valueType = getFlagValueType(key)` which derives BOOLEAN/NUMBER from the flag's runtime type. The comment at line 156-160 calls it out as the P0-4 fix. |
+| 3 | `ADMIN_DATA_MANAGEMENT_DR` P0-6 | All admin jobs posted as `priority: 'interactive'` — should differentiate | ✅ **FIXED** (prior PR) | `web/src/lib/job-outbox-config.ts:22-56` — priorities are correctly differentiated: `wallet-reconciliation` `interactive`, `rent-due-checker` `interactive`, `auto-debit` `interactive`, `device-compliance` `background`, `referral-reward` `interactive`, `notifications-cleanup` `background`, `telemetry-cleanup` `background`, `daily-engagement` `background`. The audit's claim that everything is `interactive` is false. |
+| 4 | `ADMIN_OPERATIONS_PLATFORM` P0-2 | `audit-logs` perm check missing | ✅ **FIXED** (prior PR) | `web/src/app/api/admin/audit-logs/route.ts:34` has `if (!hasPermission(session, 'audit_view')) return adminForbidden();` |
+| 5 | `ADMIN_OPERATIONS_PLATFORM` P0-7 | `pricing` endpoint unauthenticated | ✅ **FIXED** (prior PR) | `web/src/app/api/pricing/route.ts:14-15` has `const auth = await requireRiderSession(request); if (auth instanceof Response) return auth;` |
 
-**Net remaining admin-panel work: ~3-4h for items 1, 2, 4, 5.** Item 3 is a larger refactor.
+**Net remaining admin-panel work from the spot-check: 0 P0s.** All 5 highest-impact items the cross-verification report flagged are already addressed by prior `PR-VER-*` commits between sessions.
+
+**Net remaining work across the full 11-audit surface:** the 4 prior verification passes (`AUDIT_VERIFICATION_PASS3_2026-08-06.md` through `PASS6`) plus this one have collectively closed 24-31 P0s (depending on how you count partial fixes). The remaining P0s are clustered in:
+- `ADMIN_FINANCE` / `ADMIN_FINANCIAL_FLOWS` — row-level locking on transaction approve (4-6h, larger refactor)
+- `ADMIN_OPERATIONS_PLATFORM` — incident-assignment PermCheck + several bulk-endpoint transactional issues (4-6h, larger refactor)
+- `ADMIN_DATA_MGMT_EARNINGS_JOBS` — analytics raw-SQL fragility + cache invalidation patterns (4-6h)
+
+These are all "next sprint" sized. The remaining **quick wins** are the ~10 P2 cleanups in each prior audit (4-6h total).
 
 ---
 
 ## Implementation record (2026-08-24)
 
-This is a **doc-only verification pass**. The 6 highest-impact P0s across the 11 prior audits are already closed by prior `PR-VER-*` commits between sessions. **No code changes shipped in this pass** — the audit indices are stale relative to current code in the same way the analytics and dashboard audits were in earlier turns.
+This is a **doc-only verification pass**. The 5 highest-impact P0s from the prior cross-verification report are all closed by prior `PR-VER-*` commits between sessions. **No code changes shipped in this pass** — the audit indices are stale relative to current code in the same way the analytics and dashboard audits were in earlier turns.
 
-**Recommendation:** the next cleanup sprint should target the 5 small open items above (3-4h total) plus a Pass-2 audit verification of the 8 audits I spot-checked in the second pass.
+The cross-verification report is updated in-place with the 5 closed-item verdicts so a future engineer reading the report doesn't waste time re-investigating them.
+
+**Recommendation:** the next cleanup sprint should target the 4-6 "next-sprint" P0s above (12-18h total, can be split into 3-4 PRs) plus a Pass-2 audit verification of the 8 audits I spot-checked in the second pass.
 
 ---
 
@@ -163,6 +172,6 @@ This is a **doc-only verification pass**. The 6 highest-impact P0s across the 11
 
 | File | Lines | Scope |
 |---|---:|---|
-| `ADMIN_PANEL_CROSS_VERIFICATION_2026-08-24.md` (this file) | ~300 | master cross-verification report |
+| `ADMIN_PANEL_CROSS_VERIFICATION_2026-08-24.md` (this file) | ~300 | master cross-verification report, updated in this pass to reflect the 5 closed items |
 
 Plus the 6 implementation reports from the 2026-08-24 round (admin-users, dashboard, device-tracking, payment-gateway, team-leaders, analytics) which already document their own verification of the 11 prior audit items.
