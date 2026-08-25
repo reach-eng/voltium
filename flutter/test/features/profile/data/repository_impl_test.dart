@@ -24,13 +24,40 @@ void main() {
     mockApiClient = MockApiClient();
     mockVoltiumApiClient = MockVoltiumApiClient();
     repository = RiderRepositoryImpl(mockApiClient, mockVoltiumApiClient);
+
+    // AUDIT FIX (P0 data-population): getRiderProfile now uses raw
+    // ApiClient.get instead of the generated model. Mock it for all tests.
+    when(() => mockApiClient.get('/api/rider/profile')).thenAnswer(
+      (_) async => {
+        'success': true,
+        'data': {
+          'riderId': '123',
+          'fullName': 'John Doe',
+        },
+      },
+    );
   });
 
   group('RiderRepositoryImpl', () {
     // getRiderProfile
-    test('getRiderProfile returns properly formatted map', () async {
-      when(() => mockVoltiumApiClient.getRiderProfile()).thenAnswer((_) async =>
-          RiderProfileResponse(riderId: '123', fullName: 'John Doe'));
+    test('getRiderProfile returns full server JSON including rental fields',
+        () async {
+      // Override with a richer payload that includes fields the generated
+      // model would have dropped.
+      when(() => mockApiClient.get('/api/rider/profile')).thenAnswer(
+        (_) async => {
+          'success': true,
+          'data': {
+            'riderId': '123',
+            'fullName': 'John Doe',
+            'currentPlan': 'WEEKLY_MAX',
+            'teamLeader': 'Rajesh',
+            'assignedVehicle': 'VF-001',
+            'walletBalance': 500.0,
+            'paymentStreak': 3,
+          },
+        },
+      );
 
       final result = await repository.getRiderProfile();
 
@@ -38,23 +65,28 @@ void main() {
       expect(result.containsKey('rider'), true);
       expect(result['data']['riderId'], '123');
       expect(result['data']['fullName'], 'John Doe');
+      // Rental fields survive the round-trip (the old generated model
+      // dropped them).
+      expect(result['data']['currentPlan'], 'WEEKLY_MAX');
+      expect(result['data']['teamLeader'], 'Rajesh');
+      expect(result['data']['assignedVehicle'], 'VF-001');
     });
 
     test('getRiderProfile throws when api client throws', () async {
-      when(() => mockVoltiumApiClient.getRiderProfile())
+      when(() => mockApiClient.get('/api/rider/profile'))
           .thenThrow(Exception('API error'));
 
       expect(() => repository.getRiderProfile(), throwsException);
     });
 
-    test('getRiderProfile returns empty json if fields are null', () async {
-      when(() => mockVoltiumApiClient.getRiderProfile())
-          .thenAnswer((_) async => RiderProfileResponse());
+    test('getRiderProfile handles empty data', () async {
+      when(() => mockApiClient.get('/api/rider/profile')).thenAnswer(
+        (_) async => {'success': true, 'data': {}},
+      );
 
       final result = await repository.getRiderProfile();
 
       expect(result['data'], isA<Map>());
-      expect(result['data']['riderId'], null);
     });
 
     // updateRiderProfile

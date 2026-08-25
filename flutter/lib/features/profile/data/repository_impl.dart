@@ -14,11 +14,21 @@ class RiderRepositoryImpl implements RiderRepository {
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
     try {
-      final response = await _apiClient.getRiderProfile();
+      // AUDIT FIX (P0 data-population): the generated model's
+      // RiderProfileResponse only declares ~20 fields from the OpenAPI
+      // spec — it drops ALL rental/plan/team-leader/vehicle/streak fields
+      // that the server actually returns. The old `.toJson()` round-trip
+      // was silently erasing those, so every screen showed defaults.
+      //
+      // Fix: bypass the generated model and use the raw ApiClient to get
+      // the full JSON body. The server's `flattenRider()` already returns
+      // the correct field names that RiderModel.fromJson expects.
+      final response = await _client.get('/api/rider/profile');
+      final data = response['data'] ?? response;
       return {
         'success': true,
-        'data': response.toJson(),
-        'rider': response.toJson(),
+        'data': data,
+        'rider': data,
       };
     } catch (e) {
       appDebug('GET_RIDER_PROFILE_ERROR: $e');

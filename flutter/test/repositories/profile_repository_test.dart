@@ -28,17 +28,31 @@ void main() {
 
   group('RiderRepositoryImpl', () {
     test('getRiderProfile wraps response in data and rider', () async {
-      when(() => mockVoltiumApiClient.getRiderProfile())
-          .thenAnswer((_) async => RiderProfileResponse(
-                riderId: '123',
-                fullName: 'John',
-              ));
+      // AUDIT FIX (P0 data-population): getRiderProfile now bypasses the
+      // generated model and uses raw ApiClient to preserve ALL fields.
+      when(() => mockApiClient.get('/api/rider/profile')).thenAnswer(
+        (_) async => {
+          'success': true,
+          'data': {
+            'riderId': '123',
+            'fullName': 'John',
+            'currentPlan': 'WEEKLY_MAX',
+            'teamLeader': 'Rajesh',
+            'assignedVehicle': 'VF-001',
+            'walletBalance': 500.0,
+          },
+        },
+      );
 
       final result = await repository.getRiderProfile();
 
       expect(result['data'], isA<Map<String, dynamic>>());
       expect(result['data']['riderId'], '123');
       expect(result['rider'], isA<Map<String, dynamic>>());
+      // Verify rental fields survive the round-trip (the old generated
+      // model dropped them).
+      expect(result['data']['currentPlan'], 'WEEKLY_MAX');
+      expect(result['data']['teamLeader'], 'Rajesh');
     });
 
     test('updateRiderProfile calls putRiderProfile with UpdateProfileRequest',
