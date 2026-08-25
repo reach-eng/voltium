@@ -57,7 +57,8 @@ class ReceiptPreview extends StatelessWidget {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '#${transactionId.substring(0, 8).toUpperCase()}',
+                    // AUDIT FIX: guard substring against short ids.
+                    '#${transactionId.length >= 8 ? transactionId.substring(0, 8).toUpperCase() : transactionId.toUpperCase()}',
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: colors.onSurface),

@@ -54,9 +54,15 @@ class _LazyIndexedStackState extends State<LazyIndexedStack> {
   Widget build(BuildContext context) {
     return Stack(
       children: List.generate(widget.children.length, (i) {
-        return Offstage(
-          offstage: i != widget.index,
-          child: _built[i] ? widget.children[i] : const SizedBox.shrink(),
+        // AUDIT FIX (testing/widgets P1): wrap in TickerMode so hidden
+        // tabs' animation controllers (shimmer, spark OTP, pulse effects)
+        // are PAUSED instead of burning CPU/GPU at 60fps while offstage.
+        return TickerMode(
+          enabled: i == widget.index,
+          child: Offstage(
+            offstage: i != widget.index,
+            child: _built[i] ? widget.children[i] : const SizedBox.shrink(),
+          ),
         );
       }),
     );

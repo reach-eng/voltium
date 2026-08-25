@@ -43,6 +43,12 @@ class _PriceDisplayState extends State<PriceDisplay>
     );
     if (widget.animate) {
       _controller.forward();
+    } else {
+      // AUDIT FIX (testing/widgets P1): with animate:false the controller
+      // never forwarded so `_animation.value` stayed at 0 and the widget
+      // permanently displayed "$0.00" regardless of price. Jump to the
+      // final value instead.
+      _controller.value = 1.0;
     }
   }
 

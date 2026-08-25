@@ -85,6 +85,12 @@ class ScrollIndicator extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, child) {
+        // AUDIT FIX (testing/widgets P1): guard against no attached
+        // scroll positions — `.position` throws when the controller has
+        // no clients yet.
+        if (!controller.hasClients) {
+          return Container(height: height, decoration: const BoxDecoration());
+        }
         final maxScroll = controller.position.maxScrollExtent;
         final currentScroll = controller.offset;
         final progress = maxScroll > 0 ? currentScroll / maxScroll : 0.0;

@@ -160,9 +160,27 @@ class PermissionGuard extends ConsumerWidget {
                     ),
                     SizedBox(height: 16),
                     TextButton(
-                      onPressed: () => ref
-                          .read(devicePolicyProvider.notifier)
-                          .clearViolation(),
+                      // AUDIT FIX (testing/widgets P1): verify the
+                      // permission was ACTUALLY granted before clearing the
+                      // violation — the old honor-system button let riders
+                      // bypass mandatory-permission enforcement with one tap.
+                      onPressed: () async {
+                        final status =
+                            await Permission.locationWhenInUse.status;
+                        if (!context.mounted) return;
+                        if (status.isGranted) {
+                          ref
+                              .read(devicePolicyProvider.notifier)
+                              .clearViolation();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Permission is still disabled. Enable it in Settings first.'),
+                            ),
+                          );
+                        }
+                      },
                       child: Text(
                         'I\'ve re-enabled it',
                         style: GoogleFonts.plusJakartaSans(

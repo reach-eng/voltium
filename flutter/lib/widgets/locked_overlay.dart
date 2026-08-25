@@ -62,8 +62,23 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
     }
   }
 
+  /// AUDIT FIX (testing/widgets P1): client-side brute-force limiter —
+  /// the previous version had unlimited retries on a 12-digit PIN with
+  /// cleartext display. 5 attempts then a 30s cooldown.
+  static const int _maxAttempts = 5;
+  int _failedAttempts = 0;
+  DateTime? _lockoutUntil;
+
+  bool get _lockedOut =>
+      _lockoutUntil != null && DateTime.now().isBefore(_lockoutUntil!);
+
   Future<void> _verifyPassword() async {
     if (_loading) return;
+    if (_lockedOut) {
+      final wait = _lockoutUntil!.difference(DateTime.now()).inSeconds;
+      setState(() => _error = 'Too many attempts. Wait ${wait}s.');
+      return;
+    }
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() => _error =
@@ -99,6 +114,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
 
       if (mounted) {
         if (isValid) {
+          _failedAttempts = 0;
           ref.read(devicePolicyProvider.notifier).setLockedByAdmin(false);
           _passwordController.clear();
           setState(() {
@@ -106,6 +122,12 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
             _loading = false;
           });
         } else {
+          // AUDIT FIX: track failed attempts for the client-side limiter.
+          _failedAttempts++;
+          if (_failedAttempts >= _maxAttempts) {
+            _lockoutUntil = DateTime.now().add(const Duration(seconds: 30));
+            _failedAttempts = 0;
+          }
           final msg = response['message'] as String? ??
               AppLocalizations.of(context)?.txtlockedOverlayIncorrectPassword ??
               'Incorrect Password. Contact Voltium support.';

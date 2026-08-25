@@ -167,7 +167,10 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
     if (reasons.isEmpty) return const SizedBox.shrink();
 
     // Sort: critical first
-    reasons.sort((a, b) => a.severity == _Severity.critical ? -1 : 1);
+    // AUDIT FIX (testing/widgets P1): the old comparator violated the
+    // Sort contract (not antisymmetric for critical-vs-critical) and could
+    // throw "Comparison method violates its general contract".
+    reasons.sort((a, b) => b.severity.index.compareTo(a.severity.index));
 
     final topReason = reasons.first;
     final isCritical = topReason.severity == _Severity.critical;

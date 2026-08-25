@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../core/network/api_client.dart';
 import '../theme/app_theme.dart';
 
 class CachedImage extends StatelessWidget {
@@ -22,16 +23,30 @@ class CachedImage extends StatelessWidget {
     this.errorWidget,
   });
 
+  static String? resolveUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.isEmpty) return null;
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+      return rawUrl;
+    }
+    final baseUrl = ApiClient().baseUrl;
+    final clean = rawUrl.replaceFirst(RegExp(r'^/+'), '');
+    if (clean.startsWith('api/files/')) {
+      return '$baseUrl/$clean';
+    }
+    return '$baseUrl/api/files/$clean';
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (imageUrl == null || imageUrl!.isEmpty) {
+    final resolvedUrl = resolveUrl(imageUrl);
+    if (resolvedUrl == null || resolvedUrl.isEmpty) {
       return _buildPlaceholder(context);
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: CachedNetworkImage(
-        imageUrl: imageUrl!,
+        imageUrl: resolvedUrl,
         width: width,
         height: height,
         fit: fit,

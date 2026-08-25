@@ -24,11 +24,16 @@ class SearchBar extends StatefulWidget {
 
 class _SearchBarState extends State<SearchBar> {
   late TextEditingController _controller;
+  bool _ownsController = false;
   bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
+    // AUDIT FIX (testing/widgets P1): track ownership so we only dispose
+    // the controller we created. Previously the listener was added to an
+    // external controller but never removed in dispose.
+    _ownsController = widget.controller == null;
     _controller = widget.controller ?? TextEditingController();
     _controller.addListener(_onTextChanged);
     _hasText = _controller.text.isNotEmpty;
@@ -44,7 +49,8 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   void dispose() {
-    if (widget.controller == null) {
+    _controller.removeListener(_onTextChanged);
+    if (_ownsController) {
       _controller.dispose();
     }
     super.dispose();

@@ -97,7 +97,11 @@ class ChoiceChipList<T> extends StatelessWidget {
   final List<T> options;
   final T? selectedOption;
   final ValueChanged<T>? onSelected;
-  final Widget Function(T option, bool isSelected)? labelBuilder;
+
+  /// AUDIT FIX (testing/widgets P1): was declared as Widget Function but
+  /// never invoked — chips rendered empty. Now returns a String label and
+  /// is actually called.
+  final String Function(T option, bool isSelected)? labelBuilder;
   final Color activeColor;
 
   const ChoiceChipList({
@@ -116,8 +120,13 @@ class ChoiceChipList<T> extends StatelessWidget {
       runSpacing: 8,
       children: options.map((option) {
         final isSelected = option == selectedOption;
+        // AUDIT FIX (testing/widgets P1): labelBuilder was accepted but
+        // never invoked — chips rendered empty when a builder was supplied.
+        final label = labelBuilder != null
+            ? labelBuilder!(option, isSelected)
+            : option.toString();
         return ChipWidget(
-          label: labelBuilder != null ? '' : option.toString(),
+          label: label,
           selected: isSelected,
           color: activeColor,
           onTap: () => onSelected?.call(option),

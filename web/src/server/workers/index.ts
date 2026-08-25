@@ -468,10 +468,23 @@ const SCHEDULED_TASKS: Array<{
   },
   {
     name: 'device-violation-emitter',
-    intervalMs: 60_000, // every minute
+    intervalMs: 60_000, // checked every minute; fires at minute 0 of each hour
     processor: async (injectedClock) => {
+      // AUDIT FIX (workflows WF-P2): the emitter previously fired every
+      // minute ungated (~1,440 events/day for near-zero information delta).
+      // Gate to the top of the hour — a 60× reduction with no loss of
+      // enforcement freshness (the scanner itself is idempotent per scan).
+      const istMinute = Number(
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kolkata',
+          minute: '2-digit',
+          hour12: false,
+        }).format(injectedClock.now())
+      );
+      if (istMinute !== 0) return;
+
       const { OutboxService } = await import('./outbox');
-      // device compliance is background — the deviceComplianceJob
+      // device compliance is background - the deviceComplianceJob
       // is wired to priority='background'.
       await OutboxService.emit(
         OutboxEventTypes.DEVICE_VIOLATION_SCAN,
@@ -692,13 +705,11 @@ async function runReaperLoop(injectedClock: typeof clock): Promise<void> {
  * waiting. Backs the (priority, status, createdAt) index added in
  * prisma/migrations/20260803152322_add_outbox_priority/.
  *
- * The check is intentionally cheap and slightly conservative:
- * we report a PENDING interactive event exists whenever
- * status='PENDING', even if the row's attempts >= maxAttempts
- * (would not be claimed) or readyAt is in the future (would not
- * be claimed yet). The cost is one extra sleep cycle for the
- * background worker; the benefit is a single indexed EXISTS-style
- * check (findFirst + take: 1) instead of a more expensive join.
+ * AUDIT FIX (workflows P2-starvation): the check now also requires
+ * `readyAt <= now`, so an interactive event sitting in exponential
+ * backoff no longer starves ALL background queues for the full
+ * backoff duration. Rows with attempts >= maxAttempts are excluded
+ * too — they can never be claimed.
  */
 async function hasPendingInteractive(): Promise<boolean> {
   const { db } = await import('@/lib/db');
@@ -706,6 +717,8 @@ async function hasPendingInteractive(): Promise<boolean> {
     where: {
       priority: 'interactive',
       status: 'PENDING',
+      readyAt: { lte: new Date() },
+      attempts: { lt: 3 },
     },
     select: { id: true },
   });

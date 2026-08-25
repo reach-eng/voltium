@@ -62,7 +62,11 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
     _sortConfig = widget.initialSort;
     _filteredData = List.from(widget.data);
     _sortedData = List.from(widget.data);
-    _applyFilters();
+    // AUDIT FIX (testing/widgets P0): _applyFilters() internally calls
+    // setState, which is forbidden in initState. Compute the initial
+    // filter+sort synchronously WITHOUT setState — the first build reads
+    // the resulting fields directly.
+    _applyFiltersQuietly();
   }
 
   @override
@@ -94,6 +98,13 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
     _applySort();
   }
 
+  /// AUDIT FIX (testing/widgets P0): same as [_applyFilters] but without
+  /// setState — safe for initState. Subsequent updates use _applyFilters.
+  void _applyFiltersQuietly() {
+    _filteredData = List.from(widget.data);
+    _applySort();
+  }
+
   void _applySort() {
     if (_sortConfig == null) {
       _sortedData = List.from(_filteredData);
@@ -104,10 +115,15 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
       final aVal = widget.rowBuilder(a)[_sortConfig!.key] ?? '';
       final bVal = widget.rowBuilder(b)[_sortConfig!.key] ?? '';
       int result;
-      if (aVal is num && bVal is num) {
-        result = aVal.compareTo(bVal);
+      // AUDIT FIX (testing/widgets P0): rowBuilder returns Map<String,String>
+      // so is num NEVER matched — every column sorted lexicographically
+      // ("100" < "20"). Parse numerics out of the strings instead.
+      final aNum = double.tryParse(aVal);
+      final bNum = double.tryParse(bVal);
+      if (aNum != null && bNum != null) {
+        result = aNum.compareTo(bNum);
       } else {
-        result = aVal.toString().compareTo(bVal.toString());
+        result = aVal.compareTo(bVal);
       }
       return _sortConfig!.ascending ? result : -result;
     });
