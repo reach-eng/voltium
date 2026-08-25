@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { SystemSettingsData } from './types';
 
+function handleUnauthorized() {
+  toast.error('Session expired — redirecting to login');
+  if (typeof window !== 'undefined') {
+    window.location.href = '/admin/login';
+  }
+}
+
 /**
  * System settings data hook.
  *
@@ -22,7 +29,13 @@ export function useSystemSettings() {
   // Fetch admin role on mount — used to gate the Save buttons.
   useEffect(() => {
     fetch('/api/admin/auth/me', { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => {
+        if (r.status === 401) {
+          handleUnauthorized();
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((d) => {
         if (d?.data?.role) setAdminRole(d.data.role);
       })
@@ -45,10 +58,7 @@ export function useSystemSettings() {
           setEditValues(values);
         }
       } else if (res.status === 401) {
-        toast.error('Session expired — redirecting to login');
-        if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
-        }
+        handleUnauthorized();
       } else if (res.status === 403) {
         toast.error('Forbidden: Super Admin access required for system settings');
       } else {
@@ -90,10 +100,7 @@ export function useSystemSettings() {
           });
         }
       } else if (res.status === 401) {
-        toast.error('Session expired — redirecting to login');
-        if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
-        }
+        handleUnauthorized();
       } else if (res.status === 403) {
         toast.error('Super Admin permission required to modify system settings');
       } else {

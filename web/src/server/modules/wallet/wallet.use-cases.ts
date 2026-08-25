@@ -65,7 +65,19 @@ export const walletUseCases = {
   ) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { id: true, lifecycleStatus: true, phone: true },
+      select: {
+        id: true,
+        lifecycleStatus: true,
+        phone: true,
+        currentPlanId: true,
+        advanceRentPaid: true,
+        currentPlanRef: {
+          select: {
+            priceInPaise: true,
+            securityDepositInPaise: true,
+          },
+        },
+      },
     });
     if (!rider) throw new Error('Rider not found');
 
@@ -83,6 +95,21 @@ export const walletUseCases = {
     // who submit a deposit are treated as a regular wallet top-up.
     const rank = lifecycleRankOf(rider.lifecycleStatus);
     const finalPurpose = rank < 10 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
+
+    // Validate onboarding deposit amount matches plan security deposit ± advance rent
+    if (rank < 10 && finalPurpose === 'SECURITY_DEPOSIT' && rider.currentPlanRef) {
+      const secDeposit = rider.currentPlanRef.securityDepositInPaise ?? 0;
+      const rentPrice = rider.currentPlanRef.priceInPaise ?? 0;
+      const requiredPaise = rider.advanceRentPaid
+        ? (secDeposit + rentPrice)
+        : (secDeposit > 0 ? secDeposit : rentPrice);
+
+      if (requiredPaise > 0 && amountPaise !== requiredPaise) {
+        throw new WalletServiceError(
+          `Security deposit amount must be exactly ₹${(requiredPaise / 100).toFixed(0)} (${rider.advanceRentPaid ? 'Security Deposit + Advance Rent' : 'Security Deposit'})`
+        );
+      }
+    }
 
     let idempotencyKey = metadata?.idempotencyKey;
     if (!idempotencyKey) {
@@ -397,7 +424,7 @@ export const walletUseCases = {
     }
 
     await db.$transaction(async (tx) => {
-      await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
+      await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId, tx);
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
         riderId: txn.riderId,
         transactionId,

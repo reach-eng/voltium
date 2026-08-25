@@ -2511,6 +2511,59 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your session expired. Please log in again to continue.';
 
   @override
+  String get txtkycErrorInvalidDocs =>
+      'Please check your documents and try uploading again.';
+
+  @override
+  String get txtkycErrorAccessDenied =>
+      'Access denied. Please check your verification status.';
+
+  @override
+  String get txtkycErrorUploadTimeout =>
+      'Upload timed out. Please check your connection and retry.';
+
+  @override
+  String get txtserverUnavailable =>
+      'Server temporarily unavailable. Please try again later.';
+
+  @override
+  String get txtgenericTryAgain => 'Something went wrong. Please try again.';
+
+  @override
+  String get txtsubject => 'Subject';
+
+  @override
+  String get txtmessage => 'Message';
+
+  @override
+  String get txtsubjectRequired => 'Please enter a subject';
+
+  @override
+  String get txtsubjectTooShort => 'Subject must be at least 5 characters';
+
+  @override
+  String get txtmessageRequired => 'Please enter a message';
+
+  @override
+  String get txtmessageTooShort => 'Message must be at least 10 characters';
+
+  @override
+  String get txtdescribeIssueHint => 'Describe your issue in detail...';
+
+  @override
+  String get txtskipForNow => 'Skip for now';
+
+  @override
+  String get txtskipPermissionsConfirmTitle => 'Skip granting permissions?';
+
+  @override
+  String get txtskipPermissionsConfirmBody =>
+      'The rider app needs these permissions to work correctly. You can re-grant them any time from Settings → Re-grant permissions.';
+
+  @override
+  String get txtskipPermissionsConfirmAction => 'Skip anyway';
+
+  @override
   String get txtsecurityDepositProofSubmitted =>
       'Security deposit proof submitted — we\'ll review it shortly.';
 
@@ -2556,4 +2609,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtchooseNewLockPassword => 'Choose a new 4-digit lock password.';
+
+  @override
+  String get txtfaq => 'FAQ';
+
+  @override
+  String get txtnotifTabAll => 'All';
+
+  @override
+  String get txtnotifTabPayments => 'Payments';
+
+  @override
+  String get txtnotifTabKyc => 'KYC';
+
+  @override
+  String get txtnotifTabMaintenance => 'Maintenance';
+
+  @override
+  String get txtnotifTabAnnouncements => 'Announcements';
+
+  @override
+  String get txtnotifNoMatchHint =>
+      'Category filter only matches English titles today. Localised KYC / maintenance notifications will appear in \'All\' until the server adds a `category` field.';
+
+  @override
+  String get menu_signOut => 'Sign out';
+
+  @override
+  String get menu_signOutConfirmTitle => 'Sign out of Voltium?';
+
+  @override
+  String get menu_signOutConfirmBody =>
+      'You\'ll be returned to the phone-entry screen. Your account and data stay safe — sign back in any time.';
+
+  @override
+  String get menu_signOutConfirmAction => 'Sign out';
+
+  @override
+  String get menu_signOutCancelled => 'Sign-out cancelled';
+
+  @override
+  String get supportNotConfigured =>
+      'Support contact is being configured. Please try again shortly.';
 }

@@ -16,7 +16,11 @@ const VALID_TRANSITIONS: TransitionMap = {
   IN_PROGRESS: ['WAITING_ON_RIDER', 'RESOLVED'],
   WAITING_ON_RIDER: ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
   RESOLVED: ['CLOSED'],
-  CLOSED: [],
+  // Admin Panel Phase 2 P1-12 (2026-08-23): a CLOSED ticket can
+  // be reopened to IN_PROGRESS if the rider comes back with
+  // more info. The reopen path is bounded — it can only land
+  // in IN_PROGRESS (a working state), not back to OPEN.
+  CLOSED: ['IN_PROGRESS'],
 };
 
 export class TicketStateError extends Error {

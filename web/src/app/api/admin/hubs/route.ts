@@ -50,7 +50,8 @@ export async function POST(req: NextRequest) {
     const validation = validateBody(createHubSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
     const hub = await hubUseCases.createHub(validation.data, session.adminId || '');
-    invalidateCache('admin:*');
+    invalidateCache('admin:hubs:*');
+    invalidateCache('admin:vehicles:*');
     return success(hub, 'Hub created', 201);
   } catch (error) {
     logger.error('POST /api/admin/hubs error:', error);
@@ -72,7 +73,8 @@ export async function PUT(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
     const { id, ...data } = validation.data;
     const hub = await hubUseCases.updateHub(id, data, session.adminId || '');
-    invalidateCache('admin:*');
+    invalidateCache('admin:hubs:*');
+    invalidateCache('admin:vehicles:*');
     return success(hub);
   } catch (error) {
     logger.error('PUT /api/admin/hubs error:', error);
@@ -91,7 +93,8 @@ export async function DELETE(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
     const { id } = validation.data;
     await hubUseCases.deleteHub(id, session.adminId || '');
-    invalidateCache('admin:*');
+    invalidateCache('admin:hubs:*');
+    invalidateCache('admin:vehicles:*');
     return success(null, 'Hub deleted');
   } catch (error: unknown) {
     const message = errorMessage(error);

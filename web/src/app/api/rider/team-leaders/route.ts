@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       where: {
         deletedAt: null,
         isActive: true,
-        ...(hubId ? { hubId } : {}),
+        ...(hubId ? { OR: [{ hubId }, { hubId: null }] } : {}),
       },
       select: {
         id: true,

@@ -250,13 +250,9 @@ class BlurEffect extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        ImageFiltered(
-          imageFilter: ColorFilter.mode(
-            overlayColor ?? Colors.transparent,
-            BlendMode.srcOver,
-          ),
-          child: child,
-        ),
+        // AUDIT FIX: removed ImageFiltered(transparent ColorFilter) — an expensive
+        // full-subtree offscreen pass that was a visual no-op. Pass child directly.
+        child,
         Positioned.fill(
           child: ClipRect(
             child: BackdropFilter(

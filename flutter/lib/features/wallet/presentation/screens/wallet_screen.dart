@@ -9,6 +9,7 @@ import 'top_up_flow.dart';
 import 'package:voltium_rider/features/wallet/presentation/widgets/wallet_widgets.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
@@ -88,7 +89,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         centerTitle: false,
         titleSpacing: 20,
         title: Text(
-          'Wallet',
+          AppLocalizations.of(context)?.txtwallet ?? 'Wallet',
           style: AppTypography.headingMedium
               .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),

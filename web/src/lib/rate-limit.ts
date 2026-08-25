@@ -196,3 +196,10 @@ export const SENSITIVE_ACTION_RATE_LIMIT: RateLimitConfig = {
     process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging' ? 10 : 1000,
   failClosed: true,
 };
+
+export const ADMIN_JOBS_RATE_LIMIT: RateLimitConfig = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRequests: process.env.APP_ENV === 'development' ? 1000 : 5,
+  failClosed: true,
+};
+

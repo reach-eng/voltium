@@ -52,6 +52,16 @@ const updateRiderSchema = z.object({
   preferredShift: z.string().max(50).optional(),
   referredBy: z.string().max(100).optional(),
   assignedVehicle: z.string().max(100).optional().nullable(),
+  vehicleId: z.string().max(100).optional().nullable(),
+  currentPlan: z.string().max(100).optional().nullable(),
+  currentPlanId: z.string().max(100).optional().nullable(),
+  pickedUpAt: z.string().datetime().optional().nullable().or(z.literal('')),
+  lifecycleStatus: z.string().max(50).optional(),
+  registrationDone: z.boolean().optional(),
+  depositDone: z.boolean().optional(),
+  kycDone: z.boolean().optional(),
+  planDone: z.boolean().optional(),
+  pickupDone: z.boolean().optional(),
   // KYC fields
   kycStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']).optional(),
   profilePhoto: z.string().url().optional().or(z.literal('')),
@@ -181,7 +191,7 @@ export async function POST(req: NextRequest) {
     const { phone, fullName } = body;
 
     const result = await adminRiderUseCases.create({ phone, fullName });
-    invalidateCache('admin:*');
+    invalidateCache('admin:riders:*');
     return success(result);
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {
@@ -217,7 +227,7 @@ export async function PUT(req: NextRequest) {
       actorRole: session.adminRole || '',
     });
 
-    invalidateCache('admin:*');
+    invalidateCache('admin:riders:*');
     // PR-ONBOARDING-FLOW-2026-08-12: invalidate the RIDER cache so the
     // rider's next /api/rider/profile poll (mobile app, 15s cadence) sees
     // the admin's KYC / status change. Previously only `admin:*` was
@@ -255,7 +265,7 @@ export async function DELETE(req: NextRequest) {
       entity: 'rider',
       entityId: id,
     }).catch((e: unknown) => logger.error('Audit log failed for rider delete', e));
-    invalidateCache('admin:*');
+    invalidateCache('admin:riders:*');
     return success(null, 'Rider deleted');
   } catch (error) {
     logger.error('Delete rider error:', error);

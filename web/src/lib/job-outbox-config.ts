@@ -1,17 +1,9 @@
-/* eslint-disable */
 // AUDIT FIX: extracted JOB_TO_OUTBOX_CONFIG out of app/api/admin/jobs/route.ts.
 // Next.js route modules may only export handlers/config — non-handler exports
 // fail the generated type check — but the master-contract test needs to import
 // this mapping. Shared module satisfies both.
 import { OutboxEventType, OutboxEventTypes } from '@/server/workers/outbox';
 
-export interface JobOutboxConfig {
-  eventType: OutboxEventType;
-  priority: 'interactive' | 'background';
-}
-
-// exports fail the Next.js generated type check. These are file-local now
-// (verified: no external importers).
 export interface JobOutboxConfig {
   eventType: OutboxEventType;
   priority: 'interactive' | 'background';

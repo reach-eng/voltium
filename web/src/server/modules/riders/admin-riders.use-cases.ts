@@ -43,6 +43,15 @@ const SAFE_RIDER_FIELDS = new Set([
   'preferredShift',
   'referredBy',
   'assignedVehicle',
+  'vehicleId',
+  'currentPlan',
+  'currentPlanId',
+  'pickedUpAt',
+  'lifecycleStatus',
+  'registrationDoneAt',
+  'depositDoneAt',
+  'kycDoneAt',
+  'planDoneAt',
 ]);
 
 const KYC_FIELDS = new Set([

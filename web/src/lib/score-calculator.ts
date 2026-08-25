@@ -86,13 +86,23 @@ function calculatePaymentScore(rider: any): number {
   return Math.min(Math.round(score * 100) / 100, 100);
 }
 
-function calculateKycScore(rider: any): number {
+// Admin Panel Phase 1 P0-07 (2026-08-23): export the KYC score
+// helper so the unit test (admin-panel-phase1-audit-fixes.test.ts)
+// can exercise the SUBMITTED > PENDING invariant directly, and
+// the rider app can import the same scoring primitive for the
+// profile completion badge. The status weights were rebalanced
+// to give SUBMITTED (the "documents in, awaiting review" state)
+// a 70 base + 20 doc bonuses = up to 90, comfortably above the
+// 50 floor of PENDING (no documents yet) and below the 100
+// ceiling of APPROVED.
+export function calculateKycScore(rider: any): number {
   if (!rider.kycProfile) return 0;
 
   const kyc = rider.kycProfile;
   let score = 0;
 
   if (kyc.status === 'APPROVED') score = 100;
+  else if (kyc.status === 'SUBMITTED') score = 70;
   else if (kyc.status === 'PENDING') score = 50;
   else if (kyc.status === 'REJECTED') score = 20;
   else if (kyc.status === 'INFO_REQUIRED') score = 30;

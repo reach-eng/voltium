@@ -153,15 +153,21 @@ export function flattenRider(
     // `currentPlanRef` set in the rider select. Replaces the
     // `AppConstants.planSecurityDepositRupees` hardcoded map.
     currentPlanSecurityDepositInPaise:
-      (rider as any).currentPlanRef?.securityDepositInPaise ?? null,
-    assignedVehicle: r.assignedVehicle ?? null,
-    activeVehicle: r.assignedVehicle ?? null,
-    vehicleId: r.vehicleId ?? null,
+      (rider as any).currentPlanRef?.securityDepositInPaise ??
+      (rider as any).wallet?.securityDepositInPaise ??
+      null,
+    currentPlanIsSecurityRefundable:
+      (rider as any).currentPlanRef?.isSecurityRefundable ?? true,
+    currentPlanRefundableAfterDays:
+      (rider as any).currentPlanRef?.refundableAfterDays ?? 180,
+    assignedVehicle: (rider as any).vehicle?.vehicleNumber ?? r.assignedVehicle ?? null,
+    activeVehicle: (rider as any).vehicle?.vehicleNumber ?? r.assignedVehicle ?? null,
+    vehicleId: r.vehicleId ?? (rider as any).vehicle?.id ?? null,
     vehicleModel: (rider as any).vehicle?.model ?? null,
     deliveryId: r.deliveryId ?? null,
     intent: r.intent ?? null,
     emergencyContact: r.emergencyContact ?? null,
-    pickupHub: r.pickupHub ?? null,
+    pickupHub: (rider as any).pickupHubRef?.name ?? r.pickupHub ?? null,
     teamLeader: (rider as any).teamLeaderRef?.name ?? r.teamLeaderId ?? null,
     teamLeaderPhone: (rider as any).teamLeaderRef?.phone ?? null,
     planStartDate: r.planStartDate ? new Date(r.planStartDate as Date).toISOString() : null,

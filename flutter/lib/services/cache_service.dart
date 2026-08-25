@@ -29,6 +29,10 @@ class CacheService {
 
   SharedPreferences? _prefs;
 
+  /// Flag set to true while logout cleanup is executing to prevent concurrent
+  /// background tasks or autosave hooks from re-persisting stale rider data.
+  bool isLogoutInProgress = false;
+
   /// Call once from `main()` **before** `runApp()`.
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
@@ -43,6 +47,7 @@ class CacheService {
     Map<String, dynamic> riderData, {
     int? ttlSeconds,
   }) async {
+    if (isLogoutInProgress) return;
     final now = DateTime.now().toUtc();
     await _prefs?.setString(_keyRiderCache, jsonEncode(riderData));
     await _prefs?.setString(_keyRiderCacheTime, now.toIso8601String());

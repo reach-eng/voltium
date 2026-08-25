@@ -12,6 +12,14 @@ import { kycRepository } from './kyc.repository';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
+// T-91 (PR-1, 2026-08-23): import the shared payload-type literal so
+// the producer (here) and the consumer (notification-dispatch.job.ts)
+// stay in lockstep. Previously the producer emitted
+// `type: 'KYC_INFO_REQUESTED'` and the consumer only handled
+// `KYC_INFO_REQUIRED` — the event was silently acked and the rider
+// was never told their KYC needed action. See
+// docs/AUDIT_WORKFLOWS_2026-08-23.md §1.2.
+import type { NotificationPayloadType } from '@/server/workers/notification-payload-types';
 
 export const kycUseCases = {
   async getKycStatus(riderDbId: string) {
@@ -124,12 +132,16 @@ export const kycUseCases = {
         // PR-ONBOARDING-2026-08-11 (audit 3.1 P2): REQUEST_INFO used
         // a direct `notificationService` call (fire-and-forget) while
         // APPROVE / REJECT use the outbox. Move it onto the outbox so
-        // retry/backoff is consistent across KYC decisions. The
-        // dispatcher at `notification-dispatch.job.ts:90-95` already
-        // handles the `KYC_INFO_REQUESTED` event type.
+        // retry/backoff is consistent across KYC decisions.
+        //
+        // T-91 (PR-1, 2026-08-23): the literal below is the shared
+        // NotificationPayloadType — see notification-payload-types.ts
+        // for the canonical list. The TypeScript compiler will flag
+        // a misspelling at build time.
+        const payloadType: NotificationPayloadType = 'KYC_INFO_REQUESTED';
         await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
           riderId: riderDbId,
-          type: 'KYC_INFO_REQUESTED',
+          type: payloadType,
           infoRequest,
         }, 3);
         // PR-ONBOARDING-2026-08-11 (audit 2.7): REQUEST_INFO left no

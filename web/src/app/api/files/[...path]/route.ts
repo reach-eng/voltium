@@ -82,16 +82,15 @@ export async function GET(
     }
 
     const { path } = await params;
+    let cleanPath = path;
+    if (cleanPath[0] === 'api' && cleanPath[1] === 'files') {
+      cleanPath = cleanPath.slice(2);
+    }
     const { db } = await import('@/lib/db');
     const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
     const baseDir =
-      setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
-    const relativePath = path.join('/');
-    const fullPath = resolve(baseDir, relativePath);
-
-    if (!fullPath.startsWith(resolve(baseDir))) {
-      return new NextResponse('Bad Request', { status: 400 });
-    }
+      process.env.LOCAL_STORAGE_ROOT || setting?.value || join(process.cwd(), 'data', 'uploads');
+    const relativePath = cleanPath.join('/');
 
     const normalizedPath = relativePath.replace(/\\/g, '/');
     if (
@@ -102,10 +101,21 @@ export async function GET(
       return new NextResponse('Bad Request', { status: 400 });
     }
 
-    // Look up the FileRecord
-    const record = await fileRepository.getFileRecordByKey(normalizedPath);
+    // Look up the FileRecord by storageKey or by fileRecordId (for local-upload/:id paths)
+    let record = await fileRepository.getFileRecordByKey(normalizedPath);
+    if (!record && cleanPath[0] === 'local-upload' && cleanPath[1]) {
+      record = await fileRepository.getFileRecordById(cleanPath[1]);
+    }
+    if (!record && cleanPath.length === 1) {
+      record = await fileRepository.getFileRecordById(cleanPath[0]);
+    }
     if (!record) {
       return new NextResponse('Not Found', { status: 404 });
+    }
+
+    const fullPath = resolve(join(baseDir, record.storageKey));
+    if (!fullPath.startsWith(resolve(baseDir))) {
+      return new NextResponse('Bad Request', { status: 400 });
     }
 
     // Perform ownership/permission check
@@ -140,8 +150,8 @@ export async function GET(
     try {
       const content = await readFile(fullPath);
 
-      const ext = relativePath.split('.').pop()?.toLowerCase();
-      const contentType = MIME_TYPES[ext || ''] || 'application/octet-stream';
+      const ext = record.storageKey.split('.').pop()?.toLowerCase();
+      const contentType = record.mimeType || MIME_TYPES[ext || ''] || 'application/octet-stream';
 
       return new NextResponse(content, {
         headers: {

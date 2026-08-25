@@ -45,6 +45,14 @@ export async function getSession(request?: Request): Promise<SessionPayload | nu
       token = await getCookie(SESSION_COOKIE_NAME);
     }
 
+    // 3. Fallback to query parameter (common for image/media URL requests)
+    if (!token && request) {
+      try {
+        const url = new URL(request.url);
+        token = url.searchParams.get('token') || undefined;
+      } catch {}
+    }
+
     if (!token) return null;
     return await verifySessionToken(token);
   })();
@@ -84,6 +92,14 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
     // 2. Fallback to cookie
     if (!token) {
       token = await getCookie(ADMIN_SESSION_COOKIE_NAME);
+    }
+
+    // 3. Fallback to query parameter
+    if (!token && request) {
+      try {
+        const url = new URL(request.url);
+        token = url.searchParams.get('token') || undefined;
+      } catch {}
     }
 
     if (!token) {

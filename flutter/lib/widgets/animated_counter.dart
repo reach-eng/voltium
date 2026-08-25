@@ -96,9 +96,12 @@ class AnimatedCurrency extends StatelessWidget {
     final defaultStyle =
         style ?? AppTypography.headingMedium.copyWith(color: colors.onSurface);
 
-    final rupeesInt = amountInRupees.truncate();
+    // AUDIT FIX: guard negative amounts — truncate(-5.5)=-5 produced
+    // broken output like "₹-5.-50". Clamp to zero for display.
+    final safeAmount = amountInRupees < 0 ? 0.0 : amountInRupees;
+    final rupeesInt = safeAmount.truncate();
     final paiseDecimal =
-        ((amountInRupees - rupeesInt) * 100).round().toString().padLeft(2, '0');
+        ((safeAmount - rupeesInt) * 100).round().toString().padLeft(2, '0');
 
     return Row(
       mainAxisSize: MainAxisSize.min,

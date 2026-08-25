@@ -117,7 +117,6 @@ export function useAdminUsers() {
     } catch (err) {
       // P1-1: corrupted JSON. Log and fall back to role defaults — the
       // super-admin will see a warning so the loss is visible.
-      // eslint-disable-next-line no-console
       console.error('[useAdminUsers] Corrupted permissions JSON for admin', admin.id, err);
       perms = getPermissionsForRole(admin.role);
       corrupted = true;

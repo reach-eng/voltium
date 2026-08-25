@@ -178,15 +178,16 @@ export async function updateFeatureFlag(key: string, value: string): Promise<boo
 }
 
 export async function getAllFeatureFlags(): Promise<
-  Record<string, { value: string; source: string }>
+  Record<string, { value: string; source: string; valueType: 'BOOLEAN' | 'NUMBER' }>
 > {
   const flags = await getFeatureFlags();
-  const result: Record<string, { value: string; source: string }> = {};
+  const result: Record<string, { value: string; source: string; valueType: 'BOOLEAN' | 'NUMBER' }> = {};
 
   for (const [key, value] of Object.entries(flags)) {
     result[key] = {
       value: String(value),
       source: 'runtime',
+      valueType: getFlagValueType(key),
     };
   }
 

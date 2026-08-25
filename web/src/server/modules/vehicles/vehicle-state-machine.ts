@@ -6,6 +6,15 @@
  * ACTIVE_RENTAL → RETURN_PENDING | MAINTENANCE | LOST
  * RETURN_PENDING → MAINTENANCE → AVAILABLE
  *
+ * Admin Panel Phase 3 P2-02 (2026-08-23): RETIRED and LOST
+ * are no longer terminal. An admin can recover a RETIRED
+ * vehicle back to MAINTENANCE for re-inspection (un-retire),
+ * and a LOST vehicle can be recovered to MAINTENANCE
+ * (asset recovery, e.g. recovered by the police). The
+ * pre-fix model treated both as terminal — a vehicle that
+ * was wrongly marked RETIRED could not be brought back
+ * into the fleet.
+ *
  * See docs/STATE_MACHINES.md for full transition map.
  */
 
@@ -28,8 +37,14 @@ const VALID_TRANSITIONS: TransitionMap = {
   ACTIVE_RENTAL: ['RETURN_PENDING', 'MAINTENANCE', 'LOST'],
   RETURN_PENDING: ['MAINTENANCE', 'AVAILABLE'],
   MAINTENANCE: ['AVAILABLE', 'RETIRED'],
-  RETIRED: [],
-  LOST: [],
+  // Admin recovery: pull a vehicle back into the fleet for
+  // re-inspection (RETIRED) or police-recovery (LOST). The
+  // direct RETIRED → AVAILABLE / LOST → AVAILABLE transitions
+  // are short-circuited for the common "this vehicle is fine,
+  // put it back in the pool" admin flow — the MAINTENANCE
+  // step is still available for a more thorough un-retire.
+  RETIRED: ['AVAILABLE', 'MAINTENANCE'],
+  LOST: ['AVAILABLE', 'MAINTENANCE', 'RETIRED'],
 };
 
 export class VehicleStateError extends Error {

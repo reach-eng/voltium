@@ -4,6 +4,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
 import { invalidateCache } from '@/lib/cache';
+import { validateVehicleTransition } from './vehicle-state-machine';
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -120,10 +121,25 @@ export const vehicleUseCases = {
 
   /**
    * Get next vehicle ID.
+   *
+   * The old `count() + 1` formula races under parallel creates — two
+   * concurrent requests both compute the same `VF-VH-NNNNNN` and one
+   * loses to a P2002 unique-constraint violation. The fix is to keep
+   * trying with a fresh count until we land on a free id, with a sane
+   * cap so a broken DB doesn't pin the request thread.
    */
   async getNextId() {
-    const count = await db.vehicle.count();
-    return `VF-VH-${String(count + 1).padStart(6, '0')}`;
+    const MAX_ATTEMPTS = 25;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const count = await db.vehicle.count();
+      const candidate = `VF-VH-${String(count + 1).padStart(6, '0')}`;
+      const existing = await db.vehicle.findUnique({
+        where: { vehicleId: candidate },
+        select: { id: true },
+      });
+      if (!existing) return candidate;
+    }
+    throw new Error('Could not allocate a free vehicleId after 25 attempts');
   },
 
   /**
@@ -227,16 +243,35 @@ export const vehicleUseCases = {
    * 404s on an unknown id (the old code silently returned 200 with no write)
    * and 409s when the vehicle is on an active lease — mirroring
    * markForMaintenance. Retires the vehicle (soft delete) on success.
+   *
+   * Admin Panel Phase 4 / Batch B (2026-08-23): retirement is now a proper
+   * soft delete — sets both `status: 'RETIRED'` AND `deletedAt: <now>`.
+   * The list paths already filter `deletedAt: null`, so a retired vehicle
+   * disappears from the admin list without a hard delete (no FK violation
+   * to dangling `rentalLeases` rows).
+   *
+   * The lease guard now rejects OVERDUE, PICKUP_SCHEDULED, and SUSPENDED
+   * leases in addition to BOOKED/ACTIVE/RETURN_PENDING — any of those is
+   * a non-closed lease that would orphan a record if the vehicle were
+   * removed. Historical CLOSED/COMPLETED leases don't block.
    */
   async retireVehicle(vehicleId: string, actorId: string) {
     const vehicle = await vehicleRepository.findById(vehicleId);
     if (!vehicle) throw new Error('VEHICLE_NOT_FOUND');
     const activeLease = await db.rentalLease.findFirst({
-      where: { vehicleId, status: { in: ['BOOKED', 'ACTIVE', 'RETURN_PENDING'] } },
+      where: {
+        vehicleId,
+        status: {
+          in: ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING', 'SUSPENDED'],
+        },
+      },
     });
     if (activeLease) throw new Error('VEHICLE_HAS_ACTIVE_LEASE');
 
-    const result = await vehicleRepository.update(vehicleId, { status: 'RETIRED' });
+    const result = await vehicleRepository.update(vehicleId, {
+      status: 'RETIRED',
+      deletedAt: new Date(),
+    });
     invalidateCache('vehicles_list:*');
     invalidateCache('admin:vehicles:*');
     createAuditLog({
@@ -264,8 +299,26 @@ export const vehicleUseCases = {
     switch (action) {
       case 'changeStatus': {
         if (!value) throw new Error('Status value is required');
+        // Admin Panel Phase 2 P1-03 (2026-08-23): enforce the
+        // vehicle state machine for the bulk-changeStatus path.
+        // The previous implementation wrote whatever value the
+        // admin picked, allowing nonsensical jumps (RETIRED →
+        // ACTIVE_RENTAL, AVAILABLE → LOST, etc.) and leaving the
+        // fleet in inconsistent state. Read the current status
+        // of every targeted vehicle, validate the transition
+        // for each, and throw on the first invalid pair — a
+        // bulk action is atomic in spirit, so a single bad row
+        // should reject the whole batch.
+        const target = value as VehicleStatus;
+        const currentRows = await db.vehicle.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, status: true },
+        });
+        for (const row of currentRows) {
+          validateVehicleTransition(row.status as VehicleStatus, target);
+        }
         const result = await vehicleRepository.bulkUpdateStatus(ids, {
-          status: value as VehicleStatus,
+          status: target,
         });
         updatedCount = result.count;
         auditAction = 'vehicle.bulk_change_status';

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const double lowBalanceThresholdRatio = 0.3;
@@ -23,7 +23,7 @@ class AppConstants {
   /// never be reused indefinitely (post-window it re-verifies, exactly as
   /// a fresh session would).
   static const Duration emergencyContactVerificationWindow =
-      Duration(minutes: 15);
+      Duration(hours: 24);
 
   /// Pure freshness check for a phone-OTP receipt (single source of truth —
   /// the pickup emergency-contact flow and the guarantor onboarding flow

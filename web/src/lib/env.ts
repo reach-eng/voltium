@@ -94,6 +94,10 @@ export const envSchema = z.object({
     .transform((v) => v === 'true'),
 
   ALLOW_DEV_PII_KEY: z.string().optional(),
+  TEST_MODE: z.string().optional(),
+  TRUST_PROXY_HEADERS: z.string().optional(),
+  TRUSTED_PROXIES: z.string().default('127.0.0.1,::1'),
+  INTERNAL_METRICS_TOKEN: z.string().optional(),
 
   // Features
   NEXT_PUBLIC_ENABLE_KYC: z
@@ -118,19 +122,16 @@ export const envSchema = z.object({
   // multiplies by 100 to get paise.
   MAX_ADMIN_DEBIT_INR: z.coerce.number().int().positive().default(50000),
   LARGE_DEBIT_THRESHOLD_INR: z.coerce.number().int().positive().default(10000),
-}).refine(
-  (data) => {
-    const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
-    if (isProd && data.ALLOW_DEV_PII_KEY === 'true') {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'ALLOW_DEV_PII_KEY=true is strictly forbidden in production and staging environments',
-    path: ['ALLOW_DEV_PII_KEY'],
+}).superRefine((data, ctx) => {
+  const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
+  if (isProd && data.ALLOW_DEV_PII_KEY === 'true') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'ALLOW_DEV_PII_KEY=true is strictly forbidden in production and staging environments',
+      path: ['ALLOW_DEV_PII_KEY'],
+    });
   }
-);
+});
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DATABASE_URL =

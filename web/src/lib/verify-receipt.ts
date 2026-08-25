@@ -21,8 +21,8 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { env } from '@/lib/env';
 
-/** Short-lived validity window for a verify-phone receipt. */
-export const VERIFY_RECEIPT_TTL_MS = 15 * 60 * 1000; // 15 minutes
+/** Validity window for a verify-phone receipt (24 hours to accommodate on-site pickup and inspection). */
+export const VERIFY_RECEIPT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /**
  * Resolve the HMAC secret used to sign verify receipts. Dedicated secret

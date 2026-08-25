@@ -119,14 +119,18 @@ class VoltiumApiClient {
 
   /// Serve a private file (proxied with auth check)
   Future<Map<String, dynamic>> getFilespath(String path) async {
-    final response = await _client.get('/api/files/$path');
+    // AUDIT FIX: encode path segment to prevent traversal via ../, ?, #
+    final encoded = Uri.encodeComponent(path);
+    final response = await _client.get('/api/files/$encoded');
     return response;
   }
 
   /// Update {path}
   Future<Map<String, dynamic>> putFilespath(
-      Map<String, dynamic> request) async {
-    final response = await _client.put('/api/files/{path}', body: request);
+      String path, Map<String, dynamic> request) async {
+    // AUDIT FIX: same encoding + template substitution fix as above.
+    final encoded = Uri.encodeComponent(path);
+    final response = await _client.put('/api/files/$encoded', body: request);
     return response;
   }
 

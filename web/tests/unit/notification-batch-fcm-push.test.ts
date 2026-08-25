@@ -101,7 +101,7 @@ describe('sendToAllRiders — FCM multicast (SHIFTS P0-4 Bug B, batch path)', ()
 
     await expect(
       notificationUseCases.sendToAllRiders('T', 'M', 'INFO', 'admin_1')
-    ).resolves.toEqual({ count: 3 });
+    ).resolves.toEqual({ count: 3, completedSkip: 500 });
   });
 });
 

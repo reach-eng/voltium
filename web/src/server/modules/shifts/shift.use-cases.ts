@@ -29,11 +29,55 @@ function computeShiftTimes(
   endTime?: string
 ): { partsJson: string | null; startTime: string; endTime: string } {
   if (parts && parts.length > 0) {
+    // Admin Panel Phase 3 P2-04 (2026-08-23): reject parts
+    // where start === end (a zero-length block is
+    // nonsensical and was previously silently accepted).
+    for (const p of parts) {
+      if (p.startTime === p.endTime) {
+        throw new Error(
+          `Invalid shift part: startTime (${p.startTime}) and endTime (${p.endTime}) must differ.`
+        );
+      }
+    }
+    // Admin Panel Phase 4 / Batch C (2026-08-23): allow cross-midnight
+    // parts (endTime < startTime in wall-clock terms, e.g. 23:00 -> 04:00
+    // is a night-delivery block that crosses midnight). The previous
+    // implementation rejected any such part as "endTime before startTime",
+    // which forced operators to split a single overnight block into
+    // awkward 23:00 -> 23:59 and 00:00 -> 04:00 pieces and lose the
+    // semantic that they were one shift. The fix: only reject
+    // endTime < startTime for *non-crossing* parts. The shift
+    // store uses "HH:MM" as opaque strings, so callers indicate a
+    // crossing by the time pattern; the endTime is taken at face
+    // value (e.g. 04:00 as a wall-clock end-of-shift, regardless
+    // of whether the same date was the start date).
+    //
+    // Latest-endTime semantics: for cross-midnight parts, the endTime
+    // wall-clock is *earlier* on the next day. To compare two ends
+    // across parts (e.g. 23:00 vs 04:00), we treat the cross-midnight
+    // end as +24h in a virtual "minutes-since-shift-start" space,
+    // take the max, and then output the *wall-clock* endTime of the
+    // winning part (NOT a normalized 28:00 string). This matches
+    // the operator's mental model: a 18:00-23:00 + 23:00-04:00
+    // pair ends at 04:00, not 23:00.
     const sorted = [...parts].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const minutesFromShiftStart = (p: ShiftPart): number => {
+      const [sh, sm] = p.startTime.split(':').map(Number);
+      const [eh, em] = p.endTime.split(':').map(Number);
+      const startMins = sh * 60 + sm;
+      const endMins = eh * 60 + em;
+      // Cross-midnight: add 24h (1440 mins) to the endMins so it's
+      // numerically later than any same-day end.
+      const crosses = endMins < startMins;
+      return endMins + (crosses ? 1440 : 0);
+    };
+    const winning = parts.reduce((best, p) =>
+      minutesFromShiftStart(p) > minutesFromShiftStart(best) ? p : best
+    );
     return {
       partsJson: JSON.stringify(sorted),
       startTime: sorted[0].startTime,
-      endTime: sorted[sorted.length - 1].endTime,
+      endTime: winning.endTime,
     };
   }
   // Fallback to plain startTime/endTime (no parts)
@@ -174,15 +218,26 @@ export const shiftUseCases = {
   },
 
   async deleteShift(id: string, actorId: string) {
-    const leaseCount = await db.rentalLease.count({ where: { shiftId: id } });
+    // Admin Panel Phase 3 P2-04 (2026-08-23): guard against
+    // orphaning active or booked leases. Count leases by
+    // status (BOOKED + ACTIVE) rather than all rows — a
+    // historical CLOSED/COMPLETED lease on the same shift
+    // shouldn't block deletion.
+    const leaseCount = await db.rentalLease.count({
+      where: {
+        shiftId: id,
+        status: { in: ['BOOKED', 'ACTIVE'] },
+      },
+    });
     if (leaseCount > 0) {
       throw new Error(
-        `Cannot delete shift: ${leaseCount} lease(s) are using it. Remove them first.`
+        `Cannot delete shift: ${leaseCount} active or booked lease(s) are using it. Remove them first.`
       );
     }
     await db.shift.delete({ where: { id } });
     createAuditLog({ actorId, action: 'shift.delete', entity: 'shift', entityId: id }).catch(
       () => {}
     );
+    return { id };
   },
 };

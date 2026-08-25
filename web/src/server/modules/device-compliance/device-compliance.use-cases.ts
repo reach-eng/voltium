@@ -192,6 +192,25 @@ export const deviceComplianceUseCases = {
       batteryLevel?: number;
     }
   ) {
+    // HYGIENE-01 (2026-08-23): reject out-of-range or non-finite
+    // coordinates BEFORE the DB transaction. The previous code
+    // passed any number straight to `userLocation.create`, which
+    // (a) lets a malicious or buggy client write lat=999 or
+    // lng=NaN into the audit log, and (b) surfaces a useless
+    // "Foreign key constraint violated" error to the caller
+    // when the riderId doesn't exist — masking the real problem.
+    // Validate the inputs first with a clear error message, then
+    // proceed with the normal write.
+    if (typeof data.lat !== 'number' || !Number.isFinite(data.lat) || data.lat < -90 || data.lat > 90) {
+      throw new Error(
+        `Invalid latitude coordinate: ${data.lat}. Must be a finite number in [-90, 90].`
+      );
+    }
+    if (typeof data.lng !== 'number' || !Number.isFinite(data.lng) || data.lng < -180 || data.lng > 180) {
+      throw new Error(
+        `Invalid longitude coordinate: ${data.lng}. Must be a finite number in [-180, 180].`
+      );
+    }
     const [location] = await db.$transaction([
       db.userLocation.create({
         data: {

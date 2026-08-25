@@ -176,37 +176,42 @@ async function getMonthlyTrend(): Promise<Array<{ month: string; revenue: number
 async function getCohortData(): Promise<
   Array<{ month: string; total: number; active: number; suspended: number; retentionRate: number }>
 > {
-  // P0-5: was raw SQL with snake_case table names. Use Prisma's
-  // groupBy with a date-trunc expression (Postgres $queryRaw inside
-  // the groupBy, but with Prisma's @map-aware column names so the
-  // table is referenced through the model, not the literal "riders"
-  // string). The date_trunc and to_char functions are Postgres-
-  // specific; we route them through $queryRaw inside the groupBy
-  // signature so the schema awareness is preserved.
-  const rows = await db.$queryRaw<
-    Array<{ month: string; total: bigint; active: bigint; suspended: bigint }>
-  >`
-    SELECT
-      TO_CHAR("createdAt" AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM') AS month,
-      COUNT(*)::bigint AS total,
-      COUNT(*) FILTER (WHERE "lifecycleStatus" = 'ACTIVE')::bigint AS active,
-      COUNT(*) FILTER (WHERE "lifecycleStatus" = 'SUSPENDED')::bigint AS suspended
-    FROM "riders"
-    WHERE "deletedAt" IS NULL
-    GROUP BY TO_CHAR("createdAt" AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM')
-    ORDER BY month ASC
-  `;
-
-  return rows.map((row: { month: string; total: bigint; active: bigint; suspended: bigint }) => {
-    const total = Number(row.total);
-    const active = Number(row.active);
-    const suspended = Number(row.suspended);
-    return {
-      month: row.month,
-      total,
-      active,
-      suspended,
-      retentionRate: total > 0 ? Math.round((active / total) * 10000) / 100 : 0,
-    };
+  // P0-5 (ADMIN_DATAMGMT_AUDIT_2026-08-05): pure Prisma aggregation — no raw
+  // SQL with hard-coded table strings ("riders"). All fields and @maps are
+  // validated at compile time by the Prisma client.
+  const riders = await db.rider.findMany({
+    where: { deletedAt: null },
+    select: { createdAt: true, lifecycleStatus: true },
+    orderBy: { createdAt: 'asc' },
   });
+
+  const cohortMap = new Map<
+    string,
+    { month: string; total: number; active: number; suspended: number }
+  >();
+
+  for (const rider of riders) {
+    const d = new Date(rider.createdAt);
+    // Format to Asia/Kolkata (UTC + 5:30) YYYY-MM
+    const istOffsetMs = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(d.getTime() + istOffsetMs);
+    const month = `${istDate.getUTCFullYear()}-${String(istDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    const entry = cohortMap.get(month) ?? { month, total: 0, active: 0, suspended: 0 };
+    entry.total += 1;
+    if (rider.lifecycleStatus === 'ACTIVE') {
+      entry.active += 1;
+    } else if (rider.lifecycleStatus === 'SUSPENDED') {
+      entry.suspended += 1;
+    }
+    cohortMap.set(month, entry);
+  }
+
+  return Array.from(cohortMap.values()).map((row) => ({
+    month: row.month,
+    total: row.total,
+    active: row.active,
+    suspended: row.suspended,
+    retentionRate: row.total > 0 ? Math.round((row.active / row.total) * 10000) / 100 : 0,
+  }));
 }

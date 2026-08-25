@@ -328,7 +328,17 @@ export const rentalUseCases = {
           // new active path (no explicit bookRental) can complete
           // pickup in a single round-trip.
           lifecycleStatus: {
-            in: ['PLAN_SELECTED', 'PICKUP_SCHEDULED', 'ACTIVE', 'DEPOSIT_APPROVED'],
+            in: [
+              'PLAN_SELECTED',
+              'DEPOSIT_PENDING',
+              'DEPOSIT_APPROVED',
+              'PICKUP_SCHEDULED',
+              'KYC_APPROVED',
+              'KYC_SUBMITTED',
+              'GUARANTOR_APPROVED',
+              'GUARANTOR_SUBMITTED',
+              'ACTIVE',
+            ],
           },
         },
         data: {
@@ -355,7 +365,7 @@ export const rentalUseCases = {
       });
       if (riderClaim.count === 0) {
         throw new Error(
-          'Rider is not in a pickup-eligible state (must be PLAN_SELECTED, PICKUP_SCHEDULED, DEPOSIT_APPROVED, or ACTIVE).'
+          'Rider is not in a pickup-eligible state (must be in an onboarding or active state).'
         );
       }
       return tx.rider.findUnique({

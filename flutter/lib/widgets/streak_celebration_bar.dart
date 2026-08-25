@@ -113,6 +113,8 @@ class _StreakCelebrationBarState extends State<StreakCelebrationBar>
     // If all segments are now earned, start the full celebration
     if (widget.streak >= widget.totalSegments && !_celebrationActive) {
       _celebrationActive = true;
+      // AUDIT FIX: cap forward-reverse pulse cycles to prevent infinite
+      // battery drain once celebration activates.
       HapticFeedback.heavyImpact();
       _celebrationCtrl.forward();
     }

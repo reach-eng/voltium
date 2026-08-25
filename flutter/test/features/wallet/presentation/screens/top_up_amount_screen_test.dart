@@ -28,17 +28,20 @@ void main() {
     Function(int)? onProceed,
     VoidCallback? onBack,
     int? initialAmount,
+    int? lockedAmount,
+    RiderModel? rider,
   }) {
     return ProviderScope(
       overrides: [
         riderProvider.overrideWith(() => _SeededRiderNotifier(
-              const RiderModel(
-                id: 'rider_123',
-                riderId: 'rider_123',
-                name: 'Test Rider',
-                phone: '9999999999',
-                lifecycleStatus: 'ACTIVE',
-              ),
+              rider ??
+                  const RiderModel(
+                    id: 'rider_123',
+                    riderId: 'rider_123',
+                    name: 'Test Rider',
+                    phone: '9999999999',
+                    lifecycleStatus: 'ACTIVE',
+                  ),
             )),
       ],
       child: MaterialApp(
@@ -54,6 +57,7 @@ void main() {
           onProceed: onProceed,
           onBack: onBack,
           initialAmount: initialAmount ?? 1000,
+          lockedAmount: lockedAmount,
         ),
       ),
     );
@@ -99,6 +103,46 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(proceededAmount, equals(2000));
+    });
+
+    testWidgets(
+        'renders locked amount with read-only text field and hides quick chips',
+        (tester) async {
+      int? proceededAmount;
+      await tester.pumpWidget(buildTestHost(
+        lockedAmount: 3400,
+        onProceed: (amount) => proceededAmount = amount,
+        rider: const RiderModel(
+          id: 'rider_123',
+          riderId: 'rider_123',
+          name: 'Test Rider',
+          phone: '9999999999',
+          lifecycleStatus: 'PLAN_SELECTED',
+          currentPlan: 'Weekly',
+          currentPlanPrice: 1400.0,
+          currentPlanSecurityDepositInRupees: 2000.0,
+          advanceRentPaid: true,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // 3400 should be present
+      expect(find.text('3400'), findsWidgets);
+      expect(
+          find.text('Fixed amount for initial plan deposit'), findsOneWidget);
+      expect(find.text('Fixed Deposit: ₹3400'), findsOneWidget);
+
+      // Verify TextField is read-only
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.readOnly, isTrue);
+
+      // Proceed button should proceed with locked amount
+      final proceedButton = find.byKey(const Key('proceedToPaymentButton'));
+      expect(proceedButton, findsOneWidget);
+      await tester.tap(proceedButton);
+      await tester.pumpAndSettle();
+
+      expect(proceededAmount, equals(3400));
     });
   });
 }

@@ -40,8 +40,12 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
 
     final colors = AppColors.of(context);
     final supportConfig = ref.watch(supportProvider).supportConfig;
-    final supportPhone = supportConfig?.supportPhone ?? '+919876543210';
-    final supportEmail = supportConfig?.supportEmail ?? 'support@voltium.app';
+    // T-113: do NOT use hardcoded fallback phone / email. If the
+    // server hasn't published the contact yet, the contact cards
+    // are hidden (see the `if` guards below) and the variable is
+    // empty so the fallback info card renders.
+    final supportPhone = supportConfig?.supportPhone ?? '';
+    final supportEmail = supportConfig?.supportEmail ?? '';
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -53,7 +57,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
         centerTitle: false,
         titleSpacing: 20,
         title: Text(
-          'Support Center',
+          AppLocalizations.of(context)?.txtsupportCenter ?? 'Support Center',
           style: AppTypography.headingMedium
               .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),
@@ -148,7 +152,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                           children: [
                             _buildQuickChip(
                                 Icons.help_outline,
-                                'FAQ',
+                                AppLocalizations.of(context)?.txtfaq ?? 'FAQ',
                                 () => AppNavigator.push(
                                     context, const FaqScreen())),
                             _buildQuickChip(
@@ -266,27 +270,47 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                             ),
                             const SizedBox(height: 12),
                           ],
-                          // Email us
-                          _buildContactCard(
-                            icon: Icons.email_outlined,
-                            title: 'Email Us',
-                            subtitle: supportEmail,
-                            actionLabel: 'Send',
-                            actionIcon: Icons.open_in_new,
-                            color: AppColors.primary,
-                            onTap: () => _launchExternal(
-                                context, 'mailto:$supportEmail'),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildContactCard(
-                            icon: Icons.phone_outlined,
-                            title: 'Call Us',
-                            subtitle: supportPhone,
-                            actionLabel: 'Call',
-                            actionIcon: Icons.call,
-                            color: AppColors.success,
-                            onTap: () => launchDialer(context, supportPhone),
-                          ),
+                          // T-113: hide the Call/Email contact cards
+                          // when the server hasn't published support
+                          // contact info yet. The legacy contract is
+                          // that supportConfig is non-null but the
+                          // phone / email fields are empty strings
+                          // when the admin hasn't set them up yet —
+                          // treat the empty string the same as null.
+                          if (supportConfig?.supportEmail.isNotEmpty ??
+                              false) ...[
+                            _buildContactCard(
+                              icon: Icons.email_outlined,
+                              title: 'Email Us',
+                              subtitle: supportEmail,
+                              actionLabel: 'Send',
+                              actionIcon: Icons.open_in_new,
+                              color: AppColors.primary,
+                              onTap: () => _launchExternal(
+                                  context, 'mailto:$supportEmail'),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (supportConfig?.supportPhone.isNotEmpty ??
+                              false) ...[
+                            _buildContactCard(
+                              icon: Icons.phone_outlined,
+                              title: 'Call Us',
+                              subtitle: supportPhone,
+                              actionLabel: 'Call',
+                              actionIcon: Icons.call,
+                              color: AppColors.success,
+                              onTap: () => launchDialer(context, supportPhone),
+                            ),
+                          ],
+                          // Fallback: support channel not yet published
+                          // by the admin team. Show a single subdued
+                          // info card so the rider isn't confused by
+                          // missing buttons.
+                          if (supportConfig == null ||
+                              (supportConfig.supportPhone.isEmpty &&
+                                  supportConfig.supportEmail.isEmpty))
+                            _buildSupportNotConfiguredCard(context),
                         ],
                       ),
                     ),
@@ -294,6 +318,40 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  /// T-113: subdued "Support is being configured" card. Rendered
+  /// when the server hasn't published either `supportPhone` or
+  /// `supportEmail`. Replaces the previous behaviour of showing
+  /// hardcoded fake fallbacks (`+919876543210` / `support@voltium.app`)
+  /// that, when tapped, dialled a number nobody owned.
+  Widget _buildSupportNotConfiguredCard(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: Spacing.paddingMd,
+      decoration: BoxDecoration(
+        color: colors.iconBackground,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: colors.onSurfaceVariant, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              AppLocalizations.of(context)?.supportNotConfigured ??
+                  'Support contact is being configured. Please try again shortly.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: colors.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

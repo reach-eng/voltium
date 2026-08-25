@@ -755,17 +755,18 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               ),
             ],
           ),
-          TextButton(
-            onPressed: widget.onEditAmount,
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primaryLight,
+          if (widget.onEditAmount != null)
+            TextButton(
+              onPressed: widget.onEditAmount,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primaryLight,
+              ),
+              child: Text(
+                'Edit',
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
-            child: Text(
-              'Edit',
-              style: AppTypography.bodyMedium
-                  .copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
         ],
       ),
     );

@@ -21,7 +21,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -80,14 +79,42 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   void initState() {
     super.initState();
     PostHogService.capture('hang_tight_viewed');
-    // PR-ONBOARDING-FLOW-2026-08-11: poll for activation so a rider who
-    // is approved in another tab (admin web console) is moved to the
-    // dashboard without manual refresh. 15s is the same cadence the
-    // pre-dashboard uses for the KYC-pending case.
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _safeRefresh(),
-    );
+    // T-116: poll for activation with exponential backoff instead of
+    // a flat 15s cadence. A rider waiting 4h for admin approval used
+    // to do ~960 polls. The new schedule is:
+    //   15s, 30s, 60s, 120s, 300s (cap at 5m)
+    // Reset to 15s on a successful refresh. Reset to 15s on a manual
+    // pull-to-refresh (the rider just did work — keep cadence tight).
+    _scheduleNextRefresh();
+  }
+
+  /// T-116: current backoff delay, starting at 15s. Doubles after
+  /// every consecutive failed refresh up to [_maxBackoff]. Reset to
+  /// [_initialBackoff] on success.
+  Duration _currentBackoff = const Duration(seconds: 15);
+  static const Duration _initialBackoff = Duration(seconds: 15);
+  static const Duration _maxBackoff = Duration(seconds: 300);
+
+  /// Schedules the next refresh using the current backoff. Schedules
+  /// one-shot (`Timer`) instead of a periodic so we can re-arm with
+  /// a fresh duration after each tick.
+  void _scheduleNextRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer(_currentBackoff, () async {
+      if (!mounted || _redirected || _sessionExpired) return;
+      await _safeRefresh();
+      // Only re-schedule if the refresh didn't redirect us away.
+      if (mounted && !_redirected && !_sessionExpired) {
+        _scheduleNextRefresh();
+      }
+    });
+  }
+
+  /// Public for the pull-to-refresh handler — re-tighten the backoff
+  /// after a manual refresh so the rider doesn't have to wait 5
+  /// minutes for the next poll if they were already in backoff state.
+  void _resetBackoff() {
+    _currentBackoff = _initialBackoff;
   }
 
   @override
@@ -101,7 +128,18 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
     if (!mounted || _redirected || _sessionExpired || _refreshInFlight) return;
     _refreshInFlight = true;
     try {
+      // T-116: skip the refresh when the device is offline. The
+      // ConnectivityProvider exposes this synchronously; a true
+      // `isOffline` means the next refresh will 500/timeout anyway,
+      // and re-scheduling a tick we know will fail wastes battery.
+      if (_isOffline()) {
+        _bumpBackoff();
+        return;
+      }
       await ref.read(riderProvider.notifier).refreshFromApi();
+      // Success — re-tighten the backoff so subsequent ticks are
+      // tight again.
+      _resetBackoff();
     } on ApiException catch (e) {
       // PR-ONBOARDING-FLOW-2026-08-13: surface 401 to the router so
       // the rider is sent to the login screen instead of being
@@ -118,10 +156,33 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
         if (mounted) widget.onSessionExpired?.call();
         return;
       }
+      // 5xx / network errors: back off so we don't hammer the API.
+      _bumpBackoff();
     } catch (_) {
-      // Offline / transient — the next tick will retry.
+      // Offline / transient — the next tick will retry. Back off so
+      // a transient error doesn't pin us to the tightest cadence.
+      _bumpBackoff();
     } finally {
       _refreshInFlight = false;
+    }
+  }
+
+  /// T-116: double the current backoff, capped at `_maxBackoff`. The
+  /// sequence: 15s, 30s, 60s, 120s, 240s, 300s, 300s, ...
+  void _bumpBackoff() {
+    final next = _currentBackoff * 2;
+    _currentBackoff = next > _maxBackoff ? _maxBackoff : next;
+  }
+
+  /// T-116: check the connectivity provider. We tolerate the
+  /// provider being absent (web / tests) and treat that as
+  /// "online" so the refresh still attempts.
+  bool _isOffline() {
+    try {
+      final connectivity = ref.read(connectivityProvider);
+      return !connectivity.isOnline;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -163,21 +224,30 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
           children: [
             _buildHero(context),
             Expanded(
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  Spacing.lg,
-                  Spacing.lg,
-                  Spacing.lg,
-                  Spacing.xl,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildStatusList(rider),
-                    const SizedBox(height: Spacing.lg),
-                    _buildNotificationHint(context),
-                  ],
+              child: RefreshIndicator(
+                // T-116: re-tighten the backoff after a manual pull so
+                // the rider doesn't have to wait the current backoff
+                // window (up to 5m) for the next poll.
+                onRefresh: () async {
+                  _resetBackoff();
+                  await _safeRefresh();
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                    Spacing.lg,
+                    Spacing.lg,
+                    Spacing.lg,
+                    Spacing.xl,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildStatusList(rider),
+                      const SizedBox(height: Spacing.lg),
+                      _buildNotificationHint(context),
+                    ],
+                  ),
                 ),
               ),
             ),

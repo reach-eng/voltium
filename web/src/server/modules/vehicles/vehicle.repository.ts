@@ -104,6 +104,36 @@ export const vehicleRepository = {
   // retired the vehicle — same action, opposite durability. Unify on soft
   // delete: set deletedAt + RETIRED; every read path filters deletedAt: null.
   async bulkDelete(ids: string[]) {
+    // Admin Panel Phase 2 P1-03 (2026-08-23): guard against
+    // orphaning active or booked rental leases. A historical
+    // CLOSED/COMPLETED lease on the same vehicle shouldn't
+    // block deletion. Without this guard, a bulk delete
+    // would either (a) leave dangling FKs in `rental_leases`,
+    // or (b) throw a Prisma `P2003` constraint violation at
+    // the `updateMany` call and surface a 500.
+    //
+    // Admin Panel Phase 4 / Batch C (2026-08-23): broadened the
+    // blocked-status set to include PICKUP_SCHEDULED, OVERDUE,
+    // RETURN_PENDING, and SUSPENDED. Any of those is a non-closed
+    // lease that would orphan a record if the vehicle were
+    // removed. BOOKED + ACTIVE alone missed the cases where
+    // (a) the rider is en route to pick up the vehicle, (b) the
+    // lease is past-due, (c) the rider is mid-return flow, or
+    // (d) the lease was suspended pending a dispute. Historical
+    // CLOSED / COMPLETED / RETURN_APPROVED leases don't block.
+    const blockedCount = await db.rentalLease.count({
+      where: {
+        vehicleId: { in: ids },
+        status: {
+          in: ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING', 'SUSPENDED'],
+        },
+      },
+    });
+    if (blockedCount > 0) {
+      throw new Error(
+        `Cannot delete vehicles: ${blockedCount} vehicle(s) currently have active or booked rental leases`
+      );
+    }
     const result = await db.vehicle.updateMany({
       where: { id: { in: ids }, deletedAt: null },
       data: { deletedAt: new Date(), status: 'RETIRED' },

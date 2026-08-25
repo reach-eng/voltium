@@ -1292,8 +1292,8 @@ class VerifyPhoneRequest {
 
   factory VerifyPhoneRequest.fromJson(Map<String, dynamic> json) {
     return VerifyPhoneRequest(
-      phone: json['phone'] as String,
-      otp: json['otp'].toString(),
+      phone: json['phone'] as String? ?? '',
+      otp: json['otp']?.toString() ?? '',
     );
   }
 

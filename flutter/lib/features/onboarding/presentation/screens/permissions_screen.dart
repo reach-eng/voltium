@@ -286,7 +286,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     super.dispose();
   }
 
+  bool _isRequesting = false;
+
   Future<void> _togglePermission(_PermissionItem item) async {
+    if (_isRequesting) return;
     if (item.isEnabled) {
       // PR-10 (F-077 — 2026-08-22 deep audit): the previous
       // tile was a no-op once the permission was already
@@ -299,7 +302,12 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       await openAppSettings();
       return;
     }
-    await _requestPermission(item);
+    _isRequesting = true;
+    try {
+      await _requestPermission(item);
+    } finally {
+      _isRequesting = false;
+    }
   }
 
   Future<void> _requestPermission(_PermissionItem item) async {
@@ -309,21 +317,48 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       case 'location':
         status = await Permission.locationWhenInUse.request();
         if (status.isGranted) {
-          final accuracy = await Geolocator.getLocationAccuracy();
-          if (accuracy != LocationAccuracyStatus.precise) {
-            status = PermissionStatus.denied;
-            if (mounted) {
-              Toast.error(
-                context,
-                AppLocalizations.of(context)!.txtpreciseLocationRequired,
-              );
+          try {
+            final accuracy = await Geolocator.getLocationAccuracy();
+            if (accuracy != LocationAccuracyStatus.precise) {
+              if (mounted) {
+                Toast.info(
+                  context,
+                  AppLocalizations.of(context)!.txtpreciseLocationRequired,
+                );
+              }
             }
-            await openAppSettings();
+          } catch (_) {
+            // Some devices / emulators throw on getLocationAccuracy; preserve granted status.
           }
         }
         break;
       case 'background_location':
+        // Android 11+ requires foreground location to be granted before background location.
+        final whenInUse = await Permission.locationWhenInUse.status;
+        if (!whenInUse.isGranted) {
+          final fgStatus = await Permission.locationWhenInUse.request();
+          if (!fgStatus.isGranted) {
+            status = PermissionStatus.denied;
+            if (mounted) {
+              Toast.info(
+                context,
+                'Please grant foreground location permission first',
+              );
+            }
+            break;
+          }
+        }
         status = await Permission.locationAlways.request();
+        if (!status.isGranted) {
+          // On Android 11+, OS policy requires selecting "Allow all the time" in Settings.
+          if (mounted) {
+            Toast.info(
+              context,
+              'Please select "Allow all the time" in Location settings',
+            );
+          }
+          await openAppSettings();
+        }
         break;
       case 'camera':
         status = await Permission.camera.request();
@@ -345,9 +380,6 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         if (mounted) {
           setState(() => item.isEnabled = status.isGranted);
         }
-        // AUDIT FIX: battery previously `return`ed before the consent
-        // block, so its grant was never recorded even though it maps to
-        // ConsentType.battery.
         await _recordConsent(_consentTypeFor(item.id), status.isGranted);
         return;
       case 'device_admin':
@@ -355,7 +387,6 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         if (mounted) {
           final adminActive = ref.read(devicePolicyProvider).isAdminActive;
           setState(() => item.isEnabled = adminActive);
-          // AUDIT FIX: same consent gap as battery.
           await _recordConsent(_consentTypeFor(item.id), adminActive);
         }
         return;
@@ -370,7 +401,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     await _recordConsent(_consentTypeFor(item.id), status.isGranted);
 
     if (status.isPermanentlyDenied) {
-      openAppSettings();
+      await openAppSettings();
     }
   }
 
@@ -463,72 +494,76 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     final description = _getPermDesc(context, perm.id);
     final tooltip = _getPermTooltip(context, perm.id);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: Spacing.paddingMd,
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
-        boxShadow: AppShadows.card,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+    return InkWell(
+      onTap: () => _togglePermission(perm),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: Spacing.paddingMd,
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
+          boxShadow: AppShadows.card,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                perm.icon,
+                color: AppColors.primary,
+                size: 24,
+              ),
             ),
-            child: Icon(
-              perm.icon,
-              color: AppColors.primary,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        name,
-                        style: AppTypography.labelLarge
-                            .copyWith(color: colors.onSurface),
-                      ),
-                    ),
-                    if (tooltip != null) ...[
-                      const SizedBox(width: 6),
-                      Tooltip(
-                        message: tooltip,
-                        triggerMode: TooltipTriggerMode.tap,
-                        child: Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: colors.onSurfaceVariant,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          style: AppTypography.labelLarge
+                              .copyWith(color: colors.onSurface),
                         ),
                       ),
+                      if (tooltip != null) ...[
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: tooltip,
+                          triggerMode: TooltipTriggerMode.tap,
+                          child: Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: colors.onSurfaceVariant,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          _buildToggle(perm, devPolicy: devPolicy),
-        ],
+            const SizedBox(width: 12),
+            _buildToggle(perm, devPolicy: devPolicy),
+          ],
+        ),
       ),
     );
   }
@@ -634,43 +669,105 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           ),
         ],
       ),
-      child: GestureDetector(
-        key: const Key('continuePermissionsButton'),
-        behavior: HitTestBehavior.opaque,
-        onTap: canProceed
-            ? () {
-                if (widget.onNext != null) widget.onNext!();
-              }
-            : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 56,
-          decoration: BoxDecoration(
-            color: canProceed
-                ? AppColors.primary
-                : colors.outline.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: canProceed ? AppShadows.primaryButton : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                l10n.txtcontinue,
-                style: AppTypography.titleSmall.copyWith(
-                    color: canProceed ? Colors.white : colors.onSurfaceMuted),
+      child: Column(
+        children: [
+          // T-118: skip button. Always visible — the rider who
+          // accidentally denied a permission (e.g., tapped "Don't
+          // allow" on Notifications by mistake) used to be stuck. The
+          // confirmation dialog makes the consequence explicit so a
+          // tap is intentional. The on-screen copy directs them to
+          // Settings to re-grant if they change their mind.
+          if (!canProceed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextButton(
+                key: const Key('skipPermissionsButton'),
+                onPressed: () => _confirmSkip(context),
+                child: Text(
+                  l10n.txtskipForNow,
+                  style: AppTypography.titleSmall.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward,
-                color: canProceed ? Colors.white : colors.onSurfaceMuted,
-                size: 20,
+            ),
+          GestureDetector(
+            key: const Key('continuePermissionsButton'),
+            behavior: HitTestBehavior.opaque,
+            onTap: canProceed
+                ? () {
+                    if (widget.onNext != null) widget.onNext!();
+                  }
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 56,
+              decoration: BoxDecoration(
+                color: canProceed
+                    ? AppColors.primary
+                    : colors.outline.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                boxShadow: canProceed ? AppShadows.primaryButton : null,
               ),
-            ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n.txtcontinue,
+                    style: AppTypography.titleSmall.copyWith(
+                        color:
+                            canProceed ? Colors.white : colors.onSurfaceMuted),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward,
+                    color: canProceed ? Colors.white : colors.onSurfaceMuted,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  /// T-118: confirm the rider really wants to skip the permissions
+  /// gate. The dialog uses a non-destructive Copy and a confirm
+  /// button labeled "Skip anyway" so the action is intentional.
+  Future<void> _confirmSkip(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final colors = AppColors.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surface,
+        title: Text(
+          l10n?.txtskipPermissionsConfirmTitle ?? 'Skip granting permissions?',
+        ),
+        content: Text(
+          l10n?.txtskipPermissionsConfirmBody ??
+              'The rider app needs these permissions to work correctly. You can re-grant them any time from Settings → Re-grant permissions.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n?.txtcancel ?? 'Cancel'),
+          ),
+          FilledButton(
+            key: const Key('confirmSkipPermissionsButton'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              l10n?.txtskipPermissionsConfirmAction ?? 'Skip anyway',
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted && widget.onNext != null) {
+      widget.onNext!();
+    }
   }
 }
 

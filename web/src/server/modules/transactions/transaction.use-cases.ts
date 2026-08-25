@@ -124,11 +124,15 @@ export const transactionUseCases = {
     const rank = lifecycleRankOf(rider.lifecycleStatus);
     const finalPurpose = rank < 10 ? 'SECURITY_DEPOSIT' : txn.purpose;
 
-    // P1-14 (financial audit): ordering is credit → CAS claim → audit log.
-    // If the process dies between credit and claim, the credit is idempotent
-    // on `idempotencyKey` (P0-9), so a retry replays a no-op credit and the
-    // CAS claim completes — the state self-heals. The audit log runs last;
-    // its failure is logged with full context (P1-15), never silently dropped.
+    // P0-2 (financial audit): CAS-claim FIRST. If another admin moved this
+    // transaction in the meantime, updateStatus throws CONFLICT and the route
+    // returns 409 before any wallet/deposit side effects occur.
+    const result = await transactionRepository.updateStatus(
+      transactionId,
+      txn.status,
+      'APPROVED',
+      adminId
+    );
 
     if (finalPurpose === 'SECURITY_DEPOSIT') {
       const depositRecord = await db.depositRecord.findUnique({
@@ -193,13 +197,6 @@ export const transactionUseCases = {
       });
     }
 
-    // P0-2: CAS claim (expected = the status we validated against).
-    const result = await transactionRepository.updateStatus(
-      transactionId,
-      txn.status,
-      'APPROVED',
-      adminId
-    );
     await transactionService.logAction({
       actorId: adminId,
       action: 'transaction.approve',
@@ -210,6 +207,7 @@ export const transactionUseCases = {
     // Invalidate rider cache & admin rider lists so Rider App & Admin Rider Section update instantly
     invalidateRiderCache(txn.riderId);
     invalidateCache('admin:riders:*');
+    invalidateCache('admin:transactions:*');
 
     return { ...result, amount: paiseToRupees(result.amountInPaise) };
   },

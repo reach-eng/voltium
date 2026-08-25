@@ -18,6 +18,21 @@ class ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // AUDIT FIX (testing/widgets P1): honor reduce-motion accessibility
+    // setting — render static placeholder boxes instead of animating.
+    final disableAnimations = MediaQuery.of(context).disableAnimations;
+    if (disableAnimations) {
+      return Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.of(context).card,
+          borderRadius: shape == ShimmerShape.circle
+              ? BorderRadius.circular(height / 2)
+              : BorderRadius.circular(borderRadius),
+        ),
+      );
+    }
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Blue-tinted shimmer for brand identity in light mode
     final baseColor =

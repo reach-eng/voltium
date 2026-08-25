@@ -139,6 +139,7 @@ void main() {
         dartCmd,
         ['run', 'tool/lint_google_fonts_bypass.dart'],
         workingDirectory: Directory.current.path,
+        runInShell: true,
       );
       // The tool exits 0 on pass, 1 on fail. Stdout/stderr may include
       // a "Running build hooks" warning from the Dart CLI which is harmless.

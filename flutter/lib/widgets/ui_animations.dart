@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -25,8 +27,7 @@ class FadeSlideEntrance extends StatefulWidget {
 class _FadeSlideEntranceState extends State<FadeSlideEntrance>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -36,30 +37,31 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
       duration: widget.animationDuration,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-      ),
+    final fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
-
-    _slideAnimation =
+    final slideAnim =
         Tween<Offset>(begin: widget.startOffset, end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
 
-    Future.delayed(widget.delayMultiplier * widget.index, () {
-      if (mounted) {
-        _controller.forward();
-      }
+    // AUDIT FIX: cancellable Timer instead of raw Future.delayed.
+    final delayMs = widget.delayMultiplier.inMilliseconds * (widget.index + 1);
+    _delayTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (mounted) _controller.forward();
     });
+
+    // Store animations for build.
+    _fade = fadeAnim;
+    _slide = slideAnim;
   }
+
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -67,9 +69,9 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: _fadeAnimation,
+      opacity: _fade,
       child: SlideTransition(
-        position: _slideAnimation,
+        position: _slide,
         child: widget.child,
       ),
     );
@@ -80,10 +82,7 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
 class PulsingFab extends StatefulWidget {
   final Widget child;
 
-  const PulsingFab({
-    super.key,
-    required this.child,
-  });
+  const PulsingFab({super.key, required this.child});
 
   @override
   State<PulsingFab> createState() => _PulsingFabState();
@@ -112,10 +111,10 @@ class _PulsingFabState extends State<PulsingFab>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
+      child: widget.child,
       builder: (context, child) {
-        final scale = 1.0 + (_controller.value * 0.03); // Subtle scale
-        final glowOpacity =
-            0.2 + (_controller.value * 0.3); // Subtle glow pulse
+        final scale = 1.0 + (_controller.value * 0.03);
+        final glowOpacity = 0.2 + (_controller.value * 0.3);
 
         return Transform.scale(
           scale: scale,
@@ -131,11 +130,10 @@ class _PulsingFabState extends State<PulsingFab>
                 ),
               ],
             ),
-            child: widget.child,
+            child: child,
           ),
         );
       },
-      child: widget.child,
     );
   }
 }

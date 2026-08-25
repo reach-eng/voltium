@@ -91,8 +91,19 @@ export const adminRepository = {
     if (params.permissions !== undefined) data.permissions = params.permissions;
     if (params.isActive !== undefined) data.isActive = params.isActive;
 
+    // P0-7 (Admin Password Session Invalidation, 2026-08-23): a password
+    // change must invalidate the admin's existing JWT-bearing sessions.
+    // The earlier code only invalidated on role/permissions/isActive
+    // changes, leaving any open browser tab authenticated with the
+    // OLD password hash. Now we add `password` to the invalidation
+    // trigger set: after the password update, the next request with
+    // the old JWT will hit a `tokenVersion` mismatch in the auth
+    // middleware and force a re-login.
     const shouldInvalidateSession =
-      params.role !== undefined || params.permissions !== undefined || params.isActive !== undefined;
+      params.role !== undefined ||
+      params.permissions !== undefined ||
+      params.isActive !== undefined ||
+      params.password !== undefined;
 
     if (shouldInvalidateSession) {
       return db.$transaction(async (tx) => {

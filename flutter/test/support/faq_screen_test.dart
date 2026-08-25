@@ -44,10 +44,13 @@ void main() {
       expect(find.byType(FaqScreen), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('displays help and FAQ title', (tester) async {
+    testWidgets('displays FAQ title', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      expect(find.text('Help & FAQ'), findsAtLeastNWidgets(1));
+      // AUDIT (T-111): the title is now just "FAQ" (l10n key
+      // `txtfaq`), down from the older "Help & FAQ" — shorter title
+      // fits a 48dp header on a 360dp-wide device.
+      expect(find.text('FAQ'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('filters FAQs by search input', (tester) async {

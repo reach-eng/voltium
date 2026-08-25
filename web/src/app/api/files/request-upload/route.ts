@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 import { requireRiderSession } from '@/lib/rider-auth';
@@ -10,6 +10,12 @@ import { requestUploadUrlSchema } from '@/server/modules/files/files.schemas';
 export async function POST(request: NextRequest) {
   try {
     const riderSession = await requireRiderSession(request);
+    // requireRiderSession returns NextResponse (a truthy object) on auth
+    // failure rather than null, so the bare `!riderSession` check below
+    // would let unauthenticated requests fall through to body validation
+    // and return 422. Surface the NextResponse here so the caller gets
+    // the proper 401.
+    if (riderSession instanceof NextResponse) return riderSession;
     const adminSession = await requireAdmin();
 
     if (!riderSession && !adminSession) {

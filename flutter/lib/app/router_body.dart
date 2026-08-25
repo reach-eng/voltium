@@ -363,11 +363,24 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           ProviderScope.containerOf(context).read(topUpFlowProvider.notifier);
       final topUpAmount =
           ProviderScope.containerOf(context).read(topUpFlowProvider).amount;
+
+      // First-time onboarding deposit: amount is locked to plan security deposit + advance rent (if selected)
+      final int? lockedDeposit = state._isOnboarding && rider != null
+          ? () {
+              final sec = rider.activeRentalPlanSecurityDeposit.toInt();
+              final rent = rider.activeRentalPlanPrice?.toInt() ?? 0;
+              final isAdvance = rider.advanceRentPaid;
+              final total = isAdvance ? (sec + rent) : (sec > 0 ? sec : rent);
+              return total > 0 ? total : null;
+            }()
+          : null;
+
       currentScreen = TopUpAmountScreen(
         key: const ValueKey('topUpAmount'),
         initialAmount: topUpAmount > 0 ? topUpAmount : null,
         securityDeposit: rider?.activeRentalPlanSecurityDeposit.toInt(),
         rentalPrice: rider?.activeRentalPlanPrice?.toInt(),
+        lockedAmount: lockedDeposit,
         onBack: () => state._navigateToLocal(
           // PR-ONBOARDING-FLOW-2026-08-13: onboarding back returns to
           // plan selection; dashboard back returns to the dashboard.
@@ -588,7 +601,9 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         key: const ValueKey('topUpProof'),
         amount: topUpAmount,
         onBack: () => state._navigateToLocal(AuthState.topUpAmount),
-        onEditAmount: () => state._navigateToLocal(AuthState.topUpAmount),
+        onEditAmount: state._isOnboarding
+            ? null
+            : () => state._navigateToLocal(AuthState.topUpAmount),
         onSubmit: (file, method, upiRef) async {
           // ONBOARDING-AUDIT 2026-08-14 P0-1: the previous implementation
           // only navigated, dropping the proof image / payment method /
@@ -655,9 +670,13 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
               );
             }
             state._navigateToLocal(
-              state._isOnboarding
-                  ? AuthState.pickupHub
-                  : AuthState.topUpReceipt,
+              // T-119: after submitting the top-up, route back to the
+              // dashboard (or the next onboarding step). The old flow
+              // went through `topUpReceipt` as an interstitial
+              // success screen, but the snackbar above already gives
+              // the rider the same feedback — skipping the third
+              // screen collapses the flow from 3 to 2.
+              state._isOnboarding ? AuthState.pickupHub : AuthState.dashboard,
             );
           } catch (e) {
             if (state.mounted) {

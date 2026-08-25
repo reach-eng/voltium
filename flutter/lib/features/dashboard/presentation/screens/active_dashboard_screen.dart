@@ -301,6 +301,12 @@ class _DashboardContentWidget extends ConsumerWidget {
                     child: RepaintBoundary(
                       child: PlanCard(
                         currentPlan: rider.currentPlan,
+                        currentPlanPrice: rider.currentPlanPrice,
+                        securityDeposit:
+                            rider.currentPlanSecurityDepositInRupees ??
+                                rider.securityDeposit,
+                        advanceRentPaid: rider.advanceRentPaid,
+                        planStartDate: rider.planStartDate,
                         planEndDate: rider.planEndDate,
                       ),
                     ),

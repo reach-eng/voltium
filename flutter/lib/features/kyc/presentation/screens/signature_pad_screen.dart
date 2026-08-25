@@ -149,27 +149,52 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
+                  clipBehavior: Clip.antiAlias,
                   child: Stack(
                     children: [
-                      const SizedBox.expand(),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanStart: (details) =>
-                            _addPoint(details.localPosition),
-                        onPanUpdate: (details) =>
-                            _addPoint(details.localPosition),
-                        onPanEnd: (_) => _endStroke(),
-                        // AUDIT FIX (MEDIUM): without this handler a
-                        // cancelled gesture never terminated the stroke, so
-                        // the next stroke drew a straight line connecting to
-                        // the previous one.
-                        onPanCancel: _endStroke,
-                        child: CustomPaint(
-                          painter: _SignaturePainter(
-                            _points,
-                            color: AppColors.of(context).onSurface,
+                      // Subtle watermark placeholder when empty
+                      if (_points.isEmpty)
+                        Positioned.fill(
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.draw_outlined,
+                                  size: 40,
+                                  color: Colors.grey.shade400,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n?.txtdrawSignature ??
+                                      'Sign here with your finger',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade400,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          size: Size.infinite,
+                        ),
+                      // Full-surface gesture detector for smooth continuous ink capture
+                      Positioned.fill(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onPanStart: (details) =>
+                              _addPoint(details.localPosition),
+                          onPanUpdate: (details) =>
+                              _addPoint(details.localPosition),
+                          onPanEnd: (_) => _endStroke(),
+                          onPanCancel: _endStroke,
+                          child: CustomPaint(
+                            painter: _SignaturePainter(
+                              List.unmodifiable(_points),
+                              color: AppColors.slate900,
+                            ),
+                            size: Size.infinite,
+                          ),
                         ),
                       ),
                     ],
@@ -185,24 +210,44 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
 }
 
 class _SignaturePainter extends CustomPainter {
+  static const double _strokeWidth = 3.5;
   final List<Offset?> points;
   final Color color;
-  _SignaturePainter(this.points, {required this.color});
+
+  _SignaturePainter(
+    this.points, {
+    required this.color,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 3;
-    for (int i = 0; i < points.length - 1; i++) {
-      if (points[i] != null && points[i + 1] != null) {
-        canvas.drawLine(points[i]!, points[i + 1]!, paint);
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = _strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < points.length; i++) {
+      final current = points[i];
+      if (current == null) continue;
+
+      final prev = i > 0 ? points[i - 1] : null;
+      final next = i < points.length - 1 ? points[i + 1] : null;
+
+      if (prev == null && next == null) {
+        // Isolated point / dot
+        canvas.drawCircle(current, _strokeWidth / 2, dotPaint);
+      } else if (next != null) {
+        canvas.drawLine(current, next, paint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _SignaturePainter old) =>
-      old.points.length != points.length;
+  bool shouldRepaint(covariant _SignaturePainter oldDelegate) => true;
 }

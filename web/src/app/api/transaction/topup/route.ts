@@ -11,6 +11,7 @@ import { validateBody, topUpSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from '@/server/modules/wallet/wallet.use-cases';
+import { WalletServiceError } from '@/server/modules/wallet/wallet.errors';
 import { rupeesToPaise } from '@/lib/money';
 import { toRupeesResponse } from '@/lib/api-money';
 
@@ -64,6 +65,9 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : String(err);
     if (message === 'Rider not found') {
       return errors.notFound('Rider not found');
+    }
+    if (err instanceof WalletServiceError) {
+      return errors.badRequest(err.message);
     }
     return errors.internal('Failed to submit payment');
   }

@@ -4714,6 +4714,102 @@ abstract class AppLocalizations {
   /// **'Your session expired. Please log in again to continue.'**
   String get txtsessionExpiredPleaseLogIn;
 
+  /// KYC submit error when the server returns 422 with no message
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your documents and try uploading again.'**
+  String get txtkycErrorInvalidDocs;
+
+  /// KYC submit error when the server returns 403
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied. Please check your verification status.'**
+  String get txtkycErrorAccessDenied;
+
+  /// KYC submit error when the server returns 408 or 504
+  ///
+  /// In en, this message translates to:
+  /// **'Upload timed out. Please check your connection and retry.'**
+  String get txtkycErrorUploadTimeout;
+
+  /// KYC submit error when the server returns 5xx
+  ///
+  /// In en, this message translates to:
+  /// **'Server temporarily unavailable. Please try again later.'**
+  String get txtserverUnavailable;
+
+  /// Generic fallback error message
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get txtgenericTryAgain;
+
+  /// Create-ticket field label
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get txtsubject;
+
+  /// Create-ticket field label
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get txtmessage;
+
+  /// Create-ticket validator message
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a subject'**
+  String get txtsubjectRequired;
+
+  /// Create-ticket validator message
+  ///
+  /// In en, this message translates to:
+  /// **'Subject must be at least 5 characters'**
+  String get txtsubjectTooShort;
+
+  /// Create-ticket validator message
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a message'**
+  String get txtmessageRequired;
+
+  /// Create-ticket validator message
+  ///
+  /// In en, this message translates to:
+  /// **'Message must be at least 10 characters'**
+  String get txtmessageTooShort;
+
+  /// Create-ticket message field hint
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your issue in detail...'**
+  String get txtdescribeIssueHint;
+
+  /// Permissions screen skip button label
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get txtskipForNow;
+
+  /// Permissions skip confirm dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Skip granting permissions?'**
+  String get txtskipPermissionsConfirmTitle;
+
+  /// Permissions skip confirm dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'The rider app needs these permissions to work correctly. You can re-grant them any time from Settings → Re-grant permissions.'**
+  String get txtskipPermissionsConfirmBody;
+
+  /// Permissions skip confirm dialog action
+  ///
+  /// In en, this message translates to:
+  /// **'Skip anyway'**
+  String get txtskipPermissionsConfirmAction;
+
   /// Toast shown after security-deposit proof upload succeeds
   ///
   /// In en, this message translates to:
@@ -4791,6 +4887,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a new 4-digit lock password.'**
   String get txtchooseNewLockPassword;
+
+  /// FAQ section title and AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ'**
+  String get txtfaq;
+
+  /// Notifications screen 'All' tab label
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get txtnotifTabAll;
+
+  /// Notifications screen 'Payments' tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get txtnotifTabPayments;
+
+  /// Notifications screen 'KYC' tab label
+  ///
+  /// In en, this message translates to:
+  /// **'KYC'**
+  String get txtnotifTabKyc;
+
+  /// Notifications screen 'Maintenance' tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get txtnotifTabMaintenance;
+
+  /// Notifications screen 'Announcements' tab label
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get txtnotifTabAnnouncements;
+
+  /// Dev-only hint shown when KYC or Maintenance tab is empty because of the title-keyword filter
+  ///
+  /// In en, this message translates to:
+  /// **'Category filter only matches English titles today. Localised KYC / maintenance notifications will appear in \'All\' until the server adds a `category` field.'**
+  String get txtnotifNoMatchHint;
+
+  /// Profile menu entry to log the rider out without deleting the account
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get menu_signOut;
+
+  /// Title of the sign-out confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of Voltium?'**
+  String get menu_signOutConfirmTitle;
+
+  /// Body of the sign-out confirmation dialog. Reassures the rider that sign-out is not destructive.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be returned to the phone-entry screen. Your account and data stay safe — sign back in any time.'**
+  String get menu_signOutConfirmBody;
+
+  /// Confirm action label on the sign-out dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get menu_signOutConfirmAction;
+
+  /// Toast shown when the rider taps Cancel on the sign-out dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-out cancelled'**
+  String get menu_signOutCancelled;
+
+  /// Support Center card shown when the server hasn't published support contact info yet
+  ///
+  /// In en, this message translates to:
+  /// **'Support contact is being configured. Please try again shortly.'**
+  String get supportNotConfigured;
 }
 
 class _AppLocalizationsDelegate

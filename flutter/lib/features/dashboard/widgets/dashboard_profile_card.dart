@@ -21,12 +21,15 @@ class DashboardProfileCard extends StatelessWidget {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final fallbackRider = l10n?.txtguestRider ?? 'Rider';
-    final isUnassignedVehicle = rider.assignedVehicle == null ||
-        rider.assignedVehicle!.isEmpty ||
-        rider.assignedVehicle == 'Not Assigned';
+    final vehicle = rider.assignedVehicle ?? '';
+    final isUnassignedVehicle = vehicle.isEmpty ||
+        vehicle == 'Not Assigned' ||
+        vehicle == 'Vehicle Pending Assignment';
     final vehicleText = isUnassignedVehicle
         ? (l10n?.txtvehiclePendingAssignment ?? 'Vehicle Pending Assignment')
-        : rider.assignedVehicle!;
+        : (rider.vehicleModel != null && rider.vehicleModel!.isNotEmpty
+            ? '$vehicle · ${rider.vehicleModel}'
+            : vehicle);
 
     return PremiumDoubleBezelCard.interactive(
       onTap: onTap != null
@@ -86,11 +89,16 @@ class DashboardProfileCard extends StatelessWidget {
 
   Widget _buildAvatar(ThemeColors colors) {
     String? getAvatarUrl() {
-      if (rider.profilePhoto == null || rider.profilePhoto!.isEmpty)
+      if (rider.profilePhoto == null || rider.profilePhoto!.isEmpty) {
         return null;
+      }
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       final baseUrl = ApiClient().baseUrl;
-      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+      final clean = rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '');
+      if (clean.startsWith('api/files/')) {
+        return '$baseUrl/$clean';
+      }
+      return '$baseUrl/api/files/$clean';
     }
 
     final avatarUrl = getAvatarUrl();

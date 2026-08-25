@@ -107,10 +107,19 @@ class ConnectivityProvider extends Notifier<ConnectivityState> {
             continue;
           }
 
-          final method = op['method'] as String;
-          final endpoint = op['endpoint'] as String;
-          final body = op['body'] as Map<String, dynamic>?;
-          final idempotencyKey = op['idempotency_key'] as String?;
+          // AUDIT FIX: defensive casts so one corrupt row doesn't kill
+          // the entire flush loop.
+          final method = op['method']?.toString() ?? '';
+          final endpoint = op['endpoint']?.toString() ?? '';
+          if (method.isEmpty || endpoint.isEmpty) {
+            appDebug('[Connectivity] Skipping malformed op ${op['id']}');
+            await offlineStorage.removePendingOperation(op['id'] as int);
+            continue;
+          }
+          final body = op['body'] is Map<String, dynamic>
+              ? op['body'] as Map<String, dynamic>
+              : null;
+          final idempotencyKey = op['idempotency_key']?.toString();
 
           await apiClient.sendQueuedRequest(
             method,

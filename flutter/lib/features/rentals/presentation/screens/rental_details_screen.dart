@@ -43,7 +43,9 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
             rider!.assignedVehicle!.isEmpty ||
             rider.assignedVehicle == 'Not Assigned')
         ? (l10n?.txtvehiclePendingAssignment ?? 'Vehicle Pending Assignment')
-        : rider.assignedVehicle!;
+        : (rider.vehicleModel != null && rider.vehicleModel!.isNotEmpty
+            ? '${rider.assignedVehicle!} · ${rider.vehicleModel!}'
+            : rider.assignedVehicle!);
     final hub = (rider?.pickupHub == null ||
             rider!.pickupHub!.isEmpty ||
             rider.pickupHub == 'Not Assigned')
@@ -59,7 +61,10 @@ class _RentalDetailsScreenState extends ConsumerState<RentalDetailsScreen> {
         _calculateEndDate(rider?.planStartDate, rider?.currentPlan);
     final streak = rider?.paymentStreak ?? 0;
     final wallet = rider?.walletBalance ?? 0.0;
-    final deposit = rider?.securityDeposit ?? 0.0;
+    final deposit =
+        (rider?.securityDeposit != null && rider!.securityDeposit > 0)
+            ? rider.securityDeposit
+            : (rider?.currentPlanSecurityDepositInRupees ?? 0.0);
 
     final dateFormat = DateFormat('MMM dd, yyyy');
 

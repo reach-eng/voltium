@@ -12,6 +12,7 @@ import { Shield, Save, RefreshCw, AlertTriangle } from 'lucide-react';
 interface FlagEntry {
   value: string;
   source: string;
+  valueType?: 'BOOLEAN' | 'NUMBER';
 }
 
 import { FLAG_LABELS, FLAG_DESCRIPTIONS } from '@/lib/feature-flags';
@@ -151,7 +152,7 @@ export default function FeatureFlagsScreen() {
         </CardHeader>
         <CardContent className="space-y-4">
           {Object.entries(flags).map(([key, entry]) => {
-            const isBoolean = key !== 'maxUploadSizeMb';
+            const isBoolean = entry.valueType ? entry.valueType === 'BOOLEAN' : key !== 'maxUploadSizeMb';
             const isEnabled = entry.value === 'true';
 
             return (

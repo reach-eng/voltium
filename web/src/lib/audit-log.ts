@@ -3,9 +3,14 @@ import { logger } from '@/lib/logger';
 
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
+  admin: 90,
   kyc: 365,
   rider_update: 180,
   bulk_action: 365,
+  transaction: 365,
+  wallet: 365,
+  finance: 365,
+  payment: 365,
   system: 30,
 };
 
@@ -13,7 +18,16 @@ const DEFAULT_RETENTION_DAYS = 90;
 
 function getRetentionDays(action: string): number {
   const actionType = action.split('.')[0];
-  return RETENTION_PERIODS[actionType] ?? DEFAULT_RETENTION_DAYS;
+  if (RETENTION_PERIODS[actionType]) {
+    return RETENTION_PERIODS[actionType];
+  }
+  if (action.includes('login') || action.includes('auth')) {
+    return RETENTION_PERIODS.auth ?? 90;
+  }
+  if (action.includes('transaction') || action.includes('payment') || action.includes('wallet') || action.includes('finance')) {
+    return RETENTION_PERIODS.transaction ?? 365;
+  }
+  return DEFAULT_RETENTION_DAYS;
 }
 
 export function getExpiresAt(action: string): Date {

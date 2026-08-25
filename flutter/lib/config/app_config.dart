@@ -7,7 +7,6 @@
 library;
 
 import 'package:flutter/foundation.dart';
-import 'package:universal_io/io.dart';
 
 enum Flavor { dev, staging, production }
 
@@ -31,7 +30,7 @@ class AppConfig {
       case Flavor.staging:
         return 'https://staging-api.voltium.app';
       case Flavor.dev:
-        return 'http://10.0.2.2:8081';
+        return 'http://$localDevHost:8081';
     }
   }
 
@@ -59,18 +58,10 @@ class AppConfig {
 
   static bool get isTestOrDev => flavor == Flavor.dev || kDebugMode;
 
-  /// PR-7 (F-065 — 2026-08-22 deep audit): single source of truth
-  /// for the local-dev host. Android emulators can't reach the
-  /// host's `127.0.0.1` directly; the emulator routes the host
-  /// machine through the magic IP `10.0.2.2`. iOS simulators and
-  /// desktop runs use `127.0.0.1` directly. The previous code had
-  /// three different places hardcoding one or the other
-  /// (`api_client.dart`, `files_repository.dart`,
-  /// `top_up_request_sent_card.dart`) — using the wrong one on the
-  /// wrong platform silently 404'd. Always use this helper, never
-  /// inline the literal.
+  /// Default local-dev host. When USB debugging with `adb reverse tcp:8081 tcp:8081`,
+  /// loopback `127.0.0.1` connects directly to the host machine on both physical devices
+  /// and emulators.
   static String get localDevHost {
-    if (!kIsWeb && Platform.isAndroid) return '10.0.2.2';
     return '127.0.0.1';
   }
 }

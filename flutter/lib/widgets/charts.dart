@@ -32,8 +32,11 @@ class PieChartWidget extends StatelessWidget {
               fl.PieChartData(
                 sections: data.map((item) {
                   final total = data.fold<double>(0, (sum, d) => sum + d.value);
-                  final percentage =
-                      (item.value / total * 100).toStringAsFixed(1);
+                  // AUDIT FIX: guard division by zero — all-zero data
+                  // produced NaN% in the label.
+                  final percentage = total > 0
+                      ? (item.value / total * 100).toStringAsFixed(1)
+                      : '0.0';
                   return fl.PieChartSectionData(
                     value: item.value,
                     title: showPercentage ? '$percentage%' : '',

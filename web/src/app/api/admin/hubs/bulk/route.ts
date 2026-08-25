@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       default:
         return errors.validation('Invalid action');
     }
-    invalidateCache('admin:*');
+    invalidateCache('admin:hubs:*');
     invalidateCache('admin:vehicles:*');
     return success(result, `Bulk ${action} completed`);
   } catch (error: unknown) {

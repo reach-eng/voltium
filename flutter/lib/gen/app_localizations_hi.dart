@@ -2518,6 +2518,59 @@ class AppLocalizationsHi extends AppLocalizations {
       'आपका सत्र समाप्त हो गया है। जारी रखने के लिए कृपया फिर से लॉग इन करें।';
 
   @override
+  String get txtkycErrorInvalidDocs =>
+      'कृपया अपने दस्तावेज़ जाँचें और फिर से अपलोड करने का प्रयास करें।';
+
+  @override
+  String get txtkycErrorAccessDenied =>
+      'पहुँच अस्वीकृत। कृपया अपनी सत्यापन स्थिति जाँचें।';
+
+  @override
+  String get txtkycErrorUploadTimeout =>
+      'अपलोड में समय समाप्त हुआ। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get txtserverUnavailable =>
+      'सर्वर अस्थायी रूप से अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।';
+
+  @override
+  String get txtgenericTryAgain => 'कुछ गलत हो गया। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get txtsubject => 'विषय';
+
+  @override
+  String get txtmessage => 'संदेश';
+
+  @override
+  String get txtsubjectRequired => 'कृपया एक विषय दर्ज करें';
+
+  @override
+  String get txtsubjectTooShort => 'विषय कम से कम 5 अक्षर का होना चाहिए';
+
+  @override
+  String get txtmessageRequired => 'कृपया एक संदेश दर्ज करें';
+
+  @override
+  String get txtmessageTooShort => 'संदेश कम से कम 10 अक्षर का होना चाहिए';
+
+  @override
+  String get txtdescribeIssueHint => 'अपनी समस्या का विस्तार से वर्णन करें...';
+
+  @override
+  String get txtskipForNow => 'अभी के लिए छोड़ें';
+
+  @override
+  String get txtskipPermissionsConfirmTitle => 'क्या अनुमतियाँ देना छोड़ दें?';
+
+  @override
+  String get txtskipPermissionsConfirmBody =>
+      'राइडर ऐप को सही तरीके से काम करने के लिए इन अनुमतियों की आवश्यकता है। आप इन्हें कभी भी सेटिंग्स → अनुमतियाँ पुनः दें से पुनः दे सकते हैं।';
+
+  @override
+  String get txtskipPermissionsConfirmAction => 'फिर भी छोड़ें';
+
+  @override
   String get txtsecurityDepositProofSubmitted =>
       'सिक्योरिटी डिपॉज़िट रसीद सबमिट हो गई — हम जल्द ही इसकी समीक्षा करेंगे।';
 
@@ -2563,4 +2616,47 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtchooseNewLockPassword => 'नया 4-अंकों का लॉक पासवर्ड चुनें।';
+
+  @override
+  String get txtfaq => 'अक्सर पूछे जाने वाले प्रश्न';
+
+  @override
+  String get txtnotifTabAll => 'सभी';
+
+  @override
+  String get txtnotifTabPayments => 'भुगतान';
+
+  @override
+  String get txtnotifTabKyc => 'केवाईसी';
+
+  @override
+  String get txtnotifTabMaintenance => 'रखरखाव';
+
+  @override
+  String get txtnotifTabAnnouncements => 'घोषणाएँ';
+
+  @override
+  String get txtnotifNoMatchHint =>
+      'श्रेणी फ़िल्टर अभी केवल अंग्रेज़ी शीर्षकों से मेल खाता है। हिंदी केवाईसी / रखरखाव सूचनाएँ \'सभी\' में दिखेंगी जब तक सर्वर `category` फ़ील्ड नहीं जोड़ता।';
+
+  @override
+  String get menu_signOut => 'साइन आउट';
+
+  @override
+  String get menu_signOutConfirmTitle =>
+      'क्या आप वोल्टियम से साइन आउट करना चाहते हैं?';
+
+  @override
+  String get menu_signOutConfirmBody =>
+      'आप फ़ोन नंबर स्क्रीन पर वापस जाएँगे। आपका खाता और डेटा सुरक्षित है — कभी भी वापस साइन इन करें।';
+
+  @override
+  String get menu_signOutConfirmAction => 'साइन आउट करें';
+
+  @override
+  String get menu_signOutCancelled => 'साइन आउट रद्द किया गया';
+
+  @override
+  String get supportNotConfigured =>
+      'सपोर्ट संपर्क कॉन्फ़िगर किया जा रहा है। कृपया थोड़ी देर में पुनः प्रयास करें।';
 }

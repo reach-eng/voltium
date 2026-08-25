@@ -5,7 +5,7 @@
  * All wallet mutations go through wallet.service.ts (which uses wallet-ledger.service.ts).
  */
 
-import { db } from '@/lib/db';
+import { db, type TxClient } from '@/lib/db';
 import { TransactionType, TransactionPurpose, TransactionStatus, TransactionAudience } from '@prisma/client';
 
 // H6-2026-08-13: centralized audience assignment. Any purpose not in
@@ -106,8 +106,14 @@ export const walletRepository = {
     return db.transaction.findUnique({ where: { idempotencyKey } });
   },
 
-  async updateTransactionStatus(txnId: string, status: TransactionStatus, approvedBy?: string) {
-    return db.transaction.update({
+  async updateTransactionStatus(
+    txnId: string,
+    status: TransactionStatus,
+    approvedBy?: string,
+    tx?: TxClient
+  ) {
+    const client = tx || db;
+    return client.transaction.update({
       where: { id: txnId },
       data: {
         status,

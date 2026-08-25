@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -7,6 +7,7 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/language_toggle.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
@@ -269,6 +270,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       },
                     ),
                   ),
+                  const SizedBox(height: 32),
+
+                  // ── Sign out (T-112: non-destructive account switch) ───
+                  // The only pre-existing exit was Settings → Delete Account
+                  // (GDPR). A rider who lends their phone cannot switch
+                  // accounts. The "Sign out" entry below uses the same
+                  // RiderLogoutOrchestrator path the session-expired flow
+                  // uses, so it clears auth + FCM + cached rider + active
+                  // device policy and routes back to the phone-entry
+                  // screen. The confirmation dialog reassures the rider
+                  // that the action is not destructive.
+                  FadeUpWidget(
+                    delay: 380,
+                    child: QuickLinkItem(
+                      key: const Key('signOutLink'),
+                      icon: Icons.logout,
+                      iconColor: AppColors.error,
+                      iconBgColor: colors.errorLight,
+                      title: l10n?.menu_signOut ?? 'Sign out',
+                      onTap: () => _confirmSignOut(context, ref, l10n),
+                    ),
+                  ),
                   const SizedBox(height: 48),
                 ],
               ),
@@ -302,6 +325,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 // Internal widgets
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+/// T-112: non-destructive sign-out confirmation. The rider sees a
+/// reassuring copy (the action does not delete their account) and
+/// either confirms or cancels. On confirm, the rider provider's
+/// `logout()` is invoked — the same path the session-expired flow
+/// uses, which clears auth + cached rider + FCM + active device
+/// policy and routes back to the phone-entry screen.
+Future<void> _confirmSignOut(
+  BuildContext context,
+  WidgetRef ref,
+  AppLocalizations? l10n,
+) async {
+  // AUDIT FIX (mount guard): a fast tap of the menu item then a back-press
+  // before the dialog mounts would otherwise push a dialog on a disposed
+  // BuildContext. The `context.mounted` check below is the only safe one.
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: AppColors.of(context).surface,
+      title: Text(
+        l10n?.menu_signOutConfirmTitle ?? 'Sign out of Voltium?',
+      ),
+      content: Text(
+        l10n?.menu_signOutConfirmBody ??
+            "You'll be returned to the phone-entry screen. Your account and data stay safe — sign back in any time.",
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(l10n?.txtcancel ?? 'Cancel'),
+        ),
+        FilledButton(
+          key: const Key('confirmSignOutButton'),
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.error,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(
+            l10n?.menu_signOutConfirmAction ?? 'Sign out',
+          ),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) {
+    if (context.mounted) {
+      Toast.info(
+        context,
+        l10n?.menu_signOutCancelled ?? 'Sign-out cancelled',
+      );
+    }
+    return;
+  }
+  // AUDIT FIX: capture the provider reference BEFORE the await so a
+  // mid-await pop can't leave the rider signed-in but the UI signed-out.
+  final notifier = ref.read(riderProvider.notifier);
+  await notifier.logout();
+}
+
 class _SectionLabel extends StatelessWidget {
   final String label;
   const _SectionLabel(this.label);
@@ -320,7 +402,7 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// Compact header showing avatar, name and KYC badge â€” no redundant detail.
+/// Compact header showing avatar, name and KYC badge — no redundant detail.
 class _CompactRiderHeader extends StatelessWidget {
   final RiderModel? rider;
   const _CompactRiderHeader({this.rider});
@@ -331,7 +413,11 @@ class _CompactRiderHeader extends StatelessWidget {
     }
     if (rider!.profilePhoto!.startsWith('http')) return rider!.profilePhoto;
     final baseUrl = ApiClient().baseUrl;
-    return '$baseUrl/api/files/${rider!.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+    final clean = rider!.profilePhoto!.replaceFirst(RegExp(r'^/+'), '');
+    if (clean.startsWith('api/files/')) {
+      return '$baseUrl/$clean';
+    }
+    return '$baseUrl/api/files/$clean';
   }
 
   @override
@@ -339,9 +425,11 @@ class _CompactRiderHeader extends StatelessWidget {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final avatarUrl = _getAvatarUrl();
-    final String initial = (rider?.name.isNotEmpty ?? false)
-        ? rider!.name.substring(0, 1).toUpperCase()
-        : '?';
+    final String displayName = (rider?.name.trim().isNotEmpty ?? false)
+        ? rider!.name.trim()
+        : (l10n?.txtguestRider ?? 'Rider');
+    final String initial =
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
     final String kycStatusName =
         rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
     final bool isVerified =
@@ -367,24 +455,20 @@ class _CompactRiderHeader extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             // Avatar
             Container(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
-                color: isVerified ? AppColors.success : AppColors.primary,
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: colors.card, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryLight, AppColors.primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
               alignment: Alignment.center,
               child: avatarUrl != null
@@ -424,7 +508,7 @@ class _CompactRiderHeader extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          rider?.name ?? (l10n?.txtguestRider ?? 'Rider'),
+                          displayName,
                           style: AppTypography.titleMedium.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colors.onSurface,

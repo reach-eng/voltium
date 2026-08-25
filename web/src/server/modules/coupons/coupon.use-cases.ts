@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { invalidateCache } from '@/lib/cache';
+import { normalizeExpiryToEndOfDayUtc } from '@/lib/date-normalize';
 
 export const couponUseCases = {
   async list(page: number, limit: number, search?: string | null) {
@@ -62,8 +63,15 @@ export const couponUseCases = {
         discountValueInPaise,
         minAmount: data.minAmount ?? null,
         maxUses: data.maxUses ?? null,
+        // T-94 (PR-4, 2026-08-23) and Admin Panel Phase 3 P2-15: a
+        // YYYY-MM-DD `validUntil` represents "valid through the
+        // END of that day" (the operator's mental model), not
+        // midnight at the START of that day. Normalize at the
+        // use-case boundary so the DB row reflects the end-of-day
+        // semantic, regardless of whether the admin typed
+        // "2026-09-30" or "2026-09-30T23:59:59.999Z".
         validFrom: new Date(data.validFrom),
-        validUntil: new Date(data.validUntil),
+        validUntil: normalizeExpiryToEndOfDayUtc(data.validUntil),
         isActive: data.isActive,
       },
     });
@@ -81,7 +89,12 @@ export const couponUseCases = {
   async update(id: string, data: Record<string, unknown>, actorId: string) {
     const updateData = { ...data };
     if (updateData.validFrom) updateData.validFrom = new Date(updateData.validFrom as string);
-    if (updateData.validUntil) updateData.validUntil = new Date(updateData.validUntil as string);
+    if (updateData.validUntil) {
+      // T-94 + P2-15: same end-of-day normalization on update.
+      updateData.validUntil = normalizeExpiryToEndOfDayUtc(
+        updateData.validUntil as string
+      );
+    }
     if (updateData.code) updateData.code = (updateData.code as string).toUpperCase();
     // PR-VER-2026-08-06 (SHIFTS P0-3): the old update only converted
     // `discountValue` when `discountType === 'FIXED'` — a PERCENTAGE update
@@ -97,6 +110,18 @@ export const couponUseCases = {
           select: { discountType: true },
         });
         discountType = existing?.discountType;
+      }
+      // Admin Panel Phase 2 P1-13 (2026-08-23): percentage cap on
+      // partial update. The create path enforces this via the
+      // schema's superRefine, but the update path bypasses the
+      // schema and writes directly to the DB. Apply the same
+      // 1..100% rule here so a 150% edit can never persist.
+      if (
+        discountType === 'PERCENTAGE' &&
+        (Number(updateData.discountValue) < 1 ||
+          Number(updateData.discountValue) > 100)
+      ) {
+        throw new Error('Percentage discount must be between 1 and 100');
       }
       updateData.discountValueInPaise =
         discountType === 'FIXED'

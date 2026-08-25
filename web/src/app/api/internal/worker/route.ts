@@ -16,13 +16,7 @@ const WORKER_SECRET = process.env.WORKER_SECRET;
 
 export async function POST(request: NextRequest) {
   if (!WORKER_SECRET) {
-    // PR-61: use APP_ENV (the deploy env) rather than NODE_ENV
-    // (the Next.js optimizer flag) — see fix(security) PR-60 for the
-    // same change in get-session.ts.
-    if (process.env.APP_ENV === 'production') {
-      return NextResponse.json({ error: 'Worker endpoint not configured' }, { status: 503 });
-    }
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Worker endpoint not configured' }, { status: 503 });
   }
 
   const authHeader = request.headers.get('authorization') || '';

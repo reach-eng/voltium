@@ -110,6 +110,13 @@ export default defineConfig(async () => {
           branches: 20,
           statements: 25,
           perFile: false,
+          // AUDIT FIX (testing backlog #9): per-package floors so
+          // widget-heavy areas can't mask service gaps.
+          './src/lib/auth.ts': { lines: 60 },
+          './src/lib/rate-limit.ts': { lines: 50 },
+          './src/lib/otp-store.ts': { lines: 50 },
+          './src/lib/rbac.ts': { lines: 40 },
+          './src/server/workers/index.ts': { lines: 30 },
         },
         skipFull: false,
       },

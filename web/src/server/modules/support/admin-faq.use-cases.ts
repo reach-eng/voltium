@@ -78,7 +78,13 @@ export const adminFaqUseCases = {
   async reorder(id: string, direction: 'up' | 'down', actorId: string) {
     const allFaqs = await db.faq.findMany({
       where: { deletedAt: null },
-      orderBy: { order: 'asc' },
+      // Tiebreak on createdAt so FAQs that share an `order` value (a
+      // legacy data condition from the old bulk-import flow) still
+      // have a deterministic sequence. The previous code sorted by
+      // `order` alone; two FAQs with the same `order` would render
+      // in undefined order, and the swap math could pick the wrong
+      // neighbour.
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
     });
 
     const index = allFaqs.findIndex((f: { id: string }) => f.id === id);
@@ -87,20 +93,28 @@ export const adminFaqUseCases = {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= allFaqs.length) return allFaqs;
 
-    const currentFaq = allFaqs[index];
-    const targetFaq = allFaqs[targetIndex];
+    // P3-07 (FAQ Reordering Sequential Indexing, 2026-08-23): the
+    // old code only swapped the two affected rows, leaving any
+    // pre-existing duplicate `order` values intact. With a stale
+    // dataset (3 FAQs all at `order: 0`), this produced an
+    // ambiguous post-reorder state. The fix: splice the moved FAQ
+    // into its new position, then re-number EVERY row 0..N-1
+    // sequentially. A single transactional batch of N updates is
+    // emitted; callers see the new order on the next read.
+    const moved = allFaqs.splice(index, 1)[0];
+    allFaqs.splice(targetIndex, 0, moved);
 
-    await db.$transaction([
-      db.faq.update({ where: { id: currentFaq.id }, data: { order: targetFaq.order } }),
-      db.faq.update({ where: { id: targetFaq.id }, data: { order: currentFaq.order } }),
-    ]);
+    const updates = allFaqs.map((faq, newOrder) =>
+      db.faq.update({ where: { id: faq.id }, data: { order: newOrder } })
+    );
+    await db.$transaction(updates);
 
     createAuditLog({
       actorId,
       action: 'faq.reorder',
       entity: 'faq',
       entityId: id,
-      details: { direction, swappedWith: targetFaq.id },
+      details: { direction, swappedWith: allFaqs[targetIndex === 0 ? 1 : targetIndex - 1]?.id },
     }).catch(() => {});
 
     return this.list({ page: 1, limit: 100 });

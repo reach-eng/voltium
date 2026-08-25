@@ -68,7 +68,7 @@ class _CellAnimState {
 
   void dispose() {
     if (_initialized) {
-      glow.removeListener(() {});
+      // AUDIT FIX: removed no-op removeListener with fresh closure.
       controller.dispose();
     }
   }

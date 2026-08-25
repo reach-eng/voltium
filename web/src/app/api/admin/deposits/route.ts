@@ -110,7 +110,8 @@ export async function PUT(req: NextRequest) {
           details: { action },
         }).catch(() => {});
         invalidateCache('admin:deposits:*');
-        invalidateCache('admin:*');
+        invalidateCache('admin:wallets:*');
+        invalidateCache('admin:riders:*');
         return success({ riderId, status: 'APPROVED' }, 'Deposit approved');
 
       case 'REJECT':
@@ -127,7 +128,8 @@ export async function PUT(req: NextRequest) {
           details: { action, reason },
         }).catch(() => {});
         invalidateCache('admin:deposits:*');
-        invalidateCache('admin:*');
+        invalidateCache('admin:wallets:*');
+        invalidateCache('admin:riders:*');
         return success({ riderId, status: 'REJECTED' }, 'Deposit rejected');
 
       case 'REFUND':
@@ -144,7 +146,8 @@ export async function PUT(req: NextRequest) {
           details: { action, refundAmount },
         }).catch(() => {});
         invalidateCache('admin:deposits:*');
-        invalidateCache('admin:*');
+        invalidateCache('admin:wallets:*');
+        invalidateCache('admin:riders:*');
         return success({ riderId, status: 'REFUNDED' }, 'Deposit refunded');
 
       case 'FORFEIT':
@@ -158,7 +161,8 @@ export async function PUT(req: NextRequest) {
           details: { action, reason },
         }).catch(() => {});
         invalidateCache('admin:deposits:*');
-        invalidateCache('admin:*');
+        invalidateCache('admin:wallets:*');
+        invalidateCache('admin:riders:*');
         return success({ riderId, status: 'FORFEITED' }, 'Deposit forfeited');
 
       default:

@@ -27,7 +27,7 @@ void main() {
 
     // Try to submit with empty phone — should stay on login screen
     final loginButton = app.login.getOtpButton;
-    if (loginButton.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on loginButton
       await settle(tester);
       await tester.tap(loginButton.first);
       await tester.pumpAndSettle(const Duration(seconds: 2));
@@ -46,12 +46,12 @@ void main() {
 
     // Enter valid phone
     final phoneField = app.shared.phoneNumberField;
-    if (phoneField.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on phoneField
       await tester.enterText(phoneField.first, TestCredentials.phone);
 
       // Tap Send OTP
       final sendOtpButton = app.login.getOtpButton;
-      if (sendOtpButton.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on sendOtpButton
         await settle(tester);
         await tester.tap(sendOtpButton.first);
         await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -60,13 +60,13 @@ void main() {
 
     // Enter wrong OTP (not 111111)
     final otpField = app.shared.otpField;
-    if (otpField.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on otpField
       await tester.enterText(otpField.first, '000000');
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
       // Tap Verify
       final verifyButton = app.login.verifyOtpButton;
-      if (verifyButton.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on verifyButton
         await settle(tester);
         await tester.tap(verifyButton.first);
         await tester.pumpAndSettle(const Duration(seconds: 3));
@@ -86,12 +86,12 @@ void main() {
 
     // Enter valid phone
     final phoneField = app.shared.phoneNumberField;
-    if (phoneField.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on phoneField
       await tester.enterText(phoneField.first, TestCredentials.phone);
 
       // Tap Send OTP
       final sendOtpButton = app.login.getOtpButton;
-      if (sendOtpButton.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on sendOtpButton
         await settle(tester);
         await tester.tap(sendOtpButton.first);
         await tester.pumpAndSettle(const Duration(seconds: 2));
@@ -100,7 +100,7 @@ void main() {
 
     // Try resend multiple times rapidly
     final resendButton = app.shared.resendOtpButton;
-    if (resendButton.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on resendButton
       for (int i = 0; i < 5 && resendButton.evaluate().isNotEmpty; i++) {
         await settle(tester);
         await tester.tap(resendButton.first);
@@ -129,20 +129,20 @@ void main() {
 
     // Find and tap top-up button
     final topupButton = app.shared.topupButton;
-    if (topupButton.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on topupButton
       await scrollAndTap(tester, topupButton.first);
       await settle(tester);
 
       // Enter invalid amount (zero)
       final amountField = app.shared.topupAmountField;
-      if (amountField.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on amountField
         await smartEnterText(tester, amountField.first, '0');
         await settle(tester);
 
         // Should see validation error or the submit button should be disabled
         // final errorText = find.textContaining('minimum');
         final submitButton = app.shared.submitTopupButton;
-        if (submitButton.evaluate().isNotEmpty) {
+        { // AUDIT FIX: removed vacuous-pass guard on submitButton
           await scrollAndTap(tester, submitButton.first);
           await settle(tester);
 
@@ -166,19 +166,19 @@ void main() {
 
     // Tap edit profile
     final editButton = app.profile.editProfileButton;
-    if (editButton.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on editButton
       await scrollAndTap(tester, editButton.first);
       await settle(tester);
 
       // Clear name field
       final nameField = app.profile.profileNameField;
-      if (nameField.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on nameField
         await smartEnterText(tester, nameField.first, '');
         await settle(tester);
 
         // Try to save
         final saveButton = app.profile.saveProfileButton;
-        if (saveButton.evaluate().isNotEmpty) {
+        { // AUDIT FIX: removed vacuous-pass guard on saveButton
           await scrollAndTap(tester, saveButton.first);
           await settle(tester);
 
@@ -200,7 +200,7 @@ void main() {
     await settle(tester);
 
     final supportButton = app.shared.supportButton;
-    if (supportButton.evaluate().isNotEmpty) {
+    { // AUDIT FIX: removed vacuous-pass guard on supportButton
       await scrollAndTap(tester, supportButton.first);
       await settle(tester);
       await scrollAndTap(tester, app.shared.createTicketButton);
@@ -208,7 +208,7 @@ void main() {
 
       // Try to submit empty ticket
       final submitButton = app.support.submitTicketButton;
-      if (submitButton.evaluate().isNotEmpty) {
+      { // AUDIT FIX: removed vacuous-pass guard on submitButton
         await scrollAndTap(tester, submitButton.first);
         await settle(tester);
 

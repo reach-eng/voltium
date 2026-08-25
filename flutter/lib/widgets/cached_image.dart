@@ -50,7 +50,7 @@ class CachedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        memCacheWidth: 500,
+        memCacheWidth: (width ?? 500).toInt(),
         placeholder: (context, url) =>
             placeholder ?? _buildPlaceholder(context),
         errorWidget: (context, url, error) =>

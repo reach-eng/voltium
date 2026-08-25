@@ -8,6 +8,7 @@ import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/support_model.dart' show FaqItem;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -22,19 +23,47 @@ class FaqScreen extends ConsumerStatefulWidget {
 
 class _FaqScreenState extends ConsumerState<FaqScreen> {
   String _searchQuery = '';
-  String _activeCategory = 'All';
+  String _activeCategory = 'All'; // UI label; the comparison below matches
+  // against the raw English constant intentionally so localisation
+  // (chip reads "सभी" in Hindi) doesn't break the filter.
   String? _expandedId;
 
   Future<void> _callSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
-    final phone = supportConfig?.supportPhone ?? '+919876543210';
+    // T-113: do NOT fall back to a hardcoded phone number. If the
+    // server hasn't published a support phone yet, show the same
+    // "being configured" toast the Support Center uses and bail.
+    final phone = supportConfig?.supportPhone;
+    if (phone == null || phone.isEmpty) {
+      if (mounted) {
+        Toast.info(
+          context,
+          AppLocalizations.of(context)?.supportNotConfigured ??
+              'Support contact is being configured. Please try again shortly.',
+        );
+      }
+      return;
+    }
     // AUDIT FIX: guarded dialer with toast fallback (was silent no-op).
     await launchDialer(context, phone);
   }
 
   Future<void> _emailSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
-    final email = supportConfig?.supportEmail ?? 'support@voltium.app';
+    // T-113: do NOT fall back to a hardcoded email. The Support Center
+    // also hides the email card when this is null; the FAQ screen
+    // surfaces the same "being configured" toast on tap.
+    final email = supportConfig?.supportEmail;
+    if (email == null || email.isEmpty) {
+      if (mounted) {
+        Toast.info(
+          context,
+          AppLocalizations.of(context)?.supportNotConfigured ??
+              'Support contact is being configured. Please try again shortly.',
+        );
+      }
+      return;
+    }
     final uri = Uri.parse('mailto:$email');
     try {
       if (await canLaunchUrl(uri)) {
@@ -56,7 +85,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     final colors = AppColors.of(context);
 
     final categories = <String>[
-      'All',
+      AppLocalizations.of(context)?.history_all ?? 'All',
       ...faqItems.map((f) => f.category).toSet()
     ];
 
@@ -64,6 +93,9 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       final matchesSearch =
           f.question.toLowerCase().contains(_searchQuery.toLowerCase()) ||
               f.answer.toLowerCase().contains(_searchQuery.toLowerCase());
+      // The "All" key is shown localised in the chip; compare against the
+      // raw English constant so the matching doesn't break when the locale
+      // is Hindi (chip would read "सभी" but the comparison is `== 'All'`).
       final matchesCategory =
           _activeCategory == 'All' || f.category == _activeCategory;
       return matchesSearch && matchesCategory;
@@ -221,7 +253,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           ),
           const SizedBox(width: 16),
           Text(
-            'Help & FAQ',
+            AppLocalizations.of(context)?.txtfaq ?? 'FAQ',
             style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
         ],

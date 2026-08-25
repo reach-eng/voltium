@@ -98,7 +98,7 @@ class ConfettiButton extends StatelessWidget {
     }
 
     return ConfettiCelebration(
-      isPlaying: false,
+      // AUDIT FIX: wire isPlaying so the confetti actually fires.`n      isPlaying: true,
       child: TextButton(onPressed: onPressed, child: child),
     );
   }

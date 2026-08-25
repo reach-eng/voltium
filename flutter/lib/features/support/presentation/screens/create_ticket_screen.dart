@@ -277,7 +277,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
                 // Subject TextField
                 Text(
-                  'Subject',
+                  AppLocalizations.of(context)?.txtsubject ?? 'Subject',
                   style: GoogleFonts.plusJakartaSans(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w600,
@@ -316,11 +316,19 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     contentPadding: Spacing.paddingMd,
                   ),
                   validator: (value) {
+                    // T-114: validator messages go through l10n with an
+                    // English fallback. The screen was previously
+                    // hardcoded English; a Hindi rider saw "Please
+                    // enter a subject" in English while the rest of
+                    // the screen was translated.
+                    final l10n = AppLocalizations.of(context);
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a subject';
+                      return l10n?.txtsubjectRequired ??
+                          'Please enter a subject';
                     }
                     if (value.trim().length < 5) {
-                      return 'Subject must be at least 5 characters';
+                      return l10n?.txtsubjectTooShort ??
+                          'Subject must be at least 5 characters';
                     }
                     return null;
                   },
@@ -329,7 +337,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
 
                 // Message TextField
                 Text(
-                  'Message',
+                  AppLocalizations.of(context)?.txtmessage ?? 'Message',
                   style: GoogleFonts.plusJakartaSans(
                     color: colors.onSurface,
                     fontWeight: FontWeight.w600,
@@ -348,7 +356,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                           maxLength}) =>
                       null, // counter hidden; limit still enforced
                   decoration: InputDecoration(
-                    hintText: 'Describe your issue in detail...',
+                    hintText:
+                        AppLocalizations.of(context)?.txtdescribeIssueHint ??
+                            'Describe your issue in detail...',
                     hintStyle: GoogleFonts.plusJakartaSans(
                         color: colors.onSurfaceMuted),
                     filled: true,
@@ -369,11 +379,15 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     contentPadding: Spacing.paddingMd,
                   ),
                   validator: (value) {
+                    // T-114: see note above on l10n fallbacks.
+                    final l10n = AppLocalizations.of(context);
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a message';
+                      return l10n?.txtmessageRequired ??
+                          'Please enter a message';
                     }
                     if (value.trim().length < 10) {
-                      return 'Message must be at least 10 characters';
+                      return l10n?.txtmessageTooShort ??
+                          'Message must be at least 10 characters';
                     }
                     return null;
                   },

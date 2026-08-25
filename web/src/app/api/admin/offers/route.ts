@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
-import { validateBody, createOfferSchema } from '@/lib/validators';
+import { validateBody, createOfferSchema, updateOfferSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { parsePositiveInt } from '@/lib/api-utils';
@@ -58,17 +58,25 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(
-      createOfferSchema.partial().extend({ id: z.string().min(1) }),
-      body
-    );
+    // Zod v4 doesn't allow `.partial()` on schemas with refinements
+    // (it throws at runtime). Use the dedicated `updateOfferSchema`
+    // which has all fields optional and the same cross-field
+    // `validUntil >= validFrom` superRefine.
+    const validation = validateBody(updateOfferSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
 
     const { id, ...data } = validation.data;
     const offer = await offerUseCases.update(id, data, session.adminId || '');
     return success(offer);
   } catch (error) {
-    logger.error('PUT /api/admin/offers error:', error);
+    // Pino's default Error serialization is empty `{}` — extract
+    // the message + stack explicitly so the dev log shows the real
+    // cause instead of an opaque `err: {}`.
+    const err = error as { message?: string; stack?: string };
+    logger.error('PUT /api/admin/offers error', {
+      message: err?.message,
+      stack: err?.stack,
+    });
     return errors.internal('Failed to update offer');
   }
 }

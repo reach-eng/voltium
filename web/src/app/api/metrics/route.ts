@@ -14,8 +14,13 @@ collectDefaultMetrics({ register });
 
 async function isAuthorizedMetricsCaller(req: NextRequest): Promise<boolean> {
   const tokenHeader = req.headers.get('x-internal-metrics-token');
+  const authHeader = req.headers.get('authorization');
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7).trim() : null;
+  const queryToken = req.nextUrl.searchParams.get('token');
+  const providedToken = tokenHeader || bearerToken || queryToken;
+
   const expectedToken = process.env.INTERNAL_METRICS_TOKEN;
-  if (expectedToken && tokenHeader === expectedToken) {
+  if (expectedToken && providedToken && providedToken === expectedToken) {
     return true;
   }
   const session = await requireAdmin();

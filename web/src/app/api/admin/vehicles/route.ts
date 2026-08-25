@@ -93,7 +93,9 @@ export async function POST(req: NextRequest) {
       hub: { connect: { id: validation.data.hubId } },
     } as any);
 
-    invalidateCache('admin:*');
+    invalidateCache('admin:vehicles:*');
+    invalidateCache('admin:hubs:*');
+    invalidateCache('vehicles_list:*');
 
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'system',
@@ -123,7 +125,9 @@ export async function PUT(req: NextRequest) {
     const { id, ...data } = validation.data;
     const vehicle = await vehicleUseCases.updateVehicle(id, data);
 
-    invalidateCache('admin:*');
+    invalidateCache('admin:vehicles:*');
+    invalidateCache('admin:hubs:*');
+    invalidateCache('vehicles_list:*');
 
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'system',
@@ -152,8 +156,8 @@ export async function DELETE(req: NextRequest) {
     // P1.7/P3.15: retireVehicle 404s on an unknown id and 409s on an active
     // lease — the old code silently returned 200 with no write for a typo'd id.
     await vehicleUseCases.retireVehicle(id, session.adminId || session.riderDbId || 'system');
-    invalidateCache('admin:*');
     invalidateCache('admin:vehicles:*');
+    invalidateCache('admin:hubs:*');
     invalidateCache('vehicles_list:*');
     return success(null, 'Vehicle retired');
   } catch (error) {

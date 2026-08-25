@@ -14,6 +14,7 @@ import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.dart';
+import 'package:voltium_rider/widgets/language_toggle.dart';
 
 /// LoginScreen — composition shell for the auth landing page.
 ///
@@ -174,6 +175,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       onPressed: _handleLogin,
                     ),
                   ],
+                ),
+              ),
+            ),
+          ),
+          // Language toggle — top-right corner so Hindi-speaking riders
+          // can switch locale before entering their phone number.
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 12,
+            child: SafeArea(
+              child: Semantics(
+                label: 'Change language',
+                button: true,
+                child: IconButton(
+                  key: const Key('loginLanguageToggle'),
+                  icon: const Icon(Icons.language),
+                  tooltip: 'Change language / भाषा बदलें',
+                  onPressed: () => showAppLanguageDialog(context, ref),
                 ),
               ),
             ),

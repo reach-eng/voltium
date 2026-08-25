@@ -540,7 +540,11 @@ class RiderModel {
   /// `AppConstants.planSecurityDepositRupees` map.
   @JsonKey(includeFromJson: false, includeToJson: false)
   double get activeRentalPlanSecurityDeposit {
-    return currentPlanSecurityDepositInRupees ?? 0.0;
+    if (currentPlanSecurityDepositInRupees != null &&
+        currentPlanSecurityDepositInRupees! > 0) {
+      return currentPlanSecurityDepositInRupees!;
+    }
+    return securityDeposit > 0 ? securityDeposit : 0.0;
   }
 
   // ── Derived Lifecycle & Progress Status Getters ─────────────────────────
@@ -656,7 +660,9 @@ class RiderModel {
       id: json['id'] as String?,
       riderId: json['riderId'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
-      name: json['name'] as String? ?? '',
+      name: (json['name'] as String?)?.trim().isNotEmpty == true
+          ? (json['name'] as String).trim()
+          : ((json['fullName'] as String?)?.trim() ?? ''),
       email: json['email'] as String?,
       fatherName: json['fatherName'] as String?,
       motherName: json['motherName'] as String?,
@@ -787,7 +793,9 @@ class RiderModel {
       'walletBalance': walletBalance,
       'securityDeposit': securityDeposit,
       'currentPlan': currentPlan,
+      'currentPlanId': currentPlanId,
       'currentPlanPrice': currentPlanPrice,
+      'currentPlanSecurityDepositInRupees': currentPlanSecurityDepositInRupees,
       'assignedVehicle': assignedVehicle,
       'vehicleModel': vehicleModel,
       'pickupHub': pickupHub,
@@ -801,6 +809,33 @@ class RiderModel {
       'rentalStatus': rentalStatus,
       'name': name,
       'phone': phone,
+      'email': email,
+      'fatherName': fatherName,
+      'motherName': motherName,
+      'dob': dob?.toIso8601String(),
+      'currentAddress': currentAddress,
+      'profilePhoto': profilePhoto,
+      'riderPhoto': riderPhoto,
+      'signature': signature,
+      'aadhaarFront': aadhaarFront,
+      'aadhaarBack': aadhaarBack,
+      'panCard': panCard,
+      'bankAccount': bankAccount,
+      'bankIfsc': bankIfsc,
+      'bankName': bankName,
+      'guarantorName': guarantorName,
+      'guarantorRelation': guarantorRelation,
+      'guarantorDob': guarantorDob?.toIso8601String(),
+      'guarantorPhone': guarantorPhone,
+      'guarantorAadhaarFront': guarantorAadhaarFront,
+      'guarantorAadhaarBack': guarantorAadhaarBack,
+      'guarantorPan': guarantorPan,
+      'guarantorVideo': guarantorVideo,
+      'guarantorSignature': guarantorSignature,
+      'guarantorStatus': guarantorStatus.name,
+      'guarantorPhoto': guarantorPhoto,
+      'guarantorAddress': guarantorAddress,
+      'advanceRentPaid': advanceRentPaid,
       'intent': intent,
       'preferredLocale': preferredLocale,
       'submissionDate': submissionDate?.toIso8601String(),
@@ -813,6 +848,7 @@ class RiderModel {
       'planStartDate': planStartDate?.toIso8601String(),
       'planEndDate': planEndDate?.toIso8601String(),
       'paymentStreak': paymentStreak,
+      'referralCode': referralCode,
     };
   }
 
@@ -822,7 +858,9 @@ class RiderModel {
     return RiderModel(
       id: cache['id'] as String?,
       riderId: cache['riderId'] as String? ?? '',
-      name: cache['name'] as String? ?? '',
+      name: (cache['name'] as String?)?.trim().isNotEmpty == true
+          ? (cache['name'] as String).trim()
+          : ((cache['fullName'] as String?)?.trim() ?? ''),
       phone: cache['phone'] as String? ?? '',
       email: cache['email'] as String?,
       fatherName: cache['fatherName'] as String?,
@@ -833,6 +871,7 @@ class RiderModel {
       currentAddress: cache['currentAddress'] as String?,
       emergencyContact: cache['emergencyContact'] as String?,
       profilePhoto: cache['profilePhoto'] as String?,
+      riderPhoto: cache['riderPhoto'] as String?,
       walletBalance: _toDouble(cache['walletBalance']),
       securityDeposit: _toDouble(cache['securityDeposit']),
       currentPlan: cache['currentPlan'] as String?,
@@ -853,6 +892,10 @@ class RiderModel {
           ? DateTime.tryParse(cache['planEndDate'] as String)
           : null,
       guarantorName: cache['guarantorName'] as String?,
+      guarantorRelation: cache['guarantorRelation'] as String?,
+      guarantorDob: cache['guarantorDob'] != null
+          ? DateTime.tryParse(cache['guarantorDob'] as String)
+          : null,
       guarantorPhone: cache['guarantorPhone'] as String?,
       guarantorAddress: cache['guarantorAddress'] as String?,
       guarantorStatus: _parseGuarantorStatus(cache['guarantorStatus']),
@@ -862,6 +905,9 @@ class RiderModel {
       aadhaarBack: cache['aadhaarBack'] as String?,
       panCard: cache['panCard'] as String?,
       signature: cache['signature'] as String?,
+      bankAccount: cache['bankAccount'] as String?,
+      bankIfsc: cache['bankIfsc'] as String?,
+      bankName: cache['bankName'] as String?,
       guarantorAadhaarFront: cache['guarantorAadhaarFront'] as String?,
       guarantorAadhaarBack: cache['guarantorAadhaarBack'] as String?,
       guarantorPan: cache['guarantorPan'] as String?,
@@ -882,6 +928,9 @@ class RiderModel {
       kycDone: _toBool(cache['kycDone']) ?? false,
       planDone: _toBool(cache['planDone']) ?? false,
       pickupDone: _toBool(cache['pickupDone']) ?? false,
+      preferredLocale: cache['preferredLocale'] as String?,
+      advanceRentPaid: _toBool(cache['advanceRentPaid']) ?? false,
+      referralCode: cache['referralCode'] as String?,
     );
   }
 

@@ -123,13 +123,19 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
       }
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       final baseUrl = ApiClient().baseUrl;
-      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+      final clean = rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '');
+      if (clean.startsWith('api/files/')) {
+        return '$baseUrl/$clean';
+      }
+      return '$baseUrl/api/files/$clean';
     }
 
     final avatarUrl = getAvatarUrl();
-    final String initial = (rider?.name.isNotEmpty ?? false)
-        ? rider!.name.substring(0, 1).toUpperCase()
-        : '?';
+    final String displayName = (rider?.name.trim().isNotEmpty ?? false)
+        ? rider!.name.trim()
+        : (l10n?.txtguestRider ?? 'Rider');
+    final String initial =
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
     final String kycStatusName =
         rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
     final bool isVerified =
@@ -150,7 +156,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
         children: [
           Stack(
@@ -159,22 +165,19 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
               Container(
                 width: 96,
                 height: 96,
-                decoration: BoxDecoration(
-                  color: isVerified ? AppColors.success : AppColors.primary,
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: colors.card, width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryLight, AppColors.primary],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: avatarUrl != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(48),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.radiusModal),
                         child: CachedNetworkImage(
                           imageUrl: avatarUrl,
                           width: 96,
@@ -221,7 +224,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            rider?.name ?? (l10n?.txtguestRider ?? 'Rider'),
+            displayName,
             style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: 8),

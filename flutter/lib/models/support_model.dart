@@ -71,7 +71,7 @@ class FaqCategory {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(createFactory: false, createToJson: false)
 class FaqItem {
   final String id;
   final String categoryId;
@@ -87,9 +87,23 @@ class FaqItem {
 
   String get category => categoryId;
 
-  factory FaqItem.fromJson(Map<String, dynamic> json) =>
-      _$FaqItemFromJson(json);
-  Map<String, dynamic> toJson() => _$FaqItemToJson(this);
+  factory FaqItem.fromJson(Map<String, dynamic> json) {
+    return FaqItem(
+      id: (json['id'] as String?) ?? '',
+      categoryId: (json['categoryId'] as String?) ??
+          (json['category'] as String?) ??
+          'General',
+      question: (json['question'] as String?) ?? '',
+      answer: (json['answer'] as String?) ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'categoryId': categoryId,
+        'question': question,
+        'answer': answer,
+      };
 }
 
 @JsonSerializable(createFactory: false)

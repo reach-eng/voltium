@@ -156,8 +156,19 @@ export const hubUseCases = {
   },
 
   async bulkDelete(ids: string[], actorId: string) {
+    // Admin Panel Phase 4 / Batch A D1-P1-01 (2026-08-23): the
+    // previous `vehicles: { some: {} }` matched hubs with
+    // ANY vehicle (soft-deleted or not). The intent of the
+    // bulk-delete guard is "this hub still has ACTIVE
+    // vehicles", so we filter on `deletedAt: null` on the
+    // nested `vehicles` relation. A hub whose only vehicles
+    // are soft-deleted can now be safely bulk-deleted.
     const hubsWithVehicles = await db.hub.findMany({
-      where: { id: { in: ids }, deletedAt: null, vehicles: { some: {} } },
+      where: {
+        id: { in: ids },
+        deletedAt: null,
+        vehicles: { some: { deletedAt: null } },
+      },
       select: { id: true },
     });
     if (hubsWithVehicles.length > 0) {

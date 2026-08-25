@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:voltium_rider/models/transaction_model.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/money_format.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/animated_balance_counter.dart';
 import '../../../../widgets/streak_celebration_bar.dart';
@@ -250,8 +252,13 @@ class SecurityDepositCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (rider == null) return const SizedBox.shrink();
 
-    final double deposit = (rider.securityDeposit ?? 0).toDouble();
-    final bool isRefundable = deposit >= AppConstants.depositRefundThreshold;
+    final double deposit = ((rider is RiderModel
+            ? (rider.securityDeposit > 0
+                ? rider.securityDeposit
+                : (rider.currentPlanSecurityDepositInRupees ?? 0.0))
+            : (rider.securityDeposit ?? 0)))
+        .toDouble();
+    final bool isRefundable = deposit > 0;
     final colors = AppColors.of(context);
 
     return ClipRRect(
@@ -315,7 +322,7 @@ class SecurityDepositCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
@@ -328,7 +335,7 @@ class SecurityDepositCard extends StatelessWidget {
                       color: colors.onSurface,
                     ),
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     deposit.toInt().toString(),
                     style: AppTypography.headingMedium
@@ -336,11 +343,11 @@ class SecurityDepositCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 isRefundable
-                    ? 'Your first top-up of ₹\u2060${deposit.toInt()} is refundable after 180 days of active service.'
-                    : 'Amounts less than ₹\u2060${AppConstants.depositRefundThreshold.toInt()} are treated as account activation fees and are non-refundable.',
+                    ? 'Your security deposit of ₹\u2060${deposit.toInt()} is refundable after 180 days of active service.'
+                    : 'A refundable security deposit of ₹\u2060${AppConstants.depositRefundThreshold.toInt()} applies to active vehicle rentals.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: colors.onSurfaceVariant,
@@ -674,7 +681,8 @@ class WalletActionButtons extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'History',
+                        AppLocalizations.of(context)?.wallet_history ??
+                            'History',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurface),
@@ -813,7 +821,7 @@ class TransactionHistorySection extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                'All',
+                AppLocalizations.of(context)?.history_all ?? 'All',
                 'Approved',
                 'Pending',
                 'Rejected',

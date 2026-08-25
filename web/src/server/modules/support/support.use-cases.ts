@@ -9,6 +9,10 @@ import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { randomBytes } from 'crypto';
 import { supportRepository } from './support.repository';
+import {
+  type TicketStatus,
+  validateTicketTransition,
+} from './ticket-state-machine';
 import { createAuditLog } from '@/lib/audit-log';
 import { notificationService } from '@/lib/notification-service';
 import { sanitizeHtml } from '@/lib/sanitize';
@@ -65,6 +69,20 @@ export const supportUseCases = {
   },
 
   async updateTicket(ticketId: string, input: Record<string, unknown>) {
+    // Admin Panel Phase 2 P1-12 (2026-08-23): enforce the
+    // ticket state machine. The previous implementation
+    // passed the update straight to the repository, allowing
+    // arbitrary status jumps (CLOSED → OPEN, OPEN → RESOLVED
+    // skipping IN_PROGRESS, etc.) that left the workflow in
+    // an inconsistent state. Read the current status, validate
+    // the transition via the state machine, and throw
+    // `TicketStateError` on any invalid move.
+    if (input && typeof input === 'object' && 'status' in input) {
+      const targetStatus = input.status as TicketStatus;
+      const existing = await supportRepository.findById(ticketId);
+      if (!existing) throw new Error('Ticket not found');
+      validateTicketTransition(existing.status as TicketStatus, targetStatus);
+    }
     return supportRepository.update(ticketId, input);
   },
 
@@ -97,11 +115,27 @@ export const supportUseCases = {
   },
 
   async getFAQs() {
-    return supportRepository.getFaqs();
+    return db.faq.findMany({
+      where: { isActive: true },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        category: true,
+        question: true,
+        answer: true,
+      },
+    });
   },
 
   /**
    * Admin ticket listing with search, pagination, and rider info.
+   *
+   * Admin Panel Phase 4 / Batch C (2026-08-23): the `statusCounts`
+   * summary now includes `WAITING_ON_RIDER`. Tickets in this state
+   * are waiting for the rider to respond (e.g. additional KYC docs
+   * or a clarification) and are common enough to deserve a tab on
+   * the admin screen. Without this entry the tab badge would show
+   * zero and admins would have to manually scan the OPEN column.
    */
   async getAdminTickets(query: {
     status?: string;
@@ -128,7 +162,15 @@ export const supportUseCases = {
       ...(status ? { status: status as Prisma.SupportTicketWhereInput['status'] } : {}),
     };
 
-    const [tickets, total, openCount, inProgressCount, resolvedCount, closedCount] = await Promise.all([
+    const [
+      tickets,
+      total,
+      openCount,
+      inProgressCount,
+      waitingOnRiderCount,
+      resolvedCount,
+      closedCount,
+    ] = await Promise.all([
       db.supportTicket.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -141,6 +183,7 @@ export const supportUseCases = {
       db.supportTicket.count({ where }),
       db.supportTicket.count({ where: { ...searchWhere, status: 'OPEN' } }),
       db.supportTicket.count({ where: { ...searchWhere, status: 'IN_PROGRESS' } }),
+      db.supportTicket.count({ where: { ...searchWhere, status: 'WAITING_ON_RIDER' } }),
       db.supportTicket.count({ where: { ...searchWhere, status: 'RESOLVED' } }),
       db.supportTicket.count({ where: { ...searchWhere, status: 'CLOSED' } }),
     ]);
@@ -165,9 +208,10 @@ export const supportUseCases = {
     return {
       tickets: formatted,
       statusCounts: {
-        all: openCount + inProgressCount + resolvedCount + closedCount,
+        all: openCount + inProgressCount + waitingOnRiderCount + resolvedCount + closedCount,
         OPEN: openCount,
         IN_PROGRESS: inProgressCount,
+        WAITING_ON_RIDER: waitingOnRiderCount,
         RESOLVED: resolvedCount,
         CLOSED: closedCount,
       },

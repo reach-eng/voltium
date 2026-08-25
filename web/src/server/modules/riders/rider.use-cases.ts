@@ -18,6 +18,7 @@ import { riderRepository } from './rider.repository';
 import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 import { clock } from '@/lib/clock';
 import { verifyVerifyReceipt } from '@/lib/verify-receipt';
+import { signRiderUrls } from '@/lib/sign-rider';
 
 const GUARANTOR_FIELD_TO_DB: Record<string, string> = {
   guarantorName: 'name',
@@ -182,7 +183,20 @@ export const riderUseCases = {
           wallet: true,
           guarantor: true,
           vehicleReturns: true,
-          vehicle: { select: { vehicleNumber: true, model: true } },
+          currentPlanRef: true,
+          teamLeaderRef: { select: { id: true, name: true, phone: true } },
+          pickupHubRef: { select: { id: true, name: true, location: true } },
+          depositRecord: true,
+          vehicle: {
+            select: {
+              id: true,
+              vehicleId: true,
+              vehicleNumber: true,
+              model: true,
+              batteryLevel: true,
+              hub: { select: { id: true, name: true, location: true } },
+            },
+          },
         },
       })
     );
@@ -207,14 +221,16 @@ export const riderUseCases = {
       }
     }
     flatRider.assignedVehicle = assignedVehicleNumber;
+    if (vehicleModel) {
+      flatRider.vehicleModel = vehicleModel;
+    }
 
-    return {
+    return signRiderUrls({
       ...flatRider,
-      vehicleModel,
       referralCode: rider.referralCode,
       unreadNotificationCount,
       totalRewardPoints: rewardAggregates._sum.points || 0,
-    };
+    });
   },
 
   /**
@@ -264,12 +280,18 @@ export const riderUseCases = {
         currentPlanId: true,
         currentPlanPrice: true,
         advanceRentPaid: true,
-        // PR-47 (WALLET P1-1): include the current plan's security
-        // deposit so the dashboard can render the correct amount
-        // without falling back to a hardcoded map. The FK
-        // `currentPlanRef` is set in the schema (line 270 of
-        // schema.prisma).
-        currentPlanRef: { select: { securityDepositInPaise: true } },
+        currentPlanRef: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            priceInPaise: true,
+            durationDays: true,
+            securityDepositInPaise: true,
+            isSecurityRefundable: true,
+            refundableAfterDays: true,
+          },
+        },
         planStartDate: true,
         planEndDate: true,
         planRejectionReason: true,
@@ -381,11 +403,14 @@ export const riderUseCases = {
           if (rider.vehicle?.vehicleNumber) {
             flatRider.assignedVehicle = rider.vehicle.vehicleNumber;
           }
+          if (rider.vehicle?.model) {
+            flatRider.vehicleModel = rider.vehicle.model;
+          }
           const { signRiderUrls } = await import('@/lib/sign-rider');
           return await signRiderUrls(flatRider);
         } catch (err) {
           logger.error('[getDashboard] signRiderUrls failed', err);
-          return { id: rider.id, fullName: rider.fullName, riderId: rider.riderId };
+          return flattenRider(rider);
         }
       })(),
       computeUpcomingRentPrompt(riderDbId, rider.wallet?.balanceInPaise ?? 0),
@@ -750,7 +775,7 @@ export const riderUseCases = {
       if (v) assignedVehicleNumber = v.vehicleNumber;
     }
     flatRider.assignedVehicle = assignedVehicleNumber;
-    return flatRider;
+    return signRiderUrls(flatRider);
   },
 
   async getState(riderDbId: string): Promise<RiderState | null> {

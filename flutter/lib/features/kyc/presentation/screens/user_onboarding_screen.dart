@@ -974,7 +974,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         default:
           return e.message.isNotEmpty
               ? e.message
-              : (l10n?.txtgenericTryAgain ?? 'Something went wrong. Please try again.');
+              : (l10n?.txtgenericTryAgain ??
+                  'Something went wrong. Please try again.');
       }
     }
     final msg = e.toString().toLowerCase();

@@ -20,6 +20,7 @@ class TopUpAmountScreen extends ConsumerStatefulWidget {
   final int? securityDeposit;
   final int? rentalPrice;
   final int? initialAmount;
+  final int? lockedAmount;
 
   const TopUpAmountScreen({
     super.key,
@@ -29,6 +30,7 @@ class TopUpAmountScreen extends ConsumerStatefulWidget {
     this.securityDeposit,
     this.rentalPrice,
     this.initialAmount,
+    this.lockedAmount,
   });
 
   @override
@@ -52,13 +54,18 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     // was implemented three times in this file — it now flows through the
     // single [_planTotalFor] helper below.
     final planTotal = _planTotalFor(rider);
+    final isLocked = widget.lockedAmount != null && widget.lockedAmount! > 0;
 
-    final initial = widget.initialAmount;
-    if (initial != null && initial > 0) {
-      _selectedAmount = initial;
+    if (isLocked) {
+      _selectedAmount = widget.lockedAmount!;
     } else {
-      _selectedAmount =
-          planTotal > 0 ? planTotal : AppConstants.walletDefaultTopUpAmount;
+      final initial = widget.initialAmount;
+      if (initial != null && initial > 0) {
+        _selectedAmount = initial;
+      } else {
+        _selectedAmount =
+            planTotal > 0 ? planTotal : AppConstants.walletDefaultTopUpAmount;
+      }
     }
     _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
 
@@ -160,6 +167,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   }
 
   bool get _canProceed {
+    if (widget.lockedAmount != null && widget.lockedAmount! > 0) {
+      return _finalAmount == widget.lockedAmount;
+    }
     return _finalAmount >= _requiredMinAmount;
   }
 
@@ -177,6 +187,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   Widget _buildTopUpBreakdownCard() {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
+    final isLocked = widget.lockedAmount != null && widget.lockedAmount! > 0;
     // AUDIT FIX 2026-08-22 (AMOUNT-a): reuse the consolidated helpers —
     // this card no longer re-implements the required-amount rule.
     final secDeposit = _secDepositFor(rider);
@@ -184,7 +195,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
     if (secDeposit <= 0 && rentPrice <= 0) return const SizedBox.shrink();
 
-    final totalRequired = _planTotalFor(rider);
+    final totalRequired =
+        isLocked ? widget.lockedAmount! : _planTotalFor(rider);
 
     final colors = AppColors.of(context);
     return Container(
@@ -207,7 +219,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Required Deposit Breakdown',
+                isLocked
+                    ? 'Required Deposit Breakdown'
+                    : 'Required Deposit Breakdown',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -261,9 +275,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Minimum Required Top-Up',
-                style: TextStyle(
+              Text(
+                isLocked ? 'Total Deposit Payable' : 'Minimum Required Top-Up',
+                style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary),
@@ -285,6 +299,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final isLocked = widget.lockedAmount != null && widget.lockedAmount! > 0;
     return Scaffold(
       backgroundColor: colors.surface,
       extendBody: true, // For glass bottom nav
@@ -312,62 +327,91 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                             color:
                                 colors.outlineVariant.withValues(alpha: 0.5)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      child: Column(
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
-                            child: Text(
-                              '₹',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 32,
-                                fontWeight: FontWeight.w700,
-                                color: colors.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IntrinsicWidth(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(minWidth: 50),
-                              child: TextFormField(
-                                key: const Key('customAmountField'),
-                                autofocus: true,
-                                controller: _customAmountCtrl,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  // AUDIT FIX 2026-08-22 (AMOUNT-b):
-                                  // cap entry at ₹9,999,999.
-                                  LengthLimitingTextInputFormatter(7),
-                                ],
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 56,
-                                  fontWeight: FontWeight.w800,
-                                  color: colors.onSurface,
-                                  letterSpacing: -2,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: Text(
+                                  '₹',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.onSurfaceVariant,
+                                  ),
                                 ),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  focusedErrorBorder: InputBorder.none,
-                                  disabledBorder: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  filled: false, // Override theme
-                                ),
-                                onChanged: (val) {
-                                  setState(() {
-                                    _selectedAmount = int.tryParse(val) ?? 0;
-                                  });
-                                },
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              IntrinsicWidth(
+                                child: ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(minWidth: 50),
+                                  child: TextFormField(
+                                    key: const Key('customAmountField'),
+                                    autofocus: !isLocked,
+                                    readOnly: isLocked,
+                                    controller: _customAmountCtrl,
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      // AUDIT FIX 2026-08-22 (AMOUNT-b):
+                                      // cap entry at ₹9,999,999.
+                                      LengthLimitingTextInputFormatter(7),
+                                    ],
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 56,
+                                      fontWeight: FontWeight.w800,
+                                      color: colors.onSurface,
+                                      letterSpacing: -2,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      errorBorder: InputBorder.none,
+                                      focusedErrorBorder: InputBorder.none,
+                                      disabledBorder: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      filled: false, // Override theme
+                                    ),
+                                    onChanged: (val) {
+                                      if (!isLocked) {
+                                        setState(() {
+                                          _selectedAmount =
+                                              int.tryParse(val) ?? 0;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                          if (isLocked) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.lock_outline_rounded,
+                                  size: 14,
+                                  color: colors.onSurfaceMuted,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Fixed amount for initial plan deposit',
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: colors.onSurfaceMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -376,51 +420,53 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                     _buildTopUpBreakdownCard(),
                     const SizedBox(height: 16),
 
-                    // Grid of 4 chips
-                    GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      shrinkWrap: true,
-                      childAspectRatio: 2.2,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: _quickAmounts.map((amt) {
-                        final isSelected = _selectedAmount == amt;
-                        return GestureDetector(
-                          onTap: () => _selectQuickAmount(amt),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            decoration: BoxDecoration(
-                              gradient:
-                                  isSelected ? AppGradients.primary : null,
-                              color: isSelected ? null : colors.card,
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              boxShadow: isSelected
-                                  ? AppShadows.primaryButton
-                                  : AppShadows.glass,
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.transparent
-                                    : colors.outlineVariant
-                                        .withValues(alpha: 0.5),
-                                width: 1,
+                    if (!isLocked) ...[
+                      // Grid of 4 chips
+                      GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        shrinkWrap: true,
+                        childAspectRatio: 2.2,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: _quickAmounts.map((amt) {
+                          final isSelected = _selectedAmount == amt;
+                          return GestureDetector(
+                            onTap: () => _selectQuickAmount(amt),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: BoxDecoration(
+                                gradient:
+                                    isSelected ? AppGradients.primary : null,
+                                color: isSelected ? null : colors.card,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.lg),
+                                boxShadow: isSelected
+                                    ? AppShadows.primaryButton
+                                    : AppShadows.glass,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Colors.transparent
+                                      : colors.outlineVariant
+                                          .withValues(alpha: 0.5),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '₹$amt',
+                                  style: AppTypography.titleMedium.copyWith(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : colors.onSurfaceMuted),
+                                ),
                               ),
                             ),
-                            child: Center(
-                              child: Text(
-                                '₹$amt',
-                                style: AppTypography.titleMedium.copyWith(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : colors.onSurfaceMuted),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-                    const SizedBox(height: 32),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
 
                     // Balance info row
                     Consumer(
@@ -440,7 +486,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                   .copyWith(color: colors.onSurfaceMuted),
                             ),
                             Text(
-                              'Min Required: ₹$_requiredMinAmount',
+                              isLocked
+                                  ? 'Fixed Deposit: ₹${widget.lockedAmount}'
+                                  : 'Min Required: ₹$_requiredMinAmount',
                               style: AppTypography.bodyMedium
                                   .copyWith(fontWeight: FontWeight.w600)
                                   .copyWith(color: AppColors.primary),
