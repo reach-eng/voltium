@@ -661,6 +661,16 @@ class ApiClient {
     }
   }
 
+  /// AUDIT FIX (workflows P1): current session rider for offline-flush
+  /// ownership checks. Null when unauthenticated.
+  Future<String?> currentRiderDbId() async {
+    try {
+      return await _storage.getRiderId();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Queue an idempotent write offline when the network is unavailable.
   /// Only queues mutating operations (POST, PUT, DELETE).
   Future<void> _maybeQueueOffline(
@@ -673,15 +683,20 @@ class ApiClient {
     if (method == 'GET') return;
     try {
       final key = idempotencyKey ?? newIdempotencyKey();
+      // AUDIT FIX (workflows P1): stamp the owning rider so the flush loop
+      // can drop ops that belong to a session that was revoked while
+      // offline (shared/kiosk device safety).
+      final riderDbId = await _storage.getRiderId();
       final offlineStorage = OfflineStorageService();
       await offlineStorage.addPendingOperation(
         path,
         method,
         body,
         idempotencyKey: key,
+        riderDbId: riderDbId,
       );
     } catch (_) {
-      // Offline storage is optional — silently ignore failures
+      // Offline storage is optional - silently ignore failures
     }
   }
 

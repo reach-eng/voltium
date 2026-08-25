@@ -25,7 +25,7 @@ class OfflineStorageService {
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
       join(dbPath, 'volt_offline.db'),
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -51,6 +51,14 @@ class OfflineStorageService {
     if (oldVersion < 2) {
       await db.execute(
         'ALTER TABLE pending_operations ADD COLUMN idempotency_key TEXT',
+      );
+    }
+    // AUDIT FIX (workflows P1): bind each queued op to the rider that
+    // created it so a shared/kiosk device can never replay rider A's
+    // mutations under rider B's session after server-side revocation.
+    if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE pending_operations ADD COLUMN rider_db_id TEXT',
       );
     }
   }
@@ -195,6 +203,7 @@ class OfflineStorageService {
     String method,
     Map<String, dynamic>? body, {
     String? idempotencyKey,
+    String? riderDbId,
   }) async {
     if (_db == null) return;
     MonitoringService.logInfo(
@@ -205,6 +214,8 @@ class OfflineStorageService {
       'method': method,
       'body': body != null ? jsonEncode(body) : null,
       'idempotency_key': idempotencyKey,
+      // AUDIT FIX (workflows P1): owner binding for flush-time filtering.
+      'rider_db_id': riderDbId,
       'created_at': DateTime.now().millisecondsSinceEpoch,
     });
   }
@@ -221,6 +232,7 @@ class OfflineStorageService {
             'method': r['method'],
             'body': r['body'] != null ? jsonDecode(r['body'] as String) : null,
             'idempotency_key': r['idempotency_key'],
+            'rider_db_id': r['rider_db_id'],
           },
         )
         .toList();

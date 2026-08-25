@@ -89,6 +89,24 @@ class ConnectivityProvider extends Notifier<ConnectivityState> {
 
       for (final op in pending) {
         try {
+          // AUDIT FIX (workflows P1): drop ops owned by a DIFFERENT rider.
+          // The queue survives server-side revocation, so without this
+          // check a shared/kiosk device could replay rider A's queued
+          // top-up/pickup mutations under rider B's session.
+          final opRider = op['rider_db_id'] as String?;
+          final currentRider = await apiClient.currentRiderDbId();
+          if (opRider != null &&
+              opRider.isNotEmpty &&
+              currentRider != null &&
+              currentRider.isNotEmpty &&
+              opRider != currentRider) {
+            appDebug(
+              '[Connectivity] Dropping offline op ${op['id']} — belongs to another rider',
+            );
+            await offlineStorage.removePendingOperation(op['id'] as int);
+            continue;
+          }
+
           final method = op['method'] as String;
           final endpoint = op['endpoint'] as String;
           final body = op['body'] as Map<String, dynamic>?;
