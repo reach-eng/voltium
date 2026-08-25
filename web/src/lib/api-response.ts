@@ -45,6 +45,7 @@ export interface ApiPagination {
   limit: number;
   total: number;
   totalPages: number;
+  [key: string]: unknown;
 }
 
 export interface ApiResponseSuccess<T = unknown> {

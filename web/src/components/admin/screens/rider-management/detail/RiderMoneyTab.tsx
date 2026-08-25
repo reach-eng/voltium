@@ -70,23 +70,9 @@ export function RiderMoneyTab({
           </div>
           <div className="flex items-center text-4xl font-black tracking-tighter">
             <span className="text-blue-500 opacity-50 mr-2">₹</span>
-            {isEditing ? (
-              <Input
-                type="number"
-                value={editForm.securityDeposit || 0}
-                onChange={(e) =>
-                  setEditForm({
-                    ...editForm,
-                    securityDeposit: Number(e.target.value),
-                  })
-                }
-                className="bg-transparent border-none text-4xl font-black h-auto p-0 focus-visible:ring-0 w-full"
-              />
-            ) : (
-              <span>
-                {(rider.securityDeposit || 0).toLocaleString('en-IN')}
-              </span>
-            )}
+            <span>
+              {(rider.securityDeposit || 0).toLocaleString('en-IN')}
+            </span>
           </div>
         </div>
       </div>
@@ -99,28 +85,12 @@ export function RiderMoneyTab({
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/50">
               Deposit Payment Status
             </p>
-            {isEditing ? (
-              <Select
-                value={editForm.depositStatus || 'PENDING'}
-                onValueChange={(v) => setEditForm({ ...editForm, depositStatus: v })}
-              >
-                <SelectTrigger className="bg-transparent border-none h-auto p-0 font-black text-lg focus:outline-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">PENDING</SelectItem>
-                  <SelectItem value="PAID">PAID</SelectItem>
-                  <SelectItem value="REFUNDED">REFUNDED</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge
-                variant="outline"
-                className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge(rider.depositStatus ?? 'PENDING')}`}
-              >
-                {rider.depositStatus ?? 'PENDING'}
-              </Badge>
-            )}
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge(rider.depositStatus ?? 'PENDING')}`}
+            >
+              {rider.depositStatus ?? 'PENDING'}
+            </Badge>
           </div>
         </div>
         <div className="text-right">

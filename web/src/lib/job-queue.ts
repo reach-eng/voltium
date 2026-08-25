@@ -196,9 +196,9 @@ export const JobQueue = {
                   COALESCE(' | previous error: ' || error, '')
       WHERE status = 'PROCESSING'
         AND (
-          ("eventType" = 'sms.send' AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})
-          OR ("eventType" = 'wallet.reconciliation' AND "updatedAt" <= ${new Date(now.getTime() - 15 * 60 * 1000)})
-          OR ("eventType" NOT IN ('sms.send', 'wallet.reconciliation') AND "updatedAt" <= ${new Date(now.getTime() - 5 * 60 * 1000)})
+          ("eventType" IN ('sms.send', 'notification.send') AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})
+          OR ("eventType" IN ('wallet.reconciliation', 'admin.job.wallet_reconciliation', 'announcement.broadcast', 'notification.broadcast', 'admin.job.scheduled_backup', 'admin.job.daily_engagement') AND "updatedAt" <= ${new Date(now.getTime() - 30 * 60 * 1000)})
+          OR ("eventType" NOT IN ('sms.send', 'notification.send', 'wallet.reconciliation', 'admin.job.wallet_reconciliation', 'announcement.broadcast', 'notification.broadcast', 'admin.job.scheduled_backup', 'admin.job.daily_engagement') AND "updatedAt" <= ${new Date(now.getTime() - 10 * 60 * 1000)})
         )
     `;
     if (result > 0) {

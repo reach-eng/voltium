@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -70,7 +71,7 @@ export default function PlanManagement() {
         setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p)));
         toast.success(`Plan ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       } else {
-        toast.error(json.error || 'Failed to update plan status');
+        toast.error(extractErrorMessage(json, ''));
       }
     } catch {
       toast.error('Failed to update plan status');
@@ -92,7 +93,7 @@ export default function PlanManagement() {
         toast.success('Plan deleted successfully');
         setPlanToDelete(null);
       } else {
-        toast.error(json.error || 'Failed to delete plan');
+        toast.error(extractErrorMessage(json, ''));
       }
     } catch {
       toast.error('Failed to delete plan');

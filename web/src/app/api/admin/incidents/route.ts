@@ -7,6 +7,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { incidentUseCases } from '@/server/modules/incidents/incident.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -24,7 +25,13 @@ export async function GET(req: NextRequest) {
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await incidentUseCases.list({ status, type, severity, search, page, limit });
-    return withCacheHeaders(success(result.incidents, undefined, 200, result.pagination), 5);
+    return withCacheHeaders(
+      success(result.incidents, undefined, 200, {
+        ...result.pagination,
+        statusCounts: result.statusCounts,
+      }),
+      5
+    );
   } catch (error) {
     logger.error('GET /api/admin/incidents error:', error);
     return errors.internal('Failed to fetch incidents');
@@ -43,6 +50,13 @@ export async function POST(req: NextRequest) {
 
     const incident = await incidentUseCases.create(validation.data, session.adminId || '');
     invalidateCache('admin:incidents:*');
+    await logAdminMutation({
+      session,
+      action: 'incident.create',
+      entity: 'Incident',
+      entityId: incident?.id,
+      details: validation.data,
+    });
     return success(incident, 'Incident created', 201);
   } catch (error) {
     // P1-8: the use-case already verifies rider/vehicle existence — surface a
@@ -84,6 +98,13 @@ export async function PUT(req: NextRequest) {
     );
 
     invalidateCache('admin:incidents:*');
+    await logAdminMutation({
+      session,
+      action: 'incident.update',
+      entity: 'Incident',
+      entityId: id,
+      details: { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber },
+    });
     return success(incident);
   } catch (error) {
     logger.error('PUT /api/admin/incidents error:', error);

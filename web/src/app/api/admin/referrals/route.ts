@@ -28,18 +28,27 @@ export async function GET(req: NextRequest) {
   }
 }
 
+import { z } from 'zod';
+
+const ProcessReferralSchema = z.object({
+  referrerId: z.string().min(1, 'Referrer ID is required'),
+  refereeId: z.string().min(1, 'Referee ID is required'),
+});
+
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (!hasPermission(session, 'rewards_manage')) return adminForbidden();
 
   try {
-    const body = await req.json();
-    const { referrerId, refereeId } = body;
-
-    if (!referrerId || !refereeId) {
-      return errors.badRequest('Referrer ID and Referee ID are required');
+    const raw = await req.json();
+    const parsed = ProcessReferralSchema.safeParse(raw);
+    if (!parsed.success) {
+      return errors.badRequest(
+        parsed.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ')
+      );
     }
+    const { referrerId, refereeId } = parsed.data;
 
     const { db } = await import('@/lib/db');
     

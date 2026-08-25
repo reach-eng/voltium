@@ -1,20 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { History, Search, RefreshCw, FileText } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Code, Eye, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { redactPii } from '@/lib/pii-redact';
 
 interface AuditLog {
   id: string;
   actorId: string;
+  actorType?: string;
   action: string;
   entity: string;
   entityId: string;
-  details: string;
+  details: string | null;
   createdAt: string;
 }
 
@@ -22,49 +31,74 @@ export default function AuditLogScreen() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 25;
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', String(limit));
+      if (searchTerm) params.set('action', searchTerm);
+      const res = await fetch(`/api/admin/audit-logs?${params}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          const rawLogs = json.data?.logs || json.data || [];
+          const normalized = rawLogs.map((l: any) => ({
+            id: l.id,
+            actorId: l.actorId || 'SYSTEM',
+            actorType: l.actorType,
+            action: l.action,
+            entity: l.entity,
+            entityId: l.entityId || '—',
+            details: typeof l.details === 'object' ? JSON.stringify(l.details) : l.details,
+            createdAt: l.createdAt,
+          }));
+          setLogs(normalized);
+          if (json.pagination) {
+            setTotalPages(json.pagination.totalPages || 1);
+            setTotal(json.pagination.total || 0);
+          }
+        }
+      }
+    } catch {
+      // silently handle or log
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchTerm]);
 
   useEffect(() => {
-    // Simulate fetching audit logs
-    setTimeout(() => {
-      setLogs([
-        {
-          id: 'a-1',
-          actorId: 'admin-1',
-          action: 'KYC_APPROVED',
-          entity: 'Rider',
-          entityId: 'rider-123',
-          details: JSON.stringify({ reviewer: 'KycReviewer1' }),
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'a-2',
-          actorId: 'admin-1',
-          action: 'SYSTEM_SETTING_UPDATED',
-          entity: 'SystemSetting',
-          entityId: 'maintenance_mode',
-          details: JSON.stringify({ value: 'true' }),
-          createdAt: new Date(Date.now() - 600000).toISOString(),
-        },
-        {
-          id: 'a-3',
-          actorId: 'admin-2',
-          action: 'BACKUP_CREATED',
-          entity: 'BackupJob',
-          entityId: 'backup-456',
-          details: JSON.stringify({ sizeBytes: 1024345 }),
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ]);
-      setLoading(false);
-    }, 500);
-  }, []);
+    fetchLogs();
+  }, [fetchLogs]);
 
-  const filteredLogs = logs.filter(
-    (l) =>
-      l.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.actorId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.entity.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLogs = logs.filter((l) => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return true;
+    return (
+      l.action.toLowerCase().includes(term) ||
+      l.actorId.toLowerCase().includes(term) ||
+      l.entity.toLowerCase().includes(term) ||
+      (l.entityId && l.entityId.toLowerCase().includes(term)) ||
+      (l.details && l.details.toLowerCase().includes(term))
+    );
+  });
+
+  const getRedactedDetails = (details: string | null) => {
+    if (!details) return '—';
+    try {
+      const parsed = JSON.parse(details);
+      const redacted = redactPii(parsed);
+      return JSON.stringify(redacted);
+    } catch {
+      return details;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -72,7 +106,7 @@ export default function AuditLogScreen() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Audit Logs</h2>
           <p className="text-muted-foreground">
-            Browse chronological history of sensitive administrative actions.
+            Browse chronological history of sensitive administrative actions ({total} total).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -82,7 +116,10 @@ export default function AuditLogScreen() {
               placeholder="Search logs..."
               className="pl-8 h-11 text-base rounded-xl"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
             />
           </div>
         </div>
@@ -152,7 +189,16 @@ export default function AuditLogScreen() {
                         <div>{l.entity}</div>
                         <div className="text-[10px] text-muted-foreground">ID: {l.entityId}</div>
                       </td>
-                      <td className="py-3 font-mono text-[10px] max-w-xs truncate">{l.details}</td>
+                      <td className="py-3">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLog(l)}
+                          className="font-mono text-[10px] max-w-xs truncate text-left hover:underline text-primary/80 hover:text-primary cursor-pointer block"
+                          title="Click to view full details"
+                        >
+                          {getRedactedDetails(l.details)}
+                        </button>
+                      </td>
                       <td className="py-3 text-right text-muted-foreground">
                         {new Date(l.createdAt).toLocaleDateString()}{' '}
                         {new Date(l.createdAt).toLocaleTimeString()}
@@ -163,8 +209,76 @@ export default function AuditLogScreen() {
               </table>
             </div>
           )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t mt-4 text-xs text-muted-foreground">
+              <span>
+                Page {page} of {totalPages} ({total} entries)
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
+        <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="w-5 h-5 text-primary" />
+              Audit Log Details
+            </DialogTitle>
+            <DialogDescription>
+              {selectedLog?.action} &bull; {selectedLog?.entity} ({selectedLog?.entityId})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 flex-1 overflow-y-auto min-h-0 text-sm">
+            <div className="grid grid-cols-2 gap-2 p-3 bg-muted/40 rounded-lg text-xs">
+              <div>
+                <span className="text-muted-foreground">Actor:</span>{' '}
+                <span className="font-medium">{selectedLog?.actorId}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Time:</span>{' '}
+                <span className="font-medium">
+                  {selectedLog ? new Date(selectedLog.createdAt).toLocaleString() : ''}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                Payload / Details JSON
+              </label>
+              <pre className="p-3 bg-muted rounded-lg font-mono text-xs overflow-x-auto whitespace-pre-wrap max-h-60">
+                {(() => {
+                  if (!selectedLog?.details) return 'No details provided';
+                  try {
+                    return JSON.stringify(JSON.parse(selectedLog.details), null, 2);
+                  } catch {
+                    return selectedLog.details;
+                  }
+                })()}
+              </pre>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

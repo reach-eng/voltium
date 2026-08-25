@@ -51,7 +51,7 @@ This file contains context for AI assistants working on this codebase.
 ### Backend Unit Tests
 
 - Location: `tests/unit/`
-- Run: `npm run test:unit` (2,958 passing, 3 skipped — 298 test files)
+- Run: `npm run test:unit` (3,267 passing, 3 skipped — 345 test files)
 
 ### Backend Integration & API Tests
 

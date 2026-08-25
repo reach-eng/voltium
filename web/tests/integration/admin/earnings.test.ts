@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 describe('Admin API: /api/admin/earnings', () => {
   let cookie: string;
 
   beforeAll(async () => {
-    cookie = await adminLogin();
+    cookie = (await adminLogin()).cookie;
   });
 
   it('GET /api/admin/earnings - happy path', async () => {

@@ -26,14 +26,27 @@ import { logger } from '@/lib/logger';
 // Types
 // ---------------------------------------------------------------------------
 
-export type DepositStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REFUNDED' | 'FORFEITED';
+export type DepositStatus =
+  | 'PENDING'
+  | 'NOT_SUBMITTED'
+  | 'PENDING_VERIFICATION'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'REFUND_REQUESTED'
+  | 'REFUNDED'
+  | 'FORFEITED'
+  | 'PARTIALLY_REFUNDED';
 
 type DepositTransition = 'APPROVE' | 'REJECT' | 'REFUND' | 'FORFEIT';
 
 // Valid transitions: [fromStatus] → allowed actions
 const VALID_TRANSITIONS: Record<DepositStatus, DepositTransition[]> = {
   PENDING: ['APPROVE', 'REJECT'],
+  NOT_SUBMITTED: [],
+  PENDING_VERIFICATION: ['APPROVE', 'REJECT'],
   APPROVED: ['REFUND', 'FORFEIT'],
+  PARTIALLY_REFUNDED: ['REFUND', 'FORFEIT'],
+  REFUND_REQUESTED: ['REFUND', 'REJECT'],
   REJECTED: [],
   REFUNDED: [],
   FORFEITED: [],
@@ -91,9 +104,42 @@ export async function approveDeposit(params: {
 }): Promise<void> {
   const { riderId, adminId, bonusAmountInPaise } = params;
 
+  // W6 / M-2: explicit status guard. The state machine inside the
+  // transaction (_getAndValidate) already blocks re-approving an
+  // APPROVED deposit, but checking up-front lets us bail without
+  // opening a transaction — cleaner logs and a faster 4xx. The
+  // idempotency key below is the authoritative guard against the
+  // race window between this read and the update inside the tx.
+  const existing = await db.depositRecord.findUnique({ where: { riderId } });
+  if (!existing) {
+    throw new DepositStateError(`No deposit record found for rider ${riderId}`);
+  }
+  if (existing.status === 'APPROVED') {
+    logger.info('[DepositService] approve: deposit already approved, no-op', {
+      riderId,
+      adminId,
+    });
+    return;
+  }
+  if (existing.status !== 'PENDING') {
+    throw new DepositStateError(
+      `Cannot approve deposit in status ${existing.status}`
+    );
+  }
+
   await db.$transaction(async (tx: any) => {
     const record = await _getAndValidate(tx, riderId, 'APPROVE');
     const wallet = await _requireWallet(tx, riderId);
+
+    // W6 / M-2: idempotency key on the security-deposit credit so a
+    // retried approve (concurrent admin / partial-failure retry) is a
+    // no-op rather than a second increment. The state machine alone
+    // blocks a sequential re-approve (APPROVED is not a PENDING target),
+    // but it does NOT block a race where two admins click Approve in
+    // the same millisecond — both transactions see status='PENDING' and
+    // both try to credit. The unique key on WalletLedger.idempotencyKey
+    // makes the second one a P2002 → silent idempotent replay.
+    const approveKey = `deposit:approve:${record.id}`;
 
     // Credit the security deposit ledger
     await creditSecurityDeposit(tx, {
@@ -103,6 +149,7 @@ export async function approveDeposit(params: {
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
       note: 'Security deposit approved by admin',
+      idempotencyKey: approveKey,
     });
 
     // Optional welcome bonus to general balance
@@ -227,7 +274,7 @@ export async function rejectDeposit(params: {
 export async function refundDeposit(params: {
   riderId: string;
   adminId: string;
-  refundAmountInPaise?: number; // defaults to full deposit amount
+  refundAmountInPaise?: number; // defaults to full remaining deposit amount
   note?: string;
 }): Promise<void> {
   const { riderId, adminId, note } = params;
@@ -236,7 +283,24 @@ export async function refundDeposit(params: {
     const record = await _getAndValidate(tx, riderId, 'REFUND');
     const wallet = await _requireWallet(tx, riderId);
 
-    const refundAmount = params.refundAmountInPaise ?? record.amountInPaise;
+    const previouslyRefunded = record.refundedAmountInPaise ?? 0;
+    const remainingRefundable = Math.max(0, record.amountInPaise - previouslyRefunded);
+
+    const refundAmount = params.refundAmountInPaise ?? remainingRefundable;
+
+    if (refundAmount <= 0) {
+      throw new DepositStateError('Refund amount must be greater than 0');
+    }
+
+    if (refundAmount > remainingRefundable) {
+      throw new DepositStateError(
+        `Cannot refund ₹${(refundAmount / 100).toFixed(2)}; maximum remaining refundable deposit is ₹${(remainingRefundable / 100).toFixed(2)}`
+      );
+    }
+
+    const totalRefundedNow = previouslyRefunded + refundAmount;
+    const isFullRefund = totalRefundedNow >= record.amountInPaise;
+    const newDepositStatus: DepositStatus = isFullRefund ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
 
     // Debit securityDeposit ledger
     await debitSecurityDeposit(tx, {
@@ -244,10 +308,12 @@ export async function refundDeposit(params: {
       walletId: wallet.id,
       amountInPaise: refundAmount,
       category: 'REFUND',
-      newDepositStatus: 'REFUNDED',
+      newDepositStatus,
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
-      note: note ?? 'Security deposit refunded',
+      note: note ?? (isFullRefund ? 'Security deposit refunded' : 'Security deposit partially refunded'),
+      // W6 / M-2 / W7 / R-6: idempotency key per refund increment
+      idempotencyKey: `deposit:refund:${record.id}:${totalRefundedNow}`,
     });
 
     // Credit general wallet balance (rider gets money back)
@@ -257,18 +323,24 @@ export async function refundDeposit(params: {
       amountInPaise: refundAmount,
       category: 'REFUND',
       actorId: adminId,
-      note: note ?? 'Refund from security deposit',
+      note: note ?? (isFullRefund ? 'Refund from security deposit' : 'Partial refund from security deposit'),
     });
 
-    await tx.depositRecord.update({
-      where: { riderId },
+    const updateResult = await tx.depositRecord.updateMany({
+      where: { riderId, status: record.status },
       data: {
-        status: 'REFUNDED' as DepositStatus,
+        status: newDepositStatus,
         refundedAt: new Date(),
         refundedBy: adminId,
-        refundedAmountInPaise: refundAmount,
+        refundedAmountInPaise: totalRefundedNow,
       },
     });
+
+    if (updateResult.count === 0) {
+      throw new DepositStateError(
+        `Concurrent modification: deposit record for rider ${riderId} is no longer in status ${record.status}`
+      );
+    }
   });
 
   createAuditLog({
@@ -308,6 +380,8 @@ export async function forfeitDeposit(params: {
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
       note: reason,
+      // W6 / M-2: idempotency key — a retried FORFEIT is a no-op.
+      idempotencyKey: `deposit:forfeit:${record.id}`,
     });
 
     await tx.depositRecord.update({

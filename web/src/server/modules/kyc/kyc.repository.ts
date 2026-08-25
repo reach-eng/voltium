@@ -113,6 +113,13 @@ export const kycRepository = {
     });
 
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
+    if (currentStatus === 'APPROVED' || currentStatus === 'EXPIRED') {
+      throw new KycStateError(
+        `Cannot resubmit KYC documents from status "${currentStatus}"`,
+        currentStatus,
+        'SUBMITTED'
+      );
+    }
     validateKycTransition(currentStatus, 'SUBMITTED');
 
     const encryptedData = encryptKycData(data);
@@ -155,10 +162,18 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx) => {
-      const kyc = await tx.kycProfile.update({
-        where: { riderId: riderDbId },
+      const claimResult = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'APPROVED' },
       });
+      if (claimResult.count === 0) {
+        throw new KycStateError(
+          `Concurrent decision race: KYC profile for rider ${riderDbId} is no longer in status "${currentStatus}"`,
+          currentStatus,
+          'APPROVED'
+        );
+      }
+      const kyc = await tx.kycProfile.findUniqueOrThrow({ where: { riderId: riderDbId } });
       await tx.rider.update({
         where: { id: riderDbId },
         data: { kycDoneAt: new Date() },
@@ -204,10 +219,18 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'REJECTED');
 
     return db.$transaction(async (tx) => {
-      const kyc = await tx.kycProfile.update({
-        where: { riderId: riderDbId },
+      const claimResult = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
+      if (claimResult.count === 0) {
+        throw new KycStateError(
+          `Concurrent decision race: KYC profile for rider ${riderDbId} is no longer in status "${currentStatus}"`,
+          currentStatus,
+          'REJECTED'
+        );
+      }
+      const kyc = await tx.kycProfile.findUniqueOrThrow({ where: { riderId: riderDbId } });
       await tx.rider.updateMany({
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
@@ -231,13 +254,22 @@ export const kycRepository = {
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
     validateKycTransition(currentStatus, 'INFO_REQUIRED');
 
-    return db.kycProfile.update({
-      where: { riderId: riderDbId },
-      data: {
-        status: 'INFO_REQUIRED',
-        rejectionReason: infoRequest,
-      },
-    }).then((kyc) => {
+    return db.$transaction(async (tx) => {
+      const claimResult = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
+        data: {
+          status: 'INFO_REQUIRED',
+          rejectionReason: infoRequest,
+        },
+      });
+      if (claimResult.count === 0) {
+        throw new KycStateError(
+          `Concurrent decision race: KYC profile for rider ${riderDbId} is no longer in status "${currentStatus}"`,
+          currentStatus,
+          'INFO_REQUIRED'
+        );
+      }
+      const kyc = await tx.kycProfile.findUniqueOrThrow({ where: { riderId: riderDbId } });
       invalidateRiderCache(riderDbId);
       return kyc;
     });

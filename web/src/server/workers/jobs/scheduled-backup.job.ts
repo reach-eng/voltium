@@ -34,6 +34,36 @@ function computeNextRunAt(
 }
 
 export const scheduledBackupJob = {
+  /**
+   * Outbox worker entry point for ADMIN_JOB_SCHEDULED_BACKUP events.
+   * Handles admin-triggered manual backups, schedule triggers, and regular checks.
+   */
+  async process(job?: { id?: string; payload?: unknown }): Promise<{ ran: boolean; reason?: string }> {
+    const payload = (job?.payload ?? {}) as {
+      type?: 'MANUAL' | 'SCHEDULED' | 'PRE_RESTORE';
+      scheduleId?: string;
+      adminId?: string;
+      triggeredBy?: string;
+    };
+
+    if (payload.type === 'MANUAL' || payload.type === 'PRE_RESTORE') {
+      try {
+        await backupService.createBackup({
+          type: payload.type,
+          adminId: payload.adminId,
+          notes: payload.type === 'MANUAL' ? 'Manual backup triggered by admin' : 'Pre-restore snapshot',
+        });
+        return { ran: true };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        logger.error('[ScheduledBackup] Manual backup worker failed', err);
+        return { ran: false, reason: errorMsg };
+      }
+    }
+
+    return scheduledBackupJob.checkAndRun();
+  },
+
   async checkAndRun(): Promise<{ ran: boolean; reason?: string }> {
     try {
       const schedule = await backupRepository.getSchedule();

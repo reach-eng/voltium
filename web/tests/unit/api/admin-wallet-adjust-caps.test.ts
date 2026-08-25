@@ -257,4 +257,19 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
     expect(res.status).toBe(200);
     expect(ledgerCalled?.type).toBe('DEBIT');
   });
+
+  it('F-036: passes transaction client to createAuditLog and rolls back on audit failure', async () => {
+    const { createAuditLog } = await import('@/lib/audit-log');
+    vi.mocked(createAuditLog).mockImplementationOnce(async () => {
+      throw new Error('Audit log DB write failed');
+    });
+
+    const res = await callPost({
+      type: 'CREDIT',
+      amount: 100,
+      reason: 'Standard credit adjustment testing audit tx rollback',
+      proofUrl: 'https://example.com/receipt.pdf',
+    });
+    expect(res.status).toBe(500);
+  });
 });

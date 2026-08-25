@@ -12,6 +12,8 @@ export const RETENTION_PERIODS: Record<string, number> = {
   finance: 365,
   payment: 365,
   system: 30,
+  sos: 30,
+  emergency: 30,
 };
 
 const DEFAULT_RETENTION_DAYS = 90;
@@ -20,6 +22,9 @@ function getRetentionDays(action: string): number {
   const actionType = action.split('.')[0];
   if (RETENTION_PERIODS[actionType]) {
     return RETENTION_PERIODS[actionType];
+  }
+  if (action.includes('sos') || action.includes('emergency')) {
+    return RETENTION_PERIODS.emergency ?? 30;
   }
   if (action.includes('login') || action.includes('auth')) {
     return RETENTION_PERIODS.auth ?? 90;
@@ -52,16 +57,20 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function createAuditLog(params: {
-  actorId: string;
-  actorType?: string;
-  action: string;
-  entity: string;
-  entityId?: string;
-  details?: string | Record<string, unknown>;
-}): Promise<void> {
+export async function createAuditLog(
+  params: {
+    actorId: string;
+    actorType?: string;
+    action: string;
+    entity: string;
+    entityId?: string;
+    details?: string | Record<string, unknown>;
+  },
+  tx?: any
+): Promise<void> {
+  const client = tx || db;
   try {
-    await db.auditLog.create({
+    await client.auditLog.create({
       data: {
         actorId: params.actorId,
         actorType: (params.actorType || 'ADMIN') as 'ADMIN' | 'SYSTEM' | 'RIDER',
@@ -79,7 +88,7 @@ export async function createAuditLog(params: {
     });
   } catch (err: unknown) {
     logger.error('[AuditLog] Failed to create entry:', err);
-    if (CRITICAL_ACTIONS.has(params.action)) {
+    if (tx || CRITICAL_ACTIONS.has(params.action)) {
       throw new Error(
         `Audit log write failed for critical action ${params.action}: ${errorMessage(err)}`
       );
@@ -87,6 +96,40 @@ export async function createAuditLog(params: {
     const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
     console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), errorMessage(err));
   }
+}
+
+/**
+ * Standard audit logger for administrative mutation endpoints.
+ * Extracts the actor ID from session payload or falls back safely.
+ */
+export async function logAdminMutation(params: {
+  session?: { adminId?: string; riderDbId?: string; role?: string; adminRole?: string; id?: string; email?: string } | null;
+  actorId?: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  details?: string | Record<string, unknown>;
+  tx?: any;
+}): Promise<void> {
+  const actorId =
+    params.actorId ||
+    params.session?.adminId ||
+    params.session?.riderDbId ||
+    params.session?.id ||
+    params.session?.email ||
+    'system';
+
+  await createAuditLog(
+    {
+      actorId,
+      actorType: 'ADMIN',
+      action: params.action,
+      entity: params.entity,
+      entityId: params.entityId,
+      details: params.details,
+    },
+    params.tx
+  );
 }
 
 export async function getExpiredLogs(): Promise<number> {

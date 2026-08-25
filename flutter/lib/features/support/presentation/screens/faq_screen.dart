@@ -28,6 +28,16 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   // (chip reads "सभी" in Hindi) doesn't break the filter.
   String? _expandedId;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(supportProvider.notifier).refreshFaqs();
+      }
+    });
+  }
+
   Future<void> _callSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
     // T-113: do NOT fall back to a hardcoded phone number. If the
@@ -111,71 +121,78 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
               children: [
                 _buildHeader(context),
                 Expanded(
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // AUDIT FIX: FadeUpWidget computes
-                              // `index * delay(seconds) * 1000` — the old
-                              // ms-int delays with default index collapsed
-                              // every stagger to 0ms.
-                              FadeUpWidget(
-                                index: 1,
-                                delay: 0.05,
-                                child: _buildSearchBar(),
-                              ),
-                              const SizedBox(height: 24),
-                              if (categories.length > 2)
+                  child: RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: () =>
+                        ref.read(supportProvider.notifier).refreshFaqs(),
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // AUDIT FIX: FadeUpWidget computes
+                                // `index * delay(seconds) * 1000` — the old
+                                // ms-int delays with default index collapsed
+                                // every stagger to 0ms.
                                 FadeUpWidget(
                                   index: 1,
-                                  delay: 0.1,
-                                  child: _buildCategoryScroller(categories),
-                                ),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (filteredFaqs.isEmpty)
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: _buildEmptyFaqState(),
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          sliver: SliverList.builder(
-                            itemCount: filteredFaqs.length,
-                            itemBuilder: (context, idx) {
-                              final faq = filteredFaqs[idx];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: FadeUpWidget(
-                                  index: 3 + idx,
                                   delay: 0.05,
-                                  child: _buildFaqItem(faq),
+                                  child: _buildSearchBar(),
                                 ),
-                              );
-                            },
+                                const SizedBox(height: 24),
+                                if (categories.length > 2)
+                                  FadeUpWidget(
+                                    index: 1,
+                                    delay: 0.1,
+                                    child: _buildCategoryScroller(categories),
+                                  ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
                           ),
                         ),
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 32, 20, 48),
-                        sliver: SliverToBoxAdapter(
-                          child: FadeUpWidget(
-                            index: 1,
-                            delay: 0.2,
-                            child: _buildContactSection(),
+                        if (filteredFaqs.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: _buildEmptyFaqState(),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            sliver: SliverList.builder(
+                              itemCount: filteredFaqs.length,
+                              itemBuilder: (context, idx) {
+                                final faq = filteredFaqs[idx];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: FadeUpWidget(
+                                    index: 3 + idx,
+                                    delay: 0.05,
+                                    child: _buildFaqItem(faq),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 32, 20, 48),
+                          sliver: SliverToBoxAdapter(
+                            child: FadeUpWidget(
+                              index: 1,
+                              delay: 0.2,
+                              child: _buildContactSection(),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],

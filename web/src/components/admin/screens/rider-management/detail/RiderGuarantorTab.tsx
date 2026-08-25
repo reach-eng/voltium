@@ -106,7 +106,7 @@ export function RiderGuarantorTab({
               isEditing={isEditing}
               field="guarantorStatus"
               type="select"
-              options={['PENDING', 'SUBMITTED', 'VERIFIED', 'APPROVED', 'REJECTED']}
+              options={['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']}
               onEdit={(v) => setEditForm({ ...editForm, guarantorStatus: v })}
             />
           </div>

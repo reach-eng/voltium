@@ -4,6 +4,7 @@ import { validateBody, vehicleBulkActionSchema } from '@/lib/validators';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +25,13 @@ export async function POST(req: NextRequest) {
       value,
       session.adminId || ''
     );
+
+    await logAdminMutation({
+      session,
+      action: `vehicle.bulk_${action}`,
+      entity: 'Vehicle',
+      details: { count: ids.length, result, value },
+    });
 
     return success(result, 'Bulk action completed');
   } catch (error) {

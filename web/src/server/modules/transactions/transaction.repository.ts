@@ -190,6 +190,13 @@ export const transactionRepository = {
     approvedBy?: string,
     rejectionReason?: string
   ) {
+    if (expectedStatus === status) {
+      throw new TransactionServiceError(
+        `Transaction is already in status "${status}". Cannot transition to same status.`,
+        'CONFLICT'
+      );
+    }
+
     const claimed = await db.transaction.updateMany({
       where: { id, status: expectedStatus },
       data: {

@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { teamLeaderUseCases } from '@/server/modules/team-leaders/team-leader.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,6 +41,13 @@ export async function POST(req: NextRequest) {
       default:
         return errors.badRequest('Invalid action');
     }
+
+    await logAdminMutation({
+      session,
+      action: `team_leader.bulk_${action}`,
+      entity: 'TeamLeader',
+      details: { count, ids, action },
+    });
 
     return success({ count }, 'Bulk action completed');
   } catch (error) {

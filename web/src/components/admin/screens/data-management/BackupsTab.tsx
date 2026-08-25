@@ -45,6 +45,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
+import { DestructiveConfirm } from '@/components/admin/DestructiveConfirm';
 import {
   Database,
   HardDrive,
@@ -81,6 +83,7 @@ import {
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { extractErrorMessage } from '@/lib/error-utils';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -284,7 +287,7 @@ export function BackupsTab() {
         fetchBackups();
       } else {
         const err = await res.json();
-        toast.error(err.error || 'Failed to start backup');
+        toast.error(extractErrorMessage(err, ''));
       }
     } catch {
       toast.error('Failed to start backup');
@@ -481,17 +484,14 @@ export function BackupsTab() {
               ))}
             </div>
           ) : backups.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <Archive className="w-10 h-10 mb-3 opacity-40" />
-              <p className="text-sm">No backups found</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => setShowCreateDialog(true)}
-              >
-                <Plus className="w-3 h-3 mr-1" /> Create your first backup
-              </Button>
+            <div className="p-6">
+              <EmptyState
+                icon={Archive}
+                title="No backups found"
+                description="There are no backups matching your filter criteria."
+                actionLabel="Create your first backup"
+                onAction={() => setShowCreateDialog(true)}
+              />
             </div>
           ) : (
             <Table>
@@ -666,26 +666,22 @@ export function BackupsTab() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Backup</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this backup? This action cannot be undone. The backup
-              files will be permanently removed from disk.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveConfirm
+        open={!!deleteConfirm}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+        title="Delete Backup"
+        description="Are you sure you want to delete this backup? This action cannot be undone. The backup archive will be permanently removed from disk."
+        expectedPhrase="DELETE"
+        confirmLabel="Delete Backup"
+        variant="destructive"
+        onConfirm={async () => {
+          if (deleteConfirm) {
+            await handleDelete(deleteConfirm);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin, riderLogin, generateRandomPhone } from '../helpers';
 
 describe('GET /api/admin/rewards', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. returns 200 with list of rewards', async () => {
@@ -28,7 +28,7 @@ describe('POST /api/admin/rewards', () => {
   let testRiderId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
     // Create a rider for rewards test
     const phone = generateRandomPhone();
     const rider = await riderLogin(phone);

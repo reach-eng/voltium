@@ -40,6 +40,7 @@ export function useIncidents() {
   });
 
   const [search, setSearch] = useState('');
+  const [serverStatusCounts, setServerStatusCounts] = useState<Record<string, number> | null>(null);
   const debouncedSearch = useDebounce(search, 500);
 
   const incidentTypes = ['ACCIDENT', 'THEFT', 'BREAKDOWN', 'DAMAGE', 'OTHER'];
@@ -62,6 +63,9 @@ export function useIncidents() {
         if (json.pagination) {
           setTotalPages(json.pagination.totalPages || 1);
           setTotal(json.pagination.total || 0);
+          if (json.pagination.statusCounts) {
+            setServerStatusCounts(json.pagination.statusCounts);
+          }
         }
       } else if (res.status === 403) {
         setIncidents([]);
@@ -233,11 +237,33 @@ export function useIncidents() {
     URL.revokeObjectURL(url);
   }
 
+  const openDetail = useCallback(async (incident: Incident) => {
+    setSelectedIncident(incident);
+    setDetailOpen(true);
+    try {
+      const res = await fetch(`/api/admin/incidents/${incident.id}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setSelectedIncident(json.data);
+        }
+      }
+    } catch {
+      // Retain selectedIncident
+    }
+  }, []);
+
   const statusCounts = {
-    OPEN: incidents.filter((i) => i.status === 'OPEN').length,
-    INVESTIGATING: incidents.filter((i) => i.status === 'INVESTIGATING').length,
-    RESOLVED: incidents.filter((i) => i.status === 'RESOLVED').length,
-    CLOSED: incidents.filter((i) => i.status === 'CLOSED').length,
+    OPEN: serverStatusCounts?.OPEN ?? incidents.filter((i) => i.status === 'OPEN').length,
+    INVESTIGATING:
+      serverStatusCounts?.INVESTIGATING ??
+      incidents.filter((i) => i.status === 'INVESTIGATING').length,
+    RESOLVED:
+      serverStatusCounts?.RESOLVED ??
+      incidents.filter((i) => i.status === 'RESOLVED').length,
+    CLOSED:
+      serverStatusCounts?.CLOSED ??
+      incidents.filter((i) => i.status === 'CLOSED').length,
   };
 
   return {
@@ -259,6 +285,7 @@ export function useIncidents() {
     setDetailOpen,
     selectedIncident,
     setSelectedIncident,
+    openDetail,
     creating,
     riders,
     vehicles,

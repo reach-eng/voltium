@@ -42,7 +42,6 @@ import {
   OutboxPayloadTooLargeError,
   OutboxEventTypes,
   __resetEmitRateLimitCountersForTests,
-  __forceEmitRateLimitOnForTests,
 } from '@/server/workers/outbox';
 
 describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
@@ -52,12 +51,14 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     // The emit counters are process-global with a 60s window; each case
     // must start a fresh window or the 1,000 from the previous case bleed
     // into the next one.
+    //
+    // T-97 (PR-7, 2026-08-23): the rate limit is now ALWAYS
+    // enforced (production behavior is the same as the test
+    // behavior). The previous `__forceEmitRateLimitOnForTests`
+    // opt-in flag is removed. Tests reset the counter in
+    // beforeEach to start each case with a fresh 1,000-emit
+    // budget.
     __resetEmitRateLimitCountersForTests();
-    // The rate limit is OFF by default in tests (so other test files
-    // that share the in-memory counter via parallel vitest workers
-    // are not affected). This test explicitly opts in to verify the
-    // production behavior.
-    __forceEmitRateLimitOnForTests();
   });
 
   it('first 1,000 emits of WALLET_TOPUP_APPROVED in a minute succeed', async () => {

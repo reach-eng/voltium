@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { extractErrorMessage } from '@/lib/error-utils';
 import {
   EMPTY_REWARDS_SUMMARY,
   REWARDS_PAGE_SIZE,
@@ -151,7 +152,7 @@ export function useRewards() {
         toast.success('Reward points revoked successfully');
         fetchRewards();
       } else {
-        toast.error(json.error?.message || json.error || 'Failed to revoke points');
+        toast.error(extractErrorMessage(json, ''));
       }
     } catch {
       toast.error('Failed to revoke reward points');

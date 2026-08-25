@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 /**
@@ -10,7 +10,7 @@ describe('GET /api/admin/vehicles/[id]/history', () => {
   let vehicleId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
 
     try {
       const hubRes = await api('/api/admin/hubs', {

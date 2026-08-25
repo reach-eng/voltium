@@ -39,6 +39,10 @@ const JOBS_DIR = resolve(__dirname, '../../src/server/workers/jobs');
 const WORKERS_DIR = resolve(__dirname, '../../src/server/workers');
 const JOB_QUEUE = resolve(__dirname, '../../src/lib/job-queue.ts');
 const JOB_WRAPPER = resolve(__dirname, '../../src/server/workers/job-wrapper.ts');
+// T-97 (PR-7, 2026-08-23): the previous `job-wrapper.ts` was
+// removed because the helper had zero callers. The reaper at
+// `lib/job-queue.ts` is the new "alert on failed job" path.
+const SERVER_WORKERS = resolve(__dirname, '../../src/server/workers');
 
 function listJobs(): string[] {
   return readdirSync(JOBS_DIR)
@@ -125,13 +129,19 @@ describe('PR-M (Ticket #23): workers jobs error-handling consistency', () => {
       expect(content).toMatch(/maxAttempts/);
     });
 
-    it('job-wrapper.ts exports withJobGuards with DLQ + alert pattern', () => {
-      const content = readSafe(JOB_WRAPPER);
-      expect(content).toMatch(/export\s+function\s+withJobGuards/);
-      // The wrapper logs errors and marks failed jobs
-      expect(content).toMatch(/logger\.error|DLQ/);
-      // And log the alert
-      expect(content).toMatch(/\[ALERT\]/);
+    it('job-wrapper.ts is intentionally not present (T-97 PR-7 2026-08-23)', () => {
+      // T-97 (PR-7, 2026-08-23): `withJobGuards` was defined but
+      // had ZERO callers across the codebase. Each `job.process`
+      // already implements its own idempotency, error logging,
+      // and outbox retry contract. The dead machinery was
+      // removed. Each worker now relies on the in-tx outbox
+      // emit + JobQueue's `processJobs` retry/backoff to
+      // surface failures. The "ALERT Background job failed"
+      // contract that `withJobGuards` used to provide is now
+      // delivered by the OutboxEvent reaper at lib/job-queue.ts
+      // (see T-98 PR-8 verification test).
+      const fs = require('fs') as typeof import('fs');
+      expect(fs.existsSync(JOB_WRAPPER)).toBe(false);
     });
   });
 
@@ -143,12 +153,14 @@ describe('PR-M (Ticket #23): workers jobs error-handling consistency', () => {
       expect(content).toMatch(/alerter\.send/);
     });
 
-    it('other jobs delegate alerts to withJobGuards notifyOnFailure', () => {
-      // The other 11 jobs rely on withJobGuards' default
-      // `notifyOnFailure: true`, which logs `[ALERT] Background job failed`
-      // and persists to the FailedJob table.
-      const content = readSafe(JOB_WRAPPER);
-      expect(content).toMatch(/notifyOnFailure[\s\S]*?\[ALERT\]/);
+    it('JobQueue reaper preserves forensic context for FAILED events (T-98)', () => {
+      // T-97 + T-98: the reaper at lib/job-queue.ts is the new
+      // canonical "alert on failed job" path. It increments
+      // attempts (so poison pills die at maxAttempts) and
+      // prefixes the prior error string onto the reaper note.
+      const content = readSafe(JOB_QUEUE);
+      expect(content).toMatch(/Reclaimed by reaper/);
+      expect(content).toMatch(/attempts = attempts \+ 1/);
     });
   });
 });

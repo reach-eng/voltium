@@ -5,8 +5,8 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
-
 import { invalidateCache } from '@/lib/cache';
+import { logAdminMutation } from '@/lib/audit-log';
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -37,6 +37,14 @@ export async function POST(req: NextRequest) {
     }
     invalidateCache('admin:hubs:*');
     invalidateCache('admin:vehicles:*');
+
+    await logAdminMutation({
+      session,
+      action: `hub.bulk_${action}`,
+      entity: 'Hub',
+      details: { count: result?.count, ids, action },
+    });
+
     return success(result, `Bulk ${action} completed`);
   } catch (error: unknown) {
     const message = errorMessage(error);

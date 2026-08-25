@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 describe('POST /api/admin/scores/recalculate', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('should return 401 if not authenticated', async () => {

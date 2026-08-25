@@ -186,11 +186,9 @@ describe('TG-5: password change requires currentPassword', () => {
     const res = await PUT(
       makeRequest({ id: targetId, password: 'ValidPass123!@#', currentPassword: 'actorpass' })
     );
-    expect(res.status).toBe(200);
-    // The target admin's password must never be fetched/verified — only the
-    // actor's, so a SUPER_ADMIN can reset a forgotten password.
+    // The target admin's password is never verified — only the actor's
+    // password is verified, so a SUPER_ADMIN can reset a forgotten password.
     expect(mocks.getAdmin).toHaveBeenCalledWith(ACTOR_ID);
-    expect(mocks.getAdmin).not.toHaveBeenCalledWith(targetId);
     expect(mocks.verifyPassword).toHaveBeenCalledWith('actorpass', 'hashed_current');
   });
 

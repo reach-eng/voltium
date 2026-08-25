@@ -1,8 +1,29 @@
 import { z } from 'zod';
 
+const DANGEROUS_EXTENSIONS = /\.(exe|bat|cmd|sh|scr|dll|com|cpl|jar|msi|vbs|ps1)$/i;
+const DANGEROUS_MIME_TYPES = [
+  'application/x-msdownload',
+  'application/x-sh',
+  'application/x-bat',
+  'application/x-executable',
+  'application/java-archive',
+  'application/octet-stream-executable',
+];
+
 export const requestUploadUrlSchema = z.object({
-  fileName: z.string().min(1).max(255),
-  mimeType: z.string().min(1),
+  fileName: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine((name) => !DANGEROUS_EXTENSIONS.test(name), {
+      message: 'Executable and script file uploads are not permitted',
+    }),
+  mimeType: z
+    .string()
+    .min(1)
+    .refine((mime) => !DANGEROUS_MIME_TYPES.includes(mime.toLowerCase()), {
+      message: 'Disallowed executable MIME type for file upload',
+    }),
   category: z.enum([
     'kyc_document',
     'profile_photo',

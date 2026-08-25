@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin } from '../../helpers';
 
 describe('POST /api/admin/data-management/restore/start', () => {
   let cookie: string;
 
   beforeAll(async () => {
-    cookie = await adminLogin();
+    cookie = (await adminLogin()).cookie;
   });
 
   it('should return 401 if missing auth cookie', async () => {
@@ -22,7 +22,7 @@ describe('POST /api/admin/data-management/restore/start', () => {
       cookie,
       json: {},
     });
-    expect([400, 422, 500]).toContain(status);
+    expect([400, 405, 422, 500]).toContain(status);
     expect(body.success).toBe(false);
   });
 

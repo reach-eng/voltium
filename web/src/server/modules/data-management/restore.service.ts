@@ -88,6 +88,16 @@ export const restoreService = {
   async startRestore(backupJobId: string, adminId: string) {
     const job = await backupRepository.getBackupJob(backupJobId);
     if (!job) throw new Error('Backup job not found');
+    if (job.status !== 'COMPLETED') throw new Error('Cannot restore from a non-completed backup');
+
+    // F-004: Single-flight restore check to prevent concurrent restore race conditions
+    const runningRestore = await backupRepository.findRunningRestore();
+    if (runningRestore) {
+      throw new Error('A restore operation is already in progress');
+    }
+
+    // F-003: Acquire backup lock — prevents scheduled backups from running during restore
+    await backupService.setBackupLock(true);
 
     // Create restore job record
     const restoreJob = await backupRepository.createRestoreJob({
@@ -96,8 +106,15 @@ export const restoreService = {
       requestedByAdminId: adminId,
     });
 
-    // Acquire backup lock — prevents scheduled backups from running during restore
-    await backupService.setBackupLock(true);
+    // F-003: emit restore.started audit BEFORE execution steps
+    await createAuditLog({
+      actorId: adminId,
+      actorType: 'ADMIN',
+      action: 'restore.started',
+      entity: 'RestoreJob',
+      entityId: restoreJob.id,
+      details: { backupId: backupJobId },
+    });
 
     // PR-7 (2026-08-06 fix-plan, 6th audit P0): track the pre-restore backup so
     // a mid-restore failure cannot silently orphan it. On failure the catch
@@ -106,15 +123,6 @@ export const restoreService = {
     let preRestoreBackupId: string | null = null;
 
     try {
-      await createAuditLog({
-        actorId: adminId,
-        actorType: 'ADMIN',
-        action: 'restore.started',
-        entity: 'RestoreJob',
-        entityId: restoreJob.id,
-        details: { backupId: backupJobId },
-      });
-
       // 1. Create pre-restore backup
       logger.info('[RestoreService] Creating pre-restore backup');
       const preRestoreBackup = await backupService.createBackup({

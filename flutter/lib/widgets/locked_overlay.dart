@@ -108,9 +108,12 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
           .read(voltiumApiClientProvider)
           .postRiderDeviceVerifyLock({'password': password});
 
-      final successVal = response['success'] as bool? ?? false;
-      final data = response['data'] as Map<String, dynamic>?;
-      final isValid = (data != null && data['success'] == true) || successVal;
+      // AUDIT FIX (FL-21): do not rely on outer envelope success (which is true
+      // on 200 HTTP response even if password was incorrect). Check inner payload.
+      final payload = response['data'] is Map<String, dynamic>
+          ? response['data'] as Map<String, dynamic>
+          : response;
+      final isValid = payload['success'] == true || payload['verified'] == true;
 
       if (mounted) {
         if (isValid) {

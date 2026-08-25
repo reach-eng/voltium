@@ -83,13 +83,6 @@ export async function completePickupVerification(
 
   const ALLOWED_PICKUP_STATUSES = new Set([
     'PICKUP_SCHEDULED',
-    'PLAN_SELECTED',
-    'DEPOSIT_PENDING',
-    'DEPOSIT_APPROVED',
-    'KYC_APPROVED',
-    'KYC_SUBMITTED',
-    'GUARANTOR_APPROVED',
-    'GUARANTOR_SUBMITTED',
     'ACTIVE',
   ]);
   if (!ALLOWED_PICKUP_STATUSES.has(rider.lifecycleStatus)) {

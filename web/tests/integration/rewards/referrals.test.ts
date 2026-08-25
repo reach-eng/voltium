@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, riderLogin, adminLogin } from '../helpers';
 
 describe('Referral and Rewards Integration Workflow', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. Fetches referral codes for registered riders', async () => {

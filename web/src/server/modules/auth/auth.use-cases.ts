@@ -16,7 +16,7 @@ import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { flattenRider } from '@/lib/flatten-rider';
 import { logger } from '@/lib/logger';
 import { getFeatureFlags } from '@/lib/feature-flags';
-import { env } from '@/lib/env';
+import { env, IS_PROD } from '@/lib/env';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import type { SendOtpInput, VerifyOtpInput, VerifyOtpResult } from './auth.types';
 
@@ -83,11 +83,12 @@ export const authUseCases = {
     });
 
     return {
-      // PR-112 (SEC PR-5): only echo the OTP in dev. APP_ENV=staging is
-      // production-grade for this gate (staging receives real SMS), so the
-      // echo is suppressed.
+      // PR-112 / F-039: only echo the OTP in development. In staging or production
+      // or whenever IS_PROD is true, OTP echo is suppressed.
       otp:
-        process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development'
+        process.env.APP_ENV === 'development' &&
+        process.env.NODE_ENV === 'development' &&
+        !IS_PROD
           ? otp
           : undefined,
     };

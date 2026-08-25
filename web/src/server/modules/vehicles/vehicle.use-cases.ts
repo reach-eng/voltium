@@ -4,7 +4,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
 import { invalidateCache } from '@/lib/cache';
-import { validateVehicleTransition } from './vehicle-state-machine';
+import { validateVehicleTransition, VehicleStateError } from './vehicle-state-machine';
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -26,6 +26,22 @@ export const vehicleUseCases = {
   },
 
   async updateVehicle(vehicleId: string, input: Prisma.VehicleUpdateInput) {
+    // V-1 (W8): enforce the vehicle state machine on single-vehicle PUT.
+    // The bulk path already validates via validateVehicleTransition; this
+    // was the only remaining unchecked write path. Re-read the current
+    // status inside the use-case so the route doesn't need to know about
+    // the state machine directly.
+    if (input.status !== undefined) {
+      const current = await db.vehicle.findUnique({
+        where: { id: vehicleId },
+        select: { status: true },
+      });
+      if (!current) throw new Error('VEHICLE_NOT_FOUND');
+      validateVehicleTransition(
+        current.status as VehicleStatus,
+        input.status as VehicleStatus
+      );
+    }
     const result = await vehicleRepository.update(vehicleId, input);
     invalidateCache('vehicles_list:*');
     return result;
@@ -74,16 +90,25 @@ export const vehicleUseCases = {
    * List vehicles with hub info, pagination, and active leases for admin panel.
    */
   async listAdminVehicles(params: {
+    search?: string;
     status?: string;
     hubId?: string;
     page: number;
     limit: number;
   }) {
-    const { status, hubId, page, limit } = params;
+    const { search, status, hubId, page, limit } = params;
     // P1.6: soft-deleted vehicles must not appear in the admin list.
     const where: Record<string, unknown> = { deletedAt: null };
-    if (status) where.status = status;
-    if (hubId) where.hubId = hubId;
+    if (status && status !== 'ALL') where.status = status;
+    if (hubId && hubId !== 'ALL') where.hubId = hubId;
+    if (search) {
+      const trimmed = search.trim();
+      where.OR = [
+        { vehicleNumber: { contains: trimmed, mode: 'insensitive' } },
+        { model: { contains: trimmed, mode: 'insensitive' } },
+        { vehicleId: { contains: trimmed, mode: 'insensitive' } },
+      ];
+    }
 
     const [vehicles, total, hubs] = await Promise.all([
       db.vehicle.findMany({

@@ -17,7 +17,7 @@ import { logger } from '@/lib/logger';
 import { parseDDMMYYYY } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
-import { createAuditLog } from '@/lib/audit-log';
+import { createAuditLog, logAdminMutation } from '@/lib/audit-log';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { toRupeesResponse } from '@/lib/api-money';
@@ -54,9 +54,26 @@ const updateRiderSchema = z.object({
   assignedVehicle: z.string().max(100).optional().nullable(),
   vehicleId: z.string().max(100).optional().nullable(),
   currentPlan: z.string().max(100).optional().nullable(),
-  currentPlanId: z.string().max(100).optional().nullable(),
   pickedUpAt: z.string().datetime().optional().nullable().or(z.literal('')),
-  lifecycleStatus: z.string().max(50).optional(),
+  lifecycleStatus: z
+    .enum([
+      'NEW',
+      'PHONE_VERIFIED',
+      'PROFILE_SUBMITTED',
+      'KYC_SUBMITTED',
+      'KYC_APPROVED',
+      'GUARANTOR_SUBMITTED',
+      'GUARANTOR_APPROVED',
+      'DEPOSIT_PENDING',
+      'DEPOSIT_APPROVED',
+      'PLAN_SELECTED',
+      'PICKUP_SCHEDULED',
+      'ACTIVE',
+      'SUSPENDED',
+      'RETURN_PENDING',
+      'CLOSED',
+    ])
+    .optional(),
   registrationDone: z.boolean().optional(),
   depositDone: z.boolean().optional(),
   kycDone: z.boolean().optional(),
@@ -128,6 +145,7 @@ export async function GET(req: NextRequest) {
     const endDate = endDateRaw
       ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
       : '';
+    const hubId = url.searchParams.get('hubId') || '';
     const cursor = url.searchParams.get('cursor') || '';
     const page = parsePositiveInt(url.searchParams.get('page'), 1);
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
@@ -144,6 +162,7 @@ export async function GET(req: NextRequest) {
       search,
       state,
       kycStatus,
+      hubId,
       startDate,
       endDate,
       cursor,
@@ -159,6 +178,7 @@ export async function GET(req: NextRequest) {
         search,
         state,
         kycStatus,
+        hubId: hubId || undefined,
         startDate,
         endDate,
         cursor: cursor || undefined,
@@ -192,6 +212,13 @@ export async function POST(req: NextRequest) {
 
     const result = await adminRiderUseCases.create({ phone, fullName });
     invalidateCache('admin:riders:*');
+    await logAdminMutation({
+      session,
+      action: 'rider.create',
+      entity: 'Rider',
+      entityId: result?.id,
+      details: { phone, fullName },
+    });
     return success(result);
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {

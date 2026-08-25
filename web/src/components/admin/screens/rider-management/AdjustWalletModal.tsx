@@ -1,5 +1,6 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -59,7 +60,7 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
       onSuccess(data.data.walletBalance);
       onClose();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(extractErrorMessage(err, 'Operation failed'));
     } finally {
       setIsSubmitting(false);
     }

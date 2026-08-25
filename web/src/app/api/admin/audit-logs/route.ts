@@ -41,11 +41,26 @@ export async function GET(req: NextRequest) {
     const entityId = url.searchParams.get('entityId') || undefined;
     const actorId = url.searchParams.get('actorId') || undefined;
     const action = url.searchParams.get('action') || undefined;
+    const actionPrefix = url.searchParams.get('actionPrefix') || undefined;
+    const q = url.searchParams.get('q') || undefined;
+    const from = url.searchParams.get('from') || undefined;
+    const to = url.searchParams.get('to') || undefined;
     // PR-4b (13th audit P0-6): NaN-safe pagination.
     const page = parsePositiveInt(url.searchParams.get('page'), 1);
     const limit = parsePositiveInt(url.searchParams.get('limit'), 50, 100);
 
-    const result = await adminUseCases.getAuditLogs({ entity, entityId, actorId, action, page, limit });
+    const result = await adminUseCases.getAuditLogs({
+      entity,
+      entityId,
+      actorId,
+      action,
+      actionPrefix,
+      q,
+      from,
+      to,
+      page,
+      limit,
+    });
 
     // PR-153: PII redaction. AuditLog.details is a JSON string that
     // can contain phone numbers, Aadhaar/PAN/account numbers, emails,
@@ -79,5 +94,33 @@ export async function GET(req: NextRequest) {
     // rider actions) — log the redacted form, never the raw error.
     logger.error('[AUDIT_LOGS_GET]', redactPii(error));
     return errors.internal('Failed to fetch audit logs');
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) return adminUnauthorized();
+
+  try {
+    const body = await req.json();
+    const { action, entity, entityId, details } = body;
+
+    if (!action || typeof action !== 'string' || !entity || typeof entity !== 'string') {
+      return errors.badRequest('action and entity strings are required');
+    }
+
+    const { logAdminMutation } = await import('@/lib/audit-log');
+    await logAdminMutation({
+      session,
+      action,
+      entity,
+      entityId: typeof entityId === 'string' ? entityId : undefined,
+      details: typeof details === 'object' || typeof details === 'string' ? details : undefined,
+    });
+
+    return success(null, 'Audit log recorded', 201);
+  } catch (error) {
+    logger.error('[AUDIT_LOGS_POST]', redactPii(error));
+    return errors.internal('Failed to record audit log');
   }
 }

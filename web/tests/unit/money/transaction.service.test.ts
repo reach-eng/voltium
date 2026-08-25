@@ -75,8 +75,8 @@ describe('transactionService', () => {
       expect(() => transactionService.validateTransition('APPROVED', 'PENDING')).toThrow();
     });
 
-    it('allows same-to-same (no-op)', () => {
-      expect(() => transactionService.validateTransition('PENDING', 'PENDING')).not.toThrow();
+    it('throws on same-to-same (no loop / duplicate transition)', () => {
+      expect(() => transactionService.validateTransition('PENDING', 'PENDING')).toThrow();
     });
 
     it('allows PENDING → REJECTED', () => {
@@ -163,8 +163,8 @@ describe('transaction-state-machine', () => {
       expect(() => validateTransactionTransition('FAILED', 'PENDING')).not.toThrow();
     });
 
-    it('allows same-to-same', () => {
-      expect(() => validateTransactionTransition('PENDING', 'PENDING')).not.toThrow();
+    it('throws on same-to-same', () => {
+      expect(() => validateTransactionTransition('PENDING', 'PENDING')).toThrow(TransactionStateError);
     });
 
     it('throws for REVERSED → PENDING (terminal)', () => {
@@ -210,8 +210,8 @@ describe('transaction-state-machine', () => {
       expect(canTransitionTransaction('REFUNDED', 'APPROVED')).toBe(false);
     });
 
-    it('returns true for same-to-same', () => {
-      expect(canTransitionTransaction('APPROVED', 'APPROVED')).toBe(true);
+    it('returns false for same-to-same', () => {
+      expect(canTransitionTransaction('APPROVED', 'APPROVED')).toBe(false);
     });
   });
 });

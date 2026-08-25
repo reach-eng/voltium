@@ -12,7 +12,15 @@ import { authUseCases, RateLimitError } from '@/server/modules/auth/auth.use-cas
 import { API_VERSION } from '@/lib/api-version';
 import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { IS_PROD } from '@/lib/env';
 import { redactPii } from '@/lib/pii-redact';
+
+const DAILY_AUTH_IP_RATE_LIMIT = {
+  windowMs: 24 * 60 * 60 * 1000,
+  maxRequests: IS_PROD ? 100 : 1000,
+  failClosed: true,
+};
 
 function getCorrelationId(request: NextRequest): string {
   return request.headers.get('x-correlation-id') || 'unknown';
@@ -21,6 +29,14 @@ function getCorrelationId(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId(request);
   const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
+
+  const dailyIpCheck = await checkRateLimit(`daily-auth:ip:${clientIp}`, DAILY_AUTH_IP_RATE_LIMIT);
+  if (!dailyIpCheck.allowed) {
+    return errors.tooManyRequests(
+      'Daily authentication attempt limit exceeded for this IP. Please try again tomorrow.',
+      { correlationId }
+    );
+  }
 
   try {
     let body;

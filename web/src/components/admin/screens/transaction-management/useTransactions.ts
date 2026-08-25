@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { logger } from '@/lib/logger';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import type { Transaction, ConfirmActionState, LastBulkAction } from './types';
 
@@ -137,7 +138,7 @@ export function useTransactions() {
       setDeductReason('');
       fetchTransactions();
     } catch (err: any) {
-      toast.error(err.message || 'An error occurred');
+      toast.error(extractErrorMessage(err, ''));
     } finally {
       if (mountedRef.current) {
         setDeductLoading(false);

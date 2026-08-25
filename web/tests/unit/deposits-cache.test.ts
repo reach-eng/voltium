@@ -45,6 +45,7 @@ describe('Deposit Actions Cache Invalidation', () => {
     const res = await PUT(req);
     expect(res.status).toBe(200);
     expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:deposits:*');
-    expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:*');
+    expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:wallets:*');
+    expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:riders:*');
   });
 });

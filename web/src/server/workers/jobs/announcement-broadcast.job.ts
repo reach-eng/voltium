@@ -19,6 +19,7 @@ import { db } from '@/lib/db';
 import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { sendSms } from '@/lib/sms-provider';
 import type { RiderLifecycleStatus } from '@prisma/client';
 
 export interface AnnouncementBroadcastPayload {
@@ -59,23 +60,23 @@ export const announcementBroadcastJob = {
       ? (announcement.targetIds as string[])
       : [];
 
-    let recipients: { id: string }[] = [];
+    let recipients: { id: string; phone?: string | null }[] = [];
     if (announcement.targetAudience === 'ALL') {
-      recipients = await db.rider.findMany({ select: { id: true } });
+      recipients = await db.rider.findMany({ select: { id: true, phone: true } });
     } else if (announcement.targetAudience === 'BY_HUB') {
       recipients = await db.rider.findMany({
         where: { pickupHub: { in: targetIds } },
-        select: { id: true },
+        select: { id: true, phone: true },
       });
     } else if (announcement.targetAudience === 'BY_STATUS') {
       recipients = await db.rider.findMany({
         where: { lifecycleStatus: { in: targetIds as RiderLifecycleStatus[] } },
-        select: { id: true },
+        select: { id: true, phone: true },
       });
     } else if (announcement.targetAudience === 'BY_PLAN') {
       recipients = await db.rider.findMany({
         where: { currentPlan: { in: targetIds } },
-        select: { id: true },
+        select: { id: true, phone: true },
       });
     }
 
@@ -120,6 +121,18 @@ export const announcementBroadcastJob = {
         })),
         skipDuplicates: true,
       });
+
+      // A-2 (W9): dispatch SMS when announcement channel is SMS
+      if (announcement.channel === 'SMS') {
+        for (const r of batch) {
+          if (r.phone) {
+            sendSms(r.phone, `${announcement.title}: ${announcement.message}`).catch((err) =>
+              logger.error('[AnnouncementBroadcast] SMS send error', err)
+            );
+          }
+        }
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 

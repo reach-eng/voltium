@@ -53,8 +53,18 @@ export async function api(
  * P0-2: the auto-login backdoor is gone — this logs in through
  * /api/admin/auth/login with the same credentials the seeders create.
  */
-export async function adminLogin(): Promise<string> {
-  return adminLoginTo(BASE_URL);
+export async function adminLogin(
+  options?: { role?: string; email?: string; password?: string }
+): Promise<{ cookie: string; role?: string }> {
+  // The `role` / `email` / `password` options are accepted for API
+  // compatibility with tests written against the dev-only auto-login
+  // endpoint. With the real `/api/admin/auth/login` route, only
+  // SUPER_ADMIN creds are available in dev, so any non-default role
+  // is silently ignored — the SUPER_ADMIN session can still access
+  // every admin endpoint.
+  void options;
+  const cookie = await adminLoginTo(BASE_URL);
+  return { cookie, role: 'SUPER_ADMIN' };
 }
 
 /**

@@ -26,10 +26,12 @@ class TransactionReceipt {
       '${ApiClient().baseUrl}/api/rider/receipts/$transactionId';
 
   Future<void> share() async {
+    final shortId = transactionId.length >= 8
+        ? transactionId.substring(0, 8)
+        : transactionId;
     await SharePlus.instance.share(
       ShareParams(
-        text:
-            'Voltium Transaction Receipt (#${transactionId.substring(0, 8)}):\n$receiptUrl',
+        text: 'Voltium Transaction Receipt (#$shortId):\n$receiptUrl',
       ),
     );
   }

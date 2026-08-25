@@ -43,7 +43,24 @@ export function validateTransactionTransition(
   current: TransactionStatus,
   target: TransactionStatus
 ): void {
-  if (current === target) return;
+  // W6 / M-1: the previous early-return on `current === target` was a
+  // double-reversal loophole. A rider who legitimately moves
+  // APPROVED → REVERSED (one row in the audit log) and then submits a
+  // second REVERSED with the row already at REVERSED status used to
+  // pass this validator with a no-op. The CAS predicate at the call
+  // site also accepted `expected == target`, so both guards short-
+  // circuited and the second call could re-credit the wallet. Now we
+  // require an explicit, distinct target — the caller must use the
+  // "reverse a reversal" path (a separate admin action) instead of
+  // re-applying the same one.
+  if (current === target) {
+    throw new TransactionStateError(
+      `Transaction is already in status "${current}". ` +
+        `Re-applying the same transition is not allowed.`,
+      current,
+      target
+    );
+  }
 
   const allowed = VALID_TRANSITIONS[current];
   if (!allowed?.includes(target)) {

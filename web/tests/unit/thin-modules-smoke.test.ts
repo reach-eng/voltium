@@ -184,7 +184,10 @@ describe('offers (thin module) — smoke tests (#22.1)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           validFrom: new Date('2026-01-01'),
-          validUntil: new Date('2026-12-31'),
+          // T-94 + P2-15 (2026-08-23): a YYYY-MM-DD `validUntil`
+          // is the operator's "valid through the END of that day",
+          // not midnight at the start. See lib/date-normalize.ts.
+          validUntil: new Date('2026-12-31T23:59:59.999Z'),
           isSponsored: true,
           isActive: true,
         }),
@@ -203,7 +206,8 @@ describe('offers (thin module) — smoke tests (#22.1)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           validFrom: new Date('2026-02-01'),
-          validUntil: new Date('2026-06-01'),
+          // T-94 + P2-15: end-of-day normalization also applies to update.
+          validUntil: new Date('2026-06-01T23:59:59.999Z'),
         }),
       })
     );

@@ -51,7 +51,11 @@ describe('Rider OTP/Auth Integration Workflow', () => {
       json: { phone },
     });
 
-    // We test verify-otp with a fake/expired behavior
+    // We test verify-otp with a fake/expired behavior. Use a wrong
+    // OTP that's NOT the dev-mode magic OTP ('111111') — the
+    // `lib/otp-store.ts` dev-mode bypass accepts '111111' even
+    // after a fresh send-otp, which would make this test
+    // misleadingly pass for the wrong reason.
     const verifyRes = await api('/api/auth/verify-otp', {
       method: 'POST',
       json: { phone, otp: '000000' }, // Wrong/expired OTP
@@ -67,9 +71,12 @@ describe('Rider OTP/Auth Integration Workflow', () => {
       json: { phone },
     });
 
+    // Use '222222' (NOT '111111', which is the dev-mode magic OTP
+    // that always succeeds). '222222' is a genuinely-wrong OTP
+    // that the dev-mode bypass does not accept.
     const verifyRes = await api('/api/auth/verify-otp', {
       method: 'POST',
-      json: { phone, otp: '111111' }, // wrong OTP
+      json: { phone, otp: '222222' }, // wrong OTP (not the dev magic '111111')
     });
     expect(verifyRes.status).toBeGreaterThanOrEqual(400);
   });
@@ -82,17 +89,18 @@ describe('Rider OTP/Auth Integration Workflow', () => {
       json: { phone },
     });
 
-    // Make multiple wrong attempts
+    // Make multiple wrong attempts. Use '222222' (NOT '111111',
+    // which is the dev-mode magic OTP that always succeeds).
     for (let i = 0; i < 3; i++) {
       await api('/api/auth/verify-otp', {
         method: 'POST',
-        json: { phone, otp: '111111' },
+        json: { phone, otp: '222222' },
       });
     }
 
     const finalRes = await api('/api/auth/verify-otp', {
       method: 'POST',
-      json: { phone, otp: '222222' },
+      json: { phone, otp: '333333' },
     });
     expect(finalRes.status).toBeGreaterThanOrEqual(400);
   });
@@ -133,7 +141,10 @@ describe('Rider OTP/Auth Integration Workflow', () => {
 
     expect(verifyRes.status).toBe(200);
     expect(verifyRes.body.success).toBe(true);
-    expect(verifyRes.body.data.phone).toBe(phone);
+    // The API normalizes the phone to E.164 (+91XXXXXXXXXX) on
+    // the server. Accept either the original 10-digit input or
+    // the E.164 form.
+    expect([phone, `+91${phone}`]).toContain(verifyRes.body.data.phone);
     expect(verifyRes.body.data.riderId).toBeDefined();
   });
 

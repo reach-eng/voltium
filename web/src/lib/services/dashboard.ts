@@ -20,6 +20,7 @@ export const getDashboardStats = async () => {
     pendingInfoRequired,
     totalAdmins,
     activeRentals,
+    totalRevenueResult,
   ] = await Promise.all([
     db.rider.count(),
     db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
@@ -38,10 +39,15 @@ export const getDashboardStats = async () => {
     // not vehicles flagged ACTIVE_RENTAL/OVERDUE — the lease row is the
     // source of truth and matches the Operations overview endpoint.
     db.rentalLease.count({ where: { status: 'ACTIVE' } }),
+    db.transaction.aggregate({
+      where: { status: 'APPROVED', type: 'DEBIT', purpose: 'RENT_PAYMENT' },
+      _sum: { amountInPaise: true },
+    }),
   ]);
 
   const totalBalance = paiseToRupees(walletBalanceResult._sum.balanceInPaise || 0);
   const totalDeposits = paiseToRupees(walletDepositResult._sum.securityDepositInPaise || 0);
+  const totalRevenue = paiseToRupees(totalRevenueResult._sum.amountInPaise || 0);
 
   return {
     totalRiders,
@@ -50,6 +56,7 @@ export const getDashboardStats = async () => {
     availableVehicles,
     totalBalance,
     totalDeposits,
+    totalRevenue,
     pendingTransactions,
     openTickets,
     activeRentals,
@@ -96,10 +103,15 @@ export const getRevenueTrend = async (days = 7) => {
       'type',
       'purpose',
     ] as const
-  ) as Array<{ date: string; revenue: bigint; riderCount: bigint }>;
+  ) as Array<{ date: string | Date; revenue: bigint; riderCount: bigint }>;
 
   for (const row of result) {
-    const key = row.date;
+    const key =
+      row.date instanceof Date
+        ? row.date.toISOString().split('T')[0]
+        : typeof row.date === 'string'
+          ? row.date.split('T')[0]
+          : String(row.date);
     const entry = dailyMap.get(key);
     if (entry) {
       entry.revenue = Number(row.revenue) / 100;

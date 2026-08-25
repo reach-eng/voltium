@@ -28,11 +28,32 @@ export function KycDetailDialog({
 
   if (!selectedRider) return null;
 
-  const maskString = (val?: string) => {
+  const maskString = (val?: string | null) => {
     if (!val) return '—';
     if (showPii) return val;
     if (val.length <= 4) return '••••';
     return `••••••••${val.slice(-4)}`;
+  };
+
+  const handleTogglePii = async () => {
+    const nextState = !showPii;
+    setShowPii(nextState);
+    if (nextState && selectedRider) {
+      try {
+        await fetch('/api/admin/audit-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'kyc.reveal_pii',
+            entity: 'KycProfile',
+            entityId: selectedRider.id || selectedRider.riderId,
+            details: { riderId: selectedRider.riderId, fullName: selectedRider.fullName },
+          }),
+        });
+      } catch {
+        // Non-blocking for UI
+      }
+    }
   };
 
   return (
@@ -63,13 +84,13 @@ export function KycDetailDialog({
             <div>
               <h3 className="font-bold text-lg">{selectedRider.fullName}</h3>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <p className="text-sm text-muted-foreground">{selectedRider.phone}</p>
+                <p className="text-sm text-muted-foreground">{maskString(selectedRider.phone)}</p>
                 {selectedRider.emergencyContact && (
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <span className="font-bold text-[10px] uppercase text-rose-500">
                       SOS:
                     </span>{' '}
-                    {selectedRider.emergencyContact}
+                    {maskString(selectedRider.emergencyContact)}
                   </p>
                 )}
                 {selectedRider.teamLeader && (
@@ -234,7 +255,7 @@ export function KycDetailDialog({
                 variant="outline"
                 size="sm"
                 className="h-7 gap-1.5 text-[11px] rounded-lg"
-                onClick={() => setShowPii((v) => !v)}
+                onClick={handleTogglePii}
               >
                 {showPii ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 {showPii ? 'Hide PII' : 'Reveal PII'}
@@ -286,7 +307,7 @@ export function KycDetailDialog({
                       Phone
                     </p>
                     <p className="text-sm font-medium font-mono">
-                      {selectedRider.guarantorPhone || '—'}
+                      {maskString(selectedRider.guarantorPhone)}
                     </p>
                   </div>
                   <div>

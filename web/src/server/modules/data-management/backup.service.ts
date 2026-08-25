@@ -112,63 +112,16 @@ function getBackupRoot(): string {
 // ./data, or the operator-controlled BACKUP_ROOT / BACKUP_SECONDARY_ROOT
 // env vars. Changing disks is an operator (env) decision, not an
 // in-app admin decision.
-
-function getAllowedBackupRoots(): string[] {
-  const roots = new Set<string>([
-    resolve(join(process.cwd(), 'data')),
-    resolve(join(process.cwd(), 'data', 'backups')),
-  ]);
-  if (process.env.BACKUP_ROOT) roots.add(resolve(process.env.BACKUP_ROOT));
-  if (process.env.BACKUP_SECONDARY_ROOT) {
-    roots.add(resolve(process.env.BACKUP_SECONDARY_ROOT));
-  }
-  return [...roots];
-}
-
-/**
- * Resolves `candidate` and asserts it stays under one of the allowed
- * backup roots. Returns the resolved absolute path or throws.
- */
-export function assertBackupPathAllowed(candidate: string): string {
-  if (!candidate || candidate.includes('\0')) {
-    throw new Error('Invalid backup path');
-  }
-  // Only absolute paths are accepted for admin-configured roots; relative
-  // input would resolve against cwd and could escape via symlinks.
-  if (!isAbsolute(candidate)) {
-    throw new Error(`Backup path must be absolute: "${candidate}"`);
-  }
-  const resolved = resolve(candidate);
-  const allowed = getAllowedBackupRoots();
-  const contained = allowed.some(
-    root => resolved === root || resolved.startsWith(root + sep)
-  );
-  if (!contained) {
-    throw new Error(
-      `Backup path "${candidate}" is outside the allowed backup roots`
-    );
-  }
-  return resolved;
-}
-
-/**
- * Defense-in-depth wrapper around rmSync for DB-derived backup paths:
- * refuses to delete anything outside the allowed backup roots.
- * Returns true when the delete was performed.
- */
-export function safeRmBackupPath(path: string): boolean {
-  try {
-    const resolved = assertBackupPathAllowed(path);
-    rmSync(resolved, { recursive: true, force: true });
-    return true;
-  } catch (e) {
-    logger.warn('[BackupService] Refused to delete path outside allowed backup roots', {
-      path,
-      error: e instanceof Error ? e.message : String(e),
-    });
-    return false;
-  }
-}
+export {
+  getAllowedBackupRoots,
+  assertBackupPathAllowed,
+  safeRmBackupPath,
+} from './backup-path.validator';
+import {
+  getAllowedBackupRoots,
+  assertBackupPathAllowed,
+  safeRmBackupPath,
+} from './backup-path.validator';
 
 async function getBackupRootAsync(): Promise<string> {
   try {
@@ -683,11 +636,28 @@ export const backupService = {
         const currentStatus = lockStatus?.value || 'NONE';
 
         if (currentStatus !== 'NONE') {
-          logger.warn('[BackupService] Failed to acquire lock — lock already held', {
-            currentStatus,
-            owner,
+          // I-2 (W10): check if the lock has exceeded its 30-minute TTL
+          const startedAtSetting = await tx.systemSetting.findUnique({
+            where: { key: 'BACKUP_LOCK_STARTED_AT' },
           });
-          return false;
+          const startedAt = startedAtSetting?.value ? new Date(startedAtSetting.value).getTime() : 0;
+          const LOCK_TTL_MS = 30 * 60 * 1000;
+          const isExpired = startedAt > 0 && Date.now() - startedAt > LOCK_TTL_MS;
+
+          if (!isExpired) {
+            logger.warn('[BackupService] Failed to acquire lock — lock already held', {
+              currentStatus,
+              owner,
+              startedAt: startedAtSetting?.value,
+            });
+            return false;
+          }
+
+          logger.warn('[BackupService] Overriding expired backup lock (TTL exceeded)', {
+            currentStatus,
+            heldSince: startedAtSetting?.value,
+            ttlMinutes: LOCK_TTL_MS / 60000,
+          });
         }
 
         await Promise.all([
@@ -715,6 +685,27 @@ export const backupService = {
       logger.error('[BackupService] Error acquiring lock', err);
       return false;
     }
+  },
+
+  /**
+   * I-2 (W10): Reaps abandoned RUNNING/QUEUED backup jobs older than maxAgeMinutes.
+   */
+  async reapStaleBackupJobs(maxAgeMinutes = 60): Promise<number> {
+    const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
+    const staleJobs = await db.backupJob.updateMany({
+      where: {
+        status: { in: ['RUNNING', 'QUEUED'] },
+        createdAt: { lt: cutoff },
+      },
+      data: {
+        status: 'FAILED',
+        errorMessage: `Timed out: abandoned in RUNNING/QUEUED state older than ${maxAgeMinutes} minutes`,
+      },
+    });
+    if (staleJobs.count > 0) {
+      logger.warn('[BackupService] Reaped stale backup jobs', { count: staleJobs.count });
+    }
+    return staleJobs.count;
   },
 
   async releaseLock(): Promise<void> {
@@ -783,6 +774,13 @@ export const backupService = {
     let uploadsSize = 0;
     let backupsSize = 0;
     let logsSize = 0;
+    let databaseSizeBytes = 0;
+
+    try {
+      databaseSizeBytes = await getDatabaseSize();
+    } catch {
+      // fallback to 0
+    }
 
     // Calculate uploads size
     if (existsSync(uploadsRoot)) {
@@ -804,7 +802,7 @@ export const backupService = {
     const disk = getDiskUsage(backupRoot);
 
     return {
-      databaseSizeBytes: 0,
+      databaseSizeBytes,
       uploadsSizeBytes: uploadsSize,
       backupsSizeBytes: backupsSize,
       logsSizeBytes: logsSize,

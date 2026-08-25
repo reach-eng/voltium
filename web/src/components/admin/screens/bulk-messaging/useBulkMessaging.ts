@@ -82,7 +82,7 @@ export function useBulkMessaging() {
       const res = await fetch('/api/admin/riders?limit=1');
       if (res.ok) {
         const json = await res.json();
-        setRecipientCount(json.pagination?.total || 0);
+        setRecipientCount(json.data?.pagination?.total ?? json.pagination?.total ?? 0);
       }
       return;
     }
@@ -92,9 +92,9 @@ export function useBulkMessaging() {
     }
     const param = form.targetAudience === 'BY_HUB' ? 'hubId' : 'state';
     const promises = form.targetIds.map((id) =>
-      fetch(`/api/admin/riders?${param}=${id}&limit=1`)
+      fetch(`/api/admin/riders?${param}=${encodeURIComponent(id)}&limit=1`)
         .then((r) => r.json())
-        .then((j) => j.pagination?.total || 0)
+        .then((j) => j.data?.pagination?.total ?? j.pagination?.total ?? 0)
     );
     const counts = await Promise.all(promises);
     setRecipientCount(counts.reduce((a, b) => a + b, 0));

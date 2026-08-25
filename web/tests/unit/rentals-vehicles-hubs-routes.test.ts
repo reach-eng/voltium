@@ -105,14 +105,20 @@ describe('P1.4: rentals PUT validates the action via a closed Zod enum', () => {
   it('maps REQUEST_RETURN to the return-inspection permission', async () => {
     const res = await rentalsPUT(makeRequest('/api/admin/rentals', { leaseId: 'L1', action: 'REQUEST_RETURN' }));
     expect(res.status).toBe(200);
-    expect(m.hasPermission).toHaveBeenCalledWith('OPERATIONS_ADMIN', 'rentals_return_inspection');
+    expect(m.hasPermission).toHaveBeenCalledWith(
+        expect.objectContaining({ adminRole: 'OPERATIONS_ADMIN' }),
+        'rentals_return_inspection'
+      );
     expect(m.executeLeaseAction).toHaveBeenCalledWith({ id: 'L1' }, 'REQUEST_RETURN');
   });
 
   it('maps START to the pickup-inspection permission', async () => {
     const res = await rentalsPUT(makeRequest('/api/admin/rentals', { leaseId: 'L1', action: 'start' }));
     expect(res.status).toBe(200);
-    expect(m.hasPermission).toHaveBeenCalledWith('OPERATIONS_ADMIN', 'rentals_pickup_inspection');
+    expect(m.hasPermission).toHaveBeenCalledWith(
+        expect.objectContaining({ adminRole: 'OPERATIONS_ADMIN' }),
+        'rentals_pickup_inspection'
+      );
     expect(m.executeLeaseAction).toHaveBeenCalledWith({ id: 'L1' }, 'START');
   });
 
@@ -177,6 +183,6 @@ describe('P1.7/P3.15: vehicles DELETE returns 404/409 instead of silent 200', ()
     const res = await vehiclesDELETE(makeRequest('/api/admin/vehicles?id=v1', undefined, 'DELETE'));
     expect(res.status).toBe(200);
     expect(m.retireVehicle).toHaveBeenCalledWith('v1', 'admin_1');
-    expect(m.invalidateCache).toHaveBeenCalledWith('admin:*');
+    expect(m.invalidateCache).toHaveBeenCalledWith('admin:vehicles:*');
   });
 });

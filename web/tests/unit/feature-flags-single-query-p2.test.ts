@@ -49,8 +49,8 @@ describe('P2-21: getAllFeatureFlags reuses the single DB query', () => {
     await fresh.getFeatureFlags();
     const result = await fresh.getAllFeatureFlags();
     expect(mocks.findMany).toHaveBeenCalledTimes(1);
-    expect(result.enableReferralSystem).toEqual({ value: 'false', source: 'database' });
-    expect(result.maxUploadSizeMb).toEqual({ value: '25', source: 'database' });
+    expect(result.enableReferralSystem).toEqual({ value: 'false', source: 'database', valueType: 'BOOLEAN' });
+    expect(result.maxUploadSizeMb).toEqual({ value: '25', source: 'database', valueType: 'NUMBER' });
   });
 
   it('flags not in the DB report source runtime', async () => {
@@ -72,6 +72,6 @@ describe('P2-21: getAllFeatureFlags reuses the single DB query', () => {
     await fresh.getFeatureFlags();
     expect(mocks.findMany).toHaveBeenCalledTimes(1);
     const result = await fresh.getAllFeatureFlags();
-    expect(result.enableReferralSystem).toEqual({ value: 'true', source: 'database' });
+    expect(result.enableReferralSystem).toEqual({ value: 'true', source: 'database', valueType: 'BOOLEAN' });
   });
 });

@@ -48,6 +48,12 @@ export function useTeamLeaders() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [selectedTlStats, setSelectedTlStats] = useState<TeamLeaderStatsPayload | null>(null);
 
+  const statsCacheRef = useRef<Map<string, TeamLeaderStatsPayload>>(new Map());
+
+  const invalidateStatsCache = useCallback((ids: string[]) => {
+    for (const id of ids) statsCacheRef.current.delete(id);
+  }, []);
+
   const mountedRef = useRef(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -149,6 +155,7 @@ export function useTeamLeaders() {
 
       setDialogOpen(false);
       setForm({ ...EMPTY_LEADER_FORM });
+      if (editLeader) invalidateStatsCache([editLeader.id]);
       setEditLeader(null);
       fetchLeaders();
     } catch (e: unknown) {
@@ -158,7 +165,7 @@ export function useTeamLeaders() {
     } finally {
       setSaving(false);
     }
-  }, [editLeader, form, fetchLeaders]);
+  }, [editLeader, form, fetchLeaders, invalidateStatsCache]);
 
   const toggleActive = useCallback(
     async (leader: TeamLeader) => {
@@ -174,6 +181,7 @@ export function useTeamLeaders() {
           toast.error(json?.error?.message || 'Failed to toggle status');
           return;
         }
+        invalidateStatsCache([leader.id]);
         toast.success(leader.isActive ? 'Team leader deactivated' : 'Team leader activated');
         fetchLeaders();
       } catch {
@@ -182,7 +190,7 @@ export function useTeamLeaders() {
         setToggleLoading(null);
       }
     },
-    [fetchLeaders]
+    [fetchLeaders, invalidateStatsCache]
   );
 
   const confirmDeleteLeader = useCallback(async () => {
@@ -199,6 +207,7 @@ export function useTeamLeaders() {
         setDeleteTarget(null);
         return;
       }
+      invalidateStatsCache([deleteTarget]);
       toast.success('Team leader deleted');
       setDeleteTarget(null);
       fetchLeaders();
@@ -206,7 +215,7 @@ export function useTeamLeaders() {
       toast.error('Network error. Please try again.');
       setDeleteTarget(null);
     }
-  }, [deleteTarget, fetchLeaders]);
+  }, [deleteTarget, fetchLeaders, invalidateStatsCache]);
 
   const handleBulkAction = useCallback(
     async (action: string) => {
@@ -289,13 +298,6 @@ export function useTeamLeaders() {
     }
   }, [bulkDeleteTargets, handleBulkAction]);
 
-  // P2-2: stats dialog cache. The data doesn't change between opens
-  // for the same TL within a session. We keep a Map<tlId, payload> and
-  // serve from cache when the same TL is opened again. Cache is
-  // invalidated on bulk operations (any of the cached TLs may have
-  // changed isActive or riderCount).
-  const statsCacheRef = useRef<Map<string, TeamLeaderStatsPayload>>(new Map());
-
   const viewStats = useCallback(async (leader: TeamLeader) => {
     setStatsModalOpen(true);
     setSelectedTlStats(null);
@@ -323,12 +325,6 @@ export function useTeamLeaders() {
     } finally {
       setStatsLoading(false);
     }
-  }, []);
-
-  // P2-2: expose a cache-invalidation helper so the bulk action
-  // handlers can clear stale entries after activate/deactivate/delete.
-  const invalidateStatsCache = useCallback((ids: string[]) => {
-    for (const id of ids) statsCacheRef.current.delete(id);
   }, []);
 
   const selectAll = useCallback(() => {

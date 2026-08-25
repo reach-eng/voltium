@@ -34,9 +34,12 @@ class TicketEntity {
   });
 
   factory TicketEntity.fromJson(Map<String, dynamic> json) {
+    final effectiveId =
+        (json['id'] as String?) ?? (json['ticketId'] as String?) ?? '';
+    final effectiveTicketId = (json['ticketId'] as String?) ?? effectiveId;
     return TicketEntity(
-      id: json['id'] as String,
-      ticketId: json['ticketId'] as String,
+      id: effectiveId,
+      ticketId: effectiveTicketId,
       category: json['category'] as String? ?? '',
       priority: json['priority'] as String? ?? 'MEDIUM',
       subject: json['subject'] as String? ?? '',

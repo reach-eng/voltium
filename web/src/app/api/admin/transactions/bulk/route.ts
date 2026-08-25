@@ -41,6 +41,7 @@ import { toStateAction } from '@/server/modules/transactions/transaction.types';
 import { db } from '@/lib/db';
 import { invalidateCache } from '@/lib/cache';
 import { withIdempotency } from '@/lib/api-middleware';
+import { logAdminMutation } from '@/lib/audit-log';
 
 // P3-20 (financial audit): 500 IDs were processed in a sequential loop —
 // ~50s of sequential DB transactions, past typical HTTP timeouts. Bounded
@@ -146,6 +147,19 @@ async function postHandler(req: NextRequest) {
     // P0-6: scoped invalidation — any mutation clears the shared transactions
     // list cache, regardless of outcome.
     invalidateCache('admin:transactions:*');
+
+    await logAdminMutation({
+      session,
+      action: `transaction.bulk_${action}`,
+      entity: 'Transaction',
+      details: {
+        total: ids.length,
+        succeeded,
+        failed,
+        skipped: skippedCount,
+        action,
+      },
+    });
 
     // P0-3 (financial audit): the old code always returned 200 with per-ID
     // ERROR rows — a green toast over 50 failures. Any failure now surfaces

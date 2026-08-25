@@ -152,7 +152,10 @@ export const shiftUseCases = {
   },
 
   async listShifts(search?: string, activeOnly?: boolean) {
-    const where: Prisma.ShiftWhereInput = {};
+    const where: Prisma.ShiftWhereInput = {
+      // S-2 (W8): exclude soft-deleted (archived) shifts
+      deletedAt: null,
+    };
     if (activeOnly) where.isActive = true;
     if (search) {
       where.OR = [{ name: { contains: search, mode: 'insensitive' as const } }];
@@ -218,24 +221,42 @@ export const shiftUseCases = {
   },
 
   async deleteShift(id: string, actorId: string) {
-    // Admin Panel Phase 3 P2-04 (2026-08-23): guard against
-    // orphaning active or booked leases. Count leases by
-    // status (BOOKED + ACTIVE) rather than all rows — a
-    // historical CLOSED/COMPLETED lease on the same shift
-    // shouldn't block deletion.
+    // S-2 (W8-1): Full non-closed-status guard. Previously only BOOKED + ACTIVE
+    // were checked, leaving PICKUP_SCHEDULED, OVERDUE, RETURN_PENDING, and
+    // SUSPENDED unguarded. Any of these is a live rental that would be orphaned
+    // if the shift were removed. Historical CLOSED/COMPLETED rows are excluded.
+    const NON_CLOSED_LEASE_STATUSES = [
+      'BOOKED',
+      'PICKUP_SCHEDULED',
+      'ACTIVE',
+      'OVERDUE',
+      'RETURN_PENDING',
+      'SUSPENDED',
+    ] as const;
+
     const leaseCount = await db.rentalLease.count({
       where: {
         shiftId: id,
-        status: { in: ['BOOKED', 'ACTIVE'] },
+        status: { in: [...NON_CLOSED_LEASE_STATUSES] },
       },
     });
     if (leaseCount > 0) {
       throw new Error(
-        `Cannot delete shift: ${leaseCount} active or booked lease(s) are using it. Remove them first.`
+        `Cannot delete shift: ${leaseCount} non-closed lease(s) are using it. ` +
+        `Close or reassign them first.`
       );
     }
-    await db.shift.delete({ where: { id } });
-    createAuditLog({ actorId, action: 'shift.delete', entity: 'shift', entityId: id }).catch(
+
+    // S-2 (W8-2): Soft-delete instead of hard-delete. The Shift → RentalLease FK
+    // uses Restrict, so hard-deleting a shift with ANY historical (CLOSED/COMPLETED)
+    // lease rows will 500 with a P2003 constraint violation. Soft-delete preserves
+    // referential integrity, removes the shift from all active lists, and is
+    // recoverable by an admin if needed.
+    await db.shift.update({
+      where: { id },
+      data: { isActive: false, deletedAt: new Date() },
+    });
+    createAuditLog({ actorId, action: 'shift.archive', entity: 'shift', entityId: id }).catch(
       () => {}
     );
     return { id };

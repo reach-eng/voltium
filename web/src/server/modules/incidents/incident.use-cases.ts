@@ -40,6 +40,7 @@ export const incidentUseCases = {
         include: {
           rider: { select: { fullName: true, riderId: true, phone: true } },
           vehicle: { select: { vehicleNumber: true, model: true } },
+          assignedAdmin: { select: { name: true } },
         },
         skip: (page - 1) * limit,
         take: limit,
@@ -66,8 +67,10 @@ export const incidentUseCases = {
       description: i.description,
       location: i.location,
       status: i.status,
-      assignedTo: i.assignedTo,
+      assignedTo: i.assignedAdmin?.name || i.assignedTo || null,
+      assignedToName: i.assignedAdmin?.name || i.assignedTo || null,
       insuranceClaim: i.insuranceClaim,
+      hasInsurance: Boolean(i.insuranceClaim),
       createdAt: i.createdAt,
       updatedAt: i.updatedAt,
     }));

@@ -32,7 +32,7 @@ export async function runHealthChecks(): Promise<HealthCheck[]> {
 
   const dbStart = performance.now();
   try {
-    const r = await fetch('/api/admin/tickets?limit=1');
+    const r = await fetch('/api/health/db');
     const latency = Math.round(performance.now() - dbStart);
     checks.push({
       name: 'Database',

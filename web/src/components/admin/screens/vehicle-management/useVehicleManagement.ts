@@ -68,20 +68,35 @@ export function useVehicleManagement() {
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/vehicles?page=${currentPage}&limit=20`);
+      const params = new URLSearchParams();
+      params.set('page', String(currentPage));
+      params.set('limit', '20');
+      if (search) params.set('search', search);
+      if (statusFilter && statusFilter !== 'ALL') params.set('status', statusFilter);
+      const res = await fetch(`/api/admin/vehicles?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         const data = json.data || {};
-        setVehicles(data.vehicles || json.data || []);
-        setHubs(data.hubs || json.hubs || []);
-        setTotalPages(json.pagination?.totalPages || 1);
+        const vList = Array.isArray(data.vehicles)
+          ? data.vehicles
+          : Array.isArray(json.data)
+            ? json.data
+            : [];
+        const hList = Array.isArray(data.hubs)
+          ? data.hubs
+          : Array.isArray(json.hubs)
+            ? json.hubs
+            : [];
+        setVehicles(vList);
+        setHubs(hList);
+        setTotalPages(json.pagination?.totalPages || data.pagination?.totalPages || 1);
       }
     } catch (err) {
       logger.error('Failed to fetch vehicles', { error: err });
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, search, statusFilter]);
 
   useEffect(() => {
     fetchVehicles();

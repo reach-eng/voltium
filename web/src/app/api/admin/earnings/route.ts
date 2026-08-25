@@ -44,31 +44,47 @@ export async function GET(req: NextRequest) {
   }
 }
 
+import { z } from 'zod';
+
+const CreateEarningSchema = z.object({
+  riderId: z.string().min(1, 'riderId is required'),
+  date: z.string().optional(),
+  platform: z.string().max(50).default('DIRECT'),
+  amount: z
+    .number()
+    .finite('amount must be a finite number')
+    .positive('amount must be a positive number')
+    .max(10_000_000, 'amount exceeds maximum limit'),
+  trips: z.number().int().nonnegative().optional(),
+  distance: z.number().finite().nonnegative().optional(),
+  hoursOnline: z.number().finite().nonnegative().max(24).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (!hasPermission(session, 'riders_manage')) return adminForbidden();
 
   try {
-    const body = await req.json();
-    const { riderId, date, platform, amount, trips, distance, hoursOnline, notes } = body;
-
-    if (!riderId || typeof riderId !== 'string') {
-      return errors.badRequest('riderId is required');
+    const raw = await req.json();
+    const parsed = CreateEarningSchema.safeParse(raw);
+    if (!parsed.success) {
+      return errors.badRequest(
+        parsed.error.issues.map((i) => `${i.path.join('.') || 'body'}: ${i.message}`).join('; ')
+      );
     }
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return errors.badRequest('amount must be a positive number');
-    }
+    const { riderId, date, platform, amount, trips, distance, hoursOnline, notes } = parsed.data;
 
     const created = await earningUseCases.create({
       riderId,
       date: date ? new Date(date) : new Date(),
-      platform: platform || 'DIRECT',
+      platform,
       amount,
-      trips: typeof trips === 'number' ? trips : undefined,
-      distance: typeof distance === 'number' ? distance : undefined,
-      hoursOnline: typeof hoursOnline === 'number' ? hoursOnline : undefined,
-      notes: typeof notes === 'string' ? notes : undefined,
+      trips,
+      distance,
+      hoursOnline,
+      notes,
     });
 
     return success(toRupeesResponse(created), 'Earning entry created successfully', 201);

@@ -45,6 +45,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { DestructiveConfirm } from '@/components/admin/DestructiveConfirm';
 import {
   Database,
   HardDrive,
@@ -81,6 +82,7 @@ import {
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { useCanRestore } from './use-destroy-permission';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -244,6 +246,7 @@ export function RestoreTab() {
   );
   const [restoreResult, setRestoreResult] = useState<any>(null);
   const [restoreHistory, setRestoreHistory] = useState<any[]>([]);
+  const [confirmRestoreOpen, setConfirmRestoreOpen] = useState(false);
 
   const fetchBackups = useCallback(async () => {
     setLoading(true);
@@ -299,7 +302,7 @@ export function RestoreTab() {
           toast.error('Backup validation failed');
         }
       } else {
-        toast.error(json.error || 'Validation failed');
+        toast.error(extractErrorMessage(json, ''));
       }
     } catch {
       toast.error('Validation request failed');
@@ -324,7 +327,7 @@ export function RestoreTab() {
         toast.success('Restore started');
         fetchRestoreHistory();
       } else {
-        toast.error(json.error || 'Restore failed');
+        toast.error(extractErrorMessage(json, ''));
       }
     } catch {
       toast.error('Restore request failed');
@@ -357,36 +360,46 @@ export function RestoreTab() {
       )}
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 text-sm">
-        {restoreSteps.map((step, i) => (
-          <div key={step} className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold $              {restoreStep === step
-                  ? 'bg-primary text-primary-foreground'
-                  : restoreSteps.indexOf(restoreStep) > i
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                    : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              {restoreSteps.indexOf(restoreStep) > i ? '✓' : i + 1}
-            </div>
-            <span
-              className={`text-xs ${
-                restoreStep === step ? 'font-medium text-foreground' : 'text-muted-foreground'
-              }`}
-            >
-              {step === 'select'
-                ? 'Select Backup'
-                : step === 'validate'
-                  ? 'Validate'
-                  : step === 'confirm'
-                    ? 'Confirm'
-                    : 'Restore'}
-            </span>
-            {i < 3 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
-          </div>
-        ))}
-      </div>
+      <ol className="flex items-center gap-2 text-sm list-none p-0 m-0" aria-label="Restore wizard steps">
+        {restoreSteps.map((step, i) => {
+          const stepIndex = restoreSteps.indexOf(restoreStep);
+          const isCurrent = restoreStep === step;
+          const isCompleted = stepIndex > i;
+          const stepLabel =
+            step === 'select'
+              ? 'Select Backup'
+              : step === 'validate'
+                ? 'Validate'
+                : step === 'confirm'
+                  ? 'Confirm'
+                  : 'Restore';
+
+          return (
+            <li key={step} className="flex items-center gap-2" aria-current={isCurrent ? 'step' : undefined}>
+              <div
+                aria-label={`Step ${i + 1}: ${stepLabel}${isCurrent ? ' (current step)' : isCompleted ? ' (completed)' : ''}`}
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                  isCurrent
+                    ? 'bg-primary text-primary-foreground'
+                    : isCompleted
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-muted text-muted-foreground'
+                }`}
+              >
+                {isCompleted ? '✓' : i + 1}
+              </div>
+              <span
+                className={`text-xs ${
+                  isCurrent ? 'font-medium text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                {stepLabel}
+              </span>
+              {i < 3 && <ChevronRight className="w-3 h-3 text-muted-foreground" aria-hidden="true" />}
+            </li>
+          );
+        })}
+      </ol>
 
       {/* Step 1: Select Backup */}
       {restoreStep === 'select' && (
@@ -606,9 +619,10 @@ export function RestoreTab() {
               <Button
                 variant="destructive"
                 size="lg"
-                onClick={handleStartRestore}
+                onClick={() => setConfirmRestoreOpen(true)}
                 disabled={restoring || !canRestore}
                 title={!canRestore ? 'You do not have the data_management_restore permission' : undefined}
+                data-testid="start-restore-btn"
               >
                 {restoring ? (
                   <>
@@ -624,6 +638,32 @@ export function RestoreTab() {
                 Cancel
               </Button>
             </div>
+
+            {selectedBackup && (
+              <DestructiveConfirm
+                open={confirmRestoreOpen}
+                onOpenChange={setConfirmRestoreOpen}
+                title="Confirm Database & System Restore"
+                description={
+                  <div className="space-y-1">
+                    <p>
+                      You are about to restore the system from backup{' '}
+                      <span className="font-semibold text-foreground">{selectedBackup.id}</span>.
+                    </p>
+                    <p className="text-destructive font-medium">
+                      All existing database records and application files will be overwritten.
+                    </p>
+                  </div>
+                }
+                expectedPhrase={selectedBackup.id.slice(0, 8)}
+                confirmLabel="Execute Restore"
+                loading={restoring}
+                onConfirm={async () => {
+                  setConfirmRestoreOpen(false);
+                  await handleStartRestore();
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       )}

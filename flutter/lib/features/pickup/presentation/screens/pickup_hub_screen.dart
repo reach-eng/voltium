@@ -275,10 +275,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // already returns `Map<String, dynamic>`.
       final response = await ref.read(voltiumApiClientProvider).getRiderHubs();
       if (!mounted) return;
-      if (response['success'] == true) {
-        final List<dynamic> data = response['data'] ?? [];
+      final dynamic rawList = response['data'] ??
+          response['hubs'] ??
+          (response['success'] == true ? response['data'] : null);
+      if (rawList is List<dynamic>) {
         setState(() {
-          _hubs = data
+          _hubs = rawList
               .map((e) => HubModel.fromJson(e as Map<String, dynamic>))
               .toList();
           _isLoading = false;
@@ -286,9 +288,19 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         });
         // PR-7 (PICKUP P0-2): re-apply the restored draft once hubs load.
         _applyInitialDraft();
+      } else if (response['success'] == true && response['data'] is List) {
+        final List<dynamic> data = response['data'] as List<dynamic>;
+        setState(() {
+          _hubs = data
+              .map((e) => HubModel.fromJson(e as Map<String, dynamic>))
+              .toList();
+          _isLoading = false;
+          _hubRetryAttempt = 0;
+        });
+        _applyInitialDraft();
       } else {
         setState(() {
-          _error = response['message'] ?? 'Failed to load hubs';
+          _error = response['message']?.toString() ?? 'Failed to load hubs';
           _isLoading = false;
         });
       }

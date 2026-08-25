@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import { EMPTY_FAQ_FORM, FAQ_PAGE_SIZE, type Faq, type FaqForm } from './types';
 
@@ -98,7 +99,7 @@ export function useFaqs() {
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to save FAQ');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
 
@@ -116,7 +117,7 @@ export function useFaqs() {
       const res = await fetch(`/api/admin/faqs?id=${deleteTarget}`, { method: 'DELETE' });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to delete FAQ');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
       toast.success('FAQ deleted');
@@ -136,7 +137,7 @@ export function useFaqs() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to update FAQ status');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
       toast.success(`FAQ ${!faq.isActive ? 'activated' : 'deactivated'}`);
@@ -155,7 +156,7 @@ export function useFaqs() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to reorder FAQ');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
       fetchFaqs();
@@ -173,7 +174,7 @@ export function useFaqs() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to reorder FAQ');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
       fetchFaqs();

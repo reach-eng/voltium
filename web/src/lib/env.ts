@@ -307,4 +307,45 @@ if (isServer) {
   }
 }
 
+export function assertNoSecretCollisions(): { collisions: string[]; hasCollision: boolean } {
+  const secretKeys = [
+    'JWT_SECRET',
+    'SESSION_SECRET',
+    'FCM_COMMAND_HMAC_SECRET',
+    'FILE_UPLOAD_SECRET',
+    'VERIFY_RECEIPT_SECRET',
+    'CRON_SECRET',
+    'WORKER_SECRET',
+    'DEBUG_SECRET',
+    'BACKUP_ENCRYPTION_KEY',
+  ];
+
+  const seenValues = new Map<string, string>();
+  const collisions: string[] = [];
+
+  for (const key of secretKeys) {
+    const val = process.env[key];
+    if (val && typeof val === 'string' && val.length > 0) {
+      if (seenValues.has(val)) {
+        const priorKey = seenValues.get(val)!;
+        collisions.push(`${key} shares identical value with ${priorKey}`);
+      } else {
+        seenValues.set(val, key);
+      }
+    }
+  }
+
+  if (collisions.length > 0 && process.env.NODE_ENV !== 'test') {
+    console.warn(`⚠️ [Security Warning] Secret collision detected across env keys:\n  ${collisions.join('\n  ')}`);
+  }
+
+  return { collisions, hasCollision: collisions.length > 0 };
+}
+
+if (isServer) {
+  assertNoSecretCollisions();
+}
+
 export const env = parsedEnv;
+export const IS_PROD = parsedEnv.APP_ENV === 'production' || parsedEnv.NODE_ENV === 'production';
+export const isDevEnv = () => parsedEnv.APP_ENV === 'development' && parsedEnv.NODE_ENV === 'development';

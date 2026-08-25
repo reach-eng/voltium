@@ -46,6 +46,8 @@ export const dataManagementUseCases = {
           lastRunAt: schedule.lastRunAt?.toISOString() ?? null,
           lastStatus: schedule.lastStatus,
           lastError: schedule.lastError,
+          primaryBackupRoot: schedule.primaryBackupRoot,
+          secondaryBackupRoot: schedule.secondaryBackupRoot,
         };
       }
     } catch {}

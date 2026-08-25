@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { assertBackupPathAllowed } from './backup-path.validator';
 
 export const createBackupSchema = z.object({
   type: z.enum(['MANUAL', 'SCHEDULED', 'PRE_RESTORE']).default('MANUAL'),
@@ -41,8 +42,36 @@ export const scheduleUpdateSchema = z.object({
   includeDatabase: z.boolean().default(true),
   includeUploads: z.boolean().default(true),
   includeLogs: z.boolean().default(false),
-  primaryBackupRoot: z.string().min(1, 'Primary backup path is required'),
-  secondaryBackupRoot: z.string().nullable().default(null),
+  primaryBackupRoot: z
+    .string()
+    .min(1, 'Primary backup path is required')
+    .refine(
+      (p) => {
+        try {
+          assertBackupPathAllowed(p);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Primary backup path must be an absolute path inside allowed backup roots' }
+    ),
+  secondaryBackupRoot: z
+    .string()
+    .nullable()
+    .default(null)
+    .refine(
+      (p) => {
+        if (!p) return true;
+        try {
+          assertBackupPathAllowed(p);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'Secondary backup path must be an absolute path inside allowed backup roots' }
+    ),
   keepDaily: z.number().int().positive().max(365).default(7),
   keepWeekly: z.number().int().positive().max(52).default(4),
   keepMonthly: z.number().int().positive().max(24).default(6),

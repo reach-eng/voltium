@@ -159,23 +159,28 @@ export async function POST(
         select: { balanceInPaise: true },
       });
 
+      // F-036: move audit logging INSIDE money transaction so any audit failure rolls back
+      // the wallet change, and untracked money movement is prevented.
+      await createAuditLog(
+        {
+          actorId: session.adminId!,
+          actorType: 'ADMIN',
+          action: 'wallet_adjustment',
+          entity: 'wallet',
+          entityId: riderDbId,
+          details: JSON.stringify({
+            amount,
+            type,
+            reason,
+            coAdminId: type === 'DEBIT' ? coAdminId : undefined,
+            largeDebit: type === 'DEBIT' && amountInPaise > LARGE_DEBIT_PAISE,
+          }),
+        },
+        tx
+      );
+
       return { walletBalance: wallet?.balanceInPaise ? wallet.balanceInPaise / 100 : 0 };
     });
-
-    createAuditLog({
-      actorId: session.adminId!,
-      actorType: 'ADMIN',
-      action: 'wallet_adjustment',
-      entity: 'wallet',
-      entityId: riderDbId,
-      details: JSON.stringify({
-        amount,
-        type,
-        reason,
-        coAdminId: type === 'DEBIT' ? coAdminId : undefined,
-        largeDebit: type === 'DEBIT' && amountInPaise > LARGE_DEBIT_PAISE,
-      }),
-    }).catch(() => {});
 
     return success(toRupeesResponse(result));
   } catch (error: any) {

@@ -216,12 +216,37 @@ export async function creditSecurityDeposit(
     txnId?: string;
     actorId?: string;
     note?: string;
+    /**
+     * W6 / M-2: idempotency key — a retried approve is a no-op rather
+     * than a second increment of securityDepositInPaise. The DB
+     * unique index on `WalletLedger.idempotencyKey` is the authoritative
+     * guard; the caller passes a deterministic key like
+     * `deposit:approve:${recordId}`.
+     */
+    idempotencyKey?: string | null;
   }
 ): Promise<void> {
-  const { riderId, walletId, amountInPaise, txnId, actorId, note } = params;
+  const { riderId, walletId, amountInPaise, txnId, actorId, note, idempotencyKey } = params;
 
   if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`creditSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
+  // W6 / M-2: if the same idempotency key already exists, this is a
+  // retried approve. The state machine blocks the deposit status flip,
+  // but a race can still hit the credit if the first tx hasn't committed
+  // yet. FindUnique on the ledger before mutating the wallet is the
+  // race-safe check.
+  if (idempotencyKey) {
+    const existing = await tx.walletLedger.findUnique({
+      where: { idempotencyKey },
+    });
+    if (existing) {
+      logger.info('[WalletService] creditSecurityDeposit: idempotent replay', {
+        idempotencyKey,
+      });
+      return;
+    }
   }
 
   await tx.wallet.update({
@@ -244,6 +269,7 @@ export async function creditSecurityDeposit(
       balanceAfter: 0, // deposit is tracked separately, not in balanceInPaise
       actorId: actorId ?? null,
       note: note ?? 'Security deposit approved',
+      idempotencyKey: idempotencyKey ?? null,
     },
   });
 }
@@ -260,17 +286,34 @@ export async function debitSecurityDeposit(
     walletId: string;
     amountInPaise: number;
     category: 'REFUND' | 'FORFEITURE';
-    newDepositStatus: 'REFUNDED' | 'FORFEITED';
+    newDepositStatus: 'REFUNDED' | 'FORFEITED' | 'PARTIALLY_REFUNDED';
     txnId?: string;
     actorId?: string;
     note?: string;
+    /**
+     * W6 / M-2: idempotency key for REFUND / FORFEIT — a retried
+     * debit is a no-op rather than a second decrement.
+     */
+    idempotencyKey?: string | null;
   }
 ): Promise<void> {
-  const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note } =
+  const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note, idempotencyKey } =
     params;
 
   if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`debitSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
+  if (idempotencyKey) {
+    const existing = await tx.walletLedger.findUnique({
+      where: { idempotencyKey },
+    });
+    if (existing) {
+      logger.info('[WalletService] debitSecurityDeposit: idempotent replay', {
+        idempotencyKey,
+      });
+      return;
+    }
   }
 
   await tx.wallet.update({
@@ -293,6 +336,7 @@ export async function debitSecurityDeposit(
       balanceAfter: 0,
       actorId: actorId ?? null,
       note: note ?? `Security deposit ${category.toLowerCase()}`,
+      idempotencyKey: idempotencyKey ?? null,
     },
   });
 }

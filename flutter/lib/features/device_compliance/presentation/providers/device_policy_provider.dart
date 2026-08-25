@@ -100,8 +100,12 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     // Kick off the same async setup the old ChangeNotifier did in
     // its constructor.
     Future.microtask(() async {
-      await _selfCheck();
-      await _initLockState();
+      if (ref.mounted) {
+        await _selfCheck();
+      }
+      if (ref.mounted) {
+        await _initLockState();
+      }
     });
     // R4.5 — Scope security polling strictly to active screen states
     ref.listen<AppState>(appStateProvider, (previous, next) {
@@ -118,25 +122,29 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     return const DevicePolicyState();
   }
 
-  Future<void> _selfCheck() async {
-    if (PlatformInfo.isWeb) return;
-    if (!Platform.isAndroid) return;
+  Future<T?> _invokeSafe<T>(String method, [dynamic arguments]) async {
+    if (PlatformInfo.isWeb || !Platform.isAndroid) return null;
     try {
-      await _platform.invokeMethod('isDeviceAdminActive');
+      return await _platform.invokeMethod<T>(method, arguments);
     } catch (e) {
-      appDebug('DevicePolicyProvider: MethodChannel self-check failed: $e');
+      appDebug('DevicePolicyProvider: MethodChannel $method failed: $e');
+      return null;
     }
+  }
+
+  Future<void> _selfCheck() async {
+    if (!ref.mounted) return;
+    await _invokeSafe('isDeviceAdminActive');
   }
 
   Future<void> _initLockState() async {
     if (PlatformInfo.isWeb) return;
     try {
       final locked = await SecureStorageService().getDeviceLocked();
+      if (!ref.mounted) return;
       state = state.copyWith(lockedByAdmin: locked);
       if (locked && Platform.isAndroid) {
-        _platform.invokeMethod('startLockTaskMode').catchError((e) {
-          appDebug('Failed to startLockTaskMode: $e');
-        });
+        await _invokeSafe('startLockTaskMode');
       }
     } catch (e) {
       appDebug('DevicePolicyProvider: Failed to initialize lock state: $e');
@@ -153,44 +161,32 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
 
   void setCameraDisabled(bool disabled) {
     state = state.copyWith(hasPermissionViolation: disabled);
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('setCameraDisabled', {'disabled': disabled});
-    }
+    _invokeSafe('setCameraDisabled', {'disabled': disabled});
   }
 
   void setPasscodeRequired(bool required) {
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('setPasscodeRequired', {'required': required});
-    }
+    _invokeSafe('setPasscodeRequired', {'required': required});
   }
 
   void triggerLocationVerification() {
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('triggerLocationVerification');
-    }
+    _invokeSafe('triggerLocationVerification');
   }
 
   void setAppPersistenceRequired(bool required) {
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('setAppPersistenceRequired', {
-        'required': required,
-      });
-    }
+    _invokeSafe('setAppPersistenceRequired', {
+      'required': required,
+    });
   }
 
   void setLocationRequired(bool required) {
     state = state.copyWith(hasPermissionViolation: required);
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('setLocationMandatory', {'enabled': required});
-    }
+    _invokeSafe('setLocationMandatory', {'enabled': required});
   }
 
   void setRestrictedAppsMode(bool restricted) {
-    if (!PlatformInfo.isWeb && Platform.isAndroid) {
-      _platform.invokeMethod('setAppsControlDisabled', {
-        'enabled': restricted,
-      });
-    }
+    _invokeSafe('setAppsControlDisabled', {
+      'enabled': restricted,
+    });
   }
 
   void setLockedByAdmin(bool locked) {
@@ -198,16 +194,10 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     SecureStorageService().setDeviceLocked(locked);
     if (!PlatformInfo.isWeb && Platform.isAndroid) {
       if (locked) {
-        _platform.invokeMethod('startLockTaskMode').catchError((e) {
-          appDebug('Failed to startLockTaskMode: $e');
-        });
-        _platform.invokeMethod('lockDevice').catchError((e) {
-          appDebug('Failed to lockDevice: $e');
-        });
+        _invokeSafe('startLockTaskMode');
+        _invokeSafe('lockDevice');
       } else {
-        _platform.invokeMethod('stopLockTaskMode').catchError((e) {
-          appDebug('Failed to stopLockTaskMode: $e');
-        });
+        _invokeSafe('stopLockTaskMode');
       }
     }
   }
@@ -216,7 +206,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
     if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
-      final result = await _platform.invokeMethod('isDeviceAdminActive');
+      final result = await _invokeSafe('isDeviceAdminActive');
       final active = result is bool ? result : false;
       state = state.copyWith(isAdminActive: active);
     } catch (e) {
@@ -225,13 +215,7 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
   }
 
   Future<void> requestDeviceAdmin() async {
-    if (PlatformInfo.isWeb) return;
-    if (!Platform.isAndroid) return;
-    try {
-      await _platform.invokeMethod('requestDeviceAdmin');
-    } catch (e) {
-      appDebug('Error requesting device admin: $e');
-    }
+    await _invokeSafe('requestDeviceAdmin');
   }
 
   void startSecurityFlagsPoll({required String riderId}) {
@@ -269,24 +253,23 @@ class DevicePolicyProvider extends Notifier<DevicePolicyState> {
       }
 
       if (uninstallBlocked != null) {
-        await _platform
-            .invokeMethod('setUninstallBlocked', {'enabled': uninstallBlocked});
+        await _invokeSafe('setUninstallBlocked', {'enabled': uninstallBlocked});
       }
       if (locationMandatory != null) {
-        await _platform.invokeMethod(
+        await _invokeSafe(
           'setLocationMandatory',
           {'enabled': locationMandatory},
         );
       }
       if (appsControlRestricted != null) {
-        await _platform.invokeMethod(
+        await _invokeSafe(
           'setAppsControlDisabled',
           {'enabled': appsControlRestricted},
         );
       }
       if (adminLocked == true) {
         setLockedByAdmin(true);
-        await _platform.invokeMethod('lockDevice');
+        await _invokeSafe('lockDevice');
       } else if (adminLocked == false && state.lockedByAdmin) {
         setLockedByAdmin(false);
       }

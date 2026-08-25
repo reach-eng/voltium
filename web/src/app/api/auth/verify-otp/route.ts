@@ -11,15 +11,24 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
 import { API_VERSION } from '@/lib/api-version';
+import { IS_PROD } from '@/lib/env';
 
 const OTP_VERIFY_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 5,
+  maxRequests: IS_PROD ? 5 : 100,
+  failClosed: true,
 };
 
 const OTP_VERIFY_IP_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: process.env.NODE_ENV === 'development' ? 200 : 15,
+  maxRequests: IS_PROD ? 15 : 200,
+  failClosed: true,
+};
+
+const DAILY_AUTH_IP_RATE_LIMIT = {
+  windowMs: 24 * 60 * 60 * 1000,
+  maxRequests: IS_PROD ? 100 : 1000,
+  failClosed: true,
 };
 
 const TEST_PHONES = ['9876543210', '9999999999', '8888888888'];
@@ -30,6 +39,15 @@ function getCorrelationId(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId(request);
+  const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
+
+  const dailyIpLimit = await checkRateLimit(`daily-auth:ip:${clientIp}`, DAILY_AUTH_IP_RATE_LIMIT);
+  if (!dailyIpLimit.allowed) {
+    return errors.tooManyRequests(
+      'Daily authentication attempt limit exceeded for this IP. Please try again tomorrow.',
+      { correlationId }
+    );
+  }
 
   try {
     let body;
@@ -45,7 +63,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone: inputPhone } = validation.data;
-    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
     const ipRateLimit = await checkRateLimit(`otp-verify-ip:${clientIp}`, OTP_VERIFY_IP_RATE_LIMIT);
     if (!ipRateLimit.allowed) {
@@ -96,7 +113,7 @@ export async function POST(request: NextRequest) {
           tokenVersion: rider.tokenVersion,
         });
         const resp = success(
-          { ...flatRider, token: sessionToken, refreshToken: result.refreshToken },
+          { ...flatRider, token: sessionToken, refreshToken: result.refreshToken, isNewRider: false },
           'OTP verified successfully',
           200,
           undefined,

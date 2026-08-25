@@ -36,15 +36,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-utils';
+import { DestructiveConfirm } from '@/components/admin/DestructiveConfirm';
+import { useCanRestore } from '@/hooks/useCanRestore';
 import {
   Database,
   HardDrive,
@@ -251,7 +247,9 @@ export function ScheduleTab() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [runningNow, setRunningNow] = useState(false);
+  const [showRunNowConfirm, setShowRunNowConfirm] = useState(false);
   const [testResult, setTestResult] = useState<TestScheduleResult | null>(null);
+  const canManage = useCanRestore('data_management_manage');
 
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
@@ -308,7 +306,7 @@ export function ScheduleTab() {
         fetchSchedule();
       } else {
         const err = await res.json();
-        toast.error(err.error || 'Failed to save schedule');
+        toast.error(extractErrorMessage(err, ''));
       }
     } catch {
       toast.error('Failed to save schedule');
@@ -351,7 +349,7 @@ export function ScheduleTab() {
         fetchSchedule();
       } else {
         const err = await res.json();
-        toast.error(err.error || 'Failed to start backup');
+        toast.error(extractErrorMessage(err, ''));
       }
     } catch {
       toast.error('Failed to start backup');
@@ -785,7 +783,11 @@ export function ScheduleTab() {
             </>
           )}
         </Button>
-        <Button variant="secondary" onClick={handleRunNow} disabled={runningNow}>
+        <Button
+          variant="secondary"
+          onClick={() => canManage.ensure('Run a manual backup', () => setShowRunNowConfirm(true))}
+          disabled={runningNow || !canManage.allowed}
+        >
           {runningNow ? (
             <>
               <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Starting...
@@ -805,6 +807,20 @@ export function ScheduleTab() {
           <Ban className="w-4 h-4 mr-1" /> Disable
         </Button>
       </div>
+
+      <DestructiveConfirm
+        open={showRunNowConfirm}
+        onOpenChange={setShowRunNowConfirm}
+        title="Run Immediate Backup"
+        description="This will trigger a full database backup immediately and lock write operations for ~5 seconds."
+        expectedPhrase="RUN BACKUP"
+        confirmLabel="Run Backup Now"
+        onConfirm={async () => {
+          setShowRunNowConfirm(false);
+          await handleRunNow();
+        }}
+        loading={runningNow}
+      />
     </div>
   );
 }

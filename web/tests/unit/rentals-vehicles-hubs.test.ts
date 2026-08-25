@@ -427,6 +427,13 @@ describe('P1.6: vehicleRepository.bulkDelete is a soft delete', () => {
     vi.clearAllMocks();
     m.db.vehicle.updateMany = vi.fn().mockResolvedValue({ count: 2 });
     m.db.vehicle.deleteMany = vi.fn();
+    // Admin Panel Phase 4 / Batch C (2026-08-23): bulkDelete now
+    // pre-checks for non-closed rental leases (BOOKED, PICKUP_SCHEDULED,
+    // ACTIVE, OVERDUE, RETURN_PENDING, SUSPENDED) before retiring the
+    // vehicles. The mock needs to provide a working `count` so the
+    // guard executes without throwing — the test asserts the happy
+    // path (no leases, proceeds to soft delete).
+    m.db.rentalLease.count = vi.fn().mockResolvedValue(0);
   });
 
   it('sets deletedAt + RETIRED instead of hard-deleting rows', async () => {

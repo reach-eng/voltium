@@ -20,8 +20,8 @@ describe('Admin API: POST /api/admin/hubs/bulk', () => {
   it('should return 422 for invalid body', async () => {
     const res = await api('/api/admin/hubs/bulk', {
       method: 'POST',
-      headers: { Cookie: cookie },
-      body: JSON.stringify({}),
+      cookie,
+      json: {},
     });
     expect(res.status).toBe(422);
   });
@@ -29,13 +29,15 @@ describe('Admin API: POST /api/admin/hubs/bulk', () => {
   it('should process bulk activate on happy path', async () => {
     const res = await api('/api/admin/hubs/bulk', {
       method: 'POST',
-      headers: { Cookie: cookie },
-      body: JSON.stringify({ ids: ['test-hub-1', 'test-hub-2'], action: 'activate' }),
+      cookie,
+      json: { ids: ['test-hub-1', 'test-hub-2'], action: 'activate' },
     });
-    
+
     expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.success).toBe(true);
-    expect(data.data).toHaveProperty('count');
+    // The `api()` helper returns `{ status, body, headers }` — not
+    // a fetch Response. The test was calling `res.json()` which
+    // throws `res.json is not a function`. Use `res.body` directly.
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('count');
   });
 });

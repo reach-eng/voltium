@@ -99,10 +99,18 @@ export const guarantorRepository = {
     validateGuarantorTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx) => {
-      const guarantor = await tx.guarantor.update({
-        where: { riderId: riderDbId },
+      const claimResult = await tx.guarantor.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'APPROVED' },
       });
+      if (claimResult.count === 0) {
+        throw new GuarantorStateError(
+          `Concurrent decision race: guarantor for rider ${riderDbId} is no longer in status "${currentStatus}"`,
+          currentStatus,
+          'APPROVED'
+        );
+      }
+      const guarantor = await tx.guarantor.findUniqueOrThrow({ where: { riderId: riderDbId } });
       // PR-ONBOARDING-FLOW-2026-08-12 (active path): a rank-3/4 rider
       // who submitted the guarantor via the active path was bumped to
       // GUARANTOR_SUBMITTED at submission (see the parallel-KYC fix
@@ -140,10 +148,18 @@ export const guarantorRepository = {
     validateGuarantorTransition(currentStatus, 'REJECTED');
 
     return db.$transaction(async (tx) => {
-      const guarantor = await tx.guarantor.update({
-        where: { riderId: riderDbId },
+      const claimResult = await tx.guarantor.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'REJECTED' },
       });
+      if (claimResult.count === 0) {
+        throw new GuarantorStateError(
+          `Concurrent decision race: guarantor for rider ${riderDbId} is no longer in status "${currentStatus}"`,
+          currentStatus,
+          'REJECTED'
+        );
+      }
+      const guarantor = await tx.guarantor.findUniqueOrThrow({ where: { riderId: riderDbId } });
       // PR-ONBOARDING-2026-08-11 (audit 2.21): only suspend an ACTIVE rider
       // on a fresh reject. Re-rejecting an already-REJECTED row, or
       // rejecting a rider who is already CLOSED/SUSPENDED, must not

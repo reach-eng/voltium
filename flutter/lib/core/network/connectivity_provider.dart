@@ -40,6 +40,7 @@ class ConnectivityState {
 
 class ConnectivityProvider extends Notifier<ConnectivityState> {
   StreamSubscription<bool>? _connectivitySubscription;
+  bool _flushInFlight = false;
 
   @override
   ConnectivityState build() {
@@ -77,6 +78,8 @@ class ConnectivityProvider extends Notifier<ConnectivityState> {
 
   /// Flush queued offline operations sequentially when back online.
   Future<void> _flushPendingOperations() async {
+    if (_flushInFlight) return;
+    _flushInFlight = true;
     try {
       final offlineStorage = OfflineStorageService();
       final pending = await offlineStorage.getPendingOperations();
@@ -138,6 +141,8 @@ class ConnectivityProvider extends Notifier<ConnectivityState> {
       }
     } catch (e) {
       appDebug('[Connectivity] Error flushing offline queue: $e');
+    } finally {
+      _flushInFlight = false;
     }
   }
 
@@ -157,6 +162,7 @@ class ConnectivityProvider extends Notifier<ConnectivityState> {
 
   /// Reset state for sign-out.
   void logout() {
+    _flushInFlight = false;
     state = const ConnectivityState();
   }
 }

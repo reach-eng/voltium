@@ -13,6 +13,7 @@ import { hasPermission } from '@/lib/auth';
 import { withIdempotency } from '@/lib/api-middleware';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 import { z } from 'zod';
+import { logAdminMutation } from '@/lib/audit-log';
 
 // AUDIT FIX (N-7): `ids` / `action` / `value` were destructured raw into
 // bulk rider mutations. Now schema-validated with a hard cap on batch size.
@@ -106,6 +107,19 @@ async function postHandler(req: NextRequest) {
       default:
         return errors.badRequest('Invalid action');
     }
+
+    await logAdminMutation({
+      session,
+      action: `rider.bulk_${action}`,
+      entity: 'Rider',
+      details: {
+        total: ids.length,
+        updatedCount,
+        failedCount: failures.length,
+        action,
+        value,
+      },
+    });
 
     return success({ count: updatedCount, failures }, 'Bulk action completed');
   } catch (error) {

@@ -20,8 +20,8 @@ describe('Admin API: POST /api/admin/team-leaders/bulk', () => {
   it('should return 422 for invalid body', async () => {
     const res = await api('/api/admin/team-leaders/bulk', {
       method: 'POST',
-      headers: { Cookie: cookie },
-      body: JSON.stringify({}),
+      cookie,
+      json: {},
     });
     expect(res.status).toBe(422);
   });
@@ -29,13 +29,14 @@ describe('Admin API: POST /api/admin/team-leaders/bulk', () => {
   it('should process bulk activate on happy path', async () => {
     const res = await api('/api/admin/team-leaders/bulk', {
       method: 'POST',
-      headers: { Cookie: cookie },
-      body: JSON.stringify({ ids: ['test-tl-1', 'test-tl-2'], action: 'activate' }),
+      cookie,
+      json: { ids: ['test-tl-1', 'test-tl-2'], action: 'activate' },
     });
-    
+
     expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.success).toBe(true);
-    expect(data.data).toHaveProperty('count');
+    // The `api()` helper returns `{ status, body, headers }` — use
+    // `res.body` directly, not `res.json()` (which doesn't exist).
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('count');
   });
 });

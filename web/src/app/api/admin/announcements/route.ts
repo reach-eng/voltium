@@ -7,6 +7,7 @@ import { hasPermission } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { announcementUseCases } from '@/server/modules/announcements/announcement.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 // PR-4 (9th audit P0): an immediate ALL-broadcast fans out to every rider.
 // Same guard as the notification broadcast — require ?confirm=true and
@@ -50,10 +51,9 @@ export async function POST(req: NextRequest) {
 
     const { title, message, channel, targetAudience, targetIds, scheduledAt } = validation.data;
 
-    const isImmediateAll = !scheduledAt && targetAudience === 'ALL';
-    if (isImmediateAll) {
-      // PR-4: explicit confirmation for send-to-all — the admin UI's
-      // "are you sure?" step is enforced server-side.
+    const isAllAudience = targetAudience === 'ALL';
+    if (isAllAudience) {
+      // A-2 (W9): explicit confirmation for send-to-all across both immediate and scheduled
       const confirm = req.nextUrl.searchParams.get('confirm');
       if (confirm !== 'true') {
         return errors.badRequest('Broadcast requires ?confirm=true to send to all riders');
@@ -74,6 +74,13 @@ export async function POST(req: NextRequest) {
       { title, message, channel, targetAudience, targetIds, scheduledAt },
       session.adminId || ''
     );
+
+    await logAdminMutation({
+      session,
+      action: result.accepted ? 'announcement.broadcast_all' : 'announcement.create',
+      entity: 'Announcement',
+      details: { title, channel, targetAudience, scheduledAt, accepted: result.accepted },
+    });
 
     // PR-4: immediate sends are async (outbox + background job) — 202 Accepted
     // instead of 201 so the caller knows the fanout is queued, not complete.

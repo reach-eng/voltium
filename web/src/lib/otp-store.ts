@@ -181,11 +181,12 @@ export async function verifyOtp(
   code: string
 ): Promise<{ valid: boolean; error?: string }> {
   const phone = rawPhone.replace(/\D/g, '').slice(-10) || rawPhone;
-  // PR-112 (SEC PR-5): mirror the dev-OTP gate from generateOtp. APP_ENV wins.
+  // AUDIT FIX (N-1): the dev-OTP gate requires BOTH APP_ENV and NODE_ENV
+  // to be 'development'. A bare ENABLE_TEST_OTP=true in staging or production
+  // will never enable the master OTP.
   const isDev =
-    (process.env.APP_ENV === 'development' ||
-      process.env.NODE_ENV === 'development' ||
-      process.env.ENABLE_TEST_OTP === 'true') &&
+    process.env.APP_ENV === 'development' &&
+    process.env.NODE_ENV === 'development' &&
     process.env.ENABLE_TEST_OTP !== 'false';
 
   if (shouldUseDatabaseStore()) {

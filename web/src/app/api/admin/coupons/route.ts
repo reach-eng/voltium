@@ -7,6 +7,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { couponUseCases } from '@/server/modules/coupons/coupon.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 const deleteCouponSchema = z.object({ id: z.string().min(1) });
 
@@ -40,6 +41,15 @@ export async function POST(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
 
     const coupon = await couponUseCases.create(validation.data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'coupon.create',
+      entity: 'Coupon',
+      entityId: coupon?.id,
+      details: { code: validation.data.code },
+    });
+
     return success(coupon, 'Coupon created', 201);
   } catch (error: unknown) {
     const err = error as { code?: string };
@@ -61,6 +71,15 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...data } = validation.data;
     const coupon = await couponUseCases.update(id, data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'coupon.update',
+      entity: 'Coupon',
+      entityId: id,
+      details: data,
+    });
+
     return success(coupon);
   } catch (error: unknown) {
     const err = error as { code?: string };
@@ -81,6 +100,14 @@ export async function DELETE(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
 
     await couponUseCases.delete(validation.data.id, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'coupon.delete',
+      entity: 'Coupon',
+      entityId: validation.data.id,
+    });
+
     return success(null, 'Coupon deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/coupons error:', error);

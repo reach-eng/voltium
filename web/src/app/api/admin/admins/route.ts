@@ -106,13 +106,30 @@ export async function POST(req: NextRequest) {
       (p: unknown) => typeof p === 'string' && validPermissionKeys.includes(p)
     );
 
+    // G-2: subset-of-granter on create — non-SUPER_ADMINs can only grant permissions they hold
+    if (session.adminRole !== 'SUPER_ADMIN') {
+      const unheld = permissions.filter(p => !hasPermission(session, p as any));
+      if (unheld.length > 0) {
+        await createAuditLog({
+          actorId,
+          actorType: 'ADMIN',
+          action: 'SECURITY_VIOLATION',
+          entity: 'admin',
+          details: { reason: 'Attempted privilege escalation via unheld permissions on create', unheld },
+        });
+        return adminForbidden(`Cannot grant permissions you do not possess: ${unheld.join(', ')}`);
+      }
+    }
+
     const result = await adminUseCases.createAdmin(
       { name, email, password, role: role as AdminRole, permissions },
       actorId,
-      { request: req }
+      { request: req, session }
     );
 
-    return success(result, 'Admin created', 201);
+    // W6 / G-3: strip password hash in return
+    const { password: _pw, ...safe } = result as { password?: string } & Record<string, unknown>;
+    return success(safe, 'Admin created', 201);
   } catch (error: unknown) {
     const err = error as Error;
     logger.error('POST /api/admin/admins error:', error);
@@ -146,6 +163,39 @@ export async function PUT(req: NextRequest) {
         return errors.badRequest('Use the logout endpoint to deactivate your session');
       }
       return errors.badRequest('Ask another SUPER_ADMIN to change your role or permissions');
+    }
+
+    // G-1: Actor-target hierarchy rank check
+    const target = await adminUseCases.getAdmin(id);
+    if (!target) {
+      return errors.notFound('Admin not found');
+    }
+
+    const actorRole = (session.adminRole as AdminRole) || 'READ_ONLY';
+    const actorRank = ADMIN_ROLE_RANK[actorRole] ?? 0;
+    const targetRole = (target.role as AdminRole) || 'READ_ONLY';
+    const targetRank = ADMIN_ROLE_RANK[targetRole] ?? 0;
+
+    // G-1: if editing another admin, actor's rank must be strictly higher than target's rank,
+    // unless actor is SUPER_ADMIN
+    if (!isSelf && actorRole !== 'SUPER_ADMIN') {
+      if (targetRank >= actorRank) {
+        await createAuditLog({
+          actorId,
+          actorType: 'ADMIN',
+          action: 'SECURITY_VIOLATION',
+          entity: 'admin',
+          entityId: id,
+          details: {
+            reason: 'Attempted mutation of admin with role ranked at or above own role',
+            actorRole,
+            targetRole,
+          },
+        });
+        return adminForbidden(
+          `Cannot modify an admin with role ${targetRole} (rank ${targetRank}) ranked at or above your own (${actorRole}, rank ${actorRank})`
+        );
+      }
     }
 
     // P1-1: same no-escalation rule applies to role changes.
@@ -193,6 +243,22 @@ export async function PUT(req: NextRequest) {
       sanitizedPermissions = permissions.filter(
         (p: unknown) => typeof p === 'string' && validPermissionKeys.includes(p)
       );
+
+      // G-2: subset-of-granter rule — non-SUPER_ADMINs can only grant permissions they currently possess
+      if (session.adminRole !== 'SUPER_ADMIN') {
+        const unheld = sanitizedPermissions.filter(p => !hasPermission(session, p as any));
+        if (unheld.length > 0) {
+          await createAuditLog({
+            actorId,
+            actorType: 'ADMIN',
+            action: 'SECURITY_VIOLATION',
+            entity: 'admin',
+            entityId: id,
+            details: { reason: 'Attempted privilege escalation via unheld permissions', unheld },
+          });
+          return adminForbidden(`Cannot grant permissions you do not possess: ${unheld.join(', ')}`);
+        }
+      }
     }
 
     const updateData: UpdateAdminParams = {
@@ -209,12 +275,25 @@ export async function PUT(req: NextRequest) {
     const admin = await adminUseCases.updateAdmin(id, updateData, actorId, {
       reason,
       request: req,
+      session,
     });
     // Never return the password hash to the client (same rule as /me).
+    // W6 / G-3: the use case already strips it now; this is belt-and-braces
+    // for any future call site that forgets.
     const { password: _pw, ...safe } = admin as { password?: string } & Record<string, unknown>;
     return success(safe);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('PUT /api/admin/admins error:', error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('not found')) return errors.notFound(msg);
+    if (
+      msg.includes('is above your own') ||
+      msg.includes('ranked at or above') ||
+      msg.includes('only grant permissions')
+    ) {
+      return adminForbidden(msg);
+    }
+    if (msg.includes('last active SUPER_ADMIN')) return errors.badRequest(msg);
     return errors.internal('Failed to update admin');
   }
 }

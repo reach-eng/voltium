@@ -43,6 +43,12 @@ export const backupRepository = {
     });
   },
 
+  async findRunningRestore() {
+    return db.restoreJob.findFirst({
+      where: { status: { in: ['QUEUED', 'RUNNING'] } },
+    });
+  },
+
   async countBackupsByTypeAndAge(type: string, olderThan: Date): Promise<number> {
     return db.backupJob.count({
       where: { scheduleType: type, createdAt: { lt: olderThan }, status: 'COMPLETED' },

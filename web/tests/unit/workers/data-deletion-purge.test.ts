@@ -60,7 +60,10 @@ describe('dataDeletionPurgeJob', () => {
       rider: { update: vi.fn() },
       kycProfile: { updateMany: vi.fn() },
       guarantor: { updateMany: vi.fn() },
-      auditLog: { create: vi.fn() },
+      // T-94 (PR-4, 2026-08-23): the purge now also wipes
+      // RiderPickupPhoto rows + scrubs older AuditLog rows.
+      riderPickupPhoto: { deleteMany: vi.fn() },
+      auditLog: { create: vi.fn(), deleteMany: vi.fn() },
     };
     vi.mocked(db.$transaction).mockImplementation(
       async (cb: (t: any) => Promise<number>) => cb(tx)
@@ -77,6 +80,9 @@ describe('dataDeletionPurgeJob', () => {
     // overrides the soft-delete middleware default (`deletedAt: null`),
     // otherwise purged-but-still-deleted rows would be invisible.
     expect(where.deletedAt).toBeDefined();
+    // T-94: the new tx-side wipe + scrub were called.
+    expect(tx.riderPickupPhoto.deleteMany).toHaveBeenCalled();
+    expect(tx.auditLog.deleteMany).toHaveBeenCalled();
     expect(where.deletedAt.not).toBeNull(); // `{ not: null }` = include deleted
     expect(where.deletedAt.lt).toBeInstanceOf(Date);
     // PR-2026-08-16: already-purged riders are excluded so re-runs don't

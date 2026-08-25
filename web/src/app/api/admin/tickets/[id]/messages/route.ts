@@ -34,8 +34,10 @@ export async function POST(
 ) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session, 'tickets_view')) {
-    return adminForbidden('Requires tickets_view permission');
+  // T-3 (W9): replying is a mutation and requires tickets_manage or tickets_resolve,
+  // not view-only tickets_view.
+  if (!hasPermission(session, 'tickets_manage') && !hasPermission(session, 'tickets_resolve')) {
+    return adminForbidden('Requires tickets_manage or tickets_resolve permission');
   }
 
   const { id } = await params;

@@ -6,6 +6,7 @@ import { hasPermission } from '@/lib/auth';
 import { adminFaqUseCases } from '@/server/modules/support/admin-faq.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { createFaqAdminSchema, updateFaqAdminSchema } from '@/lib/validators/admin';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await adminFaqUseCases.list({ search, category, page, limit });
-    return withCacheHeaders(success(result.faqs, undefined, 200, result.pagination), 60);
+    return withCacheHeaders(success(result.faqs, undefined, 200, result.pagination), 0);
   } catch (error) {
     logger.error('GET /api/admin/faqs error:', error);
     return errors.internal('Failed to fetch FAQs');
@@ -41,6 +42,15 @@ export async function POST(req: NextRequest) {
       validation.data,
       session.adminId ?? session.riderDbId ?? 'system'
     );
+
+    await logAdminMutation({
+      session,
+      action: 'faq.create',
+      entity: 'FAQ',
+      entityId: faq?.id,
+      details: { question: validation.data.question, category: validation.data.category },
+    });
+
     return success(faq, 'FAQ created', 201);
   } catch (error) {
     logger.error('POST /api/admin/faqs error:', error);
@@ -60,6 +70,15 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...data } = validation.data;
     const faq = await adminFaqUseCases.update(id, data, session.adminId ?? session.riderDbId ?? 'system');
+
+    await logAdminMutation({
+      session,
+      action: 'faq.update',
+      entity: 'FAQ',
+      entityId: id,
+      details: data,
+    });
+
     return success(faq);
   } catch (error) {
     logger.error('PUT /api/admin/faqs error:', error);
@@ -77,6 +96,14 @@ export async function DELETE(req: NextRequest) {
     if (!id) return errors.badRequest('id is required');
 
     await adminFaqUseCases.delete(id, session.adminId ?? session.riderDbId ?? 'system');
+
+    await logAdminMutation({
+      session,
+      action: 'faq.delete',
+      entity: 'FAQ',
+      entityId: id,
+    });
+
     return success(null, 'FAQ deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/faqs error:', error);

@@ -70,19 +70,27 @@ export const supportUseCases = {
 
   async updateTicket(ticketId: string, input: Record<string, unknown>) {
     // Admin Panel Phase 2 P1-12 (2026-08-23): enforce the
-    // ticket state machine. The previous implementation
-    // passed the update straight to the repository, allowing
-    // arbitrary status jumps (CLOSED → OPEN, OPEN → RESOLVED
-    // skipping IN_PROGRESS, etc.) that left the workflow in
-    // an inconsistent state. Read the current status, validate
+    // ticket state machine. Read the current status, validate
     // the transition via the state machine, and throw
     // `TicketStateError` on any invalid move.
-    if (input && typeof input === 'object' && 'status' in input) {
+    if (input && typeof input === 'object' && 'status' in input && input.status) {
       const targetStatus = input.status as TicketStatus;
       const existing = await supportRepository.findById(ticketId);
       if (!existing) throw new Error('Ticket not found');
       validateTicketTransition(existing.status as TicketStatus, targetStatus);
     }
+
+    // T-2 (W9): validate that assignedTo is an active admin
+    if (input && typeof input === 'object' && input.assignedTo !== undefined && input.assignedTo !== null && input.assignedTo !== '_none') {
+      const admin = await db.admin.findFirst({
+        where: { id: input.assignedTo as string, isActive: true },
+        select: { id: true },
+      });
+      if (!admin) {
+        throw new Error('Assignee must be an active admin');
+      }
+    }
+
     return supportRepository.update(ticketId, input);
   },
 
@@ -116,7 +124,7 @@ export const supportUseCases = {
 
   async getFAQs() {
     return db.faq.findMany({
-      where: { isActive: true },
+      where: { isActive: true, deletedAt: null },
       orderBy: { order: 'asc' },
       select: {
         id: true,
@@ -279,6 +287,16 @@ export const supportUseCases = {
     switch (action) {
       case 'changeStatus': {
         if (!value) throw new Error('Status value is required');
+        // T-1 (W9): validate ticket state transition for all targeted tickets
+        const targetStatus = value as TicketStatus;
+        const currentTickets = await db.supportTicket.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, status: true },
+        });
+        for (const ticket of currentTickets) {
+          validateTicketTransition(ticket.status as TicketStatus, targetStatus);
+        }
+
         const statusData: Record<string, unknown> = { status: value };
         if (value === 'RESOLVED' || value === 'CLOSED') {
           statusData.resolvedAt = new Date();
@@ -289,6 +307,16 @@ export const supportUseCases = {
         break;
       }
       case 'revert': {
+        // T-1 (W9): validate transition to OPEN for each ticket.
+        // CLOSED tickets cannot transition directly to OPEN per state machine.
+        const currentTickets = await db.supportTicket.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, status: true },
+        });
+        for (const ticket of currentTickets) {
+          validateTicketTransition(ticket.status as TicketStatus, 'OPEN');
+        }
+
         const result = await supportRepository.bulkUpdate(ids, {
           status: 'OPEN',
           resolvedAt: null,
@@ -299,6 +327,15 @@ export const supportUseCases = {
       }
       case 'assign': {
         if (!value) throw new Error('Admin ID is required');
+        // T-2 (W9): validate that assignee is an active admin
+        if (value !== '_none') {
+          const admin = await db.admin.findFirst({
+            where: { id: value, isActive: true },
+            select: { id: true },
+          });
+          if (!admin) throw new Error('Assignee must be an active admin');
+        }
+
         const result = await supportRepository.bulkUpdate(ids, {
           assignedTo: value === '_none' ? null : value,
         });
@@ -320,6 +357,21 @@ export const supportUseCases = {
         });
         updatedCount = result.count;
         auditAction = 'ticket.bulk_close_resolved';
+        break;
+      }
+      case 'escalate': {
+        // T-3 (W9): implement escalate action
+        const result = await db.supportTicket.updateMany({
+          where: { id: { in: ids } },
+          data: {
+            isEscalated: true,
+            escalatedAt: new Date(),
+            escalatedBy: actorId,
+            priority: 'CRITICAL',
+          },
+        });
+        updatedCount = result.count;
+        auditAction = 'ticket.bulk_escalate';
         break;
       }
       default:

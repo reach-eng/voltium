@@ -7,7 +7,10 @@ describe('7 Mixed Audits Re-Verification Contracts', () => {
   });
 
   it('jobToOutboxMap: daily-engagement is configured with background priority', async () => {
-    const { JOB_TO_OUTBOX_CONFIG } = await import('@/app/api/admin/jobs/route');
+    // JOB_TO_OUTBOX_CONFIG was extracted to lib/job-outbox-config.ts
+    // so the master-contract test could import it (Next.js route
+    // modules may only export handlers).
+    const { JOB_TO_OUTBOX_CONFIG } = await import('@/lib/job-outbox-config');
     expect(JOB_TO_OUTBOX_CONFIG['daily-engagement'].priority).toBe('background');
   });
 });

@@ -125,7 +125,7 @@ class SupportNotifier extends Notifier<SupportState> {
       final dynamic rawList = response['faqs'] ??
           (response['data'] is Map<String, dynamic>
               ? (response['data'] as Map<String, dynamic>)['faqs']
-              : null);
+              : (response['data'] is List ? response['data'] : null));
       if (rawList is List<dynamic>) {
         state = state.copyWith(
           faqs: rawList

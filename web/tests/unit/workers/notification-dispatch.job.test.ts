@@ -117,7 +117,16 @@ describe('Notification Dispatch Job', () => {
   // swallowed by the try/catch, so in-app notifications were silently
   // never persisted. Assert the row actually lands with a valid enum type
   // and the correct column.
-  it('persists KYC_APPROVED in-app row with SYSTEM enum type and message column', async () => {
+  it('T-95 delegates KYC_APPROVED persistence to the service (no dispatcher-side duplicate)', async () => {
+    // T-95 (PR-5, 2026-08-23): the dispatcher NO LONGER calls
+    // `db.notification.create` directly for KYC_APPROVED. The
+    // in-app row is created by `notificationService.notifyKycStatusChange`
+    // → `createAndSend`. This unit test asserts the dispatcher
+    // delegates correctly. The actual row persistence is verified
+    // by the service's own unit test (and the integration test
+    // that uses a real DB). The OLD test asserted the DUPLICATE
+    // path (the dispatcher also created a row); that bug is
+    // what T-95 fixed.
     const riderId = uuidv4();
     await testDb.rider.create({
       data: {
@@ -128,17 +137,23 @@ describe('Notification Dispatch Job', () => {
       },
     });
 
+    // Reset the mock so we can assert the EXACT call count.
+    (notificationService.notifyKycStatusChange as ReturnType<typeof vi.fn>).mockClear();
+
     const result = await notificationDispatchJob.process({
       id: '7',
       payload: { type: 'KYC_APPROVED', riderId, title: 'Verified', body: 'KYC passed' },
     });
 
     expect(result.delivered).toBe(true);
-    const rows = await testDb.notification.findMany({ where: { riderId } });
-    expect(rows).toHaveLength(1);
-    expect(rows[0].type).toBe('SYSTEM');
-    expect(rows[0].title).toBe('Verified');
-    expect(rows[0].message).toBe('KYC passed');
+    // T-95: the dispatcher calls the service exactly ONCE for
+    // the KYC decision (was 1 service call + 1 dispatcher-side
+    // db.notification.create = 2 row creates before the fix).
+    expect(notificationService.notifyKycStatusChange).toHaveBeenCalledTimes(1);
+    expect(notificationService.notifyKycStatusChange).toHaveBeenCalledWith(
+      riderId,
+      'APPROVED'
+    );
   });
 
   it('persists WALLET_TOPUP_APPROVED in-app row with PAYMENT enum type', async () => {

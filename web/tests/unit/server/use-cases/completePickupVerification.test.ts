@@ -155,8 +155,8 @@ describe('completePickupVerification use case — precondition failures', () => 
     });
   });
 
-  it('throws PickupVerificationError(INVALID_STATE) when rider is not in PICKUP_SCHEDULED', async () => {
-    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'ACTIVE' });
+  it('throws PickupVerificationError(INVALID_STATE) when rider is in invalid status', async () => {
+    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'SUSPENDED' });
 
     await expect(completePickupVerification('rider-1', TWO_PHOTOS)).rejects.toMatchObject({
       name: 'PickupVerificationError',

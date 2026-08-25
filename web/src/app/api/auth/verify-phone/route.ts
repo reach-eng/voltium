@@ -7,6 +7,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
+import { IS_PROD } from '@/lib/env';
 import { z } from 'zod';
 
 const verifyPhoneSchema = z.object({
@@ -16,13 +17,25 @@ const verifyPhoneSchema = z.object({
 
 const VERIFY_PHONE_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 10,
+  maxRequests: IS_PROD ? 10 : 100,
+  failClosed: true,
+};
+
+const DAILY_AUTH_IP_RATE_LIMIT = {
+  windowMs: 24 * 60 * 60 * 1000,
+  maxRequests: IS_PROD ? 100 : 1000,
+  failClosed: true,
 };
 
 // POST /api/auth/verify-phone — Verify OTP without creating a rider or setting a session
 export async function POST(request: NextRequest) {
   try {
     const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
+
+    const dailyIpRl = await checkRateLimit(`daily-auth:ip:${clientIp}`, DAILY_AUTH_IP_RATE_LIMIT);
+    if (!dailyIpRl.allowed) {
+      return errors.tooManyRequests('Daily authentication attempt limit exceeded for this IP. Try again tomorrow.');
+    }
 
     const ipRl = await checkRateLimit(`verify-phone-ip:${clientIp}`, VERIFY_PHONE_RATE_LIMIT);
     if (!ipRl.allowed) {

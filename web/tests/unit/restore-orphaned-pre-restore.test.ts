@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => {
     createAuditLog,
     getBackupJob: vi.fn(),
     createRestoreJob: vi.fn(),
+    findRunningRestore: vi.fn().mockResolvedValue(null),
     setBackupLock: vi.fn().mockResolvedValue({}),
     verifyBackup: vi.fn(),
     createBackup: vi.fn(),
@@ -51,6 +52,7 @@ vi.mock('@/server/modules/data-management/backup.repository', () => ({
     createRestoreJob: mocks.createRestoreJob,
     updateRestoreJob: mocks.updateRestoreJob,
     updateBackupJob: mocks.updateBackupJob,
+    findRunningRestore: mocks.findRunningRestore,
   },
 }));
 vi.mock('@/server/modules/data-management/backup.service', () => ({

@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     const riskLevel = url.searchParams.get('riskLevel') || '';
     const minScore = url.searchParams.get('minScore');
     const search = url.searchParams.get('search') || '';
+    const hubId = url.searchParams.get('hubId') || url.searchParams.get('hub') || '';
     const page = parsePositiveInt(url.searchParams.get('page'), 1);
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
@@ -24,10 +25,26 @@ export async function GET(req: NextRequest) {
       riskLevel,
       minScore: minScore ? parseFloat(minScore) : undefined,
       search,
+      hubId: hubId || undefined,
       page,
       limit,
     });
-    return withCacheHeaders(success({ scores: result.scores, pagination: result.pagination }, undefined, 200), 10);
+    return withCacheHeaders(
+      success(
+        {
+          scores: result.scores,
+          pagination: result.pagination,
+          riskCounts: result.riskCounts,
+        },
+        undefined,
+        200,
+        {
+          ...result.pagination,
+          riskCounts: result.riskCounts,
+        }
+      ),
+      10
+    );
   } catch (error) {
     logger.error('GET /api/admin/scores error:', error);
     return errors.internal('Failed to fetch rider scores');

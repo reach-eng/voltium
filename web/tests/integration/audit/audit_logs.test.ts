@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 describe('Audit Log Integration Tests', () => {
   it('allows SUPER_ADMIN to fetch audit logs with pagination', async () => {
-    const cookie = await adminLogin();
+    const cookie = (await adminLogin()).cookie;
     const { status, body } = await api('/api/admin/audit-logs?page=1&limit=5', {
       method: 'GET',
       cookie,
@@ -15,7 +15,7 @@ describe('Audit Log Integration Tests', () => {
   });
 
   it('allows filtering audit logs by actorId and action', async () => {
-    const cookie = await adminLogin();
+    const cookie = (await adminLogin()).cookie;
     const { status, body } = await api(
       '/api/admin/audit-logs?actorId=admin-dev-id&action=LOGIN&limit=5',
       {
@@ -38,7 +38,7 @@ describe('Audit Log Integration Tests', () => {
   });
 
   it('ensures audit logs are immutable (no modification endpoints exist)', async () => {
-    const cookie = await adminLogin();
+    const cookie = (await adminLogin()).cookie;
 
     // Hitting POST on audit logs endpoint is not supported (should return 405 or 404)
     const postRes = await api('/api/admin/audit-logs', {
@@ -58,7 +58,7 @@ describe('Audit Log Integration Tests', () => {
   });
 
   it('allows running retention cleanup and retrieving stats', async () => {
-    const cookie = await adminLogin();
+    const cookie = (await adminLogin()).cookie;
 
     // GET stats
     const statsRes = await api('/api/admin/audit/cleanup', {

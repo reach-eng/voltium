@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   rider: {
     findUnique: vi.fn(),
     update: vi.fn(),
+    // AUDIT FIX (N-12): rotation now uses a compare-and-set updateMany.
+    updateMany: vi.fn(),
   },
   logger: {
     info: vi.fn(),
@@ -65,6 +67,8 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
     vi.clearAllMocks();
     mocks.createSessionToken.mockResolvedValue(newAccessToken);
     mocks.createRefreshToken.mockResolvedValue(newRefreshToken);
+    // AUDIT FIX (N-12): the CAS rotation path uses updateMany.
+    mocks.rider.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it('re-sets the rider session cookie on successful refresh', async () => {

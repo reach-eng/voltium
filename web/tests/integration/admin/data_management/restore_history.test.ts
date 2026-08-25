@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
 import { api, adminLogin } from '../../helpers';
 
 describe('GET /api/admin/data-management/restore/history', () => {
   let cookie: string;
 
   beforeAll(async () => {
-    cookie = await adminLogin();
+    cookie = (await adminLogin()).cookie;
   });
 
   it('should return 401 if missing auth cookie', async () => {

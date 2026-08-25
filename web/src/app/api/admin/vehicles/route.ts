@@ -8,6 +8,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
+import { VehicleStateError } from '@/server/modules/vehicles/vehicle-state-machine';
 
 function checkVehiclePermission(
   session: any,
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const url = req.nextUrl;
+    const search = url.searchParams.get('search') || '';
     const status = url.searchParams.get('status') || '';
     const hubId = url.searchParams.get('hubId') || '';
     // DEEP-AUDIT D-P1-1: parsePositiveInt clamps to a finite int ≥ 1, so
@@ -40,6 +42,7 @@ export async function GET(req: NextRequest) {
     const cacheKey = [
       'admin:vehicles',
       session.adminId ?? session.riderDbId ?? 'anon',
+      search,
       status,
       hubId,
       page,
@@ -47,7 +50,7 @@ export async function GET(req: NextRequest) {
     ].join(':');
 
     const result = await getOrSetResponse(cacheKey, () =>
-      vehicleUseCases.listAdminVehicles({ status, hubId, page, limit }),
+      vehicleUseCases.listAdminVehicles({ search, status, hubId, page, limit }),
       5
     );
 
@@ -139,6 +142,10 @@ export async function PUT(req: NextRequest) {
 
     return success(vehicle);
   } catch (error) {
+    // V-1 (W8): invalid state machine transition → 409, not 500
+    if (error instanceof VehicleStateError) return errors.conflict(error.message);
+    // VEHICLE_NOT_FOUND from updateVehicle guard → 404
+    if (error instanceof Error && error.message === 'VEHICLE_NOT_FOUND') return errors.notFound('Vehicle not found');
     logger.error('Update vehicle error:', error);
     return errors.internal('Failed to update vehicle');
   }

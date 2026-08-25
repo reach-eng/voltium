@@ -8,6 +8,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
+import { logAdminMutation } from '@/lib/audit-log';
 
 // P0-1/P0-9 (2026-08-05 ops audit): broadcast limit — 3 sends per hour per
 // admin. A single admin used to be able to DoS the DB with 2-3 synchronous
@@ -72,6 +73,13 @@ export async function POST(req: NextRequest) {
         type,
         session.adminId || ''
       );
+      await logAdminMutation({
+        session,
+        action: 'notification.send',
+        entity: 'Notification',
+        entityId: notification?.id,
+        details: { riderId, title, type },
+      });
       return success(notification, 'Notification sent', 201);
     }
 
@@ -106,6 +114,12 @@ export async function POST(req: NextRequest) {
         type,
         adminId,
       });
+      await logAdminMutation({
+        session,
+        action: 'notification.broadcast_all',
+        entity: 'Notification',
+        details: { title, type, sendToAll: true, eventId },
+      });
       return success(
         { accepted: true, eventId },
         'Broadcast queued for all riders',
@@ -124,6 +138,12 @@ export async function POST(req: NextRequest) {
         type,
         adminId: session.adminId ?? session.riderDbId ?? 'system',
         riderIds: validation.data.riderIds,
+      });
+      await logAdminMutation({
+        session,
+        action: 'notification.broadcast_batch',
+        entity: 'Notification',
+        details: { title, type, count: validation.data.riderIds.length, eventId },
       });
       return success(
         { accepted: true, eventId },

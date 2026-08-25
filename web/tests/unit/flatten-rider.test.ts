@@ -107,17 +107,33 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
     expect(flatPurged.purgedAt).toBe('2026-08-08T00:00:00.000Z');
   });
 
-  test('P0-S1: should never leak lockPasswordHash, fcmToken, or tokenVersion', () => {
+  test('P0-S1 / F-095: should never leak lockPassword, passwordHash, otp, tokens, or other sensitive secrets', () => {
     const sensitiveRider: any = {
       ...mockRider,
+      lockPassword: 'secret-lock-pass',
       lockPasswordHash: '$2b$10$abcdef1234567890abcdef1234567890abcdef1234567890',
+      otp: '123456',
+      otpExpiresAt: '2026-08-25T00:00:00Z',
+      otpAttempts: 2,
+      password: 'plain-password',
+      passwordHash: 'argon2id-hash-here',
       fcmToken: 'fcm-secret-push-token-12345',
       tokenVersion: 4,
+      token: 'jwt-auth-token',
+      refreshToken: 'refresh-secret-jwt',
     };
 
     const flat = flattenRider(sensitiveRider) as any;
+    expect(flat.lockPassword).toBeUndefined();
     expect(flat.lockPasswordHash).toBeUndefined();
+    expect(flat.otp).toBeUndefined();
+    expect(flat.otpExpiresAt).toBeUndefined();
+    expect(flat.otpAttempts).toBeUndefined();
+    expect(flat.password).toBeUndefined();
+    expect(flat.passwordHash).toBeUndefined();
     expect(flat.fcmToken).toBeUndefined();
     expect(flat.tokenVersion).toBeUndefined();
+    expect(flat.token).toBeUndefined();
+    expect(flat.refreshToken).toBeUndefined();
   });
 });

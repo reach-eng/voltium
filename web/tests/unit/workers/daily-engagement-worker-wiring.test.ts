@@ -75,13 +75,21 @@ describe('Workers wiring — daily engagement (EVENT_BUS P1-2)', () => {
   });
 
   it('jobs route maps the daily-engagement card to ADMIN_JOB_DAILY_ENGAGEMENT with background priority', () => {
-    const s = src(JOBS_ROUTE);
+    // AUDIT FIX (N-6 companion): JOB_TO_OUTBOX_CONFIG moved out of the
+    // route file into @/lib/job-outbox-config (route modules may only
+    // export handlers). The pairing contract is unchanged — assert
+    // against the shared module now.
+    const outboxConfigPath = resolve(
+      __dirname,
+      '../../../src/lib/job-outbox-config.ts'
+    );
+    const s = src(outboxConfigPath);
     const mapping = s.match(
       /'daily-engagement':\s*\{[\s\S]{0,200}eventType:\s*OutboxEventTypes\.ADMIN_JOB_DAILY_ENGAGEMENT[\s\S]{0,200}priority:\s*'background'/
     );
     expect(
       mapping,
-      'the Run-now emitter must map to the wired event type (emitter ↔ consumer pairing)'
+      'the Run-now emitter must map to the wired event type (emitter �+" consumer pairing)'
     ).not.toBeNull();
   });
-});
+})

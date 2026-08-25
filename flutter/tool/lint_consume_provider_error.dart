@@ -31,7 +31,7 @@ void main() {
   }
 
   // Known providers + their canonical error-state field.
-  const _PROVIDER_ERROR_FIELDS = <String, String>{
+  const providerErrorFields = <String, String>{
     'walletProvider': 'lastError',
     'supportProvider': 'lastError',
     'riderProvider': 'lastError',
@@ -72,7 +72,7 @@ void main() {
       if (line.trim().startsWith('//')) continue;
       for (final m in dataWatchRe.allMatches(line)) {
         final provider = m.group(1)!;
-        if (_PROVIDER_ERROR_FIELDS.containsKey(provider)) {
+        if (providerErrorFields.containsKey(provider)) {
           dataWatchedProviders.add(provider);
         }
       }

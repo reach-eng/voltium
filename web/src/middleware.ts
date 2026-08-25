@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { bulkActionSchema, createPlanSchema, createRiderSchema, createVehicleSchema, sendOtpSchema, verifyOtpSchema } from './lib/validators';
-import { env } from './lib/env';
+import { env, IS_PROD } from './lib/env';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 // PR-112 (SEC PR-5): use the canonical APP_ENV for the production gate that
@@ -205,9 +205,7 @@ export async function middleware(request: NextRequest) {
   // cookie-flag regression away from credentialed cross-origin reads
   // from any LAN host in production. ALLOWED_ORIGINS remains the only
   // cross-origin mechanism in prod.
-  const isProdEnv =
-    process.env.APP_ENV === 'production' ||
-    process.env.NODE_ENV === 'production';
+  const isProdEnv = IS_PROD;
 
   // P1-S4: Restrict CORS origins strictly to ALLOWED_ORIGINS or localhost/local IP in dev
   if (origin && (allowedOrigins.includes(origin) || (!isProdEnv && isLocalhost))) {
@@ -242,7 +240,7 @@ export async function middleware(request: NextRequest) {
         originHost.startsWith('127.0.0.1') ||
         originHost.startsWith('192.168.') ||
         originHost.startsWith('10.');
-      if (host && originHost !== host && !allowedOrigins.includes(origin) && !isLocalhostOrigin) {
+      if (host && originHost !== host && !allowedOrigins.includes(origin) && !(!isProdEnv && isLocalhostOrigin)) {
         return rejectCsrf('CSRF validation failed: origin mismatch');
       }
     } catch {

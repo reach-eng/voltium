@@ -158,10 +158,14 @@ class RiderLogoutOrchestrator {
       guarantor.reset();
       wallet.logout();
       devicePolicy.logout();
-      // AUDIT FIX (workflows P0-G): clear the previous rider's in-app
+      // AUDIT FIX (workflows P0-G / FL-2): clear and persist empty in-app
       // notifications (PII: titles/messages) and pending/completed upload
       // queue entries (local paths + server URLs).
-      notifications.reset();
+      try {
+        await notifications.clearAll();
+      } catch (e) {
+        appDebug('[logout-orchestrator] notifications clear failed: $e');
+      }
       uploads.clearAll();
 
       // PR-2 (F-002): reset the emergency-contacts notifier so the next
@@ -240,7 +244,10 @@ class RiderLogoutOrchestrator {
       _onStopPolling();
 
       try {
-        DocumentLocalCache.clearAll();
+        if (riderIdForCache != null && riderIdForCache.isNotEmpty) {
+          await DocumentLocalCache.clearForRider(riderIdForCache);
+        }
+        await DocumentLocalCache.clearAll();
       } catch (e) {
         appDebug('[logout-orchestrator] document cache clear failed: $e');
       }

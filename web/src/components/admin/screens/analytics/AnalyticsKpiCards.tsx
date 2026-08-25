@@ -10,6 +10,7 @@ interface KpiSpec {
   change: number;
   icon: typeof Users;
   inverse?: boolean;
+  basis?: string;
 }
 
 /**
@@ -39,9 +40,10 @@ export function AnalyticsKpiCards({ overview }: { overview: AnalyticsOverview })
       icon: Users,
     },
     {
-      label: 'Collection Efficiency',
+      label: 'Fleet Utilization',
       value: `${overview.collectionEfficiency.toFixed(1)}%`,
-      change: overview.collectionEfficiency >= 80 ? Math.round(overview.collectionEfficiency - 80) : Math.round(overview.collectionEfficiency - 80),
+      change: Math.round(overview.collectionEfficiency - 80),
+      basis: 'vs 80% target',
       icon: Percent,
     },
   ];
@@ -72,7 +74,7 @@ export function AnalyticsKpiCards({ overview }: { overview: AnalyticsOverview })
                     >
                       {Math.abs(kpi.change)}%
                     </span>
-                    <span className="text-xs text-muted-foreground">vs last month</span>
+                    <span className="text-xs text-muted-foreground">{kpi.basis || 'vs last month'}</span>
                   </div>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

@@ -70,6 +70,27 @@ interface DetailGroupProps {
   onEdit?: (val: string) => void;
 }
 
+function toDateInputValue(val: string): string {
+  if (!val) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(val);
+  if (match) {
+    const [, d, m, y] = match;
+    return `${y}-${m}-${d}`;
+  }
+  return '';
+}
+
+function fromDateInputValue(val: string): string {
+  if (!val) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val);
+  if (match) {
+    const [, y, m, d] = match;
+    return `${d}-${m}-${y}`;
+  }
+  return val;
+}
+
 export function DetailGroup({
   label,
   value,
@@ -99,8 +120,10 @@ export function DetailGroup({
         ) : (
           <Input
             type={type}
-            value={String(value ?? '')}
-            onChange={(e) => onEdit(e.target.value)}
+            value={type === 'date' ? toDateInputValue(String(value ?? '')) : String(value ?? '')}
+            onChange={(e) =>
+              onEdit(type === 'date' ? fromDateInputValue(e.target.value) : e.target.value)
+            }
             className="h-9 text-sm bg-background border-border/50 focus:border-primary/50 transition-all"
             placeholder={`Enter ${label.toLowerCase()}`}
           />

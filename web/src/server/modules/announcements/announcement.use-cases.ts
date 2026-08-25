@@ -181,24 +181,38 @@ export const announcementUseCases = {
       if (recipientCount === 0) {
         // No recipients — nothing to fan out; mark sent so the cron doesn't
         // re-emit forever.
-        await db.announcement.update({
-          where: { id: ann.id },
+        await db.announcement.updateMany({
+          where: { id: ann.id, status: 'SCHEDULED' },
           data: { status: 'SENT', sentAt: new Date(), totalRecipients: 0 },
         });
         processedCount++;
         continue;
       }
-      // PR-4 review fix: a failing emit is caught + logged so one bad row can't
-      // abort the rest of the cron loop. The row stays SCHEDULED (scheduledAt
-      // <= now), so the next cron tick re-attempts it (self-healing).
+
+      // A-1 (W9): Atomically claim the announcement by marking status: SENT
+      // so subsequent cron ticks within the processing window will NOT re-emit duplicates.
+      const claim = await db.announcement.updateMany({
+        where: { id: ann.id, status: 'SCHEDULED' },
+        data: { status: 'SENT', sentAt: new Date(), totalRecipients: recipientCount },
+      });
+      if (claim.count === 0) {
+        // Already claimed by a concurrent tick
+        continue;
+      }
+
       try {
         await OutboxService.emit(OutboxEventTypes.ANNOUNCEMENT_BROADCAST, {
           announcementId: ann.id,
         });
       } catch (err) {
-        logger.warn('[AnnouncementCron] outbox emit failed; retrying next tick', {
+        logger.warn('[AnnouncementCron] outbox emit failed; rolling back to SCHEDULED', {
           announcementId: ann.id,
           err: err instanceof Error ? err.message : String(err),
+        });
+        // Roll back so next tick can retry
+        await db.announcement.updateMany({
+          where: { id: ann.id, status: 'SENT' },
+          data: { status: 'SCHEDULED', sentAt: null },
         });
       }
       processedCount++;

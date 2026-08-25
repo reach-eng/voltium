@@ -19,12 +19,13 @@ vi.mock('@/lib/db', () => ({
   db: { systemSetting: { upsert: mocks.upsert, findMany: mocks.findMany } },
 }));
 
-import { updateFeatureFlag } from '@/lib/feature-flags';
+import { updateFeatureFlag, getAllFeatureFlags } from '@/lib/feature-flags';
 
 describe('TG-6: updateFeatureFlag valueType', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.upsert.mockResolvedValue({});
+    mocks.findMany.mockResolvedValue([]);
   });
 
   it('writes BOOLEAN for boolean flags', async () => {
@@ -52,5 +53,11 @@ describe('TG-6: updateFeatureFlag valueType', () => {
 
     mocks.upsert.mockRejectedValue(new Error('db down'));
     expect(await updateFeatureFlag('enableOfflineMode', 'true')).toBe(false);
+  });
+
+  it('getAllFeatureFlags includes valueType for boolean and number flags', async () => {
+    const flags = await getAllFeatureFlags();
+    expect(flags.enableReferralSystem.valueType).toBe('BOOLEAN');
+    expect(flags.maxUploadSizeMb.valueType).toBe('NUMBER');
   });
 });

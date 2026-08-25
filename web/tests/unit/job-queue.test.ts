@@ -133,6 +133,11 @@ const mocks = vi.hoisted(() => {
       return count;
     }),
     // Per-type-aware reaper: reap only rows older than their type's threshold.
+    // T-98 (PR-8, 2026-08-23): the mock now mirrors the production
+    // SQL — increments attempts, transitions to FAILED at
+    // maxAttempts, and preserves the prior error string. The
+    // pre-T-98 mock always set status to PENDING, which hid the
+    // "poison pills retry forever" bug.
     reaperSweepType: vi.fn(async () => {
       let count = 0;
       const thresholdMsByType: Record<string, number> = {
@@ -146,9 +151,23 @@ const mocks = vi.hoisted(() => {
         if (r.status !== 'PROCESSING') continue;
         const thresholdMs = thresholdMsByType[r.eventType] ?? defaultThresholdMs;
         if (now - r.updatedAt.getTime() >= thresholdMs) {
-          r.status = 'PENDING';
-          r.error = 'Reclaimed by reaper — stuck in PROCESSING';
+          // T-98: increment first; check if the increment
+          // crosses maxAttempts. If so, FAILED (dead-letter);
+          // otherwise PENDING (retry).
           r.attempts += 1;
+          if (r.attempts >= r.maxAttempts) {
+            r.status = 'FAILED';
+            r.readyAt = null;
+          } else {
+            r.status = 'PENDING';
+            r.readyAt = new Date(Date.now() + 60_000);
+          }
+          // T-98: preserve forensic context — prefix the prior
+          // error string onto the reaper note.
+          const reaperNote = 'Reclaimed by reaper — stuck in PROCESSING';
+          r.error = r.error
+            ? `${reaperNote} | previous error: ${r.error}`
+            : reaperNote;
           r.updatedAt = new Date();
           count++;
         }
@@ -447,5 +466,63 @@ describe('job-queue (Phase 3.4)', () => {
 
     const stuck = await JobQueue.getStuckProcessingCount();
     expect(stuck).toBe(2);
+  });
+
+  // T-98 (PR-8, 2026-08-23): close the "reaper resets attempts=0"
+  // finding with a regression test that exercises the
+  // attempts-increment + maxAttempts → FAILED + error-context
+  // preservation contract end-to-end. The previous audit
+  // identified that poison-pill handlers (process-killing
+  // exceptions) would re-enter the reaper forever with
+  // attempts=0, overwriting forensic context. The fix at
+  // job-queue.ts:175-181 increments attempts, honors
+  // maxAttempts, and prefixes the prior error.
+  it('T-98 reaper increments attempts (does NOT reset) and surfaces FAILED at maxAttempts', async () => {
+    const sixMinAgo = new Date(Date.now() - 6 * 60 * 1000);
+
+    // attempts: 2 of 3 → after reaper: attempts: 3, status: FAILED.
+    seedRow({
+      id: 'poison-pill',
+      status: 'PROCESSING',
+      updatedAt: sixMinAgo,
+      attempts: 2,
+      maxAttempts: 3,
+      error: 'Original exception: OOM at module X',
+    });
+
+    const reclaimed = await JobQueue.runReaper();
+    expect(reclaimed).toBe(1);
+    const row = mocks.store.get('poison-pill')!;
+    // T-98: attempts is INCREMENTED, not reset. A poison-pill
+    // handler dies for the 3rd time → FAILED → no more retries.
+    expect(row.attempts).toBe(3);
+    // T-98: maxAttempts reached → status FAILED (dead-letter),
+    // not PENDING (which would re-enter the queue and loop).
+    expect(row.status).toBe('FAILED');
+    // T-98: forensic context preserved. The new error string
+    // includes the reaper prefix AND the prior error so an
+    // operator grepping the logs can find the original cause.
+    expect(row.error).toMatch(/Reclaimed by reaper/);
+    expect(row.error).toMatch(/Original exception: OOM at module X/);
+  });
+
+  it('T-98 reaper increments attempts to PENDING when below maxAttempts', async () => {
+    const sixMinAgo = new Date(Date.now() - 6 * 60 * 1000);
+    // attempts: 0 of 5 → after reaper: attempts: 1, status: PENDING.
+    seedRow({
+      id: 'recoverable',
+      status: 'PROCESSING',
+      updatedAt: sixMinAgo,
+      attempts: 0,
+      maxAttempts: 5,
+      error: null,
+    });
+    const reclaimed = await JobQueue.runReaper();
+    expect(reclaimed).toBe(1);
+    const row = mocks.store.get('recoverable')!;
+    expect(row.attempts).toBe(1);
+    expect(row.status).toBe('PENDING');
+    // No prior error → no prefix to preserve.
+    expect(row.error).toMatch(/Reclaimed by reaper/);
   });
 });

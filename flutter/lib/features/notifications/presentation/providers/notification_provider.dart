@@ -22,15 +22,24 @@ import 'package:voltium_rider/models/notification_model.dart';
 @immutable
 class NotificationState {
   final List<AppNotification> notifications;
-  const NotificationState({this.notifications = const []});
+  final bool isLoading;
+
+  const NotificationState({
+    this.notifications = const [],
+    this.isLoading = true,
+  });
 
   int get unreadCount => notifications.where((n) => !n.isRead).length;
   List<AppNotification> get unreadNotifications =>
       notifications.where((n) => !n.isRead).toList();
 
-  NotificationState copyWith({List<AppNotification>? notifications}) =>
+  NotificationState copyWith({
+    List<AppNotification>? notifications,
+    bool? isLoading,
+  }) =>
       NotificationState(
         notifications: notifications ?? this.notifications,
+        isLoading: isLoading ?? this.isLoading,
       );
 }
 
@@ -40,25 +49,43 @@ class NotificationNotifier extends Notifier<NotificationState> {
 
   @override
   NotificationState build() {
-    // Trigger an async hydration; the initial state starts empty and
-    // the loaded list is published once available.
-    Future.microtask(() => _hydrate());
-    return const NotificationState();
+    // Trigger an async hydration; the initial state starts in loading state
+    // and the loaded list is published once available.
+    Future.microtask(() {
+      if (ref.mounted) {
+        _hydrate();
+      }
+    });
+    return const NotificationState(isLoading: true);
   }
 
   Future<void> _hydrate() async {
-    final prefs = await SharedPreferences.getInstance();
-    final json = prefs.getString(_key);
-    if (json == null) return;
     try {
-      final list = jsonDecode(json) as List;
-      final loaded = list
-          .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      state = state.copyWith(notifications: loaded);
+      final prefs = await SharedPreferences.getInstance();
+      final json = prefs.getString(_key);
+      if (json != null) {
+        final list = jsonDecode(json) as List;
+        final loaded = list
+            .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        if (!ref.mounted) return;
+        // AUDIT FIX (FL-6): merge loaded notifications with any that were
+        // added in-memory before hydration finished, deduplicating by ID.
+        final existingIds = state.notifications.map((n) => n.id).toSet();
+        final merged = [
+          ...state.notifications,
+          ...loaded.where((n) => !existingIds.contains(n.id)),
+        ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        state = state.copyWith(notifications: merged, isLoading: false);
+        return;
+      }
     } catch (_) {
       // Corrupt cache; ignore.
+    }
+    if (ref.mounted) {
+      state = state.copyWith(isLoading: false);
     }
   }
 

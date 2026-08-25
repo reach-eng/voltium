@@ -18,6 +18,8 @@
 // override [voltiumApiClientProvider] / construct a fresh
 // [ApiClient] for the notification path.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -216,7 +218,13 @@ class EngagementProvider extends Notifier<EngagementState> {
       unreadCount: (state.unreadCount - 1).clamp(0, 999),
     );
     if (!AppConstants.isTestMode) {
-      _http.put('/api/rider/notifications', body: {'notificationId': id});
+      unawaited(
+        _http.put('/api/rider/notifications',
+            body: {'notificationId': id}).catchError((e) {
+          appDebug('Failed to mark notification $id as read: $e');
+          return <String, dynamic>{};
+        }),
+      );
     }
   }
 
@@ -281,6 +289,7 @@ class EngagementProvider extends Notifier<EngagementState> {
   }
 
   Future<void> clearReadNotifications() async {
+    final previousNotifications = state.notifications;
     final readIds =
         state.notifications.where((n) => n.isRead).map((n) => n.id).toList();
     if (readIds.isEmpty) return;
@@ -294,6 +303,8 @@ class EngagementProvider extends Notifier<EngagementState> {
             .map((id) => _http.delete('/api/rider/notifications?id=$id')));
       } catch (e) {
         appDebug('Failed to delete read notifications: $e');
+        // Rollback optimistic state if server delete failed (FL-14)
+        state = state.copyWith(notifications: previousNotifications);
       }
     }
   }

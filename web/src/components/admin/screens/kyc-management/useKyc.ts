@@ -23,12 +23,16 @@ export function useKyc() {
   const [showUndoToast, setShowUndoToast] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [rowLoadingIds, setRowLoadingIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const fetchRiders = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '100');
+      params.set('page', String(page));
+      params.set('limit', '25');
       if (tab === 'info_required') {
         params.set('kycStatus', 'INFO_REQUIRED');
       } else if (tab === 'pending') {
@@ -45,6 +49,13 @@ export function useKyc() {
         const json = await res.json();
         const data = json.data?.riders || json.data || [];
         setRiders(Array.isArray(data) ? data : []);
+        if (json.pagination) {
+          setTotalPages(json.pagination.totalPages || 1);
+          setTotal(json.pagination.total || 0);
+        } else if (json.data?.pagination) {
+          setTotalPages(json.data.pagination.totalPages || 1);
+          setTotal(json.data.pagination.total || 0);
+        }
       } else {
         toast.error('Failed to fetch KYC queue.');
       }
@@ -54,6 +65,10 @@ export function useKyc() {
     } finally {
       setLoading(false);
     }
+  }, [page, tab, startDate, endDate]);
+
+  useEffect(() => {
+    setPage(1);
   }, [tab, startDate, endDate]);
 
   useEffect(() => {
@@ -266,5 +281,9 @@ export function useKyc() {
     handleKycAction,
     handleBulkAction,
     handleUndo,
+    page,
+    setPage,
+    totalPages,
+    total,
   };
 }

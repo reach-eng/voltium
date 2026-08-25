@@ -15,28 +15,13 @@ model Admin {
   role              AdminRole            @default(OPERATIONS_ADMIN)
   isActive          Boolean              @default(true)
   lastLoginAt       DateTime?
-  // R6 — legacy `permissions String[]` column. Will be dropped in migration
-  // 20260806000000_drop_admin_legacy_permissions after 1-week staging soak
-  // (ends 2026-08-06). Until then, kept for backward compatibility — new
-  // writers go to `AdminHasPermission`; old writers/readers still use this.
-  //
-  // DEEP-AUDIT D-P2-6 (2026-08-08): the column is REVERTED to its
-  // pre-D-P2-6 state. The 50+ file migration across the admin and
-  // rider modules to use AdminHasPermission exclusively was out of
-  // scope for this audit pass. The drop migration is now tracked as
-  // a separate follow-up (D-P2-6-backfill) that requires coordinated
-  // changes in every site that reads Admin.permissions.
   permissions       String[]             @default([])
   tokenVersion      Int                  @default(1)
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
+  hasPermissions    AdminHasPermission[]
   sessions          AdminSession[]
   backupJobs        BackupJob[]
-  hasPermissions    AdminHasPermission[]
-  // DEEP-AUDIT D-P2-8 (2026-08-08): back-relations for the new
-  // Incident.assignedToId / resolvedById FKs. The relation names
-  // disambiguate "assigned" vs "resolved" so the same admin can be
-  // the assigner on one incident and the resolver on another.
   incidentsAssigned Incident[]           @relation("IncidentAssignedAdmin")
   incidentsResolved Incident[]           @relation("IncidentResolvedByAdmin")
 
@@ -90,17 +75,12 @@ model Hub {
   location        String?
   city            String?
   isActive        Boolean      @default(true)
-  // P1.5 (2026-08-05 rentals/vehicles/hubs audit): soft delete — a deleted
-  // hub is hidden from every read path (deletedAt: null) but the row and its
-  // audit trail survive for compliance. Hard deletes are gone from the API.
   deletedAt       DateTime?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-  vehicles        Vehicle[]
-  // PR-P3.2: back-relation for Rider.pickupHubRef
   pickupHubRiders Rider[]      @relation("RiderPickupHub")
-  // P1.8 (2026-08-05 rentals/vehicles/hubs audit): hub-scoped team leaders.
   teamLeaders     TeamLeader[]
+  vehicles        Vehicle[]
 
   @@index([isActive])
   @@index([deletedAt])
@@ -121,22 +101,14 @@ model Vehicle {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   deletedAt      DateTime?
-  // DEEP-AUDIT D-P2-9 (2026-08-08): currentRiderId is the explicit
-  // "who is currently using this vehicle" pointer. Previously a
-  // vehicle's current rider was derived from `Rider.vehicleId`, which
-  // meant `db.vehicle.findMany({ include: { riders: true } })`
-  // returned ALL historical riders, not just the active one. The
-  // FK is nullable + SetNull so deleting a rider never cascades to
-  // delete their assigned vehicle (consistent with Rider.vehicleId).
-  // Migration backfills from active RentalLease.riderId.
   currentRiderId String?
-  currentRider   Rider?          @relation("VehicleCurrentRider", fields: [currentRiderId], references: [id], onDelete: SetNull)
   incidents      Incident[]
   leases         RentalLease[]   @relation("VehicleLeases")
   riders         Rider[]
   tickets        SupportTicket[] @relation("VehicleTickets")
-  hub            Hub             @relation(fields: [hubId], references: [id], onDelete: Restrict)
   returns        VehicleReturn[] @relation("VehicleReturns")
+  currentRider   Rider?          @relation("VehicleCurrentRider", fields: [currentRiderId], references: [id])
+  hub            Hub             @relation(fields: [hubId], references: [id])
 
   @@index([status])
   @@index([hubId])
@@ -180,7 +152,6 @@ model RentalPlan {
   additionalInfo         String?
   isSecurityRefundable   Boolean        @default(true)
   refundableAfterDays    Int?
-  // PR-P3.2: back-relation for Rider.currentPlanRef
   currentPlanRiders      Rider[]        @relation("RiderCurrentPlan")
 
   @@map("rental_plans")
@@ -199,44 +170,20 @@ model Rider {
   currentAddress          String?
   tokenVersion            Int                    @default(1)
   intent                  String?
-  // PR-K.3 — legacy `lifecycleStatus` enum column. Will be dropped in
-  // migration 20260806020000_drop_rider_legacy_lifecycle_status after the
-  // 1-week staging soak (ends 2026-08-06). Until then, kept for backfill;
-  // new readers/writers prefer `lifecycleStage` (5-value enum) when set.
-  //
-  // DEEP-AUDIT D-P2-5 (2026-08-08): REVERTED. The 50+ file migration
-  // to read lifecycleStage exclusively is out of scope for this audit
-  // pass. The drop is now tracked as D-P2-5-backfill.
   lifecycleStatus         RiderLifecycleStatus   @default(NEW)
   lifecycleStage          RiderLifecycleStage?   @default(NEW)
   vehicleId               String?
   deliveryId              String?
   assignedVehicle         String?
-  // PR-J — legacy `pickupHub` string column. Will be dropped in migration
-  // 20260806010000_drop_rider_legacy_string_columns after the staging soak.
-  // Until then, kept for backfill gap handling.
-  //
-  // DEEP-AUDIT D-P2-4 (2026-08-08): REVERTED. The 50+ file migration
-  // to read from the FKs exclusively is out of scope for this audit
-  // pass. The drop is now tracked as D-P2-4-backfill and requires
-  // coordinated changes in every reader.
   pickupHub               String?
-  // PR-P3.2: FK column next to the legacy `pickupHub` string. Backfilled from
-  // Hub.id or Hub.name. NULL when the legacy value doesn't match anything.
   pickupHubId             String?
-  // PR-J — legacy `currentPlan` string column. Will be dropped after soak.
   currentPlan             String?
-  // PR-P3.2: FK column next to the legacy `currentPlan` string. Backfilled
-  // from RentalPlan.id or RentalPlan.name. NULL when no match.
   currentPlanId           String?
   planStartDate           DateTime?
   planEndDate             DateTime?
   advanceRentPaid         Boolean                @default(false)
   preferredShift          String?
-  // PR-J — legacy `teamLeader` string column. Will be dropped after soak.
   teamLeader              String?
-  // PR-P3.2: FK column next to the legacy `teamLeader` string. Verified
-  // ID-only in all writers, so backfill is a single ID lookup.
   teamLeaderId            String?
   emergencyContact        String?
   referralCode            String                 @unique
@@ -266,24 +213,8 @@ model Rider {
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
   deletedAt               DateTime?
-  // PR-3 (2026-08-07 verification report, Section 2): rider-initiated
-  // GDPR/DPDP deletion request markers. Populated by POST
-  // /api/rider/account/delete-request; admin data-deletion screen can
-  // surface these to operators.
   deletionRequestedAt     DateTime?
   deletionRequestReason   String?
-  // PR-2026-08-16: set by data-deletion-purge.job.ts once the 7-day appeal
-  // window passes and the PII is destroyed. The admin data-deletion queue
-  // uses it to distinguish "purged" (purgedAt set) from "pending"
-  // (deletedAt set, purgedAt null).
-  purgedAt                DateTime?
-  // LANGUAGE-AUDIT (2026-08-16) #6: rider's chosen language as a
-  // BCP-47 language tag (`en`, `hi`). NULL means "follow system".
-  // Mirrored on every `LocaleNotifier.setLocale()` from the mobile
-  // app via PUT /api/rider/profile. The shared-prefs copy on the
-  // device is the source of truth for offline startup; the server
-  // copy is the source of truth for cross-device sync.
-  preferredLocale         String?
   currentPlanPrice        Int?
   pickupPhotoFront        String?
   pickupPhotoBack         String?
@@ -295,32 +226,27 @@ model Rider {
   lastLocationAt          DateTime?
   batteryLevel            Int                    @default(100)
   planRejectionReason     String?
+  purgedAt                DateTime?
+  preferredLocale         String?
   announcements           AnnouncementDelivery[]
+  consents                Consent[]
   depositRecord           DepositRecord?
   deviceViolations        DeviceViolation[]
   guarantor               Guarantor?
   incidents               Incident[]
   kycProfile              KycProfile?
   notifications           Notification[]
-  permissions             RiderPermission[]
-  adminLock               RiderAdminLock?
-  pickupPhoto             RiderPickupPhoto?
   leases                  RentalLease[]
-  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-  // DEEP-AUDIT D-P2-9: back-relation for Vehicle.currentRiderId. The
-  // name `currentVehicleRider` disambiguates from the existing
-  // `vehicle` field (which is the rider's historical/assigned
-  // vehicle via the Rider.vehicleId string column).
-  currentVehicleRider     Vehicle[]              @relation("VehicleCurrentRider")
-  // PR-P3.2: FK columns added next to the legacy string columns. The legacy
-  // columns are kept for backward compatibility (PR-P3.3 will drop them after
-  // 1-week staging soak). Each FK uses ON DELETE SET NULL to match the legacy
-  // column's nullability semantics.
-  pickupHubRef            Hub?                   @relation("RiderPickupHub", fields: [pickupHubId], references: [id], onDelete: SetNull, map: "riders_pickupHubId_fkey")
-  currentPlanRef          RentalPlan?            @relation("RiderCurrentPlan", fields: [currentPlanId], references: [id], onDelete: SetNull, map: "riders_currentPlanId_fkey")
-  teamLeaderRef           TeamLeader?            @relation("RiderTeamLeader", fields: [teamLeaderId], references: [id], onDelete: SetNull, map: "riders_teamLeaderId_fkey")
+  rewards                 Reward[]
+  adminLock               RiderAdminLock?
   earnings                RiderEarning[]
+  permissions             RiderPermission[]
+  pickupPhoto             RiderPickupPhoto?
   score                   RiderScore?
+  currentPlanRef          RentalPlan?            @relation("RiderCurrentPlan", fields: [currentPlanId], references: [id], map: "riders_currentPlanId_fkey")
+  pickupHubRef            Hub?                   @relation("RiderPickupHub", fields: [pickupHubId], references: [id], map: "riders_pickupHubId_fkey")
+  teamLeaderRef           TeamLeader?            @relation("RiderTeamLeader", fields: [teamLeaderId], references: [id], map: "riders_teamLeaderId_fkey")
+  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id])
   tickets                 SupportTicket[]
   trafficFines            TrafficFine[]
   transactions            Transaction[]
@@ -328,10 +254,9 @@ model Rider {
   deviceContacts          UserContact[]
   deviceLocations         UserLocation[]
   vehicleReturns          VehicleReturn[]
-  wallet                  Wallet?
+  currentVehicleRider     Vehicle[]              @relation("VehicleCurrentRider")
   walletLedger            WalletLedger[]
-  rewards                 Reward[]
-  consents                Consent[]
+  wallet                  Wallet?
 
   @@index([phone])
   @@index([riderId])
@@ -348,13 +273,12 @@ model Rider {
 model Consent {
   id            String   @id @default(cuid())
   riderId       String
-  consentType   String // 'LOCATION' | 'CONTACTS' | 'CALL_LOGS'
+  consentType   String
   granted       Boolean
   policyVersion String   @default("public-beta-v1")
-  source        String   @default("DEVICE") // 'DEVICE' | 'SERVER'
+  source        String   @default("DEVICE")
   createdAt     DateTime @default(now())
-
-  rider Rider @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  rider         Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([riderId, consentType])
@@ -459,8 +383,8 @@ model Wallet {
   version                Int            @default(1)
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
-  rider                  Rider          @relation(fields: [riderId], references: [id], onDelete: Restrict)
   ledgerEntries          WalletLedger[]
+  rider                  Rider          @relation(fields: [riderId], references: [id])
 
   @@index([riderId])
   @@index([depositStatus])
@@ -480,9 +404,9 @@ model WalletLedger {
   note           String?
   actorId        String?
   createdAt      DateTime        @default(now())
-  rider          Rider           @relation(fields: [riderId], references: [id], onDelete: Restrict)
-  txn            Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  wallet         Wallet          @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  rider          Rider           @relation(fields: [riderId], references: [id])
+  txn            Transaction?    @relation(fields: [transactionId], references: [id])
+  wallet         Wallet          @relation(fields: [walletId], references: [id])
 
   @@index([walletId])
   @@index([riderId])
@@ -513,8 +437,8 @@ model DepositRecord {
   forfeitReason         String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
-  rider                 Rider         @relation(fields: [riderId], references: [id], onDelete: Restrict)
-  transaction           Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  rider                 Rider         @relation(fields: [riderId], references: [id])
+  transaction           Transaction?  @relation(fields: [transactionId], references: [id])
 
   @@index([status])
   @@index([riderId])
@@ -534,18 +458,14 @@ model RentalLease {
   finalPriceInPaise Int
   startOdometer     Int?
   startBatteryPct   Int?
-  // PR-76: rent auto-debit period tracking. A lease is charged
-  // for its `finalPriceInPaise` once per `durationDays`-shaped
-  // period; `nextRentDueAt` advances to the next period boundary
-  // after each successful auto-debit, so a 7-day tenant is
-  // debited exactly once across 7 day-ticks, not 7 times.
   nextRentDueAt     DateTime?
   lastPaidAt        DateTime?
   periodNo          Int          @default(0)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  overdueNotifiedAt DateTime?
   rider             Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  shift             Shift        @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  shift             Shift        @relation(fields: [shiftId], references: [id])
   vehicle           Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@unique([vehicleId, shiftId, leaseDate])
@@ -565,20 +485,6 @@ model Transaction {
   type            TransactionType
   amountInPaise   Int
   purpose         TransactionPurpose
-  // H6-2026-08-13: audience discriminator. Lets the rider history
-  // endpoint filter to user-initiated flows (top-ups + deposits)
-  // without having to enumerate the 7 system-only purposes
-  // (RENT_PAYMENT, REWARD, REFUND, REVERSAL, ADMIN_ADJUSTMENT,
-  // FORFEITURE, ONBOARDING). Set at row-creation time based on
-  // purpose; default SYSTEM is the safe choice for existing rows.
-  audience        TransactionAudience    @default(SYSTEM)
-  // DEEP-AUDIT D-P2-7 (2026-08-08): clarified the relationship to
-  // WalletLedger.idempotencyKey. A single topup creates one Transaction
-  // row and one WalletLedger row; each carries an idempotency key.
-  // Transaction.idempotencyKey is the REQUEST-level key (the client
-  // builds it once when submitting the topup). WalletLedger carries
-  // the same value (the request key doubles as the event key) so a
-  // replay of the same request cannot double-credit the wallet.
   reason          String?
   method          String?
   status          TransactionStatus      @default(PENDING)
@@ -593,9 +499,10 @@ model Transaction {
   idempotencyKey  String?                @unique
   reversedTxnId   String?
   createdAt       DateTime               @default(now())
+  audience        TransactionAudience    @default(SYSTEM)
   depositRecord   DepositRecord?
-  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Restrict)
   breakdowns      TransactionBreakdown[]
+  rider           Rider                  @relation(fields: [riderId], references: [id])
   ledgerEntries   WalletLedger[]
 
   @@index([status])
@@ -605,7 +512,6 @@ model Transaction {
   @@index([idempotencyKey])
   @@index([riderId, status])
   @@index([riderId, createdAt])
-  // H6-2026-08-13: index for rider history with audience filter
   @@index([riderId, audience, createdAt])
   @@map("transactions")
 }
@@ -713,14 +619,7 @@ model AuditLog {
   id        String    @id @default(cuid())
   actorId   String
   actorType ActorType @default(ADMIN)
-  // 2026-08-05 ops audit (discovery): migrated from the AuditActionType
-  // enum to TEXT. The code writes 90+ distinct dot-string actions
-  // (transaction.approve, wallet.approve_topup, tl.create, ...) that were
-  // never enum members — every one of those writes failed Prisma validation
-  // at runtime and was silently dropped, gutting the SOC2 audit trail.
-  // TEXT makes the whole trail work; retention still buckets by
-  // action.split('.')[0]. See migration 20260811000000.
-  action    String    @db.Text
+  action    String
   entity    String
   entityId  String?
   details   String?
@@ -820,9 +719,6 @@ model Reward {
   id         String    @id @default(cuid())
   riderId    String
   title      String
-  // PR-9 (2026-08-06 fix plan): unit is PAISE (1 point = 1 paise, so a
-  // ₹200 bonus stores 20000). The column was historically misread as a
-  // point count — display code must divide by 100 for ₹.
   points     Int
   createdAt  DateTime  @default(now())
   redeemedAt DateTime?
@@ -854,15 +750,11 @@ model SystemSetting {
 }
 
 model LegalDocument {
-  id        String   @id @default(cuid())
-  type      String   @unique
+  id        String                  @id @default(cuid())
+  type      String                  @unique
   title     String
   content   String
-  updatedAt DateTime @updatedAt
-
-  // P1-2 (2026-08-05 legal/device audit): every upsert previously overwrote
-  // the document with no history — an accidental clear was unrecoverable.
-  // Revisions are written on each save; the doc row is the current pointer.
+  updatedAt DateTime                @updatedAt
   revisions LegalDocumentRevision[]
 
   @@map("legal_documents")
@@ -871,12 +763,12 @@ model LegalDocument {
 model LegalDocumentRevision {
   id              String        @id @default(cuid())
   legalDocumentId String
-  legalDocument   LegalDocument @relation(fields: [legalDocumentId], references: [id], onDelete: Cascade)
   title           String
   content         String
-  contentHash     String // sha256 of content — cheap diff + integrity check
+  contentHash     String
   createdBy       String
   createdAt       DateTime      @default(now())
+  legalDocument   LegalDocument @relation(fields: [legalDocumentId], references: [id], onDelete: Cascade)
 
   @@index([legalDocumentId, createdAt])
   @@map("legal_document_revisions")
@@ -902,16 +794,12 @@ model TeamLeader {
   phone            String
   email            String?
   isActive         Boolean   @default(true)
-  // P1.8 (2026-08-05 rentals/vehicles/hubs audit): hubId lets a hub-scoped
-  // lookup return only the team leaders that belong to a hub. Nullable +
-  // SetNull so deleting a hub never orphans or cascades team leaders.
   hubId            String?
-  hub              Hub?      @relation(fields: [hubId], references: [id], onDelete: SetNull)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
-  // PR-P3.2: back-relation for Rider.teamLeaderRef
   teamLeaderRiders Rider[]   @relation("RiderTeamLeader")
+  hub              Hub?      @relation(fields: [hubId], references: [id])
 
   @@index([hubId])
   @@map("team_leaders")
@@ -949,10 +837,6 @@ model AnnouncementDelivery {
   announcement   Announcement               @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   rider          Rider                      @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
-  // PR-4 (2026-08-06 fix-plan): unique per (announcement, rider) so the
-  // background fanout's createMany(skipDuplicates) is truly idempotent — an
-  // at-least-once outbox retry can never duplicate a delivery row (which
-  // would inflate deliveredCount/readCount in the admin list).
   @@unique([announcementId, riderId])
   @@index([announcementId])
   @@index([riderId])
@@ -974,29 +858,20 @@ model Incident {
   longitude            Float?
   photos               Json             @default("[]")
   status               IncidentStatus   @default(OPEN)
-  // DEEP-AUDIT D-P2-8 (2026-08-08): assignedTo and resolvedBy are now
-  // real FKs to Admin. The string columns were a footgun — a typo or
-  // stale admin id in assignedTo silently broke incident-to-admin
-  // lookups. New code MUST use the relation. Migration backfills the
-  // existing rows from string -> id, then drops the legacy column.
-  assignedToId         String?
-  resolvedById         String?
-  // Legacy free-text fields, kept nullable so older code paths that
-  // write a display name (not an id) don't break during the migration
-  // window. Deprecated — D-P2-8 follow-up to drop after the 1-week
-  // staging soak.
   assignedTo           String?
-  resolvedBy           String?
   resolution           String?
   resolvedAt           DateTime?
+  resolvedBy           String?
   insuranceClaim       Boolean          @default(false)
   insuranceClaimNumber String?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
-  rider                Rider?           @relation(fields: [riderId], references: [id], onDelete: SetNull)
-  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-  assignedAdmin        Admin?           @relation("IncidentAssignedAdmin", fields: [assignedToId], references: [id], onDelete: SetNull)
-  resolvedByAdmin      Admin?           @relation("IncidentResolvedByAdmin", fields: [resolvedById], references: [id], onDelete: SetNull)
+  assignedToId         String?
+  resolvedById         String?
+  assignedAdmin        Admin?           @relation("IncidentAssignedAdmin", fields: [assignedToId], references: [id])
+  resolvedByAdmin      Admin?           @relation("IncidentResolvedByAdmin", fields: [resolvedById], references: [id])
+  rider                Rider?           @relation(fields: [riderId], references: [id])
+  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id])
 
   @@index([riderId])
   @@index([vehicleId])
@@ -1059,10 +934,10 @@ model RiderScore {
 model RiderPermission {
   id         String    @id @default(cuid())
   riderId    String
-  permission String // e.g. 'LOCATION', 'BATTERY', 'CONTACTS', 'CALL_LOGS', 'MIC', 'CAMERA', 'PHONE'
+  permission String
   granted    Boolean   @default(false)
   grantedAt  DateTime?
-  grantedBy  String? // admin ID or null for system grants
+  grantedBy  String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   rider      Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
@@ -1136,13 +1011,14 @@ model TrafficFine {
 }
 
 model DeviceViolation {
-  id           String          @id @default(cuid())
-  riderId      String
-  permissionId String
-  status       ViolationStatus @default(ACTIVE)
-  reportedAt   DateTime        @default(now())
-  resolvedAt   DateTime?
-  rider        Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  riderId       String
+  permissionId  String
+  status        ViolationStatus @default(ACTIVE)
+  reportedAt    DateTime        @default(now())
+  resolvedAt    DateTime?
+  lastAlertedAt DateTime?
+  rider         Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([status])
@@ -1260,10 +1136,6 @@ model OutboxEvent {
   @@index([status, createdAt])
   @@index([status, eventType, readyAt])
   @@index([status, updatedAt])
-  /// PR-75: composite index for the worker's "oldest interactive
-  /// PENDING event" claim. The (priority, status, createdAt) order
-  /// is intentional — it matches the worker's WHERE clause
-  /// (`priority = ? AND status = 'PENDING' ORDER BY createdAt ASC`).
   @@index([priority, status, createdAt])
   @@map("outbox_events")
 }
@@ -1333,7 +1205,7 @@ model BackupJob {
   completedAt      DateTime?
   createdByAdminId String?
   createdAt        DateTime     @default(now())
-  createdByAdmin   Admin?       @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  createdByAdmin   Admin?       @relation(fields: [createdByAdminId], references: [id])
   restoreJobs      RestoreJob[]
 
   @@index([status])
@@ -1354,7 +1226,7 @@ model RestoreJob {
   startedAt          DateTime?
   completedAt        DateTime?
   createdAt          DateTime  @default(now())
-  backupJob          BackupJob @relation(fields: [backupJobId], references: [id], onDelete: Restrict)
+  backupJob          BackupJob @relation(fields: [backupJobId], references: [id])
 
   @@index([backupJobId])
   @@index([status])
@@ -1373,6 +1245,25 @@ model IdempotencyKey {
   @@index([expiresAt])
   @@index([status])
   @@map("idempotency_keys")
+}
+
+model PaymentGateway {
+  id              String    @id
+  name            String
+  provider        String
+  isActive        Boolean   @default(false)
+  mdrBearer       MdrBearer @default(RIDER)
+  extraFeePercent Float     @default(2.5)
+  keyId           String?
+  keySecret       String?
+  merchantId      String?
+  webhookSecret   String?
+  apiEndpoint     String?
+  environment     String    @default("TEST")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("payment_gateways")
 }
 
 enum RiderLifecycleStatus {
@@ -1448,12 +1339,6 @@ enum TransactionStatus {
   FAILED
   REVERSED
   REFUNDED
-  // PR-ONBOARDING-FLOW-2026-08-13: a rider can cancel their own
-  // pending transaction by retrying with a different amount in the
-  // same 5-min idempotency window (e.g., "Change amount" on the
-  // Enter Amount screen). Semantically distinct from REJECTED (admin
-  // rejected the proof) and REVERSED (admin reversed a prior
-  // approval) — the rider changed their mind, no admin involvement.
   CANCELLED
 }
 
@@ -1474,10 +1359,6 @@ enum TransactionPurpose {
   ONBOARDING
 }
 
-// H6-2026-08-13: audience discriminator. USER = rider-initiated flows
-// (visible in /api/transaction/history by default). SYSTEM = server /
-// admin / system flows (hidden from rider history by default; admin
-// tools pass ?audience=ALL to see them).
 enum TransactionAudience {
   USER
   SYSTEM
@@ -1766,23 +1647,4 @@ enum MdrBearer {
   MERCHANT
 
   @@map("mdr_bearer")
-}
-
-model PaymentGateway {
-  id              String    @id
-  name            String
-  provider        String
-  isActive        Boolean   @default(false)
-  mdrBearer       MdrBearer @default(RIDER)
-  extraFeePercent Float     @default(2.5)
-  keyId           String?
-  keySecret       String?
-  merchantId      String?
-  webhookSecret   String?
-  apiEndpoint     String?
-  environment     String    @default("TEST")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@map("payment_gateways")
 }

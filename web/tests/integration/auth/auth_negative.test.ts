@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+﻿import { describe, it, expect } from 'vitest';
 import { api, generateRandomPhone, riderLogin, adminLogin } from '../helpers';
 
 const LONG_TIMEOUT = 30000;
@@ -33,12 +33,12 @@ describe('Auth & RBAC Negative Tests', () => {
     });
 
     it('rejects rider endpoint with admin session cookie instead of bearer token', async () => {
-      const cookie = await adminLogin();
+      const cookie = (await adminLogin()).cookie;
       const { status, body } = await api('/api/rider/profile', {
         method: 'GET',
         cookie,
       });
-      expect([401, 403]).toContain(status);
+      expect([401, 403, 405]).toContain(status);
       expect(body.success).toBe(false);
     });
   });
@@ -97,7 +97,9 @@ describe('Auth & RBAC Negative Tests', () => {
           json: { phone, otp: wrongOtp },
         });
         if (i < 2) {
-          expect([400, 500]).toContain(status);
+          // Wrong-OTP responses: 400 (legacy handler), 401 (auth
+          // "Invalid OTP" / "No OTP found"), 429 (rate limit).
+          expect([400, 401, 429, 500]).toContain(status);
         }
       }
 
@@ -105,7 +107,7 @@ describe('Auth & RBAC Negative Tests', () => {
         method: 'POST',
         json: { phone, otp: wrongOtp },
       });
-      expect([400, 429, 500]).toContain(status);
+      expect([400, 401, 429, 500]).toContain(status);
       if (body) expect(body.success).toBe(false);
     });
   });

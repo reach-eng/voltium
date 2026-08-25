@@ -24,6 +24,7 @@ vi.mock('@/lib/db', () => ({
     shift: {
       create: vi.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'shf_1', ...data })),
       update: vi.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'shf_1', ...data })),
+      delete: vi.fn().mockResolvedValue({ id: 'shf_1' }),
     },
     rentalLease: {
       count: vi.fn().mockResolvedValue(0),
@@ -81,7 +82,8 @@ describe('Admin Panel Phase 3 (P2 Polish) Remediation Suite', () => {
       vi.mocked(db.rentalLease.count).mockResolvedValueOnce(3);
 
       await expect(shiftUseCases.deleteShift('shf_active', 'admin_1')).rejects.toThrow(
-        /Cannot delete shift.*3 active or booked/
+        // S-2 (W8): error message updated to reflect full non-closed status guard
+        /Cannot delete shift.*3 non-closed/
       );
     });
 

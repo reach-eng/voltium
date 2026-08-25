@@ -12,6 +12,7 @@ class OfflineStorageService {
 
   Database? _db;
   bool _initialized = false;
+  Future<void>? _initFuture;
 
   set dbForTesting(Database? database) => _db = database;
 
@@ -20,8 +21,12 @@ class OfflineStorageService {
   @visibleForTesting
   void clearMemCacheForTesting() => _memCache.clear();
 
-  Future<void> init() async {
-    if (_initialized) return;
+  Future<void> init() {
+    if (_initialized && _db != null) return Future.value();
+    return _initFuture ??= _doInit();
+  }
+
+  Future<void> _doInit() async {
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
       join(dbPath, 'volt_offline.db'),
@@ -79,6 +84,7 @@ class OfflineStorageService {
         method TEXT NOT NULL,
         body TEXT,
         idempotency_key TEXT,
+        rider_db_id TEXT,
         created_at INTEGER NOT NULL
       )
     ''');
@@ -98,17 +104,17 @@ class OfflineStorageService {
     ''');
   }
 
-  final Map<String, Map<String, dynamic>> _memCache = {};
+  final Map<String, _MemCacheEntry> _memCache = {};
 
   Future<void> cacheData(
     String key,
     Map<String, dynamic> data, {
     Duration? ttl,
   }) async {
-    _memCache[key] = data;
-    if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final expiresAt = ttl != null ? now + ttl.inMilliseconds : null;
+    _memCache[key] = _MemCacheEntry(data: data, expiresAt: expiresAt);
+    if (_db == null) return;
     await _db!.insert(
       'cached_data',
       {
@@ -122,8 +128,13 @@ class OfflineStorageService {
   }
 
   Future<Map<String, dynamic>?> getCachedData(String key) async {
-    if (_memCache.containsKey(key)) {
-      return _memCache[key];
+    final entry = _memCache[key];
+    if (entry != null) {
+      if (entry.isExpired) {
+        _memCache.remove(key);
+      } else {
+        return entry.data;
+      }
     }
     if (_db == null) return null;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -133,9 +144,10 @@ class OfflineStorageService {
       whereArgs: [key, now],
     );
     if (results.isEmpty) return null;
-    final decoded =
-        jsonDecode(results.first['value'] as String) as Map<String, dynamic>;
-    _memCache[key] = decoded;
+    final row = results.first;
+    final decoded = jsonDecode(row['value'] as String) as Map<String, dynamic>;
+    final expiresAt = row['expires_at'] as int?;
+    _memCache[key] = _MemCacheEntry(data: decoded, expiresAt: expiresAt);
     return decoded;
   }
 
@@ -245,6 +257,7 @@ class OfflineStorageService {
   }
 
   Future<void> clearAll() async {
+    _memCache.clear();
     if (_db == null) return;
     await _db!.delete('cached_data');
     await _db!.delete('cached_transactions');
@@ -254,6 +267,23 @@ class OfflineStorageService {
 
   Future<void> close() async {
     await _db?.close();
+    _db = null;
     _initialized = false;
+    _initFuture = null;
+  }
+}
+
+class _MemCacheEntry {
+  final Map<String, dynamic> data;
+  final int? expiresAt;
+
+  const _MemCacheEntry({
+    required this.data,
+    this.expiresAt,
+  });
+
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    return DateTime.now().millisecondsSinceEpoch > expiresAt!;
   }
 }

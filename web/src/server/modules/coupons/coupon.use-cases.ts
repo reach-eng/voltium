@@ -61,7 +61,10 @@ export const couponUseCases = {
         description: data.description,
         discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
         discountValueInPaise,
-        minAmount: data.minAmount ?? null,
+        minAmount:
+          data.minAmount !== undefined && data.minAmount !== null
+            ? Math.round(data.minAmount * 100)
+            : null,
         maxUses: data.maxUses ?? null,
         // T-94 (PR-4, 2026-08-23) and Admin Panel Phase 3 P2-15: a
         // YYYY-MM-DD `validUntil` represents "valid through the
@@ -96,6 +99,12 @@ export const couponUseCases = {
       );
     }
     if (updateData.code) updateData.code = (updateData.code as string).toUpperCase();
+    if (updateData.minAmount !== undefined) {
+      updateData.minAmount =
+        updateData.minAmount !== null
+          ? Math.round(Number(updateData.minAmount) * 100)
+          : null;
+    }
     // PR-VER-2026-08-06 (SHIFTS P0-3): the old update only converted
     // `discountValue` when `discountType === 'FIXED'` — a PERCENTAGE update
     // kept `discountValue` in the payload and hit Prisma with a field that

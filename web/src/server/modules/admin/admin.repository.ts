@@ -133,18 +133,39 @@ export const adminRepository = {
     entityId?: string;
     actorId?: string;
     action?: string;
+    actionPrefix?: string;
+    q?: string;
+    from?: string;
+    to?: string;
     page?: number;
     limit?: number;
   }) {
-    const { entity, entityId, actorId, action, page = 1, limit = 50 } = filters;
-    // P3-18: typed where.
+    const { entity, entityId, actorId, action, actionPrefix, q, from, to, page = 1, limit = 50 } = filters;
     const where: Prisma.AuditLogWhereInput = {};
-    if (entity) where.entity = entity;
+    if (entity) {
+      if (entity.includes(',')) {
+        where.entity = { in: entity.split(',').map((s) => s.trim()) };
+      } else {
+        where.entity = entity;
+      }
+    }
     if (entityId) where.entityId = entityId;
     if (actorId) where.actorId = actorId;
-    // 2026-08-05 ops audit: action is a free-text string (TEXT column,
-    // migration 20260811000000) — no enum cast needed.
     if (action) where.action = action;
+    if (actionPrefix) where.action = { startsWith: actionPrefix };
+    if (from || to) {
+      where.createdAt = {
+        ...(from ? { gte: new Date(from) } : {}),
+        ...(to ? { lte: new Date(to) } : {}),
+      };
+    }
+    if (q) {
+      where.OR = [
+        { action: { contains: q, mode: 'insensitive' } },
+        { entityId: { contains: q, mode: 'insensitive' } },
+        { actorId: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
     const [logs, total] = await Promise.all([
       db.auditLog.findMany({

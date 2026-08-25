@@ -8,6 +8,7 @@ import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 const deleteHubSchema = z.object({ id: z.string().min(1, 'Hub ID is required') });
 
@@ -52,6 +53,15 @@ export async function POST(req: NextRequest) {
     const hub = await hubUseCases.createHub(validation.data, session.adminId || '');
     invalidateCache('admin:hubs:*');
     invalidateCache('admin:vehicles:*');
+
+    await logAdminMutation({
+      session,
+      action: 'hub.create',
+      entity: 'Hub',
+      entityId: hub?.id,
+      details: validation.data,
+    });
+
     return success(hub, 'Hub created', 201);
   } catch (error) {
     logger.error('POST /api/admin/hubs error:', error);
@@ -75,6 +85,15 @@ export async function PUT(req: NextRequest) {
     const hub = await hubUseCases.updateHub(id, data, session.adminId || '');
     invalidateCache('admin:hubs:*');
     invalidateCache('admin:vehicles:*');
+
+    await logAdminMutation({
+      session,
+      action: 'hub.update',
+      entity: 'Hub',
+      entityId: id,
+      details: data,
+    });
+
     return success(hub);
   } catch (error) {
     logger.error('PUT /api/admin/hubs error:', error);
@@ -95,6 +114,14 @@ export async function DELETE(req: NextRequest) {
     await hubUseCases.deleteHub(id, session.adminId || '');
     invalidateCache('admin:hubs:*');
     invalidateCache('admin:vehicles:*');
+
+    await logAdminMutation({
+      session,
+      action: 'hub.delete',
+      entity: 'Hub',
+      entityId: id,
+    });
+
     return success(null, 'Hub deleted');
   } catch (error: unknown) {
     const message = errorMessage(error);

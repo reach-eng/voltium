@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/error-utils';
 
 export interface PaymentGateway {
   id: string;
@@ -109,7 +110,7 @@ export function usePaymentGateways() {
         }
         return true;
       } catch (err: any) {
-        toast.error(err.message || 'Failed to save gateway details');
+        toast.error(extractErrorMessage(err, ''));
         return false;
       }
     },
@@ -135,7 +136,7 @@ export function usePaymentGateways() {
         await fetchGateways();
         return true;
       } catch (err: any) {
-        toast.error(err.message || 'Failed to create payment gateway');
+        toast.error(extractErrorMessage(err, ''));
         return false;
       }
     },
@@ -159,7 +160,7 @@ export function usePaymentGateways() {
         setGateways((prev) => prev.filter((gw) => gw.id !== gatewayId));
         return true;
       } catch (err: any) {
-        toast.error(err.message || 'Failed to delete gateway');
+        toast.error(extractErrorMessage(err, ''));
         return false;
       }
     },
@@ -197,7 +198,7 @@ export function usePaymentGateways() {
           checks: json.data?.checks,
         };
       } catch (err: any) {
-        toast.error(err.message || 'Failed to test gateway connection');
+        toast.error(extractErrorMessage(err, ''));
         return { ok: false, issues: [err.message || 'Network error'] };
       }
     },

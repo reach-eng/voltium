@@ -42,7 +42,7 @@ describe('Hubs Bulk Operations Cache Invalidation', () => {
 
     const res = await POST(req);
     expect(res.status).toBe(200);
-    expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:*');
+    expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:hubs:*');
     expect(mocks.invalidateCache).toHaveBeenCalledWith('admin:vehicles:*');
   });
 });

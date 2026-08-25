@@ -120,6 +120,7 @@ export const walletLedgerService = {
       txnId?: string;
       actorId?: string;
       note?: string;
+      idempotencyKey?: string;
     },
     tx?: PrismaTransaction
   ) {
@@ -133,6 +134,7 @@ export const walletLedgerService = {
         txnId: params.txnId,
         actorId: params.actorId,
         note: params.note,
+        idempotencyKey: params.idempotencyKey ?? (params.txnId ? `approve-deposit:${params.txnId}` : undefined),
       });
 
     if (tx) await work(tx);

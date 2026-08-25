@@ -45,6 +45,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import { DestructiveConfirm } from '@/components/admin/DestructiveConfirm';
+import { MaintenanceToggleButton } from '@/components/admin/MaintenanceToggleButton';
 import {
   Database,
   HardDrive,
@@ -81,6 +83,7 @@ import {
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { useCanRestore } from './use-destroy-permission';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -248,8 +251,12 @@ export function DisasterRecoveryTab() {
   const drChecklist = [
     {
       id: 'backup',
-      label: 'Recent backup exists',
-      check: () => overview?.stats?.lastBackupStatus === 'COMPLETED',
+      label: 'Recent backup exists (within 48h)',
+      check: () => {
+        if (overview?.stats?.lastBackupStatus !== 'COMPLETED' || !overview?.stats?.lastBackupAt) return false;
+        const backupTime = new Date(overview.stats.lastBackupAt).getTime();
+        return !isNaN(backupTime) && Date.now() - backupTime <= 48 * 3600 * 1000;
+      },
     },
     {
       id: 'schedule',
@@ -269,7 +276,12 @@ export function DisasterRecoveryTab() {
     {
       id: 'verify',
       label: 'Latest backup verified',
-      check: () => Boolean((overview?.stats as any)?.lastBackupVerified || overview?.stats?.lastBackupStatus === 'COMPLETED'),
+      check: () =>
+        Boolean(
+          (overview?.stats as any)?.lastBackupVerified ||
+            (overview?.stats?.lastBackupStatus === 'COMPLETED' &&
+              (overview?.stats as any)?.lastVerifiedAt)
+        ),
     },
     { id: 'maintenance', label: 'Maintenance mode not active', check: () => !maintenanceMode },
   ];
@@ -354,23 +366,26 @@ export function DisasterRecoveryTab() {
     fetchHealth();
   }, [fetchHealth]);
 
-  const handleToggleMaintenance = async () => {
+  const [confirmVerifyAllOpen, setConfirmVerifyAllOpen] = useState(false);
+
+  const handleToggleMaintenance = async (targetEnabled?: boolean) => {
     setTogglingMaintenance(true);
     try {
+      const nextState = typeof targetEnabled === 'boolean' ? targetEnabled : !maintenanceMode;
       const res = await fetch('/api/admin/maintenance-mode', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          enabled: !maintenanceMode,
+          enabled: nextState,
           message: 'Disaster recovery drill in progress',
         }),
       });
       if (res.ok) {
-        setMaintenanceMode(!maintenanceMode);
-        toast.success(maintenanceMode ? 'Maintenance mode disabled' : 'Maintenance mode enabled');
+        setMaintenanceMode(nextState);
+        toast.success(nextState ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
       } else {
         const errJson = await res.json().catch(() => ({}));
-        toast.error(errJson.error || 'Failed to toggle maintenance mode');
+        toast.error(extractErrorMessage(errJson, ''));
       }
     } catch {
       toast.error('Failed to toggle maintenance mode');
@@ -383,42 +398,26 @@ export function DisasterRecoveryTab() {
     setVerifyingAll(true);
     setVerifyAllResult(null);
     try {
-      // Fetch all completed backups
-      const res = await fetch('/api/admin/data-management/backups?limit=50&status=COMPLETED');
+      const res = await fetch('/api/admin/data-management/backups/verify-all', {
+        method: 'POST',
+      });
       if (!res.ok) {
-        toast.error('Failed to fetch backups');
+        const errJson = await res.json().catch(() => ({}));
+        toast.error(extractErrorMessage(errJson, ''));
         return;
       }
       const json = await res.json();
-      const backups = json.data?.jobs || [];
-
-      if (backups.length === 0) {
-        toast.info('No completed backups to verify');
-        setVerifyAllResult({ verified: 0, failed: 0, total: 0 });
-        return;
+      if (json.success) {
+        const data = json.data;
+        setVerifyAllResult({
+          verified: data.verified,
+          failed: data.failed,
+          total: data.total,
+        });
+        toast.success(`Verified ${data.verified}/${data.total} backups`);
+      } else {
+        toast.error(extractErrorMessage(json, ''));
       }
-
-      let verified = 0;
-      let failed = 0;
-      const CHUNK_SIZE = 5;
-      for (let i = 0; i < backups.length; i += CHUNK_SIZE) {
-        const chunk = backups.slice(i, i + CHUNK_SIZE);
-        const results = await Promise.allSettled(
-          chunk.map((backup: any) =>
-            fetch(`/api/admin/data-management/backups/${backup.id}/verify`, {
-              method: 'POST',
-            })
-          )
-        );
-        for (const r of results) {
-          if (r.status === 'fulfilled' && r.value.ok) verified++;
-          else failed++;
-          failed++;
-        }
-      }
-
-      setVerifyAllResult({ verified, failed, total: backups.length });
-      toast.success(`Verified ${verified}/${backups.length} backups`);
     } catch {
       toast.error('Verification process failed');
     } finally {
@@ -445,21 +444,16 @@ export function DisasterRecoveryTab() {
     <div className="space-y-6">
       {/* Action Buttons Bar */}
       <div className="flex flex-wrap items-center gap-3">
+        <MaintenanceToggleButton
+          enabled={maintenanceMode}
+          loading={togglingMaintenance}
+          onToggle={handleToggleMaintenance}
+        />
         <Button
-          variant={maintenanceMode ? 'default' : 'outline'}
-          onClick={handleToggleMaintenance}
-          disabled={togglingMaintenance}
+          variant="outline"
+          onClick={() => setConfirmVerifyAllOpen(true)}
+          disabled={verifyingAll}
         >
-          {togglingMaintenance ? (
-            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-          ) : maintenanceMode ? (
-            <Play className="w-4 h-4 mr-1" />
-          ) : (
-            <Ban className="w-4 h-4 mr-1" />
-          )}
-          {maintenanceMode ? 'Disable Maintenance Mode' : 'Enable Maintenance Mode'}
-        </Button>
-        <Button variant="outline" onClick={handleVerifyAllBackups} disabled={verifyingAll}>
           {verifyingAll ? (
             <Loader2 className="w-4 h-4 mr-1 animate-spin" />
           ) : (
@@ -645,6 +639,36 @@ export function DisasterRecoveryTab() {
                 <RefreshCw className="w-3 h-3 mr-1" /> Refresh Health
               </Button>
             </div>
+            <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+              <p className="text-sm font-medium mb-1">Verify All Backups</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Validate checksums and file manifests across all completed backups
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={verifyingAll}
+                onClick={() => setConfirmVerifyAllOpen(true)}
+              >
+                {verifyingAll ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-3 h-3 mr-1" />
+                )}
+                {verifyingAll ? 'Verifying...' : 'Verify All Backups'}
+              </Button>
+            </div>
+            <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
+              <p className="text-sm font-medium mb-1">Maintenance Mode</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Pause or resume rider-facing operations globally
+              </p>
+              <MaintenanceToggleButton
+                enabled={maintenanceMode}
+                loading={togglingMaintenance}
+                onToggle={handleToggleMaintenance}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -659,6 +683,22 @@ export function DisasterRecoveryTab() {
           </span>
         </div>
       )}
+
+      {/* Verify All Confirmation Dialog */}
+      <DestructiveConfirm
+        open={confirmVerifyAllOpen}
+        onOpenChange={setConfirmVerifyAllOpen}
+        title="Verify All Backup Archives"
+        description="This will fan-out checksum validation across all completed backup archives on disk."
+        expectedPhrase="VERIFY ALL"
+        confirmLabel="Run Verification"
+        variant="default"
+        loading={verifyingAll}
+        onConfirm={async () => {
+          setConfirmVerifyAllOpen(false);
+          await handleVerifyAllBackups();
+        }}
+      />
     </div>
   );
 }

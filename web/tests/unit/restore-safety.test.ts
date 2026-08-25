@@ -13,6 +13,7 @@ vi.mock('@/server/modules/data-management/backup.repository', () => ({
     getBackupJob: vi.fn(),
     createRestoreJob: vi.fn(),
     updateRestoreJob: vi.fn(),
+    findRunningRestore: vi.fn(),
   },
 }));
 
@@ -150,6 +151,24 @@ describe('Restore Safety Tests', () => {
       );
       expect(shell.restoreDatabase).toHaveBeenCalled();
       expect(result.status).toBe('COMPLETED');
+    });
+
+    it('rejects restore when another restore job is already running (F-004)', async () => {
+      vi.mocked(backupRepository.getBackupJob).mockResolvedValue({
+        id: 'job-1',
+        status: 'COMPLETED',
+        createdAt: new Date(),
+        type: 'MANUAL',
+      } as any);
+
+      vi.mocked(backupRepository.findRunningRestore).mockResolvedValue({
+        id: 'existing-restore-1',
+        status: 'RUNNING',
+      } as any);
+
+      await expect(restoreService.startRestore('job-1', 'admin-1')).rejects.toThrow(
+        'A restore operation is already in progress'
+      );
     });
   });
 });

@@ -20,9 +20,9 @@ void main() {
     // Test filter chips
     final filters = ['All', 'Approved', 'Pending'];
     for (final f in filters) {
-      final chip = app.shared.filter${f}Chip;
+      final chip = find.text(f);
       if (chip.evaluate().isNotEmpty) {
-        await tester.tap(chip);
+        await tester.tap(chip.first);
         await settle(tester);
       }
     }

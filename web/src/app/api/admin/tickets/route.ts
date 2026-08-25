@@ -17,6 +17,7 @@ import {
   updateAdminTicketSchema,
 } from '@/lib/validators/admin';
 import { supportUseCases } from '@/server/modules/support/support.use-cases';
+import { TicketStateError } from '@/server/modules/support/ticket-state-machine';
 import { parsePositiveInt } from '@/lib/api-utils';
 
 export async function GET(req: NextRequest) {
@@ -34,7 +35,13 @@ export async function GET(req: NextRequest) {
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
     const result = await supportUseCases.getAdminTickets({ status, priority, search, page, limit });
-    return withCacheHeaders(success(result.tickets, undefined, 200, result.pagination), 5);
+    return withCacheHeaders(
+      success(result.tickets, undefined, 200, {
+        ...result.pagination,
+        statusCounts: result.statusCounts,
+      }),
+      5
+    );
   } catch (error) {
     logger.error('GET /api/admin/tickets error:', error);
     return errors.internal('Failed to fetch tickets');
@@ -77,6 +84,13 @@ export async function PUT(req: NextRequest) {
 
     return success(ticket);
   } catch (error) {
+    if (error instanceof TicketStateError) {
+      return errors.conflict(error.message);
+    }
+    if (error instanceof Error) {
+      if (error.message === 'Ticket not found') return errors.notFound(error.message);
+      if (error.message.includes('Assignee must be an active admin')) return errors.badRequest(error.message);
+    }
     logger.error('PUT /api/admin/tickets error:', error);
     return errors.internal('Failed to update ticket');
   }

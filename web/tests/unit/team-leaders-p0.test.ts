@@ -200,7 +200,12 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
       const res = await getRiders(req, { params: Promise.resolve({ id: 'tl_123' }) });
 
       expect(res.status).toBe(403);
-      expect(mocks.hasPermission).toHaveBeenCalledWith('OPERATIONS_ADMIN', 'riders_view');
+      // AUDIT FIX (N-5): the route now uses the SESSION-OBJECT form so explicit
+      // adminPermissions grants/revocations are honored (was: bare role string).
+      expect(mocks.hasPermission).toHaveBeenCalledWith(
+        expect.objectContaining({ adminId: 'admin_1', adminRole: 'OPERATIONS_ADMIN' }),
+        'riders_view'
+      );
     });
   });
 
@@ -218,7 +223,7 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
 
       expect(res.status).toBe(200);
       expect(mocks.hasPermission).toHaveBeenCalledWith(
-        'OPERATIONS_ADMIN',
+        expect.objectContaining({ adminId: 'admin_1', adminRole: 'OPERATIONS_ADMIN' }),
         'team_leaders_manage'
       );
       expect(mocks.bulkActivate).toHaveBeenCalledWith(['tl_1', 'tl_2'], 'admin_1');
@@ -237,7 +242,7 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
 
       expect(res.status).toBe(403);
       expect(mocks.hasPermission).toHaveBeenCalledWith(
-        'OPERATIONS_ADMIN',
+        expect.objectContaining({ adminId: 'admin_1', adminRole: 'OPERATIONS_ADMIN' }),
         'team_leaders_manage'
       );
       expect(mocks.bulkDeactivate).not.toHaveBeenCalled();

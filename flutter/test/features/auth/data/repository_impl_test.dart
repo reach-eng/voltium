@@ -106,7 +106,9 @@ void main() {
       expect(result.isNewRider, false);
     });
 
-    test('verifyOtp defaults missing values to empty or false', () async {
+    test(
+        'verifyOtp defaults missing values to empty, and isNewRider to true (fail toward onboarding)',
+        () async {
       when(() => mockVoltiumApiClient.postAuthVerifyOtp(any()))
           .thenAnswer((_) async => VerifyOtpResponse(
                 token: null,
@@ -117,7 +119,7 @@ void main() {
       final result = await repository.verifyOtp('9876543210', '123456');
       expect(result.token, '');
       expect(result.riderId, '');
-      expect(result.isNewRider, false);
+      expect(result.isNewRider, true);
       expect(result.fcmCommandSecret, '');
     });
 

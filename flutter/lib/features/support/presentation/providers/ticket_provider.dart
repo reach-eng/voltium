@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
-import 'package:voltium_rider/features/support/data/repository_impl.dart';
+import 'package:voltium_rider/features/support/domain/repository.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 
 enum TicketFilter { all, open, assigned, inProgress, resolved, closed }
 
@@ -50,18 +49,28 @@ class TicketState {
 class SupportTicketsNotifier extends Notifier<TicketState> {
   @override
   TicketState build() {
-    Future.microtask(() => fetchTickets());
+    Future.microtask(() {
+      if (ref.mounted) {
+        fetchTickets();
+      }
+    });
     return TicketState(isLoading: true);
   }
 
+  SupportRepository get _repo => ref.read(supportRepositoryProvider);
+
   Future<void> fetchTickets() async {
+    if (!ref.mounted) return;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final repository = SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
-      final response = await repository.fetchTickets();
-      final data = response['tickets'] as List<dynamic>?;
-      if (data != null) {
-        final parsed = data
+      final response = await _repo.fetchTickets();
+      if (!ref.mounted) return;
+      final dynamic rawList = response['tickets'] ??
+          (response['data'] is Map<String, dynamic>
+              ? (response['data'] as Map<String, dynamic>)['tickets']
+              : (response['data'] is List ? response['data'] : null));
+      if (rawList is List<dynamic>) {
+        final parsed = rawList
             .map((e) => TicketEntity.fromJson(e as Map<String, dynamic>))
             .toList();
         state =
@@ -70,7 +79,11 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
         state = state.copyWith(isLoading: false, clearError: true);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Failed to load tickets');
+      if (!ref.mounted) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load tickets',
+      );
     }
   }
 

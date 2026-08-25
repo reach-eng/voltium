@@ -60,7 +60,6 @@ vi.mock('@/lib/audit-log', () => ({ createAuditLog: mocks.createAuditLog }));
 
 // Catch the route's internal catch and surface the cause.
 process.on('unhandledRejection', (reason) => {
-  // eslint-disable-next-line no-console
   console.error('UNHANDLED:', reason);
 });
 

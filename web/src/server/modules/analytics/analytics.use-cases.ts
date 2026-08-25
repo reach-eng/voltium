@@ -120,53 +120,75 @@ export const analyticsUseCases = {
   },
 };
 
+/**
+ * I-5 (W10): Canonical IST month key formatter (YYYY-MM).
+ * Unifies time bucketing across analytics queries so UTC dates near the
+ * IST midnight boundary (UTC + 5:30) are consistently attributed.
+ */
+export function toIstMonthKey(date: Date): string {
+  const istOffsetMs = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(date.getTime() + istOffsetMs);
+  return `${istDate.getUTCFullYear()}-${String(istDate.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 async function getMonthlyTrend(): Promise<Array<{ month: string; revenue: number }>> {
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 11);
   startDate.setDate(1);
   startDate.setHours(0, 0, 0, 0);
 
-  // PR-110: aggregate in Node by iterating monthly buckets. The cohort
-  // query is the only one that justified raw SQL (date-bucket grouping);
-  // the monthly trend is just a sum grouped by month, which Prisma's
-  // groupBy handles in a single round-trip.
   const buckets: Array<{ month: string; revenue: number }> = [];
   for (let i = 0; i < 12; i++) {
     const d = new Date(startDate);
     d.setMonth(startDate.getMonth() + i);
-    const monthEnd = new Date(d);
-    monthEnd.setMonth(d.getMonth() + 1);
     buckets.push({
-      month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      month: toIstMonthKey(d),
       revenue: 0,
     });
-    void monthEnd;
   }
-
-  const rows = await db.transaction.groupBy({
-    by: ['createdAt'],
-    where: {
-      status: 'APPROVED',
-      type: 'DEBIT',
-      purpose: 'RENT_PAYMENT',
-      createdAt: { gte: startDate },
-    },
-    _sum: { amountInPaise: true },
-  });
 
   // Build a map for O(1) lookup.
   const bucketByKey = new Map<string, number>();
   for (const b of buckets) bucketByKey.set(b.month, 0);
-  // groupBy returns a Date for createdAt (grouped by hour, not month,
-  // so we still have to bin manually — the value is a BigInt sum in
-  // paise).
-  for (const r of rows as Array<{ createdAt: Date; _sum: { amountInPaise: bigint | null } }>) {
-    const d = new Date(r.createdAt);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+  // I-5 (W10): Query transactions and aggregate into IST month buckets.
+  let rows: Array<{
+    createdAt: Date;
+    amountInPaise?: number | bigint | null;
+    _sum?: { amountInPaise: bigint | null };
+  }> = [];
+
+  if (typeof db.transaction?.findMany === 'function') {
+    rows = (await db.transaction.findMany({
+      where: {
+        status: 'APPROVED',
+        type: 'DEBIT',
+        purpose: 'RENT_PAYMENT',
+        createdAt: { gte: startDate },
+      },
+      select: { createdAt: true, amountInPaise: true },
+    })) as any;
+  } else if (typeof (db.transaction as any)?.groupBy === 'function') {
+    rows = (await (db.transaction as any).groupBy({
+      by: ['createdAt'],
+      where: {
+        status: 'APPROVED',
+        type: 'DEBIT',
+        purpose: 'RENT_PAYMENT',
+        createdAt: { gte: startDate },
+      },
+      _sum: { amountInPaise: true },
+    })) as any;
+  }
+
+  for (const r of rows) {
+    const key = toIstMonthKey(new Date(r.createdAt));
+    const amount = r.amountInPaise ?? r._sum?.amountInPaise ?? 0;
     if (bucketByKey.has(key)) {
-      bucketByKey.set(key, (bucketByKey.get(key) ?? 0) + Number(r._sum.amountInPaise ?? 0) / 100);
+      bucketByKey.set(key, (bucketByKey.get(key) ?? 0) + Number(amount) / 100);
     }
   }
+
   for (const b of buckets) {
     b.revenue = bucketByKey.get(b.month) ?? 0;
   }
@@ -191,12 +213,7 @@ async function getCohortData(): Promise<
   >();
 
   for (const rider of riders) {
-    const d = new Date(rider.createdAt);
-    // Format to Asia/Kolkata (UTC + 5:30) YYYY-MM
-    const istOffsetMs = 5.5 * 60 * 60 * 1000;
-    const istDate = new Date(d.getTime() + istOffsetMs);
-    const month = `${istDate.getUTCFullYear()}-${String(istDate.getUTCMonth() + 1).padStart(2, '0')}`;
-
+    const month = toIstMonthKey(new Date(rider.createdAt));
     const entry = cohortMap.get(month) ?? { month, total: 0, active: 0, suspended: 0 };
     entry.total += 1;
     if (rider.lifecycleStatus === 'ACTIVE') {

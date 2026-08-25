@@ -44,14 +44,22 @@ export function flattenRider(
   // the exact `RiderWithRelations` payload. The union loosens the boundary
   // while the cast keeps the serializer body fully typed.
   const r = rider as RiderWithRelations;
-  // P0-S1: Explicitly drop sensitive secrets and internal tokens from the rest spread
+  // P0-S1 / F-095: Explicitly deny-list and drop sensitive secrets and internal tokens from the rest spread
   const {
     kycProfile,
     wallet,
     guarantor,
+    lockPassword: _lockPassword,
     lockPasswordHash: _lockPasswordHash,
+    otp: _otp,
+    otpExpiresAt: _otpExpiresAt,
+    otpAttempts: _otpAttempts,
+    password: _password,
+    passwordHash: _passwordHash,
     fcmToken: _fcmToken,
     tokenVersion: _tokenVersion,
+    token: _token,
+    refreshToken: _refreshToken,
     ...rest
   } = r as any;
 

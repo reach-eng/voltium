@@ -469,6 +469,59 @@ describe('Wallet — Top-up', () => {
     );
   });
 
+  it('validates exact security deposit amount for onboarding rider when advance rent is not paid', async () => {
+    mockDb.rider.findUnique.mockResolvedValue({
+      id: 'rider-123',
+      depositDone: false,
+      phone: '9876543210',
+      lifecycleStatus: 'PLAN_SELECTED',
+      currentPlanId: 'plan-1',
+      advanceRentPaid: false,
+      currentPlanRef: {
+        securityDepositInPaise: 200000,
+        priceInPaise: 140000,
+      },
+    });
+
+    // Mismatched amount: sending ₹1,000 when ₹2,000 is required
+    await expect(
+      walletUseCases.requestTopup('rider-123', 100000, 'TOP_UP', 'upi')
+    ).rejects.toThrow('Security deposit amount must be exactly ₹2000 (Security Deposit)');
+  });
+
+  it('validates exact security deposit + advance rent amount for onboarding rider when advance rent is ticked', async () => {
+    mockDb.rider.findUnique.mockResolvedValue({
+      id: 'rider-123',
+      depositDone: false,
+      phone: '9876543210',
+      lifecycleStatus: 'PLAN_SELECTED',
+      currentPlanId: 'plan-1',
+      advanceRentPaid: true,
+      currentPlanRef: {
+        securityDepositInPaise: 200000,
+        priceInPaise: 140000,
+      },
+    });
+    mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
+    mockWalletRepository.createTransaction.mockResolvedValue({
+      id: 'txn-deposit',
+      status: 'PENDING',
+      purpose: 'SECURITY_DEPOSIT',
+      amountInPaise: 340000,
+    });
+
+    // Exact amount: ₹2,000 deposit + ₹1,400 rent = ₹3,400 (340000 paise)
+    const result = await walletUseCases.requestTopup('rider-123', 340000, 'TOP_UP', 'upi');
+
+    expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        purpose: 'SECURITY_DEPOSIT',
+        amountInPaise: 340000,
+      })
+    );
+    expect(result.amountInPaise).toBe(340000);
+  });
+
   it('throws when rider not found', async () => {
     mockDb.rider.findUnique.mockResolvedValue(null);
 
@@ -557,7 +610,8 @@ describe('Wallet — Approval', () => {
     expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith(
       'txn-1',
       'REJECTED',
-      'admin-1'
+      'admin-1',
+      expect.anything()
     );
     expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({

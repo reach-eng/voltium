@@ -33,13 +33,20 @@ export async function POST(
     }
 
     const now = new Date();
-    const amountInPaise = reward.points * 100;
+    // M-3: Points are stored in paise ("₹200 award → points 20000").
+    // Dropping the previous `* 100` multiplication which inflated redemption 100x.
+    const amountInPaise = reward.points;
 
     await db.$transaction(async (tx) => {
-      await tx.reward.update({
-        where: { id: rewardId },
+      // M-3: CAS claim ensures concurrent requests cannot double-redeem
+      const claimed = await tx.reward.updateMany({
+        where: { id: rewardId, redeemedAt: null },
         data: { redeemedAt: now },
       });
+
+      if (claimed.count === 0) {
+        throw new Error('ALREADY_REDEEMED');
+      }
 
       const txn = await tx.transaction.create({
         data: {
@@ -57,12 +64,17 @@ export async function POST(
         amountInPaise,
         category: 'REWARD',
         txnId: txn.id,
+        idempotencyKey: `redeem-reward:${rewardId}`,
         note: `Reward redemption: ${reward.title}`,
       }, tx);
     });
 
     return success({ rewardId, redeemedAt: now.toISOString() }, 'Reward redeemed successfully');
   } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === 'ALREADY_REDEEMED') {
+      return errors.badRequest('Reward already redeemed');
+    }
     logger.error('[POST /api/rider/rewards/[id]/redeem]', err);
     return errors.internal('Failed to redeem reward');
   }

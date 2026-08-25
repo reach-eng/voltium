@@ -34,7 +34,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 import { db } from '@/lib/db';
-import { generateOtp, clearOtpStore } from '@/lib/otp-store';
+import { generateOtp, verifyOtp, clearOtpStore } from '@/lib/otp-store';
 
 describe('OTP store — N-1 master OTP env gate', () => {
   const saved: Record<string, string | undefined> = {};
@@ -113,5 +113,36 @@ describe('OTP store — N-1 master OTP env gate', () => {
     const code = await generateOtp('8000000006');
     expect(code).not.toBe('111111');
     expect(code).toMatch(/^\d{6}$/);
+  });
+
+  describe('verifyOtp master OTP gate', () => {
+    it('allows 111111 in development when APP_ENV=development and NODE_ENV=development', async () => {
+      process.env.APP_ENV = 'development';
+      process.env.NODE_ENV = 'development';
+      process.env.ENABLE_TEST_OTP = 'true';
+      await generateOtp('8000000007');
+      const result = await verifyOtp('8000000007', '111111');
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects 111111 in staging even with ENABLE_TEST_OTP=true', async () => {
+      process.env.APP_ENV = 'staging';
+      process.env.NODE_ENV = 'development';
+      process.env.ENABLE_TEST_OTP = 'true';
+      const realOtp = await generateOtp('8000000008');
+      expect(realOtp).not.toBe('111111');
+      const result = await verifyOtp('8000000008', '111111');
+      expect(result.valid).toBe(false);
+    });
+
+    it('rejects 111111 in production even with ENABLE_TEST_OTP=true', async () => {
+      process.env.APP_ENV = 'production';
+      process.env.NODE_ENV = 'production';
+      process.env.ENABLE_TEST_OTP = 'true';
+      const realOtp = await generateOtp('8000000009');
+      expect(realOtp).not.toBe('111111');
+      const result = await verifyOtp('8000000009', '111111');
+      expect(result.valid).toBe(false);
+    });
   });
 });

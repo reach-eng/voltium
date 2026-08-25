@@ -37,11 +37,17 @@ describe('Ticket #12 superseded: AuditLog.action is TEXT (dot-strings persist)',
     expect(schema.length).toBeGreaterThan(1000);
   });
 
-  it('AuditLog.action is a TEXT column, not an enum type', () => {
+  it('AuditLog.action is a TEXT/String column, not an enum type', () => {
+    // The original test asserted `action String @db.Text` (the
+    // explicit Postgres TEXT type). The schema was simplified
+    // to a plain `action String` — Prisma's default String is
+    // already a TEXT column in Postgres. The contract this test
+    // is asserting is "action is a String, not an enum", which
+    // is the load-bearing part of the invariant.
     const modelMatch = schema.match(/model\s+AuditLog\s*\{([^}]+)\}/);
     expect(modelMatch).toBeTruthy();
     const body = modelMatch![1];
-    expect(body).toMatch(/action\s+String\s+@db\.Text/);
+    expect(body).toMatch(/action\s+String/);
     expect(body).not.toMatch(/action\s+AuditActionType/);
   });
 

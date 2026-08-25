@@ -93,7 +93,7 @@ class VerifyOtpResponse {
   final String? state;
   final String? kycStatus;
   final String? guarantorStatus;
-  final int? walletBalance;
+  final double? walletBalance;
   final String? depositStatus;
   final String? rentalStatus;
   final String? referralCode;
@@ -122,22 +122,25 @@ class VerifyOtpResponse {
   });
 
   factory VerifyOtpResponse.fromJson(Map<String, dynamic> json) {
+    final payload = (json['data'] is Map<String, dynamic>)
+        ? (json['data'] as Map<String, dynamic>)
+        : json;
     return VerifyOtpResponse(
-      riderId: json['riderId'] as String?,
-      phone: json['phone'] as String?,
-      fullName: json['fullName'] as String?,
-      state: json['state'] as String?,
-      kycStatus: json['kycStatus'] as String?,
-      guarantorStatus: json['guarantorStatus'] as String?,
-      walletBalance: json['walletBalance'] as int?,
-      depositStatus: json['depositStatus'] as String?,
-      rentalStatus: json['rentalStatus'] as String?,
-      referralCode: json['referralCode'] as String?,
-      token: json['token'] as String?,
-      accountStatus: json['accountStatus'] as String?,
-      isNewRider: json['isNewRider'] as bool?,
-      fcmCommandSecret: json['fcmCommandSecret'] as String?,
-      refreshToken: json['refreshToken'] as String?,
+      riderId: payload['riderId'] as String?,
+      phone: payload['phone'] as String?,
+      fullName: payload['fullName'] as String?,
+      state: payload['state'] as String?,
+      kycStatus: payload['kycStatus'] as String?,
+      guarantorStatus: payload['guarantorStatus'] as String?,
+      walletBalance: (payload['walletBalance'] as num?)?.toDouble(),
+      depositStatus: payload['depositStatus'] as String?,
+      rentalStatus: payload['rentalStatus'] as String?,
+      referralCode: payload['referralCode'] as String?,
+      token: payload['token'] as String?,
+      accountStatus: payload['accountStatus'] as String?,
+      isNewRider: payload['isNewRider'] as bool?,
+      fcmCommandSecret: payload['fcmCommandSecret'] as String?,
+      refreshToken: payload['refreshToken'] as String?,
     );
   }
 
@@ -169,7 +172,7 @@ class RiderProfileResponse {
   final String? state;
   final String? kycStatus;
   final String? guarantorStatus;
-  final int? walletBalance;
+  final double? walletBalance;
   final String? depositStatus;
   final String? rentalStatus;
   final String? referralCode;
@@ -210,28 +213,31 @@ class RiderProfileResponse {
   });
 
   factory RiderProfileResponse.fromJson(Map<String, dynamic> json) {
+    final payload = (json['data'] is Map<String, dynamic>)
+        ? (json['data'] as Map<String, dynamic>)
+        : json;
     return RiderProfileResponse(
-      riderId: json['riderId'] as String?,
-      phone: json['phone'] as String?,
-      fullName: json['fullName'] as String?,
-      state: json['state'] as String?,
-      kycStatus: json['kycStatus'] as String?,
-      guarantorStatus: json['guarantorStatus'] as String?,
-      walletBalance: json['walletBalance'] as int?,
-      depositStatus: json['depositStatus'] as String?,
-      rentalStatus: json['rentalStatus'] as String?,
-      referralCode: json['referralCode'] as String?,
-      accountStatus: json['accountStatus'] as String?,
-      email: json['email'] as String?,
-      fatherName: json['fatherName'] as String?,
-      motherName: json['motherName'] as String?,
-      currentAddress: json['currentAddress'] as String?,
-      emergencyContact: json['emergencyContact'] as String?,
-      dob: json['dob'] as String?,
-      profilePhoto: json['profilePhoto'] as String?,
-      aadhaarFront: json['aadhaarFront'] as String?,
-      aadhaarBack: json['aadhaarBack'] as String?,
-      panCard: json['panCard'] as String?,
+      riderId: payload['riderId'] as String?,
+      phone: payload['phone'] as String?,
+      fullName: payload['fullName'] as String?,
+      state: payload['state'] as String?,
+      kycStatus: payload['kycStatus'] as String?,
+      guarantorStatus: payload['guarantorStatus'] as String?,
+      walletBalance: (payload['walletBalance'] as num?)?.toDouble(),
+      depositStatus: payload['depositStatus'] as String?,
+      rentalStatus: payload['rentalStatus'] as String?,
+      referralCode: payload['referralCode'] as String?,
+      accountStatus: payload['accountStatus'] as String?,
+      email: payload['email'] as String?,
+      fatherName: payload['fatherName'] as String?,
+      motherName: payload['motherName'] as String?,
+      currentAddress: payload['currentAddress'] as String?,
+      emergencyContact: payload['emergencyContact'] as String?,
+      dob: payload['dob'] as String?,
+      profilePhoto: payload['profilePhoto'] as String?,
+      aadhaarFront: payload['aadhaarFront'] as String?,
+      aadhaarBack: payload['aadhaarBack'] as String?,
+      panCard: payload['panCard'] as String?,
     );
   }
 
@@ -1008,15 +1014,18 @@ class ListNotificationsResponse {
   });
 
   factory ListNotificationsResponse.fromJson(Map<String, dynamic> json) {
+    final payload = (json['data'] is Map<String, dynamic>)
+        ? (json['data'] as Map<String, dynamic>)
+        : json;
     return ListNotificationsResponse(
-      notifications: json['notifications'] != null
-          ? (json['notifications'] as List)
+      notifications: payload['notifications'] != null
+          ? (payload['notifications'] as List)
               .map((e) =>
                   NotificationResponse.fromJson(e as Map<String, dynamic>))
               .toList()
           : null,
-      unreadCount: json['unreadCount'] as int?,
-      total: json['total'] as int?,
+      unreadCount: payload['unreadCount'] as int?,
+      total: payload['total'] as int?,
     );
   }
 

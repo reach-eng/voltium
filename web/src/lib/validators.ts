@@ -700,13 +700,13 @@ export const teamLeaderBulkActionSchema = z.object({
 export const awardRewardSchema = z.object({
   riderDbId: z.string().min(1, 'Rider ID is required'),
   title: z.string().min(1, 'Title is required').max(100),
-  points: z.number().int().min(1, 'Points must be positive'),
+  points: z.number().int().min(1, 'Points must be positive').max(100000, 'Points cannot exceed 100,000'),
 });
 
 export const updateRewardSchema = z.object({
   id: z.string().min(1, 'Reward ID is required'),
   title: z.string().min(1).max(100).optional(),
-  points: z.number().int().min(1).optional(),
+  points: z.number().int().min(1).max(100000, 'Points cannot exceed 100,000').optional(),
 });
 
 // ==================== WALLET TOPUP ====================
@@ -723,7 +723,7 @@ export const createAnnouncementSchema = z.object({
   channel: z.enum(['PUSH', 'SMS', 'IN_APP']),
   targetAudience: z.enum(['ALL', 'BY_HUB', 'BY_STATUS', 'BY_PLAN']),
   targetIds: z.array(z.string()).optional().default([]),
-  scheduledAt: z.string().optional(),
+  scheduledAt: z.string().datetime({ message: 'scheduledAt must be a valid ISO datetime string' }).optional(),
 });
 
 // ==================== INCIDENTS ====================

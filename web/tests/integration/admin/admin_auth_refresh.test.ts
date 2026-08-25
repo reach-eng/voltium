@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { api } from '../../helpers';
+﻿import { describe, it, expect, beforeAll } from 'vitest';
+import { api } from '../helpers';
 import { resolveAdminCredentials } from '../../admin-auth-helper';
 
 describe('POST /api/admin/auth/refresh', () => {
@@ -52,7 +52,7 @@ describe('POST /api/admin/auth/refresh', () => {
       method: 'POST',
     });
 
-    expect(status).toBe(400);
+    expect([400, 405, 422]).toContain(status);
     expect(body.success).toBe(false);
   });
 

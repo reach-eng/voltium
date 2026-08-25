@@ -15,7 +15,13 @@ describe('Support API Audit Fixes Unit Tests', () => {
     test('rejects illegal status transitions with TicketStateError', () => {
       expect(() => validateTicketTransition('OPEN', 'CLOSED')).toThrow(TicketStateError);
       expect(() => validateTicketTransition('RESOLVED', 'OPEN')).toThrow(TicketStateError);
-      expect(() => validateTicketTransition('CLOSED', 'IN_PROGRESS')).toThrow(TicketStateError);
+      // Admin Panel Phase 2 P1-12 (2026-08-23): a CLOSED ticket can
+      // be reopened to IN_PROGRESS if the rider comes back with
+      // more info. The reopen path is bounded — it can only land
+      // in IN_PROGRESS, not back to OPEN. We assert the *other*
+      // illegal transitions are still rejected.
+      expect(() => validateTicketTransition('CLOSED', 'OPEN')).toThrow(TicketStateError);
+      expect(() => validateTicketTransition('CLOSED', 'RESOLVED')).toThrow(TicketStateError);
     });
   });
 

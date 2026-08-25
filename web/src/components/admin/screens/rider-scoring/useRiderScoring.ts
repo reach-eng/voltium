@@ -33,6 +33,8 @@ export function useRiderScoring() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
 
+  const [serverRiskCounts, setServerRiskCounts] = useState<Record<string, number> | null>(null);
+
   const fetchScores = useCallback(async () => {
     setLoading(true);
     try {
@@ -51,6 +53,9 @@ export function useRiderScoring() {
           setTotalPages(json.pagination.totalPages || 1);
           setTotal(json.pagination.total || 0);
         }
+        if (json.data?.riskCounts || json.pagination?.riskCounts) {
+          setServerRiskCounts(json.data?.riskCounts || json.pagination?.riskCounts);
+        }
       }
     } catch (error) {
       logger.error('Failed to fetch rider scores', { error });
@@ -65,7 +70,7 @@ export function useRiderScoring() {
   }, [fetchScores]);
 
   useEffect(() => {
-    fetch('/api/admin/hubs')
+    fetch('/api/admin/hubs?limit=100')
       .then((r) => r.json())
       .then((json) => {
         if (json.success) setHubs(json.data || []);
@@ -76,6 +81,28 @@ export function useRiderScoring() {
   useEffect(() => {
     setPage(1);
   }, [riskFilter, hubFilter, debouncedSearch]);
+
+  const handleRecalculate = async (riderId: string) => {
+    setRecalculating(true);
+    try {
+      const res = await fetch('/api/admin/scores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riderId }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(json?.error?.message || 'Failed to recalculate score');
+        return;
+      }
+      toast.success('Score recalculated');
+      fetchScores();
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setRecalculating(false);
+    }
+  };
 
   const handleRecalculateAll = async () => {
     setRecalculating(true);
@@ -96,7 +123,7 @@ export function useRiderScoring() {
   };
 
   // Derived counts and leaderboard (recomputed on every render)
-  const riskCounts = {
+  const riskCounts = serverRiskCounts || {
     LOW: scores.filter((s) => s.riskLevel === 'LOW').length,
     MEDIUM: scores.filter((s) => s.riskLevel === 'MEDIUM').length,
     HIGH: scores.filter((s) => s.riskLevel === 'HIGH').length,

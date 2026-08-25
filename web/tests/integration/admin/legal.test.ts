@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 /**
@@ -11,7 +11,7 @@ describe('GET /api/admin/legal', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. returns 200 with list of legal documents', async () => {
@@ -35,7 +35,7 @@ describe('PUT /api/admin/legal', () => {
   const originalTerms = { type: 'terms' as const, title: 'Original Terms', content: 'Original content' };
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   afterAll(async () => {

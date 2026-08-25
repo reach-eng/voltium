@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { incidentUseCases } from '@/server/modules/incidents/incident.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
@@ -66,6 +67,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     // Update changes the record + the list view; clear the list cache so the
     // next GET reflects the new status / assignment.
     invalidateCache('admin:incidents:*');
+
+    await logAdminMutation({
+      session,
+      action: 'incident.update',
+      entity: 'Incident',
+      entityId: id,
+      details: { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber },
+    });
 
     return success(incident);
   } catch (error) {

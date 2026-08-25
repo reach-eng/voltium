@@ -103,7 +103,7 @@ void main() {
 
       // We're inside a block body opened at `bodyOpenLine`. Count braces
       // and exit when we close it.
-      final openLine = bodyOpenLine!;
+      final openLine = bodyOpenLine;
       var depth = 0;
       for (final ch in line.runes) {
         if (ch == '{'.codeUnitAt(0)) depth++;

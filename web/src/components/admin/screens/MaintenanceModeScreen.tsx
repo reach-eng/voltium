@@ -1,11 +1,13 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertOctagon, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { MaintenanceToggleButton } from '@/components/admin/MaintenanceToggleButton';
 
 export default function MaintenanceModeScreen() {
   const [enabled, setEnabled] = useState(false);
@@ -40,21 +42,21 @@ export default function MaintenanceModeScreen() {
     fetchStatus();
   }, []);
 
-  const handleToggle = async () => {
+  const handleToggle = async (nextState?: boolean) => {
     setSaving(true);
     try {
-      const nextState = !enabled;
+      const targetState = typeof nextState === 'boolean' ? nextState : !enabled;
       const res = await fetch('/api/admin/maintenance-mode', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: nextState, message }),
+        body: JSON.stringify({ enabled: targetState, message }),
       });
       if (res.ok) {
-        setEnabled(nextState);
-        toast.success(`Maintenance mode ${nextState ? 'enabled' : 'disabled'} successfully`);
+        setEnabled(targetState);
+        toast.success(`Maintenance mode ${targetState ? 'enabled' : 'disabled'} successfully`);
       } else {
         const err = await res.json();
-        toast.error(err.error || 'Failed to update maintenance mode');
+        toast.error(extractErrorMessage(err, ''));
       }
     } catch {
       toast.error('Failed to toggle maintenance mode');
@@ -78,7 +80,7 @@ export default function MaintenanceModeScreen() {
         toast.success('Maintenance banner message updated successfully');
       } else {
         const err = await res.json();
-        toast.error(err.error || 'Failed to update message');
+        toast.error(extractErrorMessage(err, ''));
       }
     } catch {
       toast.error('Failed to save message');
@@ -118,14 +120,11 @@ export default function MaintenanceModeScreen() {
                 <div className="font-semibold text-sm">Status</div>
                 <div className="text-xs text-muted-foreground">Toggle global application block</div>
               </div>
-              <Button
-                variant={enabled ? 'destructive' : 'default'}
-                disabled={saving}
-                onClick={handleToggle}
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {enabled ? 'Disable Maintenance' : 'Enable Maintenance'}
-              </Button>
+              <MaintenanceToggleButton
+                enabled={enabled}
+                loading={saving}
+                onToggle={handleToggle}
+              />
             </div>
 
             <div className="space-y-2">

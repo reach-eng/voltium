@@ -25,7 +25,8 @@ describe('POST /api/rider/verify-lock-password', () => {
       json: {},
       token: riderToken,
     });
-    expect(res.status).toBe(400); // Because verifyLockSchema uses z.object({password: z.string().min(1)})
+    // Zod validation: 400 (legacy helper) or 422 (newer validation()).
+    expect([400, 422]).toContain(res.status);
   });
 
   it('should handle happy path (returns success: false if no lock password configured)', async () => {

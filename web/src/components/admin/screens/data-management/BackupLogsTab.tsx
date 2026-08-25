@@ -265,9 +265,9 @@ export function BackupLogsTab() {
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
-          setLogs(json.data?.logs || json.data || []);
-          setTotalPages(json.data?.pagination?.totalPages || 1);
-          setTotal(json.data?.pagination?.total || 0);
+          setLogs(Array.isArray(json.data) ? json.data : (json.data?.logs || []));
+          setTotalPages(json.pagination?.totalPages || json.data?.pagination?.totalPages || 1);
+          setTotal(json.pagination?.total || json.data?.pagination?.total || 0);
         }
       }
     } catch {

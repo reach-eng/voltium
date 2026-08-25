@@ -54,7 +54,9 @@ class AuthRepositoryImpl implements AuthRepository {
     if (!PlatformInfo.isWeb && secret != null && secret.isNotEmpty) {
       await SecureStorageService().writeFcmCommandSecret(secret);
     }
-    final isNewRider = response.isNewRider ?? false;
+    // Delta F-006: if backend omits or sends null for isNewRider,
+    // default to true (fail toward onboarding) rather than skipping KYC.
+    final isNewRider = response.isNewRider ?? true;
     final nextAppState = isNewRider
         ? const Onboarding(OnboardingStep.kycSubmit)
         : const PreDashboard();

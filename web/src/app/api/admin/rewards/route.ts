@@ -7,6 +7,7 @@ import { hasPermission } from '@/lib/auth';
 import { adminRewardUseCases } from '@/server/modules/rewards/reward.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { toRupeesResponse } from '@/lib/api-money';
+import { logAdminMutation } from '@/lib/audit-log';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -39,6 +40,15 @@ export async function POST(req: Request) {
 
     const actorId = session.adminId ?? session.riderDbId ?? 'system';
     const reward = await adminRewardUseCases.award(validation.data, actorId);
+
+    await logAdminMutation({
+      session,
+      action: 'reward.award',
+      entity: 'Reward',
+      entityId: reward?.id,
+      details: { riderDbId: validation.data.riderDbId, points: validation.data.points },
+    });
+
     return success(toRupeesResponse(reward), 'Rewards points awarded successfully');
   } catch (error) {
     logger.error('POST /api/admin/rewards error:', error);
@@ -57,6 +67,14 @@ export async function DELETE(req: NextRequest) {
 
     const actorId = session.adminId ?? session.riderDbId ?? 'system';
     await adminRewardUseCases.revoke(id, actorId);
+
+    await logAdminMutation({
+      session,
+      action: 'reward.revoke',
+      entity: 'Reward',
+      entityId: id,
+    });
+
     return success({ id }, 'Reward points revoked successfully');
   } catch (error: unknown) {
     logger.error('DELETE /api/admin/rewards error:', error);
@@ -79,6 +97,15 @@ export async function PUT(req: Request) {
     const { id, ...updates } = validation.data;
     const actorId = session.adminId ?? session.riderDbId ?? 'system';
     const reward = await adminRewardUseCases.update(id, updates, actorId);
+
+    await logAdminMutation({
+      session,
+      action: 'reward.update',
+      entity: 'Reward',
+      entityId: id,
+      details: updates,
+    });
+
     return success(toRupeesResponse(reward), 'Reward updated successfully');
   } catch (error: unknown) {
     logger.error('PUT /api/admin/rewards error:', error);

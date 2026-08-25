@@ -7,6 +7,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { offerUseCases } from '@/server/modules/offers/offer.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 const deleteOfferSchema = z.object({ id: z.string().min(1) });
 
@@ -44,6 +45,15 @@ export async function POST(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
 
     const offer = await offerUseCases.create(validation.data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'offer.create',
+      entity: 'Offer',
+      entityId: offer?.id,
+      details: validation.data,
+    });
+
     return success(offer, 'Offer created', 201);
   } catch (error) {
     logger.error('POST /api/admin/offers error:', error);
@@ -67,6 +77,15 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...data } = validation.data;
     const offer = await offerUseCases.update(id, data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'offer.update',
+      entity: 'Offer',
+      entityId: id,
+      details: data,
+    });
+
     return success(offer);
   } catch (error) {
     // Pino's default Error serialization is empty `{}` — extract
@@ -92,6 +111,14 @@ export async function DELETE(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
 
     await offerUseCases.delete(validation.data.id, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'offer.delete',
+      entity: 'Offer',
+      entityId: validation.data.id,
+    });
+
     return success(null, 'Offer deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/offers error:', error);

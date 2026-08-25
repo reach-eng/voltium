@@ -9,18 +9,65 @@ import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
 import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
 import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
 
+import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from './idempotency';
+export { withIdempotency, withRequestSizeLimit, withErrorHandler, withRateLimit } from './api-middleware';
+
 type DomainError = Error & { code?: string };
 
 function asDomainError(err: unknown): DomainError {
   return err instanceof Error ? err : new Error(String(err));
 }
 
+export interface ApiHandlerOptions {
+  withIdempotency?: boolean;
+  maxSizeBytes?: number;
+}
+
 export function withApiHandler(
-  handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>
+  handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>,
+  options?: ApiHandlerOptions
 ) {
   return async (request: NextRequest, ...args: any[]) => {
+    // Check request size limit if specified
+    if (options?.maxSizeBytes) {
+      const contentLength = request.headers.get('content-length');
+      if (contentLength && parseInt(contentLength, 10) > options.maxSizeBytes) {
+        return NextResponse.json({ success: false, error: 'Request too large' }, { status: 413 });
+      }
+    }
+
+    // Check idempotency if requested
+    const key = options?.withIdempotency ? request.headers.get('x-idempotency-key') : null;
+    if (key && request.method === 'POST') {
+      const result = await checkOrClaimIdempotency(key);
+      if (result.status === 'completed') {
+        logger.info('[Idempotency] Serving cached response', { key, path: request.nextUrl.pathname });
+        return NextResponse.json(result.response);
+      }
+      if (result.status === 'processing') {
+        return NextResponse.json(
+          { success: false, error: 'A request with this idempotency key is already being processed' },
+          { status: 409 }
+        );
+      }
+    }
+
     try {
       const response = await handler(request, ...args);
+
+      if (key && request.method === 'POST') {
+        if (response.status >= 200 && response.status < 300) {
+          try {
+            const cloned = response.clone();
+            const json = await cloned.json();
+            await completeIdempotency(key, json);
+          } catch (err) {
+            logger.error('[Idempotency] Failed to cache response:', err);
+          }
+        } else {
+          await failIdempotency(key).catch(() => {});
+        }
+      }
 
       // Automatic HTTP 304 Not Modified evaluation for GET requests
       if (request.method === 'GET' && response.status === 200) {
@@ -42,6 +89,9 @@ export function withApiHandler(
 
       return response;
     } catch (err: unknown) {
+      if (key && request.method === 'POST') {
+        await failIdempotency(key).catch(() => {});
+      }
       const domainErr = asDomainError(err);
       logger.error('[ApiHandler] Unhandled route error', redactPii({
         path: request.nextUrl.pathname,

@@ -41,11 +41,11 @@ export function useHubs() {
   const fetchHubs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/hubs');
+      const res = await fetch('/api/admin/hubs?limit=100');
       if (!mountedRef.current) return;
       if (!res.ok) return;
       const json = await res.json();
-      if (json.success) setHubs(json.data);
+      if (json.success) setHubs(json.data || []);
     } catch {
       if (!mountedRef.current) return;
     } finally {

@@ -220,7 +220,7 @@ describe('depositLedgerService', () => {
       })).rejects.toThrow();
     });
 
-    it('throws DepositStateError on invalid transition (e.g. APPROVE on already APPROVED)', async () => {
+    it('is idempotent on already APPROVED deposit (no-op) and throws on invalid transition', async () => {
       await testDb.depositRecord.create({
         data: {
           riderId: riderDbId,
@@ -229,6 +229,17 @@ describe('depositLedgerService', () => {
         }
       });
 
+      // Idempotent approve on already APPROVED deposit resolves without error
+      await expect(depositLedgerService.approve({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+      })).resolves.toBeUndefined();
+
+      // Approve on FORFEITED deposit throws DepositStateError
+      await testDb.depositRecord.update({
+        where: { riderId: riderDbId },
+        data: { status: DepositStatus.FORFEITED },
+      });
       await expect(depositLedgerService.approve({
         riderId: riderDbId,
         adminId: 'admin-1',
@@ -300,7 +311,7 @@ describe('depositLedgerService', () => {
       });
 
       const record = await testDb.depositRecord.findUnique({ where: { riderId: riderDbId } });
-      expect(record?.status).toBe('REFUNDED');
+      expect(record?.status).toBe('PARTIALLY_REFUNDED');
       expect(record?.refundedAmountInPaise).toBe(2000);
 
       const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
@@ -312,6 +323,18 @@ describe('depositLedgerService', () => {
       const entries = await walletRepository.getLedgerEntries(riderDbId);
       const creditRefund = entries.find(e => e.entryType === 'CREDIT' && e.category === 'REFUND');
       expect(creditRefund?.note).toBe('Partial refund due to outstanding balance');
+
+      // Refund remaining 3000 -> status should transition to REFUNDED
+      await depositLedgerService.refund({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+        refundAmountInPaise: 3000,
+        note: 'Final refund of remaining security deposit',
+      });
+
+      const finalRecord = await testDb.depositRecord.findUnique({ where: { riderId: riderDbId } });
+      expect(finalRecord?.status).toBe('REFUNDED');
+      expect(finalRecord?.refundedAmountInPaise).toBe(5000);
     });
   });
 });

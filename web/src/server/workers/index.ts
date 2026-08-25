@@ -47,6 +47,7 @@ import { orphanBackupCleanupJob } from './jobs/orphan-backup-cleanup.job';
 // the request transaction into this background job (same pattern as
 // notification-broadcast.job.ts).
 import { announcementBroadcastJob } from './jobs/announcement-broadcast.job';
+import { scheduledBackupJob } from './jobs/scheduled-backup.job';
 // notifications.job.ts is deprecated (BLOCKER 1.4). Its birthday/payment
 // reminder logic moved to daily-engagement.job.ts; its outbox mapping was
 // the misroute that dropped per-event KYC/topup notifications. The file
@@ -230,6 +231,16 @@ export const WORKERS: WorkerDefinition[] = [
     processor: telemetryCleanupJob.process,
     concurrency: 1,
     description: 'Telemetry cleanup — purge PII > 30 days',
+    priority: 'background',
+  },
+  {
+    // I-1 (W10): Wire manual / run-now backup event. When admin triggers
+    // a backup from Data Management or Background Jobs screen, it emits
+    // ADMIN_JOB_SCHEDULED_BACKUP. Background priority so interactive work takes precedence.
+    jobType: OutboxEventTypes.ADMIN_JOB_SCHEDULED_BACKUP,
+    processor: scheduledBackupJob.process,
+    concurrency: 1,
+    description: 'Scheduled/manual backup — admin-triggered via Background Jobs / Data Management',
     priority: 'background',
   },
   // PR-151: wires the 4 orphan outbox event types that previously had
@@ -534,8 +545,6 @@ const SCHEDULED_TASKS: Array<{
 // ---------------------------------------------------------------------------
 // Scheduled backup check
 // ---------------------------------------------------------------------------
-
-import { scheduledBackupJob } from './jobs/scheduled-backup.job';
 
 async function checkScheduledBackups(): Promise<void> {
   try {

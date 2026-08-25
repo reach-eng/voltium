@@ -115,4 +115,44 @@ describe('data-management backups download — path-traversal guard', () => {
       }
     });
   });
+
+  describe('assertBackupPathAllowed (N-3)', () => {
+    it('throws on relative paths', async () => {
+      const { assertBackupPathAllowed } = await import('@/server/modules/data-management/backup-path.validator');
+      expect(() => assertBackupPathAllowed('data/backups')).toThrow(/must be absolute/i);
+    });
+
+    it('throws on UNC paths', async () => {
+      const { assertBackupPathAllowed } = await import('@/server/modules/data-management/backup-path.validator');
+      expect(() => assertBackupPathAllowed('\\\\remote-server\\share\\backup')).toThrow(/UNC path/i);
+    });
+
+    it('throws on null bytes', async () => {
+      const { assertBackupPathAllowed } = await import('@/server/modules/data-management/backup-path.validator');
+      expect(() => assertBackupPathAllowed('/opt/backups\0/data')).toThrow(/null byte/i);
+    });
+
+    it('throws on path traversal outside allowed roots', async () => {
+      const { assertBackupPathAllowed } = await import('@/server/modules/data-management/backup-path.validator');
+      expect(() => assertBackupPathAllowed('/etc/passwd')).toThrow(/outside the allowed backup roots/i);
+    });
+  });
+
+  describe('scheduleUpdateSchema refine (N-3)', () => {
+    it('rejects path traversal in primaryBackupRoot', async () => {
+      const { scheduleUpdateSchema } = await import('@/server/modules/data-management/backup.schemas');
+      const result = scheduleUpdateSchema.safeParse({
+        enabled: true,
+        primaryBackupRoot: '/etc/shadow',
+        keepDaily: 7,
+        keepWeekly: 4,
+        keepMonthly: 6,
+        minimumFreeDiskGb: 20,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0]?.message).toMatch(/allowed backup roots/i);
+      }
+    });
+  });
 });

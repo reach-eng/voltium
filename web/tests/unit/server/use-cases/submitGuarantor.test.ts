@@ -35,6 +35,8 @@ const mockTx = {
   guarantor: {
     upsert: mockUpsert,
     update: mockUpdate,
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    findUniqueOrThrow: mockUpdate,
   },
   rider: {
     updateMany: mockRiderUpdateMany,

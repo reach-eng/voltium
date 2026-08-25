@@ -9,24 +9,30 @@ export const scoreUseCases = {
     riskLevel?: string;
     minScore?: number;
     search?: string;
+    hubId?: string;
     page?: number;
     limit?: number;
   }) {
-    const { riskLevel, minScore, search, page = 1, limit = 20 } = params;
+    const { riskLevel, minScore, search, hubId, page = 1, limit = 20 } = params;
     const where: Prisma.RiderScoreWhereInput = {};
     if (riskLevel) where.riskLevel = riskLevel as Prisma.RiderScoreWhereInput['riskLevel'];
     if (minScore) where.compositeScore = { gte: minScore };
-    if (search) {
+    if (search || hubId) {
       where.rider = {
-        OR: [
-          { fullName: { contains: search } },
-          { riderId: { contains: search } },
-          { phone: { contains: search } },
-        ],
+        ...(search
+          ? {
+              OR: [
+                { fullName: { contains: search, mode: 'insensitive' } },
+                { riderId: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search } },
+              ],
+            }
+          : {}),
+        ...(hubId && hubId !== 'ALL' ? { pickupHub: hubId } : {}),
       };
     }
 
-    const [scores, total] = await Promise.all([
+    const [scores, total, lowCount, mediumCount, highCount, criticalCount] = await Promise.all([
       db.riderScore.findMany({
         where,
         orderBy: { compositeScore: 'asc' },
@@ -45,6 +51,10 @@ export const scoreUseCases = {
         take: limit,
       }),
       db.riderScore.count({ where }),
+      db.riderScore.count({ where: { riskLevel: 'LOW' } }),
+      db.riderScore.count({ where: { riskLevel: 'MEDIUM' } }),
+      db.riderScore.count({ where: { riskLevel: 'HIGH' } }),
+      db.riderScore.count({ where: { riskLevel: 'CRITICAL' } }),
     ]);
 
     const formatted = scores.map((s) => ({
@@ -70,7 +80,14 @@ export const scoreUseCases = {
 
     return {
       scores: formatted,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+      riskCounts: {
+        all: lowCount + mediumCount + highCount + criticalCount,
+        LOW: lowCount,
+        MEDIUM: mediumCount,
+        HIGH: highCount,
+        CRITICAL: criticalCount,
+      },
     };
   },
 

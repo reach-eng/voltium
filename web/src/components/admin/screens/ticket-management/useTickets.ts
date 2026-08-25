@@ -85,6 +85,8 @@ export function useTickets() {
     if (createModalOpen) fetchRiders();
   }, [createModalOpen, riderSearch, fetchRiders]);
 
+  const [serverStatusCounts, setServerStatusCounts] = useState<Record<string, number> | null>(null);
+
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
@@ -103,6 +105,9 @@ export function useTickets() {
         if (json.pagination) {
           setTotalPages(json.pagination.totalPages);
           setTotal(json.pagination.total);
+          if (json.pagination.statusCounts) {
+            setServerStatusCounts(json.pagination.statusCounts);
+          }
         }
       }
     } finally {
@@ -161,14 +166,16 @@ export function useTickets() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filtered, lastAction, bulkLoading]);
 
-  const statusCounts = tickets.reduce(
-    (acc, t) => {
-      acc[t.status] = (acc[t.status] || 0) + 1;
-      acc.all = (acc.all || 0) + 1;
-      return acc;
-    },
-    { all: 0 } as Record<string, number>
-  );
+  const statusCounts =
+    serverStatusCounts ||
+    tickets.reduce(
+      (acc, t) => {
+        acc[t.status] = (acc[t.status] || 0) + 1;
+        acc.all = (acc.all || 0) + 1;
+        return acc;
+      },
+      { all: 0 } as Record<string, number>
+    );
 
   const getAssignedName = (adminId: string | null) => {
     if (!adminId) return '—';

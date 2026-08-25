@@ -15,6 +15,7 @@ vi.mock('@/lib/db', () => ({
       aggregate: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     transaction: {
       create: vi.fn(),
@@ -89,10 +90,12 @@ describe('Tier System & Reward Redemption', () => {
       vi.mocked(db.reward.findUnique).mockResolvedValue({
         id: 'reward-1',
         riderId: 'rider-1',
-        points: 50,
+        points: 5000,
         title: 'Test Reward',
         redeemedAt: null,
       } as any);
+
+      vi.mocked(db.reward.updateMany).mockResolvedValue({ count: 1 } as any);
 
       vi.mocked(db.$transaction).mockImplementation(async (cb: any) => {
         return cb(db);
@@ -101,15 +104,15 @@ describe('Tier System & Reward Redemption', () => {
       vi.mocked(db.transaction.create).mockResolvedValue({ id: 'txn-1' } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: Promise.resolve({ id: 'reward-1' }) });
 
       const json = await res.json();
       expect(json.success).toBe(true);
       expect(json.data.rewardId).toBe('reward-1');
       expect(json.data.redeemedAt).toBeDefined();
 
-      expect(db.reward.update).toHaveBeenCalledWith({
-        where: { id: 'reward-1' },
+      expect(db.reward.updateMany).toHaveBeenCalledWith({
+        where: { id: 'reward-1', redeemedAt: null },
         data: { redeemedAt: expect.any(Date) },
       });
 
@@ -118,6 +121,7 @@ describe('Tier System & Reward Redemption', () => {
         amountInPaise: 5000,
         category: 'REWARD',
         txnId: 'txn-1',
+        idempotencyKey: 'redeem-reward:reward-1',
         note: 'Reward redemption: Test Reward',
       }, db);
     });
@@ -129,13 +133,13 @@ describe('Tier System & Reward Redemption', () => {
       vi.mocked(db.reward.findUnique).mockResolvedValue({
         id: 'reward-1',
         riderId: 'rider-1',
-        points: 50,
+        points: 5000,
         title: 'Test Reward',
         redeemedAt: new Date(),
       } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: Promise.resolve({ id: 'reward-1' }) });
 
       const json = await res.json();
       expect(json.success).toBe(false);
@@ -149,13 +153,13 @@ describe('Tier System & Reward Redemption', () => {
       vi.mocked(db.reward.findUnique).mockResolvedValue({
         id: 'reward-1',
         riderId: 'rider-1',
-        points: 50,
+        points: 5000,
         title: 'Test Reward',
         redeemedAt: null,
       } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: Promise.resolve({ id: 'reward-1' }) });
 
       const json = await res.json();
       expect(json.success).toBe(false);

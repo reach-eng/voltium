@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 /**
@@ -13,7 +13,7 @@ describe('GET /api/admin/coupons', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. returns 200 with list of coupons', async () => {
@@ -47,7 +47,7 @@ describe('POST /api/admin/coupons', () => {
   let createdCouponId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   afterAll(async () => {
@@ -69,8 +69,8 @@ describe('POST /api/admin/coupons', () => {
         description: 'Test coupon for integration tests',
         discountType: 'PERCENTAGE',
         discountValue: 10,
-        validFrom: '01-07-2026',
-        validUntil: '31-07-2026',
+        validFrom: '2026-07-01',
+        validUntil: '2026-07-31',
       },
     });
     expect(status).toBe(201);
@@ -83,7 +83,7 @@ describe('POST /api/admin/coupons', () => {
     const { status } = await api('/api/admin/coupons', {
       method: 'POST',
       cookie: adminCookie,
-      json: { description: 'no code', discountType: 'PERCENTAGE', discountValue: 5, validFrom: '01-07-2026', validUntil: '31-07-2026' },
+      json: { description: 'no code', discountType: 'PERCENTAGE', discountValue: 5, validFrom: '2026-07-01', validUntil: '2026-07-31' },
     });
     expect(status).toBe(422);
   });
@@ -92,7 +92,7 @@ describe('POST /api/admin/coupons', () => {
     const { status } = await api('/api/admin/coupons', {
       method: 'POST',
       cookie: adminCookie,
-      json: { code: 'INVALID_TYPE', description: 'bad type', discountType: 'INVALID', discountValue: 5, validFrom: '01-07-2026', validUntil: '31-07-2026' },
+      json: { code: 'INVALID_TYPE', description: 'bad type', discountType: 'INVALID', discountValue: 5, validFrom: '2026-07-01', validUntil: '2026-07-31' },
     });
     expect(status).toBe(422);
   });
@@ -100,7 +100,7 @@ describe('POST /api/admin/coupons', () => {
   it('4. returns 401 without auth', async () => {
     const { status } = await api('/api/admin/coupons', {
       method: 'POST',
-      json: { code: 'X', description: 'x', discountType: 'PERCENTAGE', discountValue: 1, validFrom: '01-07-2026', validUntil: '31-07-2026' },
+      json: { code: 'X', description: 'x', discountType: 'PERCENTAGE', discountValue: 1, validFrom: '2026-07-01', validUntil: '2026-07-31' },
     });
     expect(status).toBe(401);
   });
@@ -112,7 +112,7 @@ describe('PUT /api/admin/coupons', () => {
   let testCouponId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
     const { body } = await api('/api/admin/coupons', {
       method: 'POST',
       cookie: adminCookie,
@@ -121,8 +121,8 @@ describe('PUT /api/admin/coupons', () => {
         description: 'Coupon for update testing',
         discountType: 'FIXED',
         discountValue: 50,
-        validFrom: '01-07-2026',
-        validUntil: '31-07-2026',
+        validFrom: '2026-07-01',
+        validUntil: '2026-07-31',
       },
     });
     testCouponId = body.data.id;
@@ -170,7 +170,7 @@ describe('DELETE /api/admin/coupons', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. deletes a coupon', async () => {
@@ -182,8 +182,8 @@ describe('DELETE /api/admin/coupons', () => {
         description: 'To be deleted',
         discountType: 'PERCENTAGE',
         discountValue: 5,
-        validFrom: '01-07-2026',
-        validUntil: '31-07-2026',
+        validFrom: '2026-07-01',
+        validUntil: '2026-07-31',
       },
     });
     const id = created.data.id;

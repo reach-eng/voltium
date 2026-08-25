@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getPermissionsForRole } from '@/lib/permissions';
+import { extractErrorMessage } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import type { Admin, AdminForm } from './types';
 
@@ -71,7 +72,7 @@ export function useAdminUsers() {
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to save admin user');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
 
@@ -175,7 +176,7 @@ export function useAdminUsers() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        toast.error(json.error?.message || json.error || 'Failed to update admin status');
+        toast.error(extractErrorMessage(json, ''));
         return;
       }
       toast.success(`Admin ${!admin.isActive ? 'activated' : 'deactivated'} successfully`);

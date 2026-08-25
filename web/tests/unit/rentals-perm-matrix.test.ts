@@ -62,7 +62,10 @@ describe('Rentals Admin Route Permission Matrix', () => {
 
     const res = await PUT(req);
     expect(res.status).toBe(200);
-    expect(mocks.hasPermission).toHaveBeenCalledWith('FLEET_MANAGER', 'rentals_pickup_inspection');
+    expect(mocks.hasPermission).toHaveBeenCalledWith(
+        expect.objectContaining({ adminRole: 'FLEET_MANAGER' }),
+        'rentals_pickup_inspection'
+      );
   });
 
   it('correctly maps PUT /api/admin/rentals action APPROVE_RETURN to rentals_return_inspection', async () => {
@@ -78,6 +81,9 @@ describe('Rentals Admin Route Permission Matrix', () => {
 
     const res = await PUT(req);
     expect(res.status).toBe(200);
-    expect(mocks.hasPermission).toHaveBeenCalledWith('FLEET_MANAGER', 'rentals_return_inspection');
+    expect(mocks.hasPermission).toHaveBeenCalledWith(
+        expect.objectContaining({ adminRole: 'FLEET_MANAGER' }),
+        'rentals_return_inspection'
+      );
   });
 });

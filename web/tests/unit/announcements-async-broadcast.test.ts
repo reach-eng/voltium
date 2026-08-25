@@ -45,7 +45,10 @@ vi.mock('@/server/modules/announcements/announcement.use-cases', () => ({
   },
 }));
 vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: rateLimitMock }));
-vi.mock('@/lib/audit-log', () => ({ createAuditLog: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@/lib/audit-log', () => ({
+  createAuditLog: vi.fn().mockResolvedValue(undefined),
+  logAdminMutation: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('@/lib/sanitize', () => ({ sanitizeHtml: (v: string) => v }));
 vi.mock('@/server/workers/outbox', () => ({
   OutboxService: { emit: emitMock },

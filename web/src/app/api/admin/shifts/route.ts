@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { shiftUseCases } from '@/server/modules/shifts/shift.use-cases';
+import { logAdminMutation } from '@/lib/audit-log';
 
 const shiftPartSchema = z.object({
   startTime: z.string().min(1, 'Start time required'),
@@ -28,10 +29,14 @@ function errorMessage(error: unknown): string {
 }
 
 // PR-9 (2026-08-06 fix plan): `settings_manage` removed from the allowlist —
-// shifts are an operations concern, not a settings concern. An admin whose
-// only relevant permission is settings_manage should not be able to mutate
-// shift schedules.
-function checkShiftPermission(role: string): boolean {
+// shifts are an operations concern, not a settings concern.
+//
+// S-1 (W8): `ops_read` is a READ permission and must not grant write access.
+// Split into two helpers:
+//   canReadShifts  — includes ops_read (read-only callers can list shifts)
+//   canMutateShifts — excludes ops_read (only proper write permissions)
+function canReadShifts(session: any): boolean {
+  const role = session?.adminRole || '';
   return (
     hasPermission(role, 'shifts_manage') ||
     hasPermission(role, 'ops_read') ||
@@ -40,15 +45,24 @@ function checkShiftPermission(role: string): boolean {
   );
 }
 
+function canMutateShifts(session: any): boolean {
+  const role = session?.adminRole || '';
+  return (
+    hasPermission(role, 'shifts_manage') ||
+    hasPermission(role, 'fleet_manage') ||
+    hasPermission(role, 'hubs_manage')
+  );
+}
+
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!checkShiftPermission(session.adminRole || '')) return adminForbidden();
+  if (!canReadShifts(session)) return adminForbidden();
   try {
     const search = req.nextUrl.searchParams.get('search') || '';
     const activeOnly = req.nextUrl.searchParams.get('active') === 'true';
     const shifts = await shiftUseCases.listShifts(search, activeOnly);
-    return withCacheHeaders(success(shifts), 60);
+    return withCacheHeaders(success(shifts), 0);
   } catch (error) {
     logger.error('GET /api/admin/shifts error:', error);
     return errors.internal('Failed to fetch shifts');
@@ -58,12 +72,21 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!checkShiftPermission(session.adminRole || '')) return adminForbidden();
+  if (!canMutateShifts(session)) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(shiftSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
     const shift = await shiftUseCases.createShift(validation.data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'shift.create',
+      entity: 'Shift',
+      entityId: (shift as any)?.id || validation.data.name,
+      details: validation.data,
+    });
+
     return success(shift, 'Shift created', 201);
   } catch (error) {
     logger.error('POST /api/admin/shifts error:', error);
@@ -74,13 +97,22 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!checkShiftPermission(session.adminRole || '')) return adminForbidden();
+  if (!canMutateShifts(session)) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(shiftSchema.partial().extend({ id: z.string().min(1) }), body);
     if (!validation.success) return errors.validation(validation.error!);
     const { id, ...data } = validation.data;
     const shift = await shiftUseCases.updateShift(id, data, session.adminId || '');
+
+    await logAdminMutation({
+      session,
+      action: 'shift.update',
+      entity: 'Shift',
+      entityId: id,
+      details: data,
+    });
+
     return success(shift);
   } catch (error) {
     logger.error('PUT /api/admin/shifts error:', error);
@@ -91,14 +123,22 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!checkShiftPermission(session.adminRole || '')) return adminForbidden();
+  if (!canMutateShifts(session)) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(deleteShiftSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
     const { id } = validation.data;
     await shiftUseCases.deleteShift(id, session.adminId || '');
-    return success(null, 'Shift deleted');
+
+    await logAdminMutation({
+      session,
+      action: 'shift.delete',
+      entity: 'Shift',
+      entityId: id,
+    });
+
+    return success(null, 'Shift archived');
   } catch (error: unknown) {
     const message = errorMessage(error);
     if (message.includes('Cannot delete shift')) {

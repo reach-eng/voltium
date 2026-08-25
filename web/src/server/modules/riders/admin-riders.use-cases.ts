@@ -19,7 +19,8 @@ import { logAccountSuspension } from '@/lib/security-events';
 import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
-import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { transitionRiderStatus, validateTransition } from '@/server/modules/riders/rider-lifecycle.service';
+import { encryptPii } from '@/lib/pii-crypto';
 import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
 import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache } from '@/lib/server-cache';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
@@ -104,6 +105,7 @@ export const adminRiderUseCases = {
     search?: string;
     state?: string;
     kycStatus?: string;
+    hubId?: string;
     startDate?: string;
     endDate?: string;
     cursor?: string;
@@ -118,6 +120,7 @@ export const adminRiderUseCases = {
       search,
       state,
       kycStatus,
+      hubId,
       startDate,
       endDate,
       cursor,
@@ -151,6 +154,9 @@ export const adminRiderUseCases = {
     // the middleware's default `deletedAt: null` (see lib/db.ts).
     if (deleted) {
       where.deletedAt = { not: null };
+    }
+    if (hubId) {
+      where.pickupHub = hubId;
     }
     if (state && state !== 'ALL') where.lifecycleStatus = state as RiderLifecycleStatus;
     if (kycStatus) {
@@ -195,6 +201,20 @@ export const adminRiderUseCases = {
           kycDoneAt: true,
           planDoneAt: true,
           teamLeaderId: true,
+          advanceRentPaid: true,
+          locationGranted: true,
+          batteryGranted: true,
+          contactsGranted: true,
+          callLogsGranted: true,
+          micGranted: true,
+          cameraGranted: true,
+          phoneGranted: true,
+          teamLeaderRef: {
+            select: {
+              name: true,
+              phone: true,
+            },
+          },
           planStartDate: true,
           planEndDate: true,
           currentPlan: true,
@@ -415,8 +435,13 @@ export const adminRiderUseCases = {
       }
 
       if (KYC_FIELDS.has(key)) {
-        if (key === 'kycStatus') kycData.status = value;
-        else kycData[key] = typeof value === 'string' ? sanitizeText(value) : value;
+        if (key === 'kycStatus') {
+          kycData.status = value;
+        } else if (['aadhaarNumber', 'panNumber', 'bankAccount', 'accountNumber', 'ifscCode', 'bankIfsc'].includes(key)) {
+          kycData[key] = typeof value === 'string' && value.length > 0 ? encryptPii(sanitizeText(value)) : value;
+        } else {
+          kycData[key] = typeof value === 'string' ? sanitizeText(value) : value;
+        }
       } else if (WALLET_FIELDS.has(key)) {
         if (key === 'securityDeposit')
           walletData.securityDeposit = Math.round(Number(value) * 100);
@@ -431,7 +456,8 @@ export const adminRiderUseCases = {
         else if (key === 'guarantorDob') guarantorData.dob = value;
         else if (key === 'guarantorAadhaarFront') guarantorData.aadhaarFront = value;
         else if (key === 'guarantorAadhaarBack') guarantorData.aadhaarBack = value;
-        else if (key === 'guarantorPan') guarantorData.pan = value;
+        else if (key === 'guarantorPan' || key === 'pan')
+          guarantorData.pan = typeof value === 'string' && value.length > 0 ? encryptPii(sanitizeText(value)) : value;
         else if (key === 'guarantorVideo') guarantorData.video = value;
         else if (key === 'guarantorSignature') guarantorData.signature = value;
         else if (key === 'guarantorFatherName')
@@ -445,6 +471,11 @@ export const adminRiderUseCases = {
       } else if (SAFE_RIDER_FIELDS.has(key)) {
         riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       }
+    }
+
+    // Validate manual lifecycleStatus transition if requested directly by admin
+    if (riderData.lifecycleStatus && riderData.lifecycleStatus !== existing.lifecycleStatus) {
+      validateTransition(existing.lifecycleStatus as RiderLifecycleStatus, riderData.lifecycleStatus as RiderLifecycleStatus);
     }
 
     // Sync lifecycleStatus with KycProfile status.

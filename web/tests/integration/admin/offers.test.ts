@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+﻿import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { api, adminLogin } from '../helpers';
 
 describe('GET /api/admin/offers', () => {
   let adminCookie: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   it('1. returns 200 with list of offers', async () => {
@@ -29,7 +29,7 @@ describe('POST /api/admin/offers', () => {
   let createdOfferId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
   });
 
   afterAll(async () => {
@@ -91,7 +91,7 @@ describe('PUT /api/admin/offers', () => {
   let testOfferId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
     const { body } = await api('/api/admin/offers', {
       method: 'POST',
       cookie: adminCookie,
@@ -148,7 +148,7 @@ describe('DELETE /api/admin/offers', () => {
   let testOfferId: string;
 
   beforeAll(async () => {
-    adminCookie = await adminLogin();
+    adminCookie = (await adminLogin()).cookie;
     const { body } = await api('/api/admin/offers', {
       method: 'POST',
       cookie: adminCookie,

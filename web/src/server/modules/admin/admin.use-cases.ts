@@ -4,9 +4,9 @@ import {
   type CreateAdminParams,
   type UpdateAdminParams,
 } from './admin.repository';
-import { AUDIT_ACTIONS } from './admin.types';
+import { ADMIN_ROLE_RANK, AUDIT_ACTIONS, type AdminRole } from './admin.types';
 import { logAdminAction } from './admin.policy';
-import { parsePermissions } from '@/lib/permissions';
+import { hasPermission, parsePermissions, type SessionPayload } from '@/lib/auth';
 import { LoginError } from './login-error';
 
 /**
@@ -18,10 +18,97 @@ import { LoginError } from './login-error';
 export interface AdminActionContext {
   reason?: string;
   request?: NextRequest;
+  /**
+   * The actor's session, used for the rank + permission-subset checks
+   * (W6 / G-1, G-2). Optional so legacy callers (cron, seed scripts) can
+   * still call the use case — in that case the rank / subset checks are
+   * skipped and we trust the caller to have authorised the action out of
+   * band. A production route handler should always pass the session.
+   */
+  session?: SessionPayload | null;
 }
 
 export { LoginError } from './login-error';
 export type { LoginErrorCode } from './login-error';
+
+/**
+ * W6 / G-1: rank check on every target-touching mutation. A TEAM_LEADER
+ * (rank 2) with an explicit `admins_manage` grant must not be able to
+ * reset a SUPER_ADMIN's (rank 7) password, deactivate them, or change
+ * their role/permissions — even though the permission key is satisfied,
+ * the actor's rank is below the target's. The existing `canGrantRole`
+ * check in the route layer covers role assignment; this use-case-layer
+ * helper covers EVERY target-touching field (password, role, permissions,
+ * isActive) so the guard is consistent across both the route path and
+ * any future internal callers (cron, admin scripts).
+ *
+ * W6 / G-2: subset-of-granter on permissions. An OPERATIONS_ADMIN (rank
+ * 6) with explicit per-permission grants may only grant permissions they
+ * already hold. Without this, an admin who was granted
+ * `transactions_manage` via explicit perms (additive to their role base)
+ * could grant that same perm to a lower-ranked target — a privilege
+ * amplification hole.
+ */
+function canModifyTarget(
+  actor: SessionPayload,
+  target: { id?: string; role: string | null; permissions?: string[] | null; isActive?: boolean | null }
+): { ok: true } | { ok: false; reason: string } {
+  const actorRole = (actor.adminRole as AdminRole) || 'READ_ONLY';
+  const actorRank = ADMIN_ROLE_RANK[actorRole] ?? 0;
+  const actorId = actor.adminId ?? actor.riderDbId;
+  const isSelf = target.id && actorId && target.id === actorId;
+
+  const targetRole = (target.role as AdminRole) || 'READ_ONLY';
+  const targetRank = ADMIN_ROLE_RANK[targetRole] ?? 0;
+
+  // G-1: if targeting another admin, actor's rank must be strictly higher than target's rank (unless actor is SUPER_ADMIN)
+  if (!isSelf && actorRole !== 'SUPER_ADMIN') {
+    if (target.id && targetRank >= actorRank) {
+      return {
+        ok: false,
+        reason: `Target role ${targetRole} (rank ${targetRank}) is ranked at or above your own (${actorRole}, rank ${actorRank})`,
+      };
+    }
+  }
+
+  // When assigning/creating a role, target rank cannot exceed actor rank
+  if (targetRank > actorRank) {
+    return {
+      ok: false,
+      reason: `Target role ${targetRole} (rank ${targetRank}) is above your own (${actorRole}, rank ${actorRank})`,
+    };
+  }
+
+  // G-2: permissions subset check. The actor's effective permissions
+  // = role base ∪ explicit perms. The target can only be granted
+  // permissions from that set. SUPER_ADMIN short-circuits to "true"
+  // (they hold every key).
+  if (target.permissions && target.permissions.length > 0) {
+    if (actorRole === 'SUPER_ADMIN') {
+      // pass
+    } else {
+      const ok = target.permissions.every((p) => hasPermission(actor, p as never));
+      if (!ok) {
+        return {
+          ok: false,
+          reason: 'You can only grant permissions you already hold',
+        };
+      }
+    }
+  }
+
+  return { ok: true };
+}
+
+/** Strips the password hash (and any future sensitive fields) from an
+ *  admin row before it leaves the use case. The PUT route does this
+ *  inline (line 214 of admins/route.ts); the POST route did not
+ *  (W6 / G-3). Centralising the strip in the use case means every
+ *  future call site gets it for free. */
+function stripAdminSecrets<T extends { password?: unknown }>(row: T): Omit<T, 'password'> {
+  const { password: _password, ...safe } = row;
+  return safe;
+}
 
 /** AUDIT FIX (N-11): lazily-built Argon2id hash used only on the
  * unknown-email path to equalize verify timing. */
@@ -54,6 +141,20 @@ export const adminUseCases = {
   },
 
   async createAdmin(params: CreateAdminParams, actorId: string, ctx: AdminActionContext = {}) {
+    // W6 / G-1, G-2: rank + permission-subset check on the NEW admin.
+    // A TEAM_LEADER with an explicit `admins_manage` grant must not be
+    // able to mint a SUPER_ADMIN or grant permissions they don't hold.
+    // The `canGrantRole` check in the route layer still runs (defence
+    // in depth + handles the unknown-target case), but the use case is
+    // the last line of defence before the DB write.
+    if (ctx.session) {
+      const check = canModifyTarget(ctx.session, {
+        role: params.role,
+        permissions: params.permissions,
+      });
+      if (!check.ok) throw new Error(check.reason);
+    }
+
     const existing = await adminRepository.findByEmail(params.email);
     if (existing) {
       throw new Error('An admin with this email already exists');
@@ -70,13 +171,28 @@ export const adminUseCases = {
       request: ctx.request,
     });
 
-    return admin;
+    // W6 / G-3: never return the password hash from a create. Previously
+    // the POST route returned `result` raw, exposing the Argon2id hash.
+    return stripAdminSecrets(admin);
   },
 
   async updateAdmin(id: string, params: UpdateAdminParams, actorId: string, ctx: AdminActionContext = {}) {
     const existing = await adminRepository.findById(id);
     if (!existing) {
       throw new Error('Admin not found');
+    }
+
+    // W6 / G-1, G-2: rank + permission-subset check on the EXISTING
+    // target. The check uses the *post*-change role / permissions so
+    // a TEAM_LEADER can't sneak a rank change past the gate by
+    // skipping the role field on the request.
+    if (ctx.session) {
+      const check = canModifyTarget(ctx.session, {
+        id,
+        role: params.role ?? (existing.role as string | null),
+        permissions: params.permissions,
+      });
+      if (!check.ok) throw new Error(check.reason);
     }
 
     // Admin Panel Phase 4 / Batch B (2026-08-23): last active SUPER_ADMIN
@@ -122,7 +238,10 @@ export const adminUseCases = {
       request: ctx.request,
     });
 
-    return admin;
+    // W6 / G-3: never return the (new) password hash. Belt-and-braces
+    // — the PUT route already strips it, but a future caller that
+    // forgets will get this protection.
+    return stripAdminSecrets(admin);
   },
 
   async deleteAdmin(id: string, actorId: string, ctx: AdminActionContext = {}) {
@@ -133,6 +252,17 @@ export const adminUseCases = {
     const existing = await adminRepository.findById(id);
     if (!existing) {
       throw new Error('Admin not found');
+    }
+
+    // W6 / G-1: a lower-ranked admin cannot deactivate a higher-ranked
+    // target via delete. We check rank against the live row because
+    // delete is a deactivate.
+    if (ctx.session) {
+      const check = canModifyTarget(ctx.session, {
+        role: existing.role,
+        isActive: existing.isActive,
+      });
+      if (!check.ok) throw new Error(check.reason);
     }
 
     if (existing.role === 'SUPER_ADMIN') {
@@ -164,6 +294,10 @@ export const adminUseCases = {
     entityId?: string;
     actorId?: string;
     action?: string;
+    actionPrefix?: string;
+    q?: string;
+    from?: string;
+    to?: string;
     page?: number;
     limit?: number;
   }) {
