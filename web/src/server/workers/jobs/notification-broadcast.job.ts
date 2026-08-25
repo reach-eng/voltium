@@ -30,7 +30,11 @@ export interface NotificationBroadcastPayload {
 }
 
 export const notificationBroadcastJob = {
-  async process(job: { id: string; payload: unknown }): Promise<{ count: number }> {
+  async process(job: {
+    id: string;
+    payload: unknown;
+    error?: string;
+  }): Promise<{ count: number }> {
     const payload = (job.payload ?? {}) as Partial<NotificationBroadcastPayload>;
 
     if (!payload.title || !payload.message) {
@@ -41,12 +45,20 @@ export const notificationBroadcastJob = {
       return { count: 0 };
     }
 
+    // AUDIT FIX (workflows WF-P2): resume cursor. On a mid-batch failure
+    // the job throws `BROADCAST_RESUME:<skip>` (embedded by JobQueue into
+    // the event's error field, which the reaper preserves). The retry
+    // parses it back so already-delivered batches are not re-sent.
+    const resumeMatch = /BROADCAST_RESUME:(\d+)/.exec(job.error ?? '');
+    const resumeFromSkip = resumeMatch ? Number(resumeMatch[1]) : 0;
+
     logger.info('[NotificationBroadcast] Processing', {
       jobId: job.id,
       title: payload.title,
       type: payload.type ?? 'INFO',
       adminId: payload.adminId ?? 'system',
       targets: payload.riderIds?.length ?? 'all',
+      resumeFromSkip,
     });
 
     if (payload.riderIds && payload.riderIds.length > 0) {
@@ -67,19 +79,41 @@ export const notificationBroadcastJob = {
 
     // P0-1: 100ms between batches keeps the insert loop off the DB's back
     // while still finishing 100k riders in a reasonable window (~40s).
-    const result = await notificationUseCases.sendToAllRiders(
-      payload.title,
-      payload.message,
-      payload.type ?? 'INFO',
-      payload.adminId ?? 'system',
-      100
-    );
+    // AUDIT FIX (WF-P2): resumeFromSkip skips already-delivered batches.
+    try {
+      const result = await notificationUseCases.sendToAllRiders(
+        payload.title,
+        payload.message,
+        payload.type ?? 'INFO',
+        payload.adminId ?? 'system',
+        100,
+        resumeFromSkip
+      );
 
-    logger.info('[NotificationBroadcast] Complete', {
-      jobId: job.id,
-      count: result.count,
-    });
+      logger.info('[NotificationBroadcast] Complete', {
+        jobId: job.id,
+        count: result.count,
+      });
 
-    return result;
+      return result;
+    } catch (err) {
+      // Embed the resume cursor so the retry (JobQueue backoff or reaper)
+      // continues where this attempt stopped. The error field survives:
+      // the failure-path update writes this message, and the reaper's
+      // reclaim prepends rather than erasing (see job-queue AUDIT FIX).
+      const completedSkip = resumeMatchOf(err) ?? resumeFromSkip;
+      const wrapped = new Error(
+        `BROADCAST_RESUME:${completedSkip} | ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
+      (wrapped as Error & { cause?: unknown }).cause = err;
+      throw wrapped;
+    }
   },
 };
+
+function resumeMatchOf(err: unknown): number | null {
+  const m = /BROADCAST_RESUME:(\d+)/.exec(err instanceof Error ? err.message : String(err));
+  return m ? Number(m[1]) : null;
+}

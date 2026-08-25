@@ -310,6 +310,43 @@ const SCHEDULED_TASKS: Array<{
       const { OutboxService } = await import('./outbox');
       const count = await OutboxService.cleanupCompleted(1);
       logger.info('[Scheduler] Outbox completed events cleanup', { count });
+
+      // AUDIT FIX (workflows WF-P2): wire the dormant purge paths.
+      //  (a) FAILED outbox rows previously accumulated forever
+      //      (retryFailed/purgeCompleted-FAILED had zero callers).
+      //  (b) expired idempotency keys were removed only lazily on
+      //      key re-presentation — unbounded table growth.
+      try {
+        const failedCutoff = new Date(
+          injectedClock.now().getTime() - 14 * 24 * 60 * 60 * 1000,
+        );
+        const failedPurged = await (
+          await import('@/lib/db')
+        ).db.outboxEvent.deleteMany({
+          where: { status: 'FAILED', updatedAt: { lt: failedCutoff } },
+        });
+        if (failedPurged.count > 0) {
+          logger.info('[Scheduler] Purged FAILED outbox events (>14d)', {
+            count: failedPurged.count,
+          });
+        }
+      } catch (e) {
+        logger.warn('[Scheduler] FAILED outbox purge failed', {
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+
+      try {
+        const { purgeExpiredIdempotencyKeys } = await import('@/lib/idempotency');
+        const keysPurged = await purgeExpiredIdempotencyKeys();
+        logger.info('[Scheduler] Idempotency key purge', {
+          count: keysPurged,
+        });
+      } catch (e) {
+        logger.warn('[Scheduler] Idempotency key purge failed', {
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
     },
   },
   {

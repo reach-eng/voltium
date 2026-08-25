@@ -173,11 +173,17 @@ export const notificationUseCases = {
     message: string,
     type: string,
     actorId: string,
-    batchDelayMs = 0
+    batchDelayMs = 0,
+    // AUDIT FIX (workflows WF-P2): resume offset for retry-after-failure.
+    // The job parses BROADCAST_RESUME:<n> out of the event's error field
+    // (preserved by the reaper) and passes it here so already-sent batches
+    // are not re-sent.
+    resumeFromSkip = 0
   ) {
     const BATCH_SIZE = 500;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    let skip = 0;
+    let skip = resumeFromSkip;
+    let lastCompletedSkip = resumeFromSkip;
     let totalSent = 0;
     while (true) {
       const batch = await db.rider.findMany({
@@ -212,6 +218,7 @@ export const notificationUseCases = {
       }
       totalSent += batch.length;
       skip += BATCH_SIZE;
+      lastCompletedSkip = skip;
       if (batchDelayMs > 0 && batch.length === BATCH_SIZE) await sleep(batchDelayMs);
     }
 
@@ -221,7 +228,9 @@ export const notificationUseCases = {
       entity: 'notification',
       details: { title, type, count: totalSent },
     }).catch((e) => logger.error('Audit log failed', e));
-    return { count: totalSent };
+    // AUDIT FIX (WF-P2): expose the completed offset so the job can embed
+    // a BROADCAST_RESUME cursor in its error field on failure.
+    return { count: totalSent, completedSkip: lastCompletedSkip };
   },
 
   /**
