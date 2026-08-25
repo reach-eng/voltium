@@ -113,6 +113,14 @@ class NotificationNotifier extends Notifier<NotificationState> {
     state = const NotificationState();
     await _persist();
   }
+
+  /// AUDIT FIX (workflows P0-G): logout isolation. `clearAll()` persists
+  /// an empty list, which is exactly what logout needs — but the
+  /// orchestrator previously never called it, so the previous rider's
+  /// notification titles/messages survived in memory AND in plaintext
+  /// SharedPreferences, and were re-hydrated for whoever logged in next.
+  /// Wired into [RiderLogoutOrchestrator].
+  Future<void> reset() => clearAll();
 }
 
 /// Backwards-compat type alias for any code still importing

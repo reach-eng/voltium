@@ -48,6 +48,10 @@ void main() {
       riderId: riderId,
       phone: '+919876543210',
       name: 'Voltium Rider',
+      // AUDIT FIX (workflows P0-C companion): lifecycle-sensitive hub
+      // sections render only for fully-ACTIVE riders now. Seed an active
+      // rider so the full-tile layout this suite verifies is visible.
+      lifecycleStatus: 'ACTIVE',
     );
 
     return ProviderScope(

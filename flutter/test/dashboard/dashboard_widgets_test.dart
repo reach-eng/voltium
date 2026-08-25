@@ -401,8 +401,17 @@ void main() {
       ));
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
-      // In non-compact mode, null plan defaults to 'WEEKLY PAYMENT'
-      expect(find.text('WEEKLY PAYMENT'), findsOneWidget);
+      // AUDIT FIX: the widget now resolves `txtweeklyPayment` via
+      // AppLocalizations with a 'WEEKLY PLAN' fallback (the harness has no
+      // l10n delegates, so the fallback renders). Accept any casing of the
+      // weekly default rather than the removed hardcoded literal.
+      final weeklyText = find.byWidgetPredicate(
+        (w) =>
+            w is Text &&
+            w.data != null &&
+            w.data!.toUpperCase().contains('WEEKLY'),
+      );
+      expect(weeklyText, findsOneWidget);
     });
 
     testWidgets('null plan compact shows NO PLAN badge', (tester) async {

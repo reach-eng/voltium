@@ -203,3 +203,20 @@ Rules:
 
 ## Business Logic Rules
 - **Rental Plans (Recurring Subscriptions)**: A plan's durationDays is strictly determined by its 	ype (DAILY = 1, WEEKLY = 7, MONTHLY = 30). This ensures recurring billing cycles are mathematically consistent. The backend automatically calculates this on create/update, overriding any manual input.
+
+## Single-Writer Rule (Phase 0 governance, 2026-08-23)
+
+Multiple uncoordinated agent/sessions editing this repo have repeatedly
+clobbered each other's staged work (three confirmed sweep incidents on
+2026-08-22/23). Rules:
+
+1. ONE writer session at a time per top-level area:
+   - `flutter/**` and `web/**` may have separate writers ONLY if each
+     declares its file list before starting.
+   - Shared hot zones (`web/src/lib`, `flutter/lib/core`, `flutter/lib/app`,
+     `AGENTS.md`, `.github/workflows`) are single-writer globally.
+2. Before staging, re-run `git status` — if files you did not touch appear
+   modified, STOP and reconcile with the other writer.
+3. Commit small and often. Long-lived working-tree state WILL be swept.
+4. All audit findings must reference a ticket ID from
+   `docs/AUDIT_BACKLOG.md` in the commit message.

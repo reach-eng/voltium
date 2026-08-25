@@ -558,13 +558,12 @@ class ApiClient {
     String? idempotencyKey,
     Future<void>? cancelSignal,
   }) async {
+    final effectiveIdempotencyKey = idempotencyKey ?? newIdempotencyKey();
     final uri = Uri.parse('$_baseUrl$path');
 
     try {
       return await _executeWithRetry((headers) async {
-        if (idempotencyKey != null) {
-          headers['Idempotency-Key'] = idempotencyKey;
-        }
+        headers['Idempotency-Key'] = effectiveIdempotencyKey;
         return await _client
             .post(
               uri,
@@ -574,10 +573,10 @@ class ApiClient {
             .timeout(requestTimeout);
       }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
-      await _maybeQueueOffline('POST', path, body);
+      await _maybeQueueOffline('POST', path, body, effectiveIdempotencyKey);
       rethrow;
     } on TimeoutException catch (_) {
-      await _maybeQueueOffline('POST', path, body);
+      await _maybeQueueOffline('POST', path, body, effectiveIdempotencyKey);
       rethrow;
     }
   }
@@ -590,14 +589,13 @@ class ApiClient {
     Map<String, String>? queryParams,
     Future<void>? cancelSignal,
   }) async {
+    final effectiveIdempotencyKey = idempotencyKey ?? newIdempotencyKey();
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
 
     try {
       return await _executeWithRetry((headers) async {
-        if (idempotencyKey != null) {
-          headers['Idempotency-Key'] = idempotencyKey;
-        }
+        headers['Idempotency-Key'] = effectiveIdempotencyKey;
         return await _client
             .put(
               uri,
@@ -607,10 +605,10 @@ class ApiClient {
             .timeout(requestTimeout);
       }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
-      await _maybeQueueOffline('PUT', path, body);
+      await _maybeQueueOffline('PUT', path, body, effectiveIdempotencyKey);
       rethrow;
     } on TimeoutException catch (_) {
-      await _maybeQueueOffline('PUT', path, body);
+      await _maybeQueueOffline('PUT', path, body, effectiveIdempotencyKey);
       rethrow;
     }
   }
@@ -622,23 +620,22 @@ class ApiClient {
     Map<String, String>? queryParams,
     Future<void>? cancelSignal,
   }) async {
+    final effectiveIdempotencyKey = idempotencyKey ?? newIdempotencyKey();
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
 
     try {
       return await _executeWithRetry((headers) async {
-        if (idempotencyKey != null) {
-          headers['Idempotency-Key'] = idempotencyKey;
-        }
+        headers['Idempotency-Key'] = effectiveIdempotencyKey;
         return await _client
             .delete(uri, headers: headers)
             .timeout(requestTimeout);
       }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
-      await _maybeQueueOffline('DELETE', path, null);
+      await _maybeQueueOffline('DELETE', path, null, effectiveIdempotencyKey);
       rethrow;
     } on TimeoutException catch (_) {
-      await _maybeQueueOffline('DELETE', path, null);
+      await _maybeQueueOffline('DELETE', path, null, effectiveIdempotencyKey);
       rethrow;
     }
   }
@@ -653,8 +650,6 @@ class ApiClient {
     String? idempotencyKey,
   }) async {
     switch (method.toUpperCase()) {
-      case 'GET':
-        return get(path);
       case 'POST':
         return post(path, body: body, idempotencyKey: idempotencyKey);
       case 'PUT':
@@ -671,18 +666,19 @@ class ApiClient {
   Future<void> _maybeQueueOffline(
     String method,
     String path,
-    Map<String, dynamic>? body,
-  ) async {
+    Map<String, dynamic>? body, [
+    String? idempotencyKey,
+  ]) async {
     // Only queue mutating operations for replay
     if (method == 'GET') return;
     try {
-      final idempotencyKey = _newCorrelationId();
+      final key = idempotencyKey ?? newIdempotencyKey();
       final offlineStorage = OfflineStorageService();
       await offlineStorage.addPendingOperation(
         path,
         method,
         body,
-        idempotencyKey: idempotencyKey,
+        idempotencyKey: key,
       );
     } catch (_) {
       // Offline storage is optional — silently ignore failures

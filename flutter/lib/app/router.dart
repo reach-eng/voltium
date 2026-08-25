@@ -79,6 +79,8 @@ import '../features/referrals/presentation/screens/referral_screen.dart';
 
 import 'app_state.dart';
 import 'auth_state_group.dart';
+import '../core/navigation/app_state.dart' as nav_state;
+import '../core/navigation/app_state_notifier.dart';
 
 part 'router_body.dart';
 
@@ -412,10 +414,19 @@ class _AppRouterState extends ConsumerState<AppRouter>
     // state to a fresh const RiderState (which also clears
     // lastSessionExpiredAt so the listener doesn't re-fire).
     ProviderScope.containerOf(context).read(riderProvider.notifier).logout();
+    try {
+      Navigator.of(context, rootNavigator: true)
+          .popUntil((route) => route.isFirst);
+    } catch (_) {}
     setState(() {
       _currentState = AuthState.login;
       _isOnboarding = false;
     });
+    try {
+      ref.read(appStateProvider.notifier).replaceState(
+            nav_state.appStateFromAuthState(AuthState.login),
+          );
+    } catch (_) {}
     CacheService().setString('voltium_saved_auth_state', AuthState.login.name);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -521,23 +532,40 @@ class _AppRouterState extends ConsumerState<AppRouter>
       // pre-dashboard special-case is removed because the active path
       // no longer routes through preDashboard.
       bool stateMatches = _currentState == correctState;
-      if (!stateMatches && correctState.isPreDashboardOrSub) {
-        stateMatches = _currentState.isPreDashboardOrSub;
+      if (!stateMatches &&
+          correctState.isPreDashboardOrSub &&
+          correctState != AuthState.accountClosed) {
+        // AUDIT FIX (workflows P1-J5): the family shelter used to apply
+        // even when the gate target was SUSPENDED/TERMINATED — a suspended
+        // rider could enter choosePlan/topUpAmount/pickupHub and was
+        // stranded there, able to submit SECURITY_DEPOSIT proofs while
+        // their account was blocked. The shield now exempts blocked
+        // lifecycle targets so correction always drags them out.
+        final gateBlocked = r.lifecycleStatus == 'SUSPENDED' ||
+            r.lifecycleStatus == 'TERMINATED';
+        stateMatches = !gateBlocked && _currentState.isPreDashboardOrSub;
       }
 
       if (!stateMatches) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
+            // Kill any pushed modal/route zombies on forced lifecycle redirect
+            try {
+              Navigator.of(context, rootNavigator: true)
+                  .popUntil((route) => route.isFirst);
+            } catch (_) {}
+
             setState(() {
               _currentState = correctState;
               // PR-ONBOARDING-FLOW-2026-08-13: derive _isOnboarding
               // from the rider's lifecycle (see _computeIsOnboarding).
-              // The old heuristic (any state != dashboard) is correct
-              // for most cases but misses the suspended rider on a
-              // non-dashboard state — the lifecycle-based check
-              // handles that edge case.
               _isOnboarding = _computeIsOnboarding(correctState);
             });
+            try {
+              ref.read(appStateProvider.notifier).replaceState(
+                    nav_state.appStateFromAuthState(correctState),
+                  );
+            } catch (_) {}
             CacheService()
                 .setString('voltium_saved_auth_state', correctState.name);
           }
@@ -551,9 +579,18 @@ class _AppRouterState extends ConsumerState<AppRouter>
           // Logged out (or session expired): a pickup draft belongs to the
           // previous session — drop it so the next login starts clean.
           if (hasPickupDraft) clearPickupDraft();
+          try {
+            Navigator.of(context, rootNavigator: true)
+                .popUntil((route) => route.isFirst);
+          } catch (_) {}
           setState(() {
             _currentState = AuthState.login;
           });
+          try {
+            ref.read(appStateProvider.notifier).replaceState(
+                  nav_state.appStateFromAuthState(AuthState.login),
+                );
+          } catch (_) {}
           CacheService()
               .setString('voltium_saved_auth_state', AuthState.login.name);
         }
@@ -565,15 +602,15 @@ class _AppRouterState extends ConsumerState<AppRouter>
     setState(() {
       _currentState = nextState;
       // PR-ONBOARDING-FLOW-2026-08-13: derive _isOnboarding from the
-      // rider's lifecycle, not the destination state. The old
-      // heuristic only flipped the flag on preDashboard, which the
-      // new active path never visits — so a rider on topUpAmount
-      // (deposit step) had _isOnboarding = false and the system back
-      // button fell through to the dashboard. The lifecycle is the
-      // source of truth: rank < 11 = onboarding, regardless of which
-      // sub-screen the rider is currently on.
+      // rider's lifecycle, not the destination state.
       _isOnboarding = _computeIsOnboarding(nextState);
     });
+
+    try {
+      ref.read(appStateProvider.notifier).replaceState(
+            nav_state.appStateFromAuthState(nextState),
+          );
+    } catch (_) {}
 
     if (nextState != AuthState.splash) {
       CacheService().setString('voltium_saved_auth_state', nextState.name);

@@ -64,11 +64,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             )
             .toList();
       case NotificationTab.kyc:
-        // AUDIT FIX: prefer structured fields where they exist. The
+        // AUDIT FIX (T-110): prefer structured fields where they exist. The
         // AppNotificationType enum has NO dedicated KYC value (server
         // sends KYC items as `system`), so keyword matching on the title
         // is unavoidable here. LIMITATION: this only matches
         // English-language titles; localized titles will not match.
+        // TODO(server): add `category` to the AppNotification payload so
+        // this filter becomes structured and locale-independent.
         return all.where((n) {
           if (n.type != AppNotificationType.system) return false;
           final t = n.title.toLowerCase();
@@ -77,9 +79,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               t.contains('document');
         }).toList();
       case NotificationTab.maintenance:
-        // AUDIT FIX: use the structured `vehicle` type when present and
+        // AUDIT FIX (T-110): use the structured `vehicle` type when present and
         // fall back to system-type keywords only for legacy records.
         // Same English-title limitation as the KYC tab above.
+        // TODO(server): add `category` to the AppNotification payload.
         return all.where((n) {
           if (n.type == AppNotificationType.vehicle) return true;
           if (n.type != AppNotificationType.system) return false;
@@ -396,7 +399,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               ),
               const SizedBox(width: 16),
               Text(
-                'Notifications',
+                AppLocalizations.of(context)?.txtnotifications ??
+                    'Notifications',
                 style: AppTypography.headingSmall
                     .copyWith(color: AppColors.of(context).onSurface),
               ),

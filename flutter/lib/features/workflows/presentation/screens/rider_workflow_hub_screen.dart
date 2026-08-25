@@ -36,6 +36,13 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final riderId = ref.read(riderProvider).riderId ?? 'local';
+    // AUDIT FIX (workflows P0-C): the hub was an unguarded side door — it
+    // pushed IntentOfUse / UserOnboarding / Guarantor / ChoosePlan /
+    // RentalDetails / EndRental with zero lifecycle checks, re-exposing
+    // exactly the surfaces PR-3 gated. Lifecycle-sensitive sections now
+    // render only for fully-ACTIVE riders; everyone else gets a notice.
+    final lifecycle = ref.watch(riderProvider).rider?.lifecycleStatus;
+    final isActive = lifecycle == 'ACTIVE';
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
 
@@ -50,112 +57,132 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
-          _Section(
-            title: 'Onboarding & verification',
-            children: [
-              _Tile(
-                title: l10n?.txtintentOfUse ?? 'Intent of use',
-                icon: Icons.assignment_outlined,
-                iconColor: AppColors.primary,
-                onTap: () =>
-                    AppNavigator.push(context, const IntentOfUseScreen()),
-              ),
-              _Tile(
-                title: 'Rider profile',
-                icon: Icons.person_add_alt,
-                iconColor: AppColors.info,
-                onTap: () =>
-                    AppNavigator.push(context, const UserOnboardingScreen()),
-              ),
-              _Tile(
-                title: 'Signature / consent',
-                icon: Icons.draw_outlined,
-                iconColor: AppColors.accentPurple,
-                onTap: () =>
-                    AppNavigator.push(context, const SignaturePadScreen()),
-              ),
-              _Tile(
-                title: l10n?.menu_myDocuments ?? 'My documents',
-                icon: Icons.folder_copy_outlined,
-                iconColor: AppColors.success,
-                onTap: () =>
-                    AppNavigator.push(context, const MyDocumentsScreen()),
-              ),
-              _Tile(
-                title: 'Guarantor details',
-                icon: Icons.verified_user_outlined,
-                iconColor: AppColors.primary,
-                onTap: () => AppNavigator.push(
-                  context,
-                  GuarantorOnboardingScreen(
-                    onNext: () => Navigator.maybePop(context),
+          // AUDIT FIX (workflows P0-C): lifecycle-gated sections. The
+          // onboarding / plan-deposit / rental-return families are only
+          // offered to fully-ACTIVE riders; suspended, terminated and
+          // still-onboarding riders see a notice instead.
+          if (isActive) ...[
+            _Section(
+              title: 'Onboarding & verification',
+              children: [
+                _Tile(
+                  title: l10n?.txtintentOfUse ?? 'Intent of use',
+                  icon: Icons.assignment_outlined,
+                  iconColor: AppColors.primary,
+                  onTap: () =>
+                      AppNavigator.push(context, const IntentOfUseScreen()),
+                ),
+                _Tile(
+                  title: 'Rider profile',
+                  icon: Icons.person_add_alt,
+                  iconColor: AppColors.info,
+                  onTap: () =>
+                      AppNavigator.push(context, const UserOnboardingScreen()),
+                ),
+                _Tile(
+                  title: 'Signature / consent',
+                  icon: Icons.draw_outlined,
+                  iconColor: AppColors.accentPurple,
+                  onTap: () =>
+                      AppNavigator.push(context, const SignaturePadScreen()),
+                ),
+                _Tile(
+                  title: l10n?.menu_myDocuments ?? 'My documents',
+                  icon: Icons.folder_copy_outlined,
+                  iconColor: AppColors.success,
+                  onTap: () =>
+                      AppNavigator.push(context, const MyDocumentsScreen()),
+                ),
+                _Tile(
+                  title: 'Guarantor details',
+                  icon: Icons.verified_user_outlined,
+                  iconColor: AppColors.primary,
+                  onTap: () => AppNavigator.push(
+                    context,
+                    GuarantorOnboardingScreen(
+                      onNext: () => Navigator.maybePop(context),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          _Section(
-            title: 'Plan, wallet & deposit',
-            children: [
-              _Tile(
-                title: 'Choose plan',
-                icon: Icons.electric_bolt_outlined,
-                iconColor: AppColors.warning,
-                onTap: () => AppNavigator.push(
-                  context,
-                  ChoosePlanScreen(
-                    onNext: () => Navigator.maybePop(context),
+              ],
+            ),
+            _Section(
+              title: 'Plan, wallet & deposit',
+              children: [
+                _Tile(
+                  title: 'Choose plan',
+                  icon: Icons.electric_bolt_outlined,
+                  iconColor: AppColors.warning,
+                  onTap: () => AppNavigator.push(
+                    context,
+                    ChoosePlanScreen(
+                      onNext: () => Navigator.maybePop(context),
+                    ),
                   ),
                 ),
-              ),
-              _Tile(
-                title: 'Top-up / deposit flow',
-                icon: Icons.account_balance_wallet_outlined,
-                iconColor: AppColors.primary,
-                onTap: () => AppNavigator.push(context, const TopUpFlow()),
-              ),
-              _Tile(
-                title: 'Transaction history',
-                icon: Icons.history,
-                iconColor: AppColors.info,
-                onTap: () => AppNavigator.push(
-                  context,
-                  HistoryScreen(riderId: riderId),
+                _Tile(
+                  title: 'Top-up / deposit flow',
+                  icon: Icons.account_balance_wallet_outlined,
+                  iconColor: AppColors.primary,
+                  onTap: () => AppNavigator.push(context, const TopUpFlow()),
                 ),
-              ),
-              _Tile(
-                title: l10n?.menu_rewards ?? 'Rewards',
-                icon: Icons.card_giftcard_outlined,
-                iconColor: AppColors.accentPurple,
-                onTap: () => AppNavigator.push(context, const RewardsScreen()),
-              ),
-              _Tile(
-                title: l10n?.menu_referralProgram ?? 'Referrals',
-                icon: Icons.people_alt_outlined,
-                iconColor: AppColors.warning,
-                onTap: () => AppNavigator.push(context, const ReferralScreen()),
-              ),
-            ],
-          ),
-          _Section(
-            title: 'Pickup, rental & return',
-            children: [
-              _Tile(
-                title: 'Rental details',
-                icon: Icons.description_outlined,
-                iconColor: AppColors.info,
-                onTap: () =>
-                    AppNavigator.push(context, const RentalDetailsScreen()),
-              ),
-              _Tile(
-                title: 'End rental / return',
-                icon: Icons.assignment_return_outlined,
-                iconColor: AppColors.error,
-                onTap: () =>
-                    AppNavigator.push(context, const EndRentalScreen()),
-              ),
-            ],
-          ),
+                _Tile(
+                  title: 'Transaction history',
+                  icon: Icons.history,
+                  iconColor: AppColors.info,
+                  onTap: () => AppNavigator.push(
+                    context,
+                    HistoryScreen(riderId: riderId),
+                  ),
+                ),
+                _Tile(
+                  title: l10n?.menu_rewards ?? 'Rewards',
+                  icon: Icons.card_giftcard_outlined,
+                  iconColor: AppColors.accentPurple,
+                  onTap: () =>
+                      AppNavigator.push(context, const RewardsScreen()),
+                ),
+                _Tile(
+                  title: l10n?.menu_referralProgram ?? 'Referrals',
+                  icon: Icons.people_alt_outlined,
+                  iconColor: AppColors.warning,
+                  onTap: () =>
+                      AppNavigator.push(context, const ReferralScreen()),
+                ),
+              ],
+            ),
+            _Section(
+              title: 'Pickup, rental & return',
+              children: [
+                _Tile(
+                  title: 'Rental details',
+                  icon: Icons.description_outlined,
+                  iconColor: AppColors.info,
+                  onTap: () =>
+                      AppNavigator.push(context, const RentalDetailsScreen()),
+                ),
+                _Tile(
+                  title: 'End rental / return',
+                  icon: Icons.assignment_return_outlined,
+                  iconColor: AppColors.error,
+                  onTap: () =>
+                      AppNavigator.push(context, const EndRentalScreen()),
+                ),
+              ],
+            ),
+          ] else ...[
+            _Section(
+              title: 'Onboarding & verification',
+              children: [
+                _Tile(
+                  title: 'Account features unlock after activation',
+                  icon: Icons.lock_outline,
+                  iconColor: colors.onSurfaceMuted,
+                  onTap: null,
+                ),
+              ],
+            ),
+          ],
           _Section(
             title: 'Support & communication',
             children: [
@@ -176,7 +203,7 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 ),
               ),
               _Tile(
-                title: 'FAQ',
+                title: l10n?.txtfaq ?? 'FAQ',
                 icon: Icons.help_outline,
                 iconColor: AppColors.accentPurple,
                 onTap: () => AppNavigator.push(context, const FaqScreen()),
@@ -301,13 +328,15 @@ class _Tile extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color iconColor;
-  final VoidCallback onTap;
+
+  /// Nullable tap = inert informational tile (AUDIT FIX: locked state).
+  final VoidCallback? onTap;
 
   const _Tile({
     required this.title,
     required this.icon,
     this.iconColor = AppColors.primary,
-    required this.onTap,
+    this.onTap,
   });
 
   @override

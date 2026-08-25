@@ -941,29 +941,40 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   /// F14: Typed ApiException error handling
+  ///
+  /// T-114: every user-visible string here goes through l10n with an
+  /// English fallback. Previously these were hardcoded English — a
+  /// Hindi rider saw "Session expired. Please log in again." in
+  /// English while the rest of the screen was translated.
   String _formatKycError(Object e) {
     appDebug('KYC submit error: $e');
+    final l10n = AppLocalizations.of(context);
     if (e is ApiException) {
       switch (e.statusCode) {
         case 422:
           return e.message.isNotEmpty
               ? e.message
-              : 'Please check your documents and try uploading again.';
+              : (l10n?.txtkycErrorInvalidDocs ??
+                  'Please check your documents and try uploading again.');
         case 401:
-          return 'Session expired. Please log in again.';
+          return l10n?.txtsessionExpiredPleaseLogIn ??
+              'Session expired. Please log in again.';
         case 403:
-          return 'Access denied. Please check your verification status.';
+          return l10n?.txtkycErrorAccessDenied ??
+              'Access denied. Please check your verification status.';
         case 408:
         case 504:
-          return 'Upload timed out. Please check your connection and retry.';
+          return l10n?.txtkycErrorUploadTimeout ??
+              'Upload timed out. Please check your connection and retry.';
         case 500:
         case 502:
         case 503:
-          return 'Server temporarily unavailable. Please try again later.';
+          return l10n?.txtserverUnavailable ??
+              'Server temporarily unavailable. Please try again later.';
         default:
           return e.message.isNotEmpty
               ? e.message
-              : 'Something went wrong. Please try again.';
+              : (l10n?.txtgenericTryAgain ?? 'Something went wrong. Please try again.');
       }
     }
     final msg = e.toString().toLowerCase();
@@ -971,7 +982,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         msg.contains('timeout') ||
         msg.contains('socketexception') ||
         msg.contains('connection')) {
-      return 'No internet connection. Please check and retry.';
+      return l10n?.txtnoInternetConnection ??
+          'No internet connection. Please check and retry.';
     }
     return 'Something went wrong. Please try again.';
   }
