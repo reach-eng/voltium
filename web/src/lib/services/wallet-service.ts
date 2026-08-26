@@ -428,12 +428,21 @@ export async function verifyLedgerIntegrity(
     return { ok: false, walletBalance: 0, ledgerSum: 0, drift: 0 };
   }
 
-  // Sum ledger entries that affect balanceInPaise (exclude SECURITY_DEPOSIT & FORFEITURE
-  // because those change securityDeposit, not balanceInPaise)
+  // Sum ledger entries that affect balanceInPaise. SECURITY_DEPOSIT &
+  // FORFEITURE are excluded because those change securityDeposit, not
+  // balanceInPaise.
+  // W6 / M-6: REFUND is split-brained — creditWallet(REFUND) rows
+  // (CREDIT) move the spendable balance and must be counted, while
+  // debitSecurityDeposit(REFUND) rows (DEBIT, balanceAfter: 0) only
+  // touch securityDepositInPaise and must stay excluded. Mirrors the
+  // predicate in wallet-reconciliation.job.ts fetchAllWalletDrifts().
   const ledgerEntries = await db.walletLedger.findMany({
     where: {
       riderId,
-      category: { notIn: ['SECURITY_DEPOSIT', 'FORFEITURE', 'REFUND'] },
+      OR: [
+        { category: { notIn: ['SECURITY_DEPOSIT', 'FORFEITURE', 'REFUND'] } },
+        { category: 'REFUND', entryType: 'CREDIT' },
+      ],
     },
     select: { entryType: true, amountInPaise: true },
   });

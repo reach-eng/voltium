@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   invalidateCache: vi.fn(),
   runWalletReconciliation: vi.fn(),
   recordReconciliation: vi.fn(),
+  persistReconciliationReport: vi.fn(),
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
@@ -68,6 +69,8 @@ vi.mock('@/server/modules/transactions/transaction.use-cases', async (importOrig
 vi.mock('@/server/workers/jobs/wallet-reconciliation.job', () => ({
   runWalletReconciliation: mocks.runWalletReconciliation,
   recordReconciliation: mocks.recordReconciliation,
+  // W6 / M-6: admin runs now also persist the daily report row.
+  persistReconciliationReport: mocks.persistReconciliationReport,
 }));
 
 import { GET as GET_TXN, PUT, POST } from '@/app/api/admin/transactions/route';

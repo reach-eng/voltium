@@ -101,6 +101,27 @@ export const JobQueue = {
     if (pending.length === 0) return 0;
 
     for (const event of pending) {
+      // W10 / I-3: HEARTBEAT. processJobs claims up to `concurrency` rows
+      // (all flipped to PROCESSING at t0) then processes them SERIALLY.
+      // A long-running processor (broadcasts sized for 10k+ riders run
+      // 30-60 min) never touches its row until completion, so the
+      // reaper's staleness check saw only the claim-time timestamp and
+      // reclaimed the row mid-flight — a second loop instance then
+      // re-executed the job concurrently (duplicate mass notifications).
+      // While a processor runs, bump `updatedAt` every 60s (well under
+      // the smallest reaper window of 2 min), guarded by status so a
+      // genuinely dead worker's row stays reclaimable.
+      const heartbeat = setInterval(() => {
+        db.outboxEvent
+          .updateMany({
+            where: { id: event.id, status: 'PROCESSING' },
+            data: { updatedAt: new Date(clock.now()) },
+          })
+          .catch(() => {});
+      }, 60_000);
+      // Never hold the event loop open for the timer alone.
+      if (typeof heartbeat.unref === 'function') heartbeat.unref();
+
       try {
         const job: QueueJob = {
           id: event.id,
@@ -162,6 +183,9 @@ export const JobQueue = {
           nextReadyAt: nextReadyAt.toISOString(),
           error: errorMessage,
         });
+      } finally {
+        // W10 / I-3: stop the heartbeat regardless of success/failure.
+        clearInterval(heartbeat);
       }
     }
     return pending.length;

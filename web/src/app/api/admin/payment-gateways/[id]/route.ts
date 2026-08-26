@@ -5,9 +5,29 @@ import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { createAuditLog } from '@/lib/audit-log';
 import { encryptCredential, decryptCredential } from '@/lib/credentials';
+import { isValidPublicApiEndpoint } from '@/lib/ssrf';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * W6 / M-5: read paths return MASKED secrets (`••••last4`). The edit
+ * dialog round-trips whatever it received, so a masked value arriving
+ * here means "unchanged" — strip it before encryption, otherwise the
+ * real secret would be overwritten with the literal mask.
+ */
+const SECRET_MASK_RE = /^••••/;
+
+function isSecretMask(value: string | null | undefined): boolean {
+  return typeof value === 'string' && SECRET_MASK_RE.test(value);
+}
+
+/** W6 / M-5: last-4 mask for read responses. Mirrors route.ts. */
+function maskSecret(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (value.length <= 4) return '••••';
+  return `••••${value.slice(-4)}`;
+}
 
 const updatePaymentGatewaySchema = z
   .object({
@@ -26,7 +46,18 @@ const updatePaymentGatewaySchema = z
     apiEndpoint: z.string().nullable().optional(),
     environment: z.enum(['TEST', 'LIVE']).optional(),
   })
-  .strict();
+  .strict()
+  // W6 / M-5: SSRF guard enforced at WRITE time (mirrors create schema).
+  .superRefine((data, ctx) => {
+    const check = isValidPublicApiEndpoint(data.apiEndpoint);
+    if (!check.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['apiEndpoint'],
+        message: `apiEndpoint ${check.reason}`,
+      });
+    }
+  });
 
 export async function PATCH(
   req: NextRequest,
@@ -63,10 +94,16 @@ export async function PATCH(
     }
 
     const data = { ...parsed };
+    // W6 / M-5: masked round-trip values mean "unchanged" — drop them.
+    if (isSecretMask(data.keySecret)) {
+      delete data.keySecret;
+    }
+    if (isSecretMask(data.webhookSecret)) {
+      delete data.webhookSecret;
+    }
     // PR-8 (7th audit P0): encrypt secrets at rest. encryptCredential is
-    // idempotent — the admin edit dialog round-trips the decrypted value,
-    // and an already-encrypted value passes through untouched, so no value
-    // can ever be double-encrypted.
+    // idempotent — an already-encrypted value passes through untouched,
+    // so no value can ever be double-encrypted.
     if (data.keySecret !== undefined) {
       data.keySecret = encryptCredential(data.keySecret) as string | null;
     }
@@ -79,9 +116,11 @@ export async function PATCH(
       data,
     });
 
-    // Decrypt the secrets for the response (matches the GET contract).
-    updated.keySecret = decryptCredential(updated.keySecret) ?? null;
-    updated.webhookSecret = decryptCredential(updated.webhookSecret) ?? null;
+    // W6 / M-5: respond with MASKED secrets (matches the masked GET
+    // contract). The previous behavior decrypted full secrets into the
+    // PATCH response.
+    updated.keySecret = maskSecret(decryptCredential(updated.keySecret));
+    updated.webhookSecret = maskSecret(decryptCredential(updated.webhookSecret));
 
     createAuditLog({
       actorId: session.adminId ?? session.riderDbId ?? 'unknown',

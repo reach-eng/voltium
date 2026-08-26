@@ -61,14 +61,23 @@ interface WalletDriftRow {
  * The query groups `WalletLedger` by `riderId` and applies the
  * sign convention (CREDIT = +, DEBIT = -) via `SUM(CASE WHEN entryType
  * = 'CREDIT' THEN amountInPaise ELSE -amountInPaise END)`. The
- * categories that don't affect `balanceInPaise` (SECURITY_DEPOSIT,
- * FORFEITURE, REFUND) are excluded via the `WHERE` clause.
+ * category that never affects `balanceInPaise` (SECURITY_DEPOSIT,
+ * FORFEITURE) is excluded via the `WHERE` clause.
  *
- * P1-19 (financial audit): the exclusion was flagged as possibly wrong —
- * "a REFUND credits the wallet". Verified against wallet-service: deposit
- * entries (SECURITY_DEPOSIT/FORFEITURE/REFUND) write `balanceAfter: 0` and
- * never mutate `balanceInPaise`, so excluding them is CORRECT — a refund or
- * forfeiture history cannot produce phantom drift.
+ * P1-19 / W6 / M-6 — the REFUND subtlety, handled explicitly:
+ * TWO writers emit `category = 'REFUND'` rows:
+ *   1. `creditWallet({ category: 'REFUND' })` in refundDeposit() —
+ *      CREDIT that DOES increment `balanceInPaise`. Must be INCLUDED.
+ *   2. `debitSecurityDeposit({ category: 'REFUND' })` — DEBIT against
+ *      `securityDepositInPaise`, writes `balanceAfter: 0`, never
+ *      touches the spendable balance. Must stay EXCLUDED.
+ * The original code excluded ALL REFUND rows, producing permanent
+ * phantom drift equal to every refund ever issued. The predicate below
+ * includes only CREDIT-typed REFUND rows (the balance-moving ones).
+ *
+ * Longer-term hygiene note: the ledger's `category` field conflates
+ * these two writers; a dedicated `SECURITY_DEPOSIT_REFUND` category
+ * would remove the need for the entryType discriminator.
  *
  * `LEFT JOIN` ensures wallets with zero ledger rows are still
  * included (their `ledgerSum` is 0 and `drift` equals
@@ -98,7 +107,10 @@ async function fetchAllWalletDrifts(): Promise<WalletDriftRow[]> {
     FROM "wallets" w
     LEFT JOIN "wallet_ledgers" wl
       ON wl."riderId" = w."riderId"
-      AND wl."category" NOT IN ('SECURITY_DEPOSIT', 'FORFEITURE', 'REFUND')
+      AND (
+        wl."category" NOT IN ('SECURITY_DEPOSIT', 'FORFEITURE', 'REFUND')
+        OR (wl."category" = 'REFUND' AND wl."entryType" = 'CREDIT')
+      )
     GROUP BY w."riderId", w."balanceInPaise"
   `;
   return rows;

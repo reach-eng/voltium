@@ -5,9 +5,22 @@ import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { createAuditLog } from '@/lib/audit-log';
 import { encryptCredential, decryptCredential } from '@/lib/credentials';
+import { isValidPublicApiEndpoint } from '@/lib/ssrf';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * W6 / M-5: gateway secrets must never leave the server in plaintext.
+ * Read paths return a last-4 mask only; the full value stays encrypted
+ * at rest and is used exclusively server-side (e.g. test-connection).
+ */
+function maskSecret(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const plain = value;
+  if (plain.length <= 4) return '••••';
+  return `••••${plain.slice(-4)}`;
+}
 
 const createPaymentGatewaySchema = z
   .object({
@@ -27,7 +40,20 @@ const createPaymentGatewaySchema = z
     apiEndpoint: z.string().nullable().optional(),
     environment: z.enum(['TEST', 'LIVE']).optional().default('TEST'),
   })
-  .strict();
+  .strict()
+  // W6 / M-5: SSRF guard enforced at WRITE time — previously the
+  // public-endpoint validation lived only in test-connection, so a
+  // private-range endpoint could be stored and activated untested.
+  .superRefine((data, ctx) => {
+    const check = isValidPublicApiEndpoint(data.apiEndpoint);
+    if (!check.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['apiEndpoint'],
+        message: `apiEndpoint ${check.reason}`,
+      });
+    }
+  });
 
 export async function GET() {
   const session = await requireAdmin();
@@ -45,15 +71,16 @@ export async function GET() {
     const gateways = await db.paymentGateway.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    // PR-8 (7th audit P0): secrets are encrypted at rest — decrypt for the
-    // admin read path. Legacy plaintext rows pass through untouched until
-    // the next write migrates them to ciphertext.
-    const decrypted = gateways.map((gw: { keySecret?: string | null; webhookSecret?: string | null }) => ({
+    // PR-8 (7th audit P0): secrets are encrypted at rest.
+    // W6 / M-5: read paths return MASKED values (last 4), not plaintext.
+    // The previous behavior decrypted and returned full secrets to any
+    // admin holding transactions_view — defeating encryption-at-rest.
+    const masked = gateways.map((gw: { keySecret?: string | null; webhookSecret?: string | null }) => ({
       ...gw,
-      keySecret: decryptCredential(gw.keySecret ?? null),
-      webhookSecret: decryptCredential(gw.webhookSecret ?? null),
+      keySecret: maskSecret(decryptCredential(gw.keySecret ?? null)),
+      webhookSecret: maskSecret(decryptCredential(gw.webhookSecret ?? null)),
     }));
-    return success(decrypted, 'Payment gateways fetched successfully');
+    return success(masked, 'Payment gateways fetched successfully');
   } catch (err: unknown) {
     return errors.internal('Failed to fetch payment gateways');
   }
@@ -110,7 +137,21 @@ export async function POST(req: NextRequest) {
       details: JSON.stringify({ name: gateway.name, provider: gateway.provider }),
     }).catch(() => {});
 
-    return success(gateway, 'Payment gateway created successfully', 201);
+    // W6 / M-5: respond with MASKED secrets (matches the GET contract)
+    // instead of echoing the stored ciphertext.
+    const { keySecret: ks, webhookSecret: ws2, ...safeGateway } = gateway as Record<string, unknown> & {
+      keySecret?: string | null;
+      webhookSecret?: string | null;
+    };
+    return success(
+      {
+        ...safeGateway,
+        keySecret: maskSecret(decryptCredential(ks ?? null)),
+        webhookSecret: maskSecret(decryptCredential(ws2 ?? null)),
+      },
+      'Payment gateway created successfully',
+      201
+    );
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
       return errors.validation('Validation failed', { details: err.issues });

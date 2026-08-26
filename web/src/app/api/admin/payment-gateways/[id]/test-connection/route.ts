@@ -5,6 +5,9 @@ import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { createAuditLog } from '@/lib/audit-log';
 import { decryptCredential } from '@/lib/credentials';
+// W6 / M-5: validator extracted to shared lib so create/update enforce
+// it at write time; this route imports the same implementation.
+import { isValidPublicApiEndpoint } from '@/lib/ssrf';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +19,7 @@ export const dynamic = 'force-dynamic';
  * P1-4: validates that `apiEndpoint` (if provided) is an HTTPS URL that
  * resolves to a public IP — no `javascript:`, no private ranges, no
  * non-HTTP schemes. The server can be tricked into outbound calls that
- * exfiltrate auth headers or hit internal infrastructure; the
- * validation lives on the server because the UI maxlength/pattern can
- * be bypassed in DevTools.
+ * exfiltrate auth headers or hit internal infrastructure.
  *
  * P1-1: a lighter version of the audit's "issue a small test order"
  * approach. We don't actually contact the gateway's API (that would
@@ -28,41 +29,6 @@ export const dynamic = 'force-dynamic';
  * misconfigurations before the admin enables the gateway for real
  * riders.
  */
-function isValidPublicApiEndpoint(value: string | null | undefined): {
-  ok: boolean;
-  reason?: string;
-} {
-  if (value === null || value === undefined || value === '') {
-    return { ok: true }; // optional field
-  }
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    return { ok: false, reason: 'not a valid URL' };
-  }
-  if (url.protocol !== 'https:') {
-    return { ok: false, reason: 'must use https://' };
-  }
-  // Disallow obvious SSRF targets. hostname is always a string per
-  // the URL spec; the allowlist below rejects the canonical
-  // loopback / private / link-local patterns.
-  const host = url.hostname.toLowerCase();
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '0.0.0.0') {
-    return { ok: false, reason: 'loopback addresses are not allowed' };
-  }
-  if (host.startsWith('127.') || host.startsWith('10.') || host.startsWith('192.168.')) {
-    return { ok: false, reason: 'private network addresses are not allowed' };
-  }
-  if (host.startsWith('169.254.')) {
-    return { ok: false, reason: 'link-local addresses are not allowed' };
-  }
-  // 172.16.0.0/12 — RFC 1918
-  if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) {
-    return { ok: false, reason: 'private network addresses are not allowed' };
-  }
-  return { ok: true };
-}
 
 export async function POST(
   req: NextRequest,

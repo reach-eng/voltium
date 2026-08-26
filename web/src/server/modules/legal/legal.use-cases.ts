@@ -77,4 +77,77 @@ export const legalUseCases = {
     });
     return doc;
   },
+
+  /**
+   * W9 / L-1: revision history is now REACHABLE. The revisions were
+   * written on every save but no admin surface could list or restore
+   * them — dead compliance data. These two use-cases back the new
+   * `/api/admin/legal/[type]/revisions` endpoints.
+   *
+   * Deferred (needs a Prisma migration): DRAFT/PUBLISHED lifecycle so
+   * saves stop going live instantly. Restore is the mitigation until
+   * then — a bad save is one click from reversal.
+   */
+  async listRevisions(type: string, limit = 50) {
+    const doc = await db.legalDocument.findUnique({ where: { type } });
+    if (!doc) return null;
+    const capped = Math.min(Math.max(limit, 1), 100);
+    return db.legalDocumentRevision.findMany({
+      where: { legalDocumentId: doc.id },
+      orderBy: { createdAt: 'desc' },
+      take: capped,
+      select: {
+        id: true,
+        title: true,
+        contentHash: true,
+        createdBy: true,
+        createdAt: true,
+      },
+    });
+  },
+
+  async restoreRevision(
+    type: string,
+    revisionId: string,
+    actorId: string
+  ) {
+    const doc = await db.legalDocument.findUnique({ where: { type } });
+    if (!doc) {
+      throw new Error(`Legal document not found: ${type}`);
+    }
+    const revision = await db.legalDocumentRevision.findFirst({
+      where: { id: revisionId, legalDocumentId: doc.id },
+    });
+    if (!revision) {
+      throw new Error('Revision not found for this document');
+    }
+
+    // Reuse upsert so the restore itself is snapshotted as the newest
+    // revision — history stays linear and forward-rollback remains
+    // possible.
+    const restored = await this.upsert(
+      { type, title: revision.title, content: revision.content },
+      actorId
+    );
+
+    createAuditLog({
+      actorId,
+      action: 'legal.restore_revision',
+      entity: 'legal',
+      entityId: restored.id,
+      details: {
+        type,
+        revisionId,
+        restoredContentHash: revision.contentHash,
+      },
+    }).catch(() => {
+      logger.error('legal.restore_revision audit log write failed', {
+        entityId: restored.id,
+        type,
+        revisionId,
+      });
+    });
+
+    return restored;
+  },
 };

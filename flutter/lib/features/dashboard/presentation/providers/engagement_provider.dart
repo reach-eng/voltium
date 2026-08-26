@@ -158,20 +158,41 @@ class EngagementProvider extends Notifier<EngagementState> {
     ]);
   }
 
+  /// FL-1 (envelope contract): `ApiClient._handleResponse` already unwraps
+  /// `{success:true, data:{...}}` payloads when `data` is a Map — the
+  /// returned value IS the server payload. These three methods previously
+  /// re-gated on `response['success']`/`response['data']`, keys that no
+  /// longer exist on map-shaped responses, so rewards/referrals/
+  /// notifications silently never populated in production.
+  ///
+  /// Defensive dual-shape handling: accept BOTH the unwrapped payload
+  /// (production) and a raw envelope (older test fakes), so neither
+  /// contract regresses silently.
+
+  /// Extracts the payload from either an unwrapped response or a raw
+  /// `{success, data}` envelope. Returns null when neither shape holds.
+  static Map<String, dynamic>? _extractPayload(Map<String, dynamic> res) {
+    if (res['success'] == true && res['data'] is Map<String, dynamic>) {
+      // Raw envelope (legacy fakes / future contract flip).
+      return res['data'] as Map<String, dynamic>;
+    }
+    // Unwrapped production shape: any map that isn't an envelope.
+    if (res['success'] == null) return res;
+    return null;
+  }
+
   Future<void> refreshRewards() async {
     try {
       final response = await _gen.getRiderRewards();
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>?;
-        if (data != null) {
-          state = state.copyWith(
-            rewardPoints: data['totalPoints'] as int? ?? 0,
-            paymentStreak: data['currentStreak'] as int? ?? 0,
-            rewards: ((data['rewards'] as List<dynamic>?) ?? const [])
-                .map((e) => RewardItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
-          );
-        }
+      final data = _extractPayload(response);
+      if (data != null) {
+        state = state.copyWith(
+          rewardPoints: data['totalPoints'] as int? ?? 0,
+          paymentStreak: data['currentStreak'] as int? ?? 0,
+          rewards: ((data['rewards'] as List<dynamic>?) ?? const [])
+              .map((e) => RewardItem.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        );
       }
     } catch (e) {
       appDebug('Failed to fetch rewards: $e');
@@ -181,9 +202,9 @@ class EngagementProvider extends Notifier<EngagementState> {
   Future<void> refreshReferrals() async {
     try {
       final response = await _gen.getRiderReferrals();
-      if (response['success'] == true) {
-        state = state.copyWith(
-            referralData: response['data'] as Map<String, dynamic>?);
+      final data = _extractPayload(response);
+      if (data != null) {
+        state = state.copyWith(referralData: data);
       }
     } catch (e) {
       appDebug('Failed to fetch referrals: $e');
@@ -193,8 +214,8 @@ class EngagementProvider extends Notifier<EngagementState> {
   Future<void> refreshNotifications() async {
     try {
       final response = await _http.get('/api/rider/notifications');
-      if (response['success'] == true && response['data'] != null) {
-        final data = response['data'] as Map<String, dynamic>;
+      final data = _extractPayload(response);
+      if (data != null) {
         final list = data['notifications'] as List<dynamic>?;
         state = state.copyWith(
           unreadCount: data['unreadCount'] as int? ?? 0,

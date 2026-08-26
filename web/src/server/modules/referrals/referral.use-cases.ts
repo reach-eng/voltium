@@ -71,17 +71,58 @@ export const referralUseCases = {
       return;
     }
 
-    // Check if already rewarded (idempotency) — this is the
-    // pre-`WalletLedger.idempotencyKey` short-circuit. The database
-    // unique constraint is the authoritative guard, but checking
-    // up front avoids spinning up a $transaction just to P2002-roll.
-    const existingReward = await db.transaction.findFirst({
-      where: { riderId: referrer.id, purpose: 'REWARD', description: { contains: referee.id } },
+    // W6 / M-4: eligibility guards. An admin issuing an arbitrary
+    // {referrerId, refereeId} pair must not mint rewards unless the
+    // referee actually holds this referrer's code — and nobody refers
+    // themselves.
+    if (referrer.id === referee.id) {
+      logger.warn('[Referral] Self-referral rejected', { refereeId });
+      return;
+    }
+    if ((referee.referredBy ?? '') !== referrer.referralCode) {
+      logger.warn('[Referral] Referee was not referred by this referrer', {
+        refereeId,
+        referrerId: referrer.id,
+        referredBy: referee.referredBy ?? null,
+      });
+      return;
+    }
+
+    // PR-102: this key MUST match the key emitted by
+    // referral-reward.job.ts. The `WalletLedger.idempotencyKey` UNIQUE
+    // constraint is the only thing that prevents a double-pay if both
+    // paths race (e.g. admin clicks reconcile while the job is running).
+    const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
+
+    // W6 / M-4: authoritative idempotency pre-check on the LEDGER KEY.
+    // The old check matched `description contains referee.id`, but the
+    // stored description contains name/phone, so it never fired.
+    const existingRewardKey = await db.walletLedger.findFirst({
+      where: { idempotencyKey },
+      select: { id: true },
     });
-    if (existingReward) {
+    if (existingRewardKey) {
       logger.info('[Referral] Reward already processed', { referrerId: referrer.id, refereeId });
       return;
     }
+
+    // W6 / M-4: per-referrer lifetime reward cap (configurable). Without
+    // this, an admin can mint unlimited REWARD credits by cycling
+    // distinct referees through the endpoint.
+    const capCount = parseInt(process.env.REFERRAL_REWARD_CAP || '100', 10);
+    const rewardedCount = await db.transaction.count({
+      where: { riderId: referrer.id, purpose: 'REWARD', status: 'APPROVED' },
+    });
+    if (rewardedCount >= capCount) {
+      logger.warn('[Referral] Reward cap reached for referrer', {
+        referrerId: referrer.id,
+        cap: capCount,
+      });
+      return;
+    }
+
+    // Check if already rewarded (idempotency) — superseded by the
+    // WalletLedger.idempotencyKey lookup above (W6 / M-4).
 
     // Read referral bonus from settings (cached 60s).
     // The value is stored in PAISE (see settings.registry.ts coerceSettingValue
@@ -95,12 +136,6 @@ export const referralUseCases = {
       cacheResponse('setting:referralBonus', settingVal, 60);
     }
     const bonusPaise = parseInt(settingVal || '20000');
-
-    // PR-102: this key MUST match the key emitted by
-    // referral-reward.job.ts. The `WalletLedger.idempotencyKey` UNIQUE
-    // constraint is the only thing that prevents a double-pay if both
-    // paths race (e.g. admin clicks reconcile while the job is running).
-    const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
 
     await db.$transaction(async (tx) => {
       const wallet = await tx.wallet.findUnique({
@@ -125,6 +160,10 @@ export const referralUseCases = {
         },
       });
 
+      // W6 / M-4: pass the transaction through. Without `tx` the
+      // credit commits in its own transaction while the Transaction and
+      // Reward rows below remain in the outer one — a failure there
+      // orphaned real money with no parent records.
       await walletLedgerService.credit({
         riderId: referrer.id,
         amountInPaise: bonusPaise,
@@ -132,7 +171,7 @@ export const referralUseCases = {
         txnId: txn.id,
         idempotencyKey,
         note: `Referral reward for ${referee.fullName || referee.phone}`,
-      });
+      }, tx);
 
       await tx.reward.create({
         data: {
