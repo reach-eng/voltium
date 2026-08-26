@@ -3,9 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  MapPin,
   ShieldCheck,
-  Target,
   TrendingDown,
   TrendingUp,
   User,
@@ -23,17 +21,17 @@ const SUB_SCORES = [
   { key: 'paymentScore', label: 'Payment History', icon: TrendingUp },
   { key: 'complianceScore', label: 'Compliance', icon: ShieldCheck },
   { key: 'engagementScore', label: 'Engagement', icon: TrendingDown },
-  { key: 'vehicleScore', label: 'Vehicle Health', icon: Target },
-  { key: 'locationScore', label: 'Location Accuracy', icon: MapPin },
 ] as const;
 
 /**
  * R3 split (RiderScoringScreen) — score breakdown dialog.
  *
  * Header: name + rider ID + composite score + risk badge. Body:
- * five sub-score rows (Payment / Compliance / Engagement /
- * Vehicle / Location), each with a coloured progress bar and
- * the numeric value. Footer: phone, hub, last calculated.
+ * sub-score rows for the dimensions the calculator actually produces
+ * (Payment / Compliance / Engagement). W11 / U-11: Vehicle/Location
+ * rows were removed — the server hardcodes those to 0 and rendering
+ * them presented fabricated data as real measurements. Re-add them
+ * only when score-calculator starts emitting real values.
  */
 export function ScoreBreakdownDialog({ score, onOpenChange }: ScoreBreakdownDialogProps) {
   return (

@@ -12,6 +12,25 @@ interface DetailGroupProps {
   onEdit?: (val: string) => void;
 }
 
+// W11 / U-21: riders store dates as DD-MM-YYYY (server validator enforces
+// ^\d{2}-\d{2}-\d{4}$), but <input type="date"> speaks YYYY-MM-DD. Convert
+// at the boundary so the picker displays existing values AND emits values
+// the API accepts.
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DMY_DATE_RE = /^\d{2}-\d{2}-\d{4}$/;
+
+function dmyToIso(v: string): string {
+  if (!DMY_DATE_RE.test(v)) return v; // empty / already-ISO / garbage passes through
+  const [d, m, y] = v.split('-');
+  return `${y}-${m}-${d}`;
+}
+
+function isoToDmy(v: string): string {
+  if (!ISO_DATE_RE.test(v)) return v;
+  const [y, m, d] = v.split('-');
+  return `${d}-${m}-${y}`;
+}
+
 /**
  * R3.7cc split — small label/value cell used inside the rider detail
  * modal. Falls back to a "<not provided>" placeholder when the value
@@ -46,8 +65,10 @@ export function DetailGroup({
         ) : (
           <Input
             type={type}
-            value={value || ''}
-            onChange={(e) => onEdit(e.target.value)}
+            value={type === 'date' ? dmyToIso(value || '') : value || ''}
+            onChange={(e) =>
+              onEdit(type === 'date' ? isoToDmy(e.target.value) : e.target.value)
+            }
             className="h-9 text-sm bg-background border-border/50 focus:border-primary/50 transition-all"
             placeholder={`Enter ${label.toLowerCase()}`}
           />

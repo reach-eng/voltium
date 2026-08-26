@@ -44,7 +44,7 @@ interface IncidentDetailDialogProps {
 export function IncidentDetailDialog({
   open,
   onOpenChange,
-  selectedIncident,
+  selectedIncident: selectedIncidentProp,
   detailTab,
   setDetailTab,
   onGenerateReport,
@@ -54,6 +54,29 @@ export function IncidentDetailDialog({
   // SUPPORT_INCIDENT P0-4: assignment with validated admin dropdown
   const [admins, setAdmins] = useState<{ id: string; name: string }[]>([]);
   const [assigning, setAssigning] = useState(false);
+
+  // W11 / U-9b: the LIST payload omits photos/timeline/resolvedAt/coords —
+  // those tabs rendered permanently empty because the dialog only ever saw
+  // the list row. Fetch the purpose-built detail endpoint when the dialog
+  // opens and merge the full record over the row.
+  const [fullIncident, setFullIncident] = useState<Incident | null>(null);
+  useEffect(() => {
+    setFullIncident(null);
+    if (!open || !selectedIncidentProp?.id) return;
+    let cancelled = false;
+    fetch(`/api/admin/incidents/${selectedIncidentProp.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (cancelled || !body?.success || !body.data) return;
+        setFullIncident({ ...selectedIncidentProp, ...body.data });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, selectedIncidentProp?.id]);
+  // All render code below reads the merged (full) record.
+  const selectedIncident = fullIncident ?? selectedIncidentProp;
 
   useEffect(() => {
     let cancelled = false;
