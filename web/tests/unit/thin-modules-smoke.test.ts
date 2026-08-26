@@ -45,6 +45,9 @@ describe('legal (thin module) — smoke tests (#22.1)', () => {
     mockDb.legalDocument = {
       findMany: vi.fn(),
       upsert: vi.fn(),
+      // W9 / L-1: upsert pre-reads the doc for draft/publish semantics.
+      // Default null = brand-new document path.
+      findUnique: vi.fn().mockResolvedValue(null),
     };
     mockDb.legalDocumentRevision = {
       create: vi.fn(),
