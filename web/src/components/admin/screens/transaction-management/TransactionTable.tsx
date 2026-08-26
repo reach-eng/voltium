@@ -16,6 +16,9 @@ import {
 } from '@/components/ui/table';
 import {
   ArrowLeftRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   Eye,
   CheckCircle,
   XCircle as XCircleIcon,
@@ -163,7 +166,9 @@ interface TransactionTableProps {
   selectedIds: Set<string>;
   setSelectedIds: (ids: Set<string>) => void;
   sortKey: string | null;
-  sortDir: 'asc' | 'desc';
+  // T-AR-SORT (Step 5): `null` is part of the 3-state cycle
+  // (none → desc → asc → none).
+  sortDir: 'asc' | 'desc' | null;
   handleSort: (key: string) => void;
   setSelectedTx: (tx: Transaction | null) => void;
   setConfirmAction: (
@@ -271,13 +276,30 @@ export function TransactionTable({
                     <TableHead
                       className="cursor-pointer select-none"
                       onClick={() => handleSort('amount')}
+                      // T-AR-SORT a11y: announce the sort state to
+                      // screen readers. "none" is the ARIA default for
+                      // any column that isn't the active sort key
+                      // (including the third-click "cleared" state).
+                      aria-sort={
+                        sortKey === 'amount'
+                          ? sortDir === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
                     >
-                      Amount{' '}
-                      {sortKey === 'amount'
-                        ? sortDir === 'asc'
-                          ? '↑'
-                          : '↓'
-                        : ''}
+                      <span className="inline-flex items-center gap-1">
+                        Amount
+                        {sortKey === 'amount' && sortDir === 'asc' && (
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        )}
+                        {sortKey === 'amount' && sortDir === 'desc' && (
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        )}
+                        {sortKey !== 'amount' && (
+                          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
+                        )}
+                      </span>
                     </TableHead>
                     <TableHead>Purpose</TableHead>
                     <TableHead>Method</TableHead>
@@ -286,13 +308,26 @@ export function TransactionTable({
                     <TableHead
                       className="cursor-pointer select-none"
                       onClick={() => handleSort('createdAt')}
+                      aria-sort={
+                        sortKey === 'createdAt'
+                          ? sortDir === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
                     >
-                      Date{' '}
-                      {sortKey === 'createdAt'
-                        ? sortDir === 'asc'
-                          ? '↑'
-                          : '↓'
-                        : ''}
+                      <span className="inline-flex items-center gap-1">
+                        Date
+                        {sortKey === 'createdAt' && sortDir === 'asc' && (
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        )}
+                        {sortKey === 'createdAt' && sortDir === 'desc' && (
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        )}
+                        {sortKey !== 'createdAt' && (
+                          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
+                        )}
+                      </span>
                     </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>

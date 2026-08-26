@@ -42,6 +42,15 @@ export const transactionRepository = {
       sortDir = 'desc',
     } = filters;
 
+    // T-AR-SORT (Step 5): translate the public `sortBy` value to the
+    // real Prisma column. The route's allowlist accepts `createdAt` and
+    // `amount`; the API stores amounts as `amountInPaise` (paise) and
+    // surfaces `amount` (rupees) only after a JS conversion. Ordering
+    // on `amount` would crash Prisma — we order on the persisted
+    // column and return the same logical ordering the client asked for.
+    const orderByColumn =
+      sortBy === 'amount' ? 'amountInPaise' : 'createdAt';
+
     // P2-11/12 (financial audit): the filter object was built as
     // Record<string, unknown> with `as any` escapes that hid field/type drift.
     // Typed against Prisma.TransactionWhereInput so bad fields fail at compile
@@ -80,7 +89,7 @@ export const transactionRepository = {
           },
           breakdowns: true,
         },
-        orderBy: { [sortBy]: sortDir },
+        orderBy: { [orderByColumn]: sortDir },
         skip: (page - 1) * limit,
         take: limit,
       }),

@@ -24,8 +24,8 @@ import {
 } from '@/server/modules/transactions/transaction.use-cases';
 import { toStateAction } from '@/server/modules/transactions/transaction.types';
 import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
-import { WalletServiceError } from '@/lib/services/wallet-service';
-import { DepositStateError } from '@/lib/services/deposit-service';
+import { WalletServiceError } from '@/server/modules/wallet/wallet-service';
+import { DepositStateError } from '@/server/modules/deposits/deposit-service';
 
 // GET /api/admin/transactions — list with filters, amounts in rupees
 export async function GET(req: NextRequest) {
@@ -53,6 +53,24 @@ export async function GET(req: NextRequest) {
     const page = parsePositiveInt(url.searchParams.get('page'), 1);
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
 
+    // T-AR-SORT (Filter & Sort Review, Step 5): accept server-side sort.
+    // The two columns the table actually exposes (Amount, Date) are the
+    // only ones the allowlist accepts; anything else (including
+    // `?sortBy=createdAt; DROP TABLE` and similar) silently falls back to
+    // the default rather than being passed to `orderBy` as a dynamic key
+    // (Prisma does not parameterize `orderBy` keys — a string here is
+    // used as a property name, not a value, so the injection surface is
+    // "client can order by any column we expose", not SQL injection —
+    // but the allowlist still keeps the API honest).
+    const SORT_BY_ALLOWLIST = ['createdAt', 'amount'] as const;
+    type SortBy = (typeof SORT_BY_ALLOWLIST)[number];
+    const sortByRaw = url.searchParams.get('sortBy') || '';
+    const sortBy: SortBy = (SORT_BY_ALLOWLIST as readonly string[]).includes(sortByRaw)
+      ? (sortByRaw as SortBy)
+      : 'createdAt';
+    const sortDirRaw = url.searchParams.get('sortDir');
+    const sortDir: 'asc' | 'desc' = sortDirRaw === 'asc' ? 'asc' : 'desc';
+
     // P0-6 (financial audit): the adminId used to be part of the key, so every
     // admin kept their own duplicate copy of the same list — and a wildcard
     // 'admin:*' invalidation on every PUT cleared ALL admin caches. The key is
@@ -68,6 +86,8 @@ export async function GET(req: NextRequest) {
       endDate,
       page,
       limit,
+      sortBy,
+      sortDir,
     ].join(':');
 
     const result = await getOrSetResponse(cacheKey, () =>
@@ -80,6 +100,8 @@ export async function GET(req: NextRequest) {
         endDate,
         page,
         limit,
+        sortBy,
+        sortDir,
       }),
       5
     );

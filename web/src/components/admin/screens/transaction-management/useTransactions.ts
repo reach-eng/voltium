@@ -19,8 +19,13 @@ export function useTransactions() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  // T-AR-SORT (Filter & Sort Review, Step 5): sort moved from the client
+  // (in-memory over the fetched page — gave a misleading "global" feel to
+  // what was really page-local) to the server via `?sortBy`/`?sortDir`.
+  // Allowlist lives in the route, so anything the table header exposes
+  // is what the API accepts.
   const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [lastAction, setLastAction] = useState<LastBulkAction | null>(null);
@@ -55,6 +60,14 @@ export function useTransactions() {
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
+      // T-AR-SORT: server-side sort. `null` sortKey (the 3rd click) is
+      // intentionally NOT sent — the route's allowlist default
+      // (`createdAt desc`) reproduces the same ordering the API used
+      // before the header was clickable.
+      if (sortKey && sortDir) {
+        params.set('sortBy', sortKey);
+        params.set('sortDir', sortDir);
+      }
       params.set('page', String(page));
       params.set('limit', '20');
 
@@ -79,7 +92,7 @@ export function useTransactions() {
         setLoading(false);
       }
     }
-  }, [tab, debouncedSearch, startDate, endDate, page]);
+  }, [tab, debouncedSearch, startDate, endDate, page, sortKey, sortDir]);
 
   // Debounce search input
   useEffect(() => {
@@ -92,7 +105,7 @@ export function useTransactions() {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [tab, debouncedSearch, startDate, endDate]);
+  }, [tab, debouncedSearch, startDate, endDate, sortKey, sortDir]);
 
   useEffect(() => {
     fetchTransactions();
@@ -305,24 +318,12 @@ export function useTransactions() {
     }
   }
 
-  const sorted = sortKey
-    ? [...transactions].sort((a, b) => {
-        const aVal = a[sortKey as keyof Transaction];
-        const bVal = b[sortKey as keyof Transaction];
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortDir === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-        if (sortKey === 'createdAt' || sortKey === 'approvedAt') {
-          const aTime = aVal ? new Date(aVal as string).getTime() : 0;
-          const bTime = bVal ? new Date(bVal as string).getTime() : 0;
-          return sortDir === 'asc' ? aTime - bTime : bTime - aTime;
-        }
-        const cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
-          numeric: true,
-        });
-        return sortDir === 'asc' ? cmp : -cmp;
-      })
-    : transactions;
+  // T-AR-SORT (Step 5): sort is now server-side via `?sortBy`/`?sortDir`.
+  // The returned `transactions` is already in the requested order, so
+  // `sorted` is just an alias. We keep the name so the table contract
+  // (and the Ctrl-A "select pending on visible page" handler) doesn't
+  // change shape.
+  const sorted = transactions;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -350,9 +351,21 @@ export function useTransactions() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [sorted, lastAction, bulkLoading]);
 
+  // T-AR-SORT (Step 5): 3-state sort cycle (none → desc → asc → none),
+  // matching the data-table primitive the rest of the admin uses.
+  // First click picks the column and sorts desc (most useful default
+  // for a finance list — newest/largest first), second click flips to
+  // asc, third click clears and falls back to the API default order
+  // (`createdAt desc`).
   const handleSort = (key: string) => {
-    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else {
+    if (sortKey === key) {
+      if (sortDir === 'desc') {
+        setSortDir('asc');
+      } else if (sortDir === 'asc') {
+        setSortKey(null);
+        setSortDir(null);
+      }
+    } else {
       setSortKey(key);
       setSortDir('desc');
     }
