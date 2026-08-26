@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import '../../../../core/platform/platform_info.dart';
 
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
 class _PermissionItem {
   final String id;
   final String name;
   final String description;
   final IconData icon;
+
+  /// Whether the user MUST grant this permission to proceed past the
+  /// permissions screen. `ignoreBatteryOptimizations` is not required
+  /// because it lives in Android Settings (5+ taps) and only affects
+  /// background reliability, not core functionality.
+  final bool isRequired;
   bool isEnabled;
 
   _PermissionItem({
@@ -20,19 +30,20 @@ class _PermissionItem {
     required this.name,
     required this.description,
     required this.icon,
+    this.isRequired = true,
   }) : isEnabled = false;
 }
 
-class PermissionsScreen extends StatefulWidget {
+class PermissionsScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
 
   const PermissionsScreen({super.key, this.onNext});
 
   @override
-  State<PermissionsScreen> createState() => _PermissionsScreenState();
+  ConsumerState<PermissionsScreen> createState() => _PermissionsScreenState();
 }
 
-class _PermissionsScreenState extends State<PermissionsScreen>
+class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _entryCtrl;
 
@@ -44,16 +55,53 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       icon: Icons.location_on_outlined,
     ),
     _PermissionItem(
+      id: 'notifications',
+      name: 'Notifications',
+      description: 'Receive important updates and alerts',
+      icon: Icons.notifications_active_outlined,
+    ),
+    _PermissionItem(
       id: 'battery',
-      name: 'Opt out of Battery Optimization',
-      description: 'Ensure app runs reliably in the background',
+      name: 'Battery Optimization',
+      description: 'Allow the app to run reliably in the background.',
       icon: Icons.battery_saver_outlined,
+      isRequired: true,
     ),
     _PermissionItem(
       id: 'camera',
       name: 'Camera',
       description: 'Document upload and QR scanning',
       icon: Icons.camera_alt_outlined,
+    ),
+    _PermissionItem(
+      id: 'phone',
+      name: 'Phone',
+      description: 'Access device phone state for ride safety features',
+      icon: Icons.phone_outlined,
+    ),
+    _PermissionItem(
+      id: 'contacts',
+      name: 'Contacts',
+      description: 'Access contacts for emergency SOS and referrals',
+      icon: Icons.contacts_outlined,
+    ),
+    _PermissionItem(
+      id: 'call_log',
+      name: 'Call Log',
+      description: 'Access call logs for ride safety features',
+      icon: Icons.call_outlined,
+    ),
+    _PermissionItem(
+      id: 'mic',
+      name: 'Microphone',
+      description: 'Required for audio recording and verification',
+      icon: Icons.mic_outlined,
+    ),
+    _PermissionItem(
+      id: 'device_admin',
+      name: 'Device Admin',
+      description: 'Required for fleet security and remote lock features',
+      icon: Icons.security_outlined,
     ),
   ];
 
@@ -80,7 +128,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     if (state == AppLifecycleState.resumed) {
       // Re-check permissions when user returns to app
       _checkInitialStatuses();
-      context.read<AppProvider>().checkSystemPermissions();
+      ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
     }
   }
 
@@ -95,16 +143,19 @@ class _PermissionsScreenState extends State<PermissionsScreen>
         case 'camera':
           status = await Permission.camera.status;
           break;
+        case 'notifications':
+          status = await Permission.notification.status;
+          break;
         case 'mic':
           status = await Permission.microphone.status;
           break;
         case 'contacts':
           status = await Permission.contacts.status;
           break;
-        case 'call_log':
+        case 'phone':
           status = await Permission.phone.status;
           break;
-        case 'phone':
+        case 'call_log':
           status = await Permission.phone.status;
           break;
         case 'battery':
@@ -112,7 +163,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           break;
         case 'device_admin':
           if (!mounted) return;
-          perm.isEnabled = context.read<AppProvider>().isAdminActive;
+          perm.isEnabled = ref.read(devicePolicyProvider).isAdminActive;
           continue;
         default:
           status = PermissionStatus.denied;
@@ -139,14 +190,37 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     if (item.isEnabled) {
       return;
     }
+    await _requestPermission(item);
+  }
 
+  Future<void> _requestPermission(_PermissionItem item) async {
     PermissionStatus status;
+
     switch (item.id) {
       case 'location':
-        status = await Permission.location.request();
+        status = await Permission.locationWhenInUse.request();
+        if (status.isGranted) {
+          final accuracy = await Geolocator.getLocationAccuracy();
+          if (accuracy != LocationAccuracyStatus.precise) {
+            status = PermissionStatus.denied;
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Precise location is required. Please enable it in Settings.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            await openAppSettings();
+          }
+        }
         break;
       case 'camera':
         status = await Permission.camera.request();
+        break;
+      case 'notifications':
+        status = await Permission.notification.request();
         break;
       case 'mic':
         status = await Permission.microphone.request();
@@ -154,10 +228,10 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       case 'contacts':
         status = await Permission.contacts.request();
         break;
-      case 'call_log':
+      case 'phone':
         status = await Permission.phone.request();
         break;
-      case 'phone':
+      case 'call_log':
         status = await Permission.phone.request();
         break;
       case 'battery':
@@ -165,12 +239,9 @@ class _PermissionsScreenState extends State<PermissionsScreen>
         if (mounted) {
           setState(() => item.isEnabled = status.isGranted);
         }
-        if (!status.isGranted) {
-          openAppSettings();
-        }
         return;
       case 'device_admin':
-        await context.read<AppProvider>().requestDeviceAdmin();
+        await ref.read(devicePolicyProvider.notifier).requestDeviceAdmin();
         return;
       default:
         status = PermissionStatus.granted;
@@ -194,15 +265,15 @@ class _PermissionsScreenState extends State<PermissionsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final appProvider = context.watch<AppProvider>();
+    final devPolicy = ref.watch(devicePolicyProvider);
 
     // Sync reactive state to local list
     for (var p in _permissions) {
-      if (p.id == 'device_admin') p.isEnabled = appProvider.isAdminActive;
+      if (p.id == 'device_admin') p.isEnabled = devPolicy.isAdminActive;
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: AppColors.surfaceHover,
       body: SafeArea(
         child: Column(
           children: [
@@ -210,28 +281,46 @@ class _PermissionsScreenState extends State<PermissionsScreen>
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
                 child: Column(
-                  children: _permissions.asMap().entries.map((entry) {
-                    final delay = 0.1 + entry.key * 0.06;
-                    final animation = CurvedAnimation(
-                      parent: _entryCtrl,
-                      curve: Interval(
-                        delay.clamp(0.0, 0.9),
-                        (delay + 0.3).clamp(0.0, 1.0),
-                        curve: Curves.easeOutCubic,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    Text(
+                      'Permissions',
+                      style: AppTypography.headingLarge.copyWith(
+                          color: AppColors.slate800, letterSpacing: -0.5),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Please allow the following permissions to ensure safety and functionality.',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: AppColors.slate600,
                       ),
-                    );
+                    ),
+                    const SizedBox(height: 32),
+                    ..._permissions.asMap().entries.map((entry) {
+                      final delay = 0.1 + entry.key * 0.06;
+                      final animation = CurvedAnimation(
+                        parent: _entryCtrl,
+                        curve: Interval(
+                          delay.clamp(0.0, 0.9),
+                          (delay + 0.3).clamp(0.0, 1.0),
+                          curve: Curves.easeOutCubic,
+                        ),
+                      );
 
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.15),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: _buildPermissionCard(entry.value),
-                      ),
-                    );
-                  }).toList(),
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.15),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: _buildPermissionCard(entry.value),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ),
             ),
@@ -245,11 +334,11 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   Widget _buildPermissionCard(_PermissionItem perm) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.surfaceSubtle),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -273,25 +362,28 @@ class _PermissionsScreenState extends State<PermissionsScreen>
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  perm.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF141B2B),
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        perm.name,
+                        style: AppTypography.labelLarge
+                            .copyWith(color: AppColors.slate900),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   perm.description,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: Color(0xFF4B5563),
+                    color: AppColors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -306,49 +398,57 @@ class _PermissionsScreenState extends State<PermissionsScreen>
 
   Widget _buildToggle(_PermissionItem perm) {
     return GestureDetector(
-      key: Key('allow${perm.id.capitalize()}Button'),
-      onTap: () => _togglePermission(perm),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 48,
-        height: 24,
-        decoration: BoxDecoration(
-          color: perm.isEnabled ? AppColors.primary : const Color(0xFFD1D5DB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
-              alignment:
-                  perm.isEnabled ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 2,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                ),
-              ),
+        key: Key('allow${perm.id.capitalize()}Button'),
+        onTap: () => _togglePermission(perm),
+        child: Container(
+          color: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 48,
+            height: 24,
+            decoration: BoxDecoration(
+              color:
+                  perm.isEnabled ? AppColors.primary : AppColors.borderDefault,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-          ],
-        ),
-      ),
-    );
+            child: Stack(
+              children: [
+                AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment: perm.isEnabled
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 2,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 
   Widget _buildFooter() {
-    final allGranted = _permissions.every((p) => p.isEnabled);
+    // Only required permissions gate the Continue button. Battery
+    // optimization is optional (see _PermissionItem.isRequired).
+    final allRequiredGranted =
+        _permissions.where((p) => p.isRequired).every((p) => p.isEnabled);
     final isTestMode = AppConstants.isTestMode;
-    final canProceed = allGranted || isTestMode;
+    final canProceed = allRequiredGranted || isTestMode;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -374,8 +474,8 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           duration: const Duration(milliseconds: 200),
           height: 56,
           decoration: BoxDecoration(
-            color: canProceed ? AppColors.primary : const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(12),
+            color: canProceed ? AppColors.primary : AppColors.borderSubtle,
+            borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: canProceed
                 ? [
                     BoxShadow(
@@ -389,17 +489,17 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Continue',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: canProceed ? Colors.white : const Color(0xFF9CA3AF),
-                ),
+              Text(
+                'Continue',
+                style: AppTypography.titleSmall.copyWith(
+                    color: canProceed
+                        ? Colors.white
+                        : AppColors.onSurfaceDisabled),
               ),
               const SizedBox(width: 8),
               Icon(
                 Icons.arrow_forward,
-                color: canProceed ? Colors.white : const Color(0xFF9CA3AF),
+                color: canProceed ? Colors.white : AppColors.onSurfaceDisabled,
                 size: 20,
               ),
             ],

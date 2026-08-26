@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
+import 'package:meta/meta.dart';
 import 'dart:developer' as developer;
-import '../providers/device_policy_provider.dart';
-import '../providers/wallet_provider.dart';
-import '../providers/support_provider.dart';
-import '../providers/rider_provider.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
+import 'package:voltium_rider/services/device_data_service.dart';
+import 'package:voltium_rider/services/voltium_api_service.dart';
 
 class FCMService {
   static const _channel =
@@ -19,9 +22,9 @@ class FCMService {
   static SupportProvider? _support;
   static RiderProvider? _rider;
   static StreamSubscription<RemoteMessage>? _foregroundSubscription;
-  static final Set<String> _seenSecurityChallenges = <String>{};
+  static final Map<String, int> _seenSecurityChallenges = <String, int>{};
   static const _securityReplayWindow = Duration(minutes: 5);
-  
+
   static String? _commandHmacSecret;
   static final _secureStorage = SecureStorageService();
 
@@ -33,6 +36,15 @@ class FCMService {
   static const _allowedSecurityActions = <String>{
     'ADMIN_LOCK',
     'UNLOCK_DEVICE',
+    'DISABLE_CAMERA',
+    'ENABLE_CAMERA',
+    'ENFORCE_PASSCODE',
+    'CHECK_LOCATION_INTEGRITY',
+    'PERSIST_APP',
+    'ENFORCE_LOCATION',
+    'RESTRICT_APPS_CONTROL',
+    'FACTORY_RESET',
+    'SYNC_DEVICE_DATA',
   };
 
   static const _allowedOverlayActions = <String>{
@@ -40,9 +52,11 @@ class FCMService {
     'WALLET_LOW',
     'KYC_STATUS',
     'SUPPORT_REPLY',
+    'DEPOSIT_APPROVED',
   };
 
-  static Future<bool> _validatePayload(
+  @visibleForTesting
+  static Future<bool> validatePayload(
     Map<String, dynamic> data, {
     required bool isSecurity,
   }) async {
@@ -59,13 +73,15 @@ class FCMService {
       );
       return false;
     }
-    if (isSecurity && !await _validateSecurityEnvelope(data)) {
+    if (isSecurity && !await validateSecurityEnvelope(data)) {
       return false;
     }
     return true;
   }
 
-  static Future<bool> _validateSecurityEnvelope(Map<String, dynamic> data) async {
+  @visibleForTesting
+  static Future<bool> validateSecurityEnvelope(
+      Map<String, dynamic> data) async {
     final challenge = data['challenge'];
     final ts = data['ts'];
     final nonce = data['nonce'];
@@ -114,7 +130,8 @@ class FCMService {
     }
 
     final replayKey = '$nonce:$challenge:$ts';
-    if (_seenSecurityChallenges.contains(replayKey)) {
+    pruneExpiredChallenges();
+    if (_seenSecurityChallenges.containsKey(replayKey)) {
       developer.log('FCM: Rejected replayed security command');
       return false;
     }
@@ -124,17 +141,25 @@ class FCMService {
       utf8.encode(secret),
     ).convert(utf8.encode('$action.$ts.$nonce.$challenge')).toString();
 
-    if (!_constantTimeEquals(signature, expectedSignature)) {
+    if (!constantTimeEquals(signature, expectedSignature)) {
       developer.log('FCM: Rejected security command with invalid signature');
       return false;
     }
 
-    _seenSecurityChallenges.add(replayKey);
+    _seenSecurityChallenges[replayKey] = DateTime.now().millisecondsSinceEpoch;
 
     return true;
   }
 
-  static bool _constantTimeEquals(String a, String b) {
+  @visibleForTesting
+  static void pruneExpiredChallenges() {
+    final cutoff = DateTime.now().millisecondsSinceEpoch -
+        _securityReplayWindow.inMilliseconds;
+    _seenSecurityChallenges.removeWhere((_, added) => added < cutoff);
+  }
+
+  @visibleForTesting
+  static bool constantTimeEquals(String a, String b) {
     if (a.length != b.length) return false;
 
     var diff = 0;
@@ -142,6 +167,34 @@ class FCMService {
       diff |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
     }
     return diff == 0;
+  }
+
+  @visibleForTesting
+  static void initializeForTesting({
+    required DevicePolicyProvider devicePolicy,
+    required WalletProvider wallet,
+    required SupportProvider support,
+    required RiderProvider rider,
+  }) {
+    _devicePolicy = devicePolicy;
+    _wallet = wallet;
+    _support = support;
+    _rider = rider;
+  }
+
+  @visibleForTesting
+  static void overrideSecretForTesting(String secret) {
+    _commandHmacSecret = secret;
+  }
+
+  @visibleForTesting
+  static void injectChallengeForTesting(String key, int addedAtMs) {
+    _seenSecurityChallenges[key] = addedAtMs;
+  }
+
+  @visibleForTesting
+  static bool hasChallengeForTesting(String key) {
+    return _seenSecurityChallenges.containsKey(key);
   }
 
   static Future<void> initialize({
@@ -179,13 +232,36 @@ class FCMService {
       developer.log('Foreground message received: ${message.data}');
       final data = message.data;
       if (data['type'] == 'SECURITY_COMMAND' &&
-          await _validatePayload(data, isSecurity: true)) {
-        _handleSecurityCommand(message);
+          await validatePayload(data, isSecurity: true)) {
+        handleSecurityCommand(message);
       } else if (data['type'] == 'OVERLAY_TRIGGER' &&
-          await _validatePayload(data, isSecurity: false)) {
-        _handleOverlayTrigger(message);
+          await validatePayload(data, isSecurity: false)) {
+        handleOverlayTrigger(message);
       }
     });
+
+    // Register FCM token with backend
+    try {
+      final token = await messaging.getToken();
+      if (token != null) {
+        _syncTokenToBackend(token);
+      }
+      messaging.onTokenRefresh.listen((newToken) {
+        _syncTokenToBackend(newToken);
+      });
+    } catch (e) {
+      developer.log('FCM: Token retrieval failed: $e');
+    }
+  }
+
+  static Future<void> _syncTokenToBackend(String token) async {
+    try {
+      await VoltiumApiService()
+          .post('/api/rider/fcm-token', body: {'token': token});
+      developer.log('FCM: Token synced to backend successfully');
+    } catch (e) {
+      developer.log('FCM: Failed to sync token to backend: $e');
+    }
   }
 
   static Future<void> dispose() async {
@@ -198,7 +274,8 @@ class FCMService {
     _seenSecurityChallenges.clear();
   }
 
-  static Future<void> _handleSecurityCommand(RemoteMessage message) async {
+  @visibleForTesting
+  static Future<void> handleSecurityCommand(RemoteMessage message) async {
     final data = message.data;
     if (data['type'] == 'SECURITY_COMMAND') {
       final action = data['action'];
@@ -210,6 +287,32 @@ class FCMService {
           await _channel.invokeMethod('lockDevice');
         } else if (action == 'UNLOCK_DEVICE') {
           _devicePolicy?.setLockedByAdmin(false);
+        } else if (action == 'DISABLE_CAMERA') {
+          _devicePolicy?.setCameraDisabled(true);
+        } else if (action == 'ENABLE_CAMERA') {
+          _devicePolicy?.setCameraDisabled(false);
+        } else if (action == 'ENFORCE_PASSCODE') {
+          _devicePolicy?.setPasscodeRequired(true);
+        } else if (action == 'CHECK_LOCATION_INTEGRITY') {
+          _devicePolicy?.triggerLocationVerification();
+        } else if (action == 'PERSIST_APP') {
+          _devicePolicy?.setAppPersistenceRequired(true);
+        } else if (action == 'ENFORCE_LOCATION') {
+          _devicePolicy?.setLocationRequired(true);
+        } else if (action == 'RESTRICT_APPS_CONTROL') {
+          _devicePolicy?.setRestrictedAppsMode(true);
+        } else if (action == 'FACTORY_RESET') {
+          await _channel.invokeMethod('factoryReset');
+        } else if (action == 'SYNC_DEVICE_DATA') {
+          if (_rider?.riderId != null) {
+            await DeviceDataService().syncAll(_rider!.riderId!);
+          } else {
+            // Attempt to read rider ID if provider state is missing
+            final riderId = await SecureStorageService().getRiderId();
+            if (riderId != null) {
+              await DeviceDataService().syncAll(riderId);
+            }
+          }
         }
       } on PlatformException catch (e) {
         developer.log('Error executing security command: ${e.message}');
@@ -217,7 +320,8 @@ class FCMService {
     }
   }
 
-  static void _handleOverlayTrigger(RemoteMessage message) {
+  @visibleForTesting
+  static void handleOverlayTrigger(RemoteMessage message) {
     final data = message.data;
     final action = data['action'];
     developer.log('Overlay trigger received: $action');
@@ -232,6 +336,13 @@ class FCMService {
       _rider?.refresh();
     } else if (action == 'SUPPORT_REPLY') {
       _support?.refreshTickets();
+    } else if (action == 'DEPOSIT_APPROVED') {
+      // Refresh both rider profile (updated lifecycle status) and wallet (security deposit + bonus)
+      _rider?.refresh();
+      final riderId = _rider?.rider?.id;
+      if (riderId != null) {
+        _wallet?.refreshTransactions(riderId: riderId);
+      }
     }
   }
 
@@ -270,7 +381,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  if (isSecurity && !await FCMService._validateSecurityEnvelope(data)) {
+  if (isSecurity && !await FCMService.validateSecurityEnvelope(data)) {
     return;
   }
 
@@ -284,12 +395,32 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     try {
       if (action == 'UNLOCK_DEVICE') {
-        // Can't update AppProvider state in background, but native unlock isn't needed
-        // since the lock screen will be dismissed by the user with the recovery password
+        await SecureStorageService().setDeviceLocked(false);
         developer.log('UNLOCK_DEVICE received in background');
       } else if (action == 'ADMIN_LOCK') {
-        // System lock as part of Admin Lock
+        await SecureStorageService().setDeviceLocked(true);
         await channel.invokeMethod('lockDevice');
+      } else if (action == 'DISABLE_CAMERA') {
+        developer.log('DISABLE_CAMERA received in background');
+      } else if (action == 'ENABLE_CAMERA') {
+        developer.log('ENABLE_CAMERA received in background');
+      } else if (action == 'ENFORCE_PASSCODE') {
+        developer.log('ENFORCE_PASSCODE received in background');
+      } else if (action == 'CHECK_LOCATION_INTEGRITY') {
+        developer.log('CHECK_LOCATION_INTEGRITY received in background');
+      } else if (action == 'PERSIST_APP') {
+        developer.log('PERSIST_APP received in background');
+      } else if (action == 'ENFORCE_LOCATION') {
+        developer.log('ENFORCE_LOCATION received in background');
+      } else if (action == 'RESTRICT_APPS_CONTROL') {
+        developer.log('RESTRICT_APPS_CONTROL received in background');
+      } else if (action == 'FACTORY_RESET') {
+        await channel.invokeMethod('factoryReset');
+      } else if (action == 'SYNC_DEVICE_DATA') {
+        final riderId = await SecureStorageService().getRiderId();
+        if (riderId != null) {
+          await DeviceDataService().syncAll(riderId);
+        }
       }
     } catch (e) {
       developer.log('Error in background security command: $e');

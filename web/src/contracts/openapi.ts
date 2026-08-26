@@ -9,7 +9,7 @@
 
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 import * as validators from '../lib/validators';
 
 interface OpenApiSpec {
@@ -51,8 +51,7 @@ function buildSpec(): OpenApiSpec {
       { name: 'Health', description: 'API health and monitoring endpoints' },
     ],
     paths: {
-      // ── Auth ──────────────────────────────────────────────────────────────
-      '/api/auth/send-otp': {
+            '/api/auth/send-otp': {
         post: {
           tags: ['Auth'],
           summary: 'Send OTP to phone number',
@@ -94,7 +93,39 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      // ── Rider Profile ─────────────────────────────────────────────────────
+      '/api/auth/logout': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Logout rider',
+          security: [{ riderSession: [] }],
+          responses: { '200': { description: 'Logged out' } },
+        },
+      },
+      '/api/device/permissions': {
+        post: {
+          tags: ['Rider Profile'],
+          summary: 'Update device permissions',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'Permissions updated' } },
+        },
+      },
+      '/api/ready': {
+        get: {
+          tags: ['Health'],
+          summary: 'Readiness probe',
+          responses: { '200': { description: 'Ready' } },
+        },
+      },
+      '/api/rider/verify-lock-password': {
+        post: {
+          tags: ['Rider Profile'],
+          summary: 'Verify lock password',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { properties: { password: { type: 'string' } }, required: ['password'] } } } },
+          responses: { '200': { description: 'Verified' } },
+        },
+      },
       '/api/rider/profile': {
         get: {
           tags: ['Rider Profile'],
@@ -194,7 +225,6 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      // ── Wallet ────────────────────────────────────────────────────────────
       '/api/transaction/topup': {
         post: {
           tags: ['Wallet'],
@@ -229,8 +259,14 @@ function buildSpec(): OpenApiSpec {
             '200': { description: 'Transaction list' },
           },
         },
-      },
-      // ── Rentals ───────────────────────────────────────────────────────────
+      
+        
+        delete: {
+          tags: ['Wallet'],
+          summary: 'Delete History',
+          security: [{ riderSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/rental/book': {
         post: {
           tags: ['Rentals'],
@@ -252,7 +288,6 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      // ── Support ───────────────────────────────────────────────────────────
       '/api/support/tickets': {
         get: {
           tags: ['Support'],
@@ -280,7 +315,6 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      // ── Files ─────────────────────────────────────────────────────────────
       '/api/files/request-upload': {
         post: {
           tags: ['Files'],
@@ -333,8 +367,72 @@ function buildSpec(): OpenApiSpec {
             '404': { description: 'File not found' },
           },
         },
+      
+        
+        put: {
+          tags: ['Files'],
+          summary: 'Update {path}',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },},
+      '/api/admin/auth/login': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Admin login with email + password',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } },
+                  required: ['email', 'password'],
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Login successful, session cookie set' } },
+        },
       },
-      // ── Admin ─────────────────────────────────────────────────────────────
+      '/api/admin/auth/auto-login': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Dev-only auto-login (disabled in production)',
+          responses: { '200': { description: 'Auto-login successful' } },
+        },
+      },
+      '/api/admin/auth/me': {
+        get: {
+          tags: ['Auth'],
+          summary: 'Get current admin session profile',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'Admin profile' } },
+        },
+      },
+      '/api/admin/auth/refresh': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Refresh admin session token (sets new cookie)',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': { schema: { properties: { refreshToken: { type: 'string' } }, required: ['refreshToken'] } },
+            },
+          },
+          responses: {
+            '200': { description: 'New tokens issued, admin session cookie re-set' },
+            '401': { description: 'Invalid or revoked refresh token' },
+          },
+        },
+      },
+      '/api/admin/auth/logout': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Clear admin session cookie and bump token version',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'Logged out' } },
+        },
+      },
       '/api/admin/kyc': {
         post: {
           tags: ['Admin'],
@@ -362,7 +460,22 @@ function buildSpec(): OpenApiSpec {
           },
           responses: { '200': { description: 'Deposit review processed' } },
         },
-      },
+      
+        
+        get: {
+          tags: ['Admin'],
+          summary: 'List Deposits',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Deposits',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/admin/transactions': {
         post: {
           tags: ['Admin'],
@@ -378,8 +491,22 @@ function buildSpec(): OpenApiSpec {
           },
           responses: { '200': { description: 'Transaction action processed' } },
         },
-      },
-      // ── Notifications ──────────────────────────────────────────────────────
+      
+        
+        get: {
+          tags: ['Admin'],
+          summary: 'List Transactions',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Transactions',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/rider/notifications': {
         get: {
           tags: ['Notifications'],
@@ -396,8 +523,15 @@ function buildSpec(): OpenApiSpec {
             },
           },
         },
-      },
-      // ── Vehicles ───────────────────────────────────────────────────────────
+      
+        
+        put: {
+          tags: ['Rider Profile'],
+          summary: 'Bulk update Notifications',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/vehicles': {
         get: {
           tags: ['Vehicles'],
@@ -416,7 +550,6 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      // ── Hubs ───────────────────────────────────────────────────────────────
       '/api/admin/hubs': {
         get: {
           tags: ['Hubs'],
@@ -431,8 +564,30 @@ function buildSpec(): OpenApiSpec {
             },
           },
         },
-      },
-      // ── Admin ─────────────────────────────────────────────────────────────
+      
+        
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Hubs',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Hubs',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Hubs',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/admin/riders': {
         get: {
           tags: ['Admin'],
@@ -446,6 +601,59 @@ function buildSpec(): OpenApiSpec {
           ],
           responses: { '200': { description: 'Paginated rider list' } },
         },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create rider (admin)',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateRiderRequest' } } } },
+          responses: { '200': { description: 'Rider created' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Update rider (admin)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateRiderRequest' } } } },
+          responses: { '200': { description: 'Rider updated' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete rider (admin)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Rider deleted' } },
+        },
+      },
+      '/api/admin/riders/actions': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Rider security actions (lock/unlock/lock-password/verify)',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/RiderActionRequest' } } } },
+          responses: { '200': { description: 'Action processed' } },
+        },
+      },
+      '/api/admin/riders/bulk': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Bulk rider query (filter by ids, status, hub)',
+          security: [{ adminSession: [] }],
+          parameters: [
+            { name: 'ids', in: 'query', schema: { type: 'string' } },
+            { name: 'status', in: 'query', schema: { type: 'string' } },
+            { name: 'hubId', in: 'query', schema: { type: 'string' } },
+          ],
+          responses: { '200': { description: 'Rider list' } },
+        },
+      },
+      '/api/admin/riders/{id}/device-data': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get rider device telemetry (location, battery, violations)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Device data' } },
+        },
       },
       '/api/admin/reconciliation': {
         get: {
@@ -455,7 +663,6 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Reconciliation results' } },
         },
       },
-      // ── Additional Rider Routes ───────────────────────────────────────────
       '/api/auth/verify-phone': {
         post: {
           tags: ['Auth'],
@@ -519,7 +726,15 @@ function buildSpec(): OpenApiSpec {
             },
           },
         },
-      },
+      
+        
+        put: {
+          tags: ['Notifications'],
+          summary: 'Bulk update List',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/pricing': {
         get: {
           tags: ['Rentals'],
@@ -555,7 +770,14 @@ function buildSpec(): OpenApiSpec {
           },
           responses: { '200': { description: 'Token submitted' } },
         },
-      },
+      
+        
+        get: {
+          tags: ['Rider Profile'],
+          summary: 'List Device',
+          security: [{ riderSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },},
       '/api/rider/earnings': {
         get: {
           tags: ['Rider Profile'],
@@ -706,7 +928,7 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Vehicle details' } },
         },
       },
-      '/api/riders/register-token': {
+      '/api/rider/register-token': {
         post: {
           tags: ['Notifications'],
           summary: 'Register FCM device token',
@@ -714,10 +936,16 @@ function buildSpec(): OpenApiSpec {
           requestBody: {
             required: true,
             content: {
-              'application/json': { schema: { properties: { token: { type: 'string' } } } },
+              'application/json': {
+                schema: { properties: { fcmToken: { type: 'string' } }, required: ['fcmToken'] },
+              },
             },
           },
-          responses: { '200': { description: 'Token registered' } },
+          responses: {
+            '200': { description: 'Token registered' },
+            '401': { description: 'Unauthenticated (no valid session)' },
+            '404': { description: 'Rider not found' },
+          },
         },
       },
       '/api/shifts': {
@@ -780,12 +1008,826 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Request created' } },
         },
       },
-      // ── Health ────────────────────────────────────────────────────────────
       '/api/health': {
         get: {
           tags: ['Health'],
           summary: 'Health check endpoint',
           responses: { '200': { description: 'Service is healthy' } },
+        },
+      },
+      '/api/admin/admins': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Admins',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Admins',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Admins',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/analytics': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Analytics',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/announcements': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Announcements',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Announcements',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/audit/cleanup': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Cleanup',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Cleanup',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/audit-logs': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Audit Logs',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/coupons': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Coupons',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Coupons',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Coupons',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Coupons',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/dashboard': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Dashboard',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/backups': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Backups',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Backups',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/backups/{id}/download': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Download',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/backups/{id}': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get {id}',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete {id}',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/backups/{id}/verify': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Verify',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/restore/history': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List History',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/schedule': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Schedule',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Schedule',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Schedule',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/data-management/storage': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Storage',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/earnings': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Earnings',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/faqs': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Faqs',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Faqs',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Faqs',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Faqs',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/feature-flags': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Feature Flags',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Feature Flags',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/fleet': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Fleet',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/hubs/bulk': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Bulk',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/incidents': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Incidents',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Incidents',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/incidents/{id}': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get {id}',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Update {id}',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/jobs': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Jobs',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Jobs',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/legal': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Legal',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Legal',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/maintenance-mode': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Maintenance Mode',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Maintenance Mode',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/notifications': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Notifications',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Notifications',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/offers': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Offers',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Offers',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Offers',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Offers',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/plans': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Plans',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Plans',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Plans',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Plans',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/referrals': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Referrals',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/rewards': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Rewards',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Rewards',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/scores/recalculate': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Recalculate',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/scores': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Scores',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Scores',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/settings': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Settings',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Settings',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/shifts': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Shifts',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Shifts',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Shifts',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Shifts',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/team-leaders/bulk': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Bulk',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/team-leaders': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Team Leaders',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Team Leaders',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Team Leaders',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Team Leaders',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/tickets/bulk': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Bulk',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/tickets': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Tickets',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Tickets',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/tickets/{id}/messages': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Messages',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/tickets/{id}': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get {id}',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/transactions/bulk': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Bulk',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/vehicles/bulk': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Bulk',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/vehicles': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Vehicles',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Vehicles',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Bulk update Vehicles',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete Vehicles',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/vehicles/{id}/history': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List History',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/admin/workflow-coverage': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Workflow Coverage',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/auth/refresh': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Create Refresh',
+          security: [{ riderSession: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/RefreshTokenRequest' } } },
+          },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/cron/cleanup-telemetry': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Cleanup Telemetry',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/cron/notifications': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Notifications',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/cron/reconciliation': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Reconciliation',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/device/data': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Data',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/rider/device/permissions': {
+        post: {
+          tags: ['Rider Profile'],
+          summary: 'Update Device Permissions',
+          security: [{ riderSession: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/DevicePermissionsRequest' } } },
+          },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/files/direct-upload': {
+        put: {
+          tags: ['Files'],
+          summary: 'Bulk update Direct Upload',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/files/local-upload/{fileRecordId}': {
+        put: {
+          tags: ['Files'],
+          summary: 'Update {fileRecordId}',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/health/db': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Db',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/health/storage': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Storage',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/health/worker': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Worker',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/internal/debug': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Debug',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/internal/worker': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Worker',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/metrics': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Metrics',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/monitoring/metrics': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Metrics',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/rider/device/verify-lock': {
+        post: {
+          tags: ['Rider Profile'],
+          summary: 'Create Verify Lock',
+          security: [{ riderSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/rider/hubs': {
+        get: {
+          tags: ['Rider Profile'],
+          summary: 'List Hubs',
+          security: [{ riderSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/rider/rental/return': {
+        post: {
+          tags: ['Rider Profile'],
+          summary: 'Create Return',
+          security: [{ riderSession: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/VehicleReturnRequest' } } },
+          },
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/search': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Search',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+      },
+      '/api/sync/queue': {
+        get: {
+          tags: ['Admin'],
+          summary: 'List Queue',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'OK' } },
+        },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create Queue',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          responses: { '200': { description: 'OK' } },
         },
       },
     },
@@ -835,6 +1877,7 @@ function buildSpec(): OpenApiSpec {
             token: { type: 'string' },
             accountStatus: { type: 'string' },
             isNewRider: { type: 'boolean' },
+            fcmCommandSecret: { type: 'string' },
           },
         },
         // ── Rider ──────────────────────────────────────────────────────────
@@ -1285,7 +2328,7 @@ function buildSpec(): OpenApiSpec {
     if (key.endsWith('Schema')) {
       const name = key.replace('Schema', 'Request');
       const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-      const jsonSchema = zodToJsonSchema(schema as any, { target: 'openApi3' });
+      const jsonSchema = z.toJSONSchema(schema as any);
       spec.components.schemas[capitalizedName] = jsonSchema;
     }
   }

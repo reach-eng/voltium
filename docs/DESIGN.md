@@ -1,5 +1,16 @@
 # Voltium Rider App: Technical Design Specification
 
+> ⚠️ **DEPRECATED (R10 polish, 2026-07-31).** This doc is superseded by:
+> - **Design tokens** (color, typography, spacing, radius) → [`docs/design-system.md`](./design-system.md)
+> - **Project overview** (stack, architecture, design system summary) → [`docs/PROJECT_OVERVIEW_2026-07-30.md`](./PROJECT_OVERVIEW_2026-07-30.md)
+> - **47-screen catalog** (per-screen spec) → [`docs/PROJECT_OVERVIEW_2026-07-30.md` §9](./PROJECT_OVERVIEW_2026-07-30.md#9-flutter-app)
+>
+> The information below is preserved for historical reference and will be
+> removed in a future pass. The two new docs above are now the canonical
+> sources.
+>
+> **Audit reference:** DESIGN_SYSTEM_PLAN.md §3.5.
+
 This document serves as the absolute technical and visual reference for the Voltium Rider application. It details the global design system, the architecture of shared components, and a granular breakdown of all 47 screens.
 
 ---

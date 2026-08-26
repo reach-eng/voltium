@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { guarantorUseCases } from '@/server/modules/guarantors/guarantor.use-cases';
 
+function errorName(err: unknown): string {
+  return err instanceof Error ? err.name : '';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requireRiderSession(request);
@@ -29,9 +33,9 @@ export async function POST(request: NextRequest) {
       },
       'Guarantor submitted successfully'
     );
-  } catch (err: any) {
-    if (err.name === 'GuarantorStateError') {
-      return errors.conflict(err.message);
+  } catch (err: unknown) {
+    if (errorName(err) === 'GuarantorStateError') {
+      return errors.conflict((err instanceof Error ? err.message : String(err)));
     }
     logger.error('[POST /api/rider/guarantor]', err);
     return errors.internal('Failed to submit guarantor');

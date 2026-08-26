@@ -29,7 +29,7 @@ subprojects {
         if (project.extensions.findByName("android") != null) {
             @Suppress("DEPRECATION")
             val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
-            android.compileSdkVersion(35)
+            android.compileSdkVersion(36)
             // Fix for legacy plugins missing namespace in AGP 8+
             if (android.namespace == null) {
                 val group = project.group.toString()
@@ -42,10 +42,8 @@ subprojects {
             }
         }
         project.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            kotlinOptions {
-                languageVersion = "1.9"
-                apiVersion = "1.9"
-                jvmTarget = "17"
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             }
         }
     }

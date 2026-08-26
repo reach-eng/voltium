@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_upi_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 
 class _TestAppProvider extends AppProvider {
   @override
@@ -16,11 +17,11 @@ class _TestAppProvider extends AppProvider {
 }
 
 Widget buildTestApp() {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ChangeNotifierProvider<AppProvider>(create: (_) => _TestAppProvider()),
+  return ProviderScope(
+    overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      appProvider.overrideWith((ref) => _TestAppProvider()),
     ],
     child: MaterialApp(
       home: TopUpUpiScreen(
@@ -35,31 +36,31 @@ void main() {
   group('Top Up UPI Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(TopUpUpiScreen), findsOneWidget);
     });
 
     testWidgets('displays step info', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
-      expect(find.text('Step 3 of 3'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.textContaining('Step 2 of 2'), findsOneWidget);
     });
 
     testWidgets('shows top up amount', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.textContaining('500'), findsWidgets);
     });
 
     testWidgets('shows submit proof button', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Submit Proof'), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

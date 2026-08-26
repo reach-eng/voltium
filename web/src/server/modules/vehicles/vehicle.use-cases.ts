@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
+import { invalidateCache } from '@/lib/cache';
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -18,32 +19,37 @@ export const vehicleUseCases = {
   },
 
   async createVehicle(input: Prisma.VehicleCreateInput) {
-    return vehicleRepository.create(input);
+    const result = await vehicleRepository.create(input);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async updateVehicle(vehicleId: string, input: Prisma.VehicleUpdateInput) {
-    return vehicleRepository.update(vehicleId, input);
+    const result = await vehicleRepository.update(vehicleId, input);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async assignVehicle(vehicleId: string, riderDbId: string) {
-    const vehicle = await db.vehicle.findUnique({ where: { id: vehicleId } });
+    const [vehicle, rider, existingRental] = await Promise.all([
+      db.vehicle.findUnique({ where: { id: vehicleId } }),
+      db.rider.findUnique({ where: { id: riderDbId } }),
+      db.rentalLease.findFirst({ where: { riderId: riderDbId, status: 'ACTIVE' } }),
+    ]);
+
     if (!vehicle || vehicle.status !== 'AVAILABLE') {
       throw new Error('Vehicle is not available for assignment');
     }
-
-    const rider = await db.rider.findUnique({ where: { id: riderDbId } });
     if (!rider || rider.lifecycleStatus !== 'ACTIVE') {
       throw new Error('Rider is not in ACTIVE state');
     }
-
-    const existingRental = await db.rentalLease.findFirst({
-      where: { riderId: riderDbId, status: 'ACTIVE' },
-    });
     if (existingRental) {
       throw new Error('Rider already has an active rental');
     }
 
-    return vehicleRepository.assignToRider(vehicleId, riderDbId);
+    const result = await vehicleRepository.assignToRider(vehicleId, riderDbId);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async markForMaintenance(vehicleId: string) {
@@ -55,7 +61,9 @@ export const vehicleUseCases = {
         'Vehicle is currently on an active rental and cannot be marked for maintenance'
       );
     }
-    return vehicleRepository.update(vehicleId, { status: 'MAINTENANCE' });
+    const result = await vehicleRepository.update(vehicleId, { status: 'MAINTENANCE' });
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   /**
@@ -145,6 +153,7 @@ export const vehicleUseCases = {
       return {
         id: vehicle.id,
         vehicleId: vehicle.vehicleId,
+        vehicleNumber: vehicle.vehicleNumber,
         model: vehicle.model,
         licensePlate: vehicle.licensePlate,
         batteryLevel: vehicle.batteryLevel,
@@ -260,6 +269,7 @@ export const vehicleUseCases = {
       details: { ids, ...(value ? { value } : {}), count: updatedCount },
     }).catch((e: unknown) => logger.error('Audit log failed for bulk vehicle action', e));
 
+    invalidateCache('vehicles_list:*');
     return { count: updatedCount };
   },
 };

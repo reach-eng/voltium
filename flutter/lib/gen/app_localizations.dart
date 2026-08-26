@@ -2984,6 +2984,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'EV Plus'**
   String get txtevPlus;
+
+  /// Profile menu AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get menu_title;
+
+  /// Account section header
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT'**
+  String get menu_account;
+
+  /// Profile menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get menu_profile;
+
+  /// Documents menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'My Documents'**
+  String get menu_myDocuments;
+
+  /// Rewards section header
+  ///
+  /// In en, this message translates to:
+  /// **'REWARDS & MORE'**
+  String get menu_rewardsMore;
+
+  /// Rewards menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards'**
+  String get menu_rewards;
+
+  /// Referral menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Referral Program'**
+  String get menu_referralProgram;
+
+  /// General section header
+  ///
+  /// In en, this message translates to:
+  /// **'GENERAL'**
+  String get menu_general;
+
+  /// Workflow hub link label
+  ///
+  /// In en, this message translates to:
+  /// **'Workflow & Services'**
+  String get menu_workflowServices;
+
+  /// App Settings menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'App Settings'**
+  String get menu_appSettings;
+
+  /// Language menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get menu_language;
+
+  /// Language picker dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get menu_selectLanguage;
+
+  /// Emergency SOS menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency SOS'**
+  String get menu_emergencySos;
+
+  /// Preferences section header
+  ///
+  /// In en, this message translates to:
+  /// **'PREFERENCES'**
+  String get settings_preferences;
+
+  /// Dark mode toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get settings_darkMode;
+
+  /// Support section header
+  ///
+  /// In en, this message translates to:
+  /// **'SUPPORT & LEGAL'**
+  String get settings_supportLegal;
+
+  /// Feedback link label
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get settings_feedback;
+
+  /// Legal link label
+  ///
+  /// In en, this message translates to:
+  /// **'Legal'**
+  String get settings_legal;
+
+  /// About section header
+  ///
+  /// In en, this message translates to:
+  /// **'ABOUT'**
+  String get settings_about;
+
+  /// App version label
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get settings_appVersion;
+
+  /// Rate us link label
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Us'**
+  String get settings_rateUs;
+
+  /// Account section header in settings
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT'**
+  String get settings_accountSection;
+
+  /// Delete account confirmation dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get settings_deleteConfirmTitle;
+
+  /// Delete account confirmation dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?'**
+  String get settings_deleteConfirmBody;
+
+  /// Delete button label in confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get settings_delete;
+
+  /// Snackbar message when delete is not available
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion is not yet available. Please contact support.'**
+  String get settings_deleteNotAvailable;
+
+  /// Notifications toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settings_notifications;
+
+  /// Change phone number row in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Change Phone Number'**
+  String get settings_changePhone;
+
+  /// Generic coming-soon snackbar title
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get settings_comingSoon;
 }
 
 class _AppLocalizationsDelegate

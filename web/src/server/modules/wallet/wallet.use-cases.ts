@@ -14,16 +14,14 @@
 import { db } from '@/lib/db';
 import { walletRepository } from './wallet.repository';
 import { walletLedgerService } from './wallet-ledger.service';
+import { notificationService } from '@/lib/notification-service';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
+import { randomUUID } from 'crypto';
 import { logger } from '@/lib/logger';
 import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
+import { invalidateRiderCache } from '@/lib/server-cache';
 import type { WalletBalance } from './wallet.types';
-
-// Server-derived idempotency key (5-minute bucket, no client change required)
-function deriveIdempotencyKey(riderId: string, purpose: string, amountInPaise: number): string {
-  const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
-  return `topup:${riderId}:${purpose}:${amountInPaise}:${bucket}`;
-}
 
 const TEST_PHONES = ['9876543210', '9999999999', '8888888888', '7788888801'];
 
@@ -85,8 +83,14 @@ export const walletUseCases = {
     const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
     const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
 
-    const serverKey = deriveIdempotencyKey(riderDbId, finalPurpose, amountPaise);
-    const idempotencyKey = metadata?.idempotencyKey || serverKey;
+    let idempotencyKey = metadata?.idempotencyKey;
+    if (!idempotencyKey) {
+      idempotencyKey = `topup:${riderDbId}:${randomUUID()}`;
+      logger.warn('[WalletUseCases] Client did not provide idempotencyKey, generated server UUID fallback', {
+        riderId: riderDbId,
+        idempotencyKey,
+      });
+    }
 
     const existingTxn = await walletRepository.findTransactionByKey(idempotencyKey);
     if (existingTxn) {
@@ -107,7 +111,7 @@ export const walletUseCases = {
     const transaction = await walletRepository.createTransaction({
       riderId: riderDbId,
       type: TransactionType.CREDIT,
-      amount: amountPaise,
+      amountInPaise: amountPaise,
       purpose: finalPurpose as TransactionPurpose,
       method,
       status: isTestRider ? TransactionStatus.APPROVED : TransactionStatus.PENDING,
@@ -133,6 +137,7 @@ export const walletUseCases = {
           where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_APPROVED'] } },
           data: { lifecycleStatus: 'DEPOSIT_PENDING' },
         });
+        invalidateRiderCache(riderDbId);
       } catch (err: unknown) {
         logger.error('[WalletUseCases] Failed to upsert deposit record', err);
       }
@@ -217,18 +222,31 @@ export const walletUseCases = {
     const idempotencyKey = `approve:${transactionId}`;
 
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      await walletLedgerService.credit(
-        {
-          riderId: txn.riderId,
-          amountInPaise: txn.amount,
-          category: txn.purpose === 'SECURITY_DEPOSIT' ? 'SECURITY_DEPOSIT' : 'TOP_UP',
-          txnId: txn.id,
-          idempotencyKey,
-          actorId: adminId,
-          note: `Admin approved ${txn.purpose.toLowerCase()}`,
-        },
-        tx
-      );
+      if (txn.purpose === 'SECURITY_DEPOSIT') {
+        await walletLedgerService.creditSecurityDeposit(
+          {
+            riderId: txn.riderId,
+            amountInPaise: txn.amount,
+            txnId: txn.id,
+            actorId: adminId,
+            note: `Admin approved security deposit`,
+          },
+          tx
+        );
+      } else {
+        await walletLedgerService.credit(
+          {
+            riderId: txn.riderId,
+            amountInPaise: txn.amount,
+            category: 'TOP_UP',
+            txnId: txn.id,
+            idempotencyKey,
+            actorId: adminId,
+            note: `Admin approved top up`,
+          },
+          tx
+        );
+      }
 
       await tx.transaction.update({
         where: { id: transactionId },
@@ -238,6 +256,20 @@ export const walletUseCases = {
           approvedBy: adminId || null,
         },
       });
+
+      if (txn.purpose === 'SECURITY_DEPOSIT') {
+        await tx.rider.updateMany({
+          where: { id: txn.riderId, lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] } },
+          data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
+        });
+        invalidateRiderCache(txn.riderId);
+      }
+
+      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
+        riderId: txn.riderId,
+        transactionId,
+        amountPaise: txn.amount,
+      }, 3, tx);
     });
 
     await createAuditLog({
@@ -247,6 +279,14 @@ export const walletUseCases = {
       entityId: transactionId,
       details: { riderId: txn.riderId, amountPaise: txn.amount },
     });
+
+    await notificationService.createAndSend(
+      txn.riderId,
+      'Top-up Approved ✅',
+      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} has been approved.`,
+      'PAYMENT',
+      { screen: 'WALLET' }
+    );
 
     logger.info('[WalletUseCases] Topup approved', {
       transactionId,
@@ -262,7 +302,15 @@ export const walletUseCases = {
       throw new Error(`Transaction ${transactionId} is already ${txn.status}`);
     }
 
-    await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      await (walletRepository as any).updateTransactionStatus(transactionId, 'REJECTED', adminId, tx);
+      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
+        riderId: txn.riderId,
+        transactionId,
+        amountPaise: txn.amount,
+        reason,
+      }, 3, tx);
+    });
 
     await createAuditLog({
       actorId: adminId,
@@ -271,6 +319,14 @@ export const walletUseCases = {
       entityId: transactionId,
       details: { riderId: txn.riderId, amountPaise: txn.amount, reason },
     });
+
+    await notificationService.createAndSend(
+      txn.riderId,
+      'Top-up Rejected ❌',
+      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} was rejected: ${reason}`,
+      'PAYMENT',
+      { screen: 'WALLET' }
+    );
 
     logger.info('[WalletUseCases] Topup rejected', { transactionId, adminId, reason });
   },

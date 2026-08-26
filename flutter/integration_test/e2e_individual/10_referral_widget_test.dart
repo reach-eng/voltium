@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
+import '../pages/dashboard_page.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -14,14 +15,16 @@ void main() {
   testWidgets('Referral widget – displays code and copy works', (tester) async {
     await fullLoginFlow(tester);
 
+    final dashboardPage = DashboardPageObject(tester);
+
     // Referral widget should be visible (copy only, web parity)
-    expect(find.byKey(const Key('copyReferralButton')), findsOneWidget);
+    expect(dashboardPage.copyReferralButton, findsOneWidget);
 
     // Tap copy button
-    await tester.tap(find.byKey(const Key('copyReferralButton')));
+    await tester.tap(dashboardPage.copyReferralButton);
     await settle(tester);
 
     // Verify button still exists (copy action completed without crash)
-    expect(find.byKey(const Key('copyReferralButton')), findsOneWidget);
+    expect(dashboardPage.copyReferralButton, findsOneWidget);
   });
 }

@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
-import { validateBody, createFaqSchema } from '@/lib/validators';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminFaqUseCases } from '@/server/modules/support/admin-faq.use-cases';
+import { createFaqAdminSchema, updateFaqAdminSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
     const result = await adminFaqUseCases.list({ search, category, page, limit });
-    return success(result.faqs, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.faqs, undefined, 200, result.pagination), 60);
   } catch (error) {
     logger.error('GET /api/admin/faqs error:', error);
     return errors.internal('Failed to fetch FAQs');
@@ -34,12 +33,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(createFaqSchema, body);
-    if (!validation.success) return errors.validation(validation.error!);
+    const validation = createFaqAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
     const faq = await adminFaqUseCases.create(
       validation.data,
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
     return success(faq, 'FAQ created', 201);
   } catch (error) {
@@ -55,14 +54,11 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(
-      createFaqSchema.partial().extend({ id: z.string().min(1) }),
-      body
-    );
-    if (!validation.success) return errors.validation(validation.error!);
+    const validation = updateFaqAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
     const { id, ...data } = validation.data;
-    const faq = await adminFaqUseCases.update(id, data, req.headers.get('x-admin-id') || 'system');
+    const faq = await adminFaqUseCases.update(id, data, session.adminId ?? session.riderDbId ?? 'system');
     return success(faq);
   } catch (error) {
     logger.error('PUT /api/admin/faqs error:', error);
@@ -79,7 +75,7 @@ export async function DELETE(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return errors.badRequest('id is required');
 
-    await adminFaqUseCases.delete(id, req.headers.get('x-admin-id') || 'system');
+    await adminFaqUseCases.delete(id, session.adminId ?? session.riderDbId ?? 'system');
     return success(null, 'FAQ deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/faqs error:', error);

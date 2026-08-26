@@ -14,7 +14,16 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<WalletEntity> getWallet(String riderDbId) async {
     final response = await _apiClient.getRiderDashboard();
-    return WalletEntity.fromJson(response);
+    Map<String, dynamic> walletJson = {};
+    if (response['rider'] is Map<String, dynamic> &&
+        response['rider']['wallet'] is Map<String, dynamic>) {
+      walletJson = response['rider']['wallet'] as Map<String, dynamic>;
+    } else if (response['wallet'] is Map<String, dynamic>) {
+      walletJson = response['wallet'] as Map<String, dynamic>;
+    } else {
+      walletJson = response;
+    }
+    return WalletEntity.fromJson(walletJson);
   }
 
   @override
@@ -41,8 +50,15 @@ class WalletRepositoryImpl implements WalletRepository {
     int limit = 20,
   }) async {
     final response = await _apiClient.getTransactionHistory(page, limit);
-    final List<dynamic> data =
-        response['data'] ?? response['transactions'] ?? [];
+    List<dynamic> data = [];
+    if (response['data'] is Map<String, dynamic> &&
+        response['data']['transactions'] is List) {
+      data = response['data']['transactions'] as List<dynamic>;
+    } else if (response['data'] is List) {
+      data = response['data'] as List<dynamic>;
+    } else if (response['transactions'] is List) {
+      data = response['transactions'] as List<dynamic>;
+    }
     return data
         .map((e) => TransactionEntity.fromJson(e as Map<String, dynamic>))
         .toList();

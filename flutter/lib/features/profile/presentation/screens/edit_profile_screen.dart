@@ -1,21 +1,29 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
-class EditProfileScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -23,6 +31,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _motherNameController;
   late TextEditingController _dobController;
   late TextEditingController _addressController;
+
+  late TextEditingController _emergencyContactController;
 
   late TextEditingController _gNameController;
   late TextEditingController _gPhoneController;
@@ -41,27 +51,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final source = await showDialog<ImageSource>(
-        context: context,
-        builder: (ctx) => SimpleDialog(
-          title: const Text('Select Profile Photo'),
-          children: [
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, ImageSource.camera),
-              child: const ListTile(
-                  leading: Icon(Icons.camera_alt), title: Text('Camera'),),
-            ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
-              child: const ListTile(
-                  leading: Icon(Icons.photo_library), title: Text('Gallery'),),
-            ),
-          ],
-        ),
-      );
+      final source = await ImageSourceBottomSheet.show(context: context);
       if (source == null) return;
       final picker = ImagePicker();
-      final image = await picker.pickImage(source: source);
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+        requestFullMetadata: false,
+      );
       if (image != null && mounted) {
         setState(() => _profileImage = image);
       }
@@ -69,8 +68,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Failed to capture photo'),
-              backgroundColor: AppColors.error,),
+            content: Text('Failed to capture photo'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
@@ -79,7 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final rider = context.read<AppProvider>().rider;
+    final rider = ref.read(riderProvider).rider;
     _nameController = TextEditingController(text: rider?.name ?? '');
     _emailController = TextEditingController(text: rider?.email ?? '');
     _phoneController = TextEditingController(text: rider?.phone ?? '');
@@ -90,11 +90,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final dob = rider?.dob;
     _dobController = TextEditingController(
       text: dob != null
-          ? '${dob.year}-${_twoDigits(dob.month)}-${_twoDigits(dob.day)}'
+          ? '${_twoDigits(dob.day)}-${_twoDigits(dob.month)}-${dob.year}'
           : '',
     );
     _addressController =
         TextEditingController(text: rider?.currentAddress ?? '');
+    _emergencyContactController =
+        TextEditingController(text: rider?.emergencyContact ?? '');
 
     _gNameController = TextEditingController(text: rider?.guarantorName ?? '');
     _gPhoneController =
@@ -105,6 +107,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _originalGPhone = rider?.guarantorPhone ?? '';
     // If guarantor phone already exists, it's already verified
     _isGPhoneVerified = (rider?.guarantorPhone ?? '').isNotEmpty;
+
+    _gPhoneController.addListener(() {
+      final currentClean = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
+      final origClean = _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+      if (_isGPhoneVerified && currentClean != origClean) {
+        setState(() {
+          _isGPhoneVerified = false;
+          _isGOtpSent = false;
+        });
+      }
+    });
   }
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -119,6 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _motherNameController,
       _dobController,
       _addressController,
+      _emergencyContactController,
       _gNameController,
       _gPhoneController,
       _gAddressController,
@@ -134,23 +148,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (phone.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Enter a valid 10-digit number'),
-            backgroundColor: AppColors.error,),
+          content: Text('Enter a valid 10-digit number'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
-    final rider = context.read<AppProvider>().rider;
+    final rider = ref.read(riderProvider).rider;
     if (phone == rider?.phone) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Guarantor phone cannot be the same as your phone'),
-            backgroundColor: AppColors.error,),
+          content: Text('Guarantor phone cannot be the same as your phone'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
     setState(() => _isSendingGOtp = true);
     try {
-      final result = await VoltiumApiService().sendOtp(phone: phone);
+      final client = ApiClient();
+      final res = await VoltiumApiClient(client)
+          .postAuthSendOtp(SendOtpRequest(phone: phone));
+      final result = res.toJson();
       if (mounted) {
         setState(() {
           _isSendingGOtp = false;
@@ -158,8 +177,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('OTP sent to guarantor phone'),
-              backgroundColor: AppColors.success,),
+            content: Text('OTP sent to guarantor phone'),
+            backgroundColor: AppColors.success,
+          ),
         );
         // In dev mode, auto-fill OTP if returned by the API
         final devOtp = result['data']?['otp']?.toString();
@@ -172,8 +192,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isSendingGOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Failed to send OTP'),
-              backgroundColor: AppColors.error,),
+            content: Text('Failed to send OTP'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
@@ -183,15 +204,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_gOtpController.text.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Enter the 6-digit OTP'),
-            backgroundColor: AppColors.error,),
+          content: Text('Enter the 6-digit OTP'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     setState(() => _isVerifyingGOtp = true);
     try {
-      await VoltiumApiService().verifyOtp(phone: phone, otp: _gOtpController.text);
+      await VoltiumApiService()
+          .verifyPhone(phone: phone, otp: _gOtpController.text);
       if (mounted) {
         setState(() {
           _isVerifyingGOtp = false;
@@ -200,8 +223,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Guarantor phone verified'),
-              backgroundColor: AppColors.success,),
+            content: Text('Guarantor phone verified'),
+            backgroundColor: AppColors.success,
+          ),
         );
       }
     } catch (e) {
@@ -209,15 +233,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isVerifyingGOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Invalid OTP'), backgroundColor: AppColors.error,),
+            content: Text('Invalid OTP'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
   }
 
   Future<void> _saveProfile() async {
-    final provider = context.read<AppProvider>();
-    final rider = provider.rider;
+    final provider = ref.read(riderProvider.notifier);
+    final rider = ref.watch(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -233,6 +259,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           'motherName': _motherNameController.text,
           'dob': _dobController.text.isNotEmpty ? _dobController.text : null,
           'currentAddress': _addressController.text,
+          'emergencyContact': _emergencyContactController.text,
           'guarantorName': _gNameController.text,
           'guarantorPhone': _gPhoneController.text,
           'guarantorAddress': _gAddressController.text,
@@ -245,8 +272,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Profile updated successfully'),
-              backgroundColor: AppColors.success,),
+            content: Text('Profile updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
         );
         Navigator.pop(context);
       }
@@ -255,9 +283,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content:
-                  Text('Failed to update profile. Please try again.'),
-              backgroundColor: AppColors.error,),
+            content: Text('Failed to update profile. Please try again.'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
@@ -277,7 +305,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16,),
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Column(
                       children: [
                         FadeUpWidget(delay: 0, child: _buildAvatarSection()),
@@ -288,7 +318,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const EditProfileSectionHeader(
-                                  title: 'PERSONAL INFORMATION',),
+                                title: 'PERSONAL INFORMATION',
+                              ),
                               EditProfileTextField(
                                 key: const Key('editFullNameField'),
                                 label: 'Full Name',
@@ -356,6 +387,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 controller: _addressController,
                                 icon: Icons.home_outlined,
                               ),
+                              const SizedBox(height: 16),
+                              EditProfileTextField(
+                                key: const Key('editEmergencyContactField'),
+                                label: 'Emergency Contact Number',
+                                controller: _emergencyContactController,
+                                icon: Icons.emergency_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4, top: 4),
+                                child: Text(
+                                  'Changes to emergency contact require admin approval.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppColors.slate500,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -366,7 +416,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               const EditProfileSectionHeader(
-                                  title: 'GUARANTOR DETAILS',),
+                                title: 'GUARANTOR DETAILS',
+                              ),
                               EditProfileTextField(
                                 key: const Key('editGuarantorNameField'),
                                 label: 'Guarantor Name',
@@ -387,8 +438,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         const SizedBox(height: 32),
                         const FadeUpWidget(
-                            delay: 500, child: EditProfileAdminNote(),),
-                        const SizedBox(height: 32),
+                          delay: 500,
+                          child: EditProfileAdminNote(),
+                        ),
+                        SizedBox(height: 32),
                         FadeUpWidget(
                           delay: 600,
                           child: ElevatedButton(
@@ -399,7 +452,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 56),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),),
+                                borderRadius: BorderRadius.circular(
+                                    AppRadius.radiusModal),
+                              ),
                               elevation: 8,
                               shadowColor:
                                   AppColors.primary.withValues(alpha: 0.4),
@@ -409,11 +464,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
-                                        color: Colors.white, strokeWidth: 2,),)
-                                : const Text('SUBMIT FOR APPROVAL',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.2,),),
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'SUBMIT FOR APPROVAL',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 48),
@@ -436,7 +497,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -451,45 +512,63 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           InkWell(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: Color(0xFF1E293B),),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: AppColors.slate800,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Text('Edit Profile',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),),),
+          SizedBox(width: 16),
+          Text(
+            'Edit Profile',
+            style:
+                AppTypography.headingSmall.copyWith(color: AppColors.slate800),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildAvatarSection() {
+    final rider = ref.watch(riderProvider).rider;
+    String? getAvatarUrl() {
+      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+        return null;
+      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
+      final baseUrl = ApiClient().baseUrl;
+      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+    }
+
+    final avatarUrl = getAvatarUrl();
+
     return Center(
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(4),
+            padding: Spacing.paddingXs,
             decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 20,
-                      offset: Offset(0, 10),),
-                ],),
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 20,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
             child: CircleAvatar(
               radius: 54,
               backgroundColor: AppColors.iconBackground,
@@ -502,8 +581,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         fit: BoxFit.cover,
                       ),
                     )
-                  : const Icon(Icons.person,
-                      size: 54, color: AppColors.slate400,),
+                  : avatarUrl != null
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: avatarUrl,
+                            width: 108,
+                            height: 108,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) =>
+                                const CircularProgressIndicator(),
+                            errorWidget: (_, __, ___) => const Icon(
+                              Icons.person,
+                              size: 54,
+                              color: AppColors.slate400,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 54,
+                          color: AppColors.slate400,
+                        ),
             ),
           ),
           Positioned(
@@ -512,9 +610,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: GestureDetector(
               onTap: _pickImage,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: Spacing.paddingSm,
                 decoration: const BoxDecoration(
-                    color: AppColors.primary, shape: BoxShape.circle,),
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
                 child:
                     const Icon(Icons.camera_alt, color: Colors.white, size: 20),
               ),
@@ -532,28 +632,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Text('Guarantor Phone',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.slate500,),),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(
+            'Guarantor Phone',
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w800)
+                .copyWith(color: AppColors.slate500),
+          ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),),
-                    ],),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: TextFormField(
                   key: const Key('editGuarantorPhoneField'),
                   controller: _gPhoneController,
@@ -567,35 +670,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       _gOtpController.clear();
                     });
                   },
-                  style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),),
+                  style: AppTypography.bodyLarge
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(color: AppColors.slate800),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.phone_android_outlined,
-                        color: AppColors.slate400, size: 18,),
+                    prefixIcon: const Icon(
+                      Icons.phone_android_outlined,
+                      color: AppColors.slate400,
+                      size: 18,
+                    ),
                     suffixIcon: _isGPhoneVerified
-                        ? const Icon(Icons.check_circle,
-                            color: AppColors.success, size: 20,)
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: AppColors.success,
+                            size: 20,
+                          )
                         : null,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16,),
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),
             ),
             if (needsVerification) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isSendingGOtp ? null : _sendGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: const Color(0xFF93C5FD),
+                    disabledBackgroundColor: AppColors.primaryLightBlue,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
                   child: _isSendingGOtp
@@ -603,12 +714,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2,),)
-                      : Text(_isGOtpSent ? 'Resend' : 'Send OTP',
-                          style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,),),
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          _isGOtpSent ? 'Resend' : 'Send OTP',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -616,32 +733,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         // OTP input section
         if (_isGOtpSent && !_isGPhoneVerified) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.02),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),),
-                      ],),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: TextFormField(
                     controller: _gOtpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
-                        letterSpacing: 8,),
+                    style: AppTypography.bodyLarge
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(color: AppColors.slate800, letterSpacing: 8),
                     decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline,
-                          color: AppColors.slate400, size: 18,),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: AppColors.slate400,
+                        size: 18,
+                      ),
                       hintText: '••••••',
                       counterText: '',
                       border: InputBorder.none,
@@ -651,16 +771,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isVerifyingGOtp ? null : _verifyGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    disabledBackgroundColor: const Color(0xFF6EE7B7),
+                    disabledBackgroundColor: AppColors.successLight,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
                   child: _isVerifyingGOtp
@@ -668,12 +789,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2,),)
-                      : const Text('Verify',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,),),
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Verify',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -681,23 +808,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
         // Verified badge
         if (_isGPhoneVerified && phoneChanged) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.successLight,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 14),
+                const Icon(Icons.check_circle,
+                    color: AppColors.success, size: 14),
                 SizedBox(width: 6),
-                Text('Phone verified',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.successText,),),
+                Text(
+                  'Phone verified',
+                  style: AppTypography.labelSmall
+                      .copyWith(color: AppColors.onSurface),
+                ),
               ],
             ),
           ),

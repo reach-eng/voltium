@@ -222,7 +222,7 @@ export const backupService = {
         logger.error('[BackupService] Failed to purge old backup', {
           jobId: job.id,
           backupPath: job.backupPath,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error',
         });
       }
     }
@@ -442,11 +442,11 @@ export const backupService = {
         path: backupDir,
         sizeBytes: Number(totalSize),
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Mark job as failed
       await backupRepository.updateBackupJob(job.id, {
         status: 'FAILED',
-        errorMessage: err.message,
+        errorMessage: (err instanceof Error ? err.message : String(err)),
         completedAt: new Date(),
       });
 
@@ -456,10 +456,10 @@ export const backupService = {
         action: 'backup.failed',
         entity: 'BackupJob',
         entityId: job.id,
-        details: { backupId, error: err.message },
+        details: { backupId, error: (err instanceof Error ? err.message : String(err)) },
       });
 
-      logger.error('[BackupService] Backup failed', { backupId, error: err.message });
+      logger.error('[BackupService] Backup failed', { backupId, error: (err instanceof Error ? err.message : String(err)) });
       throw err;
     } finally {
       if (!isPreRestore) {
@@ -548,7 +548,7 @@ export const backupService = {
   async acquireLock(status: 'BACKUP_RUNNING' | 'RESTORE_RUNNING', owner: string): Promise<boolean> {
     try {
       return await db.$transaction(async (tx: Prisma.TransactionClient) => {
-        const lockStatus = await tx.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
+        const lockStatus = await tx.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
         const currentStatus = lockStatus?.value || 'NONE';
 
         if (currentStatus !== 'NONE') {
@@ -560,27 +560,27 @@ export const backupService = {
         }
 
         await Promise.all([
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_STATUS' },
             update: { value: status },
-            create: { key: 'BACKUP_LOCK_STATUS', value: status },
+            create: { key: 'BACKUP_LOCK_STATUS', value: status, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_STARTED_AT' },
             update: { value: new Date().toISOString() },
-            create: { key: 'BACKUP_LOCK_STARTED_AT', value: new Date().toISOString() },
+            create: { key: 'BACKUP_LOCK_STARTED_AT', value: new Date().toISOString(), valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_OWNER' },
             update: { value: owner },
-            create: { key: 'BACKUP_LOCK_OWNER', value: owner },
+            create: { key: 'BACKUP_LOCK_OWNER', value: owner, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
         ]);
 
         logger.info('[BackupService] Lock acquired successfully', { status, owner });
         return true;
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[BackupService] Error acquiring lock', err);
       return false;
     }
@@ -589,24 +589,24 @@ export const backupService = {
   async releaseLock(): Promise<void> {
     try {
       await Promise.all([
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_STATUS' },
           update: { value: 'NONE' },
-          create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
+          create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_STARTED_AT' },
           update: { value: '' },
-          create: { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
+          create: { key: 'BACKUP_LOCK_STARTED_AT', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_OWNER' },
           update: { value: '' },
-          create: { key: 'BACKUP_LOCK_OWNER', value: '' },
+          create: { key: 'BACKUP_LOCK_OWNER', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
       ]);
       logger.info('[BackupService] Lock released successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[BackupService] Error releasing lock', err);
     }
   },
@@ -614,9 +614,9 @@ export const backupService = {
   async getLockStatus(): Promise<{ status: string; startedAt: string; owner: string }> {
     try {
       const [statusSetting, startedSetting, ownerSetting] = await Promise.all([
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } }),
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STARTED_AT' } }),
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_OWNER' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STARTED_AT' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_OWNER' } }),
       ]);
 
       return {
@@ -728,8 +728,15 @@ export function calculateNextRun(config: {
   const minutesVal = minutes !== undefined && !isNaN(minutes) ? minutes : 0;
   next.setHours(hoursVal, minutesVal, 0, 0);
 
-  // If today's time has passed, move to next occurrence
-  if (next <= now) {
+  // MONTHLY always needs day clamping regardless of time
+  if (config.frequency === 'MONTHLY') {
+    const targetDay = Math.min(config.dayOfMonth ?? 1, 28);
+    next.setDate(targetDay);
+    if (next <= now) {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(targetDay);
+    }
+  } else if (next <= now) {
     switch (config.frequency) {
       case 'DAILY':
         next.setDate(next.getDate() + 1);
@@ -738,15 +745,6 @@ export function calculateNextRun(config: {
         const targetDay = config.dayOfWeek ?? 0;
         const daysUntil = (targetDay - next.getDay() + 7) % 7;
         next.setDate(next.getDate() + (daysUntil || 7));
-        break;
-      }
-      case 'MONTHLY': {
-        const targetDay = Math.min(config.dayOfMonth ?? 1, 28);
-        next.setDate(targetDay);
-        if (next <= now) {
-          next.setMonth(next.getMonth() + 1);
-          next.setDate(targetDay);
-        }
         break;
       }
     }

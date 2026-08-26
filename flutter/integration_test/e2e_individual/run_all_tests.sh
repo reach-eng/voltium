@@ -7,7 +7,7 @@
 # Prerequisites:
 #   - Emulator running (default: emulator-5554)
 #   - Backend running at http://localhost:8081
-#   - /Users/amreenfarooq/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081
+#   - adb on PATH (auto-detected across macOS / Linux / Windows SDKs)
 
 DEVICE="${1:-emulator-5554}"
 DRIVER="test_driver/integration_test.dart"
@@ -15,9 +15,9 @@ API_URL="http://localhost:8081"
 FAILED=0
 PASSED=0
 
-# Ensure adb reverse is set up
-echo "Setting up adb reverse for backend..."
-/Users/amreenfarooq/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081
+adb reverse tcp:8081 tcp:8081 2>/dev/null \
+  || /Users/amreenfarooq/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081 2>/dev/null \
+  || true
 
 echo ""
 echo "========================================"

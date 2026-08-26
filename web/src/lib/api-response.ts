@@ -147,13 +147,37 @@ function addCorrelationIdHeader(response: NextResponse, correlationId: string): 
 
 // ── Response Builders ───────────────────────────────────────────────────────
 
+export function generateETag(bodyString: string): string {
+  const hash = Array.from(bodyString).reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 0);
+  return `W/"${hash.toString(16)}"`;
+}
+
+/**
+ * Set auth-scoped browser caching on a response. Unlike `cacheSeconds` on
+ * `success()` (which emits `public` for CDN-friendly payloads), admin
+ * responses are private to the authenticated admin — `private` + `Vary:
+ * Authorization` prevents a shared cache from serving one admin's data to
+ * another.
+ */
+export function withCacheHeaders(response: NextResponse, maxAge: number): NextResponse {
+  response.headers.set('Cache-Control', `private, max-age=${maxAge}, must-revalidate`);
+  response.headers.set('Vary', 'Authorization');
+  return response;
+}
+
 export function success<T = unknown>(
   data: T,
   message?: string,
   status: number = 200,
   pagination?: ApiPagination,
-  options?: { correlationId?: string; rateLimit?: RateLimitInfo }
-): NextResponse<ApiResponseSuccess<T>> {
+  options?: {
+    correlationId?: string;
+    rateLimit?: RateLimitInfo;
+    cacheSeconds?: number;
+    ifNoneMatch?: string | null;
+    etag?: boolean;
+  }
+): NextResponse<ApiResponseSuccess<T> | null> {
   const body: ApiResponseSuccess<T> = {
     success: true,
     data,
@@ -163,13 +187,37 @@ export function success<T = unknown>(
   if (message !== undefined) body.message = message;
   if (pagination !== undefined) body.pagination = pagination;
 
+  const jsonString = JSON.stringify(body);
+  const etag = options?.etag !== false ? generateETag(jsonString) : undefined;
+
+  if (etag && options?.ifNoneMatch && options.ifNoneMatch === etag) {
+    const headers = new Headers();
+    headers.set('ETag', etag);
+    if (options?.cacheSeconds) {
+      headers.set(
+        'Cache-Control',
+        `public, max-age=${options.cacheSeconds}, s-maxage=${options.cacheSeconds}, stale-while-revalidate=30`
+      );
+    }
+    return new NextResponse(null, { status: 304, headers });
+  }
+
   const response = NextResponse.json(body, { status });
 
+  if (etag) {
+    response.headers.set('ETag', etag);
+  }
   if (options?.correlationId) {
     addCorrelationIdHeader(response, options.correlationId);
   }
   if (options?.rateLimit) {
     addRateLimitHeaders(response, options.rateLimit);
+  }
+  if (options?.cacheSeconds) {
+    response.headers.set(
+      'Cache-Control',
+      `public, max-age=${options.cacheSeconds}, s-maxage=${options.cacheSeconds}, stale-while-revalidate=30`
+    );
   }
 
   return response;

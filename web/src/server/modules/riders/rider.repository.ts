@@ -5,10 +5,13 @@
  */
 
 import { db } from '@/lib/db';
+import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 
 export const riderRepository = {
   async findById(riderDbId: string) {
-    return db.rider.findUnique({ where: { id: riderDbId } });
+    return getCachedRider(riderDbId, () =>
+      db.rider.findUnique({ where: { id: riderDbId } })
+    );
   },
 
   async findByPhone(phone: string) {
@@ -16,6 +19,7 @@ export const riderRepository = {
   },
 
   async updateProfile(riderDbId: string, data: Record<string, unknown>) {
+    invalidateRiderCache(riderDbId);
     return db.rider.update({
       where: { id: riderDbId },
       data,

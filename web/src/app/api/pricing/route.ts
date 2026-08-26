@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
 
     const result = await pricingUseCases.calculate(hubId, basePriceRupees);
     return success(result, 'Dynamic price calculated');
-  } catch (err: any) {
-    if (err.message === 'Hub not found') return errors.notFound(err.message);
-    if (err.message === 'Hub is currently inactive') return errors.badRequest(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err)) === 'Hub not found') return errors.notFound((err instanceof Error ? err.message : String(err)));
+    if ((err instanceof Error ? err.message : String(err)) === 'Hub is currently inactive') return errors.badRequest((err instanceof Error ? err.message : String(err)));
     logger.error('[GET /api/pricing]', err);
     return errors.internal('Failed to calculate pricing');
   }

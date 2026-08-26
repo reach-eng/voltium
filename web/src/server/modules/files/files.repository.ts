@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 import type { FileCategory } from './files.types';
 
 export const fileRepository = {
@@ -12,7 +13,8 @@ export const fileRepository = {
     sizeBytes: number;
     checksum?: string;
     visibility?: string;
-    metadata?: string;
+    // PR-P3.1: metadata is native Json; callers pass an object directly.
+    metadata?: Prisma.InputJsonValue;
   }) {
     return db.fileRecord.create({
       data: {

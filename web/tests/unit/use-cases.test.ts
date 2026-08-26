@@ -79,6 +79,7 @@ const mockDb = {
   shift: { findUnique: vi.fn() },
   rentalLease: { count: vi.fn(), findFirst: vi.fn(), create: vi.fn() },
   setting: { findUnique: vi.fn() },
+  systemSetting: { findUnique: vi.fn() },
   $transaction: vi.fn(),
   supportTicket: { count: vi.fn() },
 };
@@ -108,20 +109,39 @@ vi.mock('@/server/modules/support/support.repository', () => ({
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mockAuditLog.createAuditLog }));
 vi.mock('@/lib/logger', () => ({ logger: mockLogger }));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: { emit: () => Promise.resolve('event-1') },
+  OutboxEventTypes: {
+    NOTIFICATION_SEND: 'notification.send',
+    WALLET_TOPUP_APPROVED: 'wallet.topup.approved',
+    WALLET_TOPUP_REJECTED: 'wallet.topup.rejected',
+  },
+}));
+vi.mock('@/lib/notification-service', () => ({
+  notificationService: {
+    notifyKycStatusChange: () => Promise.resolve(undefined),
+    createAndSend: () => Promise.resolve(undefined),
+  },
+}));
 vi.mock('@/lib/dynamic-pricing', () => ({
-  calculateDynamicPrice: vi.fn(() => ({
+  calculateDynamicPrice: () => ({
     basePrice: 18000,
     finalPrice: 16000,
     tier: 'off-peak',
     discount: '11%',
     discountLabel: 'Off-peak discount',
     availability: 'High',
-  })),
+  }),
 }));
-vi.mock('@/lib/flatten-rider', () => ({ flattenRider: vi.fn((r: any) => r) }));
-vi.mock('@/lib/sign-rider', () => ({ signRiderUrls: vi.fn((r: any) => r) }));
-vi.mock('@/lib/services/deposit-service', () => ({
-  upsertDepositRecord: vi.fn().mockResolvedValue(undefined),
+vi.mock('@/lib/flatten-rider', () => ({ flattenRider: (r: any) => r }));
+vi.mock('@/lib/sign-rider', () => ({ signRiderUrls: (r: any) => r }));
+vi.mock('@/server/modules/deposits/deposit.service', () => ({
+  upsertDepositRecord: () => Promise.resolve(undefined),
+}));
+vi.mock('isomorphic-dompurify', () => ({
+  sanitize: (s: string) => s,
+  addHook: () => {},
+  isValidTag: () => true,
 }));
 
 // ===========================================================================
@@ -131,9 +151,13 @@ vi.mock('@/lib/services/deposit-service', () => ({
 const { kycUseCases } = await import('@/server/modules/kyc/kyc.use-cases');
 const { guarantorUseCases } = await import('@/server/modules/guarantors/guarantor.use-cases');
 const { walletUseCases } = await import('@/server/modules/wallet/wallet.use-cases');
-const { rentalUseCases, RentalBookError } =
-  await import('@/server/modules/rentals/rental.use-cases');
-const { supportUseCases } = await import('@/server/modules/support/support.use-cases');
+const { bookRental } = await import('@/server/modules/rentals/use-cases/book-rental.use-case');
+const { syncPickup } = await import('@/server/modules/rentals/use-cases/sync-pickup.use-case');
+const { RentalBookError } = await import('@/server/modules/rentals/use-cases/errors');
+const rentalUseCases = { bookRental, syncPickup };
+const { riderSupportUseCases } = await import('@/server/modules/support/rider-support.use-cases');
+const { sharedSupportUseCases } = await import('@/server/modules/support/shared-support.use-cases');
+const { adminSupportUseCases } = await import('@/server/modules/support/admin-support.use-cases');
 
 // ===========================================================================
 // KYC Use Cases
@@ -226,6 +250,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
 
   it('approves KYC', async () => {
     mockKycRepository.approveKyc.mockResolvedValue({ id: 'kyc-1', status: 'APPROVED' });
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     const result = await kycUseCases.reviewKyc('rider-123', 'admin-1', { action: 'APPROVE' });
 
@@ -235,6 +260,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
 
   it('rejects KYC with reason', async () => {
     mockKycRepository.rejectKyc.mockResolvedValue({ id: 'kyc-1', status: 'REJECTED' });
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REJECT',
@@ -244,7 +270,8 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     expect(mockKycRepository.rejectKyc).toHaveBeenCalledWith(
       'rider-123',
       'admin-1',
-      'Blurry document'
+      'Blurry document',
+      []
     );
   });
 
@@ -360,7 +387,7 @@ describe('Wallet — Top-up', () => {
     mockDb.rider.findUnique.mockResolvedValue({
       id: 'rider-123',
       depositDone: true,
-      phone: '9876543210',
+      phone: '9876543222',
       lifecycleStatus: 'DEPOSIT_APPROVED',
     });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
@@ -368,7 +395,7 @@ describe('Wallet — Top-up', () => {
       id: 'txn-1',
       status: 'PENDING',
       riderId: 'rider-123',
-      amount: 50000,
+      amountInPaise: 50000,
     });
 
     const result = await walletUseCases.requestTopup('rider-123', 50000, 'TOP_UP', 'upi');
@@ -376,7 +403,7 @@ describe('Wallet — Top-up', () => {
     expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         riderId: 'rider-123',
-        amount: 50000,
+        amountInPaise: 50000,
         purpose: 'TOP_UP',
         status: 'PENDING',
       })
@@ -504,13 +531,15 @@ describe('Wallet — Approval', () => {
     });
     mockWalletRepository.updateTransactionStatus.mockResolvedValue(undefined);
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await walletUseCases.rejectTopup('txn-1', 'admin-1', 'Suspicious');
 
     expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith(
       'txn-1',
       'REJECTED',
-      'admin-1'
+      'admin-1',
+      expect.anything()
     );
     expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -583,10 +612,12 @@ describe('Rental — Book Rental', () => {
     mockDb.rentalLease.count.mockResolvedValue(2);
     mockDb.rentalLease.findFirst.mockResolvedValue(null); // no duplicate
     mockDb.vehicle.count.mockResolvedValue(10);
-    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
 
     const mockTx = {
       rentalLease: {
+        count: vi.fn().mockResolvedValue(2),
+        findFirst: vi.fn().mockResolvedValue(null),
         create: vi.fn().mockResolvedValue({
           id: 'lease-1',
           status: 'BOOKED',
@@ -640,7 +671,14 @@ describe('Rental — Book Rental', () => {
   it('throws when shift is fully booked', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
-    mockDb.rentalLease.count.mockResolvedValue(5); // maxBookings = 5
+    mockDb.vehicle.count.mockResolvedValue(10);
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
+    const mockTxFullyBooked = {
+      rentalLease: { count: vi.fn().mockResolvedValue(5) },
+      vehicle: {},
+      rider: {},
+    };
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn(mockTxFullyBooked));
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
@@ -655,8 +693,17 @@ describe('Rental — Book Rental', () => {
   it('throws when rider already has booking for same shift/date', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
-    mockDb.rentalLease.count.mockResolvedValue(2);
-    mockDb.rentalLease.findFirst.mockResolvedValue({ id: 'existing-lease' });
+    mockDb.vehicle.count.mockResolvedValue(10);
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
+    const mockTxDuplicateRider = {
+      rentalLease: {
+        count: vi.fn().mockResolvedValue(2),
+        findFirst: vi.fn().mockResolvedValue({ id: 'existing-lease' }),
+      },
+      vehicle: {},
+      rider: {},
+    };
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn(mockTxDuplicateRider));
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
@@ -689,7 +736,10 @@ describe('Rental — Sync Pickup', () => {
     });
 
     const mockTx = {
-      vehicle: { update: vi.fn().mockResolvedValue(undefined) },
+      vehicle: {
+        update: vi.fn().mockResolvedValue(undefined),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
       rider: {
         update: vi.fn().mockResolvedValue({
           id: 'rider-123',
@@ -744,7 +794,7 @@ describe('Support — Ticket Flow', () => {
       status: 'OPEN',
     });
 
-    const result = await supportUseCases.createTicket('rider-123', {
+    const result = await riderSupportUseCases.createTicket('rider-123', {
       subject: 'App crash',
       message: 'App crashes on login',
       category: 'technical',
@@ -764,7 +814,7 @@ describe('Support — Ticket Flow', () => {
     mockSupportRepository.findById.mockResolvedValue({ id: 'ticket-1', status: 'OPEN' });
     mockSupportRepository.addMessage.mockResolvedValue({ id: 'msg-1', ticketId: 'ticket-1' });
 
-    await supportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {
+    await sharedSupportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {
       message: 'Still experiencing the issue',
       attachments: [],
     });
@@ -781,7 +831,7 @@ describe('Support — Ticket Flow', () => {
   it('retrieves rider tickets', async () => {
     mockSupportRepository.findByRiderId.mockResolvedValue([{ id: 'ticket-1', status: 'OPEN' }]);
 
-    const result = await supportUseCases.getTickets('rider-123');
+    const result = await riderSupportUseCases.getTickets('rider-123');
 
     expect(result).toHaveLength(1);
   });
@@ -791,7 +841,7 @@ describe('Support — Ticket Flow', () => {
       { id: 'faq-1', question: 'How to top up?', category: 'wallet' },
     ]);
 
-    const result = await supportUseCases.getFAQs();
+    const result = await riderSupportUseCases.getFAQs();
 
     expect(result).toHaveLength(1);
   });
@@ -807,7 +857,7 @@ describe('Support — Admin Audit', () => {
   it('creates audit log for admin ticket actions', async () => {
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
 
-    await supportUseCases.logAdminAction('admin-1', {
+    await adminSupportUseCases.logAdminAction('admin-1', {
       action: 'ticket.assign',
       ticketId: 'ticket-1',
       details: { assignedTo: 'admin-2' },

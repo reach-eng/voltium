@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+@Deprecated('Use Toast from utils/toast.dart instead')
 class ToastService {
   static OverlayEntry? _currentToast;
   static Timer? _autoDismissTimer;
@@ -38,32 +40,50 @@ class ToastService {
     });
   }
 
-  static void success(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.success,
-        duration: duration ?? const Duration(seconds: 2),);
+  static void success(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.success,
+      duration: duration ?? const Duration(seconds: 2),
+    );
   }
 
-  static void error(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.error,
-        duration: duration ?? const Duration(seconds: 4),);
+  static void error(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.error,
+      duration: duration ?? const Duration(seconds: 4),
+    );
   }
 
-  static void warning(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.warning,
-        duration: duration ?? const Duration(seconds: 3),);
+  static void warning(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.warning,
+      duration: duration ?? const Duration(seconds: 3),
+    );
   }
 
-  static void info(BuildContext context, String message,
-      {Duration duration = const Duration(seconds: 3),}) {
+  static void info(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
     show(context, message: message, type: ToastType.info, duration: duration);
   }
 }
@@ -97,7 +117,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300),);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
@@ -125,25 +147,25 @@ class _ToastWidgetState extends State<_ToastWidget>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Material(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             elevation: 8,
             child: GestureDetector(
               onTap: widget.onTap,
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: Spacing.paddingMd,
                 decoration: BoxDecoration(
                   color: _getBackgroundColor(),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: _getBorderColor()),
                 ),
                 child: Row(
                   children: [
                     Icon(_getIcon(), color: _getIconColor(), size: 24),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.message,
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: widget.isDark ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.w500,
                         ),
@@ -162,22 +184,22 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getBackgroundColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFFDCFCE7);
+        return AppColors.successLight;
       case ToastType.error:
         return AppColors.errorLight;
       case ToastType.warning:
         return AppColors.warningLight;
       case ToastType.info:
-        return const Color(0xFFE0F2FE);
+        return AppColors.infoLight;
     }
   }
 
   Color _getBorderColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFF16A34A);
+        return AppColors.success;
       case ToastType.error:
-        return const Color(0xFFDC2626);
+        return AppColors.error;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:
@@ -201,9 +223,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getIconColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFF16A34A);
+        return AppColors.success;
       case ToastType.error:
-        return const Color(0xFFDC2626);
+        return AppColors.error;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:
@@ -280,7 +302,9 @@ class _ToastItemState extends State<_ToastItem>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300),);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
   }
@@ -296,13 +320,13 @@ class _ToastItemState extends State<_ToastItem>
     return SizeTransition(
       sizeFactor: _animation,
       child: Material(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         elevation: 4,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.sm),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Text(widget.toast.message),
         ),

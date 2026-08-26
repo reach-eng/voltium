@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class AppInfo {
   static const String name = 'Voltium';
@@ -32,20 +34,16 @@ class VersionWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           AppInfo.name,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
-          ),
+          style: AppTypography.titleMedium.copyWith(color: AppColors.primary),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           showBuildNumber ? AppInfo.fullVersion : AppInfo.version,
-          style: const TextStyle(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
-            color: Color(0xFF667085),
+            color: AppColors.onSurfaceMuted,
           ),
         ),
       ],

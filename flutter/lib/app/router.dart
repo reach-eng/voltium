@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../models/rider_model.dart' show AccountStatus;
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../utils/app_constants.dart';
+import '../utils/app_logger.dart';
+import '../utils/toast.dart';
 
-import '../providers/app_provider.dart';
+import '../core/state/riverpod_providers.dart';
 import '../services/cache_service.dart';
 import '../main.dart' show AppShell;
 
 // Relocated screens
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart';
-import '../features/auth/presentation/screens/auth_choice_screen.dart';
 import '../features/auth/presentation/rider_lifecycle_gate.dart';
 
 import '../features/onboarding/presentation/screens/splash_screen.dart';
 import '../features/onboarding/presentation/screens/legal_screen.dart';
 import '../features/onboarding/presentation/screens/legal_page_screen.dart';
-import '../features/onboarding/presentation/screens/privacy_consent_screen.dart';
+
 import '../features/onboarding/presentation/screens/permissions_screen.dart';
 
 import '../features/kyc/presentation/screens/intent_of_use_screen.dart';
 import '../features/kyc/presentation/screens/user_onboarding_screen.dart';
 import '../features/kyc/presentation/screens/documents_screen.dart';
-
 import '../features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
 
 import '../features/wallet/presentation/screens/top_up_amount_screen.dart';
-import '../features/wallet/presentation/screens/top_up_purpose_screen.dart';
+
 import '../features/wallet/presentation/screens/top_up_receipt_screen.dart';
 import '../features/wallet/presentation/screens/top_up_upi_screen.dart';
 import '../features/wallet/presentation/screens/top_up_proof_screen.dart';
@@ -44,6 +49,8 @@ import '../features/pickup/presentation/screens/vehicle_photos_screen.dart';
 import '../features/dashboard/presentation/screens/pre_dashboard_screen.dart';
 
 import '../features/support/presentation/screens/faq_screen.dart';
+import '../features/support/presentation/screens/feedback_screen.dart';
+import '../utils/app_navigator.dart';
 
 import '../features/referrals/presentation/screens/referral_screen.dart';
 
@@ -51,25 +58,26 @@ import 'app_state.dart';
 
 part 'router_body.dart';
 
-class AppRouter extends StatefulWidget {
+class AppRouter extends ConsumerStatefulWidget {
   const AppRouter({super.key});
 
   @override
-  State<AppRouter> createState() => _AppRouterState();
+  ConsumerState<AppRouter> createState() => _AppRouterState();
 }
 
-class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
+class _AppRouterState extends ConsumerState<AppRouter>
+    with WidgetsBindingObserver {
   AuthState _currentState = AuthState.splash;
-  bool _isTransitioning = false;
+
   bool _isSignUpFlow = true;
   String _phone = '';
+  String? _referralCode;
   AuthState _startupState = AuthState.splash;
   bool _isOnboarding = false;
   AuthState? _postOtpTargetState;
 
   // Top-up flow state
-  TopUpPurpose _topUpPurpose = TopUpPurpose.topUp;
-  int _topUpAmount = 0;
+  int _topUpAmount = 2000;
 
   // Pickup flow state
   String? _pickupHubId;
@@ -82,15 +90,24 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   String? _pickupPhotoRight;
   String? _pickupPhotoWithVehicle;
 
-  Future<bool> _areAllPermissionsGranted() async {
+  /// Required permissions gate. `ignoreBatteryOptimizations` is NOT
+  /// included here because it requires a multi-tap detour into Android
+  /// Settings and is only a recommendation. Users who skip it on the
+  /// permissions screen can still use the app; the app just won't be
+  /// excluded from battery optimization.
+  ///
+  /// `phone` is also optional — it is shown in the permissions UI for
+  /// ride-safety transparency but the app degrades gracefully when the
+  /// runner grants location/camera/notifications only.
+  Future<bool> _areAllRequiredPermissionsGranted() async {
     final isTestMode = AppConstants.isTestMode;
-    if (isTestMode) return true;
+    if (isTestMode || kIsWeb) return true;
 
     final location = await Permission.location.isGranted;
     final camera = await Permission.camera.isGranted;
-    final ignoreBattery = await Permission.ignoreBatteryOptimizations.isGranted;
+    final notifications = await Permission.notification.isGranted;
 
-    return location && camera && ignoreBattery;
+    return location && camera && notifications;
   }
 
   @override
@@ -103,8 +120,14 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     _currentState = _startupState;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<AppProvider>().init();
+      if (!mounted) return;
+      try {
+        ref.read(riderProvider.notifier).init();
+        ref.read(supportProvider.notifier).initSupportData();
+        ref.read(engagementProvider.notifier).initEngagementData();
+        ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
+      } catch (_) {
+        // Ignored if element tree is deactivated during test frame rebuilds
       }
     });
   }
@@ -117,42 +140,61 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkPermissionsOnResume();
+    if (!mounted) return;
+    final rState = ref.read(riderProvider);
+    final rNotif = ref.read(riderProvider.notifier);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _checkPermissionsOnResume();
+        // R11 — polling lifecycle (active/inactive cadence + location-sync
+        // timer) is now owned by `RiderNotifier` itself. The router only
+        // triggers a manual refresh + wallet refresh + permission re-check
+        // on resume.
+        rNotif.refreshFromApi();
+        if (rState.riderId != null) {
+          ref.read(walletProvider.notifier).refreshTransactions(
+                riderId: rState.riderId!,
+              );
+        }
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // No-op: RiderProvider handles its own polling pause + timer cancel.
+        break;
     }
   }
 
   Future<void> _checkPermissionsOnResume() async {
     if (!mounted) return;
-    final provider = context.read<AppProvider>();
-    await provider.checkSystemPermissions();
+    await ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
     if (!mounted) return;
-    final allGranted = await _areAllPermissionsGranted();
-    if (!allGranted &&
+    final allRequiredGranted = await _areAllRequiredPermissionsGranted();
+    if (!allRequiredGranted &&
         _currentState != AuthState.splash &&
         _currentState != AuthState.permissions &&
         _currentState != AuthState.legal &&
-        _currentState != AuthState.privacyConsent &&
         _currentState != AuthState.otp) {
-      _navigateToLocal(AuthState.privacyConsent);
+      _navigateToLocal(AuthState.permissions);
     }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final provider = context.watch<AppProvider>();
+    final riderProv = ref.watch(riderProvider);
+    final rider = riderProv.rider;
 
     final isUnauthenticatedState = _currentState == AuthState.splash ||
         _currentState == AuthState.legal ||
-        _currentState == AuthState.privacyConsent ||
         _currentState == AuthState.permissions ||
         _currentState == AuthState.login ||
-        _currentState == AuthState.otp ||
-        _currentState == AuthState.authChoice;
+        _currentState == AuthState.otp;
 
-    if (provider.rider != null && !isUnauthenticatedState) {
-      final r = provider.rider!;
+    if (rider != null && !isUnauthenticatedState) {
+      final r = rider;
 
       // Delegate lifecycle routing to RiderLifecycleGate
       final correctState =
@@ -169,7 +211,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
               _currentState == AuthState.pickupHub ||
               _currentState == AuthState.pickupVerification ||
               _currentState == AuthState.pickupSuccess ||
-              _currentState == AuthState.topUpPurpose ||
               _currentState == AuthState.topUpAmount ||
               _currentState == AuthState.topUpUpi ||
               _currentState == AuthState.topUpProof ||
@@ -182,7 +223,9 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
           if (mounted) {
             setState(() {
               _currentState = correctState;
-              _isOnboarding = correctState != AuthState.dashboard;
+              // accountClosed is terminal — never treat as onboarding
+              _isOnboarding = correctState != AuthState.dashboard &&
+                  correctState != AuthState.accountClosed;
             });
             CacheService()
                 .setString('voltium_saved_auth_state', correctState.name);
@@ -191,9 +234,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       }
     }
 
-    if (provider.rider == null &&
-        provider.riderId == null &&
-        !isUnauthenticatedState) {
+    if (rider == null && riderProv.riderId == null && !isUnauthenticatedState) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
@@ -207,24 +248,16 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   }
 
   void _navigateToLocal(AuthState nextState) {
-    updateTransition(true);
-    _currentState = nextState;
-    if (nextState == AuthState.preDashboard) _isOnboarding = true;
-    if (nextState == AuthState.dashboard) _isOnboarding = false;
+    setState(() {
+      _currentState = nextState;
+      if (nextState == AuthState.preDashboard) _isOnboarding = true;
+      if (nextState == AuthState.dashboard) _isOnboarding = false;
+      if (nextState == AuthState.accountClosed) _isOnboarding = false;
+    });
 
     if (nextState != AuthState.splash) {
       CacheService().setString('voltium_saved_auth_state', nextState.name);
     }
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        updateTransition(false);
-      }
-    });
-  }
-
-  void updateTransition(bool value) {
-    setState(() => _isTransitioning = value);
   }
 
   void updatePostOtpTarget(AuthState? target) {
@@ -259,8 +292,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     switch (target) {
       case LifecycleTarget.intent:
         return AuthState.intent;
-      case LifecycleTarget.kycForm:
-        return AuthState.userForm;
       case LifecycleTarget.guarantorForm:
         return AuthState.guarantorForm;
       case LifecycleTarget.preDashboard:
@@ -268,10 +299,86 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       case LifecycleTarget.dashboard:
         return AuthState.dashboard;
       case LifecycleTarget.suspended:
-      case LifecycleTarget.terminated:
+        // Suspended riders may be reactivated — keep them on pre-dashboard
+        // so they see the (already-correct) "your account is suspended"
+        // banner handled by PreDashboardScreen.
         return AuthState.preDashboard;
+      case LifecycleTarget.terminated:
+        // Terminated accounts are terminal: do NOT route to pre-dashboard
+        // (which would show onboarding CTAs). Show the dedicated
+        // account-closed surface instead.
+        return AuthState.accountClosed;
       case LifecycleTarget.unknown:
         return AuthState.login;
+    }
+  }
+
+  bool get _canPop {
+    switch (_currentState) {
+      case AuthState.otp:
+      case AuthState.userForm:
+      case AuthState.guarantorForm:
+      case AuthState.choosePlan:
+      case AuthState.pickupHub:
+      case AuthState.pickupVerification:
+      case AuthState.topUpAmount:
+      case AuthState.topUpUpi:
+      case AuthState.topUpProof:
+      case AuthState.topUpReceipt:
+      case AuthState.endRental:
+      case AuthState.accountClosed:
+        // Account-closed is terminal: do not allow back navigation to
+        // a pre-onboarding screen, which would let the rider re-enter
+        // onboarding with a closed account.
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  void _handleSystemBack() {
+    switch (_currentState) {
+      case AuthState.otp:
+        _navigateToLocal(AuthState.login);
+        break;
+      case AuthState.intent:
+        // Do nothing, let PopScope handle it or just break
+        break;
+      case AuthState.userForm:
+        _navigateToLocal(AuthState.intent);
+        break;
+      case AuthState.guarantorForm:
+        _navigateToLocal(AuthState.userForm);
+        break;
+      case AuthState.choosePlan:
+        _navigateToLocal(AuthState.preDashboard);
+        break;
+      case AuthState.pickupHub:
+        _navigateToLocal(AuthState.preDashboard);
+        break;
+      case AuthState.pickupVerification:
+        _navigateToLocal(AuthState.pickupHub);
+        break;
+      case AuthState.topUpAmount:
+        _navigateToLocal(
+            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
+        break;
+      case AuthState.topUpUpi:
+        _navigateToLocal(AuthState.topUpAmount);
+        break;
+      case AuthState.topUpProof:
+        _navigateToLocal(AuthState.topUpUpi);
+        break;
+
+      case AuthState.topUpReceipt:
+        _navigateToLocal(
+            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
+        break;
+      case AuthState.endRental:
+        _navigateToLocal(AuthState.dashboard);
+        break;
+      default:
+        break;
     }
   }
 

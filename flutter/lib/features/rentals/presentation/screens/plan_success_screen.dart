@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class PlanSuccessScreen extends StatelessWidget {
   final VoidCallback onNext;
@@ -8,6 +11,9 @@ class PlanSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PostHogService.capture('plan_purchased');
+    });
     return Scaffold(
       backgroundColor: AppColors.success,
       body: SafeArea(
@@ -30,20 +36,18 @@ class PlanSuccessScreen extends StatelessWidget {
                   size: 80,
                 ),
               ),
-              const SizedBox(height: 40),
-              const Text('Subscription Confirmed!',
+              SizedBox(height: 40),
+              Text(
+                'Subscription Confirmed!',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1,
-                ),
+                style: AppTypography.headingMedium
+                    .copyWith(color: Colors.white, letterSpacing: -1),
               ),
-              const SizedBox(height: 16),
-              const Text('Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.',
+              SizedBox(height: 16),
+              Text(
+                'Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   color: Colors.white,
                   height: 1.5,

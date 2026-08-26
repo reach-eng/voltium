@@ -7,11 +7,13 @@
  */
 
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { validateBody } from '@/lib/validators';
+import { parseDDMMYYYY } from '@/lib/date-utils';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { approveTransactionSchema } from '@/server/modules/transactions/transaction.schemas';
 import {
   transactionUseCases,
@@ -32,12 +34,22 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || '';
     const type = url.searchParams.get('type') || '';
     const search = url.searchParams.get('search') || '';
-    const startDate = url.searchParams.get('startDate') || '';
-    const endDate = url.searchParams.get('endDate') || '';
+    // Accept both DD-MM-YYYY (canonical) and ISO 8601 (legacy) for
+    // backward compatibility with existing API clients.
+    const startDateRaw = url.searchParams.get('startDate') || '';
+    const endDateRaw = url.searchParams.get('endDate') || '';
+    const startDate = startDateRaw
+      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
+      : '';
+    const endDate = endDateRaw
+      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
+      : '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
-    const result = await transactionUseCases.list({
+    const cacheKey = [
+      'admin:transactions',
+      session.adminId ?? session.riderDbId ?? 'anon',
       status,
       type,
       search,
@@ -45,9 +57,23 @@ export async function GET(req: NextRequest) {
       endDate,
       page,
       limit,
-    });
+    ].join(':');
 
-    return success(result.transactions, undefined, 200, result.pagination);
+    const result = await getOrSetResponse(cacheKey, () =>
+      transactionUseCases.list({
+        status,
+        type,
+        search,
+        startDate,
+        endDate,
+        page,
+        limit,
+      }),
+      5
+    );
+
+    if (!result) return errors.internal('Failed to fetch transactions');
+    return withCacheHeaders(success(result.transactions, undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('Transactions list error:', error);
     return errors.internal('Failed to fetch transactions');
@@ -77,25 +103,26 @@ export async function PUT(req: NextRequest) {
       adminId,
     });
 
+    invalidateCache('admin:*');
     return success(result, `Transaction ${action.toLowerCase()}d`);
   } catch (error) {
     if (error instanceof TransactionError) {
-      return errors.badRequest(error.message);
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof TransactionStateError) {
-      return errors.conflict(error.message);
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof WalletServiceError) {
-      return errors.badRequest(error.message);
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof DepositStateError) {
-      return errors.conflict(error.message);
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
-    if (error instanceof Error && error.message.includes('not found')) {
-      return errors.notFound(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
+      return errors.notFound((error instanceof Error ? error.message : String(error)));
     }
-    if (error instanceof Error && error.message.includes('deposit')) {
-      return errors.conflict(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('deposit')) {
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Update transaction error:', error);
     return errors.internal('Failed to update transaction');

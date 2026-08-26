@@ -35,7 +35,9 @@ void main() {
       expect(transaction.riderId, 'rider_456');
       expect(transaction.type, TransactionType.credit);
       expect(transaction.amount, 500.50);
-      expect(transaction.status, TransactionStatus.success);
+      // Legacy 'SUCCESS' from old client writes normalises to the
+      // new canonical 'approved' (Phase 2.5 BLOCKER).
+      expect(transaction.status, TransactionStatus.approved);
       expect(transaction.breakdowns.length, 2);
       expect(transaction.breakdowns[0].label, 'Base Amount');
       expect(transaction.breakdowns[1].type, BreakdownType.tax);
@@ -48,8 +50,51 @@ void main() {
       expect(json['id'], 'tx_123');
       expect(json['type'], 'credit');
       expect(json['amount'], 500.50);
+      expect(json['status'], 'approved');
       expect(json['breakdowns'], isA<List>());
       expect((json['breakdowns'] as List).length, 2);
+    });
+
+    test('server-side enum values map to the canonical set', () {
+      // PENDING / APPROVED / REJECTED / FAILED / REVERSED / REFUNDED
+      // map 1:1 with the canonical Flutter enum.
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'PENDING'}).status,
+          TransactionStatus.pending);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'APPROVED'}).status,
+          TransactionStatus.approved);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REJECTED'}).status,
+          TransactionStatus.rejected);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'FAILED'}).status,
+          TransactionStatus.failed);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REVERSED'}).status,
+          TransactionStatus.reversed);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REFUNDED'}).status,
+          TransactionStatus.refunded);
+    });
+
+    test('legacy SUCCESS maps to approved (backwards compat)', () {
+      // Before Phase 2.5 the client wrote `success` (lowercase) and
+      // the server wrote `APPROVED`. Old records with `success` still
+      // round-trip; the parser normalises to the canonical value.
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'success'}).status,
+          TransactionStatus.approved);
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'SUCCESS'}).status,
+          TransactionStatus.approved);
+    });
+
+    test('unknown status falls back to pending (not crash)', () {
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'GIBBERISH'})
+              .status,
+          TransactionStatus.pending);
     });
 
     test('isCredit should return true for CREDIT type', () {
@@ -78,9 +123,9 @@ void main() {
       );
 
       final updated =
-          transaction.copyWith(status: TransactionStatus.success, amount: 200);
+          transaction.copyWith(status: TransactionStatus.approved, amount: 200);
 
-      expect(updated.status, TransactionStatus.success);
+      expect(updated.status, TransactionStatus.approved);
       expect(updated.amount, 200);
       expect(updated.riderId, '1');
     });

@@ -10,6 +10,13 @@ This file contains context for AI assistants working on this codebase.
 | `npm run build`     | Production build              |
 | `npm run typecheck` | TypeScript validation         |
 | `npm run test:unit` | Unit tests only               |
+| `npm run test:integration` | Integration tests (needs dev server) |
+| `npm run test:api`  | API route tests (needs dev server)   |
+| `npm run test:coverage:integration` | Integration test coverage via V8/c8 |
+| `npm run test:coverage:merge` | Merge unit + integration coverage (85% gate) |
+| `npm run test:coverage:combined` | Run full combined coverage pipeline |
+| `bash scripts/flutter-coverage.sh` | Flutter coverage with 85% threshold gate |
+| `flutter build apk --release --obfuscate --split-debug-info=build/symbols/ --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning & Obfuscation |
 | `npm run lint`      | ESLint                        |
 | `npm run db:deploy` | Apply database migrations     |
 
@@ -44,7 +51,15 @@ This file contains context for AI assistants working on this codebase.
 ### Backend Unit Tests
 
 - Location: `tests/unit/`
-- Run: `npm run test:unit`
+- Run: `npm run test:unit` (574 passing, 28 skipped)
+
+### Backend Integration & API Tests
+
+- **Integration tests**: `tests/integration/` (23 files) — run against live dev server
+- **API route tests**: `tests/api-routes.test.ts` (541 lines) — comprehensive endpoint coverage
+- Run: `npm run test:integration` or `npm run test:api` (requires `npm run dev` running)
+- Wait-for-server: `npx wait-on tcp:8081`
+- CI pipeline: seed DB → start dev → wait → integration tests → API tests → stop dev
 
 ### Flutter E2E Tests (33/33 PASSING)
 
@@ -133,7 +148,7 @@ This file contains context for AI assistants working on this codebase.
 
 GitHub Actions: `.github/workflows/ci-cd.yml`
 
-- Runs: lint → typecheck → build → test:unit
+- Runs: lint → typecheck → build → test:unit → seed DB → start dev → integration tests → API tests → cleanup
 
 ## graphify
 
@@ -147,3 +162,17 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Coverage Requirements
+- All new code: 85% lines
+- All new tests must pass CI without reducing overall coverage
+- Coverage thresholds are enforced in CI; PRs that drop coverage fail
+
+## Test commands
+- `npm test -- --run tests/unit` — web unit
+- `npm run test:coverage` — web unit + coverage report
+- `flutter test` — Flutter unit + widget
+- `flutter test --coverage` — Flutter with coverage
+
+## Business Logic Rules
+- **Rental Plans (Recurring Subscriptions)**: A plan's durationDays is strictly determined by its 	ype (DAILY = 1, WEEKLY = 7, MONTHLY = 30). This ensures recurring billing cycles are mathematically consistent. The backend automatically calculates this on create/update, overriding any manual input.

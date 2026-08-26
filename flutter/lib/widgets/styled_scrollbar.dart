@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class StyledScrollbar extends StatelessWidget {
   final Widget child;
@@ -79,7 +80,7 @@ class ScrollIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final indicatorColor =
-        color ?? (isDark ? Colors.grey[600]! : Colors.grey[400]!);
+        color ?? (isDark ? AppColors.slate500 : AppColors.slate400);
 
     return AnimatedBuilder(
       animation: controller,

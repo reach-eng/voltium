@@ -10,9 +10,11 @@ import { db } from '@/lib/db';
 import { flattenRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { logger } from '@/lib/logger';
+import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
+import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -72,15 +74,18 @@ export const riderUseCases = {
    * Gets full rider profile with all relations.
    */
   async getProfile(riderDbId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      include: {
-        kycProfile: true,
-        wallet: true,
-        guarantor: true,
-        vehicleReturns: true,
-      },
-    });
+    const rider = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        include: {
+          kycProfile: true,
+          wallet: true,
+          guarantor: true,
+          vehicleReturns: true,
+          vehicle: { select: { vehicleNumber: true, model: true } },
+        },
+      })
+    );
     if (!rider) return null;
 
     const [unreadNotificationCount, rewardAggregates] = await Promise.all([
@@ -88,9 +93,24 @@ export const riderUseCases = {
       db.reward.aggregate({ where: { riderId: rider.id }, _sum: { points: true } }),
     ]);
 
-    const flatRider = flattenRider(rider);
+    const flatRider = flattenRider(rider as any);
+    let assignedVehicleNumber = flatRider.assignedVehicle;
+    let vehicleModel: string | null = null;
+    if (rider.vehicle) {
+      assignedVehicleNumber = rider.vehicle.vehicleNumber;
+      vehicleModel = rider.vehicle.model;
+    } else if (flatRider.assignedVehicle) {
+      const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+      if (v) {
+        assignedVehicleNumber = v.vehicleNumber;
+        vehicleModel = v.model;
+      }
+    }
+    flatRider.assignedVehicle = assignedVehicleNumber;
+
     return {
       ...flatRider,
+      vehicleModel,
       referralCode: rider.referralCode,
       unreadNotificationCount,
       totalRewardPoints: rewardAggregates._sum.points || 0,
@@ -100,6 +120,32 @@ export const riderUseCases = {
   /**
    * Get full dashboard data for a rider.
    */
+  async rejectPlan(riderDbId: string, adminId: string, reason: string) {
+    const rider = await db.rider.findUnique({ where: { id: riderDbId } });
+    if (!rider) throw new Error('Rider not found');
+
+    await db.rider.update({
+      where: { id: riderDbId },
+      data: {
+        planDoneAt: null,
+        currentPlan: null,
+        planRejectionReason: reason,
+        lifecycleStatus: 'GUARANTOR_APPROVED',
+      },
+    });
+
+    invalidateRiderCache(riderDbId);
+
+    await createAuditLog({
+      actorId: adminId,
+      actorType: 'ADMIN',
+      action: 'REJECT',
+      entity: 'RiderPlan',
+      entityId: riderDbId,
+      details: { reason },
+    });
+  },
+
   async getDashboard(riderDbId: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
@@ -112,6 +158,7 @@ export const riderUseCases = {
         currentPlan: true,
         planStartDate: true,
         planEndDate: true,
+        planRejectionReason: true,
         referralCode: true,
         pickupHub: true,
         teamLeader: true,
@@ -135,6 +182,8 @@ export const riderUseCases = {
             bankName: true,
             accountNumber: true,
             ifscCode: true,
+            rejectionReason: true,
+            editableFields: true,
           },
         },
         wallet: {
@@ -156,6 +205,7 @@ export const riderUseCases = {
           },
         },
         vehicleReturns: { select: { id: true, status: true } },
+        depositRecord: true,
         vehicle: {
           select: {
             id: true,
@@ -195,6 +245,13 @@ export const riderUseCases = {
     let signedRider: any = null;
     try {
       const flatRider = flattenRider(rider as any);
+      let assignedVehicleNumber = flatRider.assignedVehicle;
+      if (flatRider.assignedVehicle) {
+        const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+        if (v) assignedVehicleNumber = v.vehicleNumber;
+      }
+      flatRider.assignedVehicle = assignedVehicleNumber;
+      
       const { signRiderUrls } = await import('@/lib/sign-rider');
       signedRider = await signRiderUrls(flatRider);
     } catch {
@@ -214,10 +271,12 @@ export const riderUseCases = {
    * Get rewards for a rider.
    */
   async getRewards(riderDbId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      include: { wallet: { select: { paymentStreak: true } } },
-    });
+    const rider = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        include: { wallet: { select: { paymentStreak: true } } },
+      })
+    );
     if (!rider) return null;
 
     const [rewards, aggregates] = await Promise.all([
@@ -250,11 +309,16 @@ export const riderUseCases = {
 
   /**
    * Register FCM token for a rider.
+   *
+   * `riderDbId` must be the internal database id (the `riderDbId` claim
+   * from the verified session), not the public `riderId`. Callers (e.g. the
+   * /api/rider/register-token route) are responsible for ensuring this.
    */
-  async registerFcmToken(riderId: string, fcmToken: string) {
-    const rider = await db.rider.findUnique({ where: { id: riderId } });
+  async registerFcmToken(riderDbId: string, fcmToken: string) {
+    const rider = await getCachedRider(riderDbId, () => db.rider.findUnique({ where: { id: riderDbId } }));
     if (!rider) throw new Error('Rider not found');
-    await db.rider.update({ where: { id: riderId }, data: { fcmToken } });
+    await db.rider.update({ where: { id: riderDbId }, data: { fcmToken } });
+    invalidateRiderCache(riderDbId);
   },
 
   /**
@@ -347,7 +411,9 @@ export const riderUseCases = {
    * Handles safe rider fields, KYC fields, guarantor fields, and vehicle returns.
    */
   async updateProfile(riderDbId: string, input: Record<string, unknown>) {
-    const existing = await db.rider.findUnique({ where: { id: riderDbId } });
+    const existing = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({ where: { id: riderDbId } })
+    );
     if (!existing) throw new Error('Rider not found');
 
     const riderData: Record<string, unknown> = {};
@@ -355,6 +421,8 @@ export const riderUseCases = {
     const guarantorData: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(input)) {
+      if (value === undefined || value === null) continue;
+
       if (SAFE_RIDER_FIELDS.has(key)) {
         riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (SAFE_KYC_FIELDS.has(key)) {
@@ -370,6 +438,11 @@ export const riderUseCases = {
 
     // Update core rider fields
     if (Object.keys(riderData).length > 0) {
+      if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
+        const name = riderData.fullName as string;
+        const prefix = name.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
+        riderData.riderId = `VEM${prefix}${String(existing.serialNumber).padStart(3, '0')}`;
+      }
       await db.rider.update({ where: { id: riderDbId }, data: riderData });
     }
 
@@ -435,12 +508,50 @@ export const riderUseCases = {
       });
     }
 
+    // Advance lifecycle based on submissions
+    const currentRider = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+    
+    if (currentRider) {
+      // 1. If Guarantor data is present, move from PROFILE_SUBMITTED to GUARANTOR_SUBMITTED (Guarantor Form completed)
+      if (Object.keys(guarantorData).length > 0) {
+        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+        if (freshStatus?.lifecycleStatus === 'PROFILE_SUBMITTED') {
+          await transitionRiderStatus(riderDbId, 'GUARANTOR_SUBMITTED');
+        }
+      }
+
+      // 2. If KYC data is present, move from DEPOSIT_APPROVED to KYC_SUBMITTED (KYC Form completed)
+      if (Object.keys(kycData).length > 0) {
+        if (currentRider.lifecycleStatus === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PHONE_VERIFIED');
+        }
+        
+        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+        if (freshStatus?.lifecycleStatus === 'PHONE_VERIFIED' || freshStatus?.lifecycleStatus === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PROFILE_SUBMITTED');
+        }
+        
+        if (freshStatus?.lifecycleStatus === 'DEPOSIT_APPROVED') {
+          await transitionRiderStatus(riderDbId, 'KYC_SUBMITTED');
+        }
+      }
+    }
+
     // Return updated profile
+    invalidateRiderCache(riderDbId);
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
-    return rider ? flattenRider(rider) : null;
+    if (!rider) return null;
+    const flatRider = flattenRider(rider);
+    let assignedVehicleNumber = flatRider.assignedVehicle;
+    if (flatRider.assignedVehicle) {
+      const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+      if (v) assignedVehicleNumber = v.vehicleNumber;
+    }
+    flatRider.assignedVehicle = assignedVehicleNumber;
+    return flatRider;
   },
 
   async getState(riderDbId: string): Promise<RiderState | null> {

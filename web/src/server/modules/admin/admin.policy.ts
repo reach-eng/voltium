@@ -85,10 +85,10 @@ export function withPermission(
       return await handler(req, session);
     } catch (err) {
       if (err instanceof AdminAuthError) {
-        return errors.unauthorized(err.message);
+        return errors.unauthorized((err instanceof Error ? err.message : String(err)));
       }
       if (err instanceof AdminForbiddenError) {
-        return errors.forbidden(err.message);
+        return errors.forbidden((err instanceof Error ? err.message : String(err)));
       }
       throw err;
     }
@@ -105,7 +105,7 @@ export function withAdmin(handler: (req: NextRequest, session: any) => Promise<R
       return await handler(req, session);
     } catch (err) {
       if (err instanceof AdminAuthError) {
-        return errors.unauthorized(err.message);
+        return errors.unauthorized((err instanceof Error ? err.message : String(err)));
       }
       throw err;
     }

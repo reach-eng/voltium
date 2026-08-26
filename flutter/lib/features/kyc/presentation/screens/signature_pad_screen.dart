@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import '../../../../utils/app_logger.dart';
 
 class SignaturePadScreen extends StatefulWidget {
   const SignaturePadScreen({super.key});
@@ -53,7 +56,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
 
       if (mounted) Navigator.of(context).pop(path);
     } catch (e) {
-      debugPrint('Error saving signature: $e');
+      appDebug('Error saving signature: $e');
       if (mounted) Navigator.of(context).pop();
     }
   }
@@ -66,25 +69,38 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),),
-        title: const Text('Draw Signature',
-            style: TextStyle(
-                color: Color(0xFF111827), fontWeight: FontWeight.w600,),),
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Draw Signature',
+          style: GoogleFonts.plusJakartaSans(
+            color: AppColors.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         actions: [
           TextButton(
-              onPressed: _clear,
-              child: const Text('Clear',
-                  style: TextStyle(color: Color(0xFF2563EB)),),),
+            onPressed: _clear,
+            child: Text(
+              'Clear',
+              style: GoogleFonts.plusJakartaSans(color: AppColors.primary),
+            ),
+          ),
           TextButton(
-              onPressed: _save,
-              child: const Text('Save',
-                  style: TextStyle(
-                      color: Color(0xFF2563EB), fontWeight: FontWeight.w600,),),),
+            onPressed: _save,
+            child: Text(
+              'Save',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Expanded(
@@ -93,8 +109,8 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.borderSubtle),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Stack(
                     children: [
@@ -130,7 +146,7 @@ class _SignaturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF111827)
+      ..color = AppColors.onSurface
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
     for (int i = 0; i < points.length - 1; i++) {

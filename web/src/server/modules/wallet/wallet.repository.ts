@@ -45,7 +45,8 @@ export const walletRepository = {
   async createTransaction(data: {
     riderId: string;
     type: TransactionType;
-    amount: number;
+    amount?: number;
+    amountInPaise?: number;
     purpose: TransactionPurpose;
     method?: string;
     status?: TransactionStatus;
@@ -54,11 +55,12 @@ export const walletRepository = {
     idempotencyKey?: string;
     description?: string;
   }) {
+    const finalAmount = data.amountInPaise ?? data.amount ?? 0;
     return db.transaction.create({
       data: {
         riderId: data.riderId,
         type: data.type,
-        amount: data.amount,
+        amountInPaise: finalAmount,
         purpose: data.purpose,
         method: data.method || null,
         status: data.status || TransactionStatus.PENDING,

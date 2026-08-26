@@ -10,14 +10,7 @@ import {
   Shield,
   Bike,
   CalendarDays,
-  ArrowLeftRight,
-  MessageSquare,
-  Tag,
-  Award,
-  Share2,
-  Bell,
-  UserCog,
-  HelpCircle,
+  ArrowLeftRight,  MessageSquare, Tag, Award, Bell, UserCog, HelpCircle,
   FileText,
   Settings,
   ShieldCheck,
@@ -53,11 +46,10 @@ const navItems = [
     keywords: ['help', 'support', 'issues'],
   },
   { id: 'offers', label: 'Offers & Coupons', icon: Tag, keywords: ['promotions', 'discounts'] },
-  { id: 'rewards', label: 'Rewards', icon: Award, keywords: ['points', 'loyalty'] },
-  { id: 'referrals', label: 'Referrals', icon: Share2, keywords: ['invite', 'share'] },
+  { id: 'rewards', label: 'Rewards', icon: Award, keywords: ['points', 'loyalty', 'referrals'] },
   { id: 'notifications', label: 'Notifications', icon: Bell, keywords: ['alerts', 'messages'] },
   { id: 'team-leaders', label: 'Team Leaders', icon: UserCog, keywords: ['managers', 'staff'] },
-  { id: 'faqs', label: 'FAQs', icon: HelpCircle, keywords: ['questions', 'help'] },
+  { id: 'faq', label: 'FAQ', icon: HelpCircle, keywords: ['questions', 'help', 'faqs'] },
   { id: 'legal', label: 'Legal Documents', icon: FileText, keywords: ['terms', 'privacy'] },
   { id: 'settings', label: 'Settings', icon: Settings, keywords: ['config', 'preferences'] },
   { id: 'admin-users', label: 'Admin Users', icon: ShieldCheck, keywords: ['admins', 'access'] },
@@ -217,7 +209,7 @@ export default function CommandPalette() {
                     key={item.id}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all relative ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm transition-all relative ${
                       isSelected
                         ? 'bg-primary/10 text-primary'
                         : 'text-foreground hover:bg-muted/50'

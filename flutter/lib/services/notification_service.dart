@@ -1,4 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -8,6 +10,10 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+
+  /// Cached notification-enabled flag, refreshed only when the user
+  /// toggles the setting in app_settings or notification_preferences.
+  bool _notificationsEnabled = true;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -24,6 +30,7 @@ class NotificationService {
         InitializationSettings(android: androidSettings, iOS: iosSettings);
     await _notifications.initialize(initSettings);
     _initialized = true;
+    await refreshNotificationPreference();
   }
 
   Future<bool> requestPermission() async {
@@ -36,12 +43,28 @@ class NotificationService {
     return true;
   }
 
+  /// Refreshes the cached notification-enabled flag from SharedPreferences.
+  /// Call this after the user toggles the notif_push preference.
+  Future<void> refreshNotificationPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _notificationsEnabled = prefs.getBool('notif_push') ?? true;
+    } catch (_) {
+      _notificationsEnabled = true; // fail-open
+    }
+  }
+
   Future<void> showNotification({
     required int id,
     required String title,
     required String body,
     String? payload,
   }) async {
+    if (!_notificationsEnabled) {
+      appDebug('NotificationService: notifications disabled, skipping');
+      return;
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'volt_channel',
       'Voltium Notifications',

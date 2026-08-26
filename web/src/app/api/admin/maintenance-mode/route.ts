@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET() {
   try {
@@ -24,8 +25,8 @@ export async function GET() {
           'System is currently under maintenance. Please check back later.',
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
   }
 }
 
@@ -36,9 +37,17 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only SUPER_ADMIN can change maintenance mode in production.
-    if (session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden: SUPER_ADMIN required' }, { status: 403 });
+    // R4.3 / audit: was `session.role !== 'SUPER_ADMIN'` which is
+    // always true (session.role is the user type 'admin'/'rider', the
+    // role name lives in session.adminRole). The old check blocked
+    // every real SUPER_ADMIN and would invert to a privilege hole if
+    // "fixed" naively. Use hasPermission() which resolves the right
+    // field.
+    if (!hasPermission(session, 'settings_manage')) {
+      return NextResponse.json(
+        { error: 'Forbidden: settings_manage permission required' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -80,14 +89,7 @@ export async function PUT(request: NextRequest) {
       }),
     ]);
 
-    // Also update the legacy Setting table for backwards compatibility/triggers if needed
-    try {
-      await db.setting.upsert({
-        where: { key: 'maintenanceMode' },
-        update: { value: String(enabled) },
-        create: { key: 'maintenanceMode', value: String(enabled) },
-      });
-    } catch {}
+    // Legacy Setting consolidated — maintenanceMode now lives in SystemSetting as MAINTENANCE_MODE
 
     // Audit logging
     await createAuditLog({
@@ -100,7 +102,7 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, data: { enabled, message } });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
   }
 }

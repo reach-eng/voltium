@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { VehicleStatus, Prisma } from '@prisma/client';
+import { getCachedVehicle, invalidateVehicleCache } from '@/lib/server-cache';
 
 export const vehicleRepository = {
   async findAll(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -13,7 +14,7 @@ export const vehicleRepository = {
   },
 
   async findById(vehicleId: string) {
-    return db.vehicle.findUnique({ where: { id: vehicleId } });
+    return getCachedVehicle(vehicleId, () => db.vehicle.findUnique({ where: { id: vehicleId } }));
   },
 
   async findByHubId(hubId: string) {
@@ -25,7 +26,9 @@ export const vehicleRepository = {
   },
 
   async update(vehicleId: string, data: Prisma.VehicleUpdateInput) {
-    return db.vehicle.update({ where: { id: vehicleId }, data });
+    const result = await db.vehicle.update({ where: { id: vehicleId }, data });
+    invalidateVehicleCache(vehicleId);
+    return result;
   },
 
   async assignToRider(vehicleId: string, riderDbId: string) {
@@ -35,10 +38,12 @@ export const vehicleRepository = {
       where: { id: riderDbId },
       data: { vehicleId },
     });
-    return db.vehicle.update({
+    const result = await db.vehicle.update({
       where: { id: vehicleId },
       data: { status: 'ASSIGNED' },
     });
+    invalidateVehicleCache(vehicleId);
+    return result;
   },
 
   async markAvailable(vehicleId: string) {
@@ -47,10 +52,12 @@ export const vehicleRepository = {
       where: { vehicleId },
       data: { vehicleId: null },
     });
-    return db.vehicle.update({
+    const result = await db.vehicle.update({
       where: { id: vehicleId },
       data: { status: 'AVAILABLE' },
     });
+    invalidateVehicleCache(vehicleId);
+    return result;
   },
 
   async findVehicleHistory(vehicleId: string) {
@@ -75,10 +82,14 @@ export const vehicleRepository = {
   },
 
   async bulkUpdateStatus(ids: string[], data: Prisma.VehicleUpdateManyMutationInput) {
-    return db.vehicle.updateMany({ where: { id: { in: ids } }, data });
+    const result = await db.vehicle.updateMany({ where: { id: { in: ids } }, data });
+    for (const id of ids) invalidateVehicleCache(id);
+    return result;
   },
 
   async bulkDelete(ids: string[]) {
-    return db.vehicle.deleteMany({ where: { id: { in: ids } } });
+    const result = await db.vehicle.deleteMany({ where: { id: { in: ids } } });
+    for (const id of ids) invalidateVehicleCache(id);
+    return result;
   },
 };

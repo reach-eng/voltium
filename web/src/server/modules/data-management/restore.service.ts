@@ -14,6 +14,8 @@ import { existsSync, mkdirSync, renameSync } from 'fs';
 import { join } from 'path';
 import { restoreDatabase, extractArchive, runMigrations } from '@/lib/shell';
 
+/** @deprecated Legacy Setting table has been consolidated into SystemSetting. */
+
 async function getSystemSettingValue(key: string, fallback: string): Promise<string> {
   try {
     const setting = await db.systemSetting.findUnique({ where: { key } });
@@ -47,13 +49,8 @@ async function setMaintenanceMode(enabled: boolean, message?: string): Promise<v
         description: 'Message shown while maintenance mode is active.',
       },
     }),
-    db.setting
-      .upsert({
-        where: { key: 'maintenanceMode' },
-        update: { value: String(enabled) },
-        create: { key: 'maintenanceMode', value: String(enabled) },
-      })
-      .catch(() => undefined),
+    // Legacy Setting consolidation: maintenanceMode is now stored in SystemSetting
+    // as MAINTENANCE_MODE. The old db.setting.upsert is removed.
   ]);
 }
 
@@ -216,11 +213,11 @@ export const restoreService = {
       logger.info('[RestoreService] Restore completed successfully', { backupId: backupJobId });
 
       return { id: restoreJob.id, status: 'COMPLETED' };
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Mark restore as failed
       await backupRepository.updateRestoreJob(restoreJob.id, {
         status: 'FAILED',
-        errorMessage: err.message,
+        errorMessage: (err instanceof Error ? err.message : String(err)),
         completedAt: new Date(),
       });
 
@@ -236,12 +233,12 @@ export const restoreService = {
         action: 'restore.failed',
         entity: 'RestoreJob',
         entityId: restoreJob.id,
-        details: { backupId: backupJobId, error: err.message },
+        details: { backupId: backupJobId, error: (err instanceof Error ? err.message : String(err)) },
       });
 
       logger.error('[RestoreService] Restore failed', {
         backupId: backupJobId,
-        error: err.message,
+        error: (err instanceof Error ? err.message : String(err)),
       });
       throw err;
     }

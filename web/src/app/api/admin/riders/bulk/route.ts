@@ -43,7 +43,7 @@ async function postHandler(req: NextRequest) {
             );
             updatedCount++;
           } catch (e) {
-            failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+            failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });
           }
         }
         break;
@@ -55,7 +55,7 @@ async function postHandler(req: NextRequest) {
             await adminRiderUseCases.delete(id);
             updatedCount++;
           } catch (e) {
-            failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+            failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });
           }
         }
         break;
@@ -75,7 +75,7 @@ async function postHandler(req: NextRequest) {
             );
             updatedCount++;
           } catch (e) {
-            failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+            failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });
           }
         }
         break;

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     return success(result, 'Vehicle booked successfully');
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to book rental';
+    const message = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to book rental';
 
     if (message.includes('not found')) return errors.notFound(message);
     if (

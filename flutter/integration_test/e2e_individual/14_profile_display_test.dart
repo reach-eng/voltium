@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -12,12 +13,13 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Profile – displays rider info and status tiles', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'profileTab');
 
     // Profile elements
     expect(find.textContaining('KYC'), findsAtLeastNWidgets(1));
-    expect(find.byKey(const Key('editProfileLink')), findsOneWidget);
-    expect(find.byKey(const Key('logoutButton')), findsOneWidget);
+    expect(app.shared.editProfileLink, findsOneWidget);
+    expect(app.profile.logoutButton, findsOneWidget);
   });
 }

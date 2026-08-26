@@ -1,6 +1,15 @@
 import { db } from '@/lib/db';
 
-export async function calculateRiderScore(riderId: string) {
+const SCORE_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+export async function calculateRiderScore(riderId: string, forceRecalculate = false) {
+  if (!forceRecalculate) {
+    const existing = await db.riderScore.findUnique({ where: { riderId } }).catch(() => null);
+    if (existing && Date.now() - existing.lastCalculated.getTime() < SCORE_CACHE_TTL_MS) {
+      return existing;
+    }
+  }
+
   const rider = await db.rider.findUnique({
     where: { id: riderId },
     include: {

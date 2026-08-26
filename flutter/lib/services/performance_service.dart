@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'monitoring_service.dart';
+import '../utils/app_logger.dart';
 
 class PerformanceService {
   static final PerformanceService _instance = PerformanceService._internal();
@@ -10,7 +11,7 @@ class PerformanceService {
 
   void startTrace(String name) {
     if (kDebugMode) {
-      debugPrint('⏱️ [Performance] Starting trace: $name');
+      appDebug('⏱️ [Performance] Starting trace: $name');
     }
     _activeStopwatches[name] = Stopwatch()..start();
   }
@@ -23,7 +24,7 @@ class PerformanceService {
     final durationMs = stopwatch.elapsedMilliseconds;
 
     if (kDebugMode) {
-      debugPrint('⏱️ [Performance] Trace stopped: $name took ${durationMs}ms');
+      appDebug('⏱️ [Performance] Trace stopped: $name took ${durationMs}ms');
     }
 
     // Log to Monitoring (local logs) as a breadcrumb or event
@@ -36,15 +37,20 @@ class PerformanceService {
 
   /// Helper to track a screen load from start to finish
   void trackScreenLoad(
-      String screenName, Future<void> Function() loadAction,) async {
+    String screenName,
+    Future<void> Function() loadAction,
+  ) async {
     startTrace('Load_$screenName');
     try {
       await loadAction();
       stopTrace('Load_$screenName');
     } catch (e, stack) {
       stopTrace('Load_$screenName', attributes: {'error': e.toString()});
-      MonitoringService.logError(e, stack,
-          reason: 'Failed to load $screenName',);
+      MonitoringService.logError(
+        e,
+        stack,
+        reason: 'Failed to load $screenName',
+      );
     }
   }
 }

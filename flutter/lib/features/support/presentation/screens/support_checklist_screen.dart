@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'troubleshooter_screen.dart';
 import '../../../../theme/app_theme.dart';
 
-class SupportChecklistScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class SupportChecklistScreen extends ConsumerStatefulWidget {
   const SupportChecklistScreen({super.key});
 
   @override
-  State<SupportChecklistScreen> createState() => _SupportChecklistScreenState();
+  ConsumerState<SupportChecklistScreen> createState() =>
+      _SupportChecklistScreenState();
 }
 
-class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
+class _SupportChecklistScreenState
+    extends ConsumerState<SupportChecklistScreen> {
   late List<bool> _checkedItems;
 
   @override
   void initState() {
     super.initState();
     final checklist =
-        context.read<AppProvider>().supportConfig?.ticketChecklist ?? [];
+        ref.read(supportProvider).supportConfig?.ticketChecklist ?? [];
     _checkedItems = List<bool>.filled(checklist.length, false);
   }
 
@@ -27,14 +32,16 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
+    final provider = ref.watch(supportProvider);
     final checklist = provider.supportConfig?.ticketChecklist ?? [];
 
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       appBar: AppBar(
-        title: const Text('Support Checklist',
-            style: TextStyle(fontWeight: FontWeight.bold),),
+        title: Text(
+          'Support Checklist',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
@@ -44,23 +51,23 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: Spacing.paddingLg,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('PLEASE VERIFY',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.slate500,
-                        letterSpacing: 1.0,
-                      ),
+                    Text(
+                      'PLEASE VERIFY',
+                      style: AppTypography.bodySmall
+                          .copyWith(fontWeight: FontWeight.w800)
+                          .copyWith(
+                              color: AppColors.slate500, letterSpacing: 1.0),
                     ),
-                    const SizedBox(height: 16),
-                    const Text('Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
-                      style: TextStyle(
+                    SizedBox(height: 16),
+                    Text(
+                      'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.slate800,
                         height: 1.5,
                       ),
                     ),
@@ -86,7 +93,7 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -104,14 +111,11 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
         },
         title: Text(
           text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.slate800),
         ),
-        activeColor: const Color(0xFF2563EB),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        activeColor: AppColors.primary,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
@@ -120,7 +124,7 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
 
   Widget _buildActionButtons() {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -128,30 +132,34 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
             onPressed: _allChecked
                 ? () {
                     AppNavigator.pushReplacement(
-                        context, const TroubleshooterScreen(),);
+                      context,
+                      const TroubleshooterScreen(),
+                    );
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
               elevation: _allChecked ? 4 : 0,
-              disabledBackgroundColor: const Color(0xFFCBD5E1),
+              disabledBackgroundColor: AppColors.borderMedium,
               disabledForegroundColor: Colors.white70,
             ),
-            child: const Text('Proceed to Support',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            child: Text(
+              'Proceed to Support',
+              style: AppTypography.titleSmall,
             ),
           ),
-          const SizedBox(height: 12),
-          Text('Keep checking all items to proceed',
-            style: TextStyle(
-              fontSize: 12,
-              color: _allChecked ? Colors.transparent : Colors.redAccent,
-              fontWeight: FontWeight.w600,
-            ),
+          SizedBox(height: 12),
+          Text(
+            'Keep checking all items to proceed',
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w600)
+                .copyWith(
+                    color: _allChecked ? Colors.transparent : AppColors.error),
           ),
         ],
       ),

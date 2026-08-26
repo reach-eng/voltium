@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -13,6 +14,7 @@ void main() {
 
   testWidgets('Guarantor flow – complete onboarding with guarantor details',
       (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
     await completeAuthFlow(tester);
@@ -27,38 +29,45 @@ void main() {
     }
 
     // Complete user onboarding form if shown
-    final fullNameField = find.byKey(const Key('fullNameField'));
+    final fullNameField = app.onboarding.fullNameField;
     if (fullNameField.evaluate().isNotEmpty) {
       await tester.enterText(fullNameField, TestCredentials.fullName);
       await tester.enterText(
-          find.byKey(const Key('emailField')), TestCredentials.email,);
+        app.onboarding.emailField,
+        TestCredentials.email,
+      );
       await tester.enterText(
-          find.byKey(const Key('fatherNameField')), TestCredentials.fatherName,);
+        app.onboarding.fatherNameField,
+        TestCredentials.fatherName,
+      );
       await tester.enterText(
-          find.byKey(const Key('motherNameField')), TestCredentials.motherName,);
+        app.onboarding.motherNameField,
+        TestCredentials.motherName,
+      );
       await settle(tester);
-      await tester.tap(find.byKey(const Key('nextOnboardingButton')));
+      await tester.tap(app.onboarding.nextOnboardingButton);
       await settle(tester);
     }
 
     // Check if guarantor form is visible
-    final guarantorNameField = find.byKey(const Key('guarantorNameField'));
+    final guarantorNameField = app.onboarding.guarantorNameField;
     if (guarantorNameField.evaluate().isNotEmpty) {
       // Fill guarantor details
       await tester.enterText(guarantorNameField, TestCredentials.guarantorName);
       await settle(tester);
 
       // Fill guarantor phone
-      final guarantorPhoneField = find.byKey(const Key('guarantorPhoneField'));
+      final guarantorPhoneField = app.onboarding.guarantorPhoneField;
       if (guarantorPhoneField.evaluate().isNotEmpty) {
         await tester.enterText(
-            guarantorPhoneField, TestCredentials.guarantorPhone,);
+          guarantorPhoneField,
+          TestCredentials.guarantorPhone,
+        );
         await settle(tester);
       }
 
       // Select relationship if dropdown exists
-      final relationshipDropdown =
-          find.byKey(const Key('relationshipDropdown'));
+      final relationshipDropdown = app.shared.relationshipDropdown;
       if (relationshipDropdown.evaluate().isNotEmpty) {
         await tester.tap(relationshipDropdown);
         await settle(tester);
@@ -67,7 +76,7 @@ void main() {
       }
 
       // Tap complete onboarding button
-      final completeBtn = find.byKey(const Key('completeOnboardingButton'));
+      final completeBtn = app.onboarding.completeOnboardingButton;
       if (completeBtn.evaluate().isNotEmpty) {
         await tester.tap(completeBtn);
         await settle(tester);
@@ -75,12 +84,10 @@ void main() {
     }
 
     // Should navigate to pre-dashboard or dashboard (or still be in onboarding)
-    final hasDashboard =
-        find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty;
-    final hasPreDashboard =
-        find.byKey(const Key('preDashboardTitle')).evaluate().isNotEmpty;
+    final hasDashboard = app.dashboard.dashboardTab.evaluate().isNotEmpty;
+    final hasPreDashboard = app.shared.preDashboardTitle.evaluate().isNotEmpty;
     final stillOnboarding =
-        find.byKey(const Key('guarantorNameField')).evaluate().isNotEmpty;
+        app.onboarding.guarantorNameField.evaluate().isNotEmpty;
 
     expect(
       hasDashboard || hasPreDashboard || stillOnboarding,
@@ -91,6 +98,7 @@ void main() {
   });
 
   testWidgets('Guarantor flow – validation for empty fields', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
     await completeAuthFlow(tester, phone: '9876543211');
@@ -104,36 +112,46 @@ void main() {
       await settle(tester);
     }
 
-    final fullNameField = find.byKey(const Key('fullNameField'));
+    final fullNameField = app.onboarding.fullNameField;
     if (fullNameField.evaluate().isNotEmpty) {
       await tester.enterText(fullNameField, TestCredentials.fullName);
       await tester.enterText(
-          find.byKey(const Key('emailField')), TestCredentials.email,);
+        app.onboarding.emailField,
+        TestCredentials.email,
+      );
       await tester.enterText(
-          find.byKey(const Key('fatherNameField')), TestCredentials.fatherName,);
+        app.onboarding.fatherNameField,
+        TestCredentials.fatherName,
+      );
       await tester.enterText(
-          find.byKey(const Key('motherNameField')), TestCredentials.motherName,);
+        app.onboarding.motherNameField,
+        TestCredentials.motherName,
+      );
       await settle(tester);
-      await tester.tap(find.byKey(const Key('nextOnboardingButton')));
+      await tester.tap(app.onboarding.nextOnboardingButton);
       await settle(tester);
     }
 
     // If on guarantor form, try to submit without filling details
-    final completeBtn = find.byKey(const Key('completeOnboardingButton'));
+    final completeBtn = app.onboarding.completeOnboardingButton;
     if (completeBtn.evaluate().isNotEmpty) {
       await tester.tap(completeBtn);
       await settle(tester);
 
       // Should still be on guarantor screen (validation prevented navigation)
-      final guarantorNameField = find.byKey(const Key('guarantorNameField'));
+      final guarantorNameField = app.onboarding.guarantorNameField;
       if (guarantorNameField.evaluate().isNotEmpty) {
-        expect(guarantorNameField, findsAtLeastNWidgets(1),
-            reason: 'Should stay on guarantor screen after validation failure',);
+        expect(
+          guarantorNameField,
+          findsAtLeastNWidgets(1),
+          reason: 'Should stay on guarantor screen after validation failure',
+        );
       }
     }
   });
 
   testWidgets('Guarantor flow – declaration checkbox required', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
     await completeAuthFlow(tester, phone: '9876543212');
@@ -147,33 +165,44 @@ void main() {
       await settle(tester);
     }
 
-    final fullNameField = find.byKey(const Key('fullNameField'));
+    final fullNameField = app.onboarding.fullNameField;
     if (fullNameField.evaluate().isNotEmpty) {
       await tester.enterText(fullNameField, TestCredentials.fullName);
       await tester.enterText(
-          find.byKey(const Key('emailField')), TestCredentials.email,);
+        app.onboarding.emailField,
+        TestCredentials.email,
+      );
       await tester.enterText(
-          find.byKey(const Key('fatherNameField')), TestCredentials.fatherName,);
+        app.onboarding.fatherNameField,
+        TestCredentials.fatherName,
+      );
       await tester.enterText(
-          find.byKey(const Key('motherNameField')), TestCredentials.motherName,);
+        app.onboarding.motherNameField,
+        TestCredentials.motherName,
+      );
       await settle(tester);
-      await tester.tap(find.byKey(const Key('nextOnboardingButton')));
+      await tester.tap(app.onboarding.nextOnboardingButton);
       await settle(tester);
     }
 
     // If on guarantor form, fill details and check declaration
-    final guarantorNameField = find.byKey(const Key('guarantorNameField'));
+    final guarantorNameField = app.onboarding.guarantorNameField;
     if (guarantorNameField.evaluate().isNotEmpty) {
       await tester.enterText(guarantorNameField, TestCredentials.guarantorName);
-      await tester.enterText(find.byKey(const Key('guarantorPhoneField')),
-          TestCredentials.guarantorPhone,);
+      await tester.enterText(
+        app.onboarding.guarantorPhoneField,
+        TestCredentials.guarantorPhone,
+      );
       await settle(tester);
 
       // Check declaration checkbox exists
-      final declarationCheckbox = find.byKey(const Key('declarationCheckbox'));
+      final declarationCheckbox = app.onboarding.declarationCheckbox;
       if (declarationCheckbox.evaluate().isNotEmpty) {
-        expect(declarationCheckbox, findsAtLeastNWidgets(1),
-            reason: 'Declaration checkbox should be visible',);
+        expect(
+          declarationCheckbox,
+          findsAtLeastNWidgets(1),
+          reason: 'Declaration checkbox should be visible',
+        );
       }
     }
   });

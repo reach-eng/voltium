@@ -1,6 +1,7 @@
 import { getStorageProvider } from '@/lib/storage';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 import { fileRepository } from './files.repository';
 import { filePolicy } from './files.policy';
 import type { FileCategory, FileOwnerType } from './files.types';
@@ -30,7 +31,8 @@ export const fileService = {
     mimeType: string;
     sizeBytes: number;
     checksum?: string;
-    metadata?: string;
+    // PR-P3.1: metadata is native Json; callers pass an object directly.
+    metadata?: Prisma.InputJsonValue;
   }) {
     const record = await fileRepository.createFileRecord({
       ownerType: params.ownerType,
@@ -97,7 +99,7 @@ export const fileService = {
   },
 
   canViewFile(
-    actor: { role: string; permissions?: string[]; riderDbId?: string },
+    actor: { role: string; adminRole?: string; permissions?: string[]; riderDbId?: string },
     fileRecord: { ownerId: string; purpose: string; visibility: string }
   ): boolean {
     return filePolicy.canViewFile(actor, fileRecord);

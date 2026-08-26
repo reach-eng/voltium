@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createVehicleSchema, updateVehicleSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
 import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
 
 function checkVehiclePermission(
@@ -31,12 +32,30 @@ export async function GET(req: NextRequest) {
     const hubId = url.searchParams.get('hubId') || '';
     const { page, limit } = parsePaginationParams(url);
 
-    const result = await vehicleUseCases.listAdminVehicles({ status, hubId, page, limit });
-    return success(
-      { vehicles: result.vehicles, hubs: result.hubs },
-      undefined,
-      200,
-      result.pagination
+    const cacheKey = [
+      'admin:vehicles',
+      session.adminId ?? session.riderDbId ?? 'anon',
+      status,
+      hubId,
+      page,
+      limit,
+    ].join(':');
+
+    const result = await getOrSetResponse(cacheKey, () =>
+      vehicleUseCases.listAdminVehicles({ status, hubId, page, limit }),
+      5
+    );
+
+    if (!result) return errors.internal('Failed to fetch vehicles');
+
+    return withCacheHeaders(
+      success(
+        { vehicles: result.vehicles, hubs: result.hubs },
+        undefined,
+        200,
+        result.pagination
+      ),
+      5
     );
   } catch (error) {
     logger.error('Vehicles list error:', error);
@@ -69,6 +88,8 @@ export async function POST(req: NextRequest) {
       hub: { connect: { id: validation.data.hubId } },
     } as any);
 
+    invalidateCache('admin:*');
+
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'system',
       action: 'vehicle.create',
@@ -97,6 +118,8 @@ export async function PUT(req: NextRequest) {
     const { id, ...data } = validation.data;
     const vehicle = await vehicleUseCases.updateVehicle(id, data);
 
+    invalidateCache('admin:*');
+
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'system',
       action: 'vehicle.update',
@@ -124,12 +147,13 @@ export async function DELETE(req: NextRequest) {
     const vehicle = await vehicleUseCases.getVehicle(id);
     if (vehicle) {
       await vehicleUseCases.updateVehicle(id, { status: 'RETIRED' });
+      invalidateCache('admin:*');
       await createAuditLog({
         actorId: session.adminId || session.riderDbId || 'system',
         action: 'vehicle.delete',
         entity: 'vehicle',
         entityId: id,
-        details: { vehicleNumber: vehicle.vehicleNumber, vehicleId: vehicle.vehicleId },
+        details: { vehicleNumber: (vehicle as any).vehicleNumber, vehicleId: (vehicle as any).vehicleId },
       }).catch(() => {});
     }
 

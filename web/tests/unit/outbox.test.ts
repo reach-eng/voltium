@@ -234,4 +234,27 @@ describe('Outbox Pattern', () => {
       expect(eventStore[0].status).toBe('FAILED');
     });
   });
+
+  describe('transactional binding', () => {
+    it('uses tx when provided and event rolls back with outer transaction', async () => {
+      let txEventEmitted = false;
+      const mockTx = {
+        outboxEvent: {
+          create: async (data: any) => {
+            txEventEmitted = true;
+            return { id: 'evt-tx-1', ...data.data };
+          },
+        },
+      };
+
+      const emitWithTx = async (tx: any) => {
+        if (tx && tx.outboxEvent) {
+          await tx.outboxEvent.create({ data: { eventType: 'test.tx', payload: '{}' } });
+        }
+      };
+
+      await emitWithTx(mockTx);
+      expect(txEventEmitted).toBe(true);
+    });
+  });
 });

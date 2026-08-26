@@ -4,8 +4,13 @@
  * Orchestrates KYC submission, review, and document verification workflows.
  */
 
+import { Prisma } from '@prisma/client';
+import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import type { KycSubmission, KycReview } from './kyc.types';
 import { kycRepository } from './kyc.repository';
+import { notificationService } from '@/lib/notification-service';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 
 export const kycUseCases = {
   async getKycStatus(riderDbId: string) {
@@ -20,6 +25,16 @@ export const kycUseCases = {
     // Only transition to SUBMITTED if all critical docs are present
     // Partial uploads just save data and keep current status (DRAFT)
     const existing = await kycRepository.findByRiderId(riderDbId);
+
+    if (existing?.status === 'REJECTED' && existing.editableFields && existing.editableFields.length > 0) {
+      // Filter prismaData to ONLY allow fields present in editableFields
+      const allowedKeys = new Set(existing.editableFields);
+      for (const key of Object.keys(prismaData)) {
+        if (!allowedKeys.has(key)) {
+          delete prismaData[key];
+        }
+      }
+    }
 
     const existingData = existing || {};
     const aadhaarFront = prismaData.aadhaarFront || (existingData as any).aadhaarFront;
@@ -38,16 +53,48 @@ export const kycUseCases = {
 
   async reviewKyc(riderDbId: string, reviewerId: string, review: KycReview) {
     switch (review.action) {
-      case 'APPROVE':
-        return kycRepository.approveKyc(riderDbId, reviewerId);
-      case 'REJECT':
-        return kycRepository.rejectKyc(riderDbId, reviewerId, review.rejectionReason || '');
-      case 'REQUEST_INFO':
-        return kycRepository.requestInfo(
-          riderDbId,
-          reviewerId,
-          review.infoRequest || 'Additional information required'
-        );
+      case 'APPROVE': {
+        return db.$transaction(async (tx: Prisma.TransactionClient) => {
+          const result = await kycRepository.approveKyc(riderDbId, reviewerId);
+          // BLOCKER 2.7: notification is dispatched by the outbox
+          // worker (notificationDispatchJob, Phase 1.4). The repository
+          // no longer fires a duplicate notification. Emitting the
+          // event inside the transaction guarantees at-least-once
+          // delivery with retry/backoff.
+          await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+            riderId: riderDbId,
+            type: 'KYC_APPROVED',
+          }, 3, tx,
+          // PR-75: KYC notification dispatch is interactive (rider
+          // expects timely feedback on KYC decisions).
+          'interactive');
+          return result;
+        });
+      }
+      case 'REJECT': {
+        const rejectionReason = review.rejectionReason || '';
+        const editableFields = review.editableFields || [];
+        return db.$transaction(async (tx: Prisma.TransactionClient) => {
+          const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason, editableFields);
+          await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+            riderId: riderDbId,
+            type: 'KYC_REJECTED',
+            reason: rejectionReason,
+          }, 3, tx,
+          // PR-75: KYC notification dispatch is interactive.
+          'interactive');
+          return result;
+        });
+      }
+      case 'REQUEST_INFO': {
+        const infoRequest = review.infoRequest || 'Additional information required';
+        const result = await kycRepository.requestInfo(riderDbId, reviewerId, infoRequest);
+        // REQUEST_INFO is not in the outbox dispatch table yet
+        // (Phase 1.4 dispatcher handles APPROVE/REJECT). Keep the
+        // direct call for now; track for the next dispatcher update.
+        await notificationService.notifyKycStatusChange(riderDbId, 'REQUESTED', infoRequest);
+        return result;
+      }
     }
   },
 };

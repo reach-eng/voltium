@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class UploadPreview extends StatelessWidget {
   final String? filePath;
@@ -22,6 +23,7 @@ class UploadPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final hasFile = filePath != null && filePath!.isNotEmpty;
 
     return GestureDetector(
@@ -29,10 +31,10 @@ class UploadPreview extends StatelessWidget {
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: hasFile ? const Color(0xFF16A34A) : AppColors.outlineVariant,
+            color: hasFile ? AppColors.success : colors.outlineVariant,
           ),
         ),
         child: Stack(
@@ -40,10 +42,10 @@ class UploadPreview extends StatelessWidget {
             if (isLoading)
               Positioned.fill(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: AppColors.outlineVariant,
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       AppColors.primary,
                     ),
@@ -59,25 +61,25 @@ class UploadPreview extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             image: DecorationImage(
                               image: FileImage(
-                                File(filePath!.startsWith('/')
-                                    ? filePath!
-                                    : filePath!,),
+                                File(
+                                  filePath!.startsWith('/')
+                                      ? filePath!
+                                      : filePath!,
+                                ),
                               ),
                               fit: BoxFit.cover,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF16A34A),
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.labelSmall
+                              .copyWith(fontSize: 10)
+                              .copyWith(color: AppColors.success),
                         ),
                       ],
                     )
@@ -86,17 +88,15 @@ class UploadPreview extends StatelessWidget {
                       children: [
                         Icon(
                           isLoading ? Icons.upload : Icons.add_photo_alternate,
-                          color: const Color(0xFF667085),
+                          color: AppColors.onSurfaceMuted,
                           size: 28,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.labelSmall
+                              .copyWith(fontSize: 10)
+                              .copyWith(color: AppColors.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -108,9 +108,9 @@ class UploadPreview extends StatelessWidget {
                 child: GestureDetector(
                   onTap: onRemove,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: Spacing.paddingXs,
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: AppColors.error,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -152,7 +152,7 @@ class FilePreview extends StatelessWidget {
           width: width ?? 80,
           height: height ?? 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             image: DecorationImage(
               image: FileImage(
                 File(filePath.startsWith('/') ? filePath : filePath),
@@ -168,9 +168,9 @@ class FilePreview extends StatelessWidget {
             child: GestureDetector(
               onTap: onRemove,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: Spacing.paddingXs,
                 decoration: const BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.error,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

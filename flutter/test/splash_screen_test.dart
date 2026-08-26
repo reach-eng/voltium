@@ -17,8 +17,8 @@ void main() {
       ),
     );
 
-    // Initial state: bolt icon (not an Image widget)
-    expect(find.byIcon(Icons.bolt), findsOneWidget);
+    // Initial state: image asset
+    expect(find.byType(Image), findsOneWidget);
 
     // Check for title
     expect(find.text('Voltium'), findsOneWidget);
@@ -28,13 +28,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pump(const Duration(milliseconds: 2000));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     // Check if onComplete was called
     expect(completed, isTrue);
   });
 
-  testWidgets('SplashScreen shows connecting label', (WidgetTester tester) async {
+  testWidgets('SplashScreen shows connecting label',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: SplashScreen(onComplete: () {}),
@@ -50,6 +51,6 @@ void main() {
 
     // Exhaust remaining timers to avoid "Timer still pending" error
     await tester.pump(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
   });
 }

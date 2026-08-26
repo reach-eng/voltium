@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class BreadcrumbItem {
   final String label;
@@ -22,8 +24,8 @@ class Breadcrumbs extends StatelessWidget {
   const Breadcrumbs({
     super.key,
     required this.items,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.fontSize = 14,
     this.separator = '/',
   });
@@ -44,7 +46,7 @@ class Breadcrumbs extends StatelessWidget {
                   item.icon != null
                       ? '${item.icon != null ? '${item.icon!.codePoint} ' : ''}${item.label}'
                       : item.label,
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     color: isLast ? activeColor : inactiveColor,
                     fontSize: fontSize,
                     fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
@@ -56,7 +58,7 @@ class Breadcrumbs extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     separator,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: inactiveColor,
                       fontSize: fontSize,
                     ),
@@ -83,8 +85,8 @@ class AnimatedTabBar extends StatefulWidget {
     required this.tabs,
     this.initialIndex = 0,
     this.onTabChanged,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.showIndicator = true,
   });
 
@@ -124,10 +126,11 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
+        color: colors.outlineVariant,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: TabBar(
         controller: _tabController,
@@ -136,10 +139,10 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
         indicator: widget.showIndicator
             ? BoxDecoration(
                 color: widget.activeColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               )
             : null,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         tabs: widget.tabs.map((tab) => Tab(text: tab)).toList(),
       ),
     );
@@ -158,7 +161,7 @@ class CustomDrawer extends StatefulWidget {
     required this.header,
     required this.items,
     this.backgroundColor = Colors.white,
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
     this.width = 280,
   });
 
@@ -171,6 +174,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Drawer(
       width: widget.width,
       backgroundColor: widget.backgroundColor,
@@ -181,7 +185,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             padding: const EdgeInsets.only(top: 40),
             child: widget.header,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
               itemCount: widget.items.length,
@@ -191,12 +195,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 return ListTile(
                   leading: Icon(
                     item.icon,
-                    color: isSelected ? widget.activeColor : Colors.grey,
+                    color:
+                        isSelected ? widget.activeColor : colors.onSurfaceMuted,
                   ),
                   title: Text(
                     item.label,
-                    style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.grey.shade700,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: isSelected ? colors.onSurface : colors.onSurface,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -257,11 +262,12 @@ class SegmentedControl<T> extends StatefulWidget {
 class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: Spacing.paddingXs,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(12),
+        color: colors.outlineVariant,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -279,16 +285,18 @@ class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.amber : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected ? AppColors.warning : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: widget.segmentBuilder != null
                     ? widget.segmentBuilder!(segment, isSelected)
                     : Center(
                         child: Text(
                           segment.toString(),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: isSelected
+                                ? Colors.white
+                                : colors.onSurfaceVariant,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -348,14 +356,16 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
           },
         ),
         if (_isExpanded)
-          ...widget.children.map((child) => ListTile(
-                leading: const SizedBox(width: 24),
-                title: Text(child.label),
-                onTap: () {
-                  child.onTap?.call();
-                  Navigator.pop(context);
-                },
-              ),),
+          ...widget.children.map(
+            (child) => ListTile(
+              leading: const SizedBox(width: 24),
+              title: Text(child.label),
+              onTap: () {
+                child.onTap?.call();
+                Navigator.pop(context);
+              },
+            ),
+          ),
       ],
     );
   }

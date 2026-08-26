@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
       'Plan pricing fetched'
     );
   } catch (err) {
-    if (err instanceof Error && err.message === 'Hub not found') {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'Hub not found') {
       return errors.notFound('Hub not found');
     }
-    if (err instanceof Error && err.message === 'Hub is currently inactive') {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'Hub is currently inactive') {
       return errors.badRequest('Hub is currently inactive');
     }
     logger.error('[GET /api/rider/pricing]', err);

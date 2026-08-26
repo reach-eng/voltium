@@ -30,11 +30,11 @@ const defaultFlags: FeatureFlags = {
 let cachedFlags: FeatureFlags | null = null;
 let cacheExpiry = 0;
 let pendingPromise: Promise<FeatureFlags> | null = null;
-const CACHE_TTL_MS = 30000;
+const CACHE_TTL_MS = 300_000; // 5 minutes (invalidates instantly on updateFeatureFlag)
 
 async function loadDbFlags(): Promise<Partial<FeatureFlags>> {
   try {
-    const settings = await db.setting.findMany({
+    const settings = await db.systemSetting.findMany({
       where: { key: { startsWith: 'flag.' } },
     });
 
@@ -98,10 +98,10 @@ export async function getMaxUploadSize(): Promise<number> {
 export async function updateFeatureFlag(key: string, value: string): Promise<boolean> {
   try {
     const dbKey = `flag.${key}`;
-    await db.setting.upsert({
+    await db.systemSetting.upsert({
       where: { key: dbKey },
-      update: { value },
-      create: { key: dbKey, value },
+      update: { value, valueType: 'BOOLEAN', category: 'FEATURE', isSecret: false, isEditable: true },
+      create: { key: dbKey, value, valueType: 'BOOLEAN', category: 'FEATURE', isSecret: false, isEditable: true },
     });
 
     cachedFlags = null;
@@ -129,7 +129,7 @@ export async function getAllFeatureFlags(): Promise<
   }
 
   try {
-    const dbSettings = await db.setting.findMany({
+    const dbSettings = await db.systemSetting.findMany({
       where: { key: { startsWith: 'flag.' } },
     });
     for (const s of dbSettings) {

@@ -1,6 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'legal_page_screen.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web LegalConsentScreen.tsx exactly:
 /// - bg #f7f9fb
@@ -78,6 +83,7 @@ class _LegalScreenState extends State<LegalScreen>
 
   void _handleContinue() {
     if (!_accepted) return;
+    PostHogService.capture('legal_accepted');
     widget.onNext?.call();
   }
 
@@ -94,8 +100,9 @@ class _LegalScreenState extends State<LegalScreen>
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: FadeTransition(
                 opacity: CurvedAnimation(
-                    parent: _entryCtrl,
-                    curve: const Interval(0, 0.5, curve: Curves.easeIn),),
+                  parent: _entryCtrl,
+                  curve: const Interval(0, 0.5, curve: Curves.easeIn),
+                ),
                 child: _buildBackButton(),
               ),
             ),
@@ -113,11 +120,12 @@ class _LegalScreenState extends State<LegalScreen>
                     // Subtitle
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl,
-                          curve:
-                              const Interval(0.2, 0.8, curve: Curves.easeIn),),
-                      child: Text('Please review and accept our legal documents to continue.',
-                        style: GoogleFonts.inter(
+                        parent: _entryCtrl,
+                        curve: const Interval(0.2, 0.8, curve: Curves.easeIn),
+                      ),
+                      child: Text(
+                        'Please review and accept our legal documents to continue.',
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           color: AppColors.onSurfaceVariant,
                           height: 1.6,
@@ -130,15 +138,23 @@ class _LegalScreenState extends State<LegalScreen>
                     // Expandable sections
                     SlideTransition(
                       position: Tween<Offset>(
-                              begin: const Offset(0, 0.3), end: Offset.zero,)
-                          .animate(CurvedAnimation(
-                              parent: _entryCtrl,
-                              curve: const Interval(0.2, 0.9,
-                                  curve: Curves.easeOutCubic,),),),
+                        begin: const Offset(0, 0.3),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: _entryCtrl,
+                          curve: const Interval(
+                            0.2,
+                            0.9,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                      ),
                       child: FadeTransition(
                         opacity: CurvedAnimation(
-                            parent: _entryCtrl,
-                            curve: const Interval(0.2, 0.8),),
+                          parent: _entryCtrl,
+                          curve: const Interval(0.2, 0.8),
+                        ),
                         child: Column(
                           children: [
                             _buildExpandableSection(
@@ -198,17 +214,17 @@ class _LegalScreenState extends State<LegalScreen>
     return GestureDetector(
       onTap: widget.onBack ?? () => Navigator.maybePop(context),
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadows.glass,
         ),
         child: const Icon(
           Icons.arrow_back,
           size: 20,
-          color: AppColors.onSurfaceAlt,
+          color: AppColors.onSurfaceMuted,
         ),
       ),
     );
@@ -216,13 +232,18 @@ class _LegalScreenState extends State<LegalScreen>
 
   Widget _buildHeader() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.1, 0.7),),
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7),
+        ),
         child: Row(
           children: [
             // Shield card 48×48 rounded-xl glass
@@ -240,12 +261,13 @@ class _LegalScreenState extends State<LegalScreen>
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(width: 12),
-            Text('Agree to Terms',
-              style: GoogleFonts.inter(
+            SizedBox(width: 12),
+            Text(
+              'Agree to Terms',
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceAlt,
+                color: AppColors.onSurfaceMuted,
                 letterSpacing: -0.5,
               ),
             ),
@@ -262,100 +284,99 @@ class _LegalScreenState extends State<LegalScreen>
     Key? headerKey,
   }) {
     final isExpanded = _expandedId == id;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.card,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            InkWell(
-              key: headerKey,
-              onTap: () {
-                setState(() => _expandedId = isExpanded ? null : id);
-              },
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurfaceAlt,
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.card,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              InkWell(
+                key: headerKey,
+                onTap: () {
+                  setState(() => _expandedId = isExpanded ? null : id);
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.bodyLarge
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.onSurfaceMuted),
                       ),
-                    ),
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.5 : 0.0,
-                      duration: const Duration(milliseconds: 250),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 20,
-                        color: AppColors.onSurfaceVariant,
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20,
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Expandable content
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              child: isExpanded
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Divider
-                        Container(
-                          height: 1,
-                          color: AppColors.divider,
-                          margin: const EdgeInsets.symmetric(horizontal: 20),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 280),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: content
-                                    .split('\n\n')
-                                    .map(
-                                      (para) => Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12),
-                                        child: Text(
-                                          para,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 13,
-                                            color: AppColors.onSurfaceVariant,
-                                            height: 1.7,
+              // Expandable content
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: isExpanded
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Divider
+                          Container(
+                            height: 1,
+                            color: AppColors.divider,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 280),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: content
+                                      .split('\n\n')
+                                      .map(
+                                        (para) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 12),
+                                          child: Text(
+                                            para,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              color: AppColors.onSurfaceVariant,
+                                              height: 1.7,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
+                                      )
+                                      .toList(),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -366,83 +387,115 @@ class _LegalScreenState extends State<LegalScreen>
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: SlideTransition(
         position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
-            .animate(CurvedAnimation(
-                parent: _entryCtrl,
-                curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),),),
+            .animate(
+          CurvedAnimation(
+            parent: _entryCtrl,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+          ),
+        ),
         child: FadeTransition(
           opacity: CurvedAnimation(
-              parent: _entryCtrl, curve: const Interval(0.3, 0.9),),
+            parent: _entryCtrl,
+            curve: const Interval(0.3, 0.9),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Custom checkbox row
               GestureDetector(
                 key: const Key('acceptCheckbox'),
+                behavior: HitTestBehavior.opaque,
                 onTap: _toggleAccepted,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Custom gradient checkbox 24×24 rounded-lg
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 24,
-                      height: 24,
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        gradient: _accepted ? AppGradients.primary : null,
-                        color: _accepted ? null : AppColors.divider,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow:
-                            _accepted ? AppShadows.checkboxAccepted : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Custom gradient checkbox 24×24 rounded-lg
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 24,
+                        height: 24,
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          gradient: _accepted ? AppGradients.primary : null,
+                          color: _accepted ? null : AppColors.divider,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          boxShadow:
+                              _accepted ? AppShadows.checkboxAccepted : null,
+                        ),
+                        child: _accepted
+                            ? ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: _checkCtrl,
+                                  curve: Curves.elasticOut,
+                                ),
+                                child: const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
                       ),
-                      child: _accepted
-                          ? ScaleTransition(
-                              scale: CurvedAnimation(
-                                parent: _checkCtrl,
-                                curve: Curves.elasticOut,
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.6,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'I have read and agree to the ',
                               ),
-                              child: const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.white,
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: AppTypography.bodyMedium
+                                    .copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)
+                                    .copyWith(
+                                        color: AppColors.primary,
+                                        decoration: TextDecoration.underline),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(
+                                        documentType: LegalDocumentType.terms,
+                                      ),
+                                    );
+                                  },
                               ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.onSurfaceVariant,
-                            height: 1.6,
+                              const TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: AppTypography.bodyMedium
+                                    .copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)
+                                    .copyWith(
+                                        color: AppColors.primary,
+                                        decoration: TextDecoration.underline),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(
+                                        documentType: LegalDocumentType.privacy,
+                                      ),
+                                    );
+                                  },
+                              ),
+                            ],
                           ),
-                          children: [
-                            const TextSpan(
-                                text: 'I have read and agree to the ',),
-                            TextSpan(
-                              text: 'Terms of Service',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
@@ -459,16 +512,15 @@ class _LegalScreenState extends State<LegalScreen>
                     height: 56,
                     decoration: BoxDecoration(
                       gradient: AppGradients.primary,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
                       boxShadow: _accepted ? AppShadows.primaryButton : null,
                     ),
                     child: Center(
-                      child: Text('Continue',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                      child: Text(
+                        'Continue',
+                        style: AppTypography.bodyLarge
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: Colors.white),
                       ),
                     ),
                   ),

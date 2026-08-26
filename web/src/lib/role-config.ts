@@ -67,6 +67,18 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     icon: 'Database',
     permission: 'data_management_view',
   },
+  {
+    id: 'background-jobs',
+    label: 'Background Jobs',
+    icon: 'Activity',
+    permission: 'analytics_view',
+  },
+  {
+    id: 'earnings',
+    label: 'Earnings',
+    icon: 'Wallet',
+    permission: 'riders_view',
+  },
 ];
 
 export function getVisibleNavItems(roleOrSession: string | SessionPayload): NavItem[] {

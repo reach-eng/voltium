@@ -1021,5 +1021,123 @@
   "txtcredit": "Credit",
   "txtdebit": "Debit",
   "txtwalletBalance": "Wallet Balance",
-  "txtevPlus": "EV Plus"
+  "txtevPlus": "EV Plus",
+
+  "menu_title": "Menu",
+  "@menu_title": {
+    "description": "Profile menu AppBar title"
+  },
+  "menu_account": "ACCOUNT",
+  "@menu_account": {
+    "description": "Account section header"
+  },
+  "menu_profile": "Profile",
+  "@menu_profile": {
+    "description": "Profile menu link label"
+  },
+  "menu_myDocuments": "My Documents",
+  "@menu_myDocuments": {
+    "description": "Documents menu link label"
+  },
+  "menu_rewardsMore": "REWARDS & MORE",
+  "@menu_rewardsMore": {
+    "description": "Rewards section header"
+  },
+  "menu_rewards": "Rewards",
+  "@menu_rewards": {
+    "description": "Rewards menu link label"
+  },
+  "menu_referralProgram": "Referral Program",
+  "@menu_referralProgram": {
+    "description": "Referral menu link label"
+  },
+  "menu_general": "GENERAL",
+  "@menu_general": {
+    "description": "General section header"
+  },
+  "menu_workflowServices": "Workflow & Services",
+  "@menu_workflowServices": {
+    "description": "Workflow hub link label"
+  },
+  "menu_appSettings": "App Settings",
+  "@menu_appSettings": {
+    "description": "App Settings menu link label"
+  },
+  "menu_language": "Language",
+  "@menu_language": {
+    "description": "Language menu link label"
+  },
+  "menu_selectLanguage": "Select Language",
+  "@menu_selectLanguage": {
+    "description": "Language picker dialog title"
+  },
+  "menu_emergencySos": "Emergency SOS",
+  "@menu_emergencySos": {
+    "description": "Emergency SOS menu link label"
+  },
+
+  "settings_preferences": "PREFERENCES",
+  "@settings_preferences": {
+    "description": "Preferences section header"
+  },
+  "settings_darkMode": "Dark Mode",
+  "@settings_darkMode": {
+    "description": "Dark mode toggle label"
+  },
+  "settings_supportLegal": "SUPPORT & LEGAL",
+  "@settings_supportLegal": {
+    "description": "Support section header"
+  },
+  "settings_feedback": "Feedback",
+  "@settings_feedback": {
+    "description": "Feedback link label"
+  },
+  "settings_legal": "Legal",
+  "@settings_legal": {
+    "description": "Legal link label"
+  },
+  "settings_about": "ABOUT",
+  "@settings_about": {
+    "description": "About section header"
+  },
+  "settings_appVersion": "App Version",
+  "@settings_appVersion": {
+    "description": "App version label"
+  },
+  "settings_rateUs": "Rate Us",
+  "@settings_rateUs": {
+    "description": "Rate us link label"
+  },
+  "settings_accountSection": "ACCOUNT",
+  "@settings_accountSection": {
+    "description": "Account section header in settings"
+  },
+  "settings_deleteConfirmTitle": "Delete Account",
+  "@settings_deleteConfirmTitle": {
+    "description": "Delete account confirmation dialog title"
+  },
+  "settings_deleteConfirmBody": "This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?",
+  "@settings_deleteConfirmBody": {
+    "description": "Delete account confirmation dialog body"
+  },
+  "settings_delete": "Delete",
+  "@settings_delete": {
+    "description": "Delete button label in confirmation dialog"
+  },
+  "settings_deleteNotAvailable": "Account deletion is not yet available. Please contact support.",
+  "@settings_deleteNotAvailable": {
+    "description": "Snackbar message when delete is not available"
+  },
+  "settings_notifications": "Notifications",
+  "@settings_notifications": {
+    "description": "Notifications toggle label"
+  },
+  "settings_changePhone": "Change Phone Number",
+  "@settings_changePhone": {
+    "description": "Change phone number row in settings"
+  },
+  "settings_comingSoon": "Coming soon",
+  "@settings_comingSoon": {
+    "description": "Generic coming-soon snackbar title"
+  }
 }

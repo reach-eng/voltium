@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -14,42 +15,53 @@ void main() {
 
   testWidgets('KYC notification – rider sees notification bell with count',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Verify notification bell is visible on dashboard
-    expect(find.byKey(const Key('notificationBell')), findsAtLeastNWidgets(1),
-        reason: 'Notification bell should be visible on dashboard',);
+    expect(
+      app.dashboard.notificationBell,
+      findsAtLeastNWidgets(1),
+      reason: 'Notification bell should be visible on dashboard',
+    );
 
     // Tap notification bell to open notification center
-    await tester.tap(find.byKey(const Key('notificationBell')));
+    await tester.tap(app.dashboard.notificationBell);
     await settle(tester);
 
     // Notification center should open
-    final markAllReadBtn = find.byKey(const Key('markAllReadButton'));
-    final notificationCards = find.byKey(const Key('notificationCard'));
+    final markAllReadBtn = app.dashboard.markAllReadButton;
+    final notificationCards = app.dashboard.notificationCard;
 
     // Either mark all read button or notification cards should be present
     final hasNotificationCenter = markAllReadBtn.evaluate().isNotEmpty ||
         notificationCards.evaluate().isNotEmpty ||
         find.text('No notifications').evaluate().isNotEmpty;
 
-    expect(hasNotificationCenter, isTrue,
-        reason: 'Should show notification center content',);
+    expect(
+      hasNotificationCenter,
+      isTrue,
+      reason: 'Should show notification center content',
+    );
   });
 
   testWidgets('KYC notification – notification cards display correctly',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Open notification center
-    await tester.tap(find.byKey(const Key('notificationBell')));
+    await tester.tap(app.dashboard.notificationBell);
     await settle(tester);
 
     // If there are notifications, verify card structure
-    final notificationCards = find.byKey(const Key('notificationCard'));
+    final notificationCards = app.dashboard.notificationCard;
     if (notificationCards.evaluate().isNotEmpty) {
-      expect(notificationCards, findsAtLeastNWidgets(1),
-          reason: 'Should display at least one notification card',);
+      expect(
+        notificationCards,
+        findsAtLeastNWidgets(1),
+        reason: 'Should display at least one notification card',
+      );
 
       // Verify notification card has expected elements
       final firstCard = notificationCards.first;
@@ -58,14 +70,15 @@ void main() {
   });
 
   testWidgets('KYC notification – mark all read works', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Open notification center
-    await tester.tap(find.byKey(const Key('notificationBell')));
+    await tester.tap(app.dashboard.notificationBell);
     await settle(tester);
 
     // If mark all read button exists, tap it
-    final markAllReadBtn = find.byKey(const Key('markAllReadButton'));
+    final markAllReadBtn = app.dashboard.markAllReadButton;
     if (markAllReadBtn.evaluate().isNotEmpty) {
       await tester.tap(markAllReadBtn);
       await settle(tester);
@@ -77,6 +90,7 @@ void main() {
 
   testWidgets('KYC notification – KYC status visible in profile',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to profile
@@ -86,13 +100,17 @@ void main() {
     // Profile should show KYC status
     final kycStatus = find.textContaining('KYC');
     if (kycStatus.evaluate().isNotEmpty) {
-      expect(kycStatus, findsAtLeastNWidgets(1),
-          reason: 'KYC status should be visible in profile',);
+      expect(
+        kycStatus,
+        findsAtLeastNWidgets(1),
+        reason: 'KYC status should be visible in profile',
+      );
     }
   });
 
   testWidgets('KYC notification – rider dashboard reflects KYC state',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Dashboard should be visible
@@ -105,6 +123,6 @@ void main() {
         find.textContaining('verification').evaluate().isNotEmpty;
 
     // This test passes regardless - just verifies no crash
-    expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
+    expect(app.dashboard.dashboardTab, findsOneWidget);
   });
 }

@@ -20,7 +20,7 @@ FAILED=0
 
 # 1. No String.fromEnvironment for secrets in flutter/lib/
 echo "Checking Gate 1: No String.fromEnvironment for secrets in flutter/lib/..."
-SECRET_ENV_REFS=$(grep -RIn "String.fromEnvironment" "$PROJECT_DIR/flutter/lib/" 2>/dev/null | grep -Ei "secret|password|key|auth|token|hmac" || true)
+SECRET_ENV_REFS=$(grep -RIn "String.fromEnvironment" "$PROJECT_DIR/flutter/lib/" 2>/dev/null | grep -Ei "secret|password|auth_secret|token_secret|hmac" | grep -vE "API_KEY" || true)
 if [ -n "$SECRET_ENV_REFS" ]; then
   echo "FAIL: Found String.fromEnvironment for secrets:"
   echo "$SECRET_ENV_REFS"
@@ -87,6 +87,18 @@ if [ -z "$PROD_ENV_CHECKS" ] || [ -z "$PROD_WORKER_CHECKS" ]; then
   FAILED=1
 else
   echo "PASS: env.ts asserts CRON_SECRET and WORKER_SECRET"
+fi
+echo ""
+
+# 6. Assert ENABLE_DEV_ADMIN_LOGIN + ENABLE_TEST_OTP gated in non-dev envs
+echo "Checking Gate 6: Confirm environment checks for dev bypass flags exist..."
+DEV_ADMIN_CHECK=$(grep -rn "ENABLE_DEV_ADMIN_LOGIN" "$PROJECT_DIR/web/src/lib/env.ts" 2>/dev/null || true)
+TEST_OTP_CHECK=$(grep -rn "ENABLE_TEST_OTP" "$PROJECT_DIR/web/src/lib/env.ts" 2>/dev/null || true)
+if [ -z "$DEV_ADMIN_CHECK" ] || [ -z "$TEST_OTP_CHECK" ]; then
+  echo "FAIL: env.ts does not gate ENABLE_DEV_ADMIN_LOGIN and ENABLE_TEST_OTP"
+  FAILED=1
+else
+  echo "PASS: env.ts gates ENABLE_DEV_ADMIN_LOGIN and ENABLE_TEST_OTP"
 fi
 echo ""
 

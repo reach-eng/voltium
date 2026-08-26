@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 
 interface DeviceComplianceResult {
@@ -73,7 +74,7 @@ export const deviceComplianceJob = {
 
       // Auto-resolve old violations if rider is now compliant
       // (violations older than 7 days with no new violations get resolved)
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(clock.now().getTime() - 7 * 24 * 60 * 60 * 1000);
       const oldViolations = await db.deviceViolation.updateMany({
         where: {
           riderId: rider.id,
@@ -82,7 +83,7 @@ export const deviceComplianceJob = {
         },
         data: {
           status: 'RESOLVED',
-          resolvedAt: new Date(),
+          resolvedAt: clock.now(),
         },
       });
       result.violationsResolved += oldViolations.count;

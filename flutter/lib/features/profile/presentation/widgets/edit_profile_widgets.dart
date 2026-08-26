@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EditProfileTextField extends StatelessWidget {
   final String label;
@@ -24,41 +26,38 @@ class EditProfileTextField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
+                .copyWith(color: AppColors.slate500),
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+        SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: AppTypography.bodyLarge
+              .copyWith(fontWeight: FontWeight.w600)
+              .copyWith(color: AppColors.slate800),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
+            filled: true,
+            fillColor:
+                AppColors.iconBackground, // AppColors.slate100 equivalent
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: BorderSide.none,
             ),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -88,54 +87,51 @@ class EditProfileDateField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
+                .copyWith(color: AppColors.slate500),
           ),
         ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            controller: controller,
-            readOnly: true,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+        SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          style: AppTypography.bodyLarge
+              .copyWith(fontWeight: FontWeight.w600)
+              .copyWith(color: AppColors.slate800),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.calendar_today_outlined,
+              color: AppColors.slate400,
+              size: 18,
             ),
-            decoration: const InputDecoration(
-              prefixIcon: Icon(
-                Icons.calendar_today_outlined,
-                color: AppColors.slate400,
-                size: 18,
-              ),
-              suffixIcon: Icon(
-                Icons.edit_calendar_outlined,
-                color: AppColors.primary,
-                size: 18,
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              hintText: 'YYYY-MM-DD',
+            suffixIcon: const Icon(
+              Icons.edit_calendar_outlined,
+              color: AppColors.primary,
+              size: 18,
             ),
-            onTap: onTap,
+            filled: true,
+            fillColor:
+                AppColors.iconBackground, // AppColors.slate100 equivalent
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            hintText: 'YYYY-MM-DD',
           ),
+          onTap: onTap,
         ),
       ],
     );
@@ -153,12 +149,9 @@ class EditProfileSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          color: AppColors.slate500,
-          letterSpacing: 1.2,
-        ),
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+            .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
       ),
     );
   }
@@ -170,20 +163,22 @@ class EditProfileAdminNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        color: AppColors.warningSurface,
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(color: AppColors.warningBorder),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.info_outline, color: AppColors.warningDark, size: 22),
+          const Icon(Icons.info_outline,
+              color: AppColors.warningDark, size: 22),
           SizedBox(width: 16),
           Expanded(
-            child: Text('Profile changes require admin approval before becoming active.',
-              style: TextStyle(
-                color: Color(0xFF9A3412),
+            child: Text(
+              'Profile changes require admin approval before becoming active.',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.warningDark,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 height: 1.4,

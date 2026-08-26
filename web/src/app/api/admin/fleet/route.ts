@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     const result = await adminRiderUseCases.listFleet({ hubId, status, search, lowBattery });
 
-    return success(result);
+    return withCacheHeaders(success(result), 5);
   } catch (error) {
     logger.error('GET /api/admin/fleet error:', error);
     return errors.internal('Failed to fetch fleet data');

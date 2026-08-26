@@ -49,13 +49,13 @@ export interface CompressResult {
 }
 
 const DEFAULT_OPTIONS: Required<CompressOptions> = {
-  maxSizeBytes: 300 * 1024,
+  maxSizeBytes: 150 * 1024,
   maxWidth: 1920,
   maxHeight: 1920,
   initialQuality: 0.8,
   qualityStep: 0.05,
   minQuality: 0.1,
-  outputMime: 'image/jpeg',
+  outputMime: 'image/webp',
 };
 
 /** Supported input image MIME types */

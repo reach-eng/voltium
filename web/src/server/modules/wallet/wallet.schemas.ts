@@ -3,9 +3,9 @@
  */
 
 import { z } from 'zod';
-import { walletTopupSchema } from '@/lib/validators';
+import { adminWalletTopupSchema } from '@/lib/validators';
 
-export { walletTopupSchema };
+export { adminWalletTopupSchema };
 
 export const approveTopupSchema = z.object({
   transactionId: z.string().min(1),
@@ -13,5 +13,5 @@ export const approveTopupSchema = z.object({
   rejectionReason: z.string().max(200).optional(),
 });
 
-export type WalletTopupDto = z.infer<typeof walletTopupSchema>;
+export type WalletTopupDto = z.infer<typeof adminWalletTopupSchema>;
 export type ApproveTopupDto = z.infer<typeof approveTopupSchema>;

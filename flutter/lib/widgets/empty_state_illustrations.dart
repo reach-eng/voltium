@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EmptyStateIllustration extends StatelessWidget {
   final EmptyStateType type;
@@ -19,29 +21,27 @@ class EmptyStateIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: Spacing.paddingXl,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildIllustration(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               title ?? _defaultTitle,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.titleMedium,
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 message!,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: colors.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -115,7 +115,7 @@ class _EmptyStatePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = AppColors.surfaceAlt
+      ..color = AppColors.surface
       ..style = PaintingStyle.fill;
 
     switch (type) {
@@ -169,21 +169,41 @@ class _EmptyStatePainter extends CustomPainter {
     final body = Path()
       ..moveTo(center.dx - 25, center.dy - 20)
       ..quadraticBezierTo(
-          center.dx - 25, center.dy + 25, center.dx, center.dy + 25,)
+        center.dx - 25,
+        center.dy + 25,
+        center.dx,
+        center.dy + 25,
+      )
       ..quadraticBezierTo(
-          center.dx + 25, center.dy + 25, center.dx + 25, center.dy - 20,)
+        center.dx + 25,
+        center.dy + 25,
+        center.dx + 25,
+        center.dy - 20,
+      )
       ..close();
     canvas.drawPath(body, fillPaint);
     canvas.drawPath(body, paint);
     canvas.drawCircle(center.translate(0, 40), 6, paint);
     canvas.drawLine(
-        center.translate(-30, -20), center.translate(-30, -35), paint,);
+      center.translate(-30, -20),
+      center.translate(-30, -35),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(30, -20), center.translate(30, -35), paint,);
+      center.translate(30, -20),
+      center.translate(30, -35),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(-15, -20), center.translate(-15, -30), paint,);
+      center.translate(-15, -20),
+      center.translate(-15, -30),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(15, -20), center.translate(15, -30), paint,);
+      center.translate(15, -20),
+      center.translate(15, -30),
+      paint,
+    );
   }
 
   void _drawCalendar(Canvas canvas, Size size, Paint paint, Paint fillPaint) {
@@ -192,7 +212,10 @@ class _EmptyStatePainter extends CustomPainter {
     canvas.drawRect(rect, fillPaint);
     canvas.drawRect(rect, paint);
     canvas.drawLine(
-        center.translate(-35, -20), center.translate(35, -20), paint,);
+      center.translate(-35, -20),
+      center.translate(35, -20),
+      paint,
+    );
     canvas.drawCircle(center.translate(-20, -30), 4, paint);
     canvas.drawCircle(center.translate(20, -30), 4, paint);
   }
@@ -214,10 +237,22 @@ class _EmptyStatePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final path = Path()
       ..moveTo(center.dx, center.dy + 30)
-      ..cubicTo(center.dx - 30, center.dy, center.dx - 30, center.dy - 25,
-          center.dx, center.dy - 10,)
-      ..cubicTo(center.dx + 30, center.dy - 25, center.dx + 30, center.dy,
-          center.dx, center.dy + 30,);
+      ..cubicTo(
+        center.dx - 30,
+        center.dy,
+        center.dx - 30,
+        center.dy - 25,
+        center.dx,
+        center.dy - 10,
+      )
+      ..cubicTo(
+        center.dx + 30,
+        center.dy - 25,
+        center.dx + 30,
+        center.dy,
+        center.dx,
+        center.dy + 30,
+      );
     canvas.drawPath(path, fillPaint);
     canvas.drawPath(path, paint);
   }
@@ -236,9 +271,15 @@ class _EmptyStatePainter extends CustomPainter {
     canvas.drawCircle(center, 40, paint);
     paint.strokeWidth = 4;
     canvas.drawLine(
-        center.translate(-15, -15), center.translate(15, 15), paint,);
+      center.translate(-15, -15),
+      center.translate(15, 15),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(15, -15), center.translate(-15, 15), paint,);
+      center.translate(15, -15),
+      center.translate(-15, 15),
+      paint,
+    );
   }
 
   void _drawWifi(Canvas canvas, Size size, Paint paint, Paint fillPaint) {

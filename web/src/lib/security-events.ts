@@ -16,6 +16,7 @@
 
 import { logger } from './logger';
 import { createAuditLog } from './audit-log';
+import { redactPii } from './pii-redact';
 
 export type SecurityEventSeverity = 'info' | 'warning' | 'critical';
 
@@ -39,11 +40,13 @@ const SECURITY_EVENT_PREFIX = '[Security]';
 export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
   const { type, severity, actorId, actorType, details, ip, userAgent, correlationId } = event;
 
+  const sanitizedDetails = redactPii(details) as Record<string, unknown>;
+
   const logContext: Record<string, unknown> = {
     eventType: type,
     severity,
     actorId: actorId || 'anonymous',
-    ...details,
+    ...sanitizedDetails,
   };
 
   if (ip) logContext.ip = ip;
@@ -64,26 +67,24 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
       logger.info(message, logContext);
   }
 
-  // For critical events, also write to audit log table for persistence
-  if (severity === 'critical' || severity === 'warning') {
-    try {
-      await createAuditLog({
-        actorId: actorId || 'SYSTEM',
-        actorType: actorType || 'SYSTEM',
-        action: `security.${type}`,
-        entity: 'securityEvent',
-        entityId: undefined,
-        details: JSON.stringify({
-          severity,
-          ...details,
-          ip,
-          userAgent,
-          correlationId,
-        }),
-      });
-    } catch (err) {
-      logger.error('[SecurityEvents] Failed to write audit log', { eventType: type, err });
-    }
+  // Write to audit log table for persistence
+  try {
+    await createAuditLog({
+      actorId: actorId || 'SYSTEM',
+      actorType: actorType || 'SYSTEM',
+      action: `security.${type}`,
+      entity: 'securityEvent',
+      entityId: undefined,
+      details: JSON.stringify({
+        severity,
+        ...sanitizedDetails,
+        ip,
+        userAgent,
+        correlationId,
+      }),
+    });
+  } catch (err) {
+    logger.error('[SecurityEvents] Failed to write audit log', { eventType: type, err });
   }
 }
 

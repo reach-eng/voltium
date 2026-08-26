@@ -2,6 +2,7 @@
 ///
 /// These are pure Dart unit tests with no Flutter widget testing overhead.
 library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -32,33 +33,36 @@ RiderModel makeRider({
 
 void main() {
   group('RiderLifecycleGate.redirect', () {
-    test('new rider with no intent → intent screen', () {
+    test('new rider with no intent -> intent', () {
       final rider = makeRider(registrationDone: false, intent: null);
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
     });
 
-    test('rider with empty intent → intent screen', () {
+    test('rider with empty intent -> intent', () {
       final rider = makeRider(intent: '');
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
     });
 
-    test('rider with intent but KYC not done → kycForm', () {
-      final rider = makeRider(kycDone: false);
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.kycForm);
+    test('rider with intent but KYC not done -> preDashboard', () {
+      final rider =
+          makeRider(kycDone: false, lifecycleStatus: 'GUARANTOR_APPROVED');
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });
 
     test('rider with KYC done but guarantor pending → guarantorForm', () {
       final rider = makeRider(
         kycDone: true,
         guarantorStatus: GuarantorStatus.pending,
+        lifecycleStatus: 'PROFILE_SUBMITTED',
       );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
-    test('rider with all done but no pickup → preDashboard', () {
+    test('rider with all done but no pickup -> preDashboard', () {
       final rider = makeRider(
         kycDone: true,
         guarantorStatus: GuarantorStatus.approved,
+        lifecycleStatus: 'KYC_APPROVED',
       );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });

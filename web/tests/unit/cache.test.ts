@@ -99,7 +99,7 @@ describe('cacheResponse / getCachedResponse', () => {
   });
 
   it('evicts oldest entries under LRU when cache exceeds max size', () => {
-    for (let i = 0; i < 102; i++) {
+    for (let i = 0; i < 502; i++) {
       cache.cacheResponse(`key:${i}`, i);
     }
 
@@ -108,24 +108,24 @@ describe('cacheResponse / getCachedResponse', () => {
     expect(cache.getCachedResponse('key:1')).toBeNull();
 
     // Most recent should still exist
-    expect(cache.getCachedResponse('key:101')).toBe(101);
-    expect(cache.getCachedResponse('key:99')).toBe(99);
+    expect(cache.getCachedResponse('key:501')).toBe(501);
+    expect(cache.getCachedResponse('key:499')).toBe(499);
   });
 
   it('promotes accessed keys under LRU (get moves to end)', () => {
-    // Fill cache to 99 items (key:0 through key:98)
-    for (let i = 0; i < 99; i++) {
+    // Fill cache to 499 items (key:0 through key:498)
+    for (let i = 0; i < 499; i++) {
       cache.cacheResponse(`key:${i}`, i);
     }
 
     // Access key:50 to promote it to end of LRU
     expect(cache.getCachedResponse('key:50')).toBe(50);
 
-    // Add key:99 — size becomes 100, no eviction (was 99, now 100)
-    cache.cacheResponse('key:99', 99);
+    // Add key:499 — size becomes 500, no eviction (was 499, now 500)
+    cache.cacheResponse('key:499', 499);
 
-    // Add key:100 — size=100 >= maxSize(100). Evicts 1 entry: key:0 (oldest).
-    cache.cacheResponse('key:100', 100);
+    // Add key:500 — size=500 >= maxSize(500). Evicts 1 entry: key:0 (oldest).
+    cache.cacheResponse('key:500', 500);
 
     // key:0 was the oldest, should be evicted
     expect(cache.getCachedResponse('key:0')).toBeNull();
@@ -374,7 +374,7 @@ describe('getCacheStats', () => {
   it('returns size 0 for empty cache', () => {
     const stats = cache.getCacheStats();
     expect(stats.query.size).toBe(0);
-    expect(stats.query.maxSize).toBe(100);
+    expect(stats.query.maxSize).toBe(500);
     expect(stats.query.keys).toEqual([]);
   });
 

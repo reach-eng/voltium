@@ -1,0 +1,249 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
+import '../../../../helpers/golden_test_helper.dart';
+import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/models/rider_model.dart';
+
+void main() {
+  group('Widget and Cache Tests', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      await CacheService().init();
+    });
+
+    Widget createTestWidget({VoidCallback? onNext}) {
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
+        id: 'test_rider_123',
+        riderId: 'test_rider_123',
+        name: 'Test Rider',
+        phone: '9999999999',
+        lifecycleStatus: 'NEW',
+      ));
+      return ProviderScope(
+        overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GuarantorOnboardingScreen(onNext: onNext),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('Screen renders all 6 sections', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Guarantor Details'), findsWidgets);
+      expect(find.text('NEXT STEP'), findsOneWidget);
+    });
+
+    testWidgets('Cache is loaded and populated', (WidgetTester tester) async {
+      // Pre-populate cache
+      final cacheData = {
+        'name': 'Cached Name',
+        'dob': '01-01-2000',
+        'phone': '1234567890',
+        'fatherName': 'Cached Father',
+        'motherName': 'Cached Mother',
+        'address': 'Cached Address',
+      };
+      await CacheService().setString(
+          'guarantor_onboarding_form_cache_test_rider_123',
+          jsonEncode(cacheData));
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      // Verify fields are populated from cache
+      expect(find.text('Cached Name'), findsOneWidget);
+      expect(find.text('01-01-2000'), findsOneWidget);
+      expect(find.text('1234567890'), findsOneWidget);
+      expect(find.text('Cached Father'), findsOneWidget);
+      expect(find.text('Cached Mother'), findsOneWidget);
+      expect(find.text('Cached Address'), findsOneWidget);
+    });
+
+    testWidgets('Fields save to cache when typed', (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      final nameField = find.byType(TextField).first;
+      await tester.enterText(nameField, 'New Name');
+      await tester.pump(const Duration(seconds: 1));
+
+      // Read cache
+      final cachedStr = CacheService()
+          .getString('guarantor_onboarding_form_cache_test_rider_123');
+      expect(cachedStr, isNotNull);
+
+      final cacheData = jsonDecode(cachedStr!);
+      expect(cacheData['name'], 'New Name');
+    });
+  });
+
+  // ── Bug 25: liability banner ───────────────────────────────────────────
+  group('Liability banner (Bug 25)', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      await CacheService().init();
+    });
+
+    Widget createTestWidget() {
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
+        id: 'test_rider_banner',
+        riderId: 'test_rider_banner',
+        name: 'Test Rider',
+        phone: '9999999999',
+        lifecycleStatus: 'NEW',
+      ));
+      return ProviderScope(
+        overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(
+            body: GuarantorOnboardingScreen(),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('liability banner is visible at the top of the form',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      // Banner explains the financial liability
+      expect(find.byKey(const Key('guarantorLiabilityBanner')), findsOneWidget);
+      expect(
+        find.textContaining('Your guarantor takes on real financial liability'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('jointly responsible for all rental charges'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  // ── Bug 24: Skip button with higher-deposit confirmation ───────────────
+  group('Skip button (Bug 24)', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      await CacheService().init();
+    });
+
+    Widget createTestWidget({VoidCallback? onNext}) {
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
+        id: 'test_rider_skip',
+        riderId: 'test_rider_skip',
+        name: 'Test Rider',
+        phone: '9999999999',
+        lifecycleStatus: 'NEW',
+      ));
+      return ProviderScope(
+        overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GuarantorOnboardingScreen(onNext: onNext),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('Skip button is visible in the bottom bar',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byKey(const Key('skipGuarantorButton')), findsOneWidget);
+    });
+
+    testWidgets(
+        'Tapping Skip opens a confirmation dialog explaining higher deposit',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump(const Duration(seconds: 1));
+
+      // Tap the Skip button
+      await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+      await tester.pump(const Duration(seconds: 1));
+
+      // Confirmation dialog appears
+      expect(find.text('Skip Guarantor?'), findsOneWidget);
+      expect(
+        find.textContaining('₹5,000 instead of ₹2,000'),
+        findsOneWidget,
+      );
+
+      // Cancel button visible
+      expect(
+          find.byKey(const Key('skipGuarantorCancelButton')), findsOneWidget);
+      expect(
+          find.byKey(const Key('skipGuarantorConfirmButton')), findsOneWidget);
+    });
+
+    testWidgets('Cancelling the skip dialog does not call onNext',
+        (WidgetTester tester) async {
+      var onNextCalled = false;
+      await tester.pumpWidget(createTestWidget(onNext: () {
+        onNextCalled = true;
+      }));
+      await tester.pump(const Duration(seconds: 1));
+
+      await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byKey(const Key('skipGuarantorCancelButton')));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(onNextCalled, isFalse);
+      // Higher-deposit flag must NOT be set when user cancels
+      expect(
+        CacheService()
+            .getString('voltium_requires_higher_deposit:test_rider_skip'),
+        isNull,
+      );
+    });
+
+    testWidgets('Confirming the skip sets higher-deposit flag and calls onNext',
+        (WidgetTester tester) async {
+      var onNextCalled = false;
+      await tester.pumpWidget(createTestWidget(onNext: () {
+        onNextCalled = true;
+      }));
+      await tester.pump(const Duration(seconds: 1));
+
+      await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byKey(const Key('skipGuarantorConfirmButton')));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(onNextCalled, isTrue,
+          reason: 'onNext must be called after confirming skip');
+      // Higher-deposit flag persisted for this rider
+      expect(
+        CacheService()
+            .getString('voltium_requires_higher_deposit:test_rider_skip'),
+        'true',
+      );
+      // Form cache cleared so user doesn't see a half-filled form
+      expect(
+        CacheService().getString('guarantor_onboarding_form_cache'),
+        isNull,
+      );
+    });
+  });
+}

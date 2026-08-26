@@ -1,6 +1,10 @@
 // Enum definitions for RiderModel field types
 
 import 'package:json_annotation/json_annotation.dart';
+import 'deposit_record.dart';
+import 'rider_lifecycle_stage.dart';
+import '../utils/app_constants.dart';
+import '../utils/lifecycle_rank.dart';
 
 part 'rider_model.g.dart';
 
@@ -72,6 +76,7 @@ class RiderModel {
   final String? aadhaarBack;
   final String? panCard;
   final String? kycRejectionReason;
+  final List<String>? kycEditableFields;
 
   // ── Bank ────────────────────────────────────────────────────────────────
   final String? bankAccount;
@@ -107,13 +112,35 @@ class RiderModel {
 
   // ── Plan ────────────────────────────────────────────────────────────────
   final String planStatus;
+  final String? planRejectionReason;
+
+  // ── Deposit Record ──────────────────────────────────────────────────────
+  final DepositRecord? depositRecord;
+
+  // ── Device policy (Phase 2.6) ──────────────────────────────────────────
+  // Mirrors the corresponding Prisma columns used by the FCM overlay
+  // and security flags. Server is source of truth; the rider app
+  // mirrors the values into the secure storage so the FCM service
+  // can read them synchronously.
+  final String? fcmToken;
+  final bool isAdminLocked;
+  final bool isUninstallBlocked;
+  final bool isLocationMandatory;
+  final bool isAppsControlRestricted;
+  final bool deviceAdminGranted;
+  final bool displayOverlayGranted;
+  final DateTime? lastDeviceViolationAt;
+  final int deviceViolationCount;
   final String? currentPlan;
+  final double? currentPlanPrice;
   final DateTime? planStartDate;
   final DateTime? planEndDate;
+  final bool advanceRentPaid;
 
   // ── Rental ──────────────────────────────────────────────────────────────
   final String rentalStatus;
   final String? assignedVehicle;
+  final String? vehicleModel;
   final String? pickupHub;
   final String? teamLeader;
   final String? emergencyContact;
@@ -132,11 +159,16 @@ class RiderModel {
   final bool planDone;
   final bool pickupDone;
 
-  // ── Account ─────────────────────────────────────────────────────────────
+  // ── Account ──────────────────────────────────────────────────────────────────
   final AccountStatus accountStatus;
   final String lifecycleStatus;
+  // PR-K.2: the new canonical 5-value stage. Preferred over `lifecycleStatus`
+  // (15 values) for routing decisions. `lifecycleStatus` is kept for
+  // backward compat with cached payloads and the legacy column.
+  final RiderLifecycleStage lifecycleStage;
+  final bool isNewRider;
 
-  // ── Referral & Rewards ───────────────────────────────────────────────────
+  // ── Referral & Rewards ───────────────────────────────────────────────────────
   final String? referralCode;
   final int totalRewardPoints;
 
@@ -164,6 +196,7 @@ class RiderModel {
     this.aadhaarBack,
     this.panCard,
     this.kycRejectionReason,
+    this.kycEditableFields,
     this.bankAccount,
     this.bankIfsc,
     this.bankName,
@@ -180,13 +213,28 @@ class RiderModel {
     this.walletBalance = 0.0,
     this.securityDeposit = 0.0,
     this.depositStatus = DepositStatus.pending,
+    this.depositRecord,
     this.paymentStreak = 0,
     this.planStatus = 'NONE',
+    this.planRejectionReason,
+    // Device policy defaults (Phase 2.6). Server is source of truth.
+    this.fcmToken,
+    this.isAdminLocked = false,
+    this.isUninstallBlocked = false,
+    this.isLocationMandatory = false,
+    this.isAppsControlRestricted = false,
+    this.deviceAdminGranted = false,
+    this.displayOverlayGranted = false,
+    this.lastDeviceViolationAt,
+    this.deviceViolationCount = 0,
     this.currentPlan,
+    this.currentPlanPrice,
     this.planStartDate,
     this.planEndDate,
+    this.advanceRentPaid = false,
     this.rentalStatus = 'NONE',
     this.assignedVehicle,
+    this.vehicleModel,
     this.pickupHub,
     this.teamLeader,
     this.emergencyContact,
@@ -197,6 +245,8 @@ class RiderModel {
     this.pickupDone = false,
     this.accountStatus = AccountStatus.preActive,
     this.lifecycleStatus = 'NEW',
+    this.lifecycleStage = RiderLifecycleStage.newRider,
+    this.isNewRider = false,
     this.referralCode,
     this.totalRewardPoints = 0,
     this.createdAt,
@@ -274,10 +324,12 @@ class RiderModel {
     int? paymentStreak,
     String? planStatus,
     String? currentPlan,
+    double? currentPlanPrice,
     DateTime? planStartDate,
     DateTime? planEndDate,
     String? rentalStatus,
     String? assignedVehicle,
+    String? vehicleModel,
     String? pickupHub,
     String? teamLeader,
     String? emergencyContact,
@@ -288,6 +340,8 @@ class RiderModel {
     bool? pickupDone,
     AccountStatus? accountStatus,
     String? lifecycleStatus,
+    RiderLifecycleStage? lifecycleStage,
+    bool? isNewRider,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? intent,
@@ -338,10 +392,12 @@ class RiderModel {
       paymentStreak: paymentStreak ?? this.paymentStreak,
       planStatus: planStatus ?? this.planStatus,
       currentPlan: currentPlan ?? this.currentPlan,
+      currentPlanPrice: currentPlanPrice ?? this.currentPlanPrice,
       planStartDate: planStartDate ?? this.planStartDate,
       planEndDate: planEndDate ?? this.planEndDate,
       rentalStatus: rentalStatus ?? this.rentalStatus,
       assignedVehicle: assignedVehicle ?? this.assignedVehicle,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
       pickupHub: pickupHub ?? this.pickupHub,
       teamLeader: teamLeader ?? this.teamLeader,
       emergencyContact: emergencyContact ?? this.emergencyContact,
@@ -352,6 +408,8 @@ class RiderModel {
       pickupDone: pickupDone ?? this.pickupDone,
       accountStatus: accountStatus ?? this.accountStatus,
       lifecycleStatus: lifecycleStatus ?? this.lifecycleStatus,
+      lifecycleStage: lifecycleStage ?? this.lifecycleStage,
+      isNewRider: isNewRider ?? this.isNewRider,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       intent: intent ?? this.intent,
@@ -372,22 +430,107 @@ class RiderModel {
     );
   }
 
+  /// Returns (rentalPrice, securityDeposit) fallback values for the current plan.
+  (double, double) get _planFallbacks => (
+        AppConstants.getPlanPrice(currentPlan),
+        AppConstants.getPlanSecurityDeposit(currentPlan),
+      );
+
   /// Helper to get the price of the active rental plan. Ideally this should come
   /// down from the backend, but mapped here for client logic.
   @JsonKey(includeFromJson: false, includeToJson: false)
   double get activeRentalPlanPrice {
-    switch (currentPlan?.toUpperCase()) {
-      case 'WEEKLY_MAX':
-        return 1500.0;
-      case 'WEEKLY_BASIC':
-        return 1000.0;
-      case 'DAILY_FLEX':
-        return 250.0;
-      default:
-        // Default safe fallback plan price.
-        return 1500.0;
+    // Use actual price from backend if available (already converted from paise in fromJson).
+    if (currentPlanPrice != null && currentPlanPrice! > 0) {
+      return currentPlanPrice!;
     }
+    return _planFallbacks.$1;
   }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  double get activeRentalPlanSecurityDeposit => _planFallbacks.$2;
+
+  // ── Derived Lifecycle & Progress Status Getters ─────────────────────────
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int get lifecycleRankValue => lifecycleRank(this);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isRegistrationDone =>
+      registrationDone ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 3);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPlanDone =>
+      planDone ||
+      (currentPlan?.isNotEmpty ?? false) ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 4);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositDone =>
+      depositDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 6);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycApproved =>
+      kycDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 8);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPickupDone =>
+      pickupDone ||
+      (assignedVehicle?.isNotEmpty ?? false) ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 9);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycRejected => kycStatus == KycStatus.rejected;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycSubmitted => kycStatus == KycStatus.submitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isActuallyActive =>
+      accountStatus == AccountStatus.active ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 11);
+
+  // ── Compound State Getters (used by PreDashboardScreen) ────────────────
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPlanRejected => planStatus == 'REJECTED';
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositRejected => depositRecord?.status == DepositStatus.rejected;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isAwaitingPickup => isPlanDone && !isPickupDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsPlanSelection => isRegistrationDone && !isPlanDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsRegistrationStart =>
+      !isRegistrationDone && !isKycRejected && !isKycSubmitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsDeposit => isPlanDone && !isDepositDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get canSubmitDeposit =>
+      depositRecord == null ||
+      depositRecord!.status == DepositStatus.notSubmitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositPending =>
+      depositRecord != null &&
+      (depositRecord!.status == DepositStatus.pending ||
+          depositRecord!.status == DepositStatus.pendingVerification ||
+          depositRecord!.status == DepositStatus.rejected);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isReadyForPickup => isDepositDone && isKycApproved && !isPickupDone;
+
+  /// Calculate the required payment amount (plan price + security deposit).
+  double requiredPaymentAmount(double walletMinTopup) =>
+      (activeRentalPlanPrice > 0 ? activeRentalPlanPrice : walletMinTopup) +
+      activeRentalPlanSecurityDeposit;
 
   // ── fromJson ────────────────────────────────────────────────────────────
 
@@ -430,7 +573,21 @@ class RiderModel {
       depositStatus: _parseDepositStatus(json['depositStatus']),
       paymentStreak: json['paymentStreak'] as int? ?? 0,
       planStatus: json['planStatus'] as String? ?? 'NONE',
+      // Device policy (Phase 2.6).
+      fcmToken: json['fcmToken'] as String?,
+      isAdminLocked: json['isAdminLocked'] as bool? ?? false,
+      isUninstallBlocked: json['isUninstallBlocked'] as bool? ?? false,
+      isLocationMandatory: json['isLocationMandatory'] as bool? ?? false,
+      isAppsControlRestricted:
+          json['isAppsControlRestricted'] as bool? ?? false,
+      deviceAdminGranted: json['deviceAdminGranted'] as bool? ?? false,
+      displayOverlayGranted: json['displayOverlayGranted'] as bool? ?? false,
+      lastDeviceViolationAt: json['lastDeviceViolationAt'] != null
+          ? DateTime.tryParse(json['lastDeviceViolationAt'] as String)
+          : null,
+      deviceViolationCount: json['deviceViolationCount'] as int? ?? 0,
       currentPlan: json['currentPlan'] as String?,
+      currentPlanPrice: _toDouble(json['currentPlanPrice'], convertPaise: true),
       planStartDate: json['planStartDate'] != null
           ? DateTime.tryParse(json['planStartDate'] as String)
           : null,
@@ -439,6 +596,7 @@ class RiderModel {
           : null,
       rentalStatus: json['rentalStatus'] as String? ?? 'NONE',
       assignedVehicle: json['assignedVehicle'] as String?,
+      vehicleModel: json['vehicleModel'] as String?,
       pickupHub: json['pickupHub'] as String?,
       teamLeader: json['teamLeader'] as String?,
       emergencyContact: json['emergencyContact'] as String?,
@@ -448,7 +606,16 @@ class RiderModel {
       planDone: json['planDone'] as bool? ?? false,
       pickupDone: json['pickupDone'] as bool? ?? false,
       accountStatus: _parseAccountStatus(json['accountStatus']),
-      lifecycleStatus: json['lifecycleStatus'] as String? ?? 'NEW',
+      lifecycleStatus: json['lifecycleStatus'] as String? ??
+          json['state'] as String? ??
+          'NEW',
+      // PR-K.2: prefer the new 5-value stage column. Fall back to mapping
+      // from the legacy 15-value status if the new column is null/empty.
+      lifecycleStage: (json['lifecycleStage'] as String? ?? '').isNotEmpty
+          ? parseRiderLifecycleStage(json['lifecycleStage'] as String?)
+          : lifecycleStageFromStatus(
+              json['lifecycleStatus'] as String? ?? 'NEW'),
+      isNewRider: json['isNewRider'] as bool? ?? false,
       referralCode: json['referralCode'] as String?,
       totalRewardPoints: json['totalRewardPoints'] as int? ?? 0,
       createdAt: json['createdAt'] != null
@@ -462,6 +629,7 @@ class RiderModel {
           ? DateTime.tryParse(json['submissionDate'] as String)
           : null,
       returnPending: json['returnPending'] as bool? ?? false,
+      advanceRentPaid: json['advanceRentPaid'] as bool? ?? false,
       pickupPhotoFront: json['pickupPhotoFront'] as String?,
       pickupPhotoBack: json['pickupPhotoBack'] as String?,
       pickupPhotoLeft: json['pickupPhotoLeft'] as String?,
@@ -484,10 +652,17 @@ class RiderModel {
       'id': id,
       'riderId': riderId,
       'walletBalance': walletBalance,
+      'securityDeposit': securityDeposit,
       'currentPlan': currentPlan,
+      'currentPlanPrice': currentPlanPrice,
       'assignedVehicle': assignedVehicle,
+      'vehicleModel': vehicleModel,
+      'pickupHub': pickupHub,
+      'teamLeader': teamLeader,
+      'emergencyContact': emergencyContact,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
+      'isNewRider': isNewRider,
       'kycStatus': kycStatus.name,
       'rentalStatus': rentalStatus,
       'name': name,
@@ -500,6 +675,9 @@ class RiderModel {
       'kycDone': kycDone,
       'planDone': planDone,
       'pickupDone': pickupDone,
+      'planStartDate': planStartDate?.toIso8601String(),
+      'planEndDate': planEndDate?.toIso8601String(),
+      'paymentStreak': paymentStreak,
     };
   }
 
@@ -511,11 +689,48 @@ class RiderModel {
       riderId: cache['riderId'] as String? ?? '',
       name: cache['name'] as String? ?? '',
       phone: cache['phone'] as String? ?? '',
+      email: cache['email'] as String?,
+      fatherName: cache['fatherName'] as String?,
+      motherName: cache['motherName'] as String?,
+      dob: cache['dob'] != null
+          ? DateTime.tryParse(cache['dob'] as String)
+          : null,
+      currentAddress: cache['currentAddress'] as String?,
+      emergencyContact: cache['emergencyContact'] as String?,
+      profilePhoto: cache['profilePhoto'] as String?,
       walletBalance: _toDouble(cache['walletBalance']),
+      securityDeposit: _toDouble(cache['securityDeposit']),
       currentPlan: cache['currentPlan'] as String?,
+      currentPlanPrice: _toDouble(cache['currentPlanPrice']),
       assignedVehicle: cache['assignedVehicle'] as String?,
+      vehicleModel: cache['vehicleModel'] as String?,
+      pickupHub: cache['pickupHub'] as String?,
+      teamLeader: cache['teamLeader'] as String?,
+      paymentStreak: cache['paymentStreak'] as int? ?? 0,
+      planStartDate: cache['planStartDate'] != null
+          ? DateTime.tryParse(cache['planStartDate'] as String)
+          : null,
+      planEndDate: cache['planEndDate'] != null
+          ? DateTime.tryParse(cache['planEndDate'] as String)
+          : null,
+      guarantorName: cache['guarantorName'] as String?,
+      guarantorPhone: cache['guarantorPhone'] as String?,
+      guarantorAddress: cache['guarantorAddress'] as String?,
+      guarantorStatus: _parseGuarantorStatus(cache['guarantorStatus']),
+      guarantorPhoto: cache['guarantorPhoto'] as String?,
+      depositStatus: _parseDepositStatus(cache['depositStatus']),
+      aadhaarFront: cache['aadhaarFront'] as String?,
+      aadhaarBack: cache['aadhaarBack'] as String?,
+      panCard: cache['panCard'] as String?,
+      signature: cache['signature'] as String?,
+      guarantorAadhaarFront: cache['guarantorAadhaarFront'] as String?,
+      guarantorAadhaarBack: cache['guarantorAadhaarBack'] as String?,
+      guarantorPan: cache['guarantorPan'] as String?,
+      guarantorVideo: cache['guarantorVideo'] as String?,
+      guarantorSignature: cache['guarantorSignature'] as String?,
       accountStatus: _parseAccountStatus(cache['accountStatus']),
       lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',
+      isNewRider: _toBool(cache['isNewRider']) ?? false,
       kycStatus: _parseKycStatus(cache['kycStatus']),
       rentalStatus: cache['rentalStatus'] as String? ?? 'NONE',
       returnPending: _toBool(cache['returnPending']) ?? false,
@@ -546,12 +761,20 @@ class RiderModel {
     return null;
   }
 
-  static double _toDouble(dynamic value) {
+  static double _toDouble(dynamic value, {bool convertPaise = false}) {
     if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
+    double d;
+    if (value is double) {
+      d = value;
+    } else if (value is int) {
+      d = value.toDouble();
+    } else if (value is String) {
+      d = double.tryParse(value) ?? 0.0;
+    } else {
+      d = 0.0;
+    }
+    // Backend stores monetary values in paise; convert to rupees.
+    return convertPaise ? d / 100 : d;
   }
 
   static DateTime? _parseDate(dynamic value) {

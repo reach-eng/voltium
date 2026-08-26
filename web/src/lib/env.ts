@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object({
   // Base
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
@@ -11,16 +11,16 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   FCM_COMMAND_HMAC_SECRET: z
     .string()
-    .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters')
-    .default('fcm-command-hmac-secret-default-32-chars-long'),
+    .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').optional(),
-  ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000'),
+  ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
   CRON_SECRET: z.string().optional(),
   WORKER_SECRET: z.string().optional(),
 
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
   NEXT_PUBLIC_API_BASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_FLUTTER_WEB_URL: z.string().url().default('http://localhost:8080'),
 
   // Integrations
   SMS_PROVIDER: z.enum(['mock', 'msg91']).default('mock'),
@@ -59,6 +59,8 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
+  ALLOW_DEV_PII_KEY: z.string().optional(),
+
   // Features
   NEXT_PUBLIC_ENABLE_KYC: z
     .string()
@@ -76,7 +78,19 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v === 'true'),
-});
+}).refine(
+  (data) => {
+    const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
+    if (isProd && data.ALLOW_DEV_PII_KEY === 'true') {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'ALLOW_DEV_PII_KEY=true is strictly forbidden in production and staging environments',
+    path: ['ALLOW_DEV_PII_KEY'],
+  }
+);
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DATABASE_URL =
@@ -95,6 +109,7 @@ const parseTarget = isServer
       APP_ENV: process.env.APP_ENV,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+      NEXT_PUBLIC_FLUTTER_WEB_URL: process.env.NEXT_PUBLIC_FLUTTER_WEB_URL,
       NEXT_PUBLIC_ENABLE_KYC: process.env.NEXT_PUBLIC_ENABLE_KYC,
       NEXT_PUBLIC_ENABLE_GUARANTOR: process.env.NEXT_PUBLIC_ENABLE_GUARANTOR,
       NEXT_PUBLIC_ENABLE_REWARDS: process.env.NEXT_PUBLIC_ENABLE_REWARDS,
@@ -110,7 +125,6 @@ const parseTarget = isServer
 const _env = envSchema.safeParse(parseTarget);
 
 if (!_env.success) {
-  // eslint-disable-next-line no-console
   console.error('❌ Invalid environment variables:', JSON.stringify(_env.error.format(), null, 2));
   throw new Error('Invalid environment variables');
 }
@@ -172,6 +186,7 @@ if (isServer) {
       'YOUR_SECURE_JWT_SECRET',
       'YOUR_SECURE_JWT_SECRET_MIN_32_CHARS_LONG',
       'placeholder',
+      'fcm-command-hmac-secret-default-32-chars-long',
     ];
     const secretLower = parsedEnv.JWT_SECRET.toLowerCase();
     if (
@@ -180,6 +195,15 @@ if (isServer) {
     ) {
       throw new Error(
         'Security violation: Leaked, insecure, or placeholder JWT_SECRET is not allowed.'
+      );
+    }
+    
+    if (
+      insecurePlaceholders.some((p) => parsedEnv.FCM_COMMAND_HMAC_SECRET.toLowerCase().includes(p.toLowerCase())) ||
+      parsedEnv.FCM_COMMAND_HMAC_SECRET.length < 32
+    ) {
+      throw new Error(
+        'Security violation: Leaked, insecure, or placeholder FCM_COMMAND_HMAC_SECRET is not allowed.'
       );
     }
   }

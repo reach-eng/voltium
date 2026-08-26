@@ -20,9 +20,16 @@ class SupportRepositoryImpl implements SupportRepository {
 
   @override
   Future<Map<String, dynamic>> createTicket(
-      String category, String subject, String message) async {
+    String category,
+    String subject,
+    String message, {
+    String riderId = '',
+    String priority = 'MEDIUM',
+  }) async {
     final request = CreateTicketRequest(
+      riderId: riderId,
       category: category,
+      priority: priority,
       subject: subject,
       message: message,
     );

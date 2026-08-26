@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class StatusTile extends StatelessWidget {
   final String title;
@@ -18,14 +20,13 @@ class StatusTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
-    final Color dotColor =
-        isApproved ? AppColors.success : const Color(0xFFDC2626);
+    final Color dotColor = isApproved ? AppColors.success : AppColors.error;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -47,26 +48,21 @@ class StatusTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.slate500,
-                  letterSpacing: 0.8,
-                ),
+                style: AppTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.w800)
+                    .copyWith(color: AppColors.slate500, letterSpacing: 0.8),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             status,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: dotColor,
-            ),
+            style: AppTypography.labelLarge
+                .copyWith(fontWeight: FontWeight.w700)
+                .copyWith(color: dotColor),
           ),
         ],
       ),
@@ -76,18 +72,22 @@ class StatusTile extends StatelessWidget {
 
 class QuickLinkItem extends StatelessWidget {
   final IconData icon;
+  final IconData? activeIcon;
   final Color iconColor;
   final Color iconBgColor;
   final String title;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const QuickLinkItem({
     super.key,
     required this.icon,
+    this.activeIcon,
     required this.iconColor,
     required this.iconBgColor,
     required this.title,
-    required this.onTap,
+    this.onTap,
+    this.trailing,
   });
 
   @override
@@ -95,7 +95,7 @@ class QuickLinkItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -107,7 +107,7 @@ class QuickLinkItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -122,22 +122,21 @@ class QuickLinkItem extends StatelessWidget {
                   ),
                   child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.labelLarge
+                        .copyWith(fontWeight: FontWeight.w700)
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFFCBD5E1),
-                  size: 20,
-                ),
+                trailing ??
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.borderMedium,
+                      size: 20,
+                    ),
               ],
             ),
           ),
@@ -185,26 +184,24 @@ class ProfileDetailRow extends StatelessWidget {
           ),
           child: Icon(icon, color: AppColors.slate500, size: 20),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 11,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
                   color: AppColors.slate500,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: AppColors.slate800),
               ),
             ],
           ),
@@ -226,12 +223,13 @@ class ProfileGuarantorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isApproved = rider.guarantorStatus == GuarantorStatus.verified;
+    final isApproved = rider.guarantorStatus == GuarantorStatus.verified ||
+        rider.guarantorStatus == GuarantorStatus.approved;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -266,39 +264,48 @@ class ProfileGuarantorCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           memCacheWidth: 96,
                           memCacheHeight: 96,
-                          errorWidget: (_, __, ___) => const Icon(Icons.person,
-                              color: AppColors.slate400, size: 24,),
+                          errorWidget: (_, __, ___) => const Icon(
+                            Icons.person,
+                            color: AppColors.slate400,
+                            size: 24,
+                          ),
                           placeholder: (_, __) => const SizedBox(
                             width: 48,
                             height: 48,
                             child: Center(
                               child: SizedBox(
-                                width: 16, height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
                           ),
                         ),
                       )
-                    : const Icon(Icons.person,
-                        color: AppColors.slate400, size: 24,),
+                    : const Icon(
+                        Icons.person,
+                        color: AppColors.slate400,
+                        size: 24,
+                      ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       rider.guarantorName ?? 'No Name Provided',
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),),
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
+                          .copyWith(color: AppColors.slate800),
                     ),
                     Text(
                       rider.guarantorPhone ?? 'No Phone Provided',
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.slate500,),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        color: AppColors.slate500,
+                      ),
                     ),
                   ],
                 ),
@@ -307,23 +314,21 @@ class ProfileGuarantorCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isApproved
-                      ? const Color(0xFFECFDF5)
-                      : const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(8),
+                      ? AppColors.successLight
+                      : AppColors.warningSurface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(
-                      color: isApproved
-                          ? AppColors.success.withValues(alpha: 0.2)
-                          : const Color(0xFFFDE68A),),
+                    color: isApproved
+                        ? AppColors.success.withValues(alpha: 0.2)
+                        : AppColors.warningBorder,
+                  ),
                 ),
                 child: Text(
                   _capitalize(rider.guarantorStatus.name),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: isApproved
-                        ? AppColors.success
-                        : AppColors.warningDark,
-                  ),
+                  style: AppTypography.labelMedium.copyWith(
+                      color: isApproved
+                          ? AppColors.success
+                          : AppColors.warningDark),
                 ),
               ),
             ],
@@ -332,17 +337,20 @@ class ProfileGuarantorCard extends StatelessWidget {
               rider.guarantorAddress!.isNotEmpty) ...[
             const SizedBox(height: 12),
             const CustomDivider(),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.home_outlined,
-                    color: AppColors.slate500, size: 16,),
-                const SizedBox(width: 8),
+                const Icon(
+                  Icons.home_outlined,
+                  color: AppColors.slate500,
+                  size: 16,
+                ),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     rider.guarantorAddress!,
-                    style:
-                        const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12, color: AppColors.slate600),
                   ),
                 ),
               ],
@@ -363,14 +371,14 @@ class ProfileEmergencySosTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        color: AppColors.errorSurface,
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(color: AppColors.errorBorder),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -383,17 +391,18 @@ class ProfileEmergencySosTile extends StatelessWidget {
                     color: AppColors.errorLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.emergency_outlined,
-                      color: Color(0xFFDC2626), size: 22,),
+                  child: const Icon(
+                    Icons.emergency_outlined,
+                    color: AppColors.error,
+                    size: 22,
+                  ),
                 ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Text('Emergency SOS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFDC2626),
-                    ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Emergency SOS',
+                    style: AppTypography.titleSmall
+                        .copyWith(color: AppColors.error),
                   ),
                 ),
                 const Icon(Icons.chevron_right, color: AppColors.error),
@@ -418,24 +427,22 @@ class ProfileLogoutButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFFDC2626),
+        foregroundColor: AppColors.error,
         elevation: 0,
-        side: const BorderSide(color: Color(0xFFFECACA), width: 1.5),
+        side: const BorderSide(color: AppColors.errorBorder, width: 1.5),
         minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.logout, size: 20),
           SizedBox(width: 8),
-          Text('Logout',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          Text(
+            'Logout',
+            style: AppTypography.titleSmall,
           ),
         ],
       ),
@@ -451,6 +458,7 @@ class ProfileQuickLinks extends StatelessWidget {
   final VoidCallback onAppSettingsTap;
   final VoidCallback onLegalTap;
   final VoidCallback onWorkflowHubTap;
+  final VoidCallback onFeedbackTap;
 
   const ProfileQuickLinks({
     super.key,
@@ -461,6 +469,7 @@ class ProfileQuickLinks extends StatelessWidget {
     required this.onAppSettingsTap,
     required this.onLegalTap,
     required this.onWorkflowHubTap,
+    required this.onFeedbackTap,
   });
 
   @override
@@ -473,7 +482,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('editProfileLink'),
             icon: Icons.edit_outlined,
             iconColor: AppColors.info, // blue-500
-            iconBgColor: const Color(0xFFEFF6FF), // blue-50
+            iconBgColor: AppColors.primarySurface, // blue-50
             title: 'Edit Profile',
             onTap: onEditProfileTap,
           ),
@@ -485,7 +494,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('myDocumentsLink'),
             icon: Icons.contact_page_outlined,
             iconColor: AppColors.success, // emerald-500
-            iconBgColor: const Color(0xFFECFDF5), // emerald-50
+            iconBgColor: AppColors.successLight, // emerald-50
             title: 'My Documents',
             onTap: onMyDocumentsTap,
           ),
@@ -496,8 +505,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('rewardsLink'),
             icon: Icons.card_giftcard_outlined,
-            iconColor: AppColors.evPurple, // violet-500
-            iconBgColor: const Color(0xFFF5F3FF), // violet-50
+            iconColor: AppColors.accentPurple, // violet-500
+            iconBgColor: AppColors.accentPurpleSurface, // violet-50
             title: 'Rewards',
             onTap: onRewardsTap,
           ),
@@ -509,7 +518,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('referralLink'),
             icon: Icons.people_outline,
             iconColor: AppColors.warning, // amber-500
-            iconBgColor: const Color(0xFFFFFBEB), // amber-50
+            iconBgColor: AppColors.warningSurface, // amber-50
             title: 'Referral Program',
             onTap: onReferralTap,
           ),
@@ -533,9 +542,21 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('workflowHubLink'),
             icon: Icons.route_outlined,
             iconColor: AppColors.primary,
-            iconBgColor: const Color(0xFFEFF6FF),
+            iconBgColor: AppColors.primarySurface,
             title: 'Workflow & Services',
             onTap: onWorkflowHubTap,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FadeUpWidget(
+          delay: 575,
+          child: QuickLinkItem(
+            key: const Key('feedbackLink'),
+            icon: Icons.rate_review_outlined,
+            iconColor: AppColors.accentPurple,
+            iconBgColor: AppColors.accentPurpleSurface,
+            title: 'Feedback',
+            onTap: onFeedbackTap,
           ),
         ),
         const SizedBox(height: 8),
@@ -544,8 +565,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('legalLink'),
             icon: Icons.gavel_outlined,
-            iconColor: const Color(0xFF0F766E), // teal-700
-            iconBgColor: const Color(0xFFCCFBF1), // teal-50
+            iconColor: AppColors.successDark, // teal-700
+            iconBgColor: AppColors.successLight, // teal-50
             title: 'Legal',
             onTap: onLegalTap,
           ),

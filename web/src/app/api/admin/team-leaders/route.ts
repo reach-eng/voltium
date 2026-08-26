@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createTeamLeaderSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const isActive = searchParams.get('isActive');
 
     const result = await teamLeaderUseCases.list({ search, isActive, page, limit });
-    return success(result);
+    return withCacheHeaders(success(result), 10);
   } catch (error) {
     logger.error('GET /api/admin/team-leaders error:', error);
     return errors.internal('Failed to fetch team leaders');

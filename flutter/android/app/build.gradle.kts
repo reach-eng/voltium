@@ -6,7 +6,6 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -29,7 +28,7 @@ configure<ApplicationExtension> {
 
     defaultConfig {
         applicationId = "com.voltiumelectric.voltium"
-        minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion // Required by PostHog Android SDK
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -11,27 +11,54 @@ on:
         required: true
         default: 'http://localhost:8081'
 
+# R10 polish #15 (Infra 4.17) — concurrency group so we don't run multiple
+# smoke tests on rapid pushes to the same branch.
+concurrency:
+  group: daily-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 env:
   FLUTTER_VERSION: '3.41.4'
   DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
   JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 jobs:
   smoke-test:
     name: Critical Path Smoke Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    # R10 polish #15 (Infra 4.6) — `sudo systemctl` is typically blocked or
+    # mocked on GitHub-hosted runners. Use the `services:` block (the same
+    # pattern as `nightly-load.yml`) so postgres is a managed sidecar.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Start PostgreSQL Service
+      - name: Wait for PostgreSQL
         run: |
-          sudo systemctl start postgresql.service
-          until pg_isready; do sleep 1; done
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
-          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
+          until pg_isready -h localhost -p 5432; do sleep 1; done
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -48,7 +75,7 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
@@ -67,7 +94,7 @@ jobs:
           TEST_MODE: true
 
       - name: Run Smoke Tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@70f4dee990796918b78d040e3278474bdbd348a7 # v2
         with:
           api-level: 33
           target: google_apis
@@ -82,7 +109,7 @@ jobs:
 
       - name: Upload smoke test screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: smoke-test-screenshots
           path: flutter/screenshots/
@@ -90,5 +117,10 @@ jobs:
       - name: Slack/Email Notification on Failure
         if: failure()
         run: |
-          echo "Daily Smoke Test Failed! Please check the logs."
-          # Integrate with Slack/Discord webhooks here if needed
+          if [ -n "${{ env.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"⚠️ Daily Smoke Test Failed! Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              "${{ env.SLACK_WEBHOOK_URL }}"
+          else
+            echo "SLACK_WEBHOOK_URL not configured. Notification skipped."
+          fi

@@ -43,6 +43,10 @@ fi
 echo ""
 
 # -- Check for Docker commands in source files --------------------------------
+# .github/ is excluded because workflow files sometimes reference Docker
+# in conditional / commented-out blocks (e.g. the workflow files that
+# would need to be rewritten if we ever moved to a containerized CI).
+# We keep those references around for context but they never run.
 EXCLUDE_DIRS="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=build --exclude-dir=.dart_tool --exclude-dir=.codex-review --exclude-dir=.github"
 
 DOCKER_REFS=$(grep -RIn \

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Run gitleaks to prevent secrets from being committed
+if command -v gitleaks &> /dev/null; then
+    gitleaks protect -v --staged
+else
+    echo "gitleaks not installed. Skipping secret scan."
+fi
+
+cd web && npm run lint && npm run typecheck
+cd ../flutter && dart format --set-exit-if-changed lib/ test/

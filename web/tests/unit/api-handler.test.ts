@@ -129,6 +129,11 @@ import {
   ValidationError,
   ConflictError,
 } from '@/lib/api-error';
+import { RentalBookError } from '@/server/modules/rentals/use-cases/errors';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -281,28 +286,28 @@ describe('withApiHandler — domain-specific errors', () => {
 
   describe('RentalBookError', () => {
     it('with code NOT_FOUND → 404', async () => {
-      const err = namedError('RentalBookError', 'Vehicle not available', 'NOT_FOUND');
+      const err = new RentalBookError('Vehicle not available', 'NOT_FOUND');
       const handler = vi.fn().mockRejectedValue(err);
       const wrapped = withApiHandler(handler);
       await expectErrorResponse(wrapped, 404, 'NOT_FOUND');
     });
 
     it('with code CONFLICT → 409', async () => {
-      const err = namedError('RentalBookError', 'Already booked', 'CONFLICT');
+      const err = new RentalBookError('Already booked', 'CONFLICT');
       const handler = vi.fn().mockRejectedValue(err);
       const wrapped = withApiHandler(handler);
       await expectErrorResponse(wrapped, 409, 'CONFLICT');
     });
 
     it('with unknown code → 400', async () => {
-      const err = namedError('RentalBookError', 'Some rental error', 'INTERNAL');
+      const err = new RentalBookError('Some rental error', 'INTERNAL');
       const handler = vi.fn().mockRejectedValue(err);
       const wrapped = withApiHandler(handler);
       await expectErrorResponse(wrapped, 400, 'BAD_REQUEST');
     });
 
     it('with no code → 400', async () => {
-      const err = namedError('RentalBookError', 'Generic rental error');
+      const err = new RentalBookError('Generic rental error');
       const handler = vi.fn().mockRejectedValue(err);
       const wrapped = withApiHandler(handler);
       await expectErrorResponse(wrapped, 400, 'BAD_REQUEST');
@@ -310,28 +315,28 @@ describe('withApiHandler — domain-specific errors', () => {
   });
 
   it('KycStateError → 409 Conflict', async () => {
-    const err = namedError('KycStateError', 'KYC already submitted');
+    const err = new KycStateError('KYC already submitted', 'SUBMITTED', 'SUBMITTED');
     const handler = vi.fn().mockRejectedValue(err);
     const wrapped = withApiHandler(handler);
     await expectErrorResponse(wrapped, 409, 'CONFLICT');
   });
 
   it('GuarantorStateError → 409 Conflict', async () => {
-    const err = namedError('GuarantorStateError', 'Guarantor already verified');
+    const err = new GuarantorStateError('Guarantor already verified', 'APPROVED', 'REJECTED');
     const handler = vi.fn().mockRejectedValue(err);
     const wrapped = withApiHandler(handler);
     await expectErrorResponse(wrapped, 409, 'CONFLICT');
   });
 
   it('DepositStateMachineError → 409 Conflict', async () => {
-    const err = namedError('DepositStateMachineError', 'Invalid deposit state transition');
+    const err = new DepositStateMachineError('Invalid deposit state transition', 'APPROVED', 'REJECTED');
     const handler = vi.fn().mockRejectedValue(err);
     const wrapped = withApiHandler(handler);
     await expectErrorResponse(wrapped, 409, 'CONFLICT');
   });
 
   it('RentalStateError → 409 Conflict', async () => {
-    const err = namedError('RentalStateError', 'Invalid rental state transition');
+    const err = new RentalStateError('Invalid rental state transition', 'ACTIVE', 'CLOSED');
     const handler = vi.fn().mockRejectedValue(err);
     const wrapped = withApiHandler(handler);
     await expectErrorResponse(wrapped, 409, 'CONFLICT');
@@ -339,28 +344,40 @@ describe('withApiHandler — domain-specific errors', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Message-based fallback
+// Prisma "record not found" (P2025) — typed check, not string match
 // ---------------------------------------------------------------------------
 
-describe('withApiHandler — message-based fallback', () => {
+describe('withApiHandler — Prisma P2025 typed check', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('error message containing "not found" → 404', async () => {
+  it('Prisma error with code "P2025" → 404 NOT_FOUND', async () => {
+    // Prisma throws objects with a `code` property (not Error instances).
+    // The handler must detect P2025 by the code field, not by string match.
+    const prismaErr = Object.assign(new Error('No Rider found'), {
+      code: 'P2025',
+      meta: { modelName: 'Rider' },
+    });
+    const handler = vi.fn().mockRejectedValue(prismaErr);
+    const wrapped = withApiHandler(handler);
+    await expectErrorResponse(wrapped, 404, 'NOT_FOUND');
+  });
+
+  it('Prisma error with other code → 500 (no string-match fallback)', async () => {
+    const prismaErr = Object.assign(new Error('Some Prisma failure'), {
+      code: 'P2002',
+      meta: { target: ['phone'] },
+    });
+    const handler = vi.fn().mockRejectedValue(prismaErr);
+    const wrapped = withApiHandler(handler);
+    await expectErrorResponse(wrapped, 500, 'SERVER_ERROR');
+  });
+
+  it('Error containing "not found" in message → 500 (no longer special-cased)', async () => {
+    // The pre-Phase-6 behavior was to match "not found" in the message and
+    // return 404. The Phase-6 fix removed that string-match in favor of the
+    // typed Prisma check. Plain Error objects with "not found" in their
+    // message now fall through to 500.
     const err = new Error('Rider not found in database');
-    const handler = vi.fn().mockRejectedValue(err);
-    const wrapped = withApiHandler(handler);
-    await expectErrorResponse(wrapped, 404, 'NOT_FOUND');
-  });
-
-  it('error message containing "Not found" → 404 (case-sensitive match)', async () => {
-    const err = new Error('Not found: vehicle 123');
-    const handler = vi.fn().mockRejectedValue(err);
-    const wrapped = withApiHandler(handler);
-    await expectErrorResponse(wrapped, 404, 'NOT_FOUND');
-  });
-
-  it('error message without "not found" → 500', async () => {
-    const err = new Error('Database connection timeout');
     const handler = vi.fn().mockRejectedValue(err);
     const wrapped = withApiHandler(handler);
     await expectErrorResponse(wrapped, 500, 'SERVER_ERROR');

@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
-import { validateBody, updateLegalSchema } from '@/lib/validators';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { legalUseCases } from '@/server/modules/legal/legal.use-cases';
+import { updateLegalAdminSchema } from '@/lib/validators/admin';
 
 export async function GET() {
   const session = await requireAdmin();
@@ -13,7 +13,7 @@ export async function GET() {
 
   try {
     const documents = await legalUseCases.list();
-    return success(documents);
+    return withCacheHeaders(success(documents), 300);
   } catch (error) {
     logger.error('GET /api/admin/legal error:', error);
     return errors.internal('Failed to fetch legal documents');
@@ -27,12 +27,12 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(updateLegalSchema, body);
-    if (!validation.success) return errors.validation(validation.error!);
+    const validation = updateLegalAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
     const doc = await legalUseCases.upsert(
       validation.data,
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
     return success(doc);
   } catch (error) {

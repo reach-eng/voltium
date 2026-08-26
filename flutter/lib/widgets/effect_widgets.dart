@@ -34,7 +34,7 @@ class ParticleEffect extends StatefulWidget {
     super.key,
     required this.child,
     this.particleCount = 50,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.speed = 1.0,
     this.enabled = true,
   });
@@ -63,15 +63,17 @@ class _ParticleEffectState extends State<ParticleEffect>
   void _initParticles(Size size) {
     _particles.clear();
     for (int i = 0; i < widget.particleCount; i++) {
-      _particles.add(Particle(
-        x: _random.nextDouble() * size.width,
-        y: _random.nextDouble() * size.height,
-        vx: (_random.nextDouble() - 0.5) * 2 * widget.speed,
-        vy: (_random.nextDouble() - 0.5) * 2 * widget.speed,
-        radius: _random.nextDouble() * 3 + 1,
-        opacity: _random.nextDouble() * 0.5 + 0.2,
-        color: widget.color,
-      ),);
+      _particles.add(
+        Particle(
+          x: _random.nextDouble() * size.width,
+          y: _random.nextDouble() * size.height,
+          vx: (_random.nextDouble() - 0.5) * 2 * widget.speed,
+          vy: (_random.nextDouble() - 0.5) * 2 * widget.speed,
+          radius: _random.nextDouble() * 3 + 1,
+          opacity: _random.nextDouble() * 0.5 + 0.2,
+          color: widget.color,
+        ),
+      );
     }
   }
 
@@ -100,15 +102,17 @@ class _ParticleEffectState extends State<ParticleEffect>
         if (_particles.isEmpty && widget.enabled) {
           _initParticles(_size);
         }
-        return Stack(
-          children: [
-            widget.child,
-            if (widget.enabled)
-              CustomPaint(
-                size: _size,
-                painter: _ParticlePainter(_particles),
-              ),
-          ],
+        return RepaintBoundary(
+          child: Stack(
+            children: [
+              widget.child,
+              if (widget.enabled)
+                CustomPaint(
+                  size: _size,
+                  painter: _ParticlePainter(_particles),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -145,7 +149,7 @@ class GlowEffect extends StatelessWidget {
   const GlowEffect({
     super.key,
     required this.child,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.blurRadius = 20,
     this.spreadRadius = 5,
     this.borderRadius,
@@ -155,7 +159,7 @@ class GlowEffect extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(8),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.6),
@@ -177,7 +181,7 @@ class AnimatedGlow extends StatefulWidget {
   const AnimatedGlow({
     super.key,
     required this.child,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.duration = const Duration(milliseconds: 1500),
   });
 
@@ -208,22 +212,24 @@ class _AnimatedGlowState extends State<AnimatedGlow>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: _animation.value * 0.6),
-                blurRadius: 20 * _animation.value,
-                spreadRadius: 5 * _animation.value,
-              ),
-            ],
-          ),
-          child: widget.child,
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withValues(alpha: _animation.value * 0.6),
+                  blurRadius: 20 * _animation.value,
+                  spreadRadius: 5 * _animation.value,
+                ),
+              ],
+            ),
+            child: widget.child,
+          );
+        },
+      ),
     );
   }
 }
@@ -283,14 +289,14 @@ class FrostedGlass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: borderRadius ?? BorderRadius.circular(16),
+      borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
-          padding: padding ?? const EdgeInsets.all(16),
+          padding: padding ?? Spacing.paddingMd,
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.2),
-            borderRadius: borderRadius ?? BorderRadius.circular(16),
+            borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.2),
             ),
@@ -309,7 +315,7 @@ class VoltMeshGradient extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F172A)), // Base color
+        Container(color: AppColors.slate900), // Base color
         Positioned(
           top: -100,
           right: -100,
@@ -330,7 +336,7 @@ class VoltMeshGradient extends StatelessWidget {
             height: 250,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF142B5B).withValues(alpha: 0.4),
+              color: AppColors.primaryDeep.withValues(alpha: 0.4),
             ),
           ),
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/widgets/wallet_card.dart';
+import 'package:voltium_rider/features/wallet/widgets/wallet_card.dart';
 
 void main() {
   group('Phase 1: Widget Atomic Tests - Wallet Cards', () {

@@ -40,10 +40,11 @@ class _BrandedPullToRefreshState extends State<BrandedPullToRefresh>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       color: widget.color,
-      backgroundColor: Colors.white,
+      backgroundColor: colors.card,
       displacement: 50,
       child: widget.child,
     );
@@ -96,10 +97,11 @@ class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       color: widget.activeColor,
-      backgroundColor: Colors.white,
+      backgroundColor: colors.card,
       displacement: 60,
       child: widget.child,
     );
@@ -126,10 +128,11 @@ class _BoltPullToRefreshState extends State<BoltPullToRefresh>
     with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       color: widget.boltColor,
-      backgroundColor: Colors.white,
+      backgroundColor: colors.card,
       displacement: 70,
       child: widget.child,
     );

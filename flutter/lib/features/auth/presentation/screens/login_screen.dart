@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/main.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/utils/phone_validator.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/utils/phone_validator.dart';
+import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
+import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
+import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.dart';
 
+/// LoginScreen — composition shell for the auth landing page.
+///
+/// Layout (top → bottom):
+///   ┌──────────────────────────────────────────┐
+///   │  Ambient blue glow (top-right)           │
+///   │                                          │
+///   │  Logo + "Voltium" + tagline              │
+///   │  "Welcome" + instructions                │
+///   │  PhoneEntryWidget  (phone + referral +   │
+///   │                     OTP note)            │
+///   │  OtpTriggerWidget (Enter button)         │
+///   │                                          │
+///   │  Floating footer: terms + privacy        │
+///   └──────────────────────────────────────────┘
+///
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
 /// - Centered logo: 72×72 circle, primary blue, bolt icon, shadow
@@ -20,24 +39,23 @@ import 'package:voltium_rider/utils/accessibility.dart';
 /// - OTP note: 1.5px blue dot + "A SECURE OTP WILL BE SENT"
 /// - "Enter" gradient pill button (56px)
 /// - Footer terms links (12px, #475467)
-
-class LoginScreen extends StatefulWidget {
-  final Function(String)? onNext;
+class LoginScreen extends ConsumerStatefulWidget {
+  /// Called when OTP is sent successfully. Passes (phoneNumber, referralCode).
+  final Function(String phone, String? referralCode)? onNext;
   final bool isSignUp;
 
   const LoginScreen({super.key, this.onNext, this.isSignUp = false});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _referralController = TextEditingController();
-  final FocusNode _phoneFocusNode = FocusNode();
+
   bool _isLoading = false;
-  String? _phoneError;
 
   late final AnimationController _entryCtrl;
 
@@ -51,18 +69,19 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+    // No autofill for manual testing
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
     _entryCtrl.forward();
+    // PhoneEntryWidget requests its own focus on first build.
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _referralController.dispose();
-    _phoneFocusNode.dispose();
     _entryCtrl.dispose();
     super.dispose();
   }
@@ -70,51 +89,37 @@ class _LoginScreenState extends State<LoginScreen>
   bool get _canSubmit =>
       PhoneValidator.isValidPhone(_phoneController.text) && !_isLoading;
 
-  void _onPhoneChanged(String value) {
-    setState(() {
-      final digits = value.replaceAll(RegExp(r'\D'), '');
-      if (digits.isEmpty) {
-        _phoneError = null;
-      } else if (digits.length == 10) {
-        _phoneError = PhoneValidator.validate(digits);
-      } else if (digits.length > 10) {
-        _phoneError = 'Phone number cannot exceed 10 digits';
-      } else if (!RegExp(r'^[6-9]').hasMatch(digits)) {
-        _phoneError = 'Phone number must start with 6, 7, 8, or 9';
-      } else {
-        _phoneError = null;
-      }
-    });
-  }
-
   Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
     final error = PhoneValidator.validate(digits);
     if (error != null) {
-      setState(() => _phoneError = error);
+      setState(() {});
       return;
     }
 
     setState(() => _isLoading = true);
+    PostHogService.capture('phone_entered', properties: {
+      'is_sign_up': widget.isSignUp.toString(),
+    });
     try {
       final referralCode = _referralController.text.trim();
-      final response = await VoltiumApiService().sendOtp(
-        phone: digits,
-        referralCode: referralCode.isNotEmpty ? referralCode : null,
-      );
-      if (mounted) {
-        if (response['success'] == true) {
-          widget.onNext?.call(digits);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Failed to send OTP'),
-              behavior: SnackBarBehavior.floating,
-            ),
+      await ref.read(authRepositoryProvider).sendOtp(
+            digits,
+            referralCode: referralCode.isNotEmpty ? referralCode : null,
           );
-        }
+      PostHogService.capture('otp_requested', properties: {
+        'has_referral': (referralCode.isNotEmpty).toString(),
+        'is_sign_up': widget.isSignUp.toString(),
+      });
+      if (mounted) {
+        widget.onNext
+            ?.call(digits, referralCode.isNotEmpty ? referralCode : null);
       }
     } catch (e) {
+      appDebug('[LoginScreen] Error in sendOtp: $e');
+      PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
         String errorMsg = 'Network error. Please try again.';
         if (e is ApiException) {
@@ -135,51 +140,75 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt, // #F5F7FA
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 48),
-
-              // Logo + App Name + Subtitle
-              _buildLogoSection(),
-
-              const SizedBox(height: 64),
-
-              // Welcome text
-              _buildWelcomeSection(),
-
-              const SizedBox(height: 32),
-
-              // Phone input
-              _buildPhoneInput(),
-
-              const SizedBox(height: 16),
-
-              // Referral code input
-              _buildReferralInput(),
-
-              const SizedBox(height: 16),
-
-              // OTP secure note
-              _buildOtpNote(),
-
-              const SizedBox(height: 32),
-
-              // Enter button
-              _buildEnterButton(),
-
-              const SizedBox(height: 32),
-
-              // Footer terms
-              _buildFooterTerms(),
-
-              const SizedBox(height: 24),
-            ],
+      backgroundColor: AppColors.surface,
+      body: Stack(
+        children: [
+          _buildAmbientGlow(),
+          Positioned.fill(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                    32, 24, 32, MediaQuery.of(context).padding.bottom + 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 48),
+                    _buildLogoSection(),
+                    const SizedBox(height: 64),
+                    _buildWelcomeSection(),
+                    const SizedBox(height: 32),
+                    PhoneEntryWidget(
+                      entryController: _entryCtrl,
+                      onPhoneChanged: (_) {
+                        if (mounted) setState(() {}); // refresh _canSubmit
+                      },
+                      onPhoneSubmitted: _handleLogin,
+                      phoneController: _phoneController,
+                      referralController: _referralController,
+                      autoFocus: true,
+                    ),
+                    const SizedBox(height: 32),
+                    OtpTriggerWidget(
+                      canSubmit: _canSubmit,
+                      isLoading: _isLoading,
+                      onPressed: _handleLogin,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: LoginFooter(
+              entryController: _entryCtrl,
+              onLaunchUrl: _launchUrl,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmbientGlow() {
+    return Positioned(
+      top: -100,
+      right: -100,
+      child: Container(
+        width: 300,
+        height: 300,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.primary.withValues(alpha: 0.05),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              blurRadius: 100,
+              spreadRadius: 50,
+            ),
+          ],
         ),
       ),
     );
@@ -203,14 +232,14 @@ class _LoginScreenState extends State<LoginScreen>
                   child: Container(
                     width: 72,
                     height: 72,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x331B60DA),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                           blurRadius: 20,
-                          offset: Offset(0, 8),
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -231,24 +260,19 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Voltium',
-                  style: GoogleFonts.inter(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.onSurface,
-                    letterSpacing: -0.5,
-                    height: 1.2,
-                  ),
+                Text(
+                  'Voltium',
+                  style: AppTypography.headingLarge.copyWith(
+                      color: AppColors.onSurface,
+                      letterSpacing: -0.5,
+                      height: 1.2),
                 ),
                 const SizedBox(height: 8),
                 ExcludeSemantics(
-                  child: Text('Manage your journey with precision.',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.onSurfaceVariant,
-                      height: 1.4,
-                    ),
+                  child: Text(
+                    'Electric scooter rentals made simple.',
+                    style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant, height: 1.4),
                   ),
                 ),
               ],
@@ -261,326 +285,34 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildWelcomeSection() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.1, 0.8, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.8, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.1, 0.7),),
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7),
+        ),
         child: Semantics(
           label: 'Welcome section with instructions',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome',
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurface,
-                  letterSpacing: -0.5,
-                ),
+              Text(
+                'Welcome',
+                style: AppTypography.headingSmall
+                    .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
-              Text('Enter the registered phone number to login or enter a new number to create another account.',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
+              Text(
+                'Enter the registered phone number to login or enter a new number to create another account.',
+                style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.onSurfaceVariant,
                   height: 1.6,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhoneInput() {
-    return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),),),
-      child: FadeTransition(
-        opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.2, 0.8),),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: _phoneError != null
-                    ? const Color(0xFFFFF1F1)
-                    : AppColors.inputBackground,
-                borderRadius: BorderRadius.circular(999),
-                border: _phoneError != null
-                    ? Border.all(color: AppColors.error, width: 1.5)
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () => _phoneFocusNode.requestFocus(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ExcludeSemantics(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 24, right: 12),
-                            child: Text(
-                              '+91',
-                              style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.onSurface,),
-                            ),
-                          ),
-                        ),
-                        Container(
-                            width: 1, height: 20, color: AppColors.divider,),
-                        const SizedBox(width: 12),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      key: const Key('phoneInput'),
-                      controller: _phoneController,
-                      focusNode: _phoneFocusNode,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      onChanged: _onPhoneChanged,
-                      onFieldSubmitted: (_) => _handleLogin(),
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
-                        letterSpacing: 1.5,
-                      ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
-                        hintText: '00000 00000',
-                        hintStyle: GoogleFonts.inter(
-                          fontSize: 16,
-                          color: AppColors.onSurfaceDisabled,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                        errorText: null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_phoneError != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 20, top: 8),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _phoneError!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFFDC2626),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReferralInput() {
-    return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.25, 0.95, curve: Curves.easeOutCubic),),),
-      child: FadeTransition(
-        opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.25, 0.85),),
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.inputBackground,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 20, right: 8),
-                child: Icon(
-                  Icons.person_add_outlined,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-              ),
-              Expanded(
-                child: TextFormField(
-                  key: const Key('referralInput'),
-                  controller: _referralController,
-                  textCapitalization: TextCapitalization.characters,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    hintText: 'Referral Code (Optional)',
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: AppColors.onSurfaceDisabled,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOtpNote() {
-    return Row(
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text('A SECURE OTP WILL BE SENT',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: AppColors.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEnterButton() {
-    return Semantics(
-      button: true,
-      label: a11yButton('Send OTP'),
-      child: Focus(
-        child: GestureDetector(
-          key: const Key('sendOtpButton'),
-          behavior: HitTestBehavior.opaque,
-          onTap: VoltiumApp.isTestMode
-              ? _handleLogin
-              : (_canSubmit ? _handleLogin : null),
-          child: AnimatedOpacity(
-            opacity: _canSubmit ? 1.0 : 0.4,
-            duration: const Duration(milliseconds: 200),
-            child: Container(
-              width: double.infinity,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: AppGradients.primary,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: _canSubmit ? AppShadows.primaryButton : null,
-              ),
-              child: Center(
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text('Enter',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooterTerms() {
-    return Center(
-      child: FadeTransition(
-        opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.5, 1.0),),
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.onSurfaceVariant,
-              height: 1.6,
-            ),
-            children: [
-              TextSpan(text: a11yLabel('By signing in, you agree to our\n')),
-              WidgetSpan(
-                child: Semantics(
-                  button: true,
-                  label: a11yButton('Terms of Service'),
-                  child: GestureDetector(
-                    onTap: () => _launchUrl('https://voltium.app/terms'),
-                    child: Text('Terms of Service',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              TextSpan(
-                  text: ' and ',
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: AppColors.onSurfaceVariant,),),
-              WidgetSpan(
-                child: Semantics(
-                  button: true,
-                  label: a11yButton('Privacy Policy'),
-                  child: GestureDetector(
-                    onTap: () => _launchUrl('https://voltium.app/privacy'),
-                    child: Text('Privacy Policy',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],

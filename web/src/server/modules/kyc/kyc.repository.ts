@@ -10,6 +10,7 @@ import { Prisma } from '@prisma/client';
 import { validateKycTransition, KycStateError } from './kyc-state-machine';
 import type { KycStatus } from './kyc.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
+import { invalidateRiderCache } from '@/lib/server-cache';
 
 function encryptKycData(data: any) {
   if (!data) return data;
@@ -74,6 +75,7 @@ export const kycRepository = {
         // Don't change status — let submitKyc handle the transition
       },
     });
+    invalidateRiderCache(riderDbId);
     return decryptKycData(kyc);
   },
 
@@ -111,6 +113,7 @@ export const kycRepository = {
         data: { lifecycleStatus: 'KYC_SUBMITTED', kycDoneAt: new Date() },
       });
 
+      invalidateRiderCache(riderDbId);
       return decryptKycData(kyc);
     });
   },
@@ -130,15 +133,41 @@ export const kycRepository = {
         where: { riderId: riderDbId },
         data: { status: 'APPROVED' },
       });
-      await tx.rider.updateMany({
-        where: { id: riderDbId, lifecycleStatus: { in: ['KYC_SUBMITTED', 'PROFILE_SUBMITTED'] } },
-        data: { lifecycleStatus: 'KYC_APPROVED', kycDoneAt: new Date() },
+      await tx.rider.update({
+        where: { id: riderDbId },
+        data: { kycDoneAt: new Date() },
       });
+      await tx.rider.updateMany({
+        where: { 
+          id: riderDbId, 
+          lifecycleStatus: { 
+            in: [
+              'NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED', 
+              'GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 
+              'PLAN_SELECTED', 'DEPOSIT_PENDING', 
+              'DEPOSIT_APPROVED', 'KYC_SUBMITTED'
+            ] 
+          } 
+        },
+        data: { lifecycleStatus: 'KYC_APPROVED' },
+      });
+
+      invalidateRiderCache(riderDbId);
+
+      // BLOCKER 2.7: notification is dispatched by the outbox worker
+      // (kyc.use-cases.ts emits NOTIFICATION_SEND inside the same
+      // transaction). The repository no longer fires a duplicate
+      // notificationService.notifyKycStatusChange call.
+      //
+      // The use-case's emit() is committed atomically with the KYC
+      // approval, and notificationDispatchJob (Phase 1.4) handles
+      // the actual delivery with retry/backoff.
+
       return kyc;
     });
   },
 
-  async rejectKyc(riderDbId: string, reviewerId: string, reason: string) {
+  async rejectKyc(riderDbId: string, reviewerId: string, reason: string, editableFields: string[] = []) {
     // Read current status to validate transition
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
@@ -151,12 +180,18 @@ export const kycRepository = {
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
-        data: { status: 'REJECTED', rejectionReason: reason },
+        data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
       await tx.rider.updateMany({
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
       });
+
+      invalidateRiderCache(riderDbId);
+
+      // BLOCKER 2.7: notification is dispatched by the outbox worker.
+      // See the comment on approveKyc above.
+
       return kyc;
     });
   },
@@ -176,6 +211,9 @@ export const kycRepository = {
         status: 'INFO_REQUIRED',
         rejectionReason: infoRequest,
       },
+    }).then((kyc: any) => {
+      invalidateRiderCache(riderDbId);
+      return kyc;
     });
   },
 };

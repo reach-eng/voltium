@@ -4,6 +4,8 @@ import { validateBody, sendOtpSchema } from '@/lib/validators';
 import { verifyOtp } from '@/lib/otp-store';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 import { z } from 'zod';
 
 const verifyPhoneSchema = z.object({
@@ -19,10 +21,7 @@ const VERIFY_PHONE_RATE_LIMIT = {
 // POST /api/auth/verify-phone — Verify OTP without creating a rider or setting a session
 export async function POST(request: NextRequest) {
   try {
-    const clientIp =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
     const ipRl = await checkRateLimit(`verify-phone-ip:${clientIp}`, VERIFY_PHONE_RATE_LIMIT);
     if (!ipRl.allowed) {
@@ -58,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     return success({ verified: true }, 'Phone verified successfully');
   } catch (err) {
-    logger.error('[POST /api/auth/verify-phone]', err);
+    logger.error('[POST /api/auth/verify-phone]', redactPii(err));
     return errors.internal('Verification failed');
   }
 }

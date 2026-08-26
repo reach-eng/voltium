@@ -6,7 +6,7 @@ part 'plan_model.g.dart';
 class PlanModel {
   final String id;
   final String name;
-  final String description;
+  final String? description;
   final double price;
   final int durationDays;
   @JsonKey(defaultValue: [])

@@ -19,6 +19,13 @@ Map<String, dynamic> _$AppNotificationToJson(AppNotification instance) =>
     };
 
 const _$AppNotificationTypeEnumMap = {
+  AppNotificationType.info: 'info',
+  AppNotificationType.alert: 'alert',
+  AppNotificationType.promotion: 'promotion',
+  AppNotificationType.payment: 'payment',
+  AppNotificationType.vehicle: 'vehicle',
+  AppNotificationType.sos: 'sos',
+  AppNotificationType.system: 'system',
   AppNotificationType.rideStarted: 'rideStarted',
   AppNotificationType.rideEnded: 'rideEnded',
   AppNotificationType.paymentReceived: 'paymentReceived',
@@ -26,5 +33,4 @@ const _$AppNotificationTypeEnumMap = {
   AppNotificationType.lowBattery: 'lowBattery',
   AppNotificationType.sosAlert: 'sosAlert',
   AppNotificationType.promo: 'promo',
-  AppNotificationType.system: 'system',
 };

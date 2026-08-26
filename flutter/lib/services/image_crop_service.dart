@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import '../theme/app_theme.dart';
@@ -15,9 +15,10 @@ class ImageCropService {
     try {
       final XFile? picked = await _picker.pickImage(
         source: source,
-        maxWidth: maxWidth,
-        maxHeight: maxHeight,
+        maxWidth: maxWidth ?? 1600,
+        maxHeight: maxHeight ?? 1600,
         imageQuality: imageQuality,
+        requestFullMetadata: false,
       );
       if (picked == null) return null;
       return await _cropImage(picked.path);
@@ -32,7 +33,7 @@ class ImageCropService {
         AndroidUiSettings(
           toolbarTitle: 'Crop Photo',
           toolbarColor: AppColors.primary,
-          toolbarWidgetColor: AppColors.surfaceWhite,
+          toolbarWidgetColor: AppColors.surface,
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: false,
           hideBottomControls: false,
@@ -74,7 +75,7 @@ class ImageCropService {
         AndroidUiSettings(
           toolbarTitle: 'Crop Photo',
           toolbarColor: AppColors.primary,
-          toolbarWidgetColor: AppColors.surfaceWhite,
+          toolbarWidgetColor: AppColors.surface,
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: true,
           hideBottomControls: true,
@@ -101,6 +102,7 @@ class ImageCropService {
         maxHeight: 800,
         imageQuality: imageQuality,
         limit: maxImages,
+        requestFullMetadata: false,
       );
       return picked.map((xfile) => File(xfile.path)).toList();
     } catch (e) {

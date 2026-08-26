@@ -41,8 +41,9 @@ class TicketEntity {
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
           DateTime.now(),
       messages: (json['messages'] as List<dynamic>?)
-              ?.map((m) =>
-                  TicketMessageEntity.fromJson(m as Map<String, dynamic>),)
+              ?.map(
+                (m) => TicketMessageEntity.fromJson(m as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );

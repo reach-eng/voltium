@@ -47,7 +47,7 @@ export function useAutoRefresh({ endpoint, interval = 5000, onUpdate }: UseAutoR
       setError(null);
       onUpdate?.(newData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connection error');
+      setError(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Connection error');
       setIsUpdating(false);
     }
   }, [endpoint, onUpdate]);

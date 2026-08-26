@@ -1,37 +1,71 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 
-class TopUpAmountScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class TopUpAmountScreen extends ConsumerStatefulWidget {
   final Function(int)? onProceed;
   final VoidCallback? onBack;
   final Function(int)? onAmountChanged;
+  final int? securityDeposit;
+  final int? rentalPrice;
 
   const TopUpAmountScreen({
     super.key,
     this.onProceed,
     this.onBack,
     this.onAmountChanged,
+    this.securityDeposit,
+    this.rentalPrice,
   });
 
   @override
-  State<TopUpAmountScreen> createState() => _TopUpAmountScreenState();
+  ConsumerState<TopUpAmountScreen> createState() => _TopUpAmountScreenState();
 }
 
-class _TopUpAmountScreenState extends State<TopUpAmountScreen>
+class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     with SingleTickerProviderStateMixin {
-  int _selectedAmount = 1000;
-  final _customAmountCtrl = TextEditingController(text: '1000');
+  late int _selectedAmount;
+  late final TextEditingController _customAmountCtrl;
   late final AnimationController _entryCtrl;
 
-  final List<int> _quickAmounts = [500, 1000, 2000, 5000];
+  late final List<int> _quickAmounts;
 
   @override
   void initState() {
     super.initState();
+    final isAdvanceRentPaid =
+        ref.read(riderProvider).rider?.advanceRentPaid ?? false;
+    final secDeposit = widget.securityDeposit ?? 0;
+    final rentPrice = widget.rentalPrice ?? 0;
+
+    // Auto-fill required top-up amount:
+    // If Advance Rent was ticked during plan selection -> Security Deposit + Advance Rent Price
+    // Otherwise -> Security Deposit only
+    final planTotal = isAdvanceRentPaid
+        ? (secDeposit + rentPrice)
+        : (secDeposit > 0 ? secDeposit : (rentPrice > 0 ? rentPrice : 0));
+
+    _selectedAmount = planTotal > 0 ? planTotal : 1000;
+    _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
+
+    // Generate quick amounts based on plan total if available
+    if (planTotal > 0) {
+      _quickAmounts = [
+        planTotal,
+        (planTotal * 1.5).round(),
+        (planTotal * 2).round(),
+        (planTotal * 3).round(),
+      ];
+    } else {
+      _quickAmounts = [500, 1000, 2000, 5000];
+    }
+
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -55,9 +89,14 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
 
   int get _finalAmount => int.tryParse(_customAmountCtrl.text) ?? 0;
 
-  bool get _canProceed => _finalAmount >= 100;
+  bool get _canProceed {
+    final minTopup =
+        ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt();
+    return _finalAmount >= (minTopup > 0 ? minTopup : 100);
+  }
 
   void _selectQuickAmount(int amount) {
+    HapticFeedback.lightImpact();
     setState(() {
       _selectedAmount = amount;
       _customAmountCtrl.text = amount.toString();
@@ -67,78 +106,86 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
+      extendBody: true, // For glass bottom nav
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                  20, 32, 20, 140), // extra bottom padding for floating footer
               child: FadeTransition(
                 opacity: _entryCtrl,
                 child: Column(
                   children: [
-                    Text('Enter Amount',
-                      style: GoogleFonts.inter(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text('How much would you like to add?',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: AppColors.slate500,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
                     // Large Amount Input Display
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            '₹',
-                            style: GoogleFonts.inter(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.slate500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 32, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.radiusModal),
+                        boxShadow: AppShadows.glass,
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              '₹',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.slate500,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        IntrinsicWidth(
-                          child: TextFormField(
-                            key: const Key('customAmountField'),
-                            controller: _customAmountCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1E293B),
-                              letterSpacing: -1,
+                          SizedBox(width: 8),
+                          IntrinsicWidth(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minWidth: 50),
+                              child: TextFormField(
+                                key: const Key('customAmountField'),
+                                autofocus: true,
+                                controller: _customAmountCtrl,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 56,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.slate800,
+                                  letterSpacing: -2,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  filled: false, // Override theme
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedAmount = int.tryParse(val) ?? 0;
+                                  });
+                                },
+                              ),
                             ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onChanged: (val) {
-                              setState(() {
-                                _selectedAmount = int.tryParse(val) ?? 0;
-                              });
-                            },
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 40),
@@ -146,8 +193,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                     // Grid of 4 chips
                     GridView.count(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
                       shrinkWrap: true,
                       childAspectRatio: 2.2,
                       physics: const NeverScrollableScrollPhysics(),
@@ -158,27 +205,28 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primaryGradientEnd
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              gradient:
+                                  isSelected ? AppGradients.primary : null,
+                              color: isSelected ? null : Colors.white,
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              boxShadow: isSelected
+                                  ? AppShadows.primaryButton
+                                  : AppShadows.glass,
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primaryGradientEnd
-                                    : AppColors.outlineVariant,
+                                    ? Colors.transparent
+                                    : AppColors.outlineVariant
+                                        .withValues(alpha: 0.5),
                                 width: 1,
                               ),
                             ),
                             child: Center(
                               child: Text(
                                 '₹$amt',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF475569),
-                                ),
+                                style: AppTypography.titleMedium.copyWith(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.slate600),
                               ),
                             ),
                           ),
@@ -186,44 +234,58 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                       }).toList(),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Balance info row
-                    Consumer<AppProvider>(builder: (context, provider, _) {
-                      final currentBalance =
-                          provider.rider?.walletBalance ?? 0.0;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Current Balance: ₹${currentBalance.toInt()}',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF475569),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final currentBalance = ref
+                                .watch(riderProvider.select((p) => p.rider))
+                                ?.walletBalance ??
+                            0.0;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Current Balance: ₹${currentBalance.toInt()}',
+                              style: AppTypography.bodyMedium
+                                  .copyWith(color: AppColors.slate600),
                             ),
-                          ),
-                          Text(
-                            'Min: ₹100',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: AppColors.slate500,
+                            Text(
+                              'Min: ₹${ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt()}',
+                              style: AppTypography.bodyMedium
+                                  .copyWith(fontWeight: FontWeight.w600)
+                                  .copyWith(color: AppColors.slate500),
                             ),
-                          ),
-                        ],
-                      );
-                    },),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
             ),
           ),
-
-          // Bottom button
-          Padding(
-            padding: const EdgeInsets.all(20),
+        ],
+      ),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(
+                20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+            ),
             child: _buildProceedButton(),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -237,9 +299,16 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
         20,
         48,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,21 +338,24 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
               const SizedBox(width: 32),
             ],
           ),
-          const SizedBox(height: 24),
-          Text('Step 2 of 3',
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Text(
+              'Step 1 of 2',
+              style: AppTypography.labelMedium
+                  .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          const SizedBox(height: 4),
-          Text('Enter Amount',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
+          SizedBox(height: 12),
+          Text(
+            'Enter Amount',
+            style: AppTypography.displayMedium
+                .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
         ],
       ),
@@ -294,19 +366,20 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
     return GestureDetector(
       key: const Key('proceedToPaymentButton'),
       onTap: _canProceed ? () => widget.onProceed?.call(_finalAmount) : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 56,
+        height: 60,
         decoration: BoxDecoration(
-          color:
-              _canProceed ? AppColors.primaryGradientEnd : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(16),
+          gradient: _canProceed ? AppGradients.primary : null,
+          color: _canProceed ? null : AppColors.outlineVariant,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: _canProceed
               ? [
                   BoxShadow(
-                    color: AppColors.primaryGradientEnd.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ]
               : null,
@@ -317,19 +390,21 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Expanded(
-                child: Text('PROCEED TO PAYMENT',
+                child: Text(
+                  'PROCEED TO PAYMENT',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: _canProceed ? Colors.white : AppColors.slate400,
-                  ),
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(
+                          letterSpacing: 0.5,
+                          color:
+                              _canProceed ? Colors.white : AppColors.slate400),
                 ),
               ),
               if (_canProceed)
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
@@ -337,7 +412,7 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                   child: const Icon(
                     Icons.arrow_forward,
                     color: Colors.white,
-                    size: 16,
+                    size: 18,
                   ),
                 ),
             ],

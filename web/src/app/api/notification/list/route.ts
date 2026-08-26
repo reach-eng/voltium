@@ -12,29 +12,7 @@ export async function GET(request: NextRequest) {
 
     const notifications = await notificationUseCases.listNotifications(riderDbId, 20);
 
-    const result =
-      notifications.length > 0
-        ? notifications
-        : [
-            {
-              id: 'welcome',
-              riderId: riderDbId,
-              title: 'Welcome to Ryd!',
-              message: 'Complete your KYC to get started.',
-              type: 'INFO',
-              isRead: false,
-              createdAt: new Date(),
-            },
-            {
-              id: 'deposit',
-              riderId: riderDbId,
-              title: 'Security Deposit',
-              message: 'Deposit ₹2,000 to unlock vehicle booking.',
-              type: 'ALERT',
-              isRead: false,
-              createdAt: new Date(Date.now() - 3600000),
-            },
-          ];
+    const result = notifications;
 
     return success({ notifications: result }, `${result.length} notifications fetched`);
   } catch (err) {
@@ -54,8 +32,8 @@ export async function PUT(request: NextRequest) {
 
     await notificationUseCases.markRead(notificationId, riderDbId);
     return success(null, 'Notification marked as read');
-  } catch (err: any) {
-    if (err.message === 'NOTIFICATION_ACCESS_DENIED')
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err)) === 'NOTIFICATION_ACCESS_DENIED')
       return errors.forbidden('Cannot access this notification');
     logger.error('[PUT /api/notification/list]', err);
     return errors.internal('Failed to update notifications');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class ShimmerLoading extends StatelessWidget {
   final double width;
@@ -18,17 +19,24 @@ class ShimmerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: shape == ShimmerShape.circle
-              ? BorderRadius.circular(height / 2)
-              : BorderRadius.circular(borderRadius),
+    // Blue-tinted shimmer for brand identity in light mode
+    final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLight;
+    final highlightColor =
+        isDark ? AppColors.slate700 : AppColors.primarySurface;
+    return TickerMode(
+      enabled: TickerMode.of(context),
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: AppColors.of(context).card,
+            borderRadius: shape == ShimmerShape.circle
+                ? BorderRadius.circular(height / 2)
+                : BorderRadius.circular(borderRadius),
+          ),
         ),
       ),
     );
@@ -82,7 +90,10 @@ class ShimmerListTile extends StatelessWidget {
         children: [
           if (showAvatar) ...[
             const ShimmerLoading(
-                width: 52, height: 52, shape: ShimmerShape.circle,),
+              width: 52,
+              height: 52,
+              shape: ShimmerShape.circle,
+            ),
             const SizedBox(width: 14),
           ],
           Expanded(
@@ -112,18 +123,22 @@ class ShimmerTransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Row(
           children: [
             ShimmerLoading(
-                width: 48, height: 48, shape: ShimmerShape.circle,),
+              width: 48,
+              height: 48,
+              shape: ShimmerShape.circle,
+            ),
             SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -138,9 +153,9 @@ class ShimmerTransactionCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ShimmerLoading(width: 60, height: 16),
+                ShimmerLoading(width: 70, height: 16),
                 SizedBox(height: 8),
-                ShimmerLoading(width: 50, height: 10),
+                ShimmerLoading(width: 50, height: 12),
               ],
             ),
           ],
@@ -156,7 +171,7 @@ class ShimmerWalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: ShimmerLoading(
         width: double.infinity,
         height: 180,
@@ -171,13 +186,14 @@ class ShimmerVehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,14 +206,12 @@ class ShimmerVehicleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ShimmerLoading(width: 100, height: 18),
-                      SizedBox(height: 6),
-                      ShimmerLoading(width: 60, height: 12),
+                      ShimmerLoading(width: 140, height: 18),
+                      SizedBox(height: 8),
+                      ShimmerLoading(width: 100, height: 14),
                     ],
                   ),
                 ),
-                ShimmerLoading(
-                    width: 32, height: 32, shape: ShimmerShape.circle,),
               ],
             ),
             SizedBox(height: 16),
@@ -215,13 +229,16 @@ class ShimmerProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: [
           const Row(
             children: [
               ShimmerLoading(
-                  width: 72, height: 72, shape: ShimmerShape.circle,),
+                width: 72,
+                height: 72,
+                shape: ShimmerShape.circle,
+              ),
               SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -243,7 +260,10 @@ class ShimmerProfileCard extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.only(left: index > 0 ? 8 : 0),
                   child: const ShimmerLoading(
-                      width: double.infinity, height: 60, borderRadius: 12,),
+                    width: double.infinity,
+                    height: 60,
+                    borderRadius: 12,
+                  ),
                 ),
               ),
             ),
@@ -266,7 +286,10 @@ class ShimmerKycStep extends StatelessWidget {
       child: Row(
         children: [
           ShimmerLoading(
-              width: 40, height: 40, shape: ShimmerShape.circle,),
+            width: 40,
+            height: 40,
+            shape: ShimmerShape.circle,
+          ),
           SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -291,11 +314,12 @@ class ShimmerDashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +327,10 @@ class ShimmerDashboardCard extends StatelessWidget {
           const Row(
             children: [
               ShimmerLoading(
-                  width: 40, height: 40, shape: ShimmerShape.circle,),
+                width: 40,
+                height: 40,
+                shape: ShimmerShape.circle,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: ShimmerLoading(width: 80, height: 14),
@@ -353,6 +380,8 @@ class ShimmerList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: false,
       itemCount: itemCount,
       itemBuilder: (context, index) => item ?? const SizedBox.shrink(),
     );

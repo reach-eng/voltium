@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../theme/app_theme.dart';
 
 class CachedImage extends StatelessWidget {
   final String? imageUrl;
@@ -24,7 +25,7 @@ class CachedImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (imageUrl == null || imageUrl!.isEmpty) {
-      return _buildPlaceholder();
+      return _buildPlaceholder(context);
     }
 
     return ClipRRect(
@@ -35,29 +36,34 @@ class CachedImage extends StatelessWidget {
         height: height,
         fit: fit,
         memCacheWidth: 500,
-        placeholder: (context, url) => placeholder ?? _buildPlaceholder(),
-        errorWidget: (context, url, error) => errorWidget ?? _buildError(),
+        placeholder: (context, url) =>
+            placeholder ?? _buildPlaceholder(context),
+        errorWidget: (context, url, error) =>
+            errorWidget ?? _buildError(context),
       ),
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: width,
       height: height,
-      color: Colors.grey[200],
+      color: colors.outlineVariant,
       child: const Center(
         child: CircularProgressIndicator(strokeWidth: 2),
       ),
     );
   }
 
-  Widget _buildError() {
+  Widget _buildError(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: width,
       height: height,
-      color: Colors.grey[200],
-      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+      color: colors.outlineVariant,
+      child: const Icon(Icons.image_not_supported,
+          color: AppColors.onSurfaceVariant),
     );
   }
 }
@@ -76,6 +82,7 @@ class AvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: CachedImage(
@@ -86,11 +93,11 @@ class AvatarImage extends StatelessWidget {
         fit: BoxFit.cover,
         placeholder: CircleAvatar(
           radius: size / 2,
-          backgroundColor: Colors.grey[200],
+          backgroundColor: colors.outlineVariant,
         ),
         errorWidget: CircleAvatar(
           radius: size / 2,
-          backgroundColor: Colors.grey[300],
+          backgroundColor: colors.divider,
           child: Icon(Icons.person, size: size * 0.5),
         ),
       ),

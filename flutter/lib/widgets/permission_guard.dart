@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 
-class PermissionGuard extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class PermissionGuard extends ConsumerWidget {
   const PermissionGuard({super.key});
 
   String _permissionName(String id) {
@@ -54,34 +57,37 @@ class PermissionGuard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final hasViolation = context.select<AppProvider, bool>((p) => p.hasPermissionViolation);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasViolation =
+        ref.watch(devicePolicyProvider.select((p) => p.hasPermissionViolation));
     if (!hasViolation) return const SizedBox.shrink();
 
-    final permId = context.select<AppProvider, String?>((p) => p.violationPermissionId) ?? 'unknown';
+    final permId = ref.watch(
+            devicePolicyProvider.select((p) => p.violationPermissionId)) ??
+        'unknown';
     final permName = _permissionName(permId);
     final icon = _permissionIcon(permId);
 
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: AppColors.slate900,
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1A1A2E),
-                const Color(0xFF16213E).withValues(alpha: 0.9),
-                const Color(0xFF0F3460).withValues(alpha: 0.8),
+                AppColors.slate900,
+                AppColors.slate900.withValues(alpha: 0.9),
+                AppColors.primaryDeep.withValues(alpha: 0.8),
               ],
             ),
           ),
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
+                padding: Spacing.paddingXl,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -89,90 +95,86 @@ class PermissionGuard extends StatelessWidget {
                       width: 96,
                       height: 96,
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.15),
+                        color: AppColors.error.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: Colors.redAccent, size: 48),
+                      child: Icon(icon, color: AppColors.error, size: 48),
                     ),
-                    const SizedBox(height: 32),
-                    const Text(
+                    SizedBox(height: 32),
+                    Text(
                       'REQUIRED PERMISSION\nREVOKED',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        height: 1.3,
-                      ),
+                      style: AppTypography.headingMedium.copyWith(
+                          color: Colors.white, letterSpacing: 1.5, height: 1.3),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'The "$permName" permission has been revoked. This permission is mandatory for the app to function.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 15,
                         height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10,),
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         permName.toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.error, letterSpacing: 1),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton.icon(
                         onPressed: _openSettings,
                         icon: const Icon(Icons.settings),
-                        label: const Text('OPEN SETTINGS',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                          ),
+                        label: Text(
+                          'OPEN SETTINGS',
+                          style: AppTypography.titleSmall
+                              .copyWith(letterSpacing: 0.5),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 4,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextButton(
-                      onPressed: () => context.read<AppProvider>().clearViolation(),
+                      onPressed: () => ref
+                          .read(devicePolicyProvider.notifier)
+                          .clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 13,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    Text('Voltium Security System v3.0',
-                      style: TextStyle(
+                    SizedBox(height: 32),
+                    Text(
+                      'Voltium Security System v3.0',
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withValues(alpha: 0.2),
                         fontSize: 12,
                         fontStyle: FontStyle.italic,

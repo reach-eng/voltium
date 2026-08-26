@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/plan_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
-class ChoosePlanScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
+
+class ChoosePlanScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
   final VoidCallback? onBack;
 
   const ChoosePlanScreen({super.key, required this.onNext, this.onBack});
 
   @override
-  State<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
+  ConsumerState<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
 }
 
-class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
+class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   List<PlanModel> _plans = [];
   bool _isLoading = true;
   String? _error;
   String? _selectedPlanId;
+  bool _payAdvanceRent = false;
   bool _isSubmitting = false;
 
   @override
@@ -29,6 +37,10 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
   }
 
   Future<void> _fetchPlans() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final response = await VoltiumApiService().fetchPlans();
       if (!mounted) return;
@@ -41,8 +53,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
           _isLoading = false;
 
           // Pre-select the plan matching current plan if any, otherwise default to first plan
-          final currentPlanName =
-              context.read<AppProvider>().rider?.currentPlan;
+          final currentPlanName = ref.read(riderProvider).rider?.currentPlan;
           if (currentPlanName != null && currentPlanName.isNotEmpty) {
             final matchingIndex = _plans.indexWhere(
               (p) => p.name.toLowerCase() == currentPlanName.toLowerCase(),
@@ -62,10 +73,16 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      appDebug('FETCH PLANS ERROR: $e');
+      appDebug('$stack');
       if (!mounted) return;
       setState(() {
-        _error = 'Connection error. Please try again.';
+        if (e is ApiException) {
+          _error = e.message;
+        } else {
+          _error = 'Connection error: $e';
+        }
         _isLoading = false;
       });
     }
@@ -76,8 +93,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final provider = context.read<AppProvider>();
-      final riderId = provider.rider?.id;
+      final provider = ref.read(riderProvider.notifier);
+      final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -86,43 +103,41 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         }
         return;
       }
-      final hubId = provider.rider?.pickupHub ?? '';
-      const securityDeposit = 1000.0;
-      final response = await VoltiumApiService().subscribePlan(
+      final hubId = ref.watch(riderProvider).rider?.pickupHub ?? '';
+      final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
+      final securityDeposit =
+          AppConstants.getPlanSecurityDeposit(selectedPlan.name);
+      await VoltiumApiService().subscribePlan(
         hubId: hubId,
         planId: _selectedPlanId!,
         securityDeposit: securityDeposit,
+        advanceRentPaid: _payAdvanceRent,
       );
 
-      if (response['success'] == true) {
-        // Refresh profile to update planDone flag
-        await provider.refreshFromApi();
-        widget.onNext();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(response['message'] ?? 'Subscription failed'),),
-          );
-        }
-      }
+      // If no exception was thrown, the API call succeeded.
+      // Refresh profile to update planDone flag
+      await provider.refreshFromApi();
+      PostHogService.capture('plan_selected', properties: {
+        'plan_id': selectedPlan.id,
+        'plan_name': selectedPlan.name,
+        'security_deposit': securityDeposit.toString(),
+      });
+      widget.onNext();
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Failed to subscribe. Please try again.';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Failed to subscribe. Check your balance.'),),
+          SnackBar(
+            content: Text(errorMessage),
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  String _getDurationLabel(int days) {
-    if (days == 1) return 'day';
-    if (days == 7) return 'week';
-    if (days == 30) return 'month';
-    return '$days days';
   }
 
   String _formatPrice(double price) {
@@ -163,16 +178,17 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.white.withValues(alpha: 0.2)
-            : const Color(0xFFF3E8FF),
+            : AppColors.accentPurpleSurface,
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text('BEST VALUE',
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          color: isSelected ? Colors.white : const Color(0xFF7E22CE),
-          letterSpacing: 0.5,
-        ),
+      child: Text(
+        'BEST VALUE',
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w800)
+            .copyWith(
+              color: isSelected ? Colors.white : AppColors.accentPurple,
+              letterSpacing: 0.5,
+            ),
       ),
     );
   }
@@ -207,7 +223,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Light Slate 50
+      backgroundColor: AppColors.surfaceBright, // Light Slate 50
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -215,11 +231,16 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!,
-                          style: const TextStyle(color: AppColors.error),),
+                      Text(
+                        _error!,
+                        style:
+                            GoogleFonts.plusJakartaSans(color: AppColors.error),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchPlans, child: const Text('Retry'),),
+                        onPressed: _fetchPlans,
+                        child: const Text('Retry'),
+                      ),
                     ],
                   ),
                 )
@@ -234,38 +255,44 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                             if (widget.onBack != null) ...[
                               InkWell(
                                 onTap: () => widget.onBack?.call(),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                                 child: Container(
-                                  padding: const EdgeInsets.all(12),
+                                  width: 44,
+                                  height: 44,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
                                     border: Border.all(
-                                        color: AppColors.outlineVariant,),
+                                      color: AppColors.outlineVariant,
+                                    ),
                                   ),
-                                  child: const Icon(Icons.arrow_back_ios_new,
-                                      size: 18, color: Color(0xFF1E293B),),
+                                  child: const Icon(
+                                    Icons.arrow_back_ios_new,
+                                    size: 18,
+                                    color: AppColors.slate800,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                             ],
-                            const Expanded(
-                              child: Text('Select a new plan',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF1E293B),
-                                  letterSpacing: -0.5,
-                                ),
+                            Expanded(
+                              child: Text(
+                                'Select a new plan',
+                                style: AppTypography.headingMedium.copyWith(
+                                    color: AppColors.slate800,
+                                    letterSpacing: -0.5),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Text('Choose the rental duration that best fits your needs. You can change this at any time.',
-                          style: TextStyle(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          'Choose the rental duration that best fits your needs. You can change this at any time.',
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             color: AppColors.slate500,
                             height: 1.5,
@@ -276,14 +303,16 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10,),
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
                           physics: const BouncingScrollPhysics(),
                           itemCount: _plans.length,
                           itemBuilder: (context, index) {
                             final plan = _plans[index];
                             final isSelected = _selectedPlanId == plan.id;
                             final currentPlanName =
-                                context.read<AppProvider>().rider?.currentPlan;
+                                ref.read(riderProvider).rider?.currentPlan;
                             final isCurrentPlan = currentPlanName != null &&
                                 plan.name.toLowerCase() ==
                                     currentPlanName.toLowerCase();
@@ -305,7 +334,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                   color: isSelected
                                       ? AppColors.primary
                                       : Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.radiusModal),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.transparent
@@ -317,14 +347,15 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                       color: isSelected
                                           ? AppColors.primary
                                               .withValues(alpha: 0.2)
-                                          : Colors.black.withValues(alpha: 0.02),
+                                          : Colors.black
+                                              .withValues(alpha: 0.02),
                                       blurRadius: 16,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(24),
+                                  padding: Spacing.paddingLg,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -345,30 +376,38 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                         isCurrentPlan
                                                             ? 'CURRENT PLAN'
                                                             : 'SELECTED PLAN',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          fontWeight:
-                                                              FontWeight.w800,
-                                                          color: Colors.white
-                                                              .withValues(alpha: 0.8),
-                                                          letterSpacing: 0.5,
-                                                        ),
+                                                        style: AppTypography
+                                                            .bodySmall
+                                                            .copyWith(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800)
+                                                            .copyWith(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.8),
+                                                              letterSpacing:
+                                                                  0.5,
+                                                            ),
                                                       ),
                                                       const SizedBox(height: 6),
                                                       Row(
                                                         children: [
                                                           if (isBestValue) ...[
                                                             _buildBestValueBadge(
-                                                                isSelected:
-                                                                    true,),
+                                                              isSelected: true,
+                                                            ),
                                                             const SizedBox(
-                                                                width: 8,),
+                                                              width: 8,
+                                                            ),
                                                           ],
                                                           Expanded(
                                                             child: Text(
                                                               plan.name,
-                                                              style:
-                                                                  const TextStyle(
+                                                              style: GoogleFonts
+                                                                  .plusJakartaSans(
                                                                 fontSize: 18,
                                                                 fontWeight:
                                                                     FontWeight
@@ -386,20 +425,23 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                     children: [
                                                       if (isBestValue) ...[
                                                         _buildBestValueBadge(
-                                                            isSelected: false,),
+                                                          isSelected: false,
+                                                        ),
                                                         const SizedBox(
-                                                            width: 8,),
+                                                          width: 8,
+                                                        ),
                                                       ],
                                                       Expanded(
                                                         child: Text(
                                                           plan.name,
-                                                          style:
-                                                              const TextStyle(
+                                                          style: GoogleFonts
+                                                              .plusJakartaSans(
                                                             fontSize: 16,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            color: Color(
-                                                                0xFF0F172A,),
+                                                            color: const Color(
+                                                              0xFF0F172A,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
@@ -415,10 +457,12 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     color: Colors.white
-                                                        .withValues(alpha: 0.15),
+                                                        .withValues(
+                                                            alpha: 0.15),
                                                     border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 2,),
+                                                      color: Colors.white,
+                                                      width: 2,
+                                                    ),
                                                   ),
                                                   child: const Center(
                                                     child: Icon(
@@ -435,65 +479,75 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
                                                       color: const Color(
-                                                          0xFFCBD5E1,),
+                                                        0xFFCBD5E1,
+                                                      ),
                                                       width: 2,
                                                     ),
                                                   ),
                                                 ),
                                         ],
                                       ),
-                                      if (plan.description.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
+                                      if (plan.description?.isNotEmpty ==
+                                          true) ...[
+                                        SizedBox(height: 6),
                                         Text(
-                                          plan.description,
-                                          style: TextStyle(
+                                          plan.description ?? '',
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             color: isSelected
-                                                ? Colors.white.withValues(alpha: 0.8)
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.8)
                                                 : AppColors.slate500,
                                           ),
                                         ),
                                       ],
                                       const SizedBox(height: 16),
                                       // Features list
-                                      ...planFeatures.map((feature) => Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 12,),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Icon(
-                                                  _getFeatureIcon(feature),
-                                                  size: 16,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                          .withValues(alpha: 0.9)
-                                                      : AppColors.slate400,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Text(
-                                                    feature,
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: isSelected
-                                                          ? Colors.white
-                                                              .withValues(alpha: 0.9)
-                                                          : const Color(
-                                                              0xFF475569,),
-                                                      height: 1.4,
-                                                    ),
+                                      ...planFeatures.map(
+                                        (feature) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                _getFeatureIcon(feature),
+                                                size: 16,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                        .withValues(alpha: 0.9)
+                                                    : AppColors.slate400,
+                                              ),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  feature,
+                                                  style: GoogleFonts
+                                                      .plusJakartaSans(
+                                                    fontSize: 14,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.9)
+                                                        : const Color(
+                                                            0xFF475569,
+                                                          ),
+                                                    height: 1.4,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                       const SizedBox(height: 16),
                                       // Divider
                                       Divider(
                                         color: isSelected
-                                            ? Colors.white.withValues(alpha: 0.15)
+                                            ? Colors.white
+                                                .withValues(alpha: 0.15)
                                             : AppColors.iconBackground,
                                         height: 1,
                                       ),
@@ -504,25 +558,29 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                           children: [
                                             TextSpan(
                                               text: _formatPrice(plan.price),
-                                              style: TextStyle(
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
                                                 fontSize: 18,
-                                                fontWeight: FontWeight.w900,
+                                                fontWeight: FontWeight.w800,
                                                 color: isSelected
                                                     ? Colors.white
-                                                    : const Color(0xFF0F172A),
+                                                    : AppColors.slate900,
                                               ),
                                             ),
                                             TextSpan(
                                               text:
-                                                  ' / ${_getDurationLabel(plan.durationDays)}',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: isSelected
-                                                    ? Colors.white
-                                                        .withValues(alpha: 0.7)
-                                                    : AppColors.slate500,
-                                              ),
+                                                  ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
+                                              style: AppTypography.bodyMedium
+                                                  .copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600)
+                                                  .copyWith(
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.7)
+                                                        : AppColors.slate500,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -536,7 +594,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: Spacing.paddingLg,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           boxShadow: [
@@ -547,38 +605,81 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                             ),
                           ],
                         ),
-                        child: ElevatedButton(
-                          key: const Key('confirmPlanButton'),
-                          onPressed: _selectedPlanId == null || _isSubmitting
-                              ? null
-                              : _subscribe,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            disabledBackgroundColor: const Color(0xFFCBD5E1),
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: Center(
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 2,),)
-                                  : const Text('Confirm New Plan',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              key: const Key('advanceRentCheckbox'),
+                              onTap: () => setState(
+                                  () => _payAdvanceRent = !_payAdvanceRent),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _payAdvanceRent,
+                                      activeColor: AppColors.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.xs),
+                                      ),
+                                      onChanged: (val) => setState(
+                                          () => _payAdvanceRent = val ?? false),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'Pay advance rent along with security deposit',
+                                        style: AppTypography.bodySmall
+                                            .copyWith(
+                                                fontWeight: FontWeight.w800)
+                                            .copyWith(
+                                              color: AppColors.slate800,
+                                            ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                            ElevatedButton(
+                              key: const Key('confirmPlanButton'),
+                              onPressed:
+                                  _selectedPlanId == null || _isSubmitting
+                                      ? null
+                                      : _subscribe,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                disabledBackgroundColor: AppColors.borderMedium,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.radiusModal),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Center(
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          'Confirm Plan',
+                                          style: AppTypography.titleSmall
+                                              .copyWith(color: Colors.white),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

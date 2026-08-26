@@ -8,7 +8,7 @@
 import { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/db';
-import { createSessionToken } from '@/lib/auth';
+import { createSessionToken, createRefreshToken } from '@/lib/auth';
 import { generateOtp, verifyOtp as verifyOtpStore } from '@/lib/otp-store';
 import { checkRateLimit, AUTH_RATE_LIMIT } from '@/lib/rate-limit';
 import { auth as firebaseAuth } from '@/lib/firebase-admin';
@@ -17,6 +17,7 @@ import { flattenRider } from '@/lib/flatten-rider';
 import { logger } from '@/lib/logger';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { env } from '@/lib/env';
+import { invalidateRiderCache } from '@/lib/server-cache';
 import type { SendOtpInput, VerifyOtpInput, VerifyOtpResult } from './auth.types';
 
 export const authUseCases = {
@@ -49,18 +50,25 @@ export const authUseCases = {
 
     // Send via SMS/Push
     const flags = await getFeatureFlags();
-    const message = `Your Ryd verification code is: ${otp}. Do not share this code with anyone.`;
+    const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
-    await OutboxService.emit(OutboxEventTypes.SMS_SEND, {
-      phone,
-      message,
-      channel: flags.enablePushNotifications ? 'push' : 'sms',
-    });
+    await OutboxService.emit(
+      OutboxEventTypes.SMS_SEND,
+      {
+        phone,
+        message,
+        channel: flags.enablePushNotifications ? 'push' : 'sms',
+      },
+      3,
+      undefined,
+      // PR-75: SMS dispatch is interactive — a 1-second job that must
+      // not be starved by a 10-minute background cleanup.
+      'interactive'
+    );
 
     logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
 
     return {
-      exists: !!existingRider,
       otp: process.env.NODE_ENV !== 'production' ? otp : undefined,
     };
   },
@@ -100,8 +108,7 @@ export const authUseCases = {
             phone,
             riderId,
             fullName: '',
-            lifecycleStatus: 'PROFILE_SUBMITTED',
-            registrationDoneAt: new Date(),
+            lifecycleStatus: 'NEW',
             referralCode,
             referredBy: incomingReferralCode || null,
           },
@@ -120,6 +127,7 @@ export const authUseCases = {
 
     // For new riders, create Wallet record and handle referral rewards
     if (isNewRider) {
+      invalidateRiderCache(rider.id);
       await db.wallet.create({
         data: {
           riderId: rider.id,
@@ -145,6 +153,7 @@ export const authUseCases = {
                 points: 500,
               },
             });
+            invalidateRiderCache(referrer.id);
           }
         } catch (rewardErr) {
           logger.error('[AuthUseCases] Failed to award referral points', { error: rewardErr });
@@ -168,7 +177,15 @@ export const authUseCases = {
     const riderData = flattenRider(riderWithRelations);
 
     // Create session token
-    const token = createSessionToken({
+    const token = await createSessionToken({
+      riderId: rider.riderId,
+      riderDbId: rider.id,
+      phone: rider.phone,
+      role: 'rider',
+      tokenVersion: rider.tokenVersion,
+    });
+
+    const refreshToken = await createRefreshToken({
       riderId: rider.riderId,
       riderDbId: rider.id,
       phone: rider.phone,
@@ -182,8 +199,8 @@ export const authUseCases = {
       phone: rider.phone,
       isNewRider,
       token,
+      refreshToken,
       riderData,
-      fcmCommandSecret: env.FCM_COMMAND_HMAC_SECRET,
     };
   },
 
@@ -192,6 +209,7 @@ export const authUseCases = {
       where: { id: riderDbId },
       data: { tokenVersion: { increment: 1 } },
     });
+    invalidateRiderCache(riderDbId);
     logger.info('[AuthUseCases] Logout (token version incremented)', { riderDbId });
   },
 };

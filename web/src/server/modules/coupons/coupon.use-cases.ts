@@ -30,7 +30,7 @@ export const couponUseCases = {
         code: data.code.toUpperCase(),
         description: data.description,
         discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
-        discountValue: data.discountValue,
+        discountValueInPaise: data.discountValue,
         minAmount: data.minAmount ?? null,
         maxUses: data.maxUses ?? null,
         validFrom: new Date(data.validFrom),

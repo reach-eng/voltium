@@ -69,7 +69,8 @@ class _TapCardState extends State<TapCard> with SingleTickerProviderStateMixin {
             scale: _scale.value,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                borderRadius:
+                    widget.borderRadius ?? BorderRadius.circular(AppRadius.md),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black
@@ -116,7 +117,7 @@ class _HoverCardState extends State<HoverCard> {
       child: AnimatedContainer(
         duration: widget.duration,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: _isHovered ? 0.15 : 0.08),
@@ -151,31 +152,27 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
-        color: isDark
-            ? Colors.white.withValues(alpha: opacity)
-            : Colors.white.withValues(alpha: opacity + 0.05),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
+        color: Colors.white.withValues(alpha: opacity),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: blur,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: padding ?? const EdgeInsets.all(16),
+          padding: padding ?? Spacing.paddingMd,
           child: child,
         ),
       ),
@@ -193,7 +190,7 @@ class GradientCard extends StatelessWidget {
   const GradientCard({
     super.key,
     required this.child,
-    this.gradientColors = const [AppColors.primary, Color(0xFF142B5B)],
+    this.gradientColors = const [AppColors.primary, AppColors.primaryDeep],
     this.borderRadius,
     this.padding,
     this.margin,
@@ -203,14 +200,14 @@ class GradientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: margin,
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? Spacing.paddingMd,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: gradientColors,
         ),
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: gradientColors.first.withValues(alpha: 0.3),

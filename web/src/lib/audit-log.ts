@@ -35,6 +35,10 @@ const CRITICAL_ACTIONS = new Set<string>([
   'SYSTEM_CONFIG',
 ]);
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function createAuditLog(params: {
   actorId: string;
   actorType?: string;
@@ -60,14 +64,15 @@ export async function createAuditLog(params: {
         expiresAt: getExpiresAt(params.action),
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[AuditLog] Failed to create entry:', err);
     if (CRITICAL_ACTIONS.has(params.action)) {
       throw new Error(
-        `Audit log write failed for critical action ${params.action}: ${err?.message || err}`
+        `Audit log write failed for critical action ${params.action}: ${errorMessage(err)}`
       );
     }
-    console.error('[AUDIT_FAILED]', JSON.stringify(params), err?.message || err);
+    const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
+    console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), errorMessage(err));
   }
 }
 
@@ -151,5 +156,19 @@ export async function getRetentionStats(): Promise<Record<string, unknown>> {
   } catch (err) {
     logger.error('[AuditLog] Failed to get retention stats:', err);
     return { error: 'Failed to compute stats' };
+  }
+}
+
+/**
+ * Safely parses audit log details JSON field.
+ */
+export function parseAuditLogDetails<T = Record<string, unknown>>(
+  details: string | null | undefined
+): T | null {
+  if (!details) return null;
+  try {
+    return JSON.parse(details) as T;
+  } catch {
+    return null;
   }
 }

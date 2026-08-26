@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 
 export async function POST(request: NextRequest) {
+  // Hard-disable in production — this endpoint must never work outside development
+  if (process.env.APP_ENV === 'production') {
+    return errors.forbidden('Auto-login is disabled in production');
+  }
   const isDev =
     process.env.NODE_ENV === 'development' || process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
   if (!isDev) {
@@ -23,16 +27,25 @@ export async function POST(request: NextRequest) {
     let admin;
     try {
       admin = await adminUseCases.autoLogin(email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[Admin Auto-Login] Database lookup or password verification failed:', err);
       // Return 503 Service Unavailable if database is down/issue, or 401 on invalid credentials
-      if (err.message === 'Invalid credentials') {
+      if ((err instanceof Error ? err.message : String(err)) === 'Invalid credentials') {
         return errors.unauthorized('Invalid credentials');
       }
       return error('Database or authentication service unavailable', 'SERVICE_UNAVAILABLE', 503);
     }
 
-    const sessionToken = createSessionToken({
+    let permissions: string[] = [];
+    try {
+      if (admin.permissions) {
+        permissions = JSON.parse(admin.permissions as string);
+      }
+    } catch (e) {
+      logger.error('Failed to parse admin permissions', { adminId: admin.id, error: e });
+    }
+
+    const sessionToken = await createSessionToken({
       riderId: admin.id,
       riderDbId: admin.id,
       phone: admin.email,
@@ -40,6 +53,7 @@ export async function POST(request: NextRequest) {
       adminRole: admin.role,
       adminId: admin.id,
       tokenVersion: admin.tokenVersion,
+      adminPermissions: permissions,
     });
 
     logger.info('[Admin Auto-Login]', { adminId: admin.id, role: admin.role });
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set(ADMIN_SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
 
     return response;
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[POST /api/admin/auth/auto-login]', err);
     return errors.internal('Auto-login failed');
   }

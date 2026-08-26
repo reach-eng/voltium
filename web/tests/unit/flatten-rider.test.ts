@@ -17,7 +17,7 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
     },
     wallet: {
       balanceInPaise: 50050, // ₹500.50
-      securityDeposit: 25000, // ₹250.00
+      securityDepositInPaise: 25000, // ₹250.00
       depositStatus: 'PAID',
       paymentStreak: 5,
     },

@@ -1,0 +1,43 @@
+version: 2
+updates:
+  # Next.js / Node.js
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    groups:
+      web-dependencies:
+        patterns:
+          - "*"
+    reviewers:
+      - "voltium-backend"
+    assignees:
+      - "voltium-backend"
+
+  # Flutter / Dart
+  - package-ecosystem: "pub"
+    directory: "/flutter"
+    schedule:
+      interval: "weekly"
+    groups:
+      flutter-dependencies:
+        patterns:
+          - "*"
+    reviewers:
+      - "voltium-mobile"
+    assignees:
+      - "voltium-mobile"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-dependencies:
+        patterns:
+          - "*"
+    reviewers:
+      - "voltium-devops"
+    assignees:
+      - "voltium-devops"

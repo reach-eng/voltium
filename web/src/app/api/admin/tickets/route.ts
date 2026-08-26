@@ -7,7 +7,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
     const result = await supportUseCases.getAdminTickets({ status, priority, search, page, limit });
-    return success(result.tickets, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.tickets, undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('GET /api/admin/tickets error:', error);
     return errors.internal('Failed to fetch tickets');
@@ -65,3 +65,35 @@ export async function PUT(req: NextRequest) {
     return errors.internal('Failed to update ticket');
   }
 }
+
+export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) return adminUnauthorized();
+  if (!hasPermission(session.adminRole || '', 'tickets_manage')) return adminForbidden();
+
+  try {
+    const body = await req.json();
+    const { riderDbId, category, priority, subject, message } = body;
+    if (!riderDbId || !subject || !message) return errors.validation('Missing required fields');
+
+    const ticket = await supportUseCases.createTicket(riderDbId, {
+      riderId: riderDbId,
+      category: category || 'GENERAL',
+      priority: priority || 'LOW',
+      subject,
+      message,
+    });
+
+    await supportUseCases.logAdminAction(session.adminId || '', {
+      action: 'ticket.created_by_admin',
+      ticketId: ticket.id,
+      details: { category, priority, subject },
+    });
+
+    return success(ticket);
+  } catch (error) {
+    logger.error('POST /api/admin/tickets error:', error);
+    return errors.internal('Failed to create ticket');
+  }
+}
+

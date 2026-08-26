@@ -1,0 +1,10 @@
+# Ignore compiled web assets & build outputs from Graphify AST extraction
+web/public/rider-app/
+web/.next/
+web/node_modules/
+flutter/build/
+flutter/.dart_tool/
+graphify-out/
+coverage/
+*.min.js
+*.dart.js

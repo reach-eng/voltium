@@ -18,6 +18,7 @@ import {
 } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { fcmService } from '@/lib/fcm';
 import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -146,9 +147,12 @@ export async function approveDeposit(params: {
     }
   });
 
+  // Send FCM overlay trigger to refresh rider state + wallet
+  _notifyDepositApproved(riderId).catch(() => {});
+
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.approve',
+    action: 'APPROVE',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId },
@@ -197,7 +201,7 @@ export async function rejectDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.reject',
+    action: 'REJECT',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, reason },
@@ -262,7 +266,7 @@ export async function refundDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.refund',
+    action: 'REFUND',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, refundAmountInPaise: params.refundAmountInPaise },
@@ -312,10 +316,10 @@ export async function forfeitDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.forfeit',
+    action: 'UPDATE',
     entity: 'depositRecord',
     entityId: riderId,
-    details: { riderId, reason },
+    details: { riderId, reason, subAction: 'forfeit' },
   }).catch(() => {});
 
   logger.info('[DepositService] Deposit forfeited', { riderId, adminId, reason });
@@ -324,6 +328,21 @@ export async function forfeitDeposit(params: {
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
+
+/** Notify the rider's device that deposit was approved, triggering a UI refresh. */
+async function _notifyDepositApproved(riderId: string): Promise<void> {
+  try {
+    const rider = await db.rider.findUnique({
+      where: { id: riderId },
+      select: { fcmToken: true },
+    });
+    if (rider?.fcmToken) {
+      await fcmService.sendOverlayTrigger(rider.fcmToken, 'DEPOSIT_APPROVED');
+    }
+  } catch (error) {
+    logger.warn('[DepositService] Failed to send FCM deposit notification', { riderId, error });
+  }
+}
 
 async function _getAndValidate(tx: any, riderId: string, action: DepositTransition) {
   const record = await tx.depositRecord.findUnique({ where: { riderId } });
@@ -344,7 +363,7 @@ async function _getAndValidate(tx: any, riderId: string, action: DepositTransiti
 async function _requireWallet(tx: any, riderId: string) {
   const wallet = await tx.wallet.findUnique({
     where: { riderId },
-    select: { id: true, balanceInPaise: true, securityDeposit: true },
+    select: { id: true, balanceInPaise: true, securityDepositInPaise: true },
   });
   if (!wallet) {
     throw new DepositStateError(`Wallet not found for rider ${riderId}`);

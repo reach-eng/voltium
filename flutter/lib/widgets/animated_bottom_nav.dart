@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web BottomNav.tsx exactly:
 /// - Glass effect: white/95 + backdrop blur
@@ -17,14 +17,14 @@ import '../theme/app_theme.dart';
 class AppBottomNav extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final int unreadCount;
+  final Map<int, int> badgeCounts;
   final List<Key>? tabKeys;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.unreadCount = 0,
+    this.badgeCounts = const {},
     this.tabKeys,
   });
 
@@ -39,17 +39,23 @@ class _AppBottomNavState extends State<AppBottomNav>
   late Animation<double> _fadeAnim;
 
   static const _tabs = [
-    _TabInfo(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
     _TabInfo(
-        icon: Icons.account_balance_wallet_outlined,
-        activeIcon: Icons.account_balance_wallet,
-        label: 'Wallet',),
+        icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
     _TabInfo(
-        icon: Icons.headset_mic_outlined,
-        activeIcon: Icons.headset_mic,
-        label: 'Support',),
+      icon: Icons.account_balance_wallet_outlined,
+      activeIcon: Icons.account_balance_wallet,
+      label: 'Wallet',
+    ),
     _TabInfo(
-        icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile',),
+      icon: Icons.headset_mic_outlined,
+      activeIcon: Icons.headset_mic,
+      label: 'Support',
+    ),
+    _TabInfo(
+      icon: Icons.menu_outlined,
+      activeIcon: Icons.menu,
+      label: 'Menu',
+    ),
   ];
 
   @override
@@ -63,10 +69,12 @@ class _AppBottomNavState extends State<AppBottomNav>
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryCtrl,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-    ),);
+    ).animate(
+      CurvedAnimation(
+        parent: _entryCtrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entryCtrl,
@@ -87,6 +95,7 @@ class _AppBottomNavState extends State<AppBottomNav>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return SlideTransition(
       position: _slideAnim,
       child: FadeTransition(
@@ -97,8 +106,8 @@ class _AppBottomNavState extends State<AppBottomNav>
             child: Container(
               height: 80 + MediaQuery.of(context).padding.bottom,
               decoration: BoxDecoration(
-                // glass: white 95% opacity
-                color: Colors.white.withValues(alpha: 0.95),
+                // glass: card 95% opacity
+                color: colors.card.withValues(alpha: 0.95),
                 border: const Border(
                   top: BorderSide(color: AppColors.outlineVariant, width: 1),
                 ),
@@ -116,9 +125,10 @@ class _AppBottomNavState extends State<AppBottomNav>
                             : null,
                         tab: _tabs[index],
                         isActive: index == widget.currentIndex,
-                        hasNotification: (index == 0 || index == 2) &&
-                            widget.unreadCount > 0,
-                        onTap: () => widget.onTap(index),
+                        hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
+                        onTap: () {
+                          widget.onTap(index);
+                        },
                       );
                     }),
                   ),
@@ -167,6 +177,9 @@ class _NavButtonState extends State<_NavButton>
   late AnimationController _pillCtrl;
   late Animation<double> _pillFade;
 
+  static final TextStyle _navLabelStyle =
+      AppTypography.labelMedium.copyWith(letterSpacing: -0.2);
+
   @override
   void initState() {
     super.initState();
@@ -198,109 +211,111 @@ class _NavButtonState extends State<_NavButton>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     const activeColor = AppColors.primary;
-    const inactiveColor = AppColors.onSurfaceVariant;
+    final inactiveColor = colors.onSurfaceVariant;
     final iconColor = widget.isActive ? activeColor : inactiveColor;
-    final labelColor = widget.isActive ? AppColors.onSurface : inactiveColor;
+    final labelColor = widget.isActive ? colors.onSurface : inactiveColor;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon container with animated pill background
-                SizedBox(
-                  width: 64,
-                  height: 32,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Active pill: bg-primary/10 rounded-full
-                      FadeTransition(
-                        opacity: _pillFade,
-                        child: Container(
-                          width: 64,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: activeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(999),
+      child: Semantics(
+        button: true,
+        label: widget.tab.label,
+        selected: widget.isActive,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon container with animated pill background
+                  SizedBox(
+                    width: 64,
+                    height: 32,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Active pill: bg-primary/10 rounded-full
+                        FadeTransition(
+                          opacity: _pillFade,
+                          child: Container(
+                            width: 64,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: activeColor.withValues(alpha: 0.1),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.full),
+                            ),
                           ),
                         ),
-                      ),
-                      // Icon
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(
-                            widget.isActive
-                                ? widget.tab.activeIcon
-                                : widget.tab.icon,
-                            color: iconColor,
-                            size: 20,
-                          ),
-                          // Notification badge
-                          if (widget.hasNotification)
-                            Positioned(
-                              top: -4,
-                              right: -6,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5,
+                        // Icon
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              widget.isActive
+                                  ? widget.tab.activeIcon
+                                  : widget.tab.icon,
+                              color: iconColor,
+                              size: 20,
+                            ),
+                            // Notification badge
+                            if (widget.hasNotification)
+                              Positioned(
+                                top: -4,
+                                right: -6,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colors.card,
+                                      width: 1.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // Label
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: _navLabelStyle.copyWith(color: labelColor),
+                    child: Text(widget.tab.label),
+                  ),
+                ],
+              ),
+
+              // Active dot at bottom (nav-dot)
+              if (widget.isActive)
+                Positioned(
+                  bottom: 4,
+                  child: AnimatedOpacity(
+                    opacity: widget.isActive ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                // Label
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                    letterSpacing: -0.2,
-                  ),
-                  child: Text(widget.tab.label),
-                ),
-              ],
-            ),
-
-            // Active dot at bottom (nav-dot)
-            if (widget.isActive)
-              Positioned(
-                bottom: 4,
-                child: AnimatedOpacity(
-                  opacity: widget.isActive ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

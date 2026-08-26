@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
 
     const result = await shiftUseCases.getShifts(hubId, date);
     return success(result, 'Shifts fetched successfully');
-  } catch (err: any) {
-    if (err.message === 'Hub not found') return errors.notFound(err.message);
-    if (err.message === 'Hub is currently inactive') return errors.badRequest(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err)) === 'Hub not found') return errors.notFound((err instanceof Error ? err.message : String(err)));
+    if ((err instanceof Error ? err.message : String(err)) === 'Hub is currently inactive') return errors.badRequest((err instanceof Error ? err.message : String(err)));
     logger.error('[GET /api/shifts]', err);
     return errors.internal('Failed to fetch shifts');
   }

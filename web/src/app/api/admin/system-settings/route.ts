@@ -3,7 +3,9 @@ import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { withApiHandler } from '@/lib/api-handler';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
+import { hasPermission } from '@/lib/permissions';
+import { updateSystemSettingSchema } from '@/lib/validators/admin';
 
 /**
  * Admin System Settings API
@@ -68,7 +70,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     SESSION_SECRET_CONFIGURED: process.env.SESSION_SECRET ? 'true' : 'false',
   };
 
-  return success({ editable, readOnly });
+  return withCacheHeaders(success({ editable, readOnly }), 60);
 });
 
 export const PUT = withApiHandler(async (request: NextRequest) => {
@@ -77,17 +79,22 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     return errors.unauthorized('Unauthorized');
   }
 
-  // Only SUPER_ADMIN can edit system settings
-  if (session.role !== 'SUPER_ADMIN') {
-    return errors.forbidden('Forbidden: SUPER_ADMIN required');
+  // R4.3 / audit: was `session.role !== 'SUPER_ADMIN'` which is
+  // always true (session.role is the user type 'admin'/'rider', the
+  // role name lives in session.adminRole). Use hasPermission() which
+  // resolves the right field and respects the policy matrix in
+  // permissions-roles.ts.
+  if (!hasPermission(session, 'settings_manage')) {
+    return errors.forbidden('Forbidden: settings_manage permission required');
   }
 
   const body = await request.json();
-  const { key, value } = body;
-
-  if (!key || value === undefined) {
-    return errors.badRequest('key and value are required');
+  const validation = updateSystemSettingSchema.safeParse(body);
+  if (!validation.success) {
+    return errors.validation(validation.error.message);
   }
+
+  const { key, value } = validation.data;
 
   // Check if setting exists and is editable
   const existing = await db.systemSetting.findUnique({ where: { key } });

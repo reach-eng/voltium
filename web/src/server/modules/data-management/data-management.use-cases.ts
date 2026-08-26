@@ -30,7 +30,7 @@ export const dataManagementUseCases = {
     // Get maintenance mode status
     let maintenanceMode = false;
     try {
-      const setting = await db.setting.findUnique({ where: { key: 'maintenanceMode' } });
+      const setting = await db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } });
       maintenanceMode = setting?.value === 'true';
     } catch {}
 
@@ -335,7 +335,7 @@ export const dataManagementUseCases = {
     }
 
     // Check maintenance mode and backup lock
-    const maintenanceSetting = await db.setting.findUnique({ where: { key: 'maintenanceMode' } });
+    const maintenanceSetting = await db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } });
     if (maintenanceSetting?.value === 'true') {
       throw new Error('Cannot run backup while maintenance mode is active');
     }
@@ -392,8 +392,8 @@ export const dataManagementUseCases = {
       });
 
       return result;
-    } catch (err: any) {
-      await backupRepository.markScheduleFailure(schedule.id, err.message);
+    } catch (err: unknown) {
+      await backupRepository.markScheduleFailure(schedule.id, (err instanceof Error ? err.message : String(err)));
 
       await createAuditLog({
         actorId: adminId,
@@ -401,7 +401,7 @@ export const dataManagementUseCases = {
         action: 'backup.scheduled_failed',
         entity: 'BackupSchedule',
         entityId: schedule.id,
-        details: { error: err.message },
+        details: { error: (err instanceof Error ? err.message : String(err)) },
       });
 
       throw err;

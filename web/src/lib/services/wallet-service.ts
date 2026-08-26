@@ -59,7 +59,7 @@ export async function creditWallet(
   const { riderId, walletId, amountInPaise, category, txnId, idempotencyKey, actorId, note } =
     params;
 
-  if (amountInPaise <= 0) {
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`creditWallet: amountInPaise must be > 0, got ${amountInPaise}`);
   }
 
@@ -91,7 +91,7 @@ export async function creditWallet(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'CREDIT' as WalletEntryType,
       category,
       amountInPaise,
@@ -134,7 +134,7 @@ export async function debitWallet(
     allowNegative = false,
   } = params;
 
-  if (amountInPaise <= 0) {
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`debitWallet: amountInPaise must be > 0, got ${amountInPaise}`);
   }
 
@@ -180,7 +180,7 @@ export async function debitWallet(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'DEBIT' as WalletEntryType,
       category,
       amountInPaise,
@@ -220,10 +220,14 @@ export async function creditSecurityDeposit(
 ): Promise<void> {
   const { riderId, walletId, amountInPaise, txnId, actorId, note } = params;
 
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+    throw new WalletServiceError(`creditSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
   await tx.wallet.update({
     where: { id: walletId },
     data: {
-      securityDeposit: { increment: amountInPaise },
+      securityDepositInPaise: { increment: amountInPaise },
       depositStatus: 'APPROVED',
       version: { increment: 1 },
     },
@@ -233,7 +237,7 @@ export async function creditSecurityDeposit(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'CREDIT',
       category: 'SECURITY_DEPOSIT',
       amountInPaise,
@@ -265,10 +269,14 @@ export async function debitSecurityDeposit(
   const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note } =
     params;
 
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+    throw new WalletServiceError(`debitSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
   await tx.wallet.update({
     where: { id: walletId },
     data: {
-      securityDeposit: { decrement: amountInPaise },
+      securityDepositInPaise: { decrement: amountInPaise },
       depositStatus: newDepositStatus,
       version: { increment: 1 },
     },
@@ -278,7 +286,7 @@ export async function debitSecurityDeposit(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'DEBIT',
       category,
       amountInPaise,
@@ -314,7 +322,7 @@ export async function reverseWalletEntry(
     data: {
       riderId,
       type: originalType === 'CREDIT' ? 'DEBIT' : 'CREDIT',
-      amount: originalAmount,
+      amountInPaise: originalAmount,
       purpose: 'REVERSAL',
       status: 'APPROVED',
       reversedTxnId: originalTxnId,

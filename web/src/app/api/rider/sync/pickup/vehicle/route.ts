@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       hubName: vehicle.hub.name,
     });
   } catch (err) {
-    if (err instanceof Error && err.message === 'Vehicle not found at this hub') {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'Vehicle not found at this hub') {
       return errors.notFound('Vehicle not found at this hub');
     }
     return errors.internal('Failed to verify vehicle');

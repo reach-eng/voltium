@@ -9,18 +9,26 @@ export const requestUploadUrlSchema = z.object({
     'vehicle_photo',
     'payment_proof',
     'support_attachment',
+    'pickup_verification',
+    'RETURN_PHOTO',
+    'TOPUP_PROOF',
+    'vehicle_return',
   ]),
+  // Max file size: 25MB to match the largest FILE_UPLOAD_RULES
+  // category (kyc_document). The per-category limit is enforced by
+  // the use-case layer (validateUpload), which returns a 422 if a
+  // specific category's limit is lower than 25MB.
   fileSize: z
     .number()
     .positive()
-    .max(10 * 1024 * 1024),
+    .max(25 * 1024 * 1024),
 });
 
 export const confirmUploadSchema = z.object({
   fileRecordId: z.string().min(1),
   sizeBytes: z.number().positive(),
-  checksum: z.string().optional(),
-  idempotencyKey: z.string().optional(),
+  checksum: z.string().nullish(),
+  idempotencyKey: z.string().nullish(),
 });
 
 export const requestReadUrlSchema = z.object({

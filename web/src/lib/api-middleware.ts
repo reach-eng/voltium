@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
-import { checkIdempotency, saveIdempotency } from '@/lib/idempotency';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
+import {
+  checkOrClaimIdempotency,
+  completeIdempotency,
+  failIdempotency,
+} from '@/lib/idempotency';
 
 const MAX_REQUEST_SIZE = 1024 * 1024;
 
@@ -12,21 +18,44 @@ export function withIdempotency(handler: (req: NextRequest) => Promise<NextRespo
       return handler(req);
     }
 
-    const cached = await checkIdempotency(key);
-    if (cached) {
-      logger.info('[Idempotency] Serving cached response', { key, path: req.nextUrl.pathname });
-      return NextResponse.json(cached);
+    // Atomic check-and-claim
+    const result = await checkOrClaimIdempotency(key);
+
+    switch (result.status) {
+      case 'completed':
+        logger.info('[Idempotency] Serving cached response', { key, path: req.nextUrl.pathname });
+        return NextResponse.json(result.response);
+
+      case 'processing':
+        logger.info('[Idempotency] Request already in-flight', { key, path: req.nextUrl.pathname });
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'A request with this idempotency key is already being processed',
+          },
+          { status: 409 }
+        );
+
+      case 'not_found':
+        // Proceed — we're the first to claim this key
+        break;
     }
 
+    // Execute the handler
     const response = await handler(req);
+
+    // On success, mark key as completed with the response
     if (response.status >= 200 && response.status < 300) {
       try {
         const cloned = response.clone();
         const json = await cloned.json();
-        await saveIdempotency(key, json);
+        await completeIdempotency(key, json);
       } catch (err) {
         logger.error('[Idempotency] Failed to cache response:', err);
       }
+    } else if (response.status >= 500) {
+      // Server error — allow retry by marking as failed
+      await failIdempotency(key).catch(() => {});
     }
 
     return response;
@@ -54,17 +83,37 @@ export async function withRequestSizeLimit(
   };
 }
 
-export async function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse>) {
+import { ApiError } from '@/lib/api-error';
+
+export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
       return await handler(req);
     } catch (error) {
-      logger.error('[API Error]', {
+      if (error instanceof ApiError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: error.code,
+              message: error.message,
+            },
+          },
+          { status: error.status }
+        );
+      }
+
+      // Redact PII from error data before logging to prevent credential leaks
+      const errorInfo: Record<string, unknown> = {
         path: req.nextUrl.pathname,
         method: req.method,
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+        error: error instanceof Error ? { name: error.name, message: (error instanceof Error ? error.message : String(error)) } : String(error),
+      };
+      // Include stack trace in development for debugging
+      if (process.env.NODE_ENV !== 'production' && error instanceof Error && error.stack) {
+        errorInfo.stack = error.stack;
+      }
+      logger.error('[API Error]', redactPii(errorInfo));
 
       return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
     }
@@ -77,10 +126,7 @@ export async function withRateLimit(
   windowMs: number
 ) {
   const wrappedHandler = async (req: NextRequest): Promise<NextResponse> => {
-    const clientIp =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') ||
-      'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(req).replace(/^ip:/, '');
 
     const rl = await checkRateLimit(`api:${req.nextUrl.pathname}:${clientIp}`, {
       windowMs,

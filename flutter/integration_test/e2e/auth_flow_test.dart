@@ -40,8 +40,11 @@ void main() {
           break;
         }
       }
-      expect(foundScreen, isTrue,
-          reason: 'No expected post-splash screen found',);
+      expect(
+        foundScreen,
+        isTrue,
+        reason: 'No expected post-splash screen found',
+      );
     });
 
     testWidgets('Legal screen – accept terms and continue', (tester) async {
@@ -188,8 +191,11 @@ void main() {
 
     testWidgets('Full auth + onboarding → dashboard', (tester) async {
       final reachedDashboard = await fullLoginFlow(tester);
-      expect(reachedDashboard, isTrue,
-          reason: 'Should reach dashboard after full auth flow',);
+      expect(
+        reachedDashboard,
+        isTrue,
+        reason: 'Should reach dashboard after full auth flow',
+      );
     });
 
     testWidgets('Logout returns to login screen', (tester) async {

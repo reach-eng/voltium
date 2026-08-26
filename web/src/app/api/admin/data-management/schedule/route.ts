@@ -4,6 +4,10 @@ import { dataManagementUseCases } from '@/server/modules/data-management/data-ma
 import { scheduleUpdateSchema } from '@/server/modules/data-management/backup.schemas';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function GET() {
   try {
     const session = await getAdminSession();
@@ -11,10 +15,11 @@ export async function GET() {
 
     const schedule = await dataManagementUseCases.getSchedule(session.adminRole as AdminRole);
     return NextResponse.json({ success: true, data: schedule });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = errorMessage(err);
     return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
+      { success: false, error: message },
+      { status: message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }
@@ -32,16 +37,21 @@ export async function PUT(request: NextRequest) {
     );
 
     return NextResponse.json({ success: true, data: schedule });
-  } catch (err: any) {
-    if (err.name === 'ZodError') {
+  } catch (err: unknown) {
+    const isZodError = err instanceof Error && err.name === 'ZodError';
+    if (isZodError) {
+      const details = typeof err === 'object' && err !== null && 'errors' in err
+        ? (err as { errors: unknown }).errors
+        : undefined;
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: err.errors },
+        { success: false, error: 'Validation failed', details },
         { status: 400 }
       );
     }
+    const message = errorMessage(err);
     return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
+      { success: false, error: message },
+      { status: message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }
@@ -73,10 +83,11 @@ export async function POST(request: NextRequest) {
       { success: false, error: 'Invalid action. Use ?action=test or ?action=run-now' },
       { status: 400 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = errorMessage(err);
     return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
+      { success: false, error: message },
+      { status: message === 'Unauthorized' ? 403 : 500 }
     );
   }
 }

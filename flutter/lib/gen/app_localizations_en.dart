@@ -1547,4 +1547,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtevPlus => 'EV Plus';
+
+  @override
+  String get menu_title => 'Menu';
+
+  @override
+  String get menu_account => 'ACCOUNT';
+
+  @override
+  String get menu_profile => 'Profile';
+
+  @override
+  String get menu_myDocuments => 'My Documents';
+
+  @override
+  String get menu_rewardsMore => 'REWARDS & MORE';
+
+  @override
+  String get menu_rewards => 'Rewards';
+
+  @override
+  String get menu_referralProgram => 'Referral Program';
+
+  @override
+  String get menu_general => 'GENERAL';
+
+  @override
+  String get menu_workflowServices => 'Workflow & Services';
+
+  @override
+  String get menu_appSettings => 'App Settings';
+
+  @override
+  String get menu_language => 'Language';
+
+  @override
+  String get menu_selectLanguage => 'Select Language';
+
+  @override
+  String get menu_emergencySos => 'Emergency SOS';
+
+  @override
+  String get settings_preferences => 'PREFERENCES';
+
+  @override
+  String get settings_darkMode => 'Dark Mode';
+
+  @override
+  String get settings_supportLegal => 'SUPPORT & LEGAL';
+
+  @override
+  String get settings_feedback => 'Feedback';
+
+  @override
+  String get settings_legal => 'Legal';
+
+  @override
+  String get settings_about => 'ABOUT';
+
+  @override
+  String get settings_appVersion => 'App Version';
+
+  @override
+  String get settings_rateUs => 'Rate Us';
+
+  @override
+  String get settings_accountSection => 'ACCOUNT';
+
+  @override
+  String get settings_deleteConfirmTitle => 'Delete Account';
+
+  @override
+  String get settings_deleteConfirmBody =>
+      'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?';
+
+  @override
+  String get settings_delete => 'Delete';
+
+  @override
+  String get settings_deleteNotAvailable =>
+      'Account deletion is not yet available. Please contact support.';
+
+  @override
+  String get settings_notifications => 'Notifications';
+
+  @override
+  String get settings_changePhone => 'Change Phone Number';
+
+  @override
+  String get settings_comingSoon => 'Coming soon';
 }

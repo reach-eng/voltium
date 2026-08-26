@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from './wallet.use-cases';
-import { walletTopupSchema } from './wallet.schemas';
+import { adminWalletTopupSchema } from './wallet.schemas';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 
@@ -24,7 +24,7 @@ export async function POST_topup(request: NextRequest) {
   if ('status' in session) return session;
 
   const body = await request.json();
-  const validation = validateBody(walletTopupSchema, body);
+  const validation = validateBody(adminWalletTopupSchema, body);
   if (!validation.success) {
     return errors.validation(validation.error);
   }

@@ -1,0 +1,5 @@
+- `[x]` Update `startWorkers` in `index.ts` to accept an explicit `IClock` dependency.
+- `[x]` Update all scheduler loops in `index.ts` to use this clock.
+- `[x]` Update `TESTING_STRATEGY.md` with the Clock mocking strategy.
+- `[x]` Add `web/tests/unit/workers/dispatcher.integration.test.ts`.
+- `[x]` Verify tests pass.

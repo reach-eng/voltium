@@ -4,12 +4,40 @@ import { hashPassword } from '@/lib/password';
 // Helper: Convert rupees to paise
 const paise = (rupees: number) => Math.round(rupees * 100);
 
+// Refuse to run in production — seed is for local/staging only.
+// The default admin password is a public string; running this in prod
+// would write a hash of that public string to the Admin.password column.
+if (process.env.APP_ENV === 'production') {
+  console.error(
+    'Refusing to run seed.ts in production (APP_ENV=production). ' +
+      'Seeding is for local/staging only.'
+  );
+  process.exit(1);
+}
+
+// Admin seed password is read from env. Generate a random one in local dev
+// if not set, so the seed is reproducible but the default value is not
+// committed in source.
+const seedAdminPassword =
+  process.env.SEED_ADMIN_PASSWORD ||
+  (process.env.NODE_ENV === 'development'
+    ? `dev-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`
+    : null);
+
+if (!seedAdminPassword || seedAdminPassword.length < 16) {
+  console.error(
+    'SEED_ADMIN_PASSWORD env var is required and must be at least 16 characters. ' +
+      'Set SEED_ADMIN_PASSWORD=<at-least-16-chars> before running seed.'
+  );
+  process.exit(1);
+}
+
 async function main() {
   console.log('Seeding database...');
 
   // ==================== ADMIN ACCOUNTS ====================
   // Hash passwords properly (PBKDF2-SHA256)
-  const hashedAdminPw = await hashPassword('admin123');
+  const hashedAdminPw = await hashPassword(seedAdminPassword);
 
   const superAdmin = await db.admin.upsert({
     where: { email: 'superadmin@voltium.in' },
@@ -1012,22 +1040,26 @@ async function main() {
 
   // ==================== SETTINGS ====================
   const settings = [
-    { key: 'dailyRent', value: String(paise(399)) },
-    { key: 'weeklyRent', value: String(paise(2199)) },
-    { key: 'monthlyRent', value: String(paise(7499)) },
-    { key: 'securityDeposit', value: String(paise(5000)) },
-    { key: 'lateFee', value: String(paise(50)) },
-    { key: 'referralBonus', value: String(paise(500)) },
-    { key: 'autoApproveKYC', value: 'false' },
-    { key: 'emailNotifications', value: 'true' },
-    { key: 'smsNotifications', value: 'true' },
-    { key: 'gracePeriodHours', value: '24' },
-    { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
-    { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
-    { key: 'BACKUP_LOCK_OWNER', value: '' },
+    { key: 'dailyRent', value: String(paise(399)), category: 'BUSINESS', isEditable: true },
+    { key: 'weeklyRent', value: String(paise(2199)), category: 'BUSINESS', isEditable: true },
+    { key: 'monthlyRent', value: String(paise(7499)), category: 'BUSINESS', isEditable: true },
+    { key: 'securityDeposit', value: String(paise(5000)), category: 'BUSINESS', isEditable: true },
+    { key: 'lateFee', value: String(paise(50)), category: 'BUSINESS', isEditable: true },
+    { key: 'referralBonus', value: String(paise(500)), category: 'BUSINESS', isEditable: true },
+    { key: 'autoApproveKYC', value: 'false', category: 'BUSINESS', isEditable: true },
+    { key: 'emailNotifications', value: 'true', category: 'BUSINESS', isEditable: true },
+    { key: 'smsNotifications', value: 'true', category: 'BUSINESS', isEditable: true },
+    { key: 'gracePeriodHours', value: '24', category: 'BUSINESS', isEditable: true },
+    { key: 'BACKUP_LOCK_STATUS', value: 'NONE', category: 'INTERNAL', isEditable: false },
+    { key: 'BACKUP_LOCK_STARTED_AT', value: '', category: 'INTERNAL', isEditable: false },
+    { key: 'BACKUP_LOCK_OWNER', value: '', category: 'INTERNAL', isEditable: false },
   ];
   for (const s of settings) {
-    await db.setting.upsert({ where: { key: s.key }, update: {}, create: s });
+    await db.systemSetting.upsert({
+      where: { key: s.key },
+      update: { valueType: 'STRING', category: s.category, isEditable: s.isEditable },
+      create: { key: s.key, value: s.value, valueType: 'STRING', category: s.category, isSecret: false, isEditable: s.isEditable },
+    });
   }
   console.log('Created settings');
 
@@ -1256,10 +1288,14 @@ async function main() {
   console.log('Created FAQs');
 
   console.log('\n✅ Database seeded successfully!');
-  console.log('\n📋 Login Credentials:');
-  console.log('  Super Admin: superadmin@voltium.in / admin123');
-  console.log('  Admin: admin@voltium.in / admin123');
-  console.log('  Admin: ops@voltium.in / admin123');
+  if (process.env.NODE_ENV === 'development' && !process.env.SEED_ADMIN_PASSWORD) {
+    console.log('\n📋 Generated admin credentials (development only — not committed):');
+    console.log(`  Super Admin: superadmin@voltium.in / ${seedAdminPassword}`);
+    console.log(`  Admin: admin@voltium.in / ${seedAdminPassword}`);
+    console.log(`  Admin: ops@voltium.in / ${seedAdminPassword}`);
+  } else {
+    console.log('\n📋 Admin credentials: see SEED_ADMIN_PASSWORD env var.');
+  }
 }
 
 main()

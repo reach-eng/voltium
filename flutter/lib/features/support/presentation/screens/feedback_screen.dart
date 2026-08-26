@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TutorialTip {
   final String message;
@@ -75,14 +78,14 @@ class _TutorialDialogState extends State<TutorialDialog> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Column(
@@ -95,45 +98,51 @@ class _TutorialDialogState extends State<TutorialDialog> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lightbulb_outline,
-                      color: AppColors.primary, size: 32,),
+                  child: const Icon(
+                    Icons.lightbulb_outline,
+                    color: AppColors.primary,
+                    size: 32,
+                  ),
                 ),
-                const SizedBox(height: 24),
-                const Text('Quick Tip',
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                SizedBox(height: 24),
+                Text(
+                  'Quick Tip',
+                  style: AppTypography.titleLarge
+                      .copyWith(color: AppColors.slate800),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   tip.message,
-                  style: const TextStyle(
-                      fontSize: 15, color: AppColors.slate500, height: 1.5,),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    color: AppColors.slate500,
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     if (_currentIndex > 0)
                       TextButton(
                         onPressed: () => setState(() => _currentIndex--),
-                        child: const Text('PREVIOUS',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.slate400,
-                                letterSpacing: 1,),),
+                        child: Text(
+                          'PREVIOUS',
+                          style: AppTypography.bodySmall
+                              .copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2)
+                              .copyWith(
+                                  color: AppColors.slate400, letterSpacing: 1),
+                        ),
                       )
                     else
-                      const SizedBox(width: 80),
+                      SizedBox(width: 80),
                     Text(
                       '${_currentIndex + 1}/${widget.tips.length}',
-                      style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.slate400,),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: AppColors.slate400),
                     ),
                     TextButton(
                       onPressed: () {
@@ -147,11 +156,11 @@ class _TutorialDialogState extends State<TutorialDialog> {
                         _currentIndex < widget.tips.length - 1
                             ? 'NEXT'
                             : 'GOT IT',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
-                            letterSpacing: 1,),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.primary, letterSpacing: 1),
                       ),
                     ),
                   ],
@@ -165,7 +174,7 @@ class _TutorialDialogState extends State<TutorialDialog> {
   }
 }
 
-class FeedbackScreen extends StatefulWidget {
+class FeedbackScreen extends ConsumerStatefulWidget {
   final VoidCallback onSubmit;
   final VoidCallback? onCancel;
 
@@ -176,10 +185,10 @@ class FeedbackScreen extends StatefulWidget {
   });
 
   @override
-  State<FeedbackScreen> createState() => _FeedbackScreenState();
+  ConsumerState<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
-class _FeedbackScreenState extends State<FeedbackScreen> {
+class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _commentController = TextEditingController();
   int _rating = 0;
   bool _isSubmitting = false;
@@ -204,7 +213,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16,),
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -219,33 +230,38 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 20,
-                                    offset: Offset(0, 10),),
+                                  color: Colors.black12,
+                                  blurRadius: 20,
+                                  offset: Offset(0, 10),
+                                ),
                               ],
                             ),
-                            child: const Icon(Icons.rate_review_outlined,
-                                color: AppColors.primary, size: 40,),
+                            child: const Icon(
+                              Icons.rate_review_outlined,
+                              color: AppColors.primary,
+                              size: 40,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 32),
-                        const FadeUpWidget(
+                        SizedBox(height: 32),
+                        FadeUpWidget(
                           delay: 100,
-                          child: Text('Share Your Thoughts',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),),
+                          child: Text(
+                            'Share Your Thoughts',
+                            style: AppTypography.headingMedium
+                                .copyWith(color: AppColors.slate800),
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        const FadeUpWidget(
+                        SizedBox(height: 12),
+                        FadeUpWidget(
                           delay: 200,
-                          child: Text('Your feedback helps us improve the experience for everyone.',
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: AppColors.slate500,
-                                height: 1.5,),
+                          child: Text(
+                            'Your feedback helps us improve the experience for everyone.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15,
+                              color: AppColors.slate500,
+                              height: 1.5,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -284,7 +300,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFDEE9FF)],
+            colors: [AppColors.iconBackground, AppColors.primarySurface],
           ),
         ),
       ),
@@ -306,18 +322,19 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
               child:
-                  const Icon(Icons.close, size: 18, color: Color(0xFF1E293B)),
+                  const Icon(Icons.close, size: 18, color: AppColors.slate800),
             ),
           ),
-          const Text('Feedback',
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),),
+          Text(
+            'Feedback',
+            style:
+                AppTypography.titleMedium.copyWith(color: AppColors.slate800),
           ),
           const SizedBox(width: 40), // Balance
         ],
@@ -338,9 +355,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               duration: const Duration(milliseconds: 200),
               child: Icon(
                 isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected
-                    ? const Color(0xFFFFB800)
-                    : const Color(0xFFCBD5E1),
+                color: isSelected ? AppColors.warning : AppColors.borderMedium,
                 size: 48,
               ),
             ),
@@ -352,25 +367,28 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _buildCommentField() {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: Spacing.paddingSm,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: Colors.white),
       ),
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
-        style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
+        style: GoogleFonts.plusJakartaSans(
+            fontSize: 15, color: AppColors.slate800),
         decoration: InputDecoration(
           hintText: 'Tell us more about your experience...',
-          hintStyle: const TextStyle(color: AppColors.slate400, fontSize: 14),
+          hintStyle: GoogleFonts.plusJakartaSans(
+              color: AppColors.slate400, fontSize: 14),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.all(20),
+          contentPadding: const EdgeInsets.all(Spacing.md),
         ),
       ),
     );
@@ -382,19 +400,38 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       onPressed: (canSubmit && !_isSubmitting)
           ? () async {
               setState(() => _isSubmitting = true);
-              if (kDebugMode) {
-                await Future.delayed(const Duration(milliseconds: 1000));
+              try {
+                await ApiClient().post(
+                  '/api/support/feedback',
+                  body: {
+                    'rating': _rating,
+                    'comment': _commentController.text.trim(),
+                  },
+                );
+                if (mounted) {
+                  widget.onSubmit();
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _isSubmitting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          Text('Failed to submit feedback: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
-              widget.onSubmit();
-              if (mounted) Navigator.pop(context);
             }
           : null,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        disabledBackgroundColor: const Color(0xFFCBD5E1),
+        disabledBackgroundColor: AppColors.borderMedium,
         minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal)),
         elevation: canSubmit ? 8 : 0,
         shadowColor: AppColors.primary.withValues(alpha: 0.4),
       ),
@@ -403,10 +440,15 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               height: 20,
               width: 20,
               child: CircularProgressIndicator(
-                  color: Colors.white, strokeWidth: 2,),)
-          : const Text('SUBMIT FEEDBACK',
-              style:
-                  TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : Text(
+              'SUBMIT FEEDBACK',
+              style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800, letterSpacing: 1.2),
+            ),
     );
   }
 }
@@ -425,30 +467,36 @@ class RateAppPrompt {
         builder: (context) => Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star_rounded,
-                    color: Color(0xFFFFB800), size: 64,),
-                const SizedBox(height: 24),
-                const Text('Enjoying Voltium?',
-                  style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                const Icon(
+                  Icons.star_rounded,
+                  color: AppColors.warning,
+                  size: 64,
                 ),
-                const SizedBox(height: 12),
-                const Text('Take a moment to rate your experience. It helps us grow!',
+                SizedBox(height: 24),
+                Text(
+                  'Enjoying Voltium?',
+                  style: AppTypography.headingSmall
+                      .copyWith(color: AppColors.slate800),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Take a moment to rate your experience. It helps us grow!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 15, color: AppColors.slate500, height: 1.5,),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    color: AppColors.slate500,
+                    height: 1.5,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
                     prefs.setBool('has_rated', true);
@@ -459,19 +507,27 @@ class RateAppPrompt {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9999),),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
                   ),
-                  child: const Text('RATE US',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, letterSpacing: 1,),),
+                  child: Text(
+                    'RATE US',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('NOT NOW',
-                      style: TextStyle(
-                          color: AppColors.slate400,
-                          fontWeight: FontWeight.bold,),),
+                  child: Text(
+                    'NOT NOW',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.slate400,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),

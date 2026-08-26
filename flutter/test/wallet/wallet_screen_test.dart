@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 
 /// Wallet Screen Widget Tests
 ///
@@ -14,6 +16,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Test-friendly AppProvider that doesn't make real HTTP calls.
 class _TestAppProvider extends AppProvider {
+  @override
+  RiderModel? get rider => RiderModel(
+      riderId: '1', name: 'Test Rider', phone: '123', walletBalance: 100);
+
+  @override
+  DataState get dataState => DataState.fresh;
+
   @override
   Future<void> refreshTransactions() async {}
 
@@ -26,11 +35,11 @@ class _TestAppProvider extends AppProvider {
 
 void main() {
   Widget buildWalletScreen() {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider<AppProvider>(create: (_) => _TestAppProvider()),
+    return ProviderScope(
+      overrides: [
+        localeProviderRef.overrideWith((ref) => LocaleProvider()),
+        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+        appProvider.overrideWith((ref) => _TestAppProvider()),
       ],
       child: const MaterialApp(
         localizationsDelegates: [
@@ -47,7 +56,8 @@ void main() {
   group('Wallet Screen', () {
     testWidgets('wallet screen renders without error', (tester) async {
       await tester.pumpWidget(buildWalletScreen());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       // Screen should render without throwing
       expect(find.byType(WalletScreen), findsOneWidget);
@@ -64,17 +74,25 @@ void main() {
       await tester.pump(const Duration(milliseconds: 150));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
     });
 
     testWidgets('wallet screen has top-up action', (tester) async {
       await tester.pumpWidget(buildWalletScreen());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
-      // There should be a way to initiate top-up
+      // The top-up button is an icon button with key('topUpButton') in
+      // WalletBalanceCard. Alternatively, look for any 'Add'/'Top' text or
+      // the well-known key.
+      final topUpByKey =
+          find.byKey(const Key('topUpButton'), skipOffstage: false);
       final addMoneyFinder = find.textContaining('Add', skipOffstage: false);
       final topupFinder = find.textContaining('Top', skipOffstage: false);
-      final hasTopupAction = addMoneyFinder.evaluate().isNotEmpty || topupFinder.evaluate().isNotEmpty;
+      final hasTopupAction = topUpByKey.evaluate().isNotEmpty ||
+          addMoneyFinder.evaluate().isNotEmpty ||
+          topupFinder.evaluate().isNotEmpty;
       expect(hasTopupAction, isTrue);
     });
   });

@@ -1,10 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
-class PickupSuccessScreen extends StatelessWidget {
+class PickupSuccessScreen extends StatefulWidget {
   final VoidCallback onFinish;
 
   const PickupSuccessScreen({super.key, required this.onFinish});
+
+  @override
+  State<PickupSuccessScreen> createState() => _PickupSuccessScreenState();
+}
+
+class _PickupSuccessScreenState extends State<PickupSuccessScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PostHogService.capture('pickup_completed');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,21 +44,18 @@ class PickupSuccessScreen extends StatelessWidget {
                   size: 80,
                 ),
               ),
-              const SizedBox(height: 48),
-              const Text(
+              SizedBox(height: 48),
+              Text(
                 'You\'re Live!',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1,
-                ),
+                style: AppTypography.displayLarge
+                    .copyWith(color: Colors.white, letterSpacing: -1),
               ),
-              const SizedBox(height: 16),
-              const Text('Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!',
+              SizedBox(height: 16),
+              Text(
+                'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 18,
                   color: Colors.white70,
                   height: 1.5,
@@ -52,7 +63,7 @@ class PickupSuccessScreen extends StatelessWidget {
               ),
               const Spacer(),
               ElevatedButton(
-                onPressed: onFinish,
+                onPressed: widget.onFinish,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.primary,

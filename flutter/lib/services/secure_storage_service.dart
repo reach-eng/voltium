@@ -93,7 +93,8 @@ class SecureStorageService {
   }
 
   Future<void> setDeviceLocked(bool locked) async {
-    await _storage.write(key: _keyDeviceLocked, value: locked ? 'true' : 'false');
+    await _storage.write(
+        key: _keyDeviceLocked, value: locked ? 'true' : 'false');
   }
 
   Future<bool> getDeviceLocked() async {

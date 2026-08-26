@@ -1,8 +1,12 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/models/support_model.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import '../../../../utils/app_logger.dart';
 
 String _getMonth(int month) {
   const months = [
@@ -30,40 +34,20 @@ Future<void> pickSupportPhoto(
 ) async {
   if (currentCount >= 5) return;
   try {
-    final source = await showDialog<ImageSource>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Select Photo Source'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, ImageSource.camera),
-            child: const ListTile(
-              leading: Icon(Icons.camera_alt),
-              title: Text('Camera'),
-            ),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
-            child: const ListTile(
-              leading: Icon(Icons.photo_library),
-              title: Text('Gallery'),
-            ),
-          ),
-        ],
-      ),
-    );
+    final source = await ImageSourceBottomSheet.show(context: context);
     if (source == null) return;
     final XFile? photo = await picker.pickImage(
       source: source,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+      requestFullMetadata: false,
     );
     if (photo != null) {
       onPhotoPicked(File(photo.path));
     }
   } catch (e) {
-    debugPrint('Support photo picker failed: $e');
+    appDebug('Support photo picker failed: $e');
   }
 }
 
@@ -98,11 +82,11 @@ class RaiseTicketCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF2176FF)],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.2),
@@ -111,7 +95,7 @@ class RaiseTicketCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -122,7 +106,7 @@ class RaiseTicketCard extends StatelessWidget {
                 width: 36,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.confirmation_number_outlined,
@@ -130,31 +114,26 @@ class RaiseTicketCard extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text('Raise a Ticket',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              SizedBox(width: 12),
+              Text(
+                'Raise a Ticket',
+                style: AppTypography.titleMedium.copyWith(color: Colors.white),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Text('ISSUE TYPE',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+          SizedBox(height: 20),
+          Text(
+            'ISSUE TYPE',
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: DropdownButtonHideUnderline(
@@ -162,16 +141,14 @@ class RaiseTicketCard extends StatelessWidget {
                 key: const Key('issueTypeDropdown'),
                 isExpanded: true,
                 value: selectedCategory,
-                dropdownColor: const Color(0xFF1E293B),
+                dropdownColor: AppColors.slate800,
                 icon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white70,
                 ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: Colors.white),
                 onChanged: (value) {
                   if (value != null) onCategoryChanged(value);
                 },
@@ -181,16 +158,14 @@ class RaiseTicketCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text('DESCRIPTION',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+          SizedBox(height: 16),
+          Text(
+            'DESCRIPTION',
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
@@ -199,7 +174,7 @@ class RaiseTicketCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
               ),
               child: TextFormField(
@@ -207,12 +182,13 @@ class RaiseTicketCard extends StatelessWidget {
                 focusNode: descriptionFocusNode,
                 controller: messageController,
                 maxLines: 3,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   hintText: 'Describe the issue...',
-                  hintStyle: const TextStyle(color: Colors.white38),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white38),
                   border: InputBorder.none,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.mic_none, color: Colors.white70),
@@ -231,15 +207,12 @@ class RaiseTicketCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'ATTACH PHOTOS (MAX 5)',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -253,7 +226,7 @@ class RaiseTicketCard extends StatelessWidget {
                     child: Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: Image.file(
                             file,
                             width: 80,
@@ -269,7 +242,7 @@ class RaiseTicketCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: const BoxDecoration(
-                                color: Colors.red,
+                                color: AppColors.error,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -292,7 +265,7 @@ class RaiseTicketCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.3)),
                       ),
@@ -306,7 +279,7 @@ class RaiseTicketCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ElevatedButton(
             key: const Key('raiseTicketButton'),
             onPressed: isSubmitting ? null : onSubmit,
@@ -315,7 +288,7 @@ class RaiseTicketCard extends StatelessWidget {
               foregroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
               ),
               elevation: 0,
             ),
@@ -328,9 +301,10 @@ class RaiseTicketCard extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                   )
-                : const Text('RAISE TICKET',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
+                : Text(
+                    'RAISE TICKET',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 1,
                     ),
                   ),
@@ -371,7 +345,7 @@ class TicketListItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -380,7 +354,7 @@ class TicketListItem extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -391,7 +365,7 @@ class TicketListItem extends StatelessWidget {
                 width: 40,
                 decoration: BoxDecoration(
                   color: AppColors.iconBackground,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.help_center_outlined,
@@ -399,7 +373,7 @@ class TicketListItem extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,15 +384,13 @@ class TicketListItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             ticket.subject,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600)
+                                .copyWith(color: AppColors.slate800),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -426,20 +398,20 @@ class TicketListItem extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(99),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                           child: Text(
                             ticket.status.replaceAll('_', ' '),
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              color: statusColor,
-                            ),
+                            style: AppTypography.bodySmall
+                                .copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2)
+                                .copyWith(color: statusColor),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(
@@ -447,21 +419,20 @@ class TicketListItem extends StatelessWidget {
                           size: 10,
                           color: AppColors.slate400,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           '${ticket.createdAt.day} ${_getMonth(ticket.createdAt.month)}',
-                          style: const TextStyle(
-                            fontSize: 11,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
                             color: AppColors.slate500,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '• ${ticket.ticketId}',
-                          style: const TextStyle(
-                            fontSize: 10,
+                          style: GoogleFonts.ibmPlexMono(
+                            fontSize: 12,
                             color: AppColors.slate400,
-                            fontFamily: 'monospace',
                           ),
                         ),
                       ],
@@ -472,10 +443,10 @@ class TicketListItem extends StatelessWidget {
             ],
           ),
           ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               ticket.message,
-              style: const TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 color: AppColors.slate500,
                 height: 1.5,
@@ -511,7 +482,7 @@ class TopActionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -523,7 +494,7 @@ class TopActionCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),
@@ -538,14 +509,12 @@ class TopActionCard extends StatelessWidget {
                   ),
                   child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                      .copyWith(color: AppColors.slate800),
                 ),
               ],
             ),

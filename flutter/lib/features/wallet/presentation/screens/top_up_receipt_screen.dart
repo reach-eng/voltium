@@ -1,7 +1,10 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/widgets/animated_success_glow.dart';
+import 'package:voltium_rider/widgets/electric_burst_success.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 /// Matches web TopUpReceiptScreen.tsx:
 /// - Success animation: green check circle with glow rings
@@ -30,9 +33,7 @@ class TopUpReceiptScreen extends StatefulWidget {
 class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
     with TickerProviderStateMixin {
   late final AnimationController _mainCtrl;
-  late final AnimationController _glowCtrl;
-  late final Animation<double> _scaleAnim;
-  late final Animation<double> _rotateAnim;
+  final GlobalKey<ElectricBurstSuccessState> _burstKey = GlobalKey();
 
   @override
   void initState() {
@@ -41,29 +42,20 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _glowCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
-
-    _scaleAnim = CurvedAnimation(
-      parent: _mainCtrl,
-      curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
-    );
-    _rotateAnim = Tween<double>(begin: -math.pi, end: 0).animate(
-      CurvedAnimation(
-        parent: _mainCtrl,
-        curve: const Interval(0.2, 0.8, curve: Curves.easeOutBack),
-      ),
-    );
 
     _mainCtrl.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _burstKey.currentState?.trigger();
+      PostHogService.capture('top_up_completed', properties: {
+        'amount': widget.amount.toString(),
+        'purpose': widget.purpose,
+      });
+    });
   }
 
   @override
   void dispose() {
     _mainCtrl.dispose();
-    _glowCtrl.dispose();
     super.dispose();
   }
 
@@ -80,8 +72,11 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Success Circle
-                _buildSuccessCircle(),
+                // Success Circle with electric burst
+                ElectricBurstSuccess(
+                  key: _burstKey,
+                  child: const AnimatedSuccessGlow(),
+                ),
 
                 const SizedBox(height: 32),
 
@@ -105,80 +100,6 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
               ],
             ),
           ),
-
-          // Decorative particles
-          ...List.generate(6, (i) => _buildParticle(i)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuccessCircle() {
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer glow rings
-          AnimatedBuilder(
-            animation: _glowCtrl,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 130 + (10 * _glowCtrl.value),
-                    height: 130 + (10 * _glowCtrl.value),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A).withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 110 + (15 * _glowCtrl.value),
-                    height: 110 + (15 * _glowCtrl.value),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          // Main circle
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: AnimatedBuilder(
-              animation: _rotateAnim,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _rotateAnim.value,
-                  child: const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.white,
-                    size: 56,
-                  ),
-                );
-              },
-            ),
-          ),
         ],
       ),
     );
@@ -190,18 +111,16 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.5, 0.8)),
       child: Column(
         children: [
-          Text('Payment Submitted',
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: AppColors.onSurfaceAlt,
-            ),
+          Text(
+            'Payment Submitted',
+            style: AppTypography.headingMedium
+                .copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 color: AppColors.onSurfaceVariant,
                 height: 1.6,
@@ -211,13 +130,15 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                 TextSpan(
                   text:
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onSurfaceAlt,),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onSurfaceMuted,
+                  ),
                 ),
                 TextSpan(
-                    text:
-                        ' for ${widget.purpose.replaceAll('_', ' ').toLowerCase()} is being verified by our team.',),
+                  text:
+                      ' for ${widget.purpose.replaceAll('_', ' ').toLowerCase()} is being verified by our team.',
+                ),
               ],
             ),
           ),
@@ -227,13 +148,14 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
   }
 
   Widget _buildStatusCard() {
+    final colors = AppColors.of(context);
     return FadeTransition(
       opacity:
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.6, 0.9)),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.card,
         ),
@@ -246,26 +168,27 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                 color: AppColors.warningLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.access_time,
-                  color: AppColors.warningDark, size: 20,),
+              child: const Icon(
+                Icons.access_time,
+                color: AppColors.warningDark,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Verification in Progress',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceAlt,
-                    ),
+                  Text(
+                    'Verification in Progress',
+                    style: AppTypography.labelLarge
+                        .copyWith(color: AppColors.onSurfaceMuted),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     'Estimated time: Within 24 hours',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
@@ -285,19 +208,19 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
+          color: AppColors.primarySurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Icon(Icons.info_outline, color: AppColors.primary, size: 16),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Balance will update after admin approval. You\'ll receive a notification once it\'s done.',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
                   color: AppColors.onSurfaceVariant,
                   height: 1.5,
                 ),
@@ -319,67 +242,24 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           height: 56,
           decoration: BoxDecoration(
             gradient: AppGradients.primary,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             boxShadow: AppShadows.primaryButton,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.home_outlined, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text('Back to Dashboard',
-                style: GoogleFonts.inter(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+              SizedBox(width: 8),
+              Text(
+                'Back to Dashboard',
+                style: AppTypography.labelLarge
+                    .copyWith(fontWeight: FontWeight.w700)
+                    .copyWith(color: Colors.white),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildParticle(int i) {
-    final colors = [
-      AppColors.primary,
-      AppColors.primaryGradientEnd,
-      const Color(0xFF16A34A),
-      AppColors.warning,
-      AppColors.primary,
-      const Color(0xFF22C55E),
-    ];
-    final random = math.Random(i);
-    final rawDelay = 0.5 + i * 0.1;
-    final delay = rawDelay < 1.0 ? rawDelay : 0.99;
-
-    return AnimatedBuilder(
-      animation: _mainCtrl,
-      builder: (context, child) {
-        if (_mainCtrl.value < delay) return const SizedBox();
-        final progress = (_mainCtrl.value - delay) / (1.0 - delay);
-        if (progress > 1.0) return const SizedBox();
-
-        final x = (random.nextDouble() - 0.5) * 300 * progress;
-        final y = -100 * progress - (random.nextDouble() * 200 * progress);
-        final opacity = 1.0 - progress;
-
-        return Transform.translate(
-          offset: Offset(x, y),
-          child: Opacity(
-            opacity: opacity,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: colors[i % colors.length],
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

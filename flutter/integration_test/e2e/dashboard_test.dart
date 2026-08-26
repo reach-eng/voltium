@@ -65,8 +65,11 @@ void main() {
           find.byKey(const Key('backButton')).evaluate().isNotEmpty;
       final hasTLContent =
           find.text('Assigned Team Leader').evaluate().isNotEmpty;
-      expect(hasBackButton || hasTLContent, isTrue,
-          reason: 'Should navigate to TL details screen',);
+      expect(
+        hasBackButton || hasTLContent,
+        isTrue,
+        reason: 'Should navigate to TL details screen',
+      );
     });
 
     testWidgets('Dashboard – assigned vehicle card navigates to photos',
@@ -81,8 +84,11 @@ void main() {
           find.textContaining('Vehicle').evaluate().isNotEmpty ||
               find.textContaining('Photos').evaluate().isNotEmpty ||
               find.byKey(const Key('backButton')).evaluate().isNotEmpty;
-      expect(hasVehicleContent, isTrue,
-          reason: 'Should navigate to vehicle details/photos',);
+      expect(
+        hasVehicleContent,
+        isTrue,
+        reason: 'Should navigate to vehicle details/photos',
+      );
     });
 
     testWidgets('Dashboard – referral widget displays code', (tester) async {
@@ -164,8 +170,11 @@ void main() {
       final hasWalletCard =
           find.text('Available Balance').evaluate().isNotEmpty ||
               find.text('Payment Streak').evaluate().isNotEmpty;
-      expect(hasWalletCard, isTrue,
-          reason: 'Inline wallet card should be visible on dashboard',);
+      expect(
+        hasWalletCard,
+        isTrue,
+        reason: 'Inline wallet card should be visible on dashboard',
+      );
     });
   });
 }

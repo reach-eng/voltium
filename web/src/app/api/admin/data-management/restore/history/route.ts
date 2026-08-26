@@ -10,10 +10,10 @@ export async function GET() {
 
     const result = await dataManagementUseCases.getRestoreHistory(session.adminRole as AdminRole);
     return NextResponse.json({ success: true, data: result });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
+      { success: false, error: (err instanceof Error ? err.message : String(err)) },
+      { status: (err instanceof Error ? err.message : String(err)) === 'Unauthorized' ? 403 : 500 }
     );
   }
 }

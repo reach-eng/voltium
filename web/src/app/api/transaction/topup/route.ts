@@ -55,9 +55,10 @@ export async function POST(request: NextRequest) {
         ? 'Payment auto-approved (test mode)'
         : 'Payment submitted for verification'
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[POST /api/transaction/topup]', err);
-    if (err?.message === 'Rider not found') {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === 'Rider not found') {
       return errors.notFound('Rider not found');
     }
     return errors.internal('Failed to submit payment');

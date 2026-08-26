@@ -1,18 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/config/app_config.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
-import 'support_center_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/services/document_local_cache.dart';
+import 'package:universal_io/io.dart';
 import '../../../../theme/app_theme.dart';
 
-class MyDocumentsScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class MyDocumentsScreen extends ConsumerWidget {
   const MyDocumentsScreen({super.key});
 
-  Future<void> _viewDocument(BuildContext context, String? url) async {
+  Future<void> _viewDocument(BuildContext context, String? url,
+      {String? cacheKey}) async {
     if (url == null || url.isEmpty) return;
-    final uri = Uri.parse(url);
+
+    // Prefer local cached file if available (from onboarding upload).
+    if (cacheKey != null) {
+      final localPath = await DocumentLocalCache.get(cacheKey);
+      if (localPath != null && File(localPath).existsSync()) {
+        final uri = Uri.file(localPath);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+    }
+
+    // Fallback to network download.
+    String fullUrl = url;
+    if (!url.startsWith('http')) {
+      final baseUrl = AppConfig.apiBaseUrl;
+      final path = url.startsWith('/') ? url.substring(1) : url;
+      fullUrl = '$baseUrl/api/files/$path';
+    }
+    final uri = Uri.parse(fullUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
@@ -25,7 +52,7 @@ class MyDocumentsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.iconBackground, // mesh-gradient equivalent bg
       appBar: AppBar(
@@ -37,8 +64,8 @@ class MyDocumentsScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 20.0),
           child: UnconstrainedBox(
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -53,11 +80,11 @@ class MyDocumentsScreen extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
                     Icons.arrow_back,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.slate800,
                     size: 18,
                   ),
                 ),
@@ -65,18 +92,15 @@ class MyDocumentsScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text('My Documents',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-            fontSize: 20,
-          ),
+        title: Text(
+          'My Documents',
+          style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
         ),
         centerTitle: false,
       ),
-      body: Consumer<AppProvider>(
-        builder: (context, provider, child) {
-          final rider = provider.rider;
+      body: Consumer(
+        builder: (context, ref, child) {
+          final rider = ref.watch(riderProvider).rider;
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
@@ -107,21 +131,25 @@ class MyDocumentsScreen extends StatelessWidget {
                     label: 'Aadhaar Card (Front)',
                     url: rider?.aadhaarFront,
                     icon: Icons.description_outlined,
+                    cacheKey: 'aadhaarFront',
                   ),
                   _DocModel(
                     label: 'Aadhaar Card (Back)',
                     url: rider?.aadhaarBack,
                     icon: Icons.description_outlined,
+                    cacheKey: 'aadhaarBack',
                   ),
                   _DocModel(
                     label: 'PAN Card',
                     url: rider?.panCard,
                     icon: Icons.badge_outlined,
+                    cacheKey: 'panCard',
                   ),
                   _DocModel(
                     label: 'Digital Signature',
                     url: rider?.signature,
                     icon: Icons.gesture_outlined,
+                    cacheKey: 'signature',
                   ),
                 ],
                 150,
@@ -148,27 +176,32 @@ class MyDocumentsScreen extends StatelessWidget {
                     label: "Guarantor's Aadhaar (Front)",
                     url: rider?.guarantorAadhaarFront,
                     icon: Icons.shield_outlined,
+                    cacheKey: 'guarantorAadhaarFront',
                   ),
                   _DocModel(
                     label: "Guarantor's Aadhaar (Back)",
                     url: rider?.guarantorAadhaarBack,
                     icon: Icons.shield_outlined,
+                    cacheKey: 'guarantorAadhaarBack',
                   ),
                   _DocModel(
                     label: "Guarantor's PAN Card",
                     url: rider?.guarantorPan,
                     icon: Icons.contact_mail_outlined,
+                    cacheKey: 'guarantorPan',
                   ),
                   _DocModel(
                     label: "Verification Video",
                     url: rider?.guarantorVideo,
                     icon: Icons.videocam_outlined,
                     isVideo: true,
+                    cacheKey: 'guarantorVideo',
                   ),
                   _DocModel(
                     label: "Guarantor's Signature",
                     url: rider?.guarantorSignature,
                     icon: Icons.gesture_outlined,
+                    cacheKey: 'guarantorSignature',
                   ),
                 ],
                 450,
@@ -194,10 +227,10 @@ class MyDocumentsScreen extends StatelessWidget {
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -218,7 +251,7 @@ class MyDocumentsScreen extends StatelessWidget {
                     height: 40,
                     width: 40,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFECFDF5),
+                      color: AppColors.successLight,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -227,26 +260,24 @@ class MyDocumentsScreen extends StatelessWidget {
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Column(
+                  SizedBox(width: 12),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('SECURITY PROFILE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.successText,
-                          letterSpacing: 1.2,
-                        ),
+                      Text(
+                        'SECURITY PROFILE',
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.onSurface, letterSpacing: 1.2),
                       ),
                       SizedBox(height: 2),
                       Text(
                         'Verified & Secure',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
-                        ),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.slate800),
                       ),
                     ],
                   ),
@@ -256,7 +287,7 @@ class MyDocumentsScreen extends StatelessWidget {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: AppColors.successLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -272,17 +303,13 @@ class MyDocumentsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             isApproved
                 ? 'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'
                 : 'Your verification is in progress. Some documents may still be under review by our safety team.',
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.slate500,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(color: AppColors.slate500, height: 1.5),
           ),
         ],
       ),
@@ -294,26 +321,21 @@ class MyDocumentsScreen extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: AppColors.slate500,
-            letterSpacing: 1.2,
-          ),
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+              .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
         ),
         const SizedBox(width: 8),
         Expanded(
           child:
               Container(height: 1, color: Colors.black.withValues(alpha: 0.05)),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           '$count FILES',
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-          ),
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+              .copyWith(color: AppColors.primary),
         ),
       ],
     );
@@ -330,15 +352,16 @@ class MyDocumentsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 32),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: Colors.black.withValues(alpha: 0.05),
             style: BorderStyle.solid,
           ),
         ),
-        child: const Center(
-          child: Text('No documents submitted yet',
-            style: TextStyle(
+        child: Center(
+          child: Text(
+            'No documents submitted yet',
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontStyle: FontStyle.italic,
               color: AppColors.slate500,
@@ -348,31 +371,29 @@ class MyDocumentsScreen extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filtered.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final doc = filtered[index];
-        return FadeUpWidget(
-          delay: baseDelay + (index * 50),
-          child: _buildDocItem(context, doc),
-        );
-      },
+    return Column(
+      children: [
+        for (int index = 0; index < filtered.length; index++) ...[
+          if (index > 0) const SizedBox(height: 12),
+          FadeUpWidget(
+            delay: baseDelay + (index * 50),
+            child: _buildDocItem(context, filtered[index]),
+          ),
+        ],
+      ],
     );
   }
 
   Widget _buildDocItem(BuildContext context, _DocModel doc) {
     final bool isVideo = doc.isVideo;
     return InkWell(
-      onTap: () => _viewDocument(context, doc.url),
-      borderRadius: BorderRadius.circular(20),
+      onTap: () => _viewDocument(context, doc.url, cacheKey: doc.cacheKey),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -388,59 +409,56 @@ class MyDocumentsScreen extends StatelessWidget {
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color:
-                    isVideo ? const Color(0xFFFFF7ED) : const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(16),
+                color: isVideo
+                    ? AppColors.warningSurface
+                    : AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Icon(
                 doc.icon,
-                color:
-                    isVideo ? const Color(0xFFF97316) : const Color(0xFF0062FF),
+                color: isVideo ? AppColors.warningDark : AppColors.primary,
                 size: 22,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     doc.label,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(color: AppColors.slate800),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
-                      const Text('VERIFIED',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.success,
-                          letterSpacing: 1,
-                        ),
+                      Text(
+                        'VERIFIED',
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.success, letterSpacing: 1),
                       ),
                       const SizedBox(width: 6),
                       Container(
                         height: 3,
                         width: 3,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFCBD5E1),
+                          color: AppColors.borderMedium,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         isVideo ? 'VIDEO' : 'IMAGE',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.slate500,
-                          letterSpacing: 1,
-                        ),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.slate500, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -451,7 +469,7 @@ class MyDocumentsScreen extends StatelessWidget {
               height: 36,
               width: 36,
               decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: AppColors.surfaceBright,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -468,12 +486,11 @@ class MyDocumentsScreen extends StatelessWidget {
 
   Widget _buildSupportBanner(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,45 +500,41 @@ class MyDocumentsScreen extends StatelessWidget {
             width: 40,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child:
                 const Icon(Icons.info_outline, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Having trouble with documents?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                Text(
+                  'Having trouble with documents?',
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(color: AppColors.primary),
                 ),
-                const SizedBox(height: 4),
-                const Text('If you see any issues with your verified documents or need to update them, please raise a support ticket.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.primary,
-                    height: 1.5,
-                    fontWeight: FontWeight.w500,
-                  ),
+                SizedBox(height: 4),
+                Text(
+                  'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
+                  style: AppTypography.bodySmall
+                      .copyWith(color: AppColors.primary, height: 1.5),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 InkWell(
                   onTap: () =>
                       AppNavigator.push(context, const SupportCenterScreen()),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Text('CONTACT SUPPORT',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                          letterSpacing: 1.2,
-                        ),
+                      Text(
+                        'CONTACT SUPPORT',
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.primary, letterSpacing: 1.2),
                       ),
                       SizedBox(width: 4),
                       Icon(
@@ -546,11 +559,13 @@ class _DocModel {
   final String? url;
   final IconData icon;
   final bool isVideo;
+  final String? cacheKey;
 
   _DocModel({
     required this.label,
     this.url,
     required this.icon,
     this.isVideo = false,
+    this.cacheKey,
   });
 }

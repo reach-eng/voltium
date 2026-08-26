@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { validateIncidentTransition, type IncidentStatus } from './incident-state-machine';
 
 export const incidentUseCases = {
   async list(params: {
@@ -91,8 +93,7 @@ export const incidentUseCases = {
       if (!vehicle) throw new Error('Vehicle not found');
     }
 
-    const count = await db.incident.count();
-    const incidentId = `INC-${String(count + 1).padStart(5, '0')}`;
+    const incidentId = `INC-${Date.now()}`;
 
     const incident = await db.incident.create({
       data: {
@@ -106,7 +107,7 @@ export const incidentUseCases = {
         location: data.location ?? null,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
-        photos: JSON.stringify(data.photos ?? []),
+        photos: (data.photos ?? []) as unknown as Prisma.InputJsonValue,
         insuranceClaim: data.insuranceClaim ?? false,
         insuranceClaimNumber: data.insuranceClaimNumber || null,
       },
@@ -115,6 +116,14 @@ export const incidentUseCases = {
         vehicle: { select: { vehicleNumber: true } },
       },
     });
+
+    // Auto-update vehicle status to MAINTENANCE if breakdown, accident, or damage reported
+    if (data.vehicleId && ['BREAKDOWN', 'ACCIDENT', 'DAMAGE'].includes(data.type)) {
+      await db.vehicle.update({
+        where: { id: data.vehicleId },
+        data: { status: 'MAINTENANCE' },
+      }).catch((err: unknown) => logger.warn('[IncidentUseCases] Failed to update vehicle status to MAINTENANCE', { vehicleId: data.vehicleId, err }));
+    }
 
     createAuditLog({
       actorId,
@@ -136,6 +145,12 @@ export const incidentUseCases = {
     });
 
     if (!incident) return null;
+
+    // PR-P3.1: photos is native Json — Prisma returns it as a parsed value
+    // (or null). Coerce safely to string[] for the response shape.
+    const parsedPhotos: string[] = Array.isArray(incident.photos)
+      ? (incident.photos as unknown as string[])
+      : [];
 
     return {
       id: incident.id,
@@ -164,7 +179,7 @@ export const incidentUseCases = {
       location: incident.location,
       latitude: incident.latitude,
       longitude: incident.longitude,
-      photos: JSON.parse(incident.photos),
+      photos: parsedPhotos,
       status: incident.status,
       assignedTo: incident.assignedTo,
       resolution: incident.resolution,
@@ -178,6 +193,12 @@ export const incidentUseCases = {
   },
 
   async updateIncident(id: string, data: Record<string, unknown>, actorId: string) {
+    if (data.status) {
+      const existing = await db.incident.findUnique({ where: { id }, select: { status: true } });
+      if (!existing) throw new Error('Incident not found');
+      validateIncidentTransition(existing.status as IncidentStatus, data.status as IncidentStatus);
+    }
+
     const updateData: Record<string, unknown> = {};
     if (data.status) updateData.status = data.status;
     if (data.assignedTo !== undefined) updateData.assignedTo = data.assignedTo;

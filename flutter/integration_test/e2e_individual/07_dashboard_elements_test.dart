@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
+import '../pages/dashboard_page.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -14,11 +15,7 @@ void main() {
   testWidgets('Dashboard displays all key elements', (tester) async {
     await fullLoginFlow(tester);
 
-    // Verify core dashboard elements
-    expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
-    expect(find.byKey(const Key('notificationBell')), findsOneWidget);
-    expect(find.byKey(const Key('pointsBadge')), findsOneWidget);
-    expect(find.byKey(const Key('assignedVehicleCard')), findsOneWidget);
-    expect(find.byKey(const Key('copyReferralButton')), findsOneWidget);
+    final dashboardPage = DashboardPageObject(tester);
+    dashboardPage.expectLoaded();
   });
 }

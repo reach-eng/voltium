@@ -26,17 +26,29 @@ export function maskEmail(email: string | null): string | null {
 
 /**
  * Mask Aadhaar number (e.g. 1234-5678-9012 -> XXXX-XXXX-9012)
+ *
+ * SECURITY (R10 polish #3, §4.2): fail-closed for invalid input. If the input
+ * is not exactly 12 alphanumeric characters, return a fully-redacted string
+ * (12 asterisks) rather than echoing the unmasked value. The previous
+ * implementation returned `cleanAadhaar` for wrong-length input, which leaked
+ * partial PII.
  */
 export function maskAadhaar(aadhaar: string | null | undefined): string {
   if (!aadhaar) return '';
   const cleanAadhaar = aadhaar.replace(/[^a-zA-Z0-9]/g, '');
-  if (cleanAadhaar.length !== 12) return cleanAadhaar;
+  if (cleanAadhaar.length !== 12) return '************'; // 12 asterisks
   return `********${cleanAadhaar.slice(-4)}`;
 }
 
+/**
+ * Mask PAN number (e.g. ABCDE1234F -> ******1234F)
+ *
+ * SECURITY (R10 polish #3, §4.2): fail-closed for invalid input. Same
+ * rationale as `maskAadhaar`.
+ */
 export function maskPan(pan: string | null | undefined): string {
   if (!pan) return '';
   const cleanPan = pan.replace(/[^a-zA-Z0-9]/g, '');
-  if (cleanPan.length !== 10) return cleanPan;
+  if (cleanPan.length !== 10) return '**********'; // 10 asterisks
   return `******${cleanPan.slice(-4)}`;
 }

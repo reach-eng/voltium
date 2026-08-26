@@ -2,19 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/splash_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Onboarding Flow Widget Tests
 void main() {
   Widget buildTestApp({required Widget child}) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+    return ProviderScope(
+      overrides: [
+        localeProviderRef.overrideWith((ref) => LocaleProvider()),
+        themeProviderRef.overrideWith((ref) => ThemeProvider()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -36,7 +37,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(OnboardingScreen), findsOneWidget);
     });
 
@@ -47,7 +48,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final hasSteps = find.byType(ListTile).evaluate().isNotEmpty ||
           find.byType(Card).evaluate().isNotEmpty ||
@@ -63,7 +64,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });
@@ -80,7 +81,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

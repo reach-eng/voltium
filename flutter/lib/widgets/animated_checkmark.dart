@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class AnimatedCheckmark extends StatefulWidget {
   final bool isChecked;
@@ -11,7 +12,7 @@ class AnimatedCheckmark extends StatefulWidget {
     super.key,
     this.isChecked = false,
     this.size = 48,
-    this.color = const Color(0xFF16A34A),
+    this.color = AppColors.success,
     this.duration = const Duration(milliseconds: 500),
     this.onAnimationComplete,
   });
@@ -73,6 +74,7 @@ class _AnimatedCheckmarkState extends State<AnimatedCheckmark>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -84,7 +86,7 @@ class _AnimatedCheckmarkState extends State<AnimatedCheckmark>
             decoration: BoxDecoration(
               color: widget.isChecked || _controller.isCompleted
                   ? widget.color
-                  : Colors.grey[300],
+                  : colors.divider,
               shape: BoxShape.circle,
             ),
             child: CustomPaint(

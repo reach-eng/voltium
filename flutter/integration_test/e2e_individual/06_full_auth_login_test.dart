@@ -12,7 +12,10 @@ void main() {
 
   testWidgets('Full auth journey – splash to dashboard', (tester) async {
     final reachedDashboard = await fullLoginFlow(tester);
-    expect(reachedDashboard, isTrue,
-        reason: 'Should reach dashboard after full auth',);
+    expect(
+      reachedDashboard,
+      isTrue,
+      reason: 'Should reach dashboard after full auth',
+    );
   });
 }

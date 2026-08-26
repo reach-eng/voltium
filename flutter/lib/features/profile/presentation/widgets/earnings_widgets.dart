@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/models/earnings_entry_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/date_helpers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class WeekSelectorBar extends StatelessWidget {
   final DateTime weekStart;
@@ -22,14 +24,15 @@ class WeekSelectorBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
+            color: AppColors.shadowSoftColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
@@ -41,50 +44,47 @@ class WeekSelectorBar extends StatelessWidget {
           InkWell(
             onTap: onPrev,
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: AppColors.iconBackground,
+              padding: Spacing.paddingSm,
+              decoration: BoxDecoration(
+                color: colors.iconBackground,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.chevron_left,
-                  size: 20, color: Color(0xFF1E293B),),
+              child: Icon(
+                Icons.chevron_left,
+                size: 20,
+                color: colors.onSurface,
+              ),
             ),
           ),
           Column(
             children: [
-              const Text('WEEKLY EARNINGS',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.slate500,
-                  letterSpacing: 1.5,
-                ),
+              Text(
+                'WEEKLY EARNINGS',
+                style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                    color: colors.onSurfaceVariant, letterSpacing: 1.5),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 _getWeekRange(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: colors.onSurface),
               ),
             ],
           ),
           InkWell(
             onTap: onNext,
             child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: AppColors.iconBackground,
+              padding: Spacing.paddingSm,
+              decoration: BoxDecoration(
+                color: colors.iconBackground,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: onNext != null
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFCBD5E1),
+                color:
+                    onNext != null ? colors.onSurface : colors.outlineVariant,
               ),
             ),
           ),
@@ -113,28 +113,27 @@ class TotalEarningsCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryGradientEnd],
+          colors: [AppColors.primary, AppColors.primaryLight],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x260053C1),
+            color: AppColors.shadowPrimaryStrongColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('THIS WEEK',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+              Text(
+                'THIS WEEK',
+                style: AppTypography.overline.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                   letterSpacing: 1.5,
                 ),
@@ -143,110 +142,99 @@ class TotalEarningsCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.trending_up, color: Color(0xFF4ADE80), size: 14),
+                    Icon(Icons.trending_up, color: AppColors.success, size: 14),
                     SizedBox(width: 4),
                     Text(
                       '+12%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4ADE80),
-                      ),
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.success),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 '\u20B9',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w300,
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 total.toStringAsFixed(0),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -1,
-                ),
+                style: AppTypography.displayLarge
+                    .copyWith(color: Colors.white, letterSpacing: -1),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TRIPS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 0.8,
-                        ),
+                      Text(
+                        'TRIPS',
+                        style: AppTypography.labelSmall
+                            .copyWith(fontSize: 9)
+                            .copyWith(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              letterSpacing: 0.8,
+                            ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '$trips',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: Colors.white),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('HOURS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 0.8,
-                        ),
+                      Text(
+                        'HOURS',
+                        style: AppTypography.labelSmall
+                            .copyWith(fontSize: 9)
+                            .copyWith(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              letterSpacing: 0.8,
+                            ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '${hours.toStringAsFixed(1)}h',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -278,17 +266,18 @@ class DayEarningsCard extends StatelessWidget {
     final hours = day['hours'] as double;
     final platforms = day['platforms'] as Set<GigPlatform>;
     final hasEntries = day['hasEntries'] as bool;
+    final colors = AppColors.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: hasEntries ? null : Border.all(color: AppColors.outlineVariant),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: hasEntries ? null : Border.all(color: colors.outlineVariant),
         boxShadow: hasEntries
             ? const [
                 BoxShadow(
-                  color: Color(0x0A0F172A),
+                  color: AppColors.shadowSoftColor,
                   blurRadius: 48,
                   offset: Offset(0, 24),
                 ),
@@ -296,15 +285,22 @@ class DayEarningsCard extends StatelessWidget {
             : null,
       ),
       child: hasEntries
-          ? _buildEntryCard(date, amount, trips, hours, platforms)
-          : _buildEmptyCard(date),
+          ? _buildEntryCard(context, date, amount, trips, hours, platforms)
+          : _buildEmptyCard(context, date),
     );
   }
 
-  Widget _buildEntryCard(DateTime date, double amount, int trips, double hours,
-      Set<GigPlatform> platforms,) {
+  Widget _buildEntryCard(
+    BuildContext context,
+    DateTime date,
+    double amount,
+    int trips,
+    double hours,
+    Set<GigPlatform> platforms,
+  ) {
+    final colors = AppColors.of(context);
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -316,66 +312,64 @@ class DayEarningsCard extends StatelessWidget {
                 children: [
                   Text(
                     DateHelpers.dayName(date),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.slate500,
-                      letterSpacing: 1.5,
-                    ),
+                    style: AppTypography.overline.copyWith(
+                        color: colors.onSurfaceVariant, letterSpacing: 1.5),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     DateHelpers.formatFullDate(date),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(color: colors.onSurface),
                   ),
                 ],
               ),
               Row(
                 children: [
-                  ...platforms.map((p) => Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2,),
-                          decoration: BoxDecoration(
-                            color: EarningEntry.platformColor(p)
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            EarningEntry.platformLabel(p),
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: EarningEntry.platformColor(p),
-                            ),
-                          ),
+                  ...platforms.map(
+                    (p) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
                         ),
-                      ),),
-                  const SizedBox(width: 8),
+                        decoration: BoxDecoration(
+                          color: EarningEntry.platformColor(p)
+                              .withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          EarningEntry.platformLabel(p),
+                          style: AppTypography.labelSmall
+                              .copyWith(fontSize: 9)
+                              .copyWith(
+                                color: EarningEntry.platformColor(p),
+                              ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
                   Text(
                     '\u20B9${amount.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF16A34A),
-                    ),
+                    style: AppTypography.titleMedium
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
-              _buildDayStat(Icons.directions_bike, '$trips trips'),
+              _buildDayStat(context, Icons.directions_bike, '$trips trips'),
               const SizedBox(width: 16),
               _buildDayStat(
-                  Icons.schedule, '${hours.toStringAsFixed(1)}h online',),
+                context,
+                Icons.schedule,
+                '${hours.toStringAsFixed(1)}h online',
+              ),
               const Spacer(),
               InkWell(
                 onTap: onAddEntry,
@@ -383,20 +377,18 @@ class DayEarningsCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.primarySurface,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.add, size: 14, color: AppColors.primary),
                       SizedBox(width: 4),
-                      Text('Add',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
+                      Text(
+                        'Add',
+                        style: AppTypography.labelSmall
+                            .copyWith(color: AppColors.primary),
                       ),
                     ],
                   ),
@@ -409,9 +401,10 @@ class DayEarningsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyCard(DateTime date) {
+  Widget _buildEmptyCard(BuildContext context, DateTime date) {
+    final colors = AppColors.of(context);
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -420,21 +413,15 @@ class DayEarningsCard extends StatelessWidget {
             children: [
               Text(
                 DateHelpers.dayName(date),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.slate400,
-                  letterSpacing: 1.5,
-                ),
+                style: AppTypography.overline
+                    .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 DateHelpers.formatFullDate(date),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate400,
-                ),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: colors.onSurfaceMuted),
               ),
             ],
           ),
@@ -443,20 +430,18 @@ class DayEarningsCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(12),
+                color: colors.iconBackground,
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add, size: 14, color: AppColors.slate500),
+                  Icon(Icons.add, size: 14, color: colors.onSurfaceVariant),
                   SizedBox(width: 4),
-                  Text('Add Entry',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate500,
-                    ),
+                  Text(
+                    'Add Entry',
+                    style: AppTypography.labelSmall
+                        .copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -467,16 +452,17 @@ class DayEarningsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDayStat(IconData icon, String text) {
+  Widget _buildDayStat(BuildContext context, IconData icon, String text) {
+    final colors = AppColors.of(context);
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.slate500),
-        const SizedBox(width: 4),
+        Icon(icon, size: 14, color: colors.onSurfaceVariant),
+        SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
-            color: AppColors.slate500,
+            color: colors.onSurfaceVariant,
           ),
         ),
       ],
@@ -505,33 +491,32 @@ class WeeklySummaryCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: AppGradients.success,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x2610B981),
+            color: AppColors.shadowSuccessStrongColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('WEEKLY SUMMARY',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1.5,
-            ),
+          Text(
+            'WEEKLY SUMMARY',
+            style: AppTypography.overline
+                .copyWith(color: Colors.white, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: _buildSummaryStat(
-                    'Total Earnings', '\u20B9${total.toStringAsFixed(0)}',),
+                  'Total Earnings',
+                  '\u20B9${total.toStringAsFixed(0)}',
+                ),
               ),
               Expanded(
                 child: _buildSummaryStat('Total Trips', '$trips'),
@@ -543,33 +528,34 @@ class WeeklySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildSummaryStat(
-                    'Avg/Day', '\u20B9${avgPerDay.toStringAsFixed(0)}',),
+                  'Avg/Day',
+                  '\u20B9${avgPerDay.toStringAsFixed(0)}',
+                ),
               ),
               Expanded(
-                child: _buildSummaryStat('Best Day',
-                    '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})',),
+                child: _buildSummaryStat(
+                  'Best Day',
+                  '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})',
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(Spacing.sm),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
                 const Icon(Icons.lightbulb, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'You earned \u20B9${total.toStringAsFixed(0)} this week. ${bestAmount > 0 ? 'Your best day was ${DateHelpers.dayName(bestDate)} with \u20B9${bestAmount.toStringAsFixed(0)}!' : 'Start logging to see insights!'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style:
+                        AppTypography.bodySmall.copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -586,21 +572,17 @@ class WeeklySummaryCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: Colors.white.withValues(alpha: 0.7),
-            letterSpacing: 0.8,
-          ),
+          style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                color: Colors.white.withValues(alpha: 0.7),
+                letterSpacing: 0.8,
+              ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: AppTypography.bodyMedium
+              .copyWith(fontWeight: FontWeight.w600)
+              .copyWith(color: Colors.white),
           overflow: TextOverflow.ellipsis,
         ),
       ],

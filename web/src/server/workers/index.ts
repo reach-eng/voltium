@@ -2,86 +2,208 @@
  * Worker Orchestrator for Voltium background jobs.
  *
  * Polls the OutboxEvent table (PostgreSQL) for pending jobs.
- * No PostgreSQL-backed local store dependency — all job state lives in the database.
+ * Cron-driven workers (audit cleanup, telemetry cleanup) run on
+ * a direct timer interval, not through event polling.
  *
  * Designed to be run as:
  *   npx tsx src/server/workers/index.ts
  */
 
-import { JobQueue, JobTypes } from '@/lib/job-queue';
+import { JobQueue } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { JOB_TYPES } from './queues';
+import { OutboxEventTypes } from './outbox';
 import { sendSms } from '@/lib/sms-provider';
 
 // Import job processors
 import { reconciliationJob } from './jobs/reconciliation.job';
-import { notificationsJob } from './jobs/notifications.job';
+import { notificationDispatchJob } from './jobs/notification-dispatch.job';
+import { dailyEngagementJob, msUntilNext0600IST } from './jobs/daily-engagement.job';
 import { rentRemindersJob } from './jobs/rent-reminders.job';
 import { deviceComplianceJob } from './jobs/device-compliance.job';
 import { referralRewardJob } from './jobs/referral-reward.job';
 import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
+// notifications.job.ts is deprecated (BLOCKER 1.4). Its birthday/payment
+// reminder logic moved to daily-engagement.job.ts; its outbox mapping was
+// the misroute that dropped per-event KYC/topup notifications. The file
+// is intentionally left in the tree as a tombstone for one release and
+// can be deleted in the next cleanup pass.
 
 // ---------------------------------------------------------------------------
-// Worker registry — maps JobType to a processor function
+// Event-driven workers — poll the OutboxEvent table for matching event types
 // ---------------------------------------------------------------------------
 
 type JobProcessor = (job: any) => Promise<any>;
+type OutboxPriority = 'interactive' | 'background';
 
 interface WorkerDefinition {
   jobType: string;
   processor: JobProcessor;
   concurrency: number;
+  description: string;
+  /**
+   * PR-75: priority split. 'interactive' workers are polled first
+   * and are not blocked by background work. 'background' workers
+   * are gated to run only when no interactive events are PENDING
+   * (checked on each poll cycle). See AUDIT_BACKEND_2026-08-03.md
+   * §2.A.N2 and AUDIT_FIX_PLAN_2026-08-03.md PR-75 for context.
+   */
+  priority: OutboxPriority;
 }
 
 const WORKERS: WorkerDefinition[] = [
   {
-    jobType: JOB_TYPES.WALLET_RECONCILIATION,
+    // Processes wallet.topup_approved / wallet.topup_rejected events from wallet use-cases
+    jobType: OutboxEventTypes.WALLET_RECONCILIATION,
     processor: reconciliationJob.process,
     concurrency: 1,
+    description: 'Wallet reconciliation — triggered by topup approval/rejection',
+    priority: 'background',
   },
   {
-    jobType: JOB_TYPES.ANNOUNCEMENT_DISPATCH,
-    processor: notificationsJob.process,
+    // BLOCKER 1.4: per-event notification dispatch (KYC, topup, support,
+    // deposit, etc). Previously this was misrouted to the daily
+    // birthday/payment reminder job, which ignored the payload and ran
+    // only once per day. Now it dispatches by payload.type.
+    jobType: OutboxEventTypes.NOTIFICATION_SEND,
+    processor: notificationDispatchJob.process,
     concurrency: 3,
+    description: 'Push/in-app notification dispatch (per-event)',
+    priority: 'interactive',
   },
   {
-    jobType: JOB_TYPES.RENT_DUE_CHECK,
+    // BLOCKER 1.4: daily birthday wishes + payment reminders + referral
+    // leaderboard. Triggered by the scheduled task below at 06:00 IST.
+    jobType: OutboxEventTypes.DAILY_ENGAGEMENT,
+    processor: dailyEngagementJob.process,
+    concurrency: 1,
+    description: 'Daily engagement (birthday + payment reminder) at 06:00 IST',
+    priority: 'interactive',
+  },
+  {
+    // Processes rent.due_check events (emitted on a timer by the scheduled loop below)
+    jobType: OutboxEventTypes.RENT_DUE_CHECK,
     processor: rentRemindersJob.process,
     concurrency: 2,
+    description: 'Rent due check & auto-debit',
+    priority: 'interactive',
   },
   {
-    jobType: JOB_TYPES.DEVICE_VIOLATION_SCAN,
+    // Processes device.violation_scan events (emitted on a timer by the scheduled loop below)
+    jobType: OutboxEventTypes.DEVICE_VIOLATION_SCAN,
     processor: deviceComplianceJob.process,
     concurrency: 2,
+    description: 'Device compliance violation scanner',
+    priority: 'background',
   },
   {
-    jobType: JOB_TYPES.REFERRAL_REWARD_PROCESS,
+    // Processes referral.reward events from referral-reward job
+    jobType: OutboxEventTypes.REFERRAL_REWARD,
     processor: referralRewardJob.process,
     concurrency: 3,
+    description: 'Referral reward processing',
+    priority: 'interactive',
   },
   {
-    jobType: JOB_TYPES.AUDIT_LOG_CLEANUP,
-    processor: auditCleanupJob.process,
-    concurrency: 1,
-  },
-  {
-    jobType: JOB_TYPES.TELEMETRY_DATA_CLEANUP,
-    processor: telemetryCleanupJob.process,
-    concurrency: 1,
-  },
-  {
-    jobType: JobTypes.SEND_SMS,
+    // SMS sends — processes sms.send events from auth use-cases
+    jobType: OutboxEventTypes.SMS_SEND,
     processor: async (job: any) => {
       const { phone, message } = job.payload as { phone: string; message: string };
       await sendSms(phone, message);
     },
     concurrency: 5,
+    description: 'SMS dispatch via provider',
+    priority: 'interactive',
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Scheduled tasks
+// Scheduled (cron-driven) workers — run directly on a timer, not event-polled
+// ---------------------------------------------------------------------------
+
+const SCHEDULED_TASKS: Array<{
+  name: string;
+  intervalMs: number;
+  processor: (injectedClock: typeof clock) => Promise<void>;
+}> = [
+  {
+    name: 'audit-log-cleanup',
+    intervalMs: 300_000, // every 5 minutes
+    processor: async () => {
+      await auditCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    name: 'telemetry-cleanup',
+    intervalMs: 300_000,
+    processor: async () => {
+      await telemetryCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    name: 'rent-due-emitter',
+    intervalMs: 60_000, // every minute
+    processor: async (injectedClock) => {
+      const { OutboxService } = await import('./outbox');
+      // PR-75: rent-due check is interactive — the rent reminders
+      // worker is on the interactive list (see WORKERS above).
+      await OutboxService.emit(
+        OutboxEventTypes.RENT_DUE_CHECK,
+        { triggeredAt: injectedClock.now().toISOString() },
+        3,
+        undefined,
+        'interactive'
+      ).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
+    },
+  },
+  {
+    name: 'device-violation-emitter',
+    intervalMs: 60_000, // every minute
+    processor: async (injectedClock) => {
+      const { OutboxService } = await import('./outbox');
+      // device compliance is background — the deviceComplianceJob
+      // is wired to priority='background'.
+      await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION_SCAN, {
+        triggeredAt: injectedClock.now().toISOString(),
+      }).catch((e: Error) => logger.error('[Scheduler] Failed to emit device violation scan', e));
+    },
+  },
+  {
+    // BLOCKER 1.4: emit the daily engagement event at 06:00 IST.
+    // msUntilNext0600IST() returns the delay until the next 06:00 IST;
+    // after the first run, we reschedule by recomputing on each tick.
+    name: 'daily-engagement-emitter',
+    intervalMs: 60_000, // checked every minute; only emits at 06:00 IST
+    processor: async (injectedClock) => {
+      const msUntil = msUntilNext0600IST();
+      // If we're within 1 minute of the target, fire now.
+      if (msUntil > 60_000) return;
+      const { OutboxService } = await import('./outbox');
+      // PR-75: daily engagement is interactive (birthday wishes,
+      // payment reminders) — the dailyEngagementJob is on the
+      // interactive list.
+      await OutboxService.emit(
+        OutboxEventTypes.DAILY_ENGAGEMENT,
+        {
+          triggeredAt: injectedClock.now().toISOString(),
+          istDate: new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata',
+          }).format(injectedClock.now()),
+        },
+        3,
+        undefined,
+        'interactive'
+      ).catch((e: Error) =>
+        logger.error('[Scheduler] Failed to emit daily engagement', e)
+      );
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Scheduled backup check
 // ---------------------------------------------------------------------------
 
 import { scheduledBackupJob } from './jobs/scheduled-backup.job';
@@ -101,42 +223,70 @@ async function checkScheduledBackups(): Promise<void> {
 // Main loop
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Main loop
-// ---------------------------------------------------------------------------
-
 let running = false;
 const activeJobs = new Set<Promise<any>>();
 
-export async function startWorkers(): Promise<void> {
+let globalAbortController: AbortController | null = null;
+
+export async function startWorkers(injectedClock: typeof clock = clock): Promise<void> {
   if (running) {
     logger.warn('[Workers] Already running');
     return;
   }
 
   running = true;
+  globalAbortController = new AbortController();
   logger.info('[Workers] Starting all workers', {
     workerCount: WORKERS.length,
+    scheduledTaskCount: SCHEDULED_TASKS.length,
     jobTypes: WORKERS.map((w) => w.jobType),
   });
 
-  // Start each worker in its own polling loop
-  const promises = WORKERS.map((worker) => runWorkerLoop(worker));
+  const promises: Promise<void>[] = [];
 
-  // Check scheduled backups every 5 minutes
-  promises.push(runScheduledBackupLoop());
+  // Event-driven workers — each polls its own event type
+  for (const worker of WORKERS) {
+    promises.push(runWorkerLoop(worker, injectedClock));
+  }
+
+  // Scheduled tasks — run on direct timer
+  for (const task of SCHEDULED_TASKS) {
+    promises.push(runScheduledTask(task, injectedClock));
+  }
+
+  // Scheduled backup check — every 5 minutes
+  promises.push(runScheduledBackupLoop(injectedClock));
+
+  // Reaper — every 5 minutes
+  promises.push(runReaperLoop(injectedClock));
 
   await Promise.all(promises);
 }
 
-async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
-  const { jobType, processor, concurrency } = worker;
+async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clock): Promise<void> {
+  const { jobType, processor, concurrency, priority } = worker;
 
-  logger.info(`[Worker] Starting loop for ${jobType}`, { concurrency });
+  logger.info(`[Worker] Starting loop for ${jobType}`, {
+    concurrency,
+    priority,
+  });
 
   while (running) {
+    let processedCount = 0;
     try {
-      await JobQueue.processJobs(
+      // PR-75: background workers yield to interactive work. If any
+      // interactive event of any type is PENDING, skip the claim this
+      // cycle so latency-sensitive jobs (rent-due SMS, FCM dispatch,
+      // etc.) get first dibs. The check is cheap (a single COUNT on
+      // the (priority, status, createdAt) index) and only runs for
+      // background workers.
+      if (priority === 'background' && (await hasPendingInteractive())) {
+        // Don't claim — sleep and re-check on the next tick.
+        await sleep(1000);
+        continue;
+      }
+
+      processedCount = await JobQueue.processJobs(
         jobType,
         async (job) => {
           logger.info(`[Worker] Processing job`, {
@@ -151,35 +301,109 @@ async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
             activeJobs.delete(promise);
           }
         },
-        concurrency
+        concurrency,
+        priority
       );
     } catch (err) {
       logger.error(`[Worker] Error in ${jobType} loop`, err);
     }
 
-    // Poll interval — check every 5 seconds
-    await sleep(5000);
+    // Adaptive idle backoff: sleep 1s when active, 15s when idle to save DB query overhead
+    await sleep(processedCount > 0 ? 1000 : 15000);
   }
 }
 
-async function runScheduledBackupLoop(): Promise<void> {
+async function runScheduledTask(task: {
+  name: string;
+  intervalMs: number;
+  processor: (injectedClock: typeof clock) => Promise<void>;
+}, injectedClock: typeof clock): Promise<void> {
+  logger.info(`[Scheduler] Starting scheduled task "${task.name}"`, {
+    intervalMs: task.intervalMs,
+  });
+
+  while (running) {
+    try {
+      await task.processor(injectedClock);
+    } catch (err) {
+      logger.error(`[Scheduler] Error in "${task.name}"`, err);
+    }
+    await sleep(task.intervalMs);
+  }
+}
+
+async function runScheduledBackupLoop(injectedClock: typeof clock): Promise<void> {
   while (running) {
     await checkScheduledBackups();
-    await sleep(300_000); // Check every 5 minutes
+    await sleep(300_000);
   }
+}
+
+async function runReaperLoop(injectedClock: typeof clock): Promise<void> {
+  while (running) {
+    try {
+      const { JobQueue } = await import('@/lib/job-queue');
+      const reclaimed = await JobQueue.runReaper();
+      if (reclaimed > 0) {
+        logger.warn('[Reaper] Reclaimed stuck processing jobs', { count: reclaimed });
+      }
+    } catch (err) {
+      logger.error('[Reaper] Error during reaper cycle', err);
+    }
+    await sleep(300_000);
+  }
+}
+
+/**
+ * PR-75: gate background workers. Returns true if any
+ * 'interactive' outbox event of any type is PENDING. Used by the
+ * worker loop to skip background claims when interactive work is
+ * waiting. Backs the (priority, status, createdAt) index added in
+ * prisma/migrations/20260803152322_add_outbox_priority/.
+ *
+ * The check is intentionally cheap and slightly conservative:
+ * we report a PENDING interactive event exists whenever
+ * status='PENDING', even if the row's attempts >= maxAttempts
+ * (would not be claimed) or readyAt is in the future (would not
+ * be claimed yet). The cost is one extra sleep cycle for the
+ * background worker; the benefit is a single indexed EXISTS-style
+ * check (findFirst + take: 1) instead of a more expensive join.
+ */
+async function hasPendingInteractive(): Promise<boolean> {
+  const { db } = await import('@/lib/db');
+  const found = await db.outboxEvent.findFirst({
+    where: {
+      priority: 'interactive',
+      status: 'PENDING',
+    },
+    select: { id: true },
+  });
+  return found !== null;
 }
 
 export function stopWorkers(): void {
   running = false;
+  if (globalAbortController) {
+    globalAbortController.abort();
+  }
   logger.info('[Workers] Stopping all workers');
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    if (!running || !globalAbortController) {
+      return resolve();
+    }
+    const timeout = setTimeout(resolve, ms);
+    globalAbortController.signal.addEventListener('abort', () => {
+      clearTimeout(timeout);
+      resolve();
+    }, { once: true });
+  });
 }
 
 // ---------------------------------------------------------------------------
-// CLI entry point — run via: npx tsx src/server/workers/index.ts
+// CLI entry point
 // ---------------------------------------------------------------------------
 
 export async function runFromCli(): Promise<void> {
@@ -187,7 +411,6 @@ export async function runFromCli(): Promise<void> {
   await startWorkers();
 }
 
-// Auto-start when executed directly (ESM-safe alternative to require.main)
 const isDirectRun =
   typeof process !== 'undefined' &&
   process.argv.length >= 2 &&
@@ -195,6 +418,8 @@ const isDirectRun =
     process.argv[1]?.endsWith('workers/index.js') ||
     process.argv[1]?.endsWith('workers\\index.ts') ||
     process.argv[1]?.endsWith('workers\\index.js') ||
+    process.argv[1]?.endsWith('workers\\\\index.ts') ||
+    process.argv[1]?.endsWith('workers\\\\index.js') ||
     process.argv[1]?.endsWith('workers.js') ||
     process.argv[1]?.endsWith('workers.ts'));
 
@@ -225,7 +450,6 @@ if (isDirectRun) {
     process.exit(1);
   });
 
-  // Graceful shutdown
   process.on('SIGINT', () => {
     handleShutdown('SIGINT').catch((err) => {
       logger.error('[Workers] Error during SIGINT handler', err);

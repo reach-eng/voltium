@@ -13,12 +13,23 @@ export const analyticsUseCases = {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(period.replace('d', '').replace('y', '365')));
 
-    const [totalRiders, activeRiders, totalVehicles, activeRentals] = await Promise.all([
-      db.rider.count(),
-      db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
-      db.vehicle.count(),
-      db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
-    ]);
+    // Single raw query replaces 4 separate Prisma count() round-trips.
+    // Table names are the snake_case @map targets (riders, vehicles), not
+    // the Prisma model names (Rider, Vehicle) — see prisma/schema.prisma
+    // @@map declarations and PR-1 (34c8b55) for the prior fix.
+    const [counts] = await db.$queryRaw<
+      { total_riders: bigint; active_riders: bigint; total_vehicles: bigint }[]
+    >`
+      SELECT
+        (SELECT COUNT(*) FROM "riders")                                       AS total_riders,
+        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'ACTIVE')   AS active_riders,
+        (SELECT COUNT(*) FROM "vehicles")                                     AS total_vehicles
+    `;
+
+    const totalRiders = Number(counts.total_riders);
+    const activeRiders = Number(counts.active_riders);
+    const totalVehicles = Number(counts.total_vehicles);
+    const activeRentals = activeRiders; // matches original logic
 
     return {
       revenue: {
@@ -58,43 +69,55 @@ export const analyticsUseCases = {
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
     twelveMonthsAgo.setDate(1);
 
-    const [
-      totalRiders,
-      activeRiders,
-      currentMonthTransactions,
-      lastMonthTransactions,
-      monthlyTrend,
-      cohortData,
-    ] = await Promise.all([
-      db.rider.count(),
-      db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
-      db.transaction.aggregate({
-        where: { status: 'APPROVED', createdAt: { gte: startOfMonth } },
-        _sum: { amount: true },
-      }),
-      db.transaction.aggregate({
-        where: { status: 'APPROVED', createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
-        _sum: { amount: true },
-      }),
+    // Single raw query replaces 5 separate Prisma count/aggregate round-trips.
+    // Uses snake_case table names (riders, vehicles, transactions) and the
+    // renamed amountInPaise column. See PR-1 (34c8b55) for the original
+    // snake_case fix and the amount -> amountInPaise rename migration.
+    const [ridersAndVehicles] = await db.$queryRaw<
+      {
+        total_riders: bigint;
+        active_riders: bigint;
+        last_month_active: bigint;
+        churned_this_month: bigint;
+        total_vehicles: bigint;
+        active_vehicles: bigint;
+        current_month_revenue: bigint | null;
+        last_month_revenue: bigint | null;
+      }[]
+    >`
+      SELECT
+        (SELECT COUNT(*) FROM "riders")                                                            AS total_riders,
+        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'ACTIVE')                        AS active_riders,
+        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'ACTIVE'
+          AND "createdAt" < ${startOfMonth})                                                       AS last_month_active,
+        (SELECT COUNT(*) FROM "riders" WHERE "lifecycleStatus" = 'SUSPENDED'
+          AND "updatedAt" >= ${startOfMonth})                                                      AS churned_this_month,
+        (SELECT COUNT(*) FROM "vehicles")                                                          AS total_vehicles,
+        (SELECT COUNT(*) FROM "vehicles" WHERE status = 'ACTIVE_RENTAL')                          AS active_vehicles,
+        (SELECT SUM("amountInPaise") FROM "transactions"
+          WHERE status = 'APPROVED' AND "createdAt" >= ${startOfMonth})                           AS current_month_revenue,
+        (SELECT SUM("amountInPaise") FROM "transactions"
+          WHERE status = 'APPROVED'
+            AND "createdAt" >= ${startOfLastMonth}
+            AND "createdAt" <= ${endOfLastMonth})                                                  AS last_month_revenue
+    `;
+
+    const totalRiders = Number(ridersAndVehicles.total_riders);
+    const activeRiders = Number(ridersAndVehicles.active_riders);
+    const lastMonthActiveRiders = Number(ridersAndVehicles.last_month_active);
+    const churnedRiders = Number(ridersAndVehicles.churned_this_month);
+    const totalVehicles = Number(ridersAndVehicles.total_vehicles);
+    const activeVehicles = Number(ridersAndVehicles.active_vehicles);
+    const currentMRR = Number(ridersAndVehicles.current_month_revenue ?? 0) / 100;
+    const lastMRR = Number(ridersAndVehicles.last_month_revenue ?? 0) / 100;
+
+    const mrrGrowth = lastMRR > 0 ? ((currentMRR - lastMRR) / lastMRR) * 100 : 0;
+    const churnRate = lastMonthActiveRiders > 0 ? (churnedRiders / lastMonthActiveRiders) * 100 : 0;
+
+    const [monthlyTrend, cohortData] = await Promise.all([
       getMonthlyTrend(twelveMonthsAgo),
       getCohortData(),
     ]);
-
-    const currentMRR =
-      ((currentMonthTransactions._sum as { amount: number | null }).amount ?? 0) / 100;
-    const lastMRR = ((lastMonthTransactions._sum as { amount: number | null }).amount ?? 0) / 100;
-    const mrrGrowth = lastMRR > 0 ? ((currentMRR - lastMRR) / lastMRR) * 100 : 0;
-
-    const lastMonthActiveRiders = await db.rider.count({
-      where: { lifecycleStatus: 'ACTIVE', createdAt: { lt: startOfMonth } },
-    });
-    const churnedRiders = await db.rider.count({
-      where: { lifecycleStatus: 'SUSPENDED', updatedAt: { gte: startOfMonth } },
-    });
-    const churnRate = lastMonthActiveRiders > 0 ? (churnedRiders / lastMonthActiveRiders) * 100 : 0;
-
-    const totalVehicles = await db.vehicle.count();
-    const activeVehicles = await db.vehicle.count({ where: { status: 'ACTIVE_RENTAL' } });
 
     return {
       overview: {
@@ -117,16 +140,19 @@ export const analyticsUseCases = {
 };
 
 async function getMonthlyTrend(startDate: Date) {
+  // `amount` was renamed to `amountInPaise` in migration 20260729150000.
+  // The value is in paise (integer); divide by 100 only at the response
+  // boundary to keep aggregation math exact.
   const transactions = await db.transaction.findMany({
     where: { status: 'APPROVED', createdAt: { gte: startDate } },
-    select: { amount: true, createdAt: true },
+    select: { amountInPaise: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
 
   const monthlyData: Record<string, number> = {};
-  transactions.forEach((t: { amount: number; createdAt: Date }) => {
+  transactions.forEach((t: { amountInPaise: number; createdAt: Date }) => {
     const key = `${t.createdAt.getFullYear()}-${String(t.createdAt.getMonth() + 1).padStart(2, '0')}`;
-    monthlyData[key] = (monthlyData[key] || 0) + t.amount / 100;
+    monthlyData[key] = (monthlyData[key] || 0) + t.amountInPaise / 100;
   });
 
   return Object.entries(monthlyData)
@@ -156,3 +182,4 @@ async function getCohortData() {
       retentionRate: data.total > 0 ? Math.round((data.active / data.total) * 10000) / 100 : 0,
     }));
 }
+

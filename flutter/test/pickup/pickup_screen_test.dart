@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_hub_screen.dart';
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_verification_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
@@ -39,10 +40,10 @@ void main() {
     VoltiumApiService.instance = FakeVoltiumApiService();
   });
   Widget buildTestApp({required Widget child}) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+    return ProviderScope(
+      overrides: [
+        localeProviderRef.overrideWith((ref) => LocaleProvider()),
+        themeProviderRef.overrideWith((ref) => ThemeProvider()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -60,8 +61,8 @@ void main() {
     testWidgets('pickup hub screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -72,8 +73,8 @@ void main() {
     testWidgets('pickup hub screen shows hub selection UI', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -90,8 +91,8 @@ void main() {
     testWidgets('pickup hub screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -111,12 +112,11 @@ void main() {
           emergencyContact: '+919999999999',
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(PickupVerificationScreen), findsOneWidget);
     });
 
-    testWidgets('pickup verification screen does not overflow',
-        (tester) async {
+    testWidgets('pickup verification screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupVerificationScreen(
           onNext: () {},
@@ -125,7 +125,7 @@ void main() {
           emergencyContact: '+919999999999',
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

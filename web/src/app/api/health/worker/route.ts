@@ -3,6 +3,10 @@ export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function GET() {
   const start = Date.now();
 
@@ -14,32 +18,32 @@ export async function GET() {
 
     try {
       const pending = (await db.$queryRawUnsafe(
-        `SELECT COUNT(*) as count FROM "OutboxEvent" WHERE status = 'PENDING'`
+        `SELECT COUNT(*) as count FROM "outbox_events" WHERE status = 'PENDING'`
       )) as any;
       pendingCount = Number(pending[0]?.count ?? 0);
 
       const failed = (await db.$queryRawUnsafe(
-        `SELECT COUNT(*) as count FROM "OutboxEvent" WHERE status = 'FAILED'`
+        `SELECT COUNT(*) as count FROM "outbox_events" WHERE status = 'FAILED'`
       )) as any;
       failedCount = Number(failed[0]?.count ?? 0);
 
       const oldest = (await db.$queryRawUnsafe(
         `SELECT EXTRACT(EPOCH FROM (NOW() - "createdAt"))::int as age_seconds
-         FROM "OutboxEvent"
+         FROM "outbox_events"
          WHERE status = 'PENDING'
          ORDER BY "createdAt" ASC
          LIMIT 1`
       )) as any;
       oldestPendingAge = oldest[0]?.age_seconds ?? null;
     } catch {
-      // OutboxEvent table may not exist
+      // outbox_events table may not exist
     }
 
     // Check if there are any stuck pending events (> 15 minutes)
     let stuckCount = 0;
     try {
       const stuck = (await db.$queryRawUnsafe(
-        `SELECT COUNT(*) as count FROM "OutboxEvent"
+        `SELECT COUNT(*) as count FROM "outbox_events"
          WHERE status = 'PENDING'
          AND "createdAt" < NOW() - INTERVAL '15 minutes'`
       )) as any;
@@ -63,14 +67,15 @@ export async function GET() {
       },
       { status: healthy ? 200 : 503 }
     );
-  } catch (err: any) {
-    logger.error('[Health/Worker] Worker check failed', { error: err?.message });
+  } catch (err: unknown) {
+    const message = errorMessage(err);
+    logger.error('[Health/Worker] Worker check failed', { error: message });
 
     return NextResponse.json(
       {
         status: 'unhealthy',
         latencyMs: Date.now() - start,
-        error: err?.message ?? 'Unknown error',
+        error: message || 'Unknown error',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

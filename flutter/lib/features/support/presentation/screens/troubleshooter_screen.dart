@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
 import 'troubleshooter_result.dart';
 import '../widgets/troubleshooter_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Smart Troubleshooter screen for the Voltium Rider App.
 ///
@@ -18,14 +18,18 @@ import '../../../../theme/app_theme.dart';
 /// 1. [_Mode.categorySelect] — rider picks an issue category.
 /// 2. [_Mode.question]      — animated yes/no questions.
 /// 3. [_Mode.result]        — display resolution / support prompt.
-class TroubleshooterScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TroubleshooterScreen extends ConsumerStatefulWidget {
   const TroubleshooterScreen({super.key});
 
   @override
-  State<TroubleshooterScreen> createState() => _TroubleshooterScreenState();
+  ConsumerState<TroubleshooterScreen> createState() =>
+      _TroubleshooterScreenState();
 }
 
-class _TroubleshooterScreenState extends State<TroubleshooterScreen>
+class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
     with TickerProviderStateMixin {
   // ── Mode ───────────────────────────────────────────────────────────────────
 
@@ -99,11 +103,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     if (_currentNode == null) return;
 
     // Record this step.
-    _path.add(TroubleshooterAnswer(
-      question: _currentNode!.question,
-      answer: answer,
-      nodeId: _currentNode!.id,
-    ),);
+    _path.add(
+      TroubleshooterAnswer(
+        question: _currentNode!.question,
+        answer: answer,
+        nodeId: _currentNode!.id,
+      ),
+    );
 
     // Determine next node.
     final nextId = answer ? _currentNode!.yesNodeId : _currentNode!.noNodeId;
@@ -115,7 +121,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
         resolutionType: 'NEEDS_SUPPORT',
       );
       return;
-    }      final nextNode = findNode(nextId);
+    }
+    final nextNode = findNode(nextId);
     if (nextNode == null) {
       _finishWithResult(
         resolution: 'Tree data error. Please contact support.',
@@ -127,11 +134,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     final resolutionType = nextNode.resolutionType ?? 'UNKNOWN';
 
     if (nextNode.isLeaf) {
-      _path.add(TroubleshooterAnswer(
-        question: nextNode.question,
-        answer: true, // leaf acceptance
-        nodeId: nextNode.id,
-      ),);
+      _path.add(
+        TroubleshooterAnswer(
+          question: nextNode.question,
+          answer: true, // leaf acceptance
+          nodeId: nextNode.id,
+        ),
+      );
       _finishWithResult(
         resolution: nextNode.resolution!,
         resolutionType: resolutionType,
@@ -210,7 +219,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
+            Icon(Icons.warning, color: AppColors.error),
             SizedBox(width: 8),
             Text('Emergency SOS'),
           ],
@@ -229,7 +238,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                 await launchUrl(uri);
               }
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Call Now'),
           ),
         ],
@@ -244,40 +253,37 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      final payload = {
-        'type': 'TROUBLESHOOTER',
-        'category': _result!.category,
-        'resolutionType': _result!.resolutionType,
-        'path': _result!.path.map((a) => a.toJson()).toList(),
-        'resolution': _result!.resolution,
-      };
+      final categoryName =
+          _result!.category ?? _selectedCategory?.label ?? 'General Issue';
+      final subject = 'Troubleshooter: $categoryName';
+      final pathText = _result!.path
+          .map((a) => '${a.question}: ${a.answer ? "Yes" : "No"}')
+          .join('\n');
+      final message =
+          'Diagnostic Resolution:\n${_result!.resolution}\n\nDiagnostic Steps:\n$pathText';
 
-      await VoltiumApiService().post('/api/support/tickets', body: payload);
+      final provider = ref.read(supportProvider.notifier);
+      await provider.createTicket(
+        category: 'TROUBLESHOOTER',
+        subject: subject.length < 5 ? '$subject (Diagnostic)' : subject,
+        message: message.length < 10 ? '$message (Auto-generated)' : message,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_ticketCreatedMessage()),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         _resetToCategories();
       }
-    } on ApiException catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage()),
-            backgroundColor: Colors.red,
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -290,16 +296,12 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     return 'Support ticket created successfully';
   }
 
-  String _errorMessage() {
-    return 'Something went wrong. Please try again.';
-  }
-
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt,
+      backgroundColor: AppColors.surface,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: AnimatedSwitcher(
@@ -326,14 +328,17 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             : _mode == _Mode.question
                 ? _selectedCategory?.label ?? 'Troubleshooter'
                 : 'Result',
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 18,
-        ),
+        style: AppTypography.titleMedium.copyWith(color: Colors.white),
       ),
-      backgroundColor: vfBlue,
+      backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       elevation: 0,
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: AppGradients.primary,
+        ),
+      ),
       leading: _mode == _Mode.categorySelect
           ? null
           : IconButton(
@@ -364,19 +369,19 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           const SizedBox(height: 8),
           // Header illustration.
           const TroubleshooterHeaderIcon(),
-          const SizedBox(height: 16),
-          Text('What issue are you experiencing?',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A2E),
-                ),
+          SizedBox(height: 16),
+          Text(
+            'What issue are you experiencing?',
+            style: AppTypography.headingSmall
+                .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 8),
           Text(
             'Select a category and we will guide you through a step‑by‑step diagnosis.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF6B7280),
-                ),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: AppColors.slate500,
+            ),
           ),
           const SizedBox(height: 20),
           ...troubleshooterCategories.map(
@@ -555,8 +560,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Troubleshoot Another Issue',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                label: Text(
+                  'Troubleshoot Another Issue',
+                  style:
+                      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                 ),
               ),
             ),

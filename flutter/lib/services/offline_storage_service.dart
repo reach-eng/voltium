@@ -19,10 +19,34 @@ class OfflineStorageService {
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
       join(dbPath, 'volt_offline.db'),
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
     _initialized = true;
+    await purgeExpired();
+  }
+
+  Future<void> purgeExpired() async {
+    if (_db == null) return;
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await _db!.delete(
+        'cached_data',
+        where: 'expires_at IS NOT NULL AND expires_at < ?',
+        whereArgs: [now],
+      );
+    } catch (e) {
+      MonitoringService.logError(e, null, reason: 'purgeExpired');
+    }
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE pending_operations ADD COLUMN idempotency_key TEXT',
+      );
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -40,6 +64,7 @@ class OfflineStorageService {
         endpoint TEXT NOT NULL,
         method TEXT NOT NULL,
         body TEXT,
+        idempotency_key TEXT,
         created_at INTEGER NOT NULL
       )
     ''');
@@ -59,8 +84,14 @@ class OfflineStorageService {
     ''');
   }
 
-  Future<void> cacheData(String key, Map<String, dynamic> data,
-      {Duration? ttl,}) async {
+  final Map<String, Map<String, dynamic>> _memCache = {};
+
+  Future<void> cacheData(
+    String key,
+    Map<String, dynamic> data, {
+    Duration? ttl,
+  }) async {
+    _memCache[key] = data;
     if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final expiresAt = ttl != null ? now + ttl.inMilliseconds : null;
@@ -77,6 +108,9 @@ class OfflineStorageService {
   }
 
   Future<Map<String, dynamic>?> getCachedData(String key) async {
+    if (_memCache.containsKey(key)) {
+      return _memCache[key];
+    }
     if (_db == null) return null;
     final now = DateTime.now().millisecondsSinceEpoch;
     final results = await _db!.query(
@@ -85,11 +119,15 @@ class OfflineStorageService {
       whereArgs: [key, now],
     );
     if (results.isEmpty) return null;
-    return jsonDecode(results.first['value'] as String) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(results.first['value'] as String) as Map<String, dynamic>;
+    _memCache[key] = decoded;
+    return decoded;
   }
 
   Future<void> cacheTransactions(
-      List<Map<String, dynamic>> transactions,) async {
+    List<Map<String, dynamic>> transactions,
+  ) async {
     if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final batch = _db!.batch();
@@ -147,14 +185,20 @@ class OfflineStorageService {
   }
 
   Future<void> addPendingOperation(
-      String endpoint, String method, Map<String, dynamic>? body,) async {
+    String endpoint,
+    String method,
+    Map<String, dynamic>? body, {
+    String? idempotencyKey,
+  }) async {
     if (_db == null) return;
     MonitoringService.logInfo(
-        'Offline: Queuing pending operation: $method $endpoint',);
+      'Offline: Queuing pending operation: $method $endpoint',
+    );
     await _db!.insert('pending_operations', {
       'endpoint': endpoint,
       'method': method,
       'body': body != null ? jsonEncode(body) : null,
+      'idempotency_key': idempotencyKey,
       'created_at': DateTime.now().millisecondsSinceEpoch,
     });
   }
@@ -164,13 +208,15 @@ class OfflineStorageService {
     final results =
         await _db!.query('pending_operations', orderBy: 'created_at ASC');
     return results
-        .map((r) => {
-              'id': r['id'],
-              'endpoint': r['endpoint'],
-              'method': r['method'],
-              'body':
-                  r['body'] != null ? jsonDecode(r['body'] as String) : null,
-            },)
+        .map(
+          (r) => {
+            'id': r['id'],
+            'endpoint': r['endpoint'],
+            'method': r['method'],
+            'body': r['body'] != null ? jsonDecode(r['body'] as String) : null,
+            'idempotency_key': r['idempotency_key'],
+          },
+        )
         .toList();
   }
 

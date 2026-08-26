@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { paiseToRupees } from '@/lib/flatten-rider';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 export const getDashboardStats = async () => {
   const [
@@ -11,7 +12,6 @@ export const getDashboardStats = async () => {
     walletDepositResult,
     pendingTransactions,
     openTickets,
-    activeRentals,
     totalHubs,
     pendingKyc,
     pendingGuarantor,
@@ -26,7 +26,6 @@ export const getDashboardStats = async () => {
     db.wallet.aggregate({ _sum: { securityDeposit: true } }),
     db.transaction.count({ where: { status: 'PENDING' } }),
     db.supportTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
-    db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
     db.hub.count(),
     db.kycProfile.count({ where: { status: { in: ['PENDING', 'SUBMITTED'] } } }),
     db.guarantor.count({ where: { status: 'PENDING' } }),
@@ -46,7 +45,7 @@ export const getDashboardStats = async () => {
     totalDeposits,
     pendingTransactions,
     openTickets,
-    activeRentals,
+    activeRentals: activeRiders,
     totalHubs,
     pendingKyc,
     pendingGuarantor,
@@ -72,9 +71,9 @@ export const getRevenueTrend = async (days = 7) => {
   const result = await db.$queryRaw<Array<{ date: string; revenue: bigint; riderCount: bigint }>>`
     SELECT
       DATE("createdAt") as date,
-      SUM(amount) as revenue,
+      SUM("amountInPaise") as revenue,
       COUNT(DISTINCT "riderId") as "riderCount"
-    FROM "Transaction"
+    FROM "transactions"
     WHERE "createdAt" >= ${startDate} AND status = 'APPROVED' AND type = 'CREDIT'
     GROUP BY DATE("createdAt")
     ORDER BY date ASC
@@ -90,7 +89,7 @@ export const getRevenueTrend = async (days = 7) => {
   }
 
   return Array.from(dailyMap.entries()).map(([date, data]) => ({
-    date: new Date(date).toLocaleDateString('en-IN', { weekday: 'short' }),
+    date: formatDateDDMMYYYY(date),
     revenue: Math.round(data.revenue),
     riders: data.riders,
   }));

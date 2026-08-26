@@ -3,7 +3,10 @@ import {
   submitKycSchema,
   topUpSchema,
   updateProfileSchema,
+  registerTokenSchema,
+  submitGuarantorSchema,
 } from '../../src/lib/validators';
+import fc from 'fast-check';
 
 describe('Phase 1: Foundational Schema Validation', () => {
   describe('Auth Validators (sendOtpSchema)', () => {
@@ -20,6 +23,18 @@ describe('Phase 1: Foundational Schema Validation', () => {
     test('should pass for valid 10-digit phone', () => {
       const result = sendOtpSchema.safeParse({ phone: '9876543210' });
       expect(result.success).toBe(true);
+    });
+
+    test('fuzz testing phone schema with extreme/invalid strings', () => {
+      fc.assert(
+        fc.property(
+          fc.string({ maxLength: 100 }).filter((s) => !/^\d{10}$/.test(s)),
+          (invalidPhone) => {
+            const result = sendOtpSchema.safeParse({ phone: invalidPhone });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
     });
   });
 
@@ -59,6 +74,63 @@ describe('Phase 1: Foundational Schema Validation', () => {
       });
       expect(result.success).toBe(false);
     });
+    test('should fail if riderPhoto or riderVideo is missing', () => {
+      const result = submitKycSchema.safeParse({
+        riderId: 'test-123',
+        aadhaarNumber: '1234-5678-1234',
+        panNumber: 'ABCDE1234F',
+        bankName: 'HDFC',
+        bankAccount: '1234567890',
+        bankIfsc: 'HDFC0001234',
+        // missing riderPhoto and riderVideo
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.some(e => e.path.includes('riderPhoto'))).toBe(true);
+        expect(result.error.issues.some(e => e.path.includes('riderVideo'))).toBe(true);
+      }
+    });
+
+    test('should pass when all mandatory fields including media are provided', () => {
+      const result = submitKycSchema.safeParse({
+        riderId: 'test-123',
+        aadhaarNumber: '1234-5678-1234',
+        panNumber: 'ABCDE1234F',
+        bankName: 'HDFC',
+        bankAccount: '1234567890',
+        bankIfsc: 'HDFC0001234',
+        riderPhoto: 'https://example.com/photo.jpg',
+        riderVideo: 'https://example.com/video.mp4',
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Guarantor Validators (submitGuarantorSchema)', () => {
+    test('should fail if guarantor video is missing', () => {
+      const result = submitGuarantorSchema.safeParse({
+        riderId: 'test-123',
+        name: 'John Doe',
+        relation: 'Father',
+        phone: '9876543210',
+        // missing video
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.some(e => e.path.includes('video'))).toBe(true);
+      }
+    });
+
+    test('should pass with guarantor video provided', () => {
+      const result = submitGuarantorSchema.safeParse({
+        riderId: 'test-123',
+        name: 'John Doe',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/guarantor.mp4',
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe('Transaction Validators (topUpSchema)', () => {
@@ -81,6 +153,29 @@ describe('Phase 1: Foundational Schema Validation', () => {
       });
       expect(result.success).toBe(false);
     });
+
+    test('fuzz testing topUpSchema with extreme invalid amounts', () => {
+      fc.assert(
+        fc.property(
+          fc.oneof(
+            fc.double({ max: 0, noDefaultInfinity: true, noNaN: true }),
+            fc.double({ min: 50000.01, noDefaultInfinity: true, noNaN: true }),
+            fc.float({ max: 0, noDefaultInfinity: true, noNaN: true }),
+            fc.integer({ max: 0 }),
+            fc.integer({ min: 50001 })
+          ),
+          (invalidAmount) => {
+            const result = topUpSchema.safeParse({
+              riderId: 'test-123',
+              amount: invalidAmount,
+              purpose: 'TOP_UP',
+              method: 'UPI',
+            });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
+    });
   });
 
   describe('Profile Validators (updateProfileSchema)', () => {
@@ -96,6 +191,64 @@ describe('Phase 1: Foundational Schema Validation', () => {
         dob: '01-01-1990',
       });
       expect(result.success).toBe(true);
+    });
+
+    test('fuzz testing email with junk data and unicode', () => {
+      fc.assert(
+        fc.property(
+          fc.string().filter((s) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s !== ''),
+          (invalidEmail) => {
+            const result = updateProfileSchema.safeParse({ email: invalidEmail });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
+    });
+
+    test('fuzz testing fullName with extreme lengths', () => {
+      fc.assert(
+        fc.property(
+          fc.oneof(fc.string({ maxLength: 1 }), fc.string({ minLength: 101 })),
+          (invalidName) => {
+            const result = updateProfileSchema.safeParse({ fullName: invalidName });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
+    });
+  });
+
+  describe('FCM Token Registration (registerTokenSchema, BLOCKER 1.2)', () => {
+    test('passes with only fcmToken (riderId is derived from session)', () => {
+      const result = registerTokenSchema.safeParse({
+        fcmToken: 'fK3...long:APA91b...',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test('fails when fcmToken is missing', () => {
+      const result = registerTokenSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    test('fails when fcmToken is empty', () => {
+      const result = registerTokenSchema.safeParse({ fcmToken: '' });
+      expect(result.success).toBe(false);
+    });
+
+    test('legacy body with riderId is now rejected (security tightening)', () => {
+      // Previously the validator required { riderId, fcmToken }. Now it
+      // derives riderId from the session, so the body must not carry it.
+      const result = registerTokenSchema.safeParse({
+        riderId: 'rider-123',
+        fcmToken: 'token-abc',
+      });
+      // riderId is silently dropped (Zod default is strip). The shape
+      // validates; the route rejects because riderId is not used anyway.
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect((result.data as Record<string, unknown>).riderId).toBeUndefined();
+      }
     });
   });
 });

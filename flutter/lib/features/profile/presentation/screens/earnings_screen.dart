@@ -11,6 +11,9 @@ import 'package:voltium_rider/widgets/earnings_chart.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/earnings_add_sheet.dart';
 import '../widgets/earnings_widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import '../../../../utils/app_logger.dart';
 
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
@@ -76,7 +79,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             .toList();
       }
     } catch (e) {
-      debugPrint('EarningsScreen: failed to load cached entries: $e');
+      appDebug('EarningsScreen: failed to load cached entries: $e');
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -297,8 +300,10 @@ class _EarningsScreenState extends State<EarningsScreen> {
         onPressed: () => _showAddEntrySheet(),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Entry',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        label: Text(
+          'Add Entry',
+          style: GoogleFonts.plusJakartaSans(
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -311,7 +316,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -340,17 +345,15 @@ class _EarningsScreenState extends State<EarningsScreen> {
               child: const Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Text('Earnings Log',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+          SizedBox(width: 16),
+          Text(
+            'Earnings Log',
+            style:
+                AppTypography.headingSmall.copyWith(color: AppColors.slate800),
           ),
         ],
       ),
@@ -367,7 +370,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             width: 80,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -380,18 +383,17 @@ class _EarningsScreenState extends State<EarningsScreen> {
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text('No earnings logged yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+          SizedBox(height: 24),
+          Text(
+            'No earnings logged yet',
+            style:
+                AppTypography.titleMedium.copyWith(color: AppColors.slate800),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Tap "Add Entry" to start tracking your gig earnings',
-            style: TextStyle(fontSize: 14, color: AppColors.slate500),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, color: AppColors.slate500),
             textAlign: TextAlign.center,
           ),
         ],

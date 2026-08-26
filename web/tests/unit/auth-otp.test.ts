@@ -47,7 +47,9 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 vi.mock('@/lib/auth', () => ({
   createSessionToken: mockCreateSessionToken,
+  createRefreshToken: vi.fn(),
   SESSION_COOKIE_OPTIONS: {},
+  REFRESH_COOKIE_OPTIONS: {},
 }));
 vi.mock('@/lib/firebase-admin', () => ({ auth: null }));
 vi.mock('@/lib/job-queue', () => ({
@@ -128,7 +130,8 @@ describe('Auth — OTP Send', () => {
       { ip: '127.0.0.1', correlationId: 'test-1' }
     );
 
-    expect(result.exists).toBe(false);
+    // 'exists' field removed to prevent user enumeration
+    expect(result.exists).toBeUndefined();
     expect(result.otp).toBeDefined();
     expect(mockGenerateOtp).toHaveBeenCalledWith('9876543210');
     expect(mockDb.outboxEvent.create).toHaveBeenCalledWith(
@@ -141,12 +144,13 @@ describe('Auth — OTP Send', () => {
     process.env.NODE_ENV = originalEnv;
   });
 
-  it('returns exists=true for existing rider', async () => {
+  it('returns response without exists field for existing rider', async () => {
     setupMocks({ existingRider: true });
 
     const result = await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-2' });
 
-    expect(result.exists).toBe(true);
+    // 'exists' field removed to prevent user enumeration
+    expect(result.exists).toBeUndefined();
   });
 
   it('throws RateLimitError when IP rate limit exceeded', async () => {
@@ -177,6 +181,38 @@ describe('Auth — OTP Send', () => {
 
     expect(result.otp).toBe('123456');
     process.env.NODE_ENV = originalEnv;
+  });
+});
+
+describe('Auth — OTP Send brand message', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('SMS message contains "Voltium" brand name (PR-1 of security plan, ticket #44)', async () => {
+    setupMocks({ existingRider: false });
+
+    await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'brand-1' });
+
+    // OutboxService.emit stores the payload as a JSON string (see web/src/server/workers/outbox.ts:91-97)
+    const createCall = mockDb.outboxEvent.create.mock.calls[0]?.[0];
+    expect(createCall).toBeDefined();
+    const payloadString = createCall?.data?.payload as string | undefined;
+    expect(payloadString).toBeDefined();
+    const payload = JSON.parse(payloadString as string) as { message?: string };
+    expect(payload.message).toBeDefined();
+    expect(payload.message).toContain('Voltium');
+  });
+
+  it('SMS message does NOT contain legacy "Ryd" brand name (regression guard)', async () => {
+    setupMocks({ existingRider: false });
+
+    await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'brand-2' });
+
+    const createCall = mockDb.outboxEvent.create.mock.calls[0]?.[0];
+    const payloadString = createCall?.data?.payload as string | undefined;
+    const payload = JSON.parse(payloadString as string) as { message?: string };
+    expect(payload.message).toBeDefined();
+    // Case-insensitive — the audit's bug was a brand violation regardless of casing
+    expect(payload.message).not.toMatch(/Ryd/i);
   });
 });
 

@@ -6,12 +6,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../core/network/api_client.dart';
 import 'consent_service.dart';
+import '../utils/app_logger.dart';
 
 class BackgroundLocationService {
   static const String notificationChannelId = 'voltium_background_location';
   static const int notificationId = 888;
 
+  static bool _isInitialized = false;
+
   static Future<void> initializeService() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
     final service = FlutterBackgroundService();
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -32,7 +37,7 @@ class BackgroundLocationService {
     await service.configure(
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
-        autoStart: true,
+        autoStart: false,
         isForegroundMode: true,
         notificationChannelId: notificationChannelId,
         initialNotificationTitle: 'Voltium Tracking Active',
@@ -40,7 +45,7 @@ class BackgroundLocationService {
         foregroundServiceNotificationId: notificationId,
       ),
       iosConfiguration: IosConfiguration(
-        autoStart: true,
+        autoStart: false,
         onForeground: onStart,
         onBackground: onIosBackground,
       ),
@@ -74,13 +79,43 @@ class BackgroundLocationService {
       service.stopSelf();
     });
 
-    Timer.periodic(const Duration(seconds: 30), (timer) async {
+    int cachedIntervalMins = 10;
+    DateTime? lastFetchTime;
+    DateTime? lastSettingsCheckTime;
+
+    Timer.periodic(const Duration(seconds: 60), (timer) async {
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
           service.setForegroundNotificationInfo(
             title: "Voltium Tracking Active",
-            content: "Syncing location...",
+            content: "Monitoring device state...",
           );
+        }
+      }
+
+      // Throttle settings API checks to once every 60 minutes instead of every 60 seconds
+      if (lastSettingsCheckTime == null ||
+          DateTime.now().difference(lastSettingsCheckTime!).inMinutes >= 60) {
+        lastSettingsCheckTime = DateTime.now();
+        try {
+          final settingsRes = await ApiClient().get('/api/rider/settings');
+          if (settingsRes['success'] == true &&
+              settingsRes['data']?['settings'] != null) {
+            final intervalStr =
+                settingsRes['data']['settings']['gpsFetchIntervalMins'];
+            if (intervalStr != null) {
+              cachedIntervalMins = int.tryParse(intervalStr.toString()) ?? 10;
+            }
+          }
+        } catch (e) {
+          appDebug('BackgroundLocationService: Error getting settings: $e');
+        }
+      }
+
+      if (lastFetchTime != null) {
+        final diff = DateTime.now().difference(lastFetchTime!);
+        if (diff.inMinutes < cachedIntervalMins) {
+          return; // Wait until interval has passed
         }
       }
 
@@ -93,7 +128,7 @@ class BackgroundLocationService {
 
         final position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
+            accuracy: LocationAccuracy.medium,
           ),
         );
 
@@ -111,8 +146,10 @@ class BackgroundLocationService {
             },
           },
         );
+
+        lastFetchTime = DateTime.now();
       } catch (e) {
-        debugPrint('BackgroundLocationService: Error getting location: $e');
+        appDebug('BackgroundLocationService: Error getting location: $e');
       }
     });
   }

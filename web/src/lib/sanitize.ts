@@ -1,6 +1,4 @@
-import createDOMPurify from 'isomorphic-dompurify';
-
-const DOMPurify = createDOMPurify();
+import * as DOMPurify from 'isomorphic-dompurify';
 
 const SANITIZE_CONFIG = {
   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li'],

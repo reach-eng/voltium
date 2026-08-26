@@ -1,16 +1,24 @@
-import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
-class TopUpProofScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TopUpProofScreen extends ConsumerStatefulWidget {
   final int amount;
   final VoidCallback? onBack;
   final VoidCallback? onEditAmount;
   final Function(File)? onImageSelected;
-  final Function(File)? onSubmit;
+  final Function(File image, String? method, String? upiRef)? onSubmit;
 
   const TopUpProofScreen({
     super.key,
@@ -22,17 +30,328 @@ class TopUpProofScreen extends StatefulWidget {
   });
 
   @override
-  State<TopUpProofScreen> createState() => _TopUpProofScreenState();
+  ConsumerState<TopUpProofScreen> createState() => _TopUpProofScreenState();
 }
 
-class _TopUpProofScreenState extends State<TopUpProofScreen> {
+enum PaymentMode { cash, upi, online }
+
+class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _imageFile;
   bool _isUploading = false;
+  PaymentMode _selectedPaymentMode = PaymentMode.cash;
+  String _selectedGateway = 'razorpay';
+
+  void _showOnlinePaymentAlertDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(Icons.bolt, color: AppColors.primaryLight, size: 28),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Instant Online Top-Up',
+                style: AppTypography.titleMedium
+                    .copyWith(color: AppColors.slate800),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(Spacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.warningSurface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline,
+                      color: AppColors.onSurface, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Instant Top-Up Notice',
+                      style: AppTypography.labelLarge
+                          .copyWith(color: AppColors.onSurface),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Your wallet top-up will be processed instantly upon successful payment.',
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14, color: AppColors.slate700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Note: Payment gateway fee of up to 2.5% extra will apply on online transactions when enabled by admin.',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Select Payment Gateway:',
+              style:
+                  AppTypography.labelMedium.copyWith(color: AppColors.slate800),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _selectedGateway,
+              decoration: InputDecoration(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md)),
+              ),
+              items: const [
+                DropdownMenuItem(
+                    value: 'razorpay', child: Text('Razorpay Gateway')),
+                DropdownMenuItem(
+                    value: 'phonepe', child: Text('PhonePe Gateway')),
+                DropdownMenuItem(
+                    value: 'cashfree', child: Text('Cashfree Gateway')),
+                DropdownMenuItem(
+                    value: 'easebuzz', child: Text('Easebuzz Gateway')),
+              ],
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _selectedGateway = val);
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryLight,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() {
+                _selectedPaymentMode = PaymentMode.online;
+              });
+              final rider = ref.read(riderProvider).rider;
+              final riderId = rider?.id ?? rider?.riderId ?? '';
+              final checkoutUrl = Uri.parse(
+                'https://api.razorpay.com/v1/checkout/embedded?rider_id=$riderId&amount=${widget.amount}&gateway=$_selectedGateway',
+              );
+              if (await canLaunchUrl(checkoutUrl)) {
+                await launchUrl(checkoutUrl,
+                    mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text('Proceed to Pay'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodSelector() {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: Spacing.paddingMd,
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'SELECT PAYMENT METHOD',
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w600)
+                .copyWith(color: colors.onSurfaceMuted, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () =>
+                      setState(() => _selectedPaymentMode = PaymentMode.cash),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedPaymentMode == PaymentMode.cash
+                          ? colors.primarySurface
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _selectedPaymentMode == PaymentMode.cash
+                            ? AppColors.primaryLight
+                            : colors.outlineVariant,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.payments_outlined,
+                          color: _selectedPaymentMode == PaymentMode.cash
+                              ? AppColors.primaryLight
+                              : colors.onSurfaceMuted,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Cash',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: _selectedPaymentMode == PaymentMode.cash
+                                ? AppColors.primaryLight
+                                : colors.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _selectedPaymentMode = PaymentMode.upi);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedPaymentMode == PaymentMode.upi
+                          ? colors.primarySurface
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _selectedPaymentMode == PaymentMode.upi
+                            ? AppColors.primaryLight
+                            : colors.outlineVariant,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.qr_code_2,
+                          color: _selectedPaymentMode == PaymentMode.upi
+                              ? AppColors.primaryLight
+                              : colors.onSurfaceMuted,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'UPI',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: _selectedPaymentMode == PaymentMode.upi
+                                ? AppColors.primaryLight
+                                : colors.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _showOnlinePaymentAlertDialog();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedPaymentMode == PaymentMode.online
+                          ? colors.primarySurface
+                          : colors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _selectedPaymentMode == PaymentMode.online
+                            ? AppColors.primaryLight
+                            : colors.outlineVariant,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.credit_card,
+                          color: _selectedPaymentMode == PaymentMode.online
+                              ? AppColors.primaryLight
+                              : colors.onSurfaceMuted,
+                          size: 22,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Instant',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: _selectedPaymentMode == PaymentMode.online
+                                ? AppColors.primaryLight
+                                : colors.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_selectedPaymentMode == PaymentMode.online) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: colors.primarySurface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.bolt,
+                      color: AppColors.primaryLight, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Gateway: ${_selectedGateway.toUpperCase()} selected. Instant top-up (up to 2.5% extra fee may apply).',
+                      style: AppTypography.bodySmall
+                          .copyWith(color: AppColors.primaryLight),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     if (AppConstants.isTestMode) {
-      final image = File('/data/local/tmp/mock_top_up_proof.png');
+      final image = File('${Directory.systemTemp.path}/mock_top_up_proof.png');
       setState(() => _imageFile = image);
       widget.onImageSelected?.call(image);
       return;
@@ -42,6 +361,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       source: source,
       imageQuality: 85,
       maxWidth: 1600,
+      maxHeight: 1600,
+      requestFullMetadata: false,
     );
     if (picked == null || !mounted) return;
 
@@ -51,60 +372,50 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
   }
 
   Future<void> _showImageSourceSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_camera_outlined),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source != null) {
+      _pickImage(source);
+    }
+  }
+
+  final TextEditingController _upiRefCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _upiRefCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _submit() async {
     if (_imageFile == null) return;
     setState(() => _isUploading = true);
-    await widget.onSubmit?.call(_imageFile!);
+    final methodStr = _selectedPaymentMode == PaymentMode.upi ? 'UPI' : 'CASH';
+    final refVal = _selectedPaymentMode == PaymentMode.upi &&
+            _upiRefCtrl.text.trim().isNotEmpty
+        ? _upiRefCtrl.text.trim()
+        : null;
+    await widget.onSubmit?.call(_imageFile!, methodStr, refVal);
     if (mounted) setState(() => _isUploading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.surface,
+      extendBody: true, // For glass bottom nav
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                  20, 24, 20, 140), // extra bottom padding for floating footer
               child: Column(
                 children: [
                   _buildAmountCard(),
+                  const SizedBox(height: 16),
+                  _buildPaymentMethodSelector(),
                   const SizedBox(height: 16),
                   _buildInstructionCard(),
                   const SizedBox(height: 16),
@@ -115,11 +426,26 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
+        ],
+      ),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(
+                20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.8),
+              border: Border(
+                top: BorderSide(
+                  color: colors.outlineVariant.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+            ),
             child: _buildSubmitButton(),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -133,9 +459,16 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
         20,
         48,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,21 +498,24 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               const SizedBox(width: 32),
             ],
           ),
-          const SizedBox(height: 24),
-          Text('Step 3 of 3',
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Text(
+              'Step 2 of 2',
+              style: AppTypography.labelMedium
+                  .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          const SizedBox(height: 4),
-          Text('Upload Proof',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
+          SizedBox(height: 12),
+          Text(
+            'Upload Proof',
+            style: AppTypography.displayMedium
+                .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
         ],
       ),
@@ -188,11 +524,11 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
 
   Widget _buildAmountCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.iconBackground),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -202,20 +538,17 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             children: [
               Text(
                 'TOP-UP AMOUNT',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate500,
-                  letterSpacing: 0.5,
-                ),
+                style: AppTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: AppColors.slate500, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primaryGradientEnd,
+                  color: AppColors.primaryLight,
                 ),
               ),
             ],
@@ -223,13 +556,12 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
           TextButton(
             onPressed: widget.onEditAmount,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.primaryGradientEnd,
+              foregroundColor: AppColors.primaryLight,
             ),
-            child: Text('Edit',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Text(
+              'Edit',
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -239,11 +571,11 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
 
   Widget _buildInstructionCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.iconBackground),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,30 +583,29 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
+              color: AppColors.primarySurface,
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.description_outlined,
-              color: AppColors.primaryGradientEnd,
+              color: AppColors.primaryLight,
               size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Proof of Top Up',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
-                  ),
+                Text(
+                  'Proof of Top Up',
+                  style: AppTypography.titleSmall
+                      .copyWith(color: AppColors.slate800),
                 ),
-                const SizedBox(height: 6),
-                Text('Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
-                  style: GoogleFonts.inter(
+                SizedBox(height: 6),
+                Text(
+                  'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     height: 1.4,
                     color: AppColors.slate500,
@@ -291,14 +622,14 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
   Widget _buildUploadCard() {
     return InkWell(
       key: const Key('uploadProofCard'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       onTap: _showImageSourceSheet,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.iconBackground),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.glass,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,17 +638,15 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               children: [
                 const Icon(
                   Icons.image_outlined,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
-                  child: Text('Upload Photo Proof',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
-                    ),
+                  child: Text(
+                    'Upload Photo Proof',
+                    style: AppTypography.titleSmall
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ),
                 if (_imageFile != null)
@@ -334,30 +663,29 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 36),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: AppColors.outlineVariant),
                 ),
                 child: Column(
                   children: [
                     const Icon(
                       Icons.cloud_upload_outlined,
-                      color: AppColors.primaryGradientEnd,
+                      color: AppColors.primaryLight,
                       size: 34,
                     ),
-                    const SizedBox(height: 10),
-                    Text('Tap to upload photo',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF1E293B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Tap to upload photo',
+                      style: AppTypography.labelLarge
+                          .copyWith(color: AppColors.slate800),
                     ),
-                    const SizedBox(height: 4),
-                    Text('Camera or gallery',
-                      style: GoogleFonts.inter(
+                    SizedBox(height: 4),
+                    Text(
+                      'Camera or gallery',
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppColors.slate500,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -366,24 +694,36 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             else
               Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.file(
-                      _imageFile!,
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      child: Image.file(
+                        _imageFile!,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 12,
+                    right: 12,
                     child: IconButton.filled(
                       key: const Key('removeProofButton'),
                       onPressed: () => setState(() => _imageFile = null),
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, size: 20),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
+                        backgroundColor: AppColors.error,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -398,24 +738,24 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
 
   Widget _buildNoteCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB), // Pale yellow
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.warningSurface, // Pale yellow
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: RichText(
         text: TextSpan(
-          style: GoogleFonts.inter(
-            fontSize: 13,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
             height: 1.5,
-            color: AppColors.warningText, // Amber text color
+            color: AppColors.onSurface, // Amber text color
           ),
-          children: const [
+          children: [
             TextSpan(
               text: 'Note: ',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
-            TextSpan(
+            const TextSpan(
               text:
                   'Payments are verified manually by our team. Balance will be updated within 24 hours of verification.',
             ),
@@ -430,12 +770,23 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
 
     return GestureDetector(
       onTap: canSubmit ? _submit : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 56,
+        height: 60,
         decoration: BoxDecoration(
-          color: canSubmit ? AppColors.primaryGradientEnd : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(16),
+          gradient: canSubmit ? AppGradients.primary : null,
+          color: canSubmit ? null : AppColors.outlineVariant,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: canSubmit
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: _isUploading
@@ -447,12 +798,11 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                     strokeWidth: 2.5,
                   ),
                 )
-              : Text('Submit Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: canSubmit ? Colors.white : AppColors.slate500,
-                  ),
+              : Text(
+                  'Submit Proof',
+                  style: AppTypography.titleSmall.copyWith(
+                      letterSpacing: 0.5,
+                      color: canSubmit ? Colors.white : AppColors.slate400),
                 ),
         ),
       ),

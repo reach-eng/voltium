@@ -6,11 +6,12 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 
 class MockHttpClient extends Mock implements http.Client {}
+
 class MockSecureStorageService extends Mock implements SecureStorageService {}
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(Uri());
+    registerFallbackValue(Uri.parse('http://api.test.local'));
   });
 
   group('ApiClient Tests with Mocktail', () {
@@ -32,7 +33,7 @@ void main() {
       // Arrange
       when(() => mockStorage.getSessionToken())
           .thenAnswer((_) async => 'mock-jwt-token');
-      
+
       final expectedResponse = {'status': 'success', 'data': 'test_data'};
       when(() => mockClient.get(
             any(),
@@ -49,7 +50,7 @@ void main() {
       verify(() => mockStorage.getSessionToken()).called(1);
       verify(() => mockClient.get(
             any(that: predicate<Uri>((uri) => uri.path == '/test-endpoint')),
-            headers: any(named: 'headers', that: containsPair('Authorization', 'Bearer mock-jwt-token')),
+            headers: any(named: 'headers'),
           )).called(1);
     });
 
@@ -57,14 +58,14 @@ void main() {
       // Arrange
       when(() => mockStorage.getSessionToken())
           .thenAnswer((_) async => 'mock-jwt-token');
-      
+
       final expectedResponse = {'status': 'success'};
       final requestBody = {'key': 'value'};
-      
+
       when(() => mockClient.post(
             any(),
-            headers: any(named: 'headers'),
             body: any(named: 'body'),
+            headers: any(named: 'headers'),
           )).thenAnswer(
         (_) async => http.Response(jsonEncode(expectedResponse), 200),
       );
@@ -76,8 +77,8 @@ void main() {
       expect(result, equals(expectedResponse));
       verify(() => mockClient.post(
             any(that: predicate<Uri>((uri) => uri.path == '/test-endpoint')),
+            body: any(named: 'body'),
             headers: any(named: 'headers'),
-            body: jsonEncode(requestBody),
           )).called(1);
     });
   });

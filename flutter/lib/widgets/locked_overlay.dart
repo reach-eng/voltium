@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/voltium_api_service.dart';
 import '../core/platform/platform_info.dart';
 
-class LockedOverlay extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_logger.dart';
+
+class LockedOverlay extends ConsumerStatefulWidget {
   const LockedOverlay({super.key});
 
   @override
-  State<LockedOverlay> createState() => _LockedOverlayState();
+  ConsumerState<LockedOverlay> createState() => _LockedOverlayState();
 }
 
-class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserver {
+class _LockedOverlayState extends ConsumerState<LockedOverlay>
+    with WidgetsBindingObserver {
   final TextEditingController _passwordController = TextEditingController();
   String _error = '';
   bool _loading = false;
@@ -42,15 +48,16 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
       final data = response['data'] as Map<String, dynamic>? ?? response;
       final adminLocked = data['isAdminLocked'] as bool?;
       if (mounted) {
-        final provider = context.read<AppProvider>();
-        if (adminLocked == true && !provider.lockedByAdmin) {
-          provider.setLockedByAdmin(true);
-        } else if (adminLocked == false && provider.lockedByAdmin) {
-          provider.setLockedByAdmin(false);
+        final state = ref.read(devicePolicyProvider);
+        final notifier = ref.read(devicePolicyProvider.notifier);
+        if (adminLocked == true && !state.lockedByAdmin) {
+          notifier.setLockedByAdmin(true);
+        } else if (adminLocked == false && state.lockedByAdmin) {
+          notifier.setLockedByAdmin(false);
         }
       }
     } catch (e) {
-      debugPrint('Failed to poll lock state on resume: $e');
+      appDebug('Failed to poll lock state on resume: $e');
     }
   }
 
@@ -59,6 +66,10 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() => _error = 'Please enter password.');
+      return;
+    }
+    if (!RegExp(r'^\d{12}$').hasMatch(password)) {
+      setState(() => _error = 'Password must be a 12 digit number.');
       return;
     }
 
@@ -79,15 +90,15 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
 
       if (mounted) {
         if (isValid) {
-          final provider = context.read<AppProvider>();
-          provider.setLockedByAdmin(false);
+          ref.read(devicePolicyProvider.notifier).setLockedByAdmin(false);
           _passwordController.clear();
           setState(() {
             _error = '';
             _loading = false;
           });
         } else {
-          final msg = response['message'] as String? ?? 'Incorrect Password. Contact Voltium support.';
+          final msg = response['message'] as String? ??
+              'Incorrect Password. Contact Voltium support.';
           setState(() {
             _error = msg;
             _passwordController.clear();
@@ -98,7 +109,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Verification failed. Please check your network and try again.';
+          _error =
+              'Verification failed. Please check your network and try again.';
           _loading = false;
         });
       }
@@ -107,28 +119,31 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    final isLocked = context.select<AppProvider, bool>((p) => p.lockedByAdmin);
+    final isLocked =
+        ref.watch(devicePolicyProvider.select((p) => p.lockedByAdmin));
     if (!isLocked) return const SizedBox.shrink();
 
     if (PlatformInfo.isWeb) {
       return Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.lock_person_rounded, size: 64, color: Colors.amber),
-                const SizedBox(height: 16),
-                const Text(
+                const Icon(Icons.lock_person_rounded,
+                    size: 64, color: AppColors.warning),
+                SizedBox(height: 16),
+                Text(
                   'Your account has been locked by Voltium.',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTypography.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Please contact support to unlock.',
-                  style: TextStyle(color: Colors.grey),
+                  style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -149,14 +164,14 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
               end: Alignment.bottomRight,
               colors: [
                 Colors.black,
-                Colors.red.withValues(alpha: 0.2),
+                AppColors.error.withValues(alpha: 0.2),
                 Colors.black,
               ],
             ),
           ),
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: Spacing.paddingXl,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -165,43 +180,39 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                     color: Colors.white,
                     size: 80,
                   ),
-                  const SizedBox(height: 24),
-                  const Text('VOLTIUM SOFT LOCK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                    ),
+                  SizedBox(height: 24),
+                  Text(
+                    'VOLTIUM SOFT LOCK',
+                    style: AppTypography.headingLarge
+                        .copyWith(color: Colors.white, letterSpacing: 2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'This device is locked for rider deterrence. Force-quitting the app will keep it locked on next launch.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Contact Voltium support to unlock',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Contact Voltium support to unlock',
+                    style: AppTypography.titleSmall
+                        .copyWith(color: Colors.redAccent),
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   Container(
                     constraints: const BoxConstraints(maxWidth: 300),
                     child: Column(
                       children: [
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
-                          keyboardType: TextInputType.text,
+                          obscureText: false,
+                          keyboardType: TextInputType.number,
+                          maxLength: 12,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontSize: 24,
                             letterSpacing: 4,
@@ -209,7 +220,7 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                           decoration: InputDecoration(
                             counterText: '',
                             hintText: 'PASSWORD',
-                            hintStyle: TextStyle(
+                            hintStyle: GoogleFonts.plusJakartaSans(
                               color: Colors.white.withValues(alpha: 0.3),
                               letterSpacing: 0,
                             ),
@@ -217,23 +228,23 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                               borderSide: BorderSide(color: Colors.white24),
                             ),
                             focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.red),
+                              borderSide: BorderSide(color: AppColors.error),
                             ),
                           ),
                           onFieldSubmitted: (_) => _verifyPassword(),
                         ),
                         if (_error.isNotEmpty) ...[
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           Text(
                             _error,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.redAccent,
                               fontSize: 13,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -243,7 +254,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                               ),
                             ),
                             child: _loading
@@ -255,20 +267,19 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text('UNLOCK',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                                : Text(
+                                    'UNLOCK',
+                                    style: AppTypography.titleSmall,
                                   ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 64),
-                  Text('Voltium Security System v3.0',
-                    style: TextStyle(
+                  SizedBox(height: 64),
+                  Text(
+                    'Voltium Security System v3.0',
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white.withValues(alpha: 0.3),
                       fontSize: 12,
                       fontStyle: FontStyle.italic,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 enum AnimationType {
   scale,
@@ -117,12 +118,16 @@ class _MicroAnimationState extends State<MicroAnimation>
             return Opacity(opacity: _animation.value, child: child);
           case AnimationType.slide:
             return Transform.translate(
-                offset: Offset(0, _animation.value), child: child,);
+              offset: Offset(0, _animation.value),
+              child: child,
+            );
           case AnimationType.bounce:
             return Transform.scale(scale: _animation.value, child: child);
           case AnimationType.shake:
             return Transform.translate(
-                offset: Offset(_animation.value, 0), child: child,);
+              offset: Offset(_animation.value, 0),
+              child: child,
+            );
           case AnimationType.pulse:
             return Transform.scale(scale: _animation.value, child: child);
           case AnimationType.rotate:
@@ -269,11 +274,11 @@ class _SuccessAnimationState extends State<SuccessAnimation>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: const Color(0xFF16A34A),
+              color: AppColors.success,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                  color: AppColors.success.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 5,
                 ),

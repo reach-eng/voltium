@@ -1,12 +1,17 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web TopUpUpiScreen.tsx:
 /// - Gradient header with back btn + "Step 3 of 3" + "Top Up"
@@ -18,7 +23,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 /// - Yellow "Note" box
 /// - Gradient "Submit Proof" pill button
 
-class TopUpUpiScreen extends StatefulWidget {
+class TopUpUpiScreen extends ConsumerStatefulWidget {
   final int amount;
   final String purpose;
   final VoidCallback? onSubmit;
@@ -35,10 +40,10 @@ class TopUpUpiScreen extends StatefulWidget {
   });
 
   @override
-  State<TopUpUpiScreen> createState() => _TopUpUpiScreenState();
+  ConsumerState<TopUpUpiScreen> createState() => _TopUpUpiScreenState();
 }
 
-class _TopUpUpiScreenState extends State<TopUpUpiScreen>
+class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     with SingleTickerProviderStateMixin {
   File? _imageFile;
   bool _isSubmitting = false;
@@ -61,11 +66,22 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
 
   Future<void> _pickImage() async {
     if (AppConstants.isTestMode) {
-      setState(() => _imageFile = File('/data/local/tmp/mock_proof.png'));
+      setState(() =>
+          _imageFile = File('${Directory.systemTemp.path}/mock_proof.png'));
       return;
     }
+
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source == null) return;
+
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+      requestFullMetadata: false,
+    );
     if (pickedFile != null && mounted) {
       setState(() => _imageFile = File(pickedFile.path));
     }
@@ -76,20 +92,21 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      final photoUrl =
-          await VoltiumApiService().uploadFile(_imageFile!, 'TOPUP_PROOF');
+      final client = ApiClient();
+      final filesRepo = FilesRepository(client, VoltiumApiClient(client));
+      final photoUrl = await filesRepo.uploadFile(_imageFile!, 'TOPUP_PROOF');
       if (!mounted) return;
 
-      final provider = context.read<AppProvider>();
-      final riderId = provider.rider?.id;
+      final riderId = ref.read(riderProvider).riderId;
       if (riderId == null) throw Exception('Not logged in');
 
-      await provider.topUpWallet(
-        amount: widget.amount.toDouble(),
-        method: 'UPI',
-        screenshotUrl: photoUrl,
-        purpose: widget.purpose,
-      );
+      await ref.read(walletProvider.notifier).topUpWallet(
+            riderId: riderId,
+            amount: widget.amount.toDouble(),
+            method: 'UPI',
+            screenshotUrl: photoUrl,
+            purpose: widget.purpose,
+          );
 
       if (mounted) {
         widget.onSubmit?.call();
@@ -158,10 +175,14 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   Widget _buildHeader() {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, MediaQuery.of(context).padding.top + 12, 20, 40,),
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        40,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryGradientEnd],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -174,8 +195,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
             child: GestureDetector(
               onTap: widget.onBack ?? () => Navigator.maybePop(context),
               child: Container(
-                width: 36,
-                height: 36,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -193,20 +214,24 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Step 3 of 3',
-                  style: GoogleFonts.inter(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Text(
+                    ' Step 2 of 2 ',
+                    style: AppTypography.labelMedium
+                        .copyWith(color: AppColors.primary),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text('Top Up',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
+                SizedBox(height: 4),
+                Text(
+                  'Top Up',
+                  style: AppTypography.titleLarge
+                      .copyWith(fontSize: 21)
+                      .copyWith(color: Colors.white),
                 ),
               ],
             ),
@@ -217,14 +242,15 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildAmountSummary() {
+    final colors = AppColors.of(context);
     final anim =
         CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.1, 0.6));
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
           boxShadow: AppShadows.card,
@@ -237,35 +263,38 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
               children: [
                 Text(
                   'TOP-UP AMOUNT',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
-                    letterSpacing: 1.2,
-                  ),
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
+                      .copyWith(
+                        color: colors.onSurfaceMuted,
+                        letterSpacing: 1.2,
+                      ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                  style: GoogleFonts.inter(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTypography.headingLarge
+                      .copyWith(color: AppColors.primary),
                 ),
               ],
             ),
             GestureDetector(
               key: const Key('editAmountLink'),
               onTap: widget.onEditAmount,
-              child: Text('Edit',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColors.primary.withValues(alpha: 0.3),
-                  decorationThickness: 2,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 16.0, horizontal: 12.0),
+                child: Text(
+                  'Edit',
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
+                      .copyWith(
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline,
+                        decorationColor:
+                            AppColors.primary.withValues(alpha: 0.3),
+                        decorationThickness: 2,
+                      ),
                 ),
               ),
             ),
@@ -276,14 +305,15 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildInfoBox() {
+    final colors = AppColors.of(context);
     final anim =
         CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.2, 0.7));
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.sm),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.card,
         ),
@@ -297,25 +327,27 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                 color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.smartphone,
-                  color: AppColors.primary, size: 20,),
+              child: const Icon(
+                Icons.smartphone,
+                color: AppColors.primary,
+                size: 20,
+              ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Proof of Top Up',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceAlt,
-                    ),
+                  Text(
+                    'Proof of Top Up',
+                    style: AppTypography.labelLarge
+                        .copyWith(color: AppColors.onSurfaceMuted),
                   ),
-                  const SizedBox(height: 4),
-                  Text('Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
+                  SizedBox(height: 4),
+                  Text(
+                    'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
                       color: AppColors.onSurfaceVariant,
                       height: 1.5,
                     ),
@@ -335,7 +367,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -346,15 +378,17 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
           children: [
             Row(
               children: [
-                const Icon(Icons.image_outlined,
-                    size: 16, color: AppColors.onSurfaceVariant,),
-                const SizedBox(width: 8),
-                Text('Upload Photo Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceAlt,
-                  ),
+                const Icon(
+                  Icons.image_outlined,
+                  size: 16,
+                  color: AppColors.onSurfaceVariant,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Upload Photo Proof',
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(color: AppColors.onSurfaceMuted),
                 ),
               ],
             ),
@@ -385,24 +419,27 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                           color: AppColors.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.upload_outlined,
-                            color: AppColors.primary, size: 24,),
-                      ),
-                      const SizedBox(height: 12),
-                      Text('Tap to upload photo',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onSurfaceAlt,
+                        child: const Icon(
+                          Icons.upload_outlined,
+                          color: AppColors.primary,
+                          size: 24,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 12),
+                      Text(
+                        'Tap to upload photo',
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.onSurfaceMuted),
+                      ),
+                      SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text('Ensure the photo shows both the rider and team member or the payment receipt',
+                        child: Text(
+                          'Ensure the photo shows both the rider and team member or the payment receipt',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
                             color: AppColors.onSurfaceVariant,
                             height: 1.4,
                           ),
@@ -431,38 +468,43 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                       key: const Key('removeProofButton'),
                       onTap: () => setState(() => _imageFile = null),
                       child: Container(
-                        width: 28,
-                        height: 28,
+                        width: 44,
+                        height: 44,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFBA1A1A),
+                          color: AppColors.errorDark,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),),
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 16,),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             if (_imageFile != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: Color(0xFF16A34A), size: 14,),
-                  const SizedBox(width: 4),
-                  Text('Photo uploaded successfully',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFF16A34A),
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.success,
+                    size: 14,
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    'Photo uploaded successfully',
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
@@ -479,25 +521,27 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEB),
+          color: AppColors.warningSurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: RichText(
           text: TextSpan(
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.warningText,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: AppColors.onSurface,
               height: 1.5,
             ),
             children: [
+              TextSpan(
+                text: 'Note: ',
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+              ),
               const TextSpan(
-                  text: 'Note: ',
-                  style: TextStyle(fontWeight: FontWeight.bold),),
-              const TextSpan(
-                  text:
-                      'Payments are verified manually by our team. Balance will be updated within 24 hours of verification.',),
+                text:
+                    'Payments are verified manually by our team. Balance will be updated within 24 hours of verification.',
+              ),
             ],
           ),
         ),
@@ -509,13 +553,14 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
     return GestureDetector(
       key: const Key('submitProofButton'),
       onTap: canSubmit ? _handleSubmit : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 56,
         decoration: BoxDecoration(
           gradient: canSubmit ? AppGradients.primary : null,
           color: canSubmit ? null : AppColors.divider,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: canSubmit ? AppShadows.primaryButton : null,
         ),
         child: Center(
@@ -524,15 +569,18 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2,),
-                )
-              : Text('Submit Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        canSubmit ? Colors.white : AppColors.onSurfaceVariant,
+                    color: Colors.white,
+                    strokeWidth: 2,
                   ),
+                )
+              : Text(
+                  'Submit Proof',
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(
+                          color: canSubmit
+                              ? Colors.white
+                              : AppColors.onSurfaceVariant),
                 ),
         ),
       ),

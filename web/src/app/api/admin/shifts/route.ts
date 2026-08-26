@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -23,6 +23,10 @@ const shiftSchema = z.object({
 
 const deleteShiftSchema = z.object({ id: z.string().min(1) });
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
@@ -31,7 +35,7 @@ export async function GET(req: NextRequest) {
     const search = req.nextUrl.searchParams.get('search') || '';
     const activeOnly = req.nextUrl.searchParams.get('active') === 'true';
     const shifts = await shiftUseCases.listShifts(search, activeOnly);
-    return success(shifts);
+    return withCacheHeaders(success(shifts), 60);
   } catch (error) {
     logger.error('GET /api/admin/shifts error:', error);
     return errors.internal('Failed to fetch shifts');
@@ -82,9 +86,10 @@ export async function DELETE(req: NextRequest) {
     const { id } = validation.data;
     await shiftUseCases.deleteShift(id, session.adminId || '');
     return success(null, 'Shift deleted');
-  } catch (error: any) {
-    if (error?.message?.includes?.('Cannot delete shift')) {
-      return errors.conflict(error.message);
+  } catch (error: unknown) {
+    const message = errorMessage(error);
+    if (message.includes('Cannot delete shift')) {
+      return errors.conflict(message);
     }
     logger.error('DELETE /api/admin/shifts error:', error);
     return errors.internal('Failed to delete shift');

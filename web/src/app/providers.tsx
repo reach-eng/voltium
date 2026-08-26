@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { useState, useEffect } from 'react';
+import { PostHogProvider } from '@/components/providers/posthog-provider';
 
 function HydrationMarker() {
   useEffect(() => {
@@ -31,11 +32,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <QueryClientProvider client={queryClient}>
-        <HydrationMarker />
-        {children}
-      </QueryClientProvider>
-    </ThemeProvider>
+    <PostHogProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <QueryClientProvider client={queryClient}>
+          <HydrationMarker />
+          {children}
+        </QueryClientProvider>
+      </ThemeProvider>
+    </PostHogProvider>
   );
 }

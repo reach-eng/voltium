@@ -1,23 +1,10 @@
-/**
- * Scheduled Backup Job
- *
- * Polls every 5 minutes for due backups based on BackupSchedule configuration.
- * Runs in the worker process as a separate polling loop.
- *
- * Flow:
- *   Load BackupSchedule → if enabled → calculate if due → create BackupJob → run backup → apply retention
- */
-
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { backupRepository } from '@/server/modules/data-management/backup.repository';
-import {
-  backupService,
-  calculateNextRun,
-  getFreeDiskBytes,
-} from '@/server/modules/data-management/backup.service';
+import { scheduleService } from '@/server/modules/data-management/schedule/schedule.service';
+import { getFreeDiskBytes } from '@/server/modules/data-management/backup.service';
 import { createAuditLog } from '@/lib/audit-log';
-import { fcmService } from '@/lib/fcm';
 
 export const scheduledBackupJob = {
   async checkAndRun(): Promise<{ ran: boolean; reason?: string }> {
@@ -38,13 +25,13 @@ export const scheduledBackupJob = {
       }
 
       // Check maintenance mode
-      const maintenanceSetting = await db.setting.findUnique({ where: { key: 'maintenanceMode' } });
+      const maintenanceSetting = await db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } });
       if (maintenanceSetting?.value === 'true') {
         return { ran: false, reason: 'Maintenance mode is active' };
       }
 
       // Check backup lock — a restore operation may be in progress
-      const backupLock = await db.setting.findUnique({ where: { key: 'backupLock' } });
+      const backupLock = await db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
       if (backupLock?.value === 'RESTORE_RUNNING') {
         return { ran: false, reason: 'Restore operation is in progress — backup skipped' };
       }
@@ -65,7 +52,7 @@ export const scheduledBackupJob = {
       }
 
       // Check if backup is due
-      const now = new Date();
+      const now = clock.now();
       if (schedule.nextRunAt && now < schedule.nextRunAt) {
         return {
           ran: false,
@@ -82,13 +69,14 @@ export const scheduledBackupJob = {
       await createAuditLog({
         actorId: 'SYSTEM',
         actorType: 'SYSTEM',
-        action: 'backup.scheduled_started',
+        action: 'SYSTEM_JOB',
         entity: 'BackupSchedule',
         entityId: schedule.id,
+        details: { event: 'backup.scheduled_started' },
       });
 
       try {
-        const result = await backupService.runScheduledBackup({
+        await (scheduleService as any).runScheduledBackup({
           id: schedule.id,
           frequency: schedule.frequency,
           includeDatabase: schedule.includeDatabase,
@@ -104,15 +92,15 @@ export const scheduledBackupJob = {
         });
 
         // Calculate next run time
-        const nextRunAt = calculateNextRun(schedule);
+        const nextRunAt = scheduleService.calculateNextRun(schedule as any);
         await backupRepository.markScheduleSuccess(
           schedule.id,
-          new Date(),
-          nextRunAt ?? new Date()
+          clock.now(),
+          nextRunAt ?? clock.now()
         );
 
         // Clear any previous failure alert
-        await db.setting
+        await db.systemSetting
           .upsert({
             where: { key: 'LAST_BACKUP_FAILURE' },
             update: { value: '' },
@@ -120,59 +108,16 @@ export const scheduledBackupJob = {
           })
           .catch(() => {});
 
-        await createAuditLog({
-          actorId: 'SYSTEM',
-          actorType: 'SYSTEM',
-          action: 'backup.scheduled_completed',
-          entity: 'BackupJob',
-          entityId: result.id,
-          details: { backupId: result.backupId, sizeBytes: result.sizeBytes },
-        });
-
         return { ran: true };
-      } catch (err: any) {
-        logger.error('[ScheduledBackup] Backup execution failed', { error: err.message });
-        await backupRepository.markScheduleFailure(schedule.id, err.message);
-
-        // Persist failure alert in SystemSetting so admin dashboard can surface it
-        const failurePayload = JSON.stringify({
-          error: err.message,
-          at: new Date().toISOString(),
-          scheduleId: schedule.id,
-        });
-        await db.setting
-          .upsert({
-            where: { key: 'LAST_BACKUP_FAILURE' },
-            update: { value: failurePayload },
-            create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload },
-          })
-          .catch(() => {});
-
-        await createAuditLog({
-          actorId: 'SYSTEM',
-          actorType: 'SYSTEM',
-          action: 'backup.scheduled_failed',
-          entity: 'BackupSchedule',
-          entityId: schedule.id,
-          details: { error: err.message },
-        });
-
-        // Send FCM alert notification to admins via a dedicated topic
-        await fcmService
-          .sendPushNotification(
-            '/topics/admin_alerts',
-            'Backup Failed 🚨',
-            `Scheduled backup failed: ${err.message}`
-          )
-          .catch((fcmErr) => {
-            logger.error('[ScheduledBackup] Failed to send FCM alert', { error: fcmErr.message });
-          });
-
-        return { ran: false, reason: err.message };
+      } catch (backupErr) {
+        const errorMsg = (backupErr instanceof Error ? backupErr.message : String(backupErr));
+        logger.error('[ScheduledBackup] Backup execution failed', backupErr);
+        await backupRepository.markScheduleFailure(schedule.id, errorMsg);
+        return { ran: false, reason: `Backup execution failed: ${errorMsg}` };
       }
-    } catch (err: any) {
-      logger.error('[ScheduledBackup] Critical error in check cycle', { error: err.message });
-      return { ran: false, reason: err.message };
+    } catch (err) {
+      logger.error('[ScheduledBackup] Job check failed', err);
+      return { ran: false, reason: 'Job check failed' };
     }
   },
 };

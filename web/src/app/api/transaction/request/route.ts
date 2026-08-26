@@ -13,6 +13,8 @@ import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from '@/server/modules/wallet/wallet.use-cases';
 import { rupeesToPaise } from '@/lib/flatten-rider';
 
+type IdempotentTransactionError = Error & { transaction?: unknown };
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireRiderSession(request);
@@ -49,9 +51,11 @@ export async function POST(request: NextRequest) {
     });
 
     return success(transaction, 'Transaction request submitted successfully');
-  } catch (err: any) {
-    if (err?.message?.includes('already submitted') || err?.message?.includes('Idempotent')) {
-      return success(err.transaction || {}, 'Transaction already submitted');
+  } catch (err: unknown) {
+    const error: IdempotentTransactionError =
+      err instanceof Error ? (err as IdempotentTransactionError) : new Error(String(err));
+    if (error.message.includes('already submitted') || error.message.includes('Idempotent')) {
+      return success(error.transaction || {}, 'Transaction already submitted');
     }
     logger.error('Failed to create pending transaction', err);
     return errors.internal('Failed to process request');

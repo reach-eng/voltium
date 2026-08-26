@@ -3,6 +3,9 @@
 # Prerequisites: npm packages installed, Java 11+ available (for openapi-generator)
 #
 # Usage: bash scripts/generate-flutter-client.sh
+#
+# Output: flutter/lib/core/network/generated/{api_client,api_models}.dart
+# (replaces the existing hand-maintained generated client).
 
 set -euo pipefail
 
@@ -10,10 +13,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 FLUTTER_DIR="$ROOT_DIR/../flutter"
 OPENAPI_JSON="$ROOT_DIR/src/contracts/openapi.json"
+GENERATED_DIR="$FLUTTER_DIR/lib/core/network/generated"
 
 echo "=== Generating Flutter API Client ==="
 echo "OpenAPI spec: $OPENAPI_JSON"
-echo "Flutter output: $FLUTTER_DIR/lib/generated"
+echo "Flutter output: $GENERATED_DIR"
 
 # Step 1: Regenerate OpenAPI JSON from the TypeScript generator
 echo ""
@@ -24,7 +28,6 @@ npx tsx src/contracts/openapi.ts
 # Step 2: Generate Dart API client using openapi-generator
 echo ""
 echo "[2/3] Generating Dart API client..."
-GENERATED_DIR="$FLUTTER_DIR/lib/generated"
 mkdir -p "$GENERATED_DIR"
 
 npx @openapitools/openapi-generator-cli generate \
@@ -38,14 +41,16 @@ npx @openapitools/openapi-generator-cli generate \
 # Step 3: Clean up generated files that conflict with existing code
 echo ""
 echo "[3/3] Cleaning up generated output..."
-# Remove the generated pubspec and test files — we only need the API classes
+# Remove the generated pubspec, README, and example folders — we only
+# need the API classes (api_client.dart, api_models.dart, lib/).
 rm -f "$GENERATED_DIR/pubspec.yaml" "$GENERATED_DIR/README.md" "$GENERATED_DIR/.openapi-generator-ignore"
-rm -rf "$GENERATED_DIR/test" "$GENERATED_DIR/.openapi-generator" 2>/dev/null || true
+rm -rf "$GENERATED_DIR/test" "$GENERATED_DIR/.openapi-generator" "$GENERATED_DIR/doc" "$GENERATED_DIR/example" 2>/dev/null || true
 
 echo ""
 echo "=== Flutter API Client Generated ==="
-echo "Output: $FLUTTER_DIR/lib/generated/"
+echo "Output: $GENERATED_DIR/api_client.dart"
+echo "        $GENERATED_DIR/api_models.dart"
 echo ""
 echo "Next steps:"
-echo "  1. Import the generated client: import 'package:voltium_app/generated/api.dart';"
-echo "  2. Replace manual ApiService calls with generated client methods"
+echo "  1. Verify the diff vs HEAD: git diff flutter/lib/core/network/generated/"
+echo "  2. If happy, commit the regenerated client."

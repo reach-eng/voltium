@@ -8,6 +8,8 @@ import { flattenRider } from '@/lib/flatten-rider';
 import { createSessionToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 import { API_VERSION } from '@/lib/api-version';
 
 const OTP_VERIFY_RATE_LIMIT = {
@@ -43,8 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone: inputPhone } = validation.data;
-    const clientIp =
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
     const ipRateLimit = await checkRateLimit(`otp-verify-ip:${clientIp}`, OTP_VERIFY_IP_RATE_LIMIT);
     if (!ipRateLimit.allowed) {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await authUseCases.verifyOtp(validation.data);
+    const result = await authUseCases.verifyOtp(validation.data as any);
 
     if (
       process.env.NODE_ENV === 'development' &&
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       const rider = await onboardingUseCases.autoProvisionTestRider(result.riderDbId, result.phone);
       if (rider) {
         const flatRider = flattenRider(rider);
-        const sessionToken = createSessionToken({
+        const sessionToken = await createSessionToken({
           riderId: rider.riderId,
           riderDbId: rider.id,
           phone: rider.phone,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
           tokenVersion: rider.tokenVersion,
         });
         const resp = success(
-          { ...flatRider, token: sessionToken, fcmCommandSecret: result.fcmCommandSecret },
+          { ...flatRider, token: sessionToken, refreshToken: result.refreshToken },
           'OTP verified successfully',
           200,
           undefined,
@@ -103,12 +104,16 @@ export async function POST(request: NextRequest) {
         );
         resp.headers.set('Api-Version', API_VERSION);
         resp.cookies.set(SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
+        resp.cookies.set('voltium_refresh', result.refreshToken, {
+          ...SESSION_COOKIE_OPTIONS,
+          maxAge: 30 * 24 * 60 * 60, // 30 days
+        });
         return resp;
       }
     }
 
     const response = success(
-      { ...result.riderData, token: result.token, fcmCommandSecret: result.fcmCommandSecret },
+      { ...result.riderData, token: result.token, refreshToken: result.refreshToken, isNewRider: result.isNewRider },
       'OTP verified successfully',
       200,
       undefined,
@@ -116,12 +121,17 @@ export async function POST(request: NextRequest) {
     );
     response.headers.set('Api-Version', API_VERSION);
     response.cookies.set(SESSION_COOKIE_NAME, result.token, SESSION_COOKIE_OPTIONS);
+    response.cookies.set('voltium_refresh', result.refreshToken, {
+      ...SESSION_COOKIE_OPTIONS,
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
     return response;
-  } catch (err: any) {
-    logger.error(`[POST /api/auth/verify-otp] error: ${err?.stack || err?.message || err}`);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : String(err);
+    logger.error('[POST /api/auth/verify-otp] error', { error: redactPii(errorMessage) });
     const response = errors.internal(
       'Verification failed. Please check your connection or try again.',
-      { correlationId }
+      { correlationId: redactPii(correlationId) }
     );
     response.headers.set('Api-Version', API_VERSION);
     return response;

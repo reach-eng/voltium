@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
@@ -47,22 +47,46 @@ class KycRepository {
       aadhaarFront: aadhaarFrontUrl,
       aadhaarBack: aadhaarBackUrl,
       panCard: panUrl,
+      selfie: selfieUrl,
+      profilePhoto: selfieUrl,
+      riderPhoto: selfieUrl,
+      signature: signatureUrl,
     ));
   }
 
-  // ── Static form cache helpers ──────────────────────────────────────────
+  // ── Form cache helpers ─────────────────────────────────────────────────
+  //
+  // SECURITY: The cache is keyed by riderId. Without this scoping, a
+  // second user on a shared device would see the first user's Aadhaar
+  // number and bank details when they open the KYC form. The previous
+  // implementation used a static Map<String, String>? that was process-
+  // wide and unscoped, which leaked PII between users on the same
+  // device. See Bug 21 in the user experience test report.
 
-  static Future<void> saveFormCache(Map<String, String?> data) async {
-    _cache = Map<String, String>.from(data);
+  static final Map<String, Map<String, String>> _cacheByRider = {};
+
+  static String _cacheKey(String riderId) => 'kyc_form:$riderId';
+
+  static Future<void> saveFormCache({
+    required String riderId,
+    required Map<String, String?> data,
+  }) async {
+    final key = _cacheKey(riderId);
+    final entry = <String, String>{};
+    data.forEach((k, v) {
+      if (v != null) entry[k] = v;
+    });
+    _cacheByRider[key] = entry;
   }
 
-  static Future<Map<String, String>?> loadFormCache() async {
-    return _cache != null ? Map<String, String>.from(_cache!) : null;
+  static Future<Map<String, String>?> loadFormCache({
+    required String riderId,
+  }) async {
+    final entry = _cacheByRider[_cacheKey(riderId)];
+    return entry == null ? null : Map<String, String>.from(entry);
   }
 
-  static Future<void> clearFormCache() async {
-    _cache = null;
+  static Future<void> clearFormCache({required String riderId}) async {
+    _cacheByRider.remove(_cacheKey(riderId));
   }
-
-  static Map<String, String>? _cache;
 }

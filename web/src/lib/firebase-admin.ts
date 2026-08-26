@@ -1,4 +1,5 @@
-import * as admin from 'firebase-admin';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { logger } from '@/lib/logger';
 
 /**
@@ -10,8 +11,9 @@ import { logger } from '@/lib/logger';
 
 const getAdminApp = () => {
   // Check if any app is already initialized
-  if (admin.apps.length > 0) {
-    return admin.apps[0]!;
+  const apps = getApps();
+  if (apps.length > 0) {
+    return apps[0]!;
   }
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -25,8 +27,8 @@ const getAdminApp = () => {
   }
 
   try {
-    return admin.initializeApp({
-      credential: admin.credential.cert({
+    return initializeApp({
+      credential: cert({
         projectId,
         clientEmail,
         privateKey,
@@ -40,5 +42,5 @@ const getAdminApp = () => {
 
 const firebaseAdmin = getAdminApp();
 
-export const auth = firebaseAdmin ? firebaseAdmin.auth() : null;
+export const auth = firebaseAdmin ? getAuth(firebaseAdmin) : null;
 export default firebaseAdmin;

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export const legalUseCases = {
   async list() {
@@ -9,8 +10,8 @@ export const legalUseCases = {
   async upsert(data: { type: string; title?: string; content: string }, actorId: string) {
     const doc = await db.legalDocument.upsert({
       where: { type: data.type },
-      update: { title: data.title || data.type, content: data.content },
-      create: { type: data.type, title: data.title || data.type, content: data.content },
+      update: { title: data.title || data.type, content: sanitizeHtml(data.content) },
+      create: { type: data.type, title: data.title || data.type, content: sanitizeHtml(data.content) },
     });
     createAuditLog({
       actorId,

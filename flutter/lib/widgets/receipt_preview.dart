@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ReceiptPreview extends StatelessWidget {
   final String transactionId;
@@ -21,15 +23,16 @@ class ReceiptPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isCredit = type.toUpperCase() == 'CREDIT';
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: Spacing.paddingMd,
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -47,22 +50,18 @@ class ReceiptPreview extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Transaction Receipt',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.grey[500],
-                      letterSpacing: 1.5,
-                    ),
+                  Text(
+                    'Transaction Receipt',
+                    style: AppTypography.overline.copyWith(
+                        color: AppColors.onSurfaceMuted, letterSpacing: 1.5),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '#${transactionId.substring(0, 8).toUpperCase()}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.grey[800],
-                    ),
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(
+                            color: isDark ? Colors.white : AppColors.onSurface),
                   ),
                 ],
               ),
@@ -73,15 +72,12 @@ class ReceiptPreview extends StatelessWidget {
                   color: isCredit
                       ? AppColors.success.withValues(alpha: 0.1)
                       : AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   type.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isCredit ? AppColors.success : AppColors.error,
-                  ),
+                  style: AppTypography.labelSmall.copyWith(
+                      color: isCredit ? AppColors.success : AppColors.error),
                 ),
               ),
             ],
@@ -89,44 +85,42 @@ class ReceiptPreview extends StatelessWidget {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
-          _buildRow('Date', _formatDate(date), isDark),
-          _buildRow('Time', _formatTime(date), isDark),
-          if (riderName != null) _buildRow('Rider', riderName!, isDark),
+          _buildRow(
+              'Date', _formatDate(date), colors.onSurfaceMuted.hashCode == 0),
+          _buildRow(
+              'Time', _formatTime(date), colors.onSurfaceMuted.hashCode == 0),
+          if (riderName != null) _buildRow('Rider', riderName!, false),
           if (vehicleNumber != null)
-            _buildRow('Vehicle', vehicleNumber!, isDark),
+            _buildRow('Vehicle', vehicleNumber!, false),
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: Spacing.paddingMd,
             decoration: BoxDecoration(
               color: isCredit
                   ? AppColors.success.withValues(alpha: 0.08)
                   : AppColors.error.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   isCredit ? 'Amount Credited' : 'Amount Debited',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.grey[800],
-                  ),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(
+                          color: isDark ? Colors.white : AppColors.onSurface),
                 ),
                 Text(
                   '₹${(amount / 100).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: isCredit ? AppColors.success : AppColors.error,
-                  ),
+                  style: AppTypography.headingMedium.copyWith(
+                      color: isCredit ? AppColors.success : AppColors.error),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Row(
+          SizedBox(height: 16),
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
@@ -135,12 +129,11 @@ class ReceiptPreview extends StatelessWidget {
                 color: AppColors.primary,
               ),
               SizedBox(width: 4),
-              Text('Voltium',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
+              Text(
+                'Voltium',
+                style: AppTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(color: AppColors.primary),
               ),
             ],
           ),
@@ -157,18 +150,15 @@ class ReceiptPreview extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: AppColors.onSurfaceMuted,
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white : Colors.grey[800],
-            ),
+            style: AppTypography.bodyMedium
+                .copyWith(color: isDark ? Colors.white : AppColors.onSurface),
           ),
         ],
       ),
@@ -199,7 +189,7 @@ class ReceiptActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Row(
         children: [
           if (onDownload != null)

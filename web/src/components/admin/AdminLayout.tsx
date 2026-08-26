@@ -6,7 +6,6 @@ import AdminSidebar from './AdminSidebar';
 import CommandPalette from './CommandPalette';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster as SonnerToaster } from 'sonner';
 import { Menu, Search, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { hasPermission } from '@/lib/permissions';
 import { ALL_NAV_ITEMS } from '@/lib/role-config';
+import { AdminErrorBoundary } from './error-boundary';
 
 // Screen placeholder with shimmer animation
 function ScreenLoader() {
@@ -31,9 +31,54 @@ function ScreenLoader() {
   );
 }
 
-// Dynamic helper with consistent loader
+// Screen import functions for speculative prefetching
+export const screenImportMap: Record<string, () => Promise<any>> = {
+  overview: () => import('./screens/DashboardOverview'),
+  riders: () => import('./screens/RiderManagement'),
+  kyc: () => import('./screens/KycManagement'),
+  rentals: () => import('./screens/RentalManagement'),
+  vehicles: () => import('./screens/VehicleManagement'),
+  hubs: () => import('./screens/HubManagement'),
+  'wallet-deposits': () => import('./screens/WalletDepositManagement'),
+  earnings: () => import('./screens/EarningsManagement'),
+  transactions: () => import('./screens/TransactionManagement'),
+  tickets: () => import('./screens/TicketManagement'),
+  incidents: () => import('./screens/IncidentManagementScreen'),
+  'team-leaders': () => import('./screens/TeamLeaderManagement'),
+  operations: () => import('./screens/OperationsBoard'),
+  'fleet-map': () => import('./screens/FleetMapScreen'),
+  shifts: () => import('./screens/ShiftManagement'),
+  'rider-scoring': () => import('./screens/RiderScoringScreen'),
+  offers: () => import('./screens/OfferManagement'),
+  faq: () => import('./screens/FaqManagement'),
+  legal: () => import('./screens/LegalManagement'),
+  'device-tracking': () => import('./screens/DeviceTrackingView'),
+  'workflow-coverage': () => import('./screens/WorkflowCoverageScreen'),
+  notifications: () => import('./screens/NotificationManagement'),
+  rewards: () => import('./screens/RewardManagement'),
+  analytics: () => import('./screens/analytics/AnalyticsDashboard'),
+  'admin-users': () => import('./screens/AdminUserManagement'),
+  'business-settings': () => import('./screens/SettingsManagement'),
+  settings: () => import('./screens/SystemSettingsScreen'),
+  'server-health': () => import('./screens/ServerHealthScreen'),
+  'data-management': () => import('./screens/data-management'),
+  'background-jobs': () => import('./screens/BackgroundJobsScreen'),
+};
+
+const prefetchedSet = new Set<string>();
+
+export function prefetchAdminScreen(sectionId: string) {
+  if (prefetchedSet.has(sectionId)) return;
+  const loader = screenImportMap[sectionId];
+  if (loader) {
+    prefetchedSet.add(sectionId);
+    loader().catch(() => prefetchedSet.delete(sectionId));
+  }
+}
+
+// Dynamic helper with consistent loader (CSR-only for admin screens)
 const loadAdminScreen = (path: string) =>
-  dynamic(() => import(`./screens/${path}`), { loading: ScreenLoader });
+  dynamic(() => import(`./screens/${path}`), { loading: ScreenLoader, ssr: false });
 
 // Dynamically loaded admin screens (split chunks for better performance)
 const sectionMap: Record<string, React.ComponentType> = {
@@ -43,6 +88,8 @@ const sectionMap: Record<string, React.ComponentType> = {
   rentals: loadAdminScreen('RentalManagement'),
   vehicles: loadAdminScreen('VehicleManagement'),
   hubs: loadAdminScreen('HubManagement'),
+  'wallet-deposits': loadAdminScreen('WalletDepositManagement'),
+  earnings: loadAdminScreen('EarningsManagement'),
   transactions: loadAdminScreen('TransactionManagement'),
   tickets: loadAdminScreen('TicketManagement'),
   incidents: loadAdminScreen('IncidentManagementScreen'),
@@ -58,12 +105,13 @@ const sectionMap: Record<string, React.ComponentType> = {
   'workflow-coverage': loadAdminScreen('WorkflowCoverageScreen'),
   notifications: loadAdminScreen('NotificationManagement'),
   rewards: loadAdminScreen('RewardManagement'),
-  analytics: loadAdminScreen('AnalyticsDashboard'),
+  analytics: loadAdminScreen('analytics/AnalyticsDashboard'),
   'admin-users': loadAdminScreen('AdminUserManagement'),
   'business-settings': loadAdminScreen('SettingsManagement'),
   settings: loadAdminScreen('SystemSettingsScreen'),
   'server-health': loadAdminScreen('ServerHealthScreen'),
-  'data-management': loadAdminScreen('DataManagementScreen'),
+  'data-management': loadAdminScreen('data-management'),
+  'background-jobs': loadAdminScreen('BackgroundJobsScreen'),
 };
 
 function PlaceholderSection({ name }: { name: string }) {
@@ -85,6 +133,9 @@ const sectionLabels: Record<string, string> = {
   rentals: 'Rentals',
   vehicles: 'Vehicles',
   hubs: 'Hubs',
+  'background-jobs': 'Background Jobs',
+  'wallet-deposits': 'Wallet Deposits',
+  'earnings': 'Earnings',
   transactions: 'Finance',
   tickets: 'Support',
   incidents: 'Incidents & Fines',
@@ -158,14 +209,31 @@ export default function AdminLayout() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [session, setSession] = useState<any>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set([activeSection]));
 
   useEffect(() => {
-    fetch('/api/admin/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.success && data?.data?.role) {
+    setVisitedSections((prev) => {
+      if (prev.has(activeSection)) return prev;
+      const next = new Set(prev);
+      next.add(activeSection);
+      return next;
+    });
+  }, [activeSection]);
+
+  useEffect(() => {
+    // Initiate auth check and dashboard stats prefetch in parallel
+    const authPromise = fetch('/api/admin/auth/me', { credentials: 'include' }).then((res) =>
+      res.ok ? res.json() : null
+    );
+    const statsPromise = fetch('/api/admin/dashboard', { credentials: 'include' }).then((res) =>
+      res.ok ? res.json() : null
+    );
+
+    Promise.all([authPromise, statsPromise])
+      .then(([authData]) => {
+        if (authData?.success && authData?.data?.role) {
           setIsAuthorized(true);
-          setSession(data.data);
+          setSession(authData.data);
         } else {
           setIsAuthorized(false);
         }
@@ -207,7 +275,7 @@ export default function AdminLayout() {
 
   if (isAuthorized === null) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex items-center justify-center min-h-dvh bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm font-medium text-muted-foreground">Verifying authorization...</p>
@@ -242,7 +310,7 @@ export default function AdminLayout() {
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-dvh bg-background p-6 text-center">
         <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8">
           <ShieldAlert className="w-10 h-10 text-primary" />
         </div>
@@ -266,7 +334,7 @@ export default function AdminLayout() {
           <Button
             variant="ghost"
             className="text-muted-foreground"
-            onClick={() => (window.location.href = '/rider-app/')}
+            onClick={() => (window.location.href = '/rider-app')}
           >
             Return to Rider App
           </Button>
@@ -276,7 +344,8 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <AdminErrorBoundary>
+    <div className="flex min-h-dvh bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block shrink-0 h-full overflow-hidden">
         <AdminSidebar collapsed={sidebarCollapsed} />
@@ -296,7 +365,7 @@ export default function AdminLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-14 border-b bg-card flex items-center px-4 gap-3 shrink-0">
+        <header className="h-16 border-b bg-card flex items-center px-6 gap-4 shrink-0 transition-colors duration-200">
           {/* Mobile menu button */}
           <Button
             variant="ghost"
@@ -313,49 +382,56 @@ export default function AdminLayout() {
           </h1>
           {breadcrumbs.map((bc, i) => (
             <span key={i} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-4 h-4" />
               <span className="truncate">{bc.label}</span>
             </span>
           ))}
 
-          {/* Search trigger + dark mode (placed in the middle band, not far right) */}
-          <div className="ml-auto mr-[230px] flex items-center gap-1.5">
+          {/* Search trigger + dark mode */}
+          <div className="ml-auto mr-[230px] flex items-center gap-2">
             {/* Command palette trigger */}
             <Button
               variant="outline"
-              size="sm"
-              className="hidden sm:flex items-center gap-2 h-8 px-3 text-xs text-muted-foreground"
+              size="default"
+              className="hidden sm:flex items-center gap-2 h-10 px-4 text-sm text-muted-foreground transition-colors"
               onClick={() => setCommandPaletteOpen(true)}
             >
-              <Search className="w-3 h-3" />
+              <Search className="w-4 h-4" />
               Search...
-              <kbd className="ml-1 bg-muted px-1 py-0.5 rounded text-[10px] font-mono">⌘K</kbd>
+              <kbd className="ml-2 bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono font-medium">⌘K</kbd>
             </Button>
 
             {/* Dark mode toggle */}
             <ThemeToggle />
+            
+            <Button
+              variant="outline"
+              size="default"
+              className="hidden sm:flex items-center gap-2 h-10 px-4 font-medium transition-colors"
+              onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || 'http://localhost:8080', '_blank')}
+            >
+              Rider App
+            </Button>
           </div>
         </header>
 
         {/* Page Content */}
         <ScrollArea className="flex-1 h-full min-h-0" data-admin-scroll="true">
-          <div className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
+          <div className="p-4 md:p-5">
+            {Array.from(visitedSections).map((section) => (
+              <div
+                key={section}
+                className={activeSection === section ? 'block animate-in fade-in slide-in-from-bottom-2 duration-300' : 'hidden'}
               >
-                <AdminSectionRenderer section={activeSection} session={session} />
-              </motion.div>
-            </AnimatePresence>
+                <AdminSectionRenderer section={section} session={session} />
+              </div>
+            ))}
           </div>
         </ScrollArea>
       </main>
       <SonnerToaster position="bottom-right" richColors closeButton />
       <div id="admin-hydration-marker" style={{ display: 'none' }} />
     </div>
+    </AdminErrorBoundary>
   );
 }

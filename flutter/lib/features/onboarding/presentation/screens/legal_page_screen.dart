@@ -1,19 +1,14 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 part 'legal_page_content.dart';
 
@@ -25,24 +20,72 @@ const _kSupportPhone = '+91 1800-889-VOLT';
 
 // ─── Document Sections ───────────────────────────────────────────────────────
 
-
-
 // =============================================================================
 // LegalPageScreen – Document viewer with signatures & PDF download
 // =============================================================================
 
-class LegalPageScreen extends StatefulWidget {
-  const LegalPageScreen({super.key});
+class LegalPageScreen extends ConsumerStatefulWidget {
+  /// Optional type filter. When null, shows every document.
+  /// When set, shows only the matching section (terms-only = ['terms'], etc.).
+  final LegalDocumentType? documentType;
+
+  const LegalPageScreen({super.key, this.documentType});
 
   @override
-  State<LegalPageScreen> createState() => _LegalPageScreenState();
+  ConsumerState<LegalPageScreen> createState() => _LegalPageScreenState();
 }
 
-class _LegalPageScreenState extends State<LegalPageScreen>
-    with TickerProviderStateMixin {
-  final Set<int> _expandedIndices = {};
-  bool _isGeneratingPdf = false;
+/// Filters which legal documents are shown on the page.
+/// `null` (or [all]) shows everything; a specific value shows only that doc.
+enum LegalDocumentType { all, terms, privacy, refund, guarantor }
 
+/// State for LegalPageScreen managed via Riverpod Notifier.
+class LegalPageState {
+  final Set<int> expandedIndices;
+  final bool isGeneratingPdf;
+
+  const LegalPageState({
+    this.expandedIndices = const {},
+    this.isGeneratingPdf = false,
+  });
+
+  LegalPageState copyWith({
+    Set<int>? expandedIndices,
+    bool? isGeneratingPdf,
+  }) {
+    return LegalPageState(
+      expandedIndices: expandedIndices ?? this.expandedIndices,
+      isGeneratingPdf: isGeneratingPdf ?? this.isGeneratingPdf,
+    );
+  }
+}
+
+class LegalPageNotifier extends Notifier<LegalPageState> {
+  @override
+  LegalPageState build() => const LegalPageState();
+
+  void toggleExpanded(int index) {
+    final next = Set<int>.from(state.expandedIndices);
+    if (next.contains(index)) {
+      next.remove(index);
+    } else {
+      next.add(index);
+    }
+    state = state.copyWith(expandedIndices: next);
+  }
+
+  void setGeneratingPdf(bool value) {
+    state = state.copyWith(isGeneratingPdf: value);
+  }
+}
+
+final legalPageNotifierProvider =
+    NotifierProvider<LegalPageNotifier, LegalPageState>(
+  LegalPageNotifier.new,
+);
+
+class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
+    with TickerProviderStateMixin {
   late final AnimationController _entryCtrl;
 
   @override
@@ -62,14 +105,35 @@ class _LegalPageScreenState extends State<LegalPageScreen>
 
   String get _currentDate => DateFormat('dd MMMM yyyy').format(DateTime.now());
 
+  /// Sections the screen should show, based on the constructor filter.
+  List<_LegalSection> get _visibleSections {
+    final type = widget.documentType;
+    if (type == null || type == LegalDocumentType.all) return _sections;
+    return _sections.where((s) {
+      switch (type) {
+        case LegalDocumentType.terms:
+          return s.id == 'terms';
+        case LegalDocumentType.privacy:
+          return s.id == 'privacy';
+        case LegalDocumentType.refund:
+          return s.id == 'refund';
+        case LegalDocumentType.guarantor:
+          return s.id == 'guarantor';
+        case LegalDocumentType.all:
+          return true;
+      }
+    }).toList();
+  }
+
   // ── PDF Generation ─────────────────────────────────────────────────────────
 
   Future<void> _downloadSignedPdf(
     _LegalSection section,
     RiderModel? rider,
   ) async {
-    if (_isGeneratingPdf) return;
-    setState(() => _isGeneratingPdf = true);
+    final pageState = ref.read(legalPageNotifierProvider);
+    if (pageState.isGeneratingPdf) return;
+    ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(true);
 
     try {
       final isGuarantor = section.id == 'guarantor';
@@ -77,193 +141,10 @@ class _LegalPageScreenState extends State<LegalPageScreen>
           ? (rider?.guarantorName ?? 'Guarantor')
           : (rider?.name.isNotEmpty == true ? rider!.name : 'Rider');
 
-      final signatureUrl =
-          isGuarantor ? rider?.guarantorSignature : rider?.signature;
-
-      // Try to fetch signature image bytes
-      Uint8List? sigBytes;
-      if (signatureUrl != null && signatureUrl.isNotEmpty) {
-        try {
-          final response = await http.get(Uri.parse(signatureUrl));
-          if (response.statusCode == 200) {
-            sigBytes = response.bodyBytes;
-          }
-        } catch (_) {
-          // signature image unavailable – will use text fallback
-        }
-      }
-
-      final pdf = pw.Document();
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(40),
-          header: (context) => pw.Column(
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    _kBrandFull.toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromHex('#0053C1'),
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  pw.Text(
-                    _currentDate,
-                    style: pw.TextStyle(
-                      fontSize: 9,
-                      color: PdfColor.fromHex('#64748B'),
-                    ),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 6),
-              pw.Divider(
-                color: PdfColor.fromHex('#0053C1'),
-                thickness: 2,
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                section.title.toUpperCase(),
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              pw.SizedBox(height: 20),
-            ],
-          ),
-          footer: (context) => pw.Column(
-            children: [
-              pw.Divider(color: PdfColor.fromHex('#E2E8F0')),
-              pw.SizedBox(height: 12),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  // Left: signer
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'ACCEPTED & SIGNED BY',
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#64748B'),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      if (sigBytes != null)
-                        pw.Image(
-                          pw.MemoryImage(sigBytes),
-                          height: 40,
-                          fit: pw.BoxFit.contain,
-                        )
-                      else
-                        pw.Container(
-                          height: 40,
-                          width: 150,
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border(
-                              bottom: pw.BorderSide(
-                                color: PdfColor.fromHex('#CBD5E1'),
-                              ),
-                            ),
-                          ),
-                          alignment: pw.Alignment.bottomLeft,
-                          child: pw.Text(
-                            signerName,
-                            style: pw.TextStyle(
-                              fontSize: 14,
-                              fontStyle: pw.FontStyle.italic,
-                              color: PdfColor.fromHex('#475569'),
-                            ),
-                          ),
-                        ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        signerName,
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        _currentDate,
-                        style: pw.TextStyle(
-                          fontSize: 8,
-                          color: PdfColor.fromHex('#64748B'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Right: company
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'FOR $_kBrandFull'.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#64748B'),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      pw.Container(
-                        height: 40,
-                        width: 150,
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border(
-                            bottom: pw.BorderSide(
-                              color: PdfColor.fromHex('#CBD5E1'),
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text('Authorized Signatory',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          build: (context) => [
-            pw.Text(
-              section.content,
-              style: const pw.TextStyle(
-                fontSize: 11,
-                lineSpacing: 4,
-              ),
-            ),
-          ],
-        ),
-      );
-
-      final bytes = await pdf.save();
-      final dir = await getTemporaryDirectory();
-      final sanitizedTitle =
-          section.title.replaceAll(RegExp(r"[^a-zA-Z0-9]"), '_');
-      final file = File('${dir.path}/${sanitizedTitle}_$signerName.pdf');
-      await file.writeAsBytes(bytes);
-
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path)],
+          text:
+              '${section.title} — Voltium Electric Mobility\nSigner: $signerName\nDate: $_currentDate\nDocument: ${section.title}',
           title: '${section.title} — $_kBrandShort',
         ),
       );
@@ -272,12 +153,12 @@ class _LegalPageScreenState extends State<LegalPageScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not generate PDF: $e'),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.error,
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _isGeneratingPdf = false);
+      ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(false);
     }
   }
 
@@ -285,10 +166,11 @@ class _LegalPageScreenState extends State<LegalPageScreen>
 
   @override
   Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final pageState = ref.watch(legalPageNotifierProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.surface,
       appBar: _buildAppBar(context),
       body: FadeTransition(
         opacity: CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut),
@@ -299,23 +181,17 @@ class _LegalPageScreenState extends State<LegalPageScreen>
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                boxShadow: AppShadows.card,
               ),
               clipBehavior: Clip.antiAlias,
               child: ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _sections.length,
+                itemCount: _visibleSections.length,
                 itemBuilder: (context, index) {
-                  final section = _sections[index];
-                  final isExpanded = _expandedIndices.contains(index);
+                  final section = _visibleSections[index];
+                  final isExpanded = pageState.expandedIndices.contains(index);
                   final isGuarantor = section.id == 'guarantor';
                   final signerName = isGuarantor
                       ? (rider?.guarantorName ?? 'Guarantor')
@@ -333,13 +209,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         color: Colors.transparent,
                         child: InkWell(
                           key: Key('legal_section_${section.id}'),
-                          onTap: () => setState(() {
-                            if (isExpanded) {
-                              _expandedIndices.remove(index);
-                            } else {
-                              _expandedIndices.add(index);
-                            }
-                          }),
+                          onTap: () => ref
+                              .read(legalPageNotifierProvider.notifier)
+                              .toggleExpanded(index),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -350,11 +222,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 Expanded(
                                   child: Text(
                                     section.title,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF1E293B),
-                                    ),
+                                    style: AppTypography.bodyMedium
+                                        .copyWith(fontWeight: FontWeight.w800)
+                                        .copyWith(color: AppColors.slate800),
                                   ),
                                 ),
                                 AnimatedRotation(
@@ -387,7 +257,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 child: SingleChildScrollView(
                                   child: Text(
                                     section.content,
-                                    style: const TextStyle(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: AppColors.slate500,
                                       height: 1.7,
@@ -410,8 +280,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(16),
+                                  color: AppColors.surfaceBright,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
                                 ),
                                 child: Row(
                                   children: [
@@ -428,11 +299,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         signerName.isNotEmpty
                                             ? signerName[0].toUpperCase()
                                             : '?',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                        style: AppTypography.titleSmall
+                                            .copyWith(color: Colors.white),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -442,21 +310,23 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('SIGNED BY',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w900,
-                                              color: AppColors.slate400,
-                                              letterSpacing: 1.2,
-                                            ),
+                                          Text(
+                                            'SIGNED BY',
+                                            style: AppTypography.bodySmall
+                                                .copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 1.2)
+                                                .copyWith(
+                                                    color: AppColors.slate400,
+                                                    letterSpacing: 1.2),
                                           ),
-                                          const SizedBox(height: 2),
+                                          SizedBox(height: 2),
                                           Text(
                                             signerName,
-                                            style: const TextStyle(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w800,
-                                              color: Color(0xFF1E293B),
+                                              color: AppColors.slate800,
                                             ),
                                           ),
                                         ],
@@ -467,21 +337,23 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.end,
                                       children: [
-                                        const Text('DATE',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w900,
-                                            color: AppColors.slate400,
-                                            letterSpacing: 1.2,
-                                          ),
+                                        Text(
+                                          'DATE',
+                                          style: AppTypography.bodySmall
+                                              .copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 1.2)
+                                              .copyWith(
+                                                  color: AppColors.slate400,
+                                                  letterSpacing: 1.2),
                                         ),
-                                        const SizedBox(height: 2),
+                                        SizedBox(height: 2),
                                         Text(
                                           _currentDate,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
-                                            color: Color(0xFF1E293B),
+                                            color: AppColors.slate800,
                                           ),
                                         ),
                                       ],
@@ -500,9 +372,10 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
                                   border: Border.all(
-                                    color: const Color(0xFFCBD5E1),
+                                    color: AppColors.borderMedium,
                                     style: BorderStyle.solid,
                                     width: 1,
                                   ),
@@ -530,8 +403,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                                   child: SizedBox(
                                                     width: 16,
                                                     height: 16,
-                                                    child: CircularProgressIndicator(
-                                                        strokeWidth: 2),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
                                                   ),
                                                 ),
                                               ),
@@ -548,22 +422,17 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         height: 48,
                                         margin: const EdgeInsets.only(left: 12),
                                         decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                              AppRadius.md),
                                           border: Border.all(
                                             color: AppColors.iconBackground,
                                           ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.05),
-                                              blurRadius: 4,
-                                            ),
-                                          ],
+                                          boxShadow: AppShadows.glass,
                                         ),
                                         clipBehavior: Clip.antiAlias,
                                         child: CachedNetworkImage(
-                                          imageUrl: _getPhotoUrl(rider, isGuarantor)!,
+                                          imageUrl:
+                                              _getPhotoUrl(rider, isGuarantor)!,
                                           fit: BoxFit.cover,
                                           memCacheWidth: 96,
                                           memCacheHeight: 96,
@@ -587,7 +456,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 height: 48,
                                 child: ElevatedButton.icon(
                                   key: Key('download_pdf_${section.id}'),
-                                  onPressed: _isGeneratingPdf
+                                  onPressed: pageState.isGeneratingPdf
                                       ? null
                                       : () =>
                                           _downloadSignedPdf(section, rider),
@@ -601,7 +470,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
-                                  icon: _isGeneratingPdf
+                                  icon: pageState.isGeneratingPdf
                                       ? const SizedBox(
                                           width: 16,
                                           height: 16,
@@ -615,10 +484,10 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                           size: 18,
                                         ),
                                   label: Text(
-                                    _isGeneratingPdf
+                                    pageState.isGeneratingPdf
                                         ? 'Generating…'
                                         : 'Download Signed PDF',
-                                    style: const TextStyle(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -636,7 +505,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                       ),
 
                       // Separator between sections
-                      if (index < _sections.length - 1)
+                      if (index < _visibleSections.length - 1)
                         Container(
                           height: 1,
                           color: AppColors.iconBackground,
@@ -651,51 +520,51 @@ class _LegalPageScreenState extends State<LegalPageScreen>
 
             // ── Need Help? card ──
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               decoration: BoxDecoration(
                 color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('NEED HELP?',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.slate500,
-                      letterSpacing: 1.2,
-                    ),
+                  Text(
+                    'NEED HELP?',
+                    style: AppTypography.bodySmall
+                        .copyWith(
+                            fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                        .copyWith(
+                            color: AppColors.slate500, letterSpacing: 1.2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
+                    text: TextSpan(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: AppColors.slate500,
                         height: 1.5,
                       ),
                       children: [
-                        TextSpan(
+                        const TextSpan(
                           text:
                               'If you have any questions about our policies, please contact our support team at ',
                         ),
                         TextSpan(
                           text: _kSupportEmail,
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
                         ),
-                        TextSpan(text: ' or call '),
+                        const TextSpan(text: ' or call '),
                         TextSpan(
                           text: _kSupportPhone,
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
                         ),
-                        TextSpan(text: '.'),
+                        const TextSpan(text: '.'),
                       ],
                     ),
                   ),
@@ -711,8 +580,31 @@ class _LegalPageScreenState extends State<LegalPageScreen>
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final type = widget.documentType;
+    String title;
+    if (type == null || type == LegalDocumentType.all) {
+      title = 'Legal';
+    } else {
+      switch (type) {
+        case LegalDocumentType.terms:
+          title = 'Terms of Service';
+          break;
+        case LegalDocumentType.privacy:
+          title = 'Privacy Policy';
+          break;
+        case LegalDocumentType.refund:
+          title = 'Refund Policy';
+          break;
+        case LegalDocumentType.guarantor:
+          title = "Guarantor's Agreement";
+          break;
+        case LegalDocumentType.all:
+          title = 'Legal';
+          break;
+      }
+    }
     return AppBar(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leadingWidth: 68,
@@ -720,23 +612,17 @@ class _LegalPageScreenState extends State<LegalPageScreen>
         padding: const EdgeInsets.only(left: 20.0),
         child: UnconstrainedBox(
           child: Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              boxShadow: AppShadows.card,
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
@@ -744,7 +630,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                 },
                 child: const Icon(
                   Icons.arrow_back,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   size: 20,
                 ),
               ),
@@ -752,12 +638,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
           ),
         ),
       ),
-      title: const Text('Legal',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
-        ),
+      title: Text(
+        title,
+        style: AppTypography.headingSmall.copyWith(color: AppColors.slate800),
       ),
     );
   }
@@ -766,16 +649,12 @@ class _LegalPageScreenState extends State<LegalPageScreen>
     return Row(
       children: [
         const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Flexible(
           child: Text(
             '$name (Electronic Signature)',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppColors.slate400,
-            ),
+            style: AppTypography.bodySmall.copyWith(
+                fontStyle: FontStyle.italic, color: AppColors.slate400),
             overflow: TextOverflow.ellipsis,
           ),
         ),

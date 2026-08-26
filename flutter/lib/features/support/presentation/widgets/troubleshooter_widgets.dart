@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 const vfBlue = AppColors.primary;
-const vfBlueLight = Color(0xFFE8F0FE);
+const vfBlueLight = AppColors.primarySurface;
 
 IconData tsIconData(String name) {
   return switch (name) {
@@ -38,57 +40,64 @@ class CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.glass,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(icon, color: color, size: 22),
                   ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1A1A2E),
-                                ),
-                      ),
-                      if (description != null) ...[
-                        const SizedBox(height: 4),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          description!,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: const Color(0xFF6B7280),
-                                  ),
+                          title,
+                          style: AppTypography.titleSmall
+                              .copyWith(color: AppColors.slate800),
                         ),
+                        if (description != null) ...[
+                          SizedBox(height: 4),
+                          Text(
+                            description!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: AppColors.slate500,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFF9CA3AF),
-                ),
-              ],
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.onSurfaceDisabled,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -111,13 +120,18 @@ class QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Container(
@@ -129,22 +143,20 @@ class QuestionCard extends StatelessWidget {
               ),
               child: Icon(icon, color: categoryColor, size: 32),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               question,
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                color: const Color(0xFF1A1A2E),
-                height: 1.4,
-              ),
+              style: AppTypography.titleMedium
+                  .copyWith(color: AppColors.slate800, height: 1.4),
             ),
-            const SizedBox(height: 8),
-            Text('Answer honestly for the most accurate diagnosis.',
+            SizedBox(height: 12),
+            Text(
+              'Answer honestly for the most accurate diagnosis.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF9CA3AF),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.slate500,
               ),
             ),
           ],
@@ -174,36 +186,37 @@ class ActionButtons extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onYes,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text('Yes',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              label: Text(
+                'Yes',
+                style: AppTypography.titleSmall,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: SizedBox(
             height: 52,
             child: FilledButton.icon(
               onPressed: onNo,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
+                backgroundColor: AppColors.errorDark,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
               icon: const Icon(Icons.cancel_outlined, size: 20),
-              label: const Text(
+              label: Text(
                 'No',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: AppTypography.titleSmall,
               ),
             ),
           ),
@@ -223,24 +236,28 @@ class PathSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
       child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading:
-              const Icon(Icons.history, size: 18, color: Color(0xFF9CA3AF)),
+          leading: const Icon(Icons.history,
+              size: 18, color: AppColors.onSurfaceDisabled),
           title: Text(
             'Your answers (${path.length})',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
-            ),
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w600)
+                .copyWith(color: AppColors.slate500),
           ),
           children: [
             for (final answer in path)
@@ -253,22 +270,24 @@ class PathSummary extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         color: answer.answer
-                            ? Colors.green.withValues(alpha: 0.15)
-                            : Colors.red.withValues(alpha: 0.15),
+                            ? AppColors.success.withValues(alpha: 0.15)
+                            : AppColors.error.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         answer.answer ? Icons.check : Icons.close,
                         size: 12,
-                        color: answer.answer ? Colors.green : Colors.red,
+                        color:
+                            answer.answer ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         answer.question,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF4B5563),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: AppColors.slate800,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -296,38 +315,39 @@ class ResolutionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final (title, titleColor) = switch (resolutionType) {
-      'SUCCESS' => ('Issue Resolved', Colors.green),
+      'SUCCESS' => ('Issue Resolved', AppColors.success),
       'FAILED' => ('Troubleshooting Tip', Colors.orange),
       'NEEDS_SUPPORT' => ('Support Required', vfBlue),
-      'DANGER' => ('Safety Warning', Colors.red),
-      _ => ('Result', Colors.grey),
+      'DANGER' => ('Safety Warning', AppColors.error),
+      _ => ('Result', AppColors.onSurfaceVariant),
     };
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: titleColor.withValues(alpha: 0.3)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+        border: Border.all(
+          color: titleColor.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: titleColor,
-              ),
+              style: AppTypography.titleMedium.copyWith(color: titleColor),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               resolution,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF1A1A2E),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                color: AppColors.slate800,
                 height: 1.5,
               ),
             ),
@@ -350,8 +370,6 @@ class PathStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -362,50 +380,46 @@ class PathStep extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               color: answer.answer
-                  ? Colors.green.withValues(alpha: 0.15)
-                  : Colors.red.withValues(alpha: 0.15),
+                  ? AppColors.success.withValues(alpha: 0.15)
+                  : AppColors.error.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: Text(
               '$stepNumber',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: answer.answer ? Colors.green : Colors.red,
-              ),
+              style: AppTypography.labelMedium.copyWith(
+                  color: answer.answer ? AppColors.success : AppColors.error),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   answer.question,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF4B5563),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.slate800,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Row(
                   children: [
                     Icon(
                       answer.answer ? Icons.check : Icons.close,
                       size: 14,
                       color: answer.answer
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
+                          ? AppColors.successDark
+                          : AppColors.errorDark,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       answer.answer ? 'Yes' : 'No',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: answer.answer
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                      ),
+                      style: AppTypography.labelMedium.copyWith(
+                          color: answer.answer
+                              ? AppColors.successDark
+                              : AppColors.errorDark),
                     ),
                   ],
                 ),
@@ -429,7 +443,7 @@ class TroubleshooterHeaderIcon extends StatelessWidget {
         height: 80,
         decoration: BoxDecoration(
           color: vfBlueLight,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         child: const Icon(
           Icons.build_circle_rounded,
@@ -457,20 +471,18 @@ class TroubleshooterStepCounter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: vfBlueLight,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.timeline, size: 16, color: vfBlue),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             'Step $currentStep of $totalSteps',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: vfBlue,
-            ),
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                .copyWith(color: vfBlue),
           ),
         ],
       ),
@@ -491,8 +503,8 @@ class TroubleshooterResultIcon extends StatelessWidget {
     final (icon, color, bgColor) = switch (resolutionType) {
       'SUCCESS' => (
           Icons.check_circle_rounded,
-          Colors.green,
-          Colors.green.withValues(alpha: 0.12),
+          AppColors.success,
+          AppColors.success.withValues(alpha: 0.12),
         ),
       'FAILED' => (
           Icons.error_outline,
@@ -506,13 +518,13 @@ class TroubleshooterResultIcon extends StatelessWidget {
         ),
       'DANGER' => (
           Icons.warning_rounded,
-          Colors.red,
-          Colors.red.withValues(alpha: 0.12),
+          AppColors.error,
+          AppColors.error.withValues(alpha: 0.12),
         ),
       _ => (
           Icons.info_outline,
-          Colors.grey,
-          Colors.grey.withValues(alpha: 0.12),
+          AppColors.onSurfaceVariant,
+          AppColors.onSurfaceVariant.withValues(alpha: 0.12),
         ),
     };
 
@@ -538,32 +550,36 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.glass,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.route, size: 18, color: Color(0xFF6B7280)),
-                const SizedBox(width: 8),
-                Text('Diagnostic path taken',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A2E),
-                  ),
+                const Icon(Icons.route,
+                    size: 18, color: AppColors.onSurfaceDisabled),
+                SizedBox(width: 8),
+                Text(
+                  'Diagnostic path taken',
+                  style: AppTypography.labelLarge
+                      .copyWith(color: AppColors.slate800),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             const Divider(height: 1),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             for (int i = 0; i < path.length; i++) ...[
               PathStep(stepNumber: i + 1, answer: path[i]),
               if (i < path.length - 1) ...[
@@ -574,7 +590,7 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
                     child: VerticalDivider(
                       width: 2,
                       thickness: 1.5,
-                      color: Color(0xFFE5E7EB),
+                      color: AppColors.borderSubtle,
                     ),
                   ),
                 ),
@@ -624,7 +640,7 @@ class TroubleshooterSupportTicketButton extends StatelessWidget {
             : const Icon(Icons.send_rounded, size: 18),
         label: Text(
           isSubmitting ? 'Submitting...' : 'Create Support Ticket',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
     );
@@ -646,7 +662,7 @@ class TroubleshooterSosButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -654,8 +670,9 @@ class TroubleshooterSosButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         icon: const Icon(Icons.warning_amber_rounded, size: 22),
-        label: const Text('Emergency SOS',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        label: Text(
+          'Emergency SOS',
+          style: AppTypography.titleSmall,
         ),
       ),
     );

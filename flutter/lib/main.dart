@@ -5,19 +5,18 @@ import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'gen/app_localizations.dart';
-import 'providers/locale_provider.dart';
-import 'providers/app_provider.dart';
-import 'providers/theme_provider.dart';
-import 'providers/rider_provider.dart';
-import 'providers/wallet_provider.dart';
-import 'providers/support_provider.dart';
-import 'providers/engagement_provider.dart';
-import 'providers/device_policy_provider.dart';
-import 'providers/connectivity_provider.dart';
-import 'providers/notification_provider.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/state/app_provider.dart';
+import 'theme/theme_provider.dart';
+import 'core/network/connectivity_provider.dart';
+import 'features/notifications/presentation/providers/notification_provider.dart';
+import 'core/state/riverpod_providers.dart';
+import 'services/emergency_contacts_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/analytics_service.dart';
@@ -26,6 +25,7 @@ import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
 import 'core/platform/platform_info.dart';
+import 'core/navigation/focus_observer.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -38,34 +38,58 @@ import 'widgets/shell_banners.dart';
 import 'widgets/animated_bottom_nav.dart';
 import 'widgets/error_boundary.dart';
 import 'widgets/overlay_manager.dart';
+import 'core/observability/posthog_service.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'utils/app_logger.dart';
 
 bool get isTestModeOverride => AppConstants.isTestModeOverride;
 set isTestModeOverride(bool val) => AppConstants.isTestModeOverride = val;
 
-Future<void> main() async {
+final FocusObserver focusObserver = FocusObserver((route) {
+  // Navigation is state-machine driven (setState), not Navigator-based.
+  // Tab-switch refresh is handled by AppShell.onTap.
+  // Reserved for future modal/push screen scenarios.
+});
+
+Future<void> main({AppProvider? injectedAppProvider}) async {
   if (AppConstants.isTestMode) {
     try {
       enableFlutterDriverExtension();
     } catch (e) {
-      debugPrint('Driver extension already enabled or binding initialized: $e');
+      appDebug('Driver extension already enabled or binding initialized: $e');
     }
   }
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Error Monitoring
-  await MonitoringService.initialize();
+  // Cap image memory cache at 50 MB and 100 items to prevent OOM on lower-end devices
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 100;
 
+  // Pre-bundle Google Fonts from asset package to eliminate startup network requests and layout shift
+  GoogleFonts.config.allowRuntimeFetching = false;
+
+  // Parallelize independent startup initializations to cut app cold-boot latency
+  await Future.wait([
+    initializeDateFormatting('en_IN', null),
+    MonitoringService.initialize(),
+    PostHogService.initialize(),
+  ]);
+  Intl.defaultLocale = 'en_IN';
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
-    debugPrint('[FlutterError] ${details.exception}');
+    appDebug('[FlutterError] ${details.exception}');
     AnalyticsService().trackError('FlutterError', details.exception.toString());
     MonitoringService.logError(
       details.exception,
       details.stack,
       reason: 'FlutterError',
     );
+    PostHogService.captureError(details.exception, details.stack,
+        reason: 'FlutterError');
   };
 
   // ── Custom ErrorWidget Builder (skip in test mode) ─────────────────────────
@@ -74,9 +98,7 @@ Future<void> main() async {
     isTestMode = true;
     return true;
   }());
-  if (!kIsWeb &&
-      !isTestMode &&
-      !AppConstants.isTestMode) {
+  if (!kIsWeb && !isTestMode && !AppConstants.isTestMode) {
     ErrorWidget.builder = (FlutterErrorDetails details) {
       AnalyticsService()
           .trackError('ErrorWidget', details.exception.toString());
@@ -93,14 +115,16 @@ Future<void> main() async {
                   size: 64,
                   color: Colors.red,
                 ),
-                const SizedBox(height: 16),
-                const Text('Something went wrong',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                SizedBox(height: 16),
+                Text(
+                  'Something went wrong',
+                  style: AppTypography.titleMedium,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   details.exception.toString(),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -137,13 +161,18 @@ Future<void> main() async {
       final savedLocale = CacheService().getLocale();
 
       // ── Create providers ────────────────────────────────────────────────
-      final localeProvider = LocaleProvider();
+      // R4.3c-1: ThemeProvider and LocaleProvider are now Riverpod Notifiers.
+      // We instantiate them here so we can apply the persisted locale
+      // choice before the first build, then inject them via
+      // ProviderScope.overrides (replacing the default NotifierProvider
+      // factory).
+      final localeProviderInstance = LocaleNotifier();
       if (savedLocale == 'hi') {
-        localeProvider.setHindi();
+        localeProviderInstance.setHindi();
       }
 
-      final appProvider = AppProvider();
-      final themeProvider = ThemeProvider();
+      final appInstance = injectedAppProvider ?? AppProvider();
+      final themeProviderInstance = ThemeNotifier();
 
       if (PlatformInfo.supportsFCM) {
         try {
@@ -151,67 +180,78 @@ Future<void> main() async {
             options: DefaultFirebaseOptions.currentPlatform,
           );
           await FCMService.initialize(
-            devicePolicy: appProvider.devicePolicyProvider,
-            wallet: appProvider.walletProvider,
-            support: appProvider.supportProvider,
-            rider: appProvider.riderProvider,
+            devicePolicy: appInstance.devicePolicyProvider,
+            wallet: appInstance.walletProvider,
+            support: appInstance.supportProvider,
+            rider: appInstance.riderProvider,
           );
         } catch (e) {
-          debugPrint('Failed to initialize Firebase: $e');
+          appDebug('Failed to initialize Firebase: $e');
         }
       }
       AnalyticsService().track(AnalyticsEvent.appOpened);
 
-      // ── Connect connectivity stream to AppProvider ──────────────────────
-      appProvider.connectivityProvider
-          .bindConnectivityService(ConnectivityService());
+      // ── Connect connectivity stream to the Riverpod notifier ─────────
+      // R4.3c-3: ConnectivityProvider is no longer a ChangeNotifier; we
+      // instantiate the Notifier directly and bind it to the
+      // ConnectivityService stream.
+      final connectivityNotifierInstance = ConnectivityNotifier();
+      connectivityNotifierInstance.bindConnectivityService(
+        ConnectivityService(),
+      );
+
+      // R4.3c-2: EmergencyContactsService is now a Riverpod Notifier.
+      // We instantiate it here so we can override the default NotifierProvider
+      // factory in ProviderScope (allowing it to be shared with the same
+      // `EmergencyContactsService` instance used by the legacy
+      // ChangeNotifierProvider entries that have not yet been migrated).
+      final emergencyContactsServiceInstance = EmergencyContactsNotifier();
 
       runApp(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
-            ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-            ChangeNotifierProvider<RiderProvider>.value(
-              value: appProvider.riderProvider,
-            ),
-            ChangeNotifierProvider<WalletProvider>.value(
-              value: appProvider.walletProvider,
-            ),
-            ChangeNotifierProvider<SupportProvider>.value(
-              value: appProvider.supportProvider,
-            ),
-            ChangeNotifierProvider<EngagementProvider>.value(
-              value: appProvider.engagementProvider,
-            ),
-            ChangeNotifierProvider<DevicePolicyProvider>.value(
-              value: appProvider.devicePolicyProvider,
-            ),
-            ChangeNotifierProvider<ConnectivityProvider>.value(
-              value: appProvider.connectivityProvider,
-            ),
-            ChangeNotifierProvider(create: (_) => NotificationProvider()),
-            ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+        // ProviderScope is the root of Riverpod's dependency injection.
+        // Existing ChangeNotifierProviders are bridged via legacy.MultiProvider
+        // so both Provider and Riverpod patterns work during migration.
+        ProviderScope(
+          overrides: [
+            appProvider.overrideWith((ref) => appInstance),
+            riderProvider.overrideWith(() => appInstance.riderProvider),
+            walletProvider.overrideWith(() => appInstance.walletProvider),
+            supportProvider.overrideWith(() => appInstance.supportProvider),
+            engagementProvider
+                .overrideWith(() => appInstance.engagementProvider),
+            devicePolicyProvider
+                .overrideWith(() => appInstance.devicePolicyProvider),
+            connectivityProviderRef
+                .overrideWith(() => connectivityNotifierInstance),
+            localeProviderRef.overrideWith(() => localeProviderInstance),
+            themeProviderRef.overrideWith(() => themeProviderInstance),
+            notificationProvider.overrideWith(() => NotificationNotifier()),
+            emergencyContactsService
+                .overrideWith(() => emergencyContactsServiceInstance),
           ],
           child: const VoltiumApp(),
         ),
       );
     },
     (error, stackTrace) {
-      debugPrint('[ZoneError] $error');
+      appDebug('[ZoneError] $error');
       AnalyticsService().trackError('ZoneError', error.toString());
       MonitoringService.logError(error, stackTrace, reason: 'ZoneError');
+      PostHogService.captureError(error, stackTrace, reason: 'ZoneError');
     },
   );
 }
 
-class VoltiumApp extends StatelessWidget {
+class VoltiumApp extends ConsumerWidget {
   static bool get isTestMode => AppConstants.isTestMode;
   const VoltiumApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>().locale;
-    final themeMode = context.watch<ThemeProvider>().themeMode;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // R4.3c-1: Locale + Theme are Riverpod v3 Notifiers. Use ref.watch
+    // (no longer context.watch<LocaleProvider>() / ThemeProvider()).
+    final locale = ref.watch(localeProvider).locale;
+    final themeMode = ref.watch(themeProvider).themeMode;
 
     return MaterialApp(
       title: 'Voltium',
@@ -230,6 +270,22 @@ class VoltiumApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+
+      // ── Responsive Web Wrapper ────────────────────────────────────────────
+      builder: (context, child) {
+        if (kIsWeb) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: child ?? const SizedBox.shrink(),
+            ),
+          );
+        }
+        return child ?? const SizedBox.shrink();
+      },
+
+      // ── Navigation Observer ───────────────────────────────────────────────
+      navigatorObservers: [focusObserver, PosthogObserver()],
 
       // ── Home ──────────────────────────────────────────────────────────────
       home: const ErrorBoundary(
@@ -250,15 +306,84 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
-  final _screens = <Widget>[
-    const ActiveDashboardScreen(),
-    const WalletScreen(),
-    const SupportCenterScreen(),
-    const ProfileScreen(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prewarmAssets();
+      _deferSecondaryInitializations();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+  }
+
+  void _prewarmAssets() {
+    try {
+      precacheImage(const AssetImage('assets/images/logo.png'), context)
+          .catchError((_) {});
+      precacheImage(const AssetImage('assets/images/scooter_hero.png'), context)
+          .catchError((_) {});
+    } catch (_) {}
+  }
+
+  void _deferSecondaryInitializations() {
+    Future.microtask(() {
+      if (mounted) {
+        try {
+          // R4.3c-4: SupportProvider is now a Riverpod v3 Notifier. Reach
+          // for it via the container rather than the legacy
+          // `context.read<SupportProvider>()`.
+          ProviderScope.containerOf(context)
+              .read(supportProvider.notifier)
+              .initSupportData();
+        } catch (_) {}
+      }
+    });
+  }
+
+  /// Each screen is wrapped in ErrorBoundary so a crash in one tab
+  /// doesn't take down the entire shell.
+  List<Widget> _buildScreens() => <Widget>[
+        const ErrorBoundary(child: ActiveDashboardScreen()),
+        const ErrorBoundary(child: WalletScreen()),
+        const ErrorBoundary(child: SupportCenterScreen()),
+        const ErrorBoundary(child: ProfileScreen()),
+      ];
+
+  void _refreshTabOnFocus(int index) {
+    switch (index) {
+      case 1:
+        // R4.3c-6: RiderProvider is now a Riverpod v3 Notifier. Use the
+        // container-based access path.
+        final riderId =
+            ProviderScope.containerOf(context).read(riderProvider).riderId;
+        if (riderId != null) {
+          ProviderScope.containerOf(context)
+              .read(walletProvider.notifier)
+              .refreshTransactions(riderId: riderId);
+        }
+        break;
+      case 2:
+        ProviderScope.containerOf(context)
+            .read(supportProvider.notifier)
+            .refreshTickets();
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +396,7 @@ class _AppShellState extends State<AppShell> {
             Expanded(
               child: IndexedStack(
                 index: _currentIndex,
-                children: _screens,
+                children: _buildScreens(),
               ),
             ),
           ],
@@ -281,7 +406,12 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
+          _refreshTabOnFocus(index);
           MonitoringService.logInfo('Navigation: Switched to tab $index');
+          PostHogService.capture('tab_switched', properties: {
+            'tab_index': index.toString(),
+            'tab_name': ['dashboard', 'wallet', 'support', 'profile'][index],
+          });
         },
         tabKeys: [
           const Key('dashboardTab'),

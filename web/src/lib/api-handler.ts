@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ApiError, ERROR_CODES } from './api-error';
 import { errors } from './api-response';
 import { logger } from './logger';
+import { redactPii } from './pii-redact';
+import { RentalBookError } from '@/server/modules/rentals/use-cases/errors';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
+
+type DomainError = Error & { code?: string };
+
+function asDomainError(err: unknown): DomainError {
+  return err instanceof Error ? err : new Error(String(err));
+}
 
 export function withApiHandler(
   handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>
@@ -9,47 +21,53 @@ export function withApiHandler(
   return async (request: NextRequest, ...args: any[]) => {
     try {
       return await handler(request, ...args);
-    } catch (err: any) {
-      logger.error('[ApiHandler] Unhandled route error', {
+    } catch (err: unknown) {
+      const domainErr = asDomainError(err);
+      logger.error('[ApiHandler] Unhandled route error', redactPii({
         path: request.nextUrl.pathname,
-        message: err.message,
-        stack: err.stack,
-      });
+        message: domainErr.message,
+        stack: domainErr.stack,
+      }));
 
       if (err instanceof ApiError) {
         const code = err.code;
-        if (code === ERROR_CODES.UNAUTHORIZED) return errors.unauthorized(err.message);
-        if (code === ERROR_CODES.FORBIDDEN) return errors.forbidden(err.message);
-        if (code === ERROR_CODES.NOT_FOUND) return errors.notFound(err.message);
-        if (code === ERROR_CODES.VALIDATION_ERROR) return errors.validation(err.message);
-        if (code === ERROR_CODES.CONFLICT) return errors.conflict(err.message);
-        if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests(err.message);
-        if (code === ERROR_CODES.GONE) return errors.gone(err.message);
-        return errors.badRequest(err.message);
+        if (code === ERROR_CODES.UNAUTHORIZED) return errors.unauthorized((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.FORBIDDEN) return errors.forbidden((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.NOT_FOUND) return errors.notFound((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.VALIDATION_ERROR) return errors.validation((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.CONFLICT) return errors.conflict((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.GONE) return errors.gone((err instanceof Error ? err.message : String(err)));
+        return errors.badRequest((err instanceof Error ? err.message : String(err)));
       }
 
-      // Handle domain-specific exceptions by naming convention
-      if (err.name === 'RentalBookError') {
-        const code = err.code;
-        if (code === 'NOT_FOUND') return errors.notFound(err.message);
-        if (code === 'CONFLICT') return errors.conflict(err.message);
-        return errors.badRequest(err.message);
+      // Prisma P2025 "record not found"
+      if ((err as any)?.code === 'P2025') {
+        return errors.notFound(domainErr.message);
+      }
+
+      // Domain-specific exceptions. We use `instanceof` against the actual
+      // error classes — the previous `.name === 'X'` check silently failed
+      // under any minifier that mangled class names (esbuild `--minify-identifiers`,
+      // production Next.js builds). The classes themselves still work; we just
+      // can't rely on the string label matching the minified identifier.
+      if (err instanceof RentalBookError) {
+        const code = (err as DomainError).code;
+        if (code === 'NOT_FOUND') return errors.notFound(domainErr.message);
+        if (code === 'CONFLICT') return errors.conflict(domainErr.message);
+        return errors.badRequest(domainErr.message);
       }
 
       if (
-        err.name === 'KycStateError' ||
-        err.name === 'GuarantorStateError' ||
-        err.name === 'DepositStateMachineError' ||
-        err.name === 'RentalStateError'
+        err instanceof KycStateError ||
+        err instanceof GuarantorStateError ||
+        err instanceof DepositStateMachineError ||
+        err instanceof RentalStateError
       ) {
-        return errors.conflict(err.message);
+        return errors.conflict(domainErr.message);
       }
 
-      if (err.message?.includes('not found') || err.message?.includes('Not found')) {
-        return errors.notFound(err.message);
-      }
-
-      return errors.internal(err.message || 'Internal Server Error');
+      return errors.internal(domainErr.message || 'Internal Server Error');
     }
   };
 }

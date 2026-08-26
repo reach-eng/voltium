@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
+import '../utils/lifecycle_rank.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Global banners that match the web app's SuspensionBanner and SyncBanner.
 /// These should be placed inside the global AppShell to remain visible across screens.
 
-class SyncBanner extends StatelessWidget {
+class SyncBanner extends ConsumerWidget {
   const SyncBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isOnline = context.select<AppProvider, bool>((p) => p.isOnline);
-    final pendingCount = context.select<AppProvider, int>((p) => p.pendingSyncCount);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(connectivityProvider.select((p) => p.isOnline));
+    final pendingCount =
+        ref.watch(connectivityProvider.select((p) => p.pendingSyncCount));
 
     if (isOnline && pendingCount == 0) return const SizedBox.shrink();
 
@@ -24,10 +29,10 @@ class SyncBanner extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isOnline ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(16),
+        color: isOnline ? AppColors.successLight : AppColors.surfaceBright,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isOnline ? const Color(0xFFDCFCE7) : AppColors.outlineVariant,
+          color: isOnline ? AppColors.successLight : AppColors.outlineVariant,
         ),
       ),
       child: Row(
@@ -35,9 +40,9 @@ class SyncBanner extends StatelessWidget {
           Icon(
             isOnline ? Icons.check_circle_outline : Icons.wifi_off_outlined,
             size: 20,
-            color: isOnline ? const Color(0xFF22C55E) : AppColors.slate500,
+            color: isOnline ? AppColors.success : AppColors.slate500,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,23 +50,20 @@ class SyncBanner extends StatelessWidget {
               children: [
                 Text(
                   isOnline ? 'Syncing...' : 'You\'re Offline',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isOnline
-                        ? const Color(0xFF166534)
-                        : const Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(
+                          color: isOnline
+                              ? AppColors.successDark
+                              : AppColors.slate800),
                 ),
                 Text(
                   pendingCount > 0
                       ? '$pendingCount action${pendingCount > 1 ? 's' : ''} will sync ${isOnline ? 'now' : 'later'}'
                       : 'Data shown may be outdated',
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: isOnline
-                        ? const Color(0xFF16A34A)
-                        : AppColors.slate500,
+                    color: isOnline ? AppColors.success : AppColors.slate500,
                   ),
                 ),
               ],
@@ -72,19 +74,15 @@ class SyncBanner extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? const Color(0xFFDCFCE7)
+                    ? AppColors.successLight
                     : AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 '$pendingCount',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isOnline
-                      ? const Color(0xFF15803D)
-                      : const Color(0xFF475569),
-                ),
+                style: AppTypography.labelSmall.copyWith(
+                    color:
+                        isOnline ? AppColors.successDark : AppColors.slate600),
               ),
             ),
         ],
@@ -93,19 +91,19 @@ class SyncBanner extends StatelessWidget {
   }
 }
 
-class SuspensionBanner extends StatefulWidget {
+class SuspensionBanner extends ConsumerStatefulWidget {
   const SuspensionBanner({super.key});
 
   @override
-  State<SuspensionBanner> createState() => _SuspensionBannerState();
+  ConsumerState<SuspensionBanner> createState() => _SuspensionBannerState();
 }
 
-class _SuspensionBannerState extends State<SuspensionBanner> {
+class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final rider = context.select<AppProvider, RiderModel?>((p) => p.rider);
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
     if (rider == null) return const SizedBox.shrink();
 
     // Mirroring web's getSuspensionReasons logic
@@ -113,41 +111,49 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
     final status = rider.accountStatus;
 
     if (status == AccountStatus.active &&
-        (rider.lifecycleStatus.isEmpty || _lifecycleRank(rider) < 12)) {
+        (rider.lifecycleStatus.isEmpty || lifecycleRank(rider) < 12)) {
       return const SizedBox.shrink();
     }
 
     if (rider.walletBalance < 0) {
-      reasons.add(const _Reason(
-        title: 'Wallet Balance Below ₹0',
-        description: 'Top up to restore your account.',
-        severity: _Severity.critical,
-      ),);
+      reasons.add(
+        const _Reason(
+          title: 'Wallet Balance Below ₹0',
+          description: 'Top up to restore your account.',
+          severity: _Severity.critical,
+        ),
+      );
     } else if (rider.walletBalance < 50) {
-      reasons.add(const _Reason(
-        title: 'Low Wallet Balance',
-        description: 'Daily charges may cause suspension.',
-        severity: _Severity.warning,
-      ),);
+      reasons.add(
+        const _Reason(
+          title: 'Low Wallet Balance',
+          description: 'Daily charges may cause suspension.',
+          severity: _Severity.warning,
+        ),
+      );
     }
 
     if (rider.kycStatus != KycStatus.verified) {
-      reasons.add(_Reason(
-        title: 'KYC Verification Pending',
-        description: 'Complete verification to activate.',
-        severity: rider.kycStatus == KycStatus.rejected
-            ? _Severity.critical
-            : _Severity.warning,
-      ),);
+      reasons.add(
+        _Reason(
+          title: 'KYC Verification Pending',
+          description: 'Complete verification to activate.',
+          severity: rider.kycStatus == KycStatus.rejected
+              ? _Severity.critical
+              : _Severity.warning,
+        ),
+      );
     }
 
     if (rider.planStatus == 'EXPIRED' ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 13)) {
-      reasons.add(const _Reason(
-        title: 'Subscription Expired',
-        description: 'Select a new plan to continue.',
-        severity: _Severity.critical,
-      ),);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 13)) {
+      reasons.add(
+        const _Reason(
+          title: 'Subscription Expired',
+          description: 'Select a new plan to continue.',
+          severity: _Severity.critical,
+        ),
+      );
     }
 
     if (reasons.isEmpty) return const SizedBox.shrink();
@@ -161,10 +167,10 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isCritical ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(16),
+        color: isCritical ? AppColors.errorSurface : AppColors.warningSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isCritical ? const Color(0xFFFECACA) : const Color(0xFFFDE68A),
+          color: isCritical ? AppColors.errorBorder : AppColors.warningBorder,
         ),
       ),
       child: Column(
@@ -173,27 +179,23 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
             onTap: () => setState(() => _expanded = !_expanded),
             leading: Icon(
               isCritical ? Icons.error_outline : Icons.warning_amber_outlined,
-              color: isCritical
-                  ? AppColors.error
-                  : AppColors.warning,
+              color: isCritical ? AppColors.error : AppColors.warning,
             ),
-            title: Text('Action Required',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isCritical
-                    ? const Color(0xFF991B1B)
-                    : AppColors.warningText,
-              ),
+            title: Text(
+              'Action Required',
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600)
+                  .copyWith(
+                    color:
+                        isCritical ? AppColors.errorDark : AppColors.onSurface,
+                  ),
             ),
             subtitle: Text(
               topReason.title +
                   (reasons.length > 1 ? ' + ${reasons.length - 1} more' : ''),
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: isCritical
-                    ? const Color(0xFFDC2626)
-                    : AppColors.warningDark,
+                color: isCritical ? AppColors.error : AppColors.warningDark,
               ),
             ),
             trailing: Row(
@@ -211,20 +213,17 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
                     ),
                     child: Text(
                       '${reasons.length}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: isCritical
-                            ? AppColors.errorDark
-                            : const Color(0xFFB45309),
-                      ),
+                      style: AppTypography.labelSmall
+                          .copyWith(fontSize: 10)
+                          .copyWith(
+                              color: isCritical
+                                  ? AppColors.errorDark
+                                  : AppColors.warningDark),
                     ),
                   ),
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: isCritical
-                      ? const Color(0xFF991B1B)
-                      : AppColors.warningText,
+                  color: isCritical ? AppColors.errorDark : AppColors.onSurface,
                 ),
               ],
             ),
@@ -234,44 +233,48 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 children: reasons
-                    .map((r) => Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: r.severity == _Severity.critical
-                                      ? Colors.red
-                                      : Colors.orange,
-                                ),
+                    .map(
+                      (r) => Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: r.severity == _Severity.critical
+                                    ? AppColors.error
+                                    : AppColors.warningDark,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      r.title,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    r.title,
+                                    style: AppTypography.bodyMedium.copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                  Text(
+                                    r.description,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: Colors.black54,
                                     ),
-                                    Text(
-                                      r.description,
-                                      style: const TextStyle(
-                                          fontSize: 12, color: Colors.black54,),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),)
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -287,27 +290,9 @@ class _Reason {
   final String title;
   final String description;
   final _Severity severity;
-  const _Reason(
-      {required this.title, required this.description, required this.severity,});
-}
-
-int _lifecycleRank(RiderModel rider) {
-  const rank = <String, int>{
-    'NEW': 0,
-    'PHONE_VERIFIED': 1,
-    'PROFILE_SUBMITTED': 2,
-    'KYC_SUBMITTED': 3,
-    'KYC_APPROVED': 4,
-    'GUARANTOR_SUBMITTED': 5,
-    'GUARANTOR_APPROVED': 6,
-    'DEPOSIT_PENDING': 7,
-    'DEPOSIT_APPROVED': 8,
-    'PLAN_SELECTED': 9,
-    'PICKUP_SCHEDULED': 10,
-    'ACTIVE': 11,
-    'SUSPENDED': 12,
-    'RETURN_PENDING': 13,
-    'CLOSED': 14,
-  };
-  return rank[rider.lifecycleStatus] ?? 0;
+  const _Reason({
+    required this.title,
+    required this.description,
+    required this.severity,
+  });
 }

@@ -1,54 +1,65 @@
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
-class EmergencyContactsScreen extends StatelessWidget {
+class EmergencyContactsScreen extends ConsumerWidget {
   const EmergencyContactsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final contacts = context.watch<EmergencyContactsService>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final service = ref.watch(emergencyContactsService);
+    final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F172A) : AppColors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: isDark ? Colors.white : Colors.black,),
+          icon: Icon(
+            Icons.arrow_back,
+            color: colors.onSurface,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Emergency Contacts',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
+        title: Text(
+          'Emergency Contacts',
+          style: AppTypography.titleMedium.copyWith(
+            color: colors.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: contacts.contacts.isEmpty
-          ? _buildEmptyState(context, isDark)
+      body: service.contacts.isEmpty
+          ? _buildEmptyState(context)
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: contacts.contacts.length,
+              addRepaintBoundaries: true,
+              addAutomaticKeepAlives: true,
+              itemExtent: 88.0,
+              padding: Spacing.paddingMd,
+              itemCount: service.contacts.length,
               itemBuilder: (context, index) {
-                final contact = contacts.contacts[index];
+                final contact = service.contacts[index];
                 return _ContactCard(
                   contact: contact,
-                  isDark: isDark,
                   onCall: () => _callContact(contact.phone),
-                  onSetPrimary: () => contacts.setPrimaryContact(contact.id),
-                  onDelete: () => contacts.removeContact(contact.id),
+                  onSetPrimary: () => ref
+                      .read(emergencyContactsService.notifier)
+                      .setPrimaryContact(contact.id),
+                  onDelete: () => ref
+                      .read(emergencyContactsService.notifier)
+                      .removeContact(contact.id),
                 );
               },
             ),
-      floatingActionButton: contacts.contacts.length < 5
+      floatingActionButton: service.contacts.length < 5
           ? FloatingActionButton.extended(
-              onPressed: () => _showAddContactDialog(context, contacts),
+              onPressed: () => _showAddContactDialog(context, ref),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add),
               label: const Text('Add Contact'),
@@ -57,7 +68,8 @@ class EmergencyContactsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, bool isDark) {
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -65,20 +77,19 @@ class EmergencyContactsScreen extends StatelessWidget {
           Icon(
             Icons.contact_emergency,
             size: 64,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+            color: colors.onSurfaceMuted,
           ),
-          const SizedBox(height: 16),
-          Text('No emergency contacts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
+          SizedBox(height: 16),
+          Text(
+            'No emergency contacts',
+            style: AppTypography.titleMedium
+                .copyWith(color: colors.onSurfaceVariant),
           ),
-          const SizedBox(height: 8),
-          Text('Add contacts to alert in case of emergency',
-            style: TextStyle(
-              color: isDark ? Colors.grey[600] : Colors.grey[500],
+          SizedBox(height: 8),
+          Text(
+            'Add contacts to alert in case of emergency',
+            style: GoogleFonts.plusJakartaSans(
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -94,7 +105,9 @@ class EmergencyContactsScreen extends StatelessWidget {
   }
 
   Future<void> _showAddContactDialog(
-      BuildContext context, EmergencyContactsService service,) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     String relationship = 'Other';
@@ -118,7 +131,7 @@ class EmergencyContactsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              initialValue: relationship,
+              value: relationship,
               items: ['Parent', 'Spouse', 'Sibling', 'Friend', 'Other']
                   .map((r) => DropdownMenuItem(value: r, child: Text(r)))
                   .toList(),
@@ -136,12 +149,14 @@ class EmergencyContactsScreen extends StatelessWidget {
             onPressed: () {
               if (nameController.text.isNotEmpty &&
                   phoneController.text.isNotEmpty) {
-                service.addContact(EmergencyContact(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  relationship: relationship,
-                ),);
+                ref.read(emergencyContactsService.notifier).addContact(
+                      EmergencyContact(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        name: nameController.text,
+                        phone: phoneController.text,
+                        relationship: relationship,
+                      ),
+                    );
                 Navigator.pop(ctx);
               }
             },
@@ -155,63 +170,66 @@ class EmergencyContactsScreen extends StatelessWidget {
   }
 }
 
-class _ContactCard extends StatelessWidget {
+class _ContactCard extends ConsumerWidget {
   final EmergencyContact contact;
-  final bool isDark;
   final VoidCallback onCall;
   final VoidCallback onSetPrimary;
   final VoidCallback onDelete;
 
   const _ContactCard({
     required this.contact,
-    required this.isDark,
     required this.onCall,
     required this.onSetPrimary,
     required this.onDelete,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: contact.isPrimary
             ? Border.all(color: AppColors.primary, width: 2)
             : null,
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: contact.isPrimary ? AppColors.primary : Colors.grey,
+          backgroundColor: contact.isPrimary
+              ? AppColors.primary
+              : AppColors.onSurfaceVariant,
           child: Text(
             contact.name[0].toUpperCase(),
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold,),
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         title: Row(
           children: [
             Text(
               contact.name,
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
+                color: colors.onSurface,
               ),
             ),
             if (contact.isPrimary) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('PRIMARY',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,),
+                child: Text(
+                  'PRIMARY',
+                  style: AppTypography.labelSmall
+                      .copyWith(fontSize: 10)
+                      .copyWith(color: Colors.white),
                 ),
               ),
             ],
@@ -219,13 +237,13 @@ class _ContactCard extends StatelessWidget {
         ),
         subtitle: Text(
           '${contact.relationship} • ${contact.phone}',
-          style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+          style: GoogleFonts.plusJakartaSans(color: colors.onSurfaceVariant),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.phone, color: Colors.green),
+              icon: const Icon(Icons.phone, color: AppColors.success),
               onPressed: onCall,
             ),
             PopupMenuButton(
@@ -241,13 +259,16 @@ class _ContactCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
+                      const Icon(Icons.delete,
+                          color: AppColors.error, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Delete',
+                          style: GoogleFonts.plusJakartaSans(
+                              color: AppColors.error)),
                     ],
                   ),
                 ),

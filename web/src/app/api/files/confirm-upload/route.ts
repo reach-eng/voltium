@@ -25,16 +25,16 @@ export async function POST(request: NextRequest) {
     const result = await fileUseCases.confirmUpload(
       data.fileRecordId,
       data.sizeBytes,
-      data.checksum
+      data.checksum as string | undefined
     );
 
     return success(result, 'File upload confirmed');
-  } catch (err: any) {
-    if (err.message?.includes('not found')) {
-      return errors.notFound(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err))?.includes('not found')) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
-    if (err.message?.includes('Upload the file first')) {
-      return errors.badRequest(err.message);
+    if ((err instanceof Error ? err.message : String(err))?.includes('Upload the file first')) {
+      return errors.badRequest((err instanceof Error ? err.message : String(err)));
     }
     return errors.internal('Failed to confirm file upload');
   }

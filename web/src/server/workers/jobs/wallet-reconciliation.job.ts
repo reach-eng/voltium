@@ -14,6 +14,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { alerter } from '@/lib/alerter';
 import { verifyLedgerIntegrity } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
 
@@ -73,12 +74,22 @@ export async function runWalletReconciliation(): Promise<ReconciliationResult> {
     }
   }
 
+
   logger.info('[Reconciliation] Complete', {
     totalWallets: result.totalWallets,
     healthy: result.healthy,
     drifted: result.drifted,
     totalDrift: result.totalDrift,
   });
+
+  if (result.drifted > 0) {
+    alerter.send({
+      level: 'error',
+      title: 'Wallet drift detected',
+      message: `Found ${result.drifted} drifted wallets with total drift ${result.totalDrift} paise`,
+      details: { count: result.drifted, totalDrift: result.totalDrift },
+    });
+  }
 
   return result;
 }

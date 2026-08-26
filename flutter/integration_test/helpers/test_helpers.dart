@@ -8,13 +8,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/main.dart' as app;
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'mock_api_client.dart';
+import '../pages/login_page.dart';
+import '../pages/app_robots.dart';
 
 /// Wraps app.main() to save/restore FlutterError.onError.
 /// Required because main.dart overrides FlutterError.onError which conflicts
 /// with the test framework's error handling.
-Future<void> safeAppMain() async {
+Future<void> safeAppMain({bool simulateError = false}) async {
   final originalErrorHandler = FlutterError.onError;
-  await app.main();
+
+  const bool isMockNetwork =
+      bool.fromEnvironment('MOCK_NETWORK', defaultValue: false);
+
+  if (isMockNetwork) {
+    final mockClient =
+        MockApiHandler.createMockClient(simulateError: simulateError);
+    final mockApiClient = ApiClient(client: mockClient);
+    final mockAppProvider = AppProvider(injectedApiClient: mockApiClient);
+    await app.main(injectedAppProvider: mockAppProvider);
+  } else {
+    await app.main();
+  }
+
   FlutterError.onError = originalErrorHandler;
 }
 
@@ -85,7 +103,10 @@ Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
 
 /// Smart enterText that handles multiple candidates by picking the last one.
 Future<void> smartEnterText(
-    WidgetTester tester, Finder finder, String text,) async {
+  WidgetTester tester,
+  Finder finder,
+  String text,
+) async {
   if (finder.evaluate().length > 1) {
     await tester.enterText(finder.last, text);
   } else {
@@ -175,9 +196,10 @@ Future<void> waitForTransition(
 
 /// Launch the app and wait for it to settle past splash.
 /// Clears cached auth state to ensure splash screen is shown.
-Future<void> launchApp(WidgetTester tester) async {
+Future<void> launchApp(WidgetTester tester,
+    {bool simulateError = false}) async {
   await resetAppState();
-  await safeAppMain();
+  await safeAppMain(simulateError: simulateError);
   await settle(tester);
   // Splash screen shows for ~3 seconds
   await tester.pump(const Duration(seconds: 4));
@@ -194,29 +216,29 @@ Future<void> handlePreamble(WidgetTester tester) async {
     await settle(tester);
 
     // Check for Dashboard (already logged in)
-    if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) {
+    if (AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty) {
       print('Found Dashboard, preamble complete');
       return;
     }
 
     // Check for Login screen
-    if (find.byKey(const Key('phoneInput')).evaluate().isNotEmpty) {
+    if (AppRobots(tester).login.phoneField.evaluate().isNotEmpty) {
       print('Found Login screen, preamble complete');
       return;
     }
 
     // Handle Legal
-    if (find.byKey(const Key('acceptCheckbox')).evaluate().isNotEmpty) {
+    if (AppRobots(tester).onboarding.acceptCheckbox.evaluate().isNotEmpty) {
       print('Found Legal screen, accepting and continuing');
-      await tester.tap(find.byKey(const Key('acceptCheckbox')));
+      await tester.tap(AppRobots(tester).onboarding.acceptCheckbox);
       await settle(tester);
-      await tester.tap(find.byKey(const Key('continueLegalButton')));
+      await tester.tap(AppRobots(tester).onboarding.continueLegalButton);
       continue;
     }
 
     // Handle Permissions
     final continuePermissions =
-        find.byKey(const Key('continuePermissionsButton'));
+        AppRobots(tester).onboarding.continuePermissionsButton;
     if (continuePermissions.evaluate().isNotEmpty) {
       print('Preamble: Found Permissions screen, tapping continue');
       await tester.tap(continuePermissions);
@@ -225,7 +247,7 @@ Future<void> handlePreamble(WidgetTester tester) async {
     }
 
     // Handle Auth Choice
-    final loginWithPhone = find.byKey(const Key('loginWithPhoneButton'));
+    final loginWithPhone = AppRobots(tester).onboarding.loginWithPhoneButton;
     if (loginWithPhone.evaluate().isNotEmpty) {
       print('Preamble: Found Auth Choice screen, tapping Login with Phone');
       await tester.tap(loginWithPhone);
@@ -245,10 +267,10 @@ Future<void> completeLegalScreen(WidgetTester tester) async {
   final end = DateTime.now().add(const Duration(seconds: 5));
   while (DateTime.now().isBefore(end)) {
     await settle(tester);
-    if (find.byKey(const Key('acceptCheckbox')).evaluate().isNotEmpty) {
-      await tester.tap(find.byKey(const Key('acceptCheckbox')));
+    if (AppRobots(tester).onboarding.acceptCheckbox.evaluate().isNotEmpty) {
+      await tester.tap(AppRobots(tester).onboarding.acceptCheckbox);
       await settle(tester);
-      await tester.tap(find.byKey(const Key('continueLegalButton')));
+      await tester.tap(AppRobots(tester).onboarding.continueLegalButton);
       await settle(tester);
       return;
     }
@@ -268,10 +290,10 @@ Future<void> completePermissionsScreen(WidgetTester tester) async {
         .isNotEmpty) {
       // Try tapping common permission allow buttons if they appear (non-TEST_MODE flows)
       final allowButtons = [
-        find.byKey(const Key('allowLocationButton')),
-        find.byKey(const Key('allowContactsButton')),
-        find.byKey(const Key('allowCameraButton')),
-        find.byKey(const Key('allowNotificationsButton')),
+        AppRobots(tester).onboarding.allowLocationButton,
+        AppRobots(tester).onboarding.allowContactsButton,
+        AppRobots(tester).onboarding.allowCameraButton,
+        AppRobots(tester).onboarding.allowNotificationsButton,
       ];
       for (final btn in allowButtons) {
         if (btn.evaluate().isNotEmpty) {
@@ -279,7 +301,7 @@ Future<void> completePermissionsScreen(WidgetTester tester) async {
           await settle(tester);
         }
       }
-      await tester.tap(find.byKey(const Key('continuePermissionsButton')));
+      await tester.tap(AppRobots(tester).onboarding.continuePermissionsButton);
       await settle(tester);
       return;
     }
@@ -293,8 +315,12 @@ Future<void> completeAuthChoiceScreen(WidgetTester tester) async {
   final end = DateTime.now().add(const Duration(seconds: 5));
   while (DateTime.now().isBefore(end)) {
     await settle(tester);
-    if (find.byKey(const Key('loginWithPhoneButton')).evaluate().isNotEmpty) {
-      await tester.tap(find.byKey(const Key('loginWithPhoneButton')));
+    if (AppRobots(tester)
+        .onboarding
+        .loginWithPhoneButton
+        .evaluate()
+        .isNotEmpty) {
+      await tester.tap(AppRobots(tester).onboarding.loginWithPhoneButton);
       await settle(tester);
       return;
     }
@@ -304,34 +330,28 @@ Future<void> completeAuthChoiceScreen(WidgetTester tester) async {
 
 /// Complete the full auth flow: phone entry → OTP verification.
 /// Handles auth choice screen if present.
-Future<void> completeAuthFlow(WidgetTester tester, {String? phone}) async {
+Future<void> completeAuthFlow(WidgetTester tester,
+    {String? phone, bool simulateError = false}) async {
   final phoneNum = phone ?? TestCredentials.phone;
 
   await handlePreamble(tester);
-  if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) return;
+  if (AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty) return;
 
-  await waitFor(tester, find.byKey(const Key('phoneInput')));
-  await tester.enterText(
-    find.byKey(const Key('phoneInput')),
-    phoneNum,
-  );
-  await settle(tester);
+  final loginPage = LoginPageObject(tester);
+
+  await waitFor(tester, loginPage.phoneField);
+  await loginPage.enterPhone(phoneNum);
   await tester.pump(const Duration(milliseconds: 300));
 
-  // Scroll the login screen so the button is visible, then tap it
-  final btnFinder = find.byKey(const Key('sendOtpButton'));
-  final scrollable = find.byType(Scrollable).first;
-  await tester.scrollUntilVisible(btnFinder, 200, scrollable: scrollable);
-  await settle(tester);
-  await tester.tap(btnFinder);
-  await settle(tester);
+  await loginPage.tapGetOtp();
 
   // Wait for OTP screen
-  await waitFor(tester, find.byKey(const Key('otpInputRow')),
-      timeout: const Duration(seconds: 15),);
-  final otpRow = find.byKey(const Key('otpInputRow'));
+  await waitFor(tester, loginPage.otpField,
+      timeout: const Duration(seconds: 15));
+
+  // The OTP field is a row of 6 text fields
   final otpFields = find.descendant(
-    of: otpRow,
+    of: loginPage.otpField,
     matching: find.byType(TextField),
   );
 
@@ -344,34 +364,30 @@ Future<void> completeAuthFlow(WidgetTester tester, {String? phone}) async {
     await settle(tester);
   }
 
-  // Scroll and tap verify button (same approach as send OTP button)
-  final verifyBtn = find.byKey(const Key('verifyOtpButton'));
-  final scrollable2 = find.byType(Scrollable).first;
-  await tester.scrollUntilVisible(verifyBtn, 200, scrollable: scrollable2);
-  await settle(tester);
-  await tester.tap(verifyBtn);
-  await settle(tester);
+  await loginPage.tapVerifyOtp();
 
   // Wait for post-auth navigation
   await tester.pump(const Duration(seconds: 3));
   await settle(tester);
 
   // Handle post-OTP Legal screen if shown
-  if (find.byKey(const Key('acceptCheckbox')).evaluate().isNotEmpty) {
+  if (AppRobots(tester).onboarding.acceptCheckbox.evaluate().isNotEmpty) {
     print(
-        'completeAuthFlow: Found post-OTP Legal screen, accepting and continuing',);
-    await tester.tap(find.byKey(const Key('acceptCheckbox')));
+      'completeAuthFlow: Found post-OTP Legal screen, accepting and continuing',
+    );
+    await tester.tap(AppRobots(tester).onboarding.acceptCheckbox);
     await settle(tester);
-    await tester.tap(find.byKey(const Key('continueLegalButton')));
+    await tester.tap(AppRobots(tester).onboarding.continueLegalButton);
     await settle(tester);
   }
 
   // Handle post-OTP Permissions screen if shown
   final continuePermissions =
-      find.byKey(const Key('continuePermissionsButton'));
+      AppRobots(tester).onboarding.continuePermissionsButton;
   if (continuePermissions.evaluate().isNotEmpty) {
     print(
-        'completeAuthFlow: Found post-OTP Permissions screen, tapping continue',);
+      'completeAuthFlow: Found post-OTP Permissions screen, tapping continue',
+    );
     await tester.tap(continuePermissions);
     await settle(tester);
   }
@@ -380,7 +396,7 @@ Future<void> completeAuthFlow(WidgetTester tester, {String? phone}) async {
 /// Complete the onboarding flow if shown (intent → user form → guarantor).
 /// Handles each step by tapping the appropriate buttons. Safe no-op if a screen is skipped.
 Future<void> completeOnboardingFlow(WidgetTester tester) async {
-  if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) return;
+  if (AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty) return;
 
   // Intent of use screen: select "Deliver with Us" and confirm.
   if (find.text('Deliver with Us').evaluate().isNotEmpty) {
@@ -391,17 +407,23 @@ Future<void> completeOnboardingFlow(WidgetTester tester) async {
   }
 
   // User onboarding form: fill all fields and tap "Next".
-  final nextBtn = find.byKey(const Key('nextOnboardingButton'));
+  final nextBtn = AppRobots(tester).onboarding.nextOnboardingButton;
   if (nextBtn.evaluate().isNotEmpty) {
-    final fullNameField = find.byKey(const Key('fullNameField'));
+    final fullNameField = AppRobots(tester).onboarding.fullNameField;
     if (fullNameField.evaluate().isNotEmpty) {
       await tester.enterText(fullNameField, TestCredentials.fullName);
       await tester.enterText(
-          find.byKey(const Key('emailField')), TestCredentials.email,);
+        AppRobots(tester).onboarding.emailField,
+        TestCredentials.email,
+      );
       await tester.enterText(
-          find.byKey(const Key('fatherNameField')), TestCredentials.fatherName,);
+        AppRobots(tester).onboarding.fatherNameField,
+        TestCredentials.fatherName,
+      );
       await tester.enterText(
-          find.byKey(const Key('motherNameField')), TestCredentials.motherName,);
+        AppRobots(tester).onboarding.motherNameField,
+        TestCredentials.motherName,
+      );
       await settle(tester);
 
       // DOB field: tap the hint text "DD-MM-YYYY" to open DatePicker,
@@ -425,20 +447,27 @@ Future<void> completeOnboardingFlow(WidgetTester tester) async {
   }
 
   // Guarantor form: tap the "Finish Setup" button (enabled in TEST_MODE).
-  final completeBtn = find.byKey(const Key('completeOnboardingButton'));
+  final completeBtn = AppRobots(tester).onboarding.completeOnboardingButton;
   if (completeBtn.evaluate().isNotEmpty) {
-    final guarantorNameField = find.byKey(const Key('guarantorNameField'));
+    final guarantorNameField = AppRobots(tester).onboarding.guarantorNameField;
     if (guarantorNameField.evaluate().isNotEmpty) {
       await tester.enterText(guarantorNameField, TestCredentials.guarantorName);
-      final guarantorPhoneField = find.byKey(const Key('guarantorPhoneField'));
+      final guarantorPhoneField =
+          AppRobots(tester).onboarding.guarantorPhoneField;
       if (guarantorPhoneField.evaluate().isNotEmpty) {
         await tester.enterText(
-            guarantorPhoneField, TestCredentials.guarantorPhone,);
+          guarantorPhoneField,
+          TestCredentials.guarantorPhone,
+        );
       }
-      await tester.enterText(find.byKey(const Key('guarantorFatherNameField')),
-          TestCredentials.fatherName,);
-      await tester.enterText(find.byKey(const Key('guarantorMotherNameField')),
-          TestCredentials.motherName,);
+      await tester.enterText(
+        AppRobots(tester).onboarding.guarantorFatherNameField,
+        TestCredentials.fatherName,
+      );
+      await tester.enterText(
+        AppRobots(tester).onboarding.guarantorMotherNameField,
+        TestCredentials.motherName,
+      );
       await settle(tester);
     }
     await tester.tap(completeBtn);
@@ -458,20 +487,23 @@ Future<void> navigateToTab(WidgetTester tester, String tabKey) async {
 
 /// Verify we're on the dashboard by checking for key elements.
 Future<void> expectOnDashboard(WidgetTester tester) async {
-  await waitFor(tester, find.byKey(const Key('dashboardTab')));
+  await waitFor(tester, AppRobots(tester).dashboard.dashboardTab);
   await settle(tester);
 
   // Wait for each critical element to appear
   final criticalElements = [
-    find.byKey(const Key('dashboardTab')),
-    find.byKey(const Key('notificationBell')),
-    find.byKey(const Key('assignedVehicleCard')),
+    AppRobots(tester).dashboard.dashboardTab,
+    AppRobots(tester).dashboard.notificationBell,
+    AppRobots(tester).dashboard.assignedVehicleCard,
   ];
 
   for (final element in criticalElements) {
     await waitFor(tester, element, timeout: const Duration(seconds: 20));
-    expect(element, findsAtLeastNWidgets(1),
-        reason: 'Dashboard element not found: $element',);
+    expect(
+      element,
+      findsAtLeastNWidgets(1),
+      reason: 'Dashboard element not found: $element',
+    );
   }
   await settle(tester);
 }
@@ -479,7 +511,7 @@ Future<void> expectOnDashboard(WidgetTester tester) async {
 /// Helper to go back, handling custom back buttons.
 Future<void> goBack(WidgetTester tester) async {
   final backButtons = [
-    find.byKey(const Key('backButton')),
+    AppRobots(tester).settings.backButton,
     find.byIcon(Icons.arrow_back),
     find.byIcon(Icons.arrow_back_ios),
     find.byIcon(Icons.close),
@@ -505,8 +537,8 @@ Future<void> goBack(WidgetTester tester) async {
 
 /// Verify we're on the login screen.
 void expectOnLogin(WidgetTester tester) {
-  expect(find.byKey(const Key('phoneInput')), findsOneWidget);
-  expect(find.byKey(const Key('sendOtpButton')), findsOneWidget);
+  expect(AppRobots(tester).login.phoneField, findsOneWidget);
+  expect(AppRobots(tester).login.getOtpButton, findsOneWidget);
 }
 
 /// Verify we're on the auth choice screen.
@@ -541,26 +573,27 @@ Future<void> scrollToAndTap(
 /// Full setup: launch → legal → permissions → auth → onboarding (if needed).
 /// Skips steps already completed based on current app state.
 /// Returns true if user reached dashboard.
-Future<bool> fullLoginFlow(WidgetTester tester, {String? phone}) async {
-  await launchApp(tester);
+Future<bool> fullLoginFlow(WidgetTester tester,
+    {String? phone, bool simulateError = false}) async {
+  await launchApp(tester, simulateError: simulateError);
 
   // If we're already on the dashboard, we're done
-  if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) {
+  if (AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty) {
     return true;
   }
 
   await handlePreamble(tester);
 
   // Re-check dashboard after preamble (unlikely but possible if state settled)
-  if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) {
+  if (AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty) {
     return true;
   }
 
-  await completeAuthFlow(tester, phone: phone);
+  await completeAuthFlow(tester, phone: phone, simulateError: simulateError);
   await completeOnboardingFlow(tester);
 
   // Check if we reached dashboard
-  return find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty;
+  return AppRobots(tester).dashboard.dashboardTab.evaluate().isNotEmpty;
 }
 
 /// Seeds a rider by running through onboarding flow in tests and caching the rider

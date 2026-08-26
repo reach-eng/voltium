@@ -109,10 +109,11 @@ export async function GET(
     }
 
     // Perform ownership/permission check
-    let actor: { role: string; permissions?: string[]; riderDbId?: string } | null = null;
+    let actor: { role: string; adminRole?: string; permissions?: string[]; riderDbId?: string } | null = null;
     if (adminSession) {
       actor = {
         role: 'admin',
+        adminRole: adminSession.adminRole,
         permissions: adminSession.adminPermissions || [],
         riderDbId: adminSession.riderDbId || adminSession.adminId,
       };
@@ -148,7 +149,8 @@ export async function GET(
           'Cache-Control': 'private, max-age=3600',
         },
       });
-    } catch {
+    } catch (readError) {
+      logger.error('File read error:', readError);
       return new NextResponse('Not Found', { status: 404 });
     }
   } catch (err) {

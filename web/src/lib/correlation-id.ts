@@ -22,7 +22,7 @@ const CORRELATION_ID_KEY = 'correlationId';
  */
 export function generateCorrelationId(): string {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 10);
+  const random = crypto.randomUUID().split('-').slice(0, 2).join('');
   return `${timestamp}-${random}`;
 }
 

@@ -1,5 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import '../network/api_client.dart';
+import '../observability/posthog_service.dart';
+import '../../utils/app_logger.dart';
 
 /// Voltium Error Handler
 ///
@@ -18,7 +21,7 @@ class AppError implements Exception {
 /// Standardized error handler for API responses
 class ErrorHandler {
   /// Convert any error to a user-friendly message
-  static String getUserFriendlyMessage(dynamic error) {
+  static String getUserFriendlyMessage(dynamic error, [BuildContext? context]) {
     if (error is ApiException) {
       if (error.code == 'VALIDATION_ERROR') {
         return 'Validation failed: ${error.message}';
@@ -40,11 +43,14 @@ class ErrorHandler {
     return 'Something went wrong. Please try again.';
   }
 
-  /// Log error for debugging
+  /// Log error for debugging and production monitoring
   static void logError(dynamic error, {String? context}) {
-    // TODO: Send to local logs in production
     if (kDebugMode) {
-      debugPrint('[${context ?? 'ERROR'}] $error');
+      appDebug('[${context ?? 'ERROR'}] $error');
     }
+    PostHogService.capture('app_error', properties: {
+      'context': context ?? 'ERROR',
+      'error': error.toString(),
+    });
   }
 }

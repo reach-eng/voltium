@@ -64,7 +64,7 @@ class SignaturePadState extends State<SignaturePad> {
       child: Container(
         decoration: BoxDecoration(
           color: widget.backgroundColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.outlineVariant),
         ),
         child: CustomPaint(

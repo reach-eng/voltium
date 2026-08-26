@@ -11,7 +11,7 @@
  *   - Logged impersonation via audit-log
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -20,6 +20,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockGetSession = vi.fn();
 const mockGetAdminSession = vi.fn();
 const mockCreateAuditLog = vi.fn();
+
+const mockRiderFindFirst = vi.fn().mockImplementation(({ where }) => {
+  const targetId = where?.id || (where?.OR && (where.OR[0]?.id || where.OR[1]?.riderId)) || 'rider-1';
+  return Promise.resolve({ id: targetId, phone: '0000000000' });
+});
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    rider: {
+      findFirst: (...args: any[]) => mockRiderFindFirst(...args),
+    },
+  },
+}));
 
 vi.mock('@/lib/get-session', () => ({
   getSession: mockGetSession,
@@ -48,6 +61,16 @@ vi.mock('@/lib/api-response', () => ({
           }
         )
     ),
+    notFound: vi.fn(
+      (msg: string) =>
+        new Response(
+          JSON.stringify({ success: false, error: { code: 'NOT_FOUND', message: msg } }),
+          {
+            status: 404,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
+    ),
     tooManyRequests: vi.fn(
       (msg: string) =>
         new Response(
@@ -70,6 +93,18 @@ vi.mock('@/lib/audit-log', () => ({
 // ---------------------------------------------------------------------------
 
 const { requireRiderSession } = await import('../../src/lib/rider-auth');
+
+// ---------------------------------------------------------------------------
+// Test env: enable admin impersonation path for tests that exercise it.
+// The dev-only path requires ENABLE_RIDER_IMPERSONATION=true AND
+// APP_ENV !== 'production'. Tests that don't want impersonation enabled
+// should explicitly clear ENABLE_RIDER_IMPERSONATION.
+// ---------------------------------------------------------------------------
+beforeAll(() => {
+  process.env.ENABLE_RIDER_IMPERSONATION = 'true';
+  process.env.APP_ENV = 'development';
+  process.env.NODE_ENV = 'development';
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -176,9 +211,9 @@ describe('requireRiderSession', () => {
     expect(mockCreateAuditLog).not.toHaveBeenCalled();
   });
 
-  // ── Admin impersonation via query param ──────────────────────────────────
+  // ── Admin impersonation via query param (removed — should fail) ────────────
 
-  it('allows admin with riderId query param to impersonate a rider', async () => {
+  it('rejects impersonation via riderId query param (no header)', async () => {
     mockGetSession.mockResolvedValue(null);
     mockGetAdminSession.mockResolvedValue({
       riderId: 'VF-AD-MGR789',
@@ -194,15 +229,10 @@ describe('requireRiderSession', () => {
     );
     const result = await requireRiderSession(request);
 
-    expect(result).toEqual({ riderDbId: 'impersonated-rider-id', phone: '0000000000' });
-    expect(mockCreateAuditLog).toHaveBeenCalledWith({
-      actorId: 'admin-001',
-      actorType: 'ADMIN',
-      action: 'IMPERSONATE_RIDER',
-      entity: 'rider',
-      entityId: 'impersonated-rider-id',
-      details: JSON.stringify({ adminRole: 'OPERATIONS_ADMIN' }),
-    });
+    // Query param is no longer accepted — should return 401
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(401);
+    expect(mockCreateAuditLog).not.toHaveBeenCalled();
   });
 
   // ── Admin impersonation via header ───────────────────────────────────────
@@ -232,9 +262,9 @@ describe('requireRiderSession', () => {
     );
   });
 
-  // ── Admin impersonation: query param takes priority over header ──────────
+  // ── Admin impersonation: header-only (query param removed) ───────────────
 
-  it('prefers riderId query param over x-rider-id header', async () => {
+  it('uses x-rider-id header when no query param is present', async () => {
     mockGetSession.mockResolvedValue(null);
     mockGetAdminSession.mockResolvedValue({
       riderId: 'VF-AD-MGR789',
@@ -245,17 +275,14 @@ describe('requireRiderSession', () => {
       adminId: 'admin-003',
     });
 
-    // Source code does: searchParams.get('riderId') || headers.get('x-rider-id')
-    // So query param takes priority
-    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=query-id', {
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
       'x-rider-id': 'header-id',
     });
     const result = await requireRiderSession(request);
 
-    // query param should take priority
-    expect(result).toEqual({ riderDbId: 'query-id', phone: '0000000000' });
+    expect(result).toEqual({ riderDbId: 'header-id', phone: '0000000000' });
     expect(mockCreateAuditLog).toHaveBeenCalledWith(
-      expect.objectContaining({ entityId: 'query-id' })
+      expect.objectContaining({ entityId: 'header-id' })
     );
   });
 
@@ -294,9 +321,9 @@ describe('requireRiderSession', () => {
       // no adminId
     });
 
-    const request = createMockRequest(
-      'http://localhost:8081/api/admin/riders?riderId=impersonated-id'
-    );
+    const request = createMockRequest('http://localhost:8081/api/admin/riders', {
+      'x-rider-id': 'impersonated-id',
+    });
     const result = await requireRiderSession(request);
 
     expect(result).toEqual({ riderDbId: 'impersonated-id', phone: '0000000000' });
@@ -321,7 +348,9 @@ describe('requireRiderSession', () => {
       // no adminRole set
     });
 
-    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz');
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
+      'x-rider-id': 'rider-xyz',
+    });
     const result = await requireRiderSession(request);
 
     expect(result).toEqual({ riderDbId: 'rider-xyz', phone: '0000000000' });
@@ -342,7 +371,9 @@ describe('requireRiderSession', () => {
       adminRole: 'SUPER_ADMIN',
     });
 
-    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz', {});
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
+      'x-rider-id': 'rider-xyz',
+    });
     // Force method to POST
     Object.defineProperty(request, 'method', { value: 'POST' });
 
@@ -362,10 +393,78 @@ describe('requireRiderSession', () => {
       adminPermissions: [], // Explicitly no permissions overrides
     });
 
-    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz');
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
+      'x-rider-id': 'rider-xyz',
+    });
 
     const result = await requireRiderSession(request);
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(403);
+  });
+
+  // ── Phase 6.1: impersonation gated behind env flag ──────────────────────
+
+  it('rejects impersonation when ENABLE_RIDER_IMPERSONATION is not set', async () => {
+    // Save and clear the flag for this test only
+    const prev = process.env.ENABLE_RIDER_IMPERSONATION;
+    delete process.env.ENABLE_RIDER_IMPERSONATION;
+
+    try {
+      mockGetSession.mockResolvedValue(null);
+      mockGetAdminSession.mockResolvedValue({
+        riderId: 'VF-AD-MGR789',
+        riderDbId: 'db-id-789',
+        phone: '9876543211',
+        role: 'admin',
+        adminRole: 'SUPER_ADMIN',
+        adminId: 'admin-001',
+        adminPermissions: ['impersonate_riders'],
+      });
+
+      const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
+        'x-rider-id': 'header-rider-id',
+      });
+      const result = await requireRiderSession(request);
+
+      // No env flag = impersonation disabled = 401
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).status).toBe(401);
+      expect(mockCreateAuditLog).not.toHaveBeenCalled();
+    } finally {
+      process.env.ENABLE_RIDER_IMPERSONATION = prev;
+    }
+  });
+
+  it('rejects impersonation when APP_ENV=production even with env flag set', async () => {
+    const prevFlag = process.env.ENABLE_RIDER_IMPERSONATION;
+    const prevAppEnv = process.env.APP_ENV;
+    process.env.ENABLE_RIDER_IMPERSONATION = 'true';
+    process.env.APP_ENV = 'production';
+
+    try {
+      mockGetSession.mockResolvedValue(null);
+      mockGetAdminSession.mockResolvedValue({
+        riderId: 'VF-AD-MGR789',
+        riderDbId: 'db-id-789',
+        phone: '9876543211',
+        role: 'admin',
+        adminRole: 'SUPER_ADMIN',
+        adminId: 'admin-001',
+        adminPermissions: ['impersonate_riders'],
+      });
+
+      const request = createMockRequest('http://localhost:8081/api/admin/kyc', {
+        'x-rider-id': 'header-rider-id',
+      });
+      const result = await requireRiderSession(request);
+
+      // Production = impersonation always disabled = 401
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).status).toBe(401);
+      expect(mockCreateAuditLog).not.toHaveBeenCalled();
+    } finally {
+      process.env.ENABLE_RIDER_IMPERSONATION = prevFlag;
+      process.env.APP_ENV = prevAppEnv;
+    }
   });
 });

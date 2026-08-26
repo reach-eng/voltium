@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
+import '../utils/lifecycle_rank.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 enum StepStatus { completed, pending, rejected, active }
 
@@ -29,83 +32,60 @@ class ApprovalMatrixWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final kycStatus = _kycStepStatus();
-    final kycSubtitle = _kycSubtitle();
+    final colors = AppColors.of(context);
+    final rank = lifecycleRank(rider);
+    final isKycRejected = rider.kycStatus == KycStatus.rejected;
+    final isPlanRejected = rider.planStatus == 'REJECTED';
+    final isDepositRejected =
+        rider.depositRecord?.status == DepositStatus.rejected;
 
     final List<_StepData> steps = [
       _StepData(
         label: 'Registration',
         status: _getStepStatus(
-          rider.registrationDone ||
-              rider.name.isNotEmpty ||
-              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 2),
-          !(rider.registrationDone ||
-              rider.name.isNotEmpty ||
-              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 2)),
+          rank >= 3,
+          rank < 3,
           false,
         ),
         icon: Icons.person_add_outlined,
       ),
       _StepData(
+        label: 'Rental Plan',
+        status: _getStepStatus(
+          rank >= 4 && !isPlanRejected,
+          rank >= 3 && rank < 4,
+          isPlanRejected,
+        ),
+        icon: Icons.event_repeat_outlined,
+        subtitle: isPlanRejected ? 'Reselect Plan' : null,
+      ),
+      _StepData(
         label: 'Deposit',
         status: _getStepStatus(
-          rider.depositDone ||
-              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 8),
-          (rider.registrationDone ||
-                  rider.name.isNotEmpty ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 2)) &&
-              !rider.depositDone &&
-              !(rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 8),
-          false,
+          rank >= 6 && !isDepositRejected,
+          rank >= 4 && rank < 6,
+          isDepositRejected,
         ),
         icon: Icons.account_balance_outlined,
+        subtitle: isDepositRejected ? 'Re-upload Proof' : null,
       ),
       _StepData(
         label: 'KYC',
         status: _getStepStatus(
-          kycStatus == StepStatus.completed,
-          (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 8)) &&
-              kycStatus != StepStatus.completed &&
-              kycStatus != StepStatus.rejected,
-          kycStatus == StepStatus.rejected,
+          rank >= 8,
+          rank >= 6 && rank < 8 && !isKycRejected,
+          isKycRejected,
         ),
         icon: Icons.shield_outlined,
-        subtitle: kycSubtitle,
-      ),
-      _StepData(
-        label: 'Rental Plan',
-        status: _getStepStatus(
-          rider.planDone ||
-              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 9),
-          kycStatus == StepStatus.completed &&
-              (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 8)) &&
-              !(rider.planDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 9)),
-          false,
-        ),
-        icon: Icons.event_repeat_outlined,
+        subtitle: isKycRejected
+            ? 'Update Documents'
+            : (rank >= 2 && rank < 8 && !isKycRejected ? 'Under Review' : null),
       ),
       _StepData(
         label: 'Pickup',
         status: _getStepStatus(
-          rider.pickupDone ||
-              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 10),
-          (rider.planDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 9)) &&
-              kycStatus == StepStatus.completed &&
-              (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 8)) &&
-              !(rider.pickupDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      _lifecycleRank(rider) >= 10)),
+          rank >= 9,
+          rank >= 8 && rank < 9,
           false,
         ),
         icon: Icons.electric_scooter_outlined,
@@ -120,21 +100,14 @@ class ApprovalMatrixWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Approval Matrix',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
-              ),
+            Text(
+              'Approval Matrix',
+              style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
             ),
             Text(
               '$completedCount/${steps.length} Done',
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: AppColors.slate500,
-                letterSpacing: 0.5,
-              ),
+              style: AppTypography.overline
+                  .copyWith(color: colors.onSurfaceVariant, letterSpacing: 0.5),
             ),
           ],
         ),
@@ -146,27 +119,11 @@ class ApprovalMatrixWidget extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final step = steps[index];
-            return _buildStepItem(step);
+            return _buildStepItem(context, colors, step);
           },
         ),
       ],
     );
-  }
-
-  StepStatus _kycStepStatus() {
-    if (rider.kycStatus == KycStatus.verified) return StepStatus.completed;
-    if (rider.kycStatus == KycStatus.rejected) return StepStatus.rejected;
-    if (rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 4)) {
-      return StepStatus.completed;
-    }
-    return StepStatus.pending;
-  }
-
-  String? _kycSubtitle() {
-    if (rider.kycStatus == KycStatus.submitted) return 'Under Review';
-    if (rider.kycStatus == KycStatus.rejected) return 'Update Documents';
-    return null;
   }
 
   StepStatus _getStepStatus(bool isCompleted, bool isNext, bool isRejected) {
@@ -176,21 +133,22 @@ class ApprovalMatrixWidget extends StatelessWidget {
     return StepStatus.pending;
   }
 
-  Widget _buildStepItem(_StepData step) {
+  Widget _buildStepItem(
+      BuildContext context, ThemeColors colors, _StepData step) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: step.isDone
-            ? const Color(0xFFF0FDF4)
+            ? AppColors.successLight
             : step.isRejected
-                ? const Color(0xFFFEF2F2)
-                : const Color(0xFFF8FAFC),
+                ? AppColors.errorSurface
+                : AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: step.isDone
-              ? const Color(0xFFDCFCE7)
+              ? AppColors.successLight
               : step.isRejected
-                  ? const Color(0xFFFECACA)
+                  ? AppColors.errorBorder
                   : Colors.transparent,
         ),
       ),
@@ -205,44 +163,47 @@ class ApprovalMatrixWidget extends StatelessWidget {
                   ? AppColors.success
                   : step.isRejected
                       ? AppColors.error
-                      : AppColors.outlineVariant,
+                      : colors.outlineVariant,
             ),
             child: Center(
               child: step.isDone
                   ? const Icon(Icons.check, color: Colors.white, size: 18)
                   : step.isRejected
                       ? const Icon(Icons.close, color: Colors.white, size: 18)
-                      : Icon(step.icon,
-                          size: 16, color: AppColors.slate400,),
+                      : Icon(
+                          step.icon,
+                          size: 16,
+                          color: colors.onSurfaceMuted,
+                        ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   step.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: step.isDone
-                        ? AppColors.successText
-                        : step.isRejected
-                            ? const Color(0xFF991B1B)
-                            : const Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                      .copyWith(
+                        color: step.isDone
+                            ? AppColors.onSurface
+                            : step.isRejected
+                                ? AppColors.errorDark
+                                : colors.onSurface,
+                      ),
                 ),
                 if (step.subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     step.subtitle!,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: step.isRejected
                           ? AppColors.error
-                          : AppColors.slate500,
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -255,40 +216,16 @@ class ApprovalMatrixWidget extends StatelessWidget {
                 : step.isRejected
                     ? 'REJECTED'
                     : 'PENDING',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-              color: step.isDone
-                  ? AppColors.success
-                  : step.isRejected
-                      ? AppColors.error
-                      : AppColors.slate400,
-            ),
+            style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                letterSpacing: 0.8,
+                color: step.isDone
+                    ? AppColors.success
+                    : step.isRejected
+                        ? AppColors.error
+                        : colors.onSurfaceMuted),
           ),
         ],
       ),
     );
   }
-}
-
-int _lifecycleRank(RiderModel rider) {
-  const rank = <String, int>{
-    'NEW': 0,
-    'PHONE_VERIFIED': 1,
-    'PROFILE_SUBMITTED': 2,
-    'KYC_SUBMITTED': 3,
-    'KYC_APPROVED': 4,
-    'GUARANTOR_SUBMITTED': 5,
-    'GUARANTOR_APPROVED': 6,
-    'DEPOSIT_PENDING': 7,
-    'DEPOSIT_APPROVED': 8,
-    'PLAN_SELECTED': 9,
-    'PICKUP_SCHEDULED': 10,
-    'ACTIVE': 11,
-    'SUSPENDED': 12,
-    'RETURN_PENDING': 13,
-    'CLOSED': 14,
-  };
-  return rank[rider.lifecycleStatus] ?? 0;
 }

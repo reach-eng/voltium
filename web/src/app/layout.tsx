@@ -1,22 +1,23 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { SkipLink } from '@/components/ui/skip-link';
 import { Providers } from './providers';
 import { SITE_TITLE, META_DESCRIPTION, FAVICON_PATH } from '@/lib/branding';
 
-const inter = Inter({
-  variable: '--font-inter',
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
 });
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
   description: META_DESCRIPTION,
   keywords: [
-    'Ryd',
-    'Ryd Electric Mobility',
+    'Voltium',
+    'Voltium Electric Mobility',
     'Electric Vehicle',
     'Fleet Management',
     'Scooter Rental',
@@ -36,8 +37,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#000000',
 };
@@ -50,6 +49,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          as="style"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
         {process.env.NODE_ENV === 'production' && (
           <script
             dangerouslySetInnerHTML={{
@@ -68,7 +79,8 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${inter.variable} antialiased`} suppressHydrationWarning>
+      <body className={`antialiased max-w-full overflow-x-hidden ${plusJakartaSans.className}`} suppressHydrationWarning>
+        <SkipLink />
         <Providers>{children}</Providers>
         <Toaster />
       </body>

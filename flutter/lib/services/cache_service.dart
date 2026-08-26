@@ -39,8 +39,10 @@ class CacheService {
   // ════════════════════════════════════════════════════════════════════════
 
   /// Persist a minimal rider payload (from `RiderModel.toCacheMap()`).
-  Future<void> cacheRider(Map<String, dynamic> riderData,
-      {int? ttlSeconds,}) async {
+  Future<void> cacheRider(
+    Map<String, dynamic> riderData, {
+    int? ttlSeconds,
+  }) async {
     final now = DateTime.now().toUtc();
     await _prefs?.setString(_keyRiderCache, jsonEncode(riderData));
     await _prefs?.setString(_keyRiderCacheTime, now.toIso8601String());
@@ -149,6 +151,29 @@ class CacheService {
 
   bool? getDarkMode() {
     return _prefs?.getBool(_keyTheme);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  //  Generic SWR API response cache (Phase 2)
+  // ════════════════════════════════════════════════════════════════════════
+
+  Future<void> cacheApiResponse(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    final key = 'swr_api_$endpoint';
+    await _prefs?.setString(key, jsonEncode(data));
+  }
+
+  Map<String, dynamic>? getCachedApiResponse(String endpoint) {
+    final key = 'swr_api_$endpoint';
+    final raw = _prefs?.getString(key);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════════

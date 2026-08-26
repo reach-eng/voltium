@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -14,19 +15,21 @@ void main() {
 
   testWidgets('Edge case – app handles empty rider data gracefully',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Dashboard should render even with minimal data
     await expectOnDashboard(tester);
 
     // Vehicle card may show placeholder if no vehicle assigned
-    final vehicleCard = find.byKey(const Key('assignedVehicleCard'));
+    final vehicleCard = app.dashboard.assignedVehicleCard;
     if (vehicleCard.evaluate().isNotEmpty) {
       expect(vehicleCard, findsAtLeastNWidgets(1));
     }
   });
 
   testWidgets('Edge case – wallet handles zero balance', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to wallet
@@ -35,10 +38,11 @@ void main() {
 
     // Wallet screen should render regardless of balance
     expect(find.text('Wallet'), findsAtLeastNWidgets(1));
-    expect(find.byKey(const Key('topUpButton')), findsAtLeastNWidgets(1));
+    expect(app.wallet.topUpButton, findsAtLeastNWidgets(1));
   });
 
   testWidgets('Edge case – profile handles missing fields', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to profile
@@ -46,10 +50,11 @@ void main() {
     await settle(tester);
 
     // Profile should render even with incomplete data
-    expect(find.byKey(const Key('logoutButton')), findsAtLeastNWidgets(1));
+    expect(app.profile.logoutButton, findsAtLeastNWidgets(1));
   });
 
   testWidgets('Edge case – support screen handles empty FAQ', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to support
@@ -57,11 +62,12 @@ void main() {
     await settle(tester);
 
     // Support screen should render
-    expect(find.byKey(const Key('raiseTicketButton')), findsAtLeastNWidgets(1));
+    expect(app.support.raiseTicketButton, findsAtLeastNWidgets(1));
   });
 
   testWidgets('Edge case – history screen handles empty transactions',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to wallet then history
@@ -69,63 +75,73 @@ void main() {
     await settle(tester);
 
     // Tap history button if exists
-    final historyBtn = find.byKey(const Key('historyButton'));
+    final historyBtn = app.profile.historyButton;
     if (historyBtn.evaluate().isNotEmpty) {
       await smartTap(tester, historyBtn);
       await settle(tester);
 
       // History screen should render (may show empty state)
       expect(
-          find.textContaining('History').evaluate().isNotEmpty ||
-              find.textContaining('No transactions').evaluate().isNotEmpty ||
-              find.byType(ListView).evaluate().isNotEmpty,
-          isTrue,);
+        find.textContaining('History').evaluate().isNotEmpty ||
+            find.textContaining('No transactions').evaluate().isNotEmpty ||
+            find.byType(ListView).evaluate().isNotEmpty,
+        isTrue,
+      );
     }
   });
 
   testWidgets('Edge case – referral handles empty code', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Referral widget should render even with fallback code (copy only, web parity)
-    final copyBtn = find.byKey(const Key('copyReferralButton'));
+    final copyBtn = app.dashboard.copyReferralButton;
 
-    expect(copyBtn, findsAtLeastNWidgets(1),
-        reason: 'Copy referral button should exist',);
+    expect(
+      copyBtn,
+      findsAtLeastNWidgets(1),
+      reason: 'Copy referral button should exist',
+    );
   });
 
   testWidgets('Edge case – rewards screen handles zero points', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Tap points badge to open rewards
-    final pointsBadge = find.byKey(const Key('pointsBadge'));
+    final pointsBadge = app.dashboard.pointsBadge;
     if (pointsBadge.evaluate().isNotEmpty) {
       await smartTap(tester, pointsBadge);
       await settle(tester);
 
       // Rewards screen should render
-      expect(find.byKey(const Key('backButton')), findsAtLeastNWidgets(1));
+      expect(app.settings.backButton, findsAtLeastNWidgets(1));
     }
   });
 
   testWidgets('Edge case – notifications handle empty list', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Open notification center
-    await smartTap(tester, find.byKey(const Key('notificationBell')));
+    await smartTap(tester, app.dashboard.notificationBell);
     await settle(tester);
 
     // Notification center should render (may show empty state)
-    final hasContent =
-        find.byKey(const Key('markAllReadButton')).evaluate().isNotEmpty ||
-            find.byKey(const Key('notificationCard')).evaluate().isNotEmpty ||
-            find.text('No notifications').evaluate().isNotEmpty;
+    final hasContent = app.dashboard.markAllReadButton.evaluate().isNotEmpty ||
+        app.dashboard.notificationCard.evaluate().isNotEmpty ||
+        find.text('No notifications').evaluate().isNotEmpty;
 
-    expect(hasContent, isTrue,
-        reason: 'Notification center should render content or empty state',);
+    expect(
+      hasContent,
+      isTrue,
+      reason: 'Notification center should render content or empty state',
+    );
   });
 
   testWidgets('Edge case – settings screen handles all toggles',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to profile then settings
@@ -133,20 +149,22 @@ void main() {
     await settle(tester);
 
     // Find and tap settings
-    final settingsBtn = find.byKey(const Key('settingsButton'));
+    final settingsBtn = app.settings.settingsButton;
     if (settingsBtn.evaluate().isNotEmpty) {
       await smartTap(tester, settingsBtn);
       await settle(tester);
 
       // Settings screen should render
       expect(
-          find.textContaining('Settings').evaluate().isNotEmpty ||
-              find.byKey(const Key('backButton')).evaluate().isNotEmpty,
-          isTrue,);
+        find.textContaining('Settings').evaluate().isNotEmpty ||
+            app.settings.backButton.evaluate().isNotEmpty,
+        isTrue,
+      );
     }
   });
 
   testWidgets('Edge case – rapid tab switching does not crash', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Rapidly switch between tabs
@@ -160,6 +178,7 @@ void main() {
   });
 
   testWidgets('Edge case – back navigation from deep screens', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to wallet
@@ -179,6 +198,7 @@ void main() {
 
   testWidgets('Edge case – form validation on top-up with invalid input',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to wallet
@@ -186,31 +206,33 @@ void main() {
     await settle(tester);
 
     // Open top-up dialog
-    await smartTap(tester, find.byKey(const Key('topUpButton')));
+    await smartTap(tester, app.wallet.topUpButton);
     await settle(tester);
 
     // Enter invalid amount (empty or zero)
-    final amountField = find.byKey(const Key('topUpAmountField'));
+    final amountField = app.wallet.topUpAmountField;
     if (amountField.evaluate().isNotEmpty) {
       await smartEnterText(tester, amountField, '0');
       await settle(tester);
 
       // Submit should show validation error
-      final submitBtn = find.byKey(const Key('submitTopUpButton'));
+      final submitBtn = app.wallet.submitTopUpButton;
       if (submitBtn.evaluate().isNotEmpty) {
         await smartTap(tester, submitBtn);
         await settle(tester);
 
         // Should show error snackbar or stay on dialog
         expect(
-            find.textContaining('valid amount').evaluate().isNotEmpty ||
-                amountField.evaluate().isNotEmpty,
-            isTrue,);
+          find.textContaining('valid amount').evaluate().isNotEmpty ||
+              amountField.evaluate().isNotEmpty,
+          isTrue,
+        );
       }
     }
   });
 
   testWidgets('Edge case – search with no results', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to support
@@ -230,6 +252,7 @@ void main() {
   });
 
   testWidgets('Edge case – multiple OTP resend attempts', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
     await completeAuthFlow(tester);
@@ -242,13 +265,15 @@ void main() {
 
       // Should show timer or confirmation
       expect(
-          find.textContaining('Resend').evaluate().isNotEmpty ||
-              find.textContaining('sent').evaluate().isNotEmpty,
-          isTrue,);
+        find.textContaining('Resend').evaluate().isNotEmpty ||
+            find.textContaining('sent').evaluate().isNotEmpty,
+        isTrue,
+      );
     }
   });
 
   testWidgets('Edge case – logout and re-login flow', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Navigate to profile
@@ -256,16 +281,19 @@ void main() {
     await settle(tester);
 
     // Find and tap logout
-    final logoutBtn = find.byKey(const Key('logoutButton'));
+    final logoutBtn = app.profile.logoutButton;
     if (logoutBtn.evaluate().isNotEmpty) {
       await scrollAndTap(tester, logoutBtn);
       await settle(tester);
 
       // Should return to login screen
-      final loginKey = find.byKey(const Key('loginWithPhoneButton'));
+      final loginKey = app.onboarding.loginWithPhoneButton;
       await waitFor(tester, loginKey, timeout: const Duration(seconds: 15));
-      expect(loginKey, findsAtLeastNWidgets(1),
-          reason: 'Should return to login after logout',);
+      expect(
+        loginKey,
+        findsAtLeastNWidgets(1),
+        reason: 'Should return to login after logout',
+      );
     }
   });
 }

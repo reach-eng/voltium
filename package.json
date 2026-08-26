@@ -1,0 +1,11 @@
+{
+  "name": "voltium-root",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install .husky",
+    "check:tokens": "npx tsx scripts/sync-tokens.ts"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3"
+  }
+}

@@ -39,8 +39,8 @@ export const adminRoutes = {
     try {
       const admin = await adminUseCases.getAdmin(id);
       return success(admin);
-    } catch (err: any) {
-      return errors.notFound(err.message);
+    } catch (err: unknown) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
   }),
 
@@ -66,9 +66,9 @@ export const adminRoutes = {
         session.adminId || session.riderDbId
       );
       return success(admin, 'Admin user created', 201);
-    } catch (err: any) {
-      if (err.message.includes('already exists')) {
-        return errors.conflict(err.message);
+    } catch (err: unknown) {
+      if ((err instanceof Error ? err.message : String(err)).includes('already exists')) {
+        return errors.conflict((err instanceof Error ? err.message : String(err)));
       }
       throw err;
     }
@@ -104,8 +104,8 @@ export const adminRoutes = {
         session.adminId || session.riderDbId
       );
       return success(admin, 'Admin user updated');
-    } catch (err: any) {
-      return errors.notFound(err.message);
+    } catch (err: unknown) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
   }),
 
@@ -121,8 +121,8 @@ export const adminRoutes = {
     try {
       await adminUseCases.deleteAdmin(id, session.adminId || session.riderDbId);
       return success(null, 'Admin user deleted');
-    } catch (err: any) {
-      return errors.notFound(err.message);
+    } catch (err: unknown) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
   }),
 

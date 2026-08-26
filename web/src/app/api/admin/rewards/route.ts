@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { validateBody, awardRewardSchema } from '@/lib/validators';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search');
 
     const result = await rewardUseCases.list({ search, page, limit });
-    return success(result);
+    return withCacheHeaders(success(result), 10);
   } catch (error) {
     logger.error('GET /api/admin/rewards error:', error);
     return errors.internal('Failed to fetch rewards');

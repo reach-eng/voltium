@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Support Screen Widget Tests
 void main() {
   Widget buildTestApp({required Widget child}) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+    return ProviderScope(
+      overrides: [
+        localeProviderRef.overrideWith((ref) => LocaleProvider()),
+        themeProviderRef.overrideWith((ref) => ThemeProvider()),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -30,13 +31,14 @@ void main() {
   group('Support Center Screen', () {
     testWidgets('support center renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(SupportCenterScreen), findsOneWidget);
     });
 
-    testWidgets('support center shows support categories or options', (tester) async {
+    testWidgets('support center shows support categories or options',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should show some support options, FAQs, or contact info
       final hasListTile = find.byType(ListTile).evaluate().isNotEmpty;
@@ -48,7 +50,7 @@ void main() {
 
     testWidgets('support center does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

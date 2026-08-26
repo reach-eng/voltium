@@ -113,8 +113,8 @@ class IssueModel {
           'No Subject',
       message:
           json['message'] as String? ?? json['description'] as String? ?? '',
-      category: json['category'] as String,
-      status: json['status'] as String,
+      category: json['category'] as String? ?? 'GENERAL',
+      status: json['status'] as String? ?? 'OPEN',
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
     );
   }
@@ -138,4 +138,70 @@ class SupportConfig {
   factory SupportConfig.fromJson(Map<String, dynamic> json) =>
       _$SupportConfigFromJson(json);
   Map<String, dynamic> toJson() => _$SupportConfigToJson(this);
+}
+
+/// Author of a support ticket message (Phase 2.6).
+/// Mirrors the server-side `SenderType` enum in
+/// `web/prisma/schema.prisma` (RIDER / ADMIN).
+enum TicketMessageSender { rider, admin, unknown }
+
+TicketMessageSender _parseSenderType(dynamic value) {
+  if (value is TicketMessageSender) return value;
+  final lower = value?.toString().toLowerCase() ?? '';
+  switch (lower) {
+    case 'rider':
+      return TicketMessageSender.rider;
+    case 'admin':
+      return TicketMessageSender.admin;
+  }
+  return TicketMessageSender.unknown;
+}
+
+/// A single entry in a support ticket's chat thread (Phase 2.6).
+///
+/// Mirrors the server-side `TicketMessage` model. The `/api/support/chat`
+/// endpoint returns a list of these for a given ticket.
+@JsonSerializable(createFactory: false)
+class TicketMessage {
+  final String id;
+  final String ticketId;
+  final TicketMessageSender sender;
+  final String senderName;
+  final String body;
+  final List<String> attachments;
+  final DateTime createdAt;
+
+  const TicketMessage({
+    required this.id,
+    required this.ticketId,
+    required this.sender,
+    required this.body,
+    required this.createdAt,
+    this.senderName = '',
+    this.attachments = const [],
+  });
+
+  factory TicketMessage.fromJson(Map<String, dynamic> json) {
+    return TicketMessage(
+      id: json['id']?.toString() ?? json['messageId']?.toString() ?? '',
+      ticketId: json['ticketId']?.toString() ?? '',
+      sender: _parseSenderType(json['senderType'] ?? json['sender']),
+      senderName: json['senderName']?.toString() ??
+          json['authorName']?.toString() ??
+          '',
+      body: json['body']?.toString() ??
+          json['message']?.toString() ??
+          json['text']?.toString() ??
+          '',
+      attachments:
+          (json['attachments'] as List?)?.map((e) => e.toString()).toList() ??
+              const [],
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ??
+              json['timestamp']?.toString() ??
+              '') ??
+          DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => _$TicketMessageToJson(this);
 }

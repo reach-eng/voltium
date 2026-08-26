@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -13,13 +14,12 @@ void main() {
 
   testWidgets('OTP verification – auth flow completes successfully',
       (tester) async {
+    final app = AppRobots(tester);
     final reachedDashboard = await fullLoginFlow(tester);
 
     // Should reach at least onboarding or dashboard
-    final hasOnboarding =
-        find.byKey(const Key('fullNameField')).evaluate().isNotEmpty;
-    final hasDashboard =
-        find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty;
+    final hasOnboarding = app.onboarding.fullNameField.evaluate().isNotEmpty;
+    final hasDashboard = app.dashboard.dashboardTab.evaluate().isNotEmpty;
 
     expect(
       reachedDashboard || hasOnboarding || hasDashboard,

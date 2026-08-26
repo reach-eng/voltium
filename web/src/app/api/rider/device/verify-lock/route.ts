@@ -7,6 +7,8 @@ import { db } from '@/lib/db';
 import { verifyPassword } from '@/lib/password';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-events';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 
 const verifyLockSchema = z.object({
   password: z.string().min(1),
@@ -14,6 +16,9 @@ const verifyLockSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (request.headers.get('x-rider-id')) {
+      return errors.forbidden('Impersonation is strictly forbidden on lock verification');
+    }
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;
@@ -31,8 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { password } = validation.data;
-    const clientIp =
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
     // Rate limit: 5 attempts per minute
     const rateLimit = await checkRateLimit(`verify-lock:${riderDbId}`, {
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
       return success({ success: false }, 'Lock password is not configured');
     }
 
-    const valid = await verifyPassword(password, rider.lockPassword);
+    const { valid } = await verifyPassword(password, rider.lockPassword);
 
     await logSecurityEvent({
       type: 'rider.verify_lock_password',
@@ -77,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     return success({ success: valid }, valid ? 'Verification successful' : 'Incorrect password');
   } catch (err) {
-    logger.error('[POST /api/rider/device/verify-lock]', err);
+    logger.error('[POST /api/rider/device/verify-lock]', redactPii(err));
     return errors.internal('Verification failed');
   }
 }

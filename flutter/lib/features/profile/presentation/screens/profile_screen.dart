@@ -1,133 +1,214 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
-import 'rewards_screen.dart';
-import 'app_settings_screen.dart';
-import 'edit_profile_screen.dart';
-import 'documents_screen.dart';
-import 'referral_screen.dart';
-import 'legal_page_screen.dart';
-import 'emergency_sos_screen.dart';
+import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
+import 'profile_detail_screen.dart';
+import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
+import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
+
+import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 import 'package:voltium_rider/features/workflows/presentation/screens/rider_workflow_hub_screen.dart';
+import 'package:voltium_rider/features/profile/presentation/screens/settings_screen.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
-class ProfileScreen extends StatelessWidget {
+/// Menu screen (formerly "Profile" tab).
+/// Shows a compact rider header and a list of navigation links.
+/// Detailed profile information lives in [ProfileDetailScreen].
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor:
-          AppColors.iconBackground, // Very light gray-blue background
+      backgroundColor: colors.iconBackground,
       appBar: _buildAppBar(context),
-      body: Consumer<AppProvider>(
-        builder: (context, provider, _) {
-          final rider = provider.rider;
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FadeUpWidget(
-                  delay: 0,
-                  child: _buildProfileCard(context, rider),
-                ),
-                const SizedBox(height: 24),
-                const Text('Personal Details',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF475569), // slate-600
-                    letterSpacing: 1.2,
+      body: Consumer(
+        builder: (context, innerRef, _) {
+          final rider = innerRef.watch(riderProvider.select((p) => p.rider));
+          final dataState =
+              innerRef.watch(riderProvider.select((p) => p.dataState));
+          final localeProv = innerRef.watch(localeProvider);
+          final currentLocale = localeProv.locale.languageCode;
+          final isLoading = rider == null &&
+              (dataState == DataState.initial ||
+                  dataState == DataState.loading);
+
+          if (isLoading) {
+            return const ProfileSkeleton();
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(riderProvider.notifier).refreshFromApi();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Compact rider header ──────────────────────────────────
+                  FadeUpWidget(
+                    delay: 0,
+                    child: _CompactRiderHeader(rider: rider),
                   ),
-                ),
-                const SizedBox(height: 12),
-                FadeUpWidget(
-                  delay: 100,
-                  child: _buildPersonalDetailsCard(rider),
-                ),
-                const SizedBox(height: 16),
-                FadeUpWidget(
-                  delay: 200,
-                  child: _buildStatusBentos(rider),
-                ),
-                if (rider?.guarantorName != null) ...[
                   const SizedBox(height: 24),
-                  const Text('Guarantor Details',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF475569),
-                      letterSpacing: 1.2,
+
+                  // ── Menu sections ─────────────────────────────────────────
+                  _SectionLabel(l10n.menu_account),
+                  const SizedBox(height: 12),
+
+                  // Profile (opens full detail screen)
+                  FadeUpWidget(
+                    delay: 100,
+                    child: QuickLinkItem(
+                      key: const Key('profileMenuLink'),
+                      icon: Icons.person_outline,
+                      activeIcon: Icons.person,
+                      iconColor: AppColors.primary,
+                      iconBgColor: AppColors.primarySurface,
+                      title: l10n.menu_profile,
+                      onTap: () => AppNavigator.push(
+                          context, const ProfileDetailScreen()),
                     ),
                   ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 150,
+                    child: QuickLinkItem(
+                      key: const Key('myDocumentsLink'),
+                      icon: Icons.contact_page_outlined,
+                      activeIcon: Icons.contact_page,
+                      iconColor: AppColors.success,
+                      iconBgColor: AppColors.successLight,
+                      title: l10n.menu_myDocuments,
+                      onTap: () =>
+                          AppNavigator.push(context, const MyDocumentsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _SectionLabel(l10n.menu_rewardsMore),
                   const SizedBox(height: 12),
+
+                  FadeUpWidget(
+                    delay: 200,
+                    child: QuickLinkItem(
+                      key: const Key('rewardsLink'),
+                      icon: Icons.card_giftcard_outlined,
+                      activeIcon: Icons.card_giftcard,
+                      iconColor: AppColors.accentPurple,
+                      iconBgColor: AppColors.accentPurpleSurface,
+                      title: l10n.menu_rewards,
+                      onTap: () =>
+                          AppNavigator.push(context, const RewardsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
                   FadeUpWidget(
                     delay: 250,
-                    child: ProfileGuarantorCard(rider: rider!),
+                    child: QuickLinkItem(
+                      key: const Key('referralLink'),
+                      icon: Icons.people_outline,
+                      activeIcon: Icons.people,
+                      iconColor: AppColors.warning,
+                      iconBgColor: AppColors.warningSurface,
+                      title: l10n.menu_referralProgram,
+                      onTap: () =>
+                          AppNavigator.push(context, const ReferralScreen()),
+                    ),
                   ),
+                  const SizedBox(height: 24),
+
+                  _SectionLabel(l10n.menu_general),
+                  const SizedBox(height: 12),
+
+                  FadeUpWidget(
+                    delay: 300,
+                    child: QuickLinkItem(
+                      key: const Key('workflowHubLink'),
+                      icon: Icons.route_outlined,
+                      activeIcon: Icons.route,
+                      iconColor: AppColors.primary,
+                      iconBgColor: AppColors.primarySurface,
+                      title: l10n.menu_workflowServices,
+                      onTap: () => AppNavigator.push(
+                          context, const RiderWorkflowHubScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 340,
+                    child: QuickLinkItem(
+                      key: const Key('appSettingsLink'),
+                      icon: Icons.tune_outlined,
+                      activeIcon: Icons.tune,
+                      iconColor: AppColors.successDark,
+                      iconBgColor: AppColors.successLight,
+                      title: l10n.menu_appSettings,
+                      onTap: () =>
+                          AppNavigator.push(context, const SettingsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 350,
+                    child: QuickLinkItem(
+                      key: const Key('languageLink'),
+                      icon: Icons.language,
+                      iconColor: AppColors.success,
+                      iconBgColor: AppColors.successLight,
+                      title: l10n.menu_language,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            currentLocale == 'hi'
+                                ? l10n.settings_hindi
+                                : l10n.settings_english,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: colors.onSurfaceMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.chevron_right,
+                              color: colors.outline, size: 20),
+                        ],
+                      ),
+                      onTap: () => _showLanguageDialog(context, localeProv),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 360,
+                    child: ProfileEmergencySosTile(
+                      onTap: () => AppNavigator.push(
+                          context, const EmergencySOSScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
                 ],
-                const SizedBox(height: 24),
-                const Text('QUICK LINKS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF475569), // slate-600
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ProfileQuickLinks(
-                  onEditProfileTap: () {
-                    AppNavigator.push(context, const EditProfileScreen());
-                  },
-                  onMyDocumentsTap: () {
-                    AppNavigator.push(context, const MyDocumentsScreen());
-                  },
-                  onRewardsTap: () {
-                    AppNavigator.push(context, const RewardsScreen());
-                  },
-                  onReferralTap: () {
-                    AppNavigator.push(context, const ReferralScreen());
-                  },
-                  onAppSettingsTap: () {
-                    AppNavigator.push(context, const AppSettingsScreen());
-                  },
-                  onLegalTap: () {
-                    AppNavigator.push(context, const LegalPageScreen());
-                  },
-                  onWorkflowHubTap: () {
-                    AppNavigator.push(context, const RiderWorkflowHubScreen());
-                  },
-                ),
-                const SizedBox(height: 24),
-                FadeUpWidget(
-                  delay: 700,
-                  child: ProfileEmergencySosTile(
-                    onTap: () {
-                      AppNavigator.push(context, const EmergencySOSScreen());
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FadeUpWidget(
-                  delay: 800,
-                  child: ProfileLogoutButton(
-                    onTap: () {
-                      provider.logout();
-                    },
-                  ),
-                ),
-                const SizedBox(height: 48), // Bottom padding
-              ],
+              ),
             ),
           );
         },
@@ -136,315 +217,264 @@ class ProfileScreen extends StatelessWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.iconBackground,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leadingWidth: 68,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 20.0),
-        child: UnconstrainedBox(
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(9999),
-                onTap: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20,),
-              ),
-            ),
-          ),
-        ),
-      ),
-      title: const Text('Profile',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
-        ),
+      automaticallyImplyLeading: false,
+      centerTitle: false,
+      titleSpacing: 20,
+      title: Text(
+        l10n.menu_title,
+        style: AppTypography.headingMedium
+            .copyWith(color: colors.onSurface, letterSpacing: -0.5),
       ),
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
+  void _showLanguageDialog(BuildContext context, LocaleState localeState) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.menu_selectLanguage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(l10n.settings_english),
+              leading: Radio<String>(
+                key: const Key('englishRadio'),
+                value: 'en',
+                groupValue: localeState.locale.languageCode,
+                onChanged: (v) {
+                  // R4.3c-1: read the notifier to call setEnglish. The
+                  // captured `localeState` above is the immutable view;
+                  // the notifier exposes the mutating API.
+                  ProviderScope.containerOf(ctx)
+                      .read(localeProvider.notifier)
+                      .setEnglish();
+                  Navigator.pop(ctx);
+                },
+                toggleable: true,
+              ),
+              onTap: () {
+                ProviderScope.containerOf(ctx)
+                    .read(localeProvider.notifier)
+                    .setEnglish();
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: Text('${l10n.settings_hindi} (Hindi)'),
+              leading: Radio<String>(
+                key: const Key('hindiRadio'),
+                value: 'hi',
+                groupValue: localeState.locale.languageCode,
+                onChanged: (v) {
+                  ProviderScope.containerOf(ctx)
+                      .read(localeProvider.notifier)
+                      .setHindi();
+                  Navigator.pop(ctx);
+                },
+              ),
+              onTap: () {
+                ProviderScope.containerOf(ctx)
+                    .read(localeProvider.notifier)
+                    .setHindi();
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Internal widgets
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Text(
+      label,
+      style: AppTypography.bodySmall
+          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+          .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.2),
+    );
+  }
+}
+
+/// Compact header showing avatar, name and KYC badge — no redundant detail.
+class _CompactRiderHeader extends StatelessWidget {
+  final RiderModel? rider;
+  const _CompactRiderHeader({this.rider});
+
+  String? _getAvatarUrl() {
+    if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+      return null;
+    if (rider!.profilePhoto!.startsWith('http')) return rider!.profilePhoto;
+    final baseUrl = ApiClient().baseUrl;
+    return '$baseUrl/api/files/${rider!.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final avatarUrl = _getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
         : '?';
-    final String riderId = rider?.riderId ?? 'NOT-ASSIGNED';
-    final String kycStatusName = rider?.kycStatus.name ?? 'PENDING';
+    final String kycStatusName =
+        rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
     final bool isVerified =
         kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: isVerified
-                      ? AppColors.success
-                      : const Color(0xFF2563EB),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+    return InkWell(
+      onTap: () => AppNavigator.push(context, const ProfileDetailScreen()),
+      borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isVerified ? AppColors.success : AppColors.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: avatarUrl != null
+                  ? ClipRRect(
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.radiusModal),
+                      child: CachedNetworkImage(
+                        imageUrl: avatarUrl,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 112,
+                        memCacheHeight: 112,
+                        placeholder: (_, __) => const SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(Icons.person,
+                            size: 28, color: Colors.white),
+                      ),
+                    )
+                  : Text(
+                      initial,
+                      style: AppTypography.headingMedium
+                          .copyWith(color: Colors.white),
                     ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: (rider?.profilePhoto != null &&
-                        rider!.profilePhoto!.isNotEmpty)
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(48),
-                        child: CachedNetworkImage(
-                            imageUrl: rider.profilePhoto!,
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => const SizedBox(
-                              width: 96,
-                              height: 96,
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            ),
-                            errorWidget: (_, __, ___) => const Icon(Icons.person, size: 48),),
-                      )
-                    : Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
+            ),
+            const SizedBox(width: 16),
+            // Name + KYC pill + Edit Icon
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          rider?.name ?? 'Rider',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-              ),
-              Positioned(
-                bottom: 2,
-                right: 4,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warning,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: colors.onSurfaceMuted,
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    isVerified ? Icons.check : Icons.access_time_filled,
-                    color: Colors.white,
-                    size: 14,
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.shield_outlined,
+                        size: 12,
+                        color: isVerified
+                            ? AppColors.success
+                            : AppColors.warningDark,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
+                        style: AppTypography.bodySmall
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(
+                                color: isVerified
+                                    ? AppColors.success
+                                    : AppColors.warningDark),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Phone chip
+            if (rider?.phone != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: colors.iconBackground,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Text(
+                  rider?.phone ?? '',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurfaceMuted,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            rider?.name ?? 'Test Rider',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.iconBackground, // slate-100
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              riderId,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: Color(0xFF475569),
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isVerified
-                  ? const Color(0xFFECFDF5)
-                  : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                  color: isVerified
-                      ? AppColors.success.withValues(alpha: 0.2)
-                      : const Color(0xFFFDE68A),),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined,
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warningDark,
-                    size: 14,),
-                const SizedBox(width: 6),
-                Text(
-                  'KYC: ${_capitalize(kycStatusName)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warningDark,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalDetailsCard(RiderModel? rider) {
-    String dobFormatted = 'Not provided';
-    if (rider?.dob != null) {
-      dobFormatted = DateFormat('dd MMM yyyy').format(rider!.dob!);
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: 'Name',
-            value: rider?.name ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.email_outlined,
-            title: 'Email',
-            value: rider?.email ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.phone_outlined,
-            title: 'Phone',
-            value: rider?.phone ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.calendar_today_outlined,
-            title: 'Date of Birth',
-            value: dobFormatted,
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: "Father's Name",
-            value: rider?.fatherName ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: "Mother's Name",
-            value: rider?.motherName ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.home_outlined,
-            title: 'Address',
-            value: rider?.currentAddress ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          GestureDetector(
-            onTap: () {
-              final phone = rider?.emergencyContact;
-              if (phone != null && phone.isNotEmpty) {
-                launchUrl(Uri.parse('tel:$phone'));
-              }
-            },
-            child: ProfileDetailRow(
-              icon: Icons.phone_android_outlined,
-              title: 'Emergency Contact',
-              value: rider?.emergencyContact ?? 'Not provided',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBentos(RiderModel? rider) {
-    final String kycStatus = _capitalize(rider?.kycStatus.name ?? 'Pending');
-    final String guarantorStatus =
-        _capitalize(rider?.guarantorStatus.name ?? 'Pending');
-
-    return Row(
-      children: [
-        Expanded(
-          child: StatusTile(
-            title: 'KYC STATUS',
-            status: kycStatus,
-          ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: StatusTile(
-            title: 'GUARANTOR',
-            status: guarantorStatus,
-          ),
-        ),
-      ],
+      ),
     );
   }
 

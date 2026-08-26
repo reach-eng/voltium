@@ -10,6 +10,7 @@ import { randomBytes } from 'crypto';
 import { supportRepository } from './support.repository';
 import { createAuditLog } from '@/lib/audit-log';
 import { notificationService } from '@/lib/notification-service';
+import { sanitizeHtml } from '@/lib/sanitize';
 import type { CreateTicketDto, TicketReplyDto } from './support.schemas';
 
 export const supportUseCases = {
@@ -21,6 +22,8 @@ export const supportUseCases = {
 
     return supportRepository.create(riderDbId, {
       ...input,
+      subject: sanitizeHtml(input.subject),
+      message: sanitizeHtml(input.message),
       ticketId,
       status: 'OPEN',
     });
@@ -51,8 +54,8 @@ export const supportUseCases = {
       ticketId,
       senderId,
       senderType,
-      input.message,
-      input.attachments
+      sanitizeHtml(input.message),
+      input.attachments ?? undefined
     );
 
     await supportRepository.update(ticketId, { updatedAt: new Date() });

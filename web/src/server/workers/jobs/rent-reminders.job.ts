@@ -4,6 +4,7 @@ import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
+import { clock } from '@/lib/clock';
 
 interface RentReminderResult {
   checkedRentals: number;
@@ -25,7 +26,7 @@ export const rentRemindersJob = {
 
     // Find active rentals that are due or overdue
     // Uses the RentalLease model to find active riders with active leases
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
 
     const activeLeases = (await db.rentalLease.findMany({
       where: {
@@ -39,7 +40,7 @@ export const rentRemindersJob = {
       select: {
         id: true,
         riderId: true,
-        finalPrice: true,
+        finalPriceInPaise: true,
         rider: {
           include: {
             wallet: true,
@@ -52,7 +53,7 @@ export const rentRemindersJob = {
 
     for (const lease of activeLeases) {
       const rider = lease.rider;
-      const rentAmount = lease.finalPrice;
+      const rentAmount = lease.finalPriceInPaise;
       const balance = rider.wallet?.balanceInPaise ?? 0;
 
       if (balance >= rentAmount) {
@@ -66,10 +67,10 @@ export const rentRemindersJob = {
               data: {
                 riderId: rider.id,
                 type: 'DEBIT',
-                amount: rentAmount,
+                amountInPaise: rentAmount,
                 purpose: 'RENT_PAYMENT',
                 status: 'APPROVED',
-                approvedAt: new Date(),
+                approvedAt: clock.now(),
                 description: `Auto-debit rent for lease ${lease.id}`,
               },
             });
@@ -81,12 +82,12 @@ export const rentRemindersJob = {
               txnId: txn.id,
               idempotencyKey,
               note: `Auto-debit rent payment for lease ${lease.id}`,
-            });
+            }, tx);
           });
 
           createAuditLog({
             actorId: 'system',
-            action: 'finance.rent_debit',
+            action: 'CREATE',
             entity: 'rentalLease',
             entityId: lease.id,
             details: { riderId: rider.id, amountPaise: rentAmount },
@@ -107,12 +108,21 @@ export const rentRemindersJob = {
         result.overdueDetected++;
 
         // Emit outbox event for overdue
-        await OutboxService.emit(OutboxEventTypes.RENT_OVERDUE, {
-          riderId: rider.id,
-          leaseId: lease.id,
-          amountDue: rentAmount,
-          balance,
-        }).catch(() => {});
+        // PR-75: rent overdue is rider-visible; classify as
+        // interactive so the (currently-unwired) consumer of
+        // RENT_OVERDUE doesn't get starved by background work.
+        await OutboxService.emit(
+          OutboxEventTypes.RENT_OVERDUE,
+          {
+            riderId: rider.id,
+            leaseId: lease.id,
+            amountDue: rentAmount,
+            balance,
+          },
+          3,
+          undefined,
+          'interactive'
+        ).catch(() => {});
 
         // Send overdue notification
         await notificationService

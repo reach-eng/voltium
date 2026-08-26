@@ -14,6 +14,7 @@ interface RentalPlan {
   name: string;
   type: string;
   price: number;
+  securityDeposit: number;
   durationDays: number;
   isActive: boolean;
   description: string;
@@ -25,44 +26,65 @@ export default function PlanManagement() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Simulate fetching plans
-    setTimeout(() => {
-      setPlans([
-        {
-          id: 'p-1',
-          name: 'Daily Flex',
-          type: 'DAILY',
-          price: 299,
-          durationDays: 1,
-          isActive: true,
-          description: 'Perfect for short-term daily delivery agents.',
-        },
-        {
-          id: 'p-2',
-          name: 'Weekly Value',
-          type: 'WEEKLY',
-          price: 1499,
-          durationDays: 7,
-          isActive: true,
-          description: 'Weekly subscription with lower overall daily rates.',
-        },
-        {
-          id: 'p-3',
-          name: 'Monthly Professional',
-          type: 'MONTHLY',
-          price: 4999,
-          durationDays: 30,
-          isActive: true,
-          description: 'Best long-term pricing for full-time fleet drivers.',
-        },
-      ]);
-      setLoading(false);
-    }, 500);
+    fetchPlans();
   }, []);
 
+  const fetchPlans = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/plans');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setPlans(json.data || []);
+        }
+      }
+    } catch {
+      // Silent fallback
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
-    setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p)));
-    toast.success(`Plan ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+    try {
+      const res = await fetch(`/api/admin/plans`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isActive: !currentStatus })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p)));
+        toast.success(`Plan ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      } else {
+        toast.error(json.error || 'Failed to update plan status');
+      }
+    } catch {
+      toast.error('Failed to update plan status');
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/plans`, { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      const json = await res.json();
+      if (json.success) {
+        setPlans((prev) => prev.filter((p) => p.id !== id));
+        toast.success('Plan deleted successfully');
+      } else {
+        toast.error(json.error || 'Failed to delete plan');
+      }
+    } catch {
+      toast.error('Failed to delete plan');
+    }
   };
 
   const filteredPlans = plans.filter((p) =>
@@ -83,13 +105,13 @@ export default function PlanManagement() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search plans..."
-              className="pl-8"
+              className="pl-8 h-11 text-base rounded-xl"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-primary text-white gap-2">
-            <Plus className="h-4 w-4" /> Create Plan
+          <Button size="default" className="bg-primary text-white gap-2 h-11 px-5 rounded-xl">
+            <Plus className="h-5 w-5" /> Create Plan
           </Button>
         </div>
       </div>
@@ -166,20 +188,31 @@ export default function PlanManagement() {
                     / {plan.durationDays} day(s)
                   </span>
                 </div>
+                <div className="text-sm font-semibold text-blue-600">
+                  Security Deposit: ₹{(plan.securityDeposit || 0).toLocaleString('en-IN')}
+                </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 h-10">
                   {plan.description}
                 </p>
                 <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="h-4 w-4 mr-2" /> Edit
+                  <Button variant="outline" size="default" className="flex-1 h-11">
+                    <Edit className="h-5 w-5 mr-2" /> Edit
                   </Button>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="flex-1"
+                    size="default"
+                    className="flex-1 h-11"
                     onClick={() => handleToggleActive(plan.id, plan.isActive)}
                   >
                     {plan.isActive ? 'Deactivate' : 'Activate'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(plan.id, plan.name)}
+                  >
+                    <Trash2 className="h-5 w-5" />
                   </Button>
                 </div>
               </CardContent>

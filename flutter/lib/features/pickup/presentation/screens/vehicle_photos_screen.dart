@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class VehiclePhotosScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class VehiclePhotosScreen extends ConsumerWidget {
   const VehiclePhotosScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(riderProvider).rider;
     final vehicle = rider?.assignedVehicle ?? 'Not Assigned';
     final pickupPhoto = rider?.pickupPhotoFront;
 
     final photos = [
       {'label': 'Front View', 'url': pickupPhoto},
+      {'label': 'Back View', 'url': rider?.pickupPhotoBack},
       {'label': 'Left Side', 'url': rider?.pickupPhotoLeft},
       {'label': 'Right Side', 'url': rider?.pickupPhotoRight},
-      {'label': 'Speedometer', 'url': rider?.pickupPhotoWithVehicle},
+      {'label': 'Photo with Vehicle', 'url': rider?.pickupPhotoWithVehicle},
     ];
 
     return Scaffold(
@@ -33,11 +35,50 @@ class VehiclePhotosScreen extends StatelessWidget {
                   children: [
                     _buildVehicleInfoCard(vehicle),
                     const SizedBox(height: 20),
-                    _buildPhotosGrid(photos),
+                    _buildPhotosGrid(context, photos),
                     const SizedBox(height: 32),
                     _buildBackButton(context),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showZoomModal(BuildContext context, String url, String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(url, fit: BoxFit.contain, cacheWidth: 800),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              left: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+            Positioned(
+              bottom: 30,
+              left: 20,
+              right: 20,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -54,24 +95,26 @@ class VehiclePhotosScreen extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: AppColors.onSurface,),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: AppColors.onSurface,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Text('Vehicle Photos',
-            style: GoogleFonts.inter(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+          SizedBox(width: 16),
+          Text(
+            'Vehicle Photos',
+            style: AppTypography.titleLarge
+                .copyWith(fontSize: 21)
+                .copyWith(color: AppColors.onSurface),
           ),
         ],
       ),
@@ -80,7 +123,7 @@ class VehiclePhotosScreen extends StatelessWidget {
 
   Widget _buildVehicleInfoCard(String vehicle) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -92,33 +135,30 @@ class VehiclePhotosScreen extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(Icons.electric_bike,
-                color: AppColors.primary, size: 24,),
+            child: const Icon(
+              Icons.electric_bike,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ASSIGNED VEHICLE',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 1.0,
-                  ),
+                Text(
+                  'ASSIGNED VEHICLE',
+                  style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.onSurfaceVariant, letterSpacing: 1.0),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   vehicle,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onSurface,
-                  ),
+                  style: AppTypography.titleSmall
+                      .copyWith(color: AppColors.onSurface),
                 ),
               ],
             ),
@@ -128,17 +168,16 @@ class VehiclePhotosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPhotosGrid(List<Map<String, dynamic>> photos) {
+  Widget _buildPhotosGrid(
+      BuildContext context, List<Map<String, dynamic>> photos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PICKUP PHOTOS',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: AppColors.onSurface,
-            letterSpacing: 1.2,
-          ),
+        Text(
+          'PICKUP PHOTOS',
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800)
+              .copyWith(color: AppColors.onSurface, letterSpacing: 1.2),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -151,51 +190,67 @@ class VehiclePhotosScreen extends StatelessWidget {
             childAspectRatio: 1.2,
           ),
           itemCount: photos.length,
-          itemBuilder: (context, index) {
+          itemBuilder: (ctx, index) {
             final photo = photos[index];
             final url = photo['url'] as String?;
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(16),
-                image: url != null && url.isNotEmpty
-                    ? DecorationImage(
-                        image: ResizeImage(NetworkImage(url),
-                            width: 400, height: 300,),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: url == null || url.isEmpty
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.camera_alt_outlined,
-                            color: AppColors.onSurfaceVariant, size: 32,),
-                        const SizedBox(height: 8),
-                        Text(
-                          photo['label'],
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
+            final label = photo['label'] as String;
+            return GestureDetector(
+              onTap: (url != null && url.isNotEmpty)
+                  ? () => _showZoomModal(context, url, label)
+                  : null,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.iconBackground,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  image: url != null && url.isNotEmpty
+                      ? DecorationImage(
+                          image: ResizeImage(
+                            NetworkImage(url),
+                            width: 400,
+                            height: 300,
+                          ),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: url == null || url.isEmpty
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.camera_alt_outlined,
                             color: AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            label,
+                            style: AppTypography.bodySmall
+                                .copyWith(fontWeight: FontWeight.w600)
+                                .copyWith(color: AppColors.onSurfaceVariant),
+                          ),
+                        ],
+                      )
+                    : Align(
+                        alignment: Alignment.bottomRight,
+                        child: GestureDetector(
+                          onTap: () => _showZoomModal(context, url, label),
+                          child: Container(
+                            margin: Spacing.paddingSm,
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.zoom_in,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
-                      ],
-                    )
-                  : Align(
-                      alignment: Alignment.bottomRight,
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.zoom_in,
-                            color: Colors.white, size: 16,),
                       ),
-                    ),
+              ),
             );
           },
         ),
@@ -212,16 +267,15 @@ class VehiclePhotosScreen extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: AppGradients.primary,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadows.primaryButton,
         ),
-        child: const Center(
-          child: Text('Back to Dashboard',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+        child: Center(
+          child: Text(
+            'Back to Dashboard',
+            style: AppTypography.labelLarge
+                .copyWith(fontWeight: FontWeight.w700)
+                .copyWith(color: Colors.white),
           ),
         ),
       ),

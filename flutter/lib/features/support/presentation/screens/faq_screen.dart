@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/models/support_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 
-class FaqScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class FaqScreen extends ConsumerStatefulWidget {
   const FaqScreen({super.key});
 
   @override
-  State<FaqScreen> createState() => _FaqScreenState();
+  ConsumerState<FaqScreen> createState() => _FaqScreenState();
 }
 
-class _FaqScreenState extends State<FaqScreen> {
+class _FaqScreenState extends ConsumerState<FaqScreen> {
   String _searchQuery = '';
   String _activeCategory = 'All';
   String? _expandedId;
@@ -34,9 +36,12 @@ class _FaqScreenState extends State<FaqScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final faqItems = context.select<AppProvider, List<FaqItem>>((p) => p.faqs);
+    final faqItems = ref.watch(supportProvider.select((p) => p.faqs));
 
-    final categories = ['All', ...faqItems.map((f) => f.category).toSet()];
+    final categories = <String>[
+      'All',
+      ...faqItems.map((f) => f.category).toSet()
+    ];
 
     final filteredFaqs = faqItems.where((f) {
       final matchesSearch =
@@ -131,7 +136,7 @@ class _FaqScreenState extends State<FaqScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -152,7 +157,7 @@ class _FaqScreenState extends State<FaqScreen> {
             key: const Key('backButton'),
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -166,18 +171,14 @@ class _FaqScreenState extends State<FaqScreen> {
               child: const Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Text(
+          SizedBox(width: 16),
+          Text(
             'Help & FAQ',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
           ),
         ],
       ),
@@ -188,7 +189,7 @@ class _FaqScreenState extends State<FaqScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -199,16 +200,15 @@ class _FaqScreenState extends State<FaqScreen> {
       ),
       child: TextFormField(
         onChanged: (v) => setState(() => _searchQuery = v),
-        decoration: const InputDecoration(
-          prefixIcon: Icon(Icons.search, color: AppColors.slate400, size: 18),
+        decoration: InputDecoration(
+          prefixIcon:
+              const Icon(Icons.search, color: AppColors.slate400, size: 18),
           hintText: 'Search help topics...',
-          hintStyle: TextStyle(
-            color: AppColors.slate400,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          hintStyle:
+              AppTypography.bodyMedium.copyWith(color: AppColors.slate400),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
     );
@@ -229,12 +229,11 @@ class _FaqScreenState extends State<FaqScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color:
-                                AppColors.primary.withValues(alpha: 0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -243,11 +242,8 @@ class _FaqScreenState extends State<FaqScreen> {
                 ),
                 child: Text(
                   cat,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : AppColors.slate500,
-                  ),
+                  style: AppTypography.labelMedium.copyWith(
+                      color: isSelected ? Colors.white : AppColors.slate500),
                 ),
               ),
             ),
@@ -265,22 +261,20 @@ class _FaqScreenState extends State<FaqScreen> {
           height: 64,
           width: 64,
           decoration: const BoxDecoration(
-            color: Color(0xFFEFF6FF),
+            color: AppColors.primarySurface,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.search, color: AppColors.primary, size: 24),
         ),
-        const SizedBox(height: 16),
-        const Text('No results found',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-          ),
+        SizedBox(height: 16),
+        Text(
+          'No results found',
+          style: AppTypography.titleSmall.copyWith(color: AppColors.slate800),
         ),
-        const Text(
+        Text(
           "We couldn't find any match for your search.",
-          style: TextStyle(fontSize: 13, color: AppColors.slate500),
+          style: GoogleFonts.plusJakartaSans(
+              fontSize: 13, color: AppColors.slate500),
         ),
       ],
     );
@@ -291,7 +285,7 @@ class _FaqScreenState extends State<FaqScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -301,11 +295,9 @@ class _FaqScreenState extends State<FaqScreen> {
                 setState(() => _expandedId = isExpanded ? null : faq.id),
             title: Text(
               faq.question,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
-              ),
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600)
+                  .copyWith(color: AppColors.slate800),
             ),
             trailing: AnimatedRotation(
               duration: const Duration(milliseconds: 300),
@@ -322,7 +314,7 @@ class _FaqScreenState extends State<FaqScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
                 faq.answer,
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   height: 1.5,
                   color: AppColors.slate500,
@@ -336,10 +328,10 @@ class _FaqScreenState extends State<FaqScreen> {
 
   Widget _buildContactSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -350,8 +342,8 @@ class _FaqScreenState extends State<FaqScreen> {
                 height: 40,
                 width: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primarySurface,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.message_outlined,
@@ -359,20 +351,20 @@ class _FaqScreenState extends State<FaqScreen> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
-              const Column(
+              SizedBox(width: 16),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Still need help?',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                  Text(
+                    'Still need help?',
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(color: AppColors.slate800),
                   ),
                   Text(
                     'Our team is available 24/7 for you.',
-                    style: TextStyle(fontSize: 11, color: AppColors.slate500),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12, color: AppColors.slate500),
                   ),
                 ],
               ),
@@ -387,8 +379,8 @@ class _FaqScreenState extends State<FaqScreen> {
                   child: _buildContactButton(
                     Icons.phone_outlined,
                     'Call Support',
-                    const Color(0xFFECFDF5),
-                    const Color(0xFF15803D),
+                    AppColors.successLight,
+                    AppColors.successDark,
                   ),
                 ),
               ),
@@ -399,8 +391,8 @@ class _FaqScreenState extends State<FaqScreen> {
                   child: _buildContactButton(
                     Icons.email_outlined,
                     'Email Us',
-                    const Color(0xFFF5F3FF),
-                    const Color(0xFF7C3AED),
+                    AppColors.accentPurpleSurface,
+                    AppColors.accentPurple,
                   ),
                 ),
               ),
@@ -418,21 +410,17 @@ class _FaqScreenState extends State<FaqScreen> {
     Color text,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+          color: bg, borderRadius: BorderRadius.circular(AppRadius.lg)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 14, color: text),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: text,
-            ),
+            style: AppTypography.labelMedium.copyWith(color: text),
           ),
         ],
       ),

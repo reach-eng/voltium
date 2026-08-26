@@ -23,6 +23,10 @@ async function checkPath(path: string) {
   return { path, exists: true, writable: true, created: !existedBefore };
 }
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function GET() {
   const start = Date.now();
 
@@ -47,12 +51,12 @@ export async function GET() {
     if (secondaryRoot.trim()) {
       try {
         secondary = await checkPath(secondaryRoot);
-      } catch (err: any) {
+      } catch (err: unknown) {
         secondary = {
           path: secondaryRoot,
           exists: existsSync(secondaryRoot),
           writable: false,
-          error: err?.message ?? 'Secondary backup path not writable',
+          error: errorMessage(err) || 'Secondary backup path not writable',
         };
       }
     }
@@ -72,13 +76,14 @@ export async function GET() {
       },
       { status: healthy ? 200 : 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = errorMessage(err);
     return NextResponse.json(
       {
         status: 'unhealthy',
         provider: 'local',
         latencyMs: Date.now() - start,
-        error: err?.message ?? 'Unknown error',
+        error: message || 'Unknown error',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

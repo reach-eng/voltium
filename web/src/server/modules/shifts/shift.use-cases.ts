@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 // ── Helper ─────────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ export const shiftUseCases = {
   async getShifts(hubId: string, date?: string) {
     let leaseDate = date;
     if (!leaseDate) {
-      leaseDate = new Date().toISOString().split('T')[0];
+      leaseDate = formatDateDDMMYYYY(new Date());
     }
     const hub = await db.hub.findUnique({
       where: { id: hubId },

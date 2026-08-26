@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export const adminFaqUseCases = {
   async list(params: { search?: string; category?: string; page?: number; limit?: number }) {
@@ -21,8 +22,8 @@ export const adminFaqUseCases = {
   ) {
     const faq = await db.faq.create({
       data: {
-        question: data.question,
-        answer: data.answer,
+        question: sanitizeHtml(data.question),
+        answer: sanitizeHtml(data.answer),
         category: data.category || null,
         order: data.order,
         isActive: data.isActive,
@@ -39,7 +40,14 @@ export const adminFaqUseCases = {
   },
 
   async update(id: string, data: Record<string, unknown>, actorId: string) {
-    const faq = await db.faq.update({ where: { id }, data });
+    const faq = await db.faq.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(data.question ? { question: sanitizeHtml(data.question as string) } : {}),
+        ...(data.answer ? { answer: sanitizeHtml(data.answer as string) } : {}),
+      },
+    });
     createAuditLog({
       actorId,
       action: 'faq.update',

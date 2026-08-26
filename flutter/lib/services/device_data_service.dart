@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -8,12 +8,10 @@ import 'voltium_api_service.dart';
 import 'consent_service.dart';
 import 'monitoring_service.dart';
 import '../core/platform/platform_info.dart';
+import '../utils/app_logger.dart';
 
-// Conditional imports for mobile-only packages
-// ignore: unused_import
 import 'package:flutter_contacts/flutter_contacts.dart' hide PermissionStatus;
-// ignore: unused_import
-import 'package:call_log/call_log.dart' show CallLog;
+import 'package:call_log/call_log.dart';
 
 class DeviceDataService {
   static final DeviceDataService _instance = DeviceDataService._internal();
@@ -39,12 +37,15 @@ class DeviceDataService {
           await Permission.location.status == PermissionStatus.granted,
       'batteryGranted': await Permission.ignoreBatteryOptimizations.status ==
           PermissionStatus.granted,
-      'contactsGranted': false,
-      'callLogsGranted': false,
-      'micGranted': false,
+      'contactsGranted':
+          await Permission.contacts.status == PermissionStatus.granted,
+      'callLogsGranted':
+          await Permission.phone.status == PermissionStatus.granted,
+      'micGranted':
+          await Permission.microphone.status == PermissionStatus.granted,
       'cameraGranted':
           await Permission.camera.status == PermissionStatus.granted,
-      'phoneGranted': false,
+      'phoneGranted': await Permission.phone.status == PermissionStatus.granted,
     };
   }
 
@@ -54,9 +55,9 @@ class DeviceDataService {
       final permissions = await getPermissionState();
       await VoltiumApiService()
           .syncPermissionState(riderId: riderId, permissions: permissions);
-      debugPrint('DeviceDataService: Permission state synced');
+      appDebug('DeviceDataService: Permission state synced');
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync permission state: $e');
+      appDebug('DeviceDataService: Failed to sync permission state: $e');
       MonitoringService.logError(e, null, reason: 'syncPermissionState');
     }
   }
@@ -64,7 +65,11 @@ class DeviceDataService {
   Future<void> syncLocation(String riderId) async {
     if (PlatformInfo.isWeb) return;
     if (!_isMobile) return;
-    if (!await ConsentService().hasConsent(ConsentType.location)) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.location)) return;
+    } catch (_) {
+      return;
+    }
 
     final granted =
         await Permission.location.status == PermissionStatus.granted;
@@ -88,35 +93,99 @@ class DeviceDataService {
           'isMocked': position.isMocked,
         },
       );
-      debugPrint('DeviceDataService: Location synced');
+      appDebug('DeviceDataService: Location synced');
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync location: $e');
+      appDebug('DeviceDataService: Failed to sync location: $e');
     }
   }
 
   Future<void> syncContacts(String riderId) async {
-    if (!await ConsentService().hasConsent(ConsentType.contacts)) return;
-    // Disabled for public beta privacy compliance
-    return;
+    if (PlatformInfo.isWeb) return;
+    if (!_isMobile) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.contacts)) return;
+
+      final granted =
+          await Permission.contacts.status == PermissionStatus.granted;
+      if (!granted) return;
+
+      final contacts = await FlutterContacts.getAll(
+          properties: {ContactProperty.phone, ContactProperty.email});
+      final mappedContacts = contacts
+          .take(200)
+          .map((c) => {
+                'name': c.displayName,
+                'phone': c.phones.isNotEmpty ? c.phones.first.number : '',
+                'email': c.emails.isNotEmpty ? c.emails.first.address : null,
+              })
+          .where((c) => c['phone'] != '')
+          .toList();
+
+      if (mappedContacts.isNotEmpty) {
+        await VoltiumApiService().syncDeviceData(
+          type: 'CONTACTS',
+          data: mappedContacts,
+        );
+        appDebug(
+            'DeviceDataService: Synced \${mappedContacts.length} contacts');
+      }
+    } catch (e) {
+      appDebug('DeviceDataService: Failed to sync contacts: $e');
+    }
   }
 
   Future<void> syncCallLogs(String riderId) async {
-    if (!await ConsentService().hasConsent(ConsentType.callLogs)) return;
-    // Disabled for public beta privacy compliance
-    return;
+    if (PlatformInfo.isWeb) return;
+    if (!_isMobile) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.callLogs)) return;
+
+      final granted = await Permission.phone.status == PermissionStatus.granted;
+      if (!granted) return;
+
+      final Iterable<CallLogEntry> entries = await CallLog.get();
+      final mappedLogs = entries
+          .take(100)
+          .map((e) => {
+                'number': e.number ?? '',
+                'name': e.name ?? '',
+                'type': e.callType?.toString().split('.').last.toUpperCase() ??
+                    'UNKNOWN',
+                'duration': e.duration ?? 0,
+                'timestamp':
+                    DateTime.fromMillisecondsSinceEpoch(e.timestamp ?? 0)
+                        .toIso8601String(),
+              })
+          .where((e) => e['number'] != '')
+          .toList();
+
+      if (mappedLogs.isNotEmpty) {
+        await VoltiumApiService().syncDeviceData(
+          type: 'CALL_LOGS',
+          data: mappedLogs,
+        );
+        appDebug('DeviceDataService: Synced \${mappedLogs.length} call logs');
+      }
+    } catch (e) {
+      appDebug('DeviceDataService: Failed to sync call logs: $e');
+    }
   }
 
   Future<void> syncAll(String riderId) async {
-    await Future.wait(
-      [
-        syncPermissionState(riderId),
-        syncLocation(riderId),
-        syncContacts(riderId),
-        syncCallLogs(riderId),
-      ],
-      eagerError: false,
-    );
+    try {
+      await Future.wait(
+        [
+          syncPermissionState(riderId),
+          syncLocation(riderId),
+          syncContacts(riderId),
+          syncCallLogs(riderId),
+        ],
+        eagerError: false,
+      );
+    } catch (e) {
+      appDebug('DeviceDataService: syncAll failed: $e');
+    }
 
-    debugPrint('DeviceDataService: syncAll completed');
+    appDebug('DeviceDataService: syncAll completed');
   }
 }

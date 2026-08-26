@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Voltium Design System Tokens",
+  "version": "1.0.0",
+  "tokens": {
+    "colors": {
+      "primitive": {
+        "blue500": "#0053C1",
+        "voltCyan": "#00E5FF",
+        "slate900": "#0F172A",
+        "slate500": "#64748B",
+        "emerald500": "#10B981",
+        "amber500": "#F59E0B",
+        "rose500": "#EF4444"
+      },
+      "semantic": {
+        "light": {
+          "actionPrimary": "#0053C1",
+          "voltAccent": "#00E5FF",
+          "statusInfo": "#3B82F6",
+          "statusNeutral": "#64748B",
+          "statusSuccess": "#10B981",
+          "statusWarning": "#F59E0B",
+          "statusError": "#EF4444"
+        },
+        "dark": {
+          "actionPrimary": "#0053C1",
+          "voltAccent": "#00E5FF",
+          "statusInfo": "#60A5FA",
+          "statusNeutral": "#94A3B8",
+          "statusSuccess": "#34D399",
+          "statusWarning": "#FBBF24",
+          "statusError": "#F87171"
+        }
+      }
+    },
+    "spacing": {
+      "xxs": 2,
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32,
+      "xxl": 48
+    },
+    "radii": {
+      "xxs": 2,
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 24,
+      "xxl": 32,
+      "full": 9999
+    },
+    "shadows": {
+      "sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
+      "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
+      "lg": "0 10px 15px rgba(0, 0, 0, 0.1)"
+    },
+    "typography": {
+      "displayLarge": { "fontSize": 40, "fontWeight": 800, "letterSpacing": -1.0 },
+      "displayMedium": { "fontSize": 32, "fontWeight": 800, "letterSpacing": -0.8 },
+      "headingLarge": { "fontSize": 28, "fontWeight": 800, "letterSpacing": -0.5 },
+      "headingMedium": { "fontSize": 24, "fontWeight": 700, "letterSpacing": -0.4 },
+      "headingSmall": { "fontSize": 20, "fontWeight": 700, "letterSpacing": -0.3 },
+      "titleLarge": { "fontSize": 18, "fontWeight": 700, "letterSpacing": -0.2 },
+      "titleMedium": { "fontSize": 16, "fontWeight": 600, "letterSpacing": -0.1 },
+      "titleSmall": { "fontSize": 14, "fontWeight": 600, "letterSpacing": 0 },
+      "bodyLarge": { "fontSize": 16, "fontWeight": 500, "letterSpacing": 0 },
+      "bodyMedium": { "fontSize": 14, "fontWeight": 400, "letterSpacing": 0 },
+      "bodySmall": { "fontSize": 12, "fontWeight": 400, "letterSpacing": 0 },
+      "labelLarge": { "fontSize": 14, "fontWeight": 600, "letterSpacing": 0 },
+      "labelMedium": { "fontSize": 12, "fontWeight": 600, "letterSpacing": 0 },
+      "labelSmall": { "fontSize": 11, "fontWeight": 600, "letterSpacing": 0 },
+      "utilityMono": { "fontSize": 14, "fontWeight": 500, "letterSpacing": 0 },
+      "utilityCaption": { "fontSize": 12, "fontWeight": 500, "letterSpacing": 0 },
+      "codeLarge": { "fontSize": 24, "fontWeight": 700, "letterSpacing": 2.0 },
+      "codeMedium": { "fontSize": 18, "fontWeight": 600, "letterSpacing": 1.0 },
+      "overline": { "fontSize": 10, "fontWeight": 800, "letterSpacing": 1.0 }
+    }
+  }
+}

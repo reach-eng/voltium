@@ -195,8 +195,11 @@ void main() {
 
     testWidgets('Full onboarding chain → dashboard', (tester) async {
       final reachedDashboard = await fullLoginFlow(tester);
-      expect(reachedDashboard, isTrue,
-          reason: 'Should reach dashboard after full onboarding',);
+      expect(
+        reachedDashboard,
+        isTrue,
+        reason: 'Should reach dashboard after full onboarding',
+      );
     });
   });
 }

@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { parseDDMMYYYY } from '@/lib/date-utils';
 import { logAdminAction } from '@/server/modules/admin/admin.policy';
 import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
 import { DepositStateError } from '@/lib/services/deposit-service';
@@ -15,8 +16,15 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const status = url.searchParams.get('status') || '';
     const riderId = url.searchParams.get('riderId') || '';
-    const startDate = url.searchParams.get('startDate') || '';
-    const endDate = url.searchParams.get('endDate') || '';
+    // Accept both DD-MM-YYYY (canonical) and ISO 8601 (legacy).
+    const startDateRaw = url.searchParams.get('startDate') || '';
+    const endDateRaw = url.searchParams.get('endDate') || '';
+    const startDate = startDateRaw
+      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
+      : '';
+    const endDate = endDateRaw
+      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
+      : '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
@@ -29,7 +37,7 @@ export async function GET(req: NextRequest) {
       limit,
     });
 
-    return success(result.records, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.records, undefined, 200, result.pagination), 5);
   } catch (err) {
     return errors.internal('Failed to fetch deposit records');
   }
@@ -107,7 +115,7 @@ export async function PUT(req: NextRequest) {
         );
     }
   } catch (err) {
-    if (err instanceof DepositStateError) return errors.conflict(err.message);
+    if (err instanceof DepositStateError) return errors.conflict((err instanceof Error ? err.message : String(err)));
     return errors.internal('Failed to process deposit action');
   }
 }

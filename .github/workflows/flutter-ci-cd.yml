@@ -30,6 +30,9 @@ on:
           - '33'
           - '34'
 
+permissions:
+  contents: read
+
 env:
   FLUTTER_VERSION: '3.41.4'
 
@@ -37,19 +40,21 @@ jobs:
   analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./flutter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: flutter/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
@@ -73,23 +78,32 @@ jobs:
       - name: Run Flutter analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Run design system lint
+        # Ticket #32: design-system gate. Catches raw `Color(0xFF...)` in
+        # non-theme files, off-grid `EdgeInsets.all(N)`, and off-grid
+        # `BorderRadius.circular(N)`. Bypass with `ALLOW_DESIGN_LINT=1` only
+        # in emergencies; that env var is checked inside the script.
+        run: bash flutter/scripts/lint-design-system.sh
+
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [analyze]
     defaults:
       run:
         working-directory: ./flutter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: flutter/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
@@ -105,20 +119,22 @@ jobs:
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [analyze]
     defaults:
       run:
         working-directory: ./flutter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: flutter/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
@@ -132,7 +148,7 @@ jobs:
         run: flutter build apk --debug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: voltium-debug.apk
           path: flutter/build/app/outputs/flutter-apk/app-debug.apk
@@ -140,6 +156,8 @@ jobs:
   e2e-test:
     name: Flutter E2E Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [build-debug]
 
     strategy:
@@ -150,7 +168,7 @@ jobs:
       run:
         working-directory: ./flutter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Start PostgreSQL Service
         run: |
@@ -159,7 +177,7 @@ jobs:
           sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
           sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -176,13 +194,13 @@ jobs:
         env:
           DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
 
       - name: Cache Flutter dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: flutter/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
@@ -203,7 +221,7 @@ jobs:
           JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
 
       - name: Run Flutter integration tests
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@70f4dee990796918b78d040e3278474bdbd348a7 # v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
@@ -214,13 +232,11 @@ jobs:
           working-directory: ./flutter
           script: |
             adb reverse tcp:8081 tcp:8081
-            flutter test integration_test/app_test.dart \
-              --dart-define=API_URL=http://localhost:8081 \
-              --timeout=none
+            bash integration_test/e2e_individual/run_phased_tests.sh emulator-5554
 
       - name: Upload test screenshots
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-test-screenshots
           path: flutter/screenshots/
@@ -228,7 +244,7 @@ jobs:
 
       - name: Upload test logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-test-logs
           path: flutter/test-results/
@@ -237,21 +253,23 @@ jobs:
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [build-debug, e2e-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     defaults:
       run:
         working-directory: ./flutter
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
 
       - name: Cache dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: flutter/.dart_tool
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
@@ -281,10 +299,35 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Build Release APK
-        run: flutter build apk --release
+        # PR-28 (Rider N6): --split-per-abi produces 3 per-ABI APKs (~14MB each)
+        # instead of a single universal APK (~35MB). Output files:
+        #   app-arm64-v8a-release.apk    — real devices
+        #   app-armeabi-v7a-release.apk  — older ARMv7 devices
+        #   app-x86_64-release.apk       — emulators
+        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols/
 
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
+      - name: Upload Release APKs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: voltium-release.apk
-          path: flutter/build/app/outputs/flutter-apk/app-release.apk
+          path: flutter/build/app/outputs/flutter-apk/*-release.apk
+
+      - name: Clean up keystore
+        if: always()
+        run: |
+          # Overwrite keystore with random bytes before deletion (defense in depth)
+          if [ -f android/app/voltium-release.jks ]; then
+            dd if=/dev/urandom of=android/app/voltium-release.jks bs=1M count=1 2>/dev/null || true
+            rm -f android/app/voltium-release.jks
+          fi
+          rm -f android/app/key.properties
+
+          # Verify cleanup actually happened (defense against silent partial cleanup)
+          REMAINING=""
+          [ -f android/app/voltium-release.jks ] && REMAINING="$REMAINING voltium-release.jks"
+          [ -f android/app/key.properties ]     && REMAINING="$REMAINING key.properties"
+          if [ -n "$REMAINING" ]; then
+            echo "::error:: Keystore cleanup incomplete — files still on disk:$REMAINING"
+            exit 1
+          fi
+          echo "Keystore and key.properties cleaned up and verified gone."

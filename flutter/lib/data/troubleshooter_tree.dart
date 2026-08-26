@@ -149,7 +149,8 @@ final Map<String, TroubleshooterNode> _tree = {
   ),
   'battery_dead': TroubleshooterNode(
     id: 'battery_dead',
-    question: 'Is the charging cable properly connected to both the vehicle and power outlet?',
+    question:
+        'Is the charging cable properly connected to both the vehicle and power outlet?',
     yesNodeId: 'battery_dead_connected',
     noNodeId: 'battery_connect',
   ),
@@ -409,8 +410,7 @@ final Map<String, TroubleshooterNode> _tree = {
     id: 'tires_pressure',
     question: '',
     isLeaf: true,
-    resolution:
-        'Tires may need inflation. Recommended pressure is 30-35 PSI. '
+    resolution: 'Tires may need inflation. Recommended pressure is 30-35 PSI. '
         'Please inflate and check again. If the issue persists, contact support.',
     resolutionType: 'SUCCESS',
     category: 'tires',

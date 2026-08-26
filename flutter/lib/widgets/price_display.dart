@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import '../theme/app_theme.dart';
 
 class PriceDisplay extends StatefulWidget {
   final double price;
@@ -72,11 +75,7 @@ class _PriceDisplayState extends State<PriceDisplay>
       builder: (context, child) {
         return Text(
           _formatPrice(_animation.value),
-          style: widget.textStyle ??
-              const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+          style: widget.textStyle ?? AppTypography.headingMedium,
         );
       },
     );
@@ -148,11 +147,7 @@ class _AnimatedPriceCounterState extends State<AnimatedPriceCounter>
       builder: (context, child) {
         return Text(
           '${widget.currency}${_formatNumber(_animation.value)}',
-          style: widget.textStyle ??
-              const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+          style: widget.textStyle ?? AppTypography.headingLarge,
         );
       },
     );
@@ -173,7 +168,7 @@ class PriceTag extends StatelessWidget {
     required this.price,
     this.currency = '\$',
     this.originalPrice,
-    this.discountColor = Colors.red,
+    this.discountColor = AppColors.error,
     this.priceStyle,
     this.originalPriceStyle,
     this.discountStyle,
@@ -192,38 +187,32 @@ class PriceTag extends StatelessWidget {
       children: [
         Text(
           '$currency${price.toStringAsFixed(2)}',
-          style: priceStyle ??
-              const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+          style: priceStyle ?? AppTypography.titleLarge,
         ),
         if (hasDiscount) ...[
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             '$currency${originalPrice!.toStringAsFixed(2)}',
             style: originalPriceStyle ??
-                const TextStyle(
+                GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   decoration: TextDecoration.lineThrough,
-                  color: Colors.grey,
+                  color: AppColors.onSurfaceVariant,
                 ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: discountColor,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
             ),
             child: Text(
               '-$discountPercent%',
               style: discountStyle ??
-                  const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  AppTypography.labelSmall
+                      .copyWith(fontSize: 10)
+                      .copyWith(color: Colors.white),
             ),
           ),
         ],
@@ -291,20 +280,16 @@ class _PriceChangeIndicatorState extends State<PriceChangeIndicator>
           children: [
             Text(
               '${widget.currency}${_animation.value.toStringAsFixed(2)}',
-              style: widget.textStyle ??
-                  const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: widget.textStyle ?? AppTypography.titleMedium,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: isPositive
-                    ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -312,15 +297,13 @@ class _PriceChangeIndicatorState extends State<PriceChangeIndicator>
                   Icon(
                     isPositive ? Icons.arrow_upward : Icons.arrow_downward,
                     size: 12,
-                    color: isPositive ? Colors.green : Colors.red,
+                    color: isPositive ? AppColors.success : AppColors.error,
                   ),
                   Text(
                     '$percentChange%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isPositive ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.labelMedium.copyWith(
+                        color:
+                            isPositive ? AppColors.success : AppColors.error),
                   ),
                 ],
               ),

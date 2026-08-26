@@ -1,26 +1,28 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/providers/app_provider.dart';
-import 'top_up_purpose_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
+
 import 'top_up_amount_screen.dart';
 import 'top_up_proof_screen.dart';
 
-class TopUpFlow extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
+
+class TopUpFlow extends ConsumerStatefulWidget {
   const TopUpFlow({super.key});
 
   @override
-  State<TopUpFlow> createState() => _TopUpFlowState();
+  ConsumerState<TopUpFlow> createState() => _TopUpFlowState();
 }
 
-class _TopUpFlowState extends State<TopUpFlow> {
+class _TopUpFlowState extends ConsumerState<TopUpFlow> {
   final PageController _pageController = PageController();
 
   int _amount = 2000;
   File? _proofImage;
-  // ignore: unused_field
-  TopUpPurpose _purpose = TopUpPurpose.topUp;
+  int _currentPage = 0;
 
   void _nextPage() {
     _pageController.nextPage(
@@ -44,60 +46,104 @@ class _TopUpFlowState extends State<TopUpFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          TopUpPurposeScreen(
-            onBack: () => Navigator.pop(context),
-            onPurposeSelected: (purpose) => setState(() => _purpose = purpose),
-            onContinue: (purpose) {
-              setState(() => _purpose = purpose);
-              _nextPage();
-            },
-          ),
-          TopUpAmountScreen(
-            onBack: _prevPage,
-            onAmountChanged: (amount) => setState(() => _amount = amount),
-            onProceed: (amount) {
-              setState(() => _amount = amount);
-              _nextPage();
-            },
-          ),
-          TopUpProofScreen(
-            amount: _amount,
-            onBack: _prevPage,
-            onEditAmount: _prevPage,
-            onImageSelected: (img) => setState(() => _proofImage = img),
-            onSubmit: (img) async {
-              setState(() => _proofImage = img);
-              final provider = Provider.of<AppProvider>(context, listen: false);
+    return PopScope(
+      canPop: _currentPage == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _currentPage > 0) {
+          _prevPage();
+        }
+      },
+      child: Scaffold(
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          onPageChanged: (page) => setState(() => _currentPage = page),
+          children: [
+            TopUpAmountScreen(
+              securityDeposit: ref
+                  .watch(riderProvider)
+                  .rider
+                  ?.activeRentalPlanSecurityDeposit
+                  .toInt(),
+              rentalPrice:
+                  ref.watch(riderProvider).rider?.activeRentalPlanPrice.toInt(),
+              onBack: () => Navigator.pop(context),
+              onAmountChanged: (amount) => setState(() => _amount = amount),
+              onProceed: (amount) {
+                setState(() => _amount = amount);
+                PostHogService.capture('wallet_top_up_initiated', properties: {
+                  'amount': amount.toString(),
+                });
+                _nextPage();
+              },
+            ),
+            TopUpProofScreen(
+              amount: _amount,
+              onBack: _prevPage,
+              onEditAmount: _prevPage,
+              onImageSelected: (img) => setState(() => _proofImage = img),
+              onSubmit: (img, method, upiRef) async {
+                setState(() => _proofImage = img);
+                final wProvider = ref.read(walletProvider.notifier);
 
-              try {
-                await provider.topUpWallet(
-                  amount: _amount.toDouble(),
-                  method: 'CASH',
-                  upiRef: 'OFFLINE_PAYMENT',
-                  image: _proofImage,
-                );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Top-up proof submitted successfully!'),),
+                try {
+                  await wProvider.topUpWallet(
+                    riderId: ref.read(riderProvider).riderId!,
+                    amount: _amount.toDouble(),
+                    method: method ?? 'CASH',
+                    upiRef: upiRef,
+                    image: _proofImage,
                   );
+                  await ref.read(riderProvider.notifier).refreshFromApi();
+                  final securityDeposit = ref
+                      .read(riderProvider)
+                      .rider
+                      ?.activeRentalPlanSecurityDeposit
+                      .toInt();
+                  final isDeposit =
+                      securityDeposit != null && _amount == securityDeposit;
+                  PostHogService.capture('wallet_top_up_submitted',
+                      properties: {
+                        'amount': _amount.toString(),
+                        'has_proof_image': (_proofImage != null).toString(),
+                        'is_deposit': isDeposit.toString(),
+                      });
+                  if (isDeposit) {
+                    PostHogService.capture('deposit_submitted', properties: {
+                      'amount': _amount.toString(),
+                    });
+                  }
+                  if (context.mounted) {
+                    final nav = Navigator.of(context);
+                    nav.pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            const Text('Top-up proof submitted successfully!'),
+                        action: SnackBarAction(
+                          label: 'Rate Us',
+                          textColor: Colors.white,
+                          onPressed: () {
+                            nav.push(MaterialPageRoute(
+                              builder: (ctx) => FeedbackScreen(
+                                  onSubmit: () => Navigator.pop(ctx)),
+                            ));
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed: $e')),
+                    );
+                  }
                 }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

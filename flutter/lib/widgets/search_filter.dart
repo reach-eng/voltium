@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SearchBar extends StatefulWidget {
   final String hintText;
@@ -51,25 +52,26 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outline),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.outline),
       ),
       child: Row(
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.search, color: Color(0xFF667085), size: 20),
-          ),
+          Icon(Icons.search, color: colors.onSurfaceMuted, size: 20),
+          const SizedBox(width: 8),
           Expanded(
             child: TextFormField(
               controller: _controller,
+              style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
               decoration: InputDecoration(
                 hintText: widget.hintText,
-                hintStyle: const TextStyle(color: AppColors.onSurfaceDisabled),
+                hintStyle:
+                    GoogleFonts.plusJakartaSans(color: colors.onSurfaceMuted),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -77,7 +79,7 @@ class _SearchBarState extends State<SearchBar> {
           ),
           if (_hasText)
             IconButton(
-              icon: const Icon(Icons.clear, size: 20, color: Color(0xFF667085)),
+              icon: Icon(Icons.clear, size: 20, color: colors.onSurfaceMuted),
               onPressed: () {
                 _controller.clear();
                 widget.onClear?.call();
@@ -103,6 +105,7 @@ class FilterChipList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -114,12 +117,11 @@ class FilterChipList extends StatelessWidget {
               label: Text(item),
               selected: isSelected,
               onSelected: (_) => onSelected(item),
-              selectedColor: AppColors.primaryLighter,
+              selectedColor: colors.primarySurface,
               checkmarkColor: AppColors.primary,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.onSurfaceVariant,
+              backgroundColor: colors.card,
+              labelStyle: GoogleFonts.plusJakartaSans(
+                color: isSelected ? AppColors.primary : colors.onSurfaceVariant,
               ),
             ),
           );
@@ -143,21 +145,25 @@ class SortDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.outline),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: colors.outline),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          icon: const Icon(Icons.sort, size: 20, color: Color(0xFF667085)),
+          dropdownColor: colors.card,
+          icon: Icon(Icons.sort, size: 20, color: colors.onSurfaceMuted),
           items: options.map((option) {
             return DropdownMenuItem(
               value: option,
-              child: Text(option, style: const TextStyle(fontSize: 14)),
+              child: Text(option,
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14, color: colors.onSurface)),
             );
           }).toList(),
           onChanged: onChanged,

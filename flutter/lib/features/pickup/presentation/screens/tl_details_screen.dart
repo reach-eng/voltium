@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class TlDetailsScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+
+class TlDetailsScreen extends ConsumerWidget {
   const TlDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(riderProvider).rider;
     final tlName = (rider?.teamLeader == null ||
             rider!.teamLeader!.isEmpty ||
             rider.teamLeader == 'Not Assigned')
-        ? 'Amit Sharma'
+        ? 'Not assigned'
         : rider.teamLeader!;
     final tlPhone =
         (rider?.emergencyContact == null || rider!.emergencyContact!.isEmpty)
-            ? '+91 98765 12345'
+            ? ''
             : rider.emergencyContact!;
 
     return Scaffold(
@@ -65,17 +67,19 @@ class TlDetailsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: AppColors.onSurface,),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: AppColors.onSurface,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
-          Text('Team Leader',
-            style: GoogleFonts.inter(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+          SizedBox(width: 16),
+          Text(
+            'Team Leader',
+            style: AppTypography.titleLarge
+                .copyWith(fontSize: 21)
+                .copyWith(color: AppColors.onSurface),
           ),
         ],
       ),
@@ -84,7 +88,7 @@ class TlDetailsScreen extends StatelessWidget {
 
   Widget _buildTLProfileCard(String name) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -98,22 +102,18 @@ class TlDetailsScreen extends StatelessWidget {
             child:
                 Icon(Icons.person, size: 48, color: AppColors.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             name,
-            style: GoogleFonts.inter(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.onSurface,
-            ),
+            style:
+                AppTypography.headingSmall.copyWith(color: AppColors.onSurface),
           ),
-          const SizedBox(height: 4),
-          Text('Assigned Team Leader',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
+          SizedBox(height: 4),
+          Text(
+            'Assigned Team Leader',
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13)
+                .copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
       ),
@@ -122,39 +122,37 @@ class TlDetailsScreen extends StatelessWidget {
 
   Widget _buildContactCard(String phone) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
-          const Icon(Icons.phone_outlined, color: Color(0xFF2563EB), size: 20),
-          const SizedBox(width: 16),
+          const Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               phone,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
-              ),
+              style:
+                  AppTypography.bodyLarge.copyWith(color: AppColors.onSurface),
             ),
           ),
           GestureDetector(
             onTap: () async {
-              final uri = Uri.parse('tel:$phone');
+              final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+              final uri = Uri.parse('tel:$sanitized');
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri);
               }
             },
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: Spacing.paddingSm,
               decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.successLight,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(Icons.call, color: Color(0xFF16A34A), size: 18),
+              child: const Icon(Icons.call, color: AppColors.success, size: 18),
             ),
           ),
         ],
@@ -164,22 +162,22 @@ class TlDetailsScreen extends StatelessWidget {
 
   Widget _buildInfoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.infoLight),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: Color(0xFF2563EB)),
-          const SizedBox(width: 12),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: const Color(0xFF1D4ED8),
+                color: AppColors.primaryDark,
                 height: 1.5,
               ),
             ),
@@ -195,7 +193,7 @@ class TlDetailsScreen extends StatelessWidget {
         _buildActionBtn(
           label: 'Change Team Leader',
           icon: Icons.swap_horiz,
-          color: const Color(0xFFDC2626),
+          color: AppColors.error,
           onTap: () {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -230,7 +228,7 @@ class TlDetailsScreen extends StatelessWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.3),
@@ -243,14 +241,10 @@ class TlDetailsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              style: AppTypography.labelLarge.copyWith(color: Colors.white),
             ),
           ],
         ),

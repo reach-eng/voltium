@@ -10,10 +10,12 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { parseDDMMYYYY } from '@/lib/date-utils';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 
 /**
@@ -50,6 +52,7 @@ const updateRiderSchema = z.object({
   kycStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']).optional(),
   profilePhoto: z.string().url().optional().or(z.literal('')),
   riderPhoto: z.string().url().optional().or(z.literal('')),
+  riderVideo: z.string().url().optional().or(z.literal('')),
   signature: z.string().url().optional().or(z.literal('')),
   aadhaarFront: z.string().url().optional().or(z.literal('')),
   aadhaarBack: z.string().url().optional().or(z.literal('')),
@@ -62,6 +65,7 @@ const updateRiderSchema = z.object({
   accountNumber: z.string().max(30).optional(),
   ifscCode: z.string().max(11).optional(),
   rejectionReason: z.string().max(500).optional(),
+  editableFields: z.array(z.string()).optional(),
   // Wallet fields
   walletBalance: z.number().optional(),
   // Guarantor fields
@@ -102,26 +106,52 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get('search') || '';
     const state = url.searchParams.get('state') || '';
     const kycStatus = url.searchParams.get('kycStatus') || '';
-    const startDate = url.searchParams.get('startDate') || '';
-    const endDate = url.searchParams.get('endDate') || '';
+    const startDateRaw = url.searchParams.get('startDate') || '';
+    const endDateRaw = url.searchParams.get('endDate') || '';
+    const startDate = startDateRaw
+      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
+      : '';
+    const endDate = endDateRaw
+      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
+      : '';
+    const cursor = url.searchParams.get('cursor') || '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '20'));
     const sortBy = url.searchParams.get('sortBy') || 'createdAt';
     const sortDir = url.searchParams.get('sortDir') || 'desc';
 
-    const result = await adminRiderUseCases.list({
+    const cacheKey = [
+      'admin:riders',
+      session.adminId ?? session.riderDbId ?? 'anon',
       search,
       state,
       kycStatus,
       startDate,
       endDate,
+      cursor,
       page,
       limit,
       sortBy,
       sortDir,
-    });
+    ].join(':');
 
-    return success(result);
+    const result = await getOrSetResponse(cacheKey, () =>
+      adminRiderUseCases.list({
+        search,
+        state,
+        kycStatus,
+        startDate,
+        endDate,
+        cursor: cursor || undefined,
+        page,
+        limit,
+        sortBy,
+        sortDir,
+      }),
+      5
+    );
+
+    return withCacheHeaders(success(result), 5);
   } catch (error) {
     logger.error('Riders list error:', error);
     return errors.internal('Failed to fetch riders');
@@ -141,10 +171,11 @@ export async function POST(req: NextRequest) {
     const { phone, fullName } = body;
 
     const result = await adminRiderUseCases.create({ phone, fullName });
+    invalidateCache('admin:*');
     return success(result);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('already exists')) {
-      return errors.conflict(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Create rider error:', error);
     return errors.internal('Failed to create rider');
@@ -164,7 +195,7 @@ export async function PUT(req: NextRequest) {
     const parsed = updateRiderSchema.safeParse(raw);
     if (!parsed.success) {
       return errors.badRequest(
-        parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${e.message}`).join('; ')
+        parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${(e instanceof Error ? e.message : String(e))}`).join('; ')
       );
     }
     const { id, ...data } = parsed.data;
@@ -176,10 +207,11 @@ export async function PUT(req: NextRequest) {
       actorRole: session.adminRole || '',
     });
 
+    invalidateCache('admin:*');
     return success(result);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('not found')) {
-      return errors.notFound(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
+      return errors.notFound((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Update rider error:', error);
     return errors.internal('Failed to update rider');
@@ -199,6 +231,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return errors.badRequest('ID required');
 
     await adminRiderUseCases.delete(id);
+    invalidateCache('admin:*');
     return success(null, 'Rider deleted');
   } catch (error) {
     logger.error('Delete rider error:', error);

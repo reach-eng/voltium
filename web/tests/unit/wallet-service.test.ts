@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 vi.mock('@/lib/db', () => ({ db: {} }));
-import { WalletServiceError } from '@/lib/services/wallet-service';
+import { WalletServiceError } from '@/server/modules/wallet/wallet.errors';
 
 // ---------------------------------------------------------------------------
 // Wallet Ledger Semantics (pure logic)
@@ -128,13 +128,14 @@ describe('File Service — MIME type validation rules', () => {
   it('rejects unsupported MIME types for kyc_document', async () => {
     const { FILE_UPLOAD_RULES } = await import('@/server/modules/files/files.types');
     const rule = FILE_UPLOAD_RULES.kyc_document;
-    expect(rule.allowedMimeTypes).not.toContain('video/mp4');
+    expect(rule.allowedMimeTypes).toContain('video/mp4');
+    expect(rule.allowedMimeTypes).toContain('video/quicktime');
     expect(rule.allowedMimeTypes).not.toContain('image/gif');
   });
 
   it('has correct max file sizes per category', async () => {
     const { FILE_UPLOAD_RULES } = await import('@/server/modules/files/files.types');
-    expect(FILE_UPLOAD_RULES.kyc_document.maxSizeBytes).toBe(5 * 1024 * 1024);
+    expect(FILE_UPLOAD_RULES.kyc_document.maxSizeBytes).toBe(25 * 1024 * 1024);
     expect(FILE_UPLOAD_RULES.profile_photo.maxSizeBytes).toBe(2 * 1024 * 1024);
     expect(FILE_UPLOAD_RULES.vehicle_photo.maxSizeBytes).toBe(5 * 1024 * 1024);
     expect(FILE_UPLOAD_RULES.payment_proof.maxSizeBytes).toBe(5 * 1024 * 1024);

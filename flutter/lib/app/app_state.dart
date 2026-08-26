@@ -1,14 +1,13 @@
 enum AuthState {
   splash,
   legal,
-  privacyConsent,
   permissions,
   login,
   otp,
   intent,
   userForm,
   guarantorForm,
-  authChoice,
+
   dashboard,
   preDashboard,
   choosePlan,
@@ -20,12 +19,12 @@ enum AuthState {
   endRental,
   faq,
   vehiclePhotos,
-  topUpPurpose,
   topUpAmount,
   topUpUpi,
   topUpProof,
   topUpReceipt,
   referralDetails,
   legalPage,
-  myDocuments
+  myDocuments,
+  accountClosed,
 }

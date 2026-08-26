@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SortableColumn {
   final String label;
@@ -123,19 +124,19 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     return Column(
       children: [
         if (widget.showSearch)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: Spacing.paddingMd,
             child: TextFormField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: widget.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -156,30 +157,26 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
           ),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
-                color:
-                    isDark ? const Color(0xFF334155) : AppColors.outlineVariant,),
+              color: colors.outlineVariant,
+            ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 headingRowColor: WidgetStateProperty.all(
-                  isDark ? const Color(0xFF1E293B) : AppColors.surfaceAlt,
+                  colors.surface,
                 ),
-                headingTextStyle: TextStyle(
+                headingTextStyle: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.iconBackground
-                      : AppColors.onSurface,
+                  color: colors.onSurface,
                 ),
-                dataTextStyle: TextStyle(
-                  color: isDark
-                      ? AppColors.iconBackground
-                      : AppColors.onSurface,
+                dataTextStyle: GoogleFonts.plusJakartaSans(
+                  color: colors.onSurface,
                 ),
                 columnSpacing: 24,
                 horizontalMargin: 16,
@@ -218,7 +215,7 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
         ),
         if (_sortedData.isEmpty && widget.emptyWidget != null)
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             child: widget.emptyWidget,
           ),
       ],
@@ -263,11 +260,11 @@ class _PaginatedDataTableWidgetState<T>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: PaginatedDataTable(
         header: null,
@@ -358,14 +355,16 @@ class FilterChipBar extends StatelessWidget {
             onSelected: (_) => onFilterSelected(null),
           ),
           const SizedBox(width: 8),
-          ...filters.map((filter) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(filter),
-                  selected: selectedFilter == filter,
-                  onSelected: (_) => onFilterSelected(filter),
-                ),
-              ),),
+          ...filters.map(
+            (filter) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(filter),
+                selected: selectedFilter == filter,
+                onSelected: (_) => onFilterSelected(filter),
+              ),
+            ),
+          ),
         ],
       ),
     );

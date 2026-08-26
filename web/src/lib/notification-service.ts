@@ -18,21 +18,21 @@ export const notificationService = {
     data: Record<string, string> = {}
   ) {
     try {
-      // 1. Save to database
-      await db.notification.create({
-        data: {
-          riderId,
-          title,
-          message,
-          type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
-        },
-      });
-
-      // 2. Fetch rider FCM token
-      const rider = await db.rider.findUnique({
-        where: { id: riderId },
-        select: { fcmToken: true },
-      });
+      // 1 & 2. Save notification to DB and fetch rider FCM token concurrently in single parallel round-trip
+      const [_, rider] = await Promise.all([
+        db.notification.create({
+          data: {
+            riderId,
+            title,
+            message,
+            type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+          },
+        }),
+        db.rider.findUnique({
+          where: { id: riderId },
+          select: { fcmToken: true },
+        }),
+      ]);
 
       if (rider?.fcmToken) {
         // 3. Send via FCM

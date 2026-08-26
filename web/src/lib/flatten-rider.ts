@@ -42,33 +42,33 @@ export function flattenRider(rider: RiderWithRelations) {
     NEW: 0,
     PHONE_VERIFIED: 1,
     PROFILE_SUBMITTED: 2,
-    KYC_SUBMITTED: 3,
-    KYC_APPROVED: 4,
-    GUARANTOR_SUBMITTED: 5,
-    GUARANTOR_APPROVED: 6,
-    DEPOSIT_PENDING: 7,
-    DEPOSIT_APPROVED: 8,
-    PLAN_SELECTED: 9,
-    PICKUP_SCHEDULED: 10,
-    ACTIVE: 11,
-    SUSPENDED: 12,
-    RETURN_PENDING: 13,
-    CLOSED: 14,
+    GUARANTOR_SUBMITTED: 3,
+    GUARANTOR_APPROVED: 3,
+    PLAN_SELECTED: 4,
+    DEPOSIT_PENDING: 5,
+    DEPOSIT_APPROVED: 6,
+    KYC_SUBMITTED: 7,
+    KYC_APPROVED: 8,
+    PICKUP_SCHEDULED: 9,
+    ACTIVE: 10,
+    SUSPENDED: 11,
+    RETURN_PENDING: 12,
+    CLOSED: 13,
   };
   const rank = lifecycleRank[lifecycleStatus] ?? 0;
-  const registrationDone = rank >= 2;
-  const kycDone = rank >= 4;
-  const depositDone = rank >= 8;
-  const planDone = rank >= 9;
-  const pickupDone = rank >= 10;
+  const registrationDone = rank >= 3;
+  const kycDone = rank >= 8 || kycProfile?.status === 'APPROVED';
+  const depositDone = rank >= 6;
+  const planDone = rank >= 4;
+  const pickupDone = rank >= 9;
 
   return {
     ...rest,
     lifecycleStatus,
     state: lifecycleStatus,
-    accountStatus: rank >= 11 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
-    rentalStatus: rank >= 11 ? 'ACTIVE' : 'NONE',
-    planStatus: rank >= 9 ? 'ACTIVE' : 'NONE',
+    accountStatus: rank >= 10 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
+    rentalStatus: rank >= 10 ? 'ACTIVE' : 'NONE',
+    planStatus: rank >= 4 ? 'ACTIVE' : 'NONE',
     registrationDone,
     kycDone,
     depositDone,
@@ -78,6 +78,8 @@ export function flattenRider(rider: RiderWithRelations) {
 
     // --- KYC Profile fields ---
     kycStatus: kycProfile?.status || 'PENDING',
+    kycRejectionReason: (kycProfile as any)?.rejectionReason ?? null,
+    kycEditableFields: (kycProfile as any)?.editableFields ?? null,
     profilePhoto: kycProfile?.profilePhoto ?? null,
     riderPhoto: kycProfile?.riderPhoto ?? null,
     signature: kycProfile?.signature ?? null,
@@ -95,7 +97,7 @@ export function flattenRider(rider: RiderWithRelations) {
     // --- Wallet fields (converted from paise → rupees) ---
     walletBalance: paiseToRupees(wallet?.balanceInPaise ?? 0),
     balance: paiseToRupees(wallet?.balanceInPaise ?? 0),
-    securityDeposit: paiseToRupees(wallet?.securityDeposit ?? 0),
+    securityDeposit: paiseToRupees(wallet?.securityDepositInPaise ?? 0),
     depositStatus: wallet?.depositStatus || 'PENDING',
     paymentStreak: wallet?.paymentStreak ?? 0,
 
@@ -104,7 +106,7 @@ export function flattenRider(rider: RiderWithRelations) {
     guarantorName: guarantor?.name ?? null,
     guarantorRelation: guarantor?.relation ?? null,
     guarantorDob: guarantor?.dob ?? null,
-    guarantorPhone: maskPhone(guarantor?.phone ?? null),
+    guarantorPhone: guarantor?.phone ?? null,
     guarantorAadhaarFront: guarantor?.aadhaarFront ?? null,
     guarantorAadhaarBack: guarantor?.aadhaarBack ?? null,
     guarantorPan: guarantor?.pan ?? null,
@@ -119,9 +121,31 @@ export function flattenRider(rider: RiderWithRelations) {
     currentPlan: rider.currentPlan ?? null,
     currentPlanPrice: rider.currentPlanPrice ?? null,
     assignedVehicle: rider.assignedVehicle ?? null,
+    activeVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
+    vehicleModel: (rider as any).vehicle?.model ?? null,
+    deliveryId: rider.deliveryId ?? null,
+    intent: rider.intent ?? null,
+    emergencyContact: rider.emergencyContact ?? null,
+    pickupHub: rider.pickupHub ?? null,
+    teamLeader: rider.teamLeader ?? null,
     planStartDate: rider.planStartDate ? new Date(rider.planStartDate as Date).toISOString() : null,
     planEndDate: rider.planEndDate ? new Date(rider.planEndDate as Date).toISOString() : null,
+    pickupPhotoFront: rider.pickupPhotoFront ?? null,
+    pickupPhotoBack: rider.pickupPhotoBack ?? null,
+    pickupPhotoLeft: rider.pickupPhotoLeft ?? null,
+    pickupPhotoRight: rider.pickupPhotoRight ?? null,
+    pickupPhotoWithVehicle: rider.pickupPhotoWithVehicle ?? null,
+
+    locationGranted: rider.locationGranted ?? false,
+    cameraGranted: rider.cameraGranted ?? false,
+    contactsGranted: rider.contactsGranted ?? false,
+    phoneGranted: rider.phoneGranted ?? false,
+    batteryGranted: rider.batteryGranted ?? false,
+    callLogsGranted: rider.callLogsGranted ?? false,
+    micGranted: rider.micGranted ?? false,
+    deviceAdminGranted: rider.deviceAdminGranted ?? false,
+    displayOverlayGranted: rider.displayOverlayGranted ?? false,
 
     // --- Rental Return fields ---
     returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'SUBMITTED') ?? false,
@@ -184,6 +208,25 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     planDone: rank >= 9,
     pickupDone: rank >= 10,
     name: rider.fullName ?? '', // Compatibility alias
+    intent: rider.intent ?? null,
+    emergencyContact: rider.emergencyContact ?? null,
+    activeVehicle: rider.assignedVehicle ?? null,
+    pickupHub: rider.pickupHub ?? null,
+    teamLeader: rider.teamLeader ?? null,
+    pickupPhotoFront: rider.pickupPhotoFront ?? null,
+    pickupPhotoBack: rider.pickupPhotoBack ?? null,
+    pickupPhotoLeft: rider.pickupPhotoLeft ?? null,
+    pickupPhotoRight: rider.pickupPhotoRight ?? null,
+    pickupPhotoWithVehicle: rider.pickupPhotoWithVehicle ?? null,
+    locationGranted: rider.locationGranted ?? false,
+    cameraGranted: rider.cameraGranted ?? false,
+    contactsGranted: rider.contactsGranted ?? false,
+    phoneGranted: rider.phoneGranted ?? false,
+    batteryGranted: rider.batteryGranted ?? false,
+    callLogsGranted: rider.callLogsGranted ?? false,
+    micGranted: rider.micGranted ?? false,
+    deviceAdminGranted: rider.deviceAdminGranted ?? false,
+    displayOverlayGranted: rider.displayOverlayGranted ?? false,
   };
 
   // Flatten kycProfile if present
@@ -222,7 +265,7 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     result.guarantorName = g.name ?? null;
     result.guarantorRelation = g.relation ?? null;
     result.guarantorDob = g.dob ?? null;
-    result.guarantorPhone = maskPhone((g.phone as string) ?? null);
+    result.guarantorPhone = (g.phone as string) ?? null;
     result.guarantorFatherName = g.fatherName ?? null;
     result.guarantorMotherName = g.motherName ?? null;
     result.guarantorAadhaarFront = g.aadhaarFront ?? null;

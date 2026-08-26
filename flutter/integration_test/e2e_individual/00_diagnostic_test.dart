@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -13,6 +14,7 @@ void main() {
 
   testWidgets('Diagnostic – app launches and preamble completes',
       (tester) async {
+    final app = AppRobots(tester);
     await setupReturningUser();
     await safeAppMain();
     await tester.pumpAndSettle();
@@ -24,14 +26,14 @@ void main() {
     await settle(tester);
 
     // Check for known screens
-    final hasPhone = find.byKey(const Key('phoneInput')).evaluate().isNotEmpty;
-    final hasDashboard =
-        find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty;
+    final hasPhone = app.login.phoneField.evaluate().isNotEmpty;
+    final hasDashboard = app.dashboard.dashboardTab.evaluate().isNotEmpty;
     final hasAuthChoice =
-        find.byKey(const Key('loginWithPhoneButton')).evaluate().isNotEmpty;
+        app.onboarding.loginWithPhoneButton.evaluate().isNotEmpty;
 
     print(
-        'DIAG: phone=$hasPhone dashboard=$hasDashboard authChoice=$hasAuthChoice',);
+      'DIAG: phone=$hasPhone dashboard=$hasDashboard authChoice=$hasAuthChoice',
+    );
 
     // Should be on some valid screen
     expect(

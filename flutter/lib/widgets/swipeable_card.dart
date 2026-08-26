@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class SwipeableCard extends StatefulWidget {
   final Widget child;
@@ -38,7 +40,9 @@ class _SwipeableCardState extends State<SwipeableCard>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200),);
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
     _slideAnimation =
         Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
@@ -95,7 +99,7 @@ class _SwipeableCardState extends State<SwipeableCard>
 
   @override
   Widget build(BuildContext context) {
-    final deleteColor = widget.deleteColor ?? Colors.red;
+    final deleteColor = widget.deleteColor ?? AppColors.error;
     final archiveColor = widget.archiveColor ?? Colors.orange;
 
     return Stack(
@@ -117,7 +121,8 @@ class _SwipeableCardState extends State<SwipeableCard>
                             padding: const EdgeInsets.only(left: 8),
                             child: Text(
                               widget.archiveLabel ?? 'Archive',
-                              style: const TextStyle(color: Colors.white),
+                              style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white),
                             ),
                           ),
                       ],
@@ -138,7 +143,8 @@ class _SwipeableCardState extends State<SwipeableCard>
                             padding: const EdgeInsets.only(right: 8),
                             child: Text(
                               widget.deleteLabel ?? 'Delete',
-                              style: const TextStyle(color: Colors.white),
+                              style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white),
                             ),
                           ),
                         const Icon(Icons.delete, color: Colors.white),

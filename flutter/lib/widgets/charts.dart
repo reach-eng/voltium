@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart' as fl;
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PieChartWidget extends StatelessWidget {
   final List<PieChartItem> data;
@@ -18,38 +20,37 @@ class PieChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
 
     return Column(
       children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: fl.PieChart(
-            fl.PieChartData(
-              sections: data.map((item) {
-                final total = data.fold<double>(0, (sum, d) => sum + d.value);
-                final percentage =
-                    (item.value / total * 100).toStringAsFixed(1);
-                return fl.PieChartSectionData(
-                  value: item.value,
-                  title: showPercentage ? '$percentage%' : '',
-                  color: item.color,
-                  radius: size * 0.35,
-                  titleStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                );
-              }).toList(),
-              sectionsSpace: 2,
-              centerSpaceRadius: size * 0.15,
+        RepaintBoundary(
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: fl.PieChart(
+              fl.PieChartData(
+                sections: data.map((item) {
+                  final total = data.fold<double>(0, (sum, d) => sum + d.value);
+                  final percentage =
+                      (item.value / total * 100).toStringAsFixed(1);
+                  return fl.PieChartSectionData(
+                    value: item.value,
+                    title: showPercentage ? '$percentage%' : '',
+                    color: item.color,
+                    radius: size * 0.35,
+                    titleStyle:
+                        AppTypography.labelMedium.copyWith(color: Colors.white),
+                  );
+                }).toList(),
+                sectionsSpace: 2,
+                centerSpaceRadius: size * 0.15,
+              ),
             ),
           ),
         ),
         if (showLegend) ...[
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Wrap(
             spacing: 16,
             runSpacing: 8,
@@ -65,12 +66,12 @@ class PieChartWidget extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(
                     item.label,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -111,53 +112,57 @@ class BarChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: fl.BarChart(
-        fl.BarChartData(
-          gridData: fl.FlGridData(show: showGrid),
-          titlesData: fl.FlTitlesData(
-            leftTitles: const fl.AxisTitles(
-              sideTitles: fl.SideTitles(showTitles: true, reservedSize: 40),
-            ),
-            bottomTitles: fl.AxisTitles(
-              sideTitles: fl.SideTitles(
-                showTitles: showLabels,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index >= 0 && index < data.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        data[index].label,
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                    );
-                  }
-                  return const Text('');
-                },
+    return RepaintBoundary(
+      child: SizedBox(
+        height: height,
+        child: fl.BarChart(
+          fl.BarChartData(
+            gridData: fl.FlGridData(show: showGrid),
+            titlesData: fl.FlTitlesData(
+              leftTitles: const fl.AxisTitles(
+                sideTitles: fl.SideTitles(showTitles: true, reservedSize: 40),
+              ),
+              bottomTitles: fl.AxisTitles(
+                sideTitles: fl.SideTitles(
+                  showTitles: showLabels,
+                  getTitlesWidget: (value, meta) {
+                    final index = value.toInt();
+                    if (index >= 0 && index < data.length) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          data[index].label,
+                          style: GoogleFonts.plusJakartaSans(fontSize: 10),
+                        ),
+                      );
+                    }
+                    return const Text('');
+                  },
+                ),
+              ),
+              rightTitles: const fl.AxisTitles(
+                sideTitles: fl.SideTitles(showTitles: false),
+              ),
+              topTitles: const fl.AxisTitles(
+                sideTitles: fl.SideTitles(showTitles: false),
               ),
             ),
-            rightTitles: const fl.AxisTitles(
-                sideTitles: fl.SideTitles(showTitles: false),),
-            topTitles: const fl.AxisTitles(
-                sideTitles: fl.SideTitles(showTitles: false),),
+            borderData: fl.FlBorderData(show: false),
+            barGroups: data.asMap().entries.map((entry) {
+              return fl.BarChartGroupData(
+                x: entry.key,
+                barRods: [
+                  fl.BarChartRodData(
+                    toY: entry.value.value,
+                    color: entry.value.color,
+                    width: 20,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(4)),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
-          borderData: fl.FlBorderData(show: false),
-          barGroups: data.asMap().entries.map((entry) {
-            return fl.BarChartGroupData(
-              x: entry.key,
-              barRods: [
-                fl.BarChartRodData(
-                  toY: entry.value.value,
-                  color: entry.value.color,
-                  width: 20,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(4)),
-                ),
-              ],
-            );
-          }).toList(),
         ),
       ),
     );
@@ -196,36 +201,38 @@ class LineChartWidget extends StatelessWidget {
       return fl.FlSpot(entry.key.toDouble(), entry.value.value);
     }).toList();
 
-    return SizedBox(
-      height: height,
-      child: fl.LineChart(
-        fl.LineChartData(
-          gridData: fl.FlGridData(show: showGrid),
-          titlesData: const fl.FlTitlesData(
-            leftTitles:
-                fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: true)),
-            bottomTitles:
-                fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
-            rightTitles:
-                fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
-            topTitles:
-                fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
-          ),
-          borderData: fl.FlBorderData(show: false),
-          lineBarsData: [
-            fl.LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: lineColor,
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: const fl.FlDotData(show: false),
-              belowBarData: fl.BarAreaData(
-                show: true,
-                color: lineColor.withValues(alpha: 0.1),
-              ),
+    return RepaintBoundary(
+      child: SizedBox(
+        height: height,
+        child: fl.LineChart(
+          fl.LineChartData(
+            gridData: fl.FlGridData(show: showGrid),
+            titlesData: const fl.FlTitlesData(
+              leftTitles:
+                  fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: true)),
+              bottomTitles:
+                  fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+              rightTitles:
+                  fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
+              topTitles:
+                  fl.AxisTitles(sideTitles: fl.SideTitles(showTitles: false)),
             ),
-          ],
+            borderData: fl.FlBorderData(show: false),
+            lineBarsData: [
+              fl.LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                color: lineColor,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: const fl.FlDotData(show: false),
+                belowBarData: fl.BarAreaData(
+                  show: true,
+                  color: lineColor.withValues(alpha: 0.1),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

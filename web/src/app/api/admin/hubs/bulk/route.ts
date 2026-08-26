@@ -6,6 +6,10 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
@@ -30,9 +34,10 @@ export async function POST(req: NextRequest) {
         return errors.validation('Invalid action');
     }
     return success(result, `Bulk ${action} completed`);
-  } catch (error: any) {
-    if (error?.message?.includes?.('Cannot delete')) {
-      return errors.conflict(error.message);
+  } catch (error: unknown) {
+    const message = errorMessage(error);
+    if (message.includes('Cannot delete')) {
+      return errors.conflict(message);
     }
     logger.error('POST /api/admin/hubs/bulk error:', error);
     return errors.internal('Bulk operation failed');

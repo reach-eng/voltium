@@ -47,3 +47,20 @@ Map<String, dynamic> _$SupportConfigToJson(SupportConfig instance) =>
       'supportEmail': instance.supportEmail,
       'ticketChecklist': instance.ticketChecklist,
     };
+
+Map<String, dynamic> _$TicketMessageToJson(TicketMessage instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'ticketId': instance.ticketId,
+      'sender': _$TicketMessageSenderEnumMap[instance.sender]!,
+      'senderName': instance.senderName,
+      'body': instance.body,
+      'attachments': instance.attachments,
+      'createdAt': instance.createdAt.toIso8601String(),
+    };
+
+const _$TicketMessageSenderEnumMap = {
+  TicketMessageSender.rider: 'rider',
+  TicketMessageSender.admin: 'admin',
+  TicketMessageSender.unknown: 'unknown',
+};

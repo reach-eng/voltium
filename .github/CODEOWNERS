@@ -1,0 +1,13 @@
+# CODEOWNERS for Voltium Repository
+
+# Database Migrations Review Scope
+web/prisma/migrations/ @reach-eng/database-leads
+
+# Flutter Visual Golden Snapshots Review Scope
+flutter/test/goldens/ @reach-eng/design-leads
+
+# Security, PII Crypto, and Auth Review Scope
+web/src/lib/auth.ts @reach-eng/security-leads
+web/src/lib/rbac.ts @reach-eng/security-leads
+web/src/lib/permissions.ts @reach-eng/security-leads
+web/src/lib/pii-crypto.ts @reach-eng/security-leads

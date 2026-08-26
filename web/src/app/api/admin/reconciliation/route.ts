@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     await recordReconciliation(result);
 
     return success(result, 'Wallet reconciliation complete');
-  } catch (err: any) {
+  } catch (err: unknown) {
     return errors.internal('Reconciliation failed');
   }
 }

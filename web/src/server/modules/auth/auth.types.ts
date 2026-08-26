@@ -28,8 +28,9 @@ export interface VerifyOtpResult {
   phone: string;
   isNewRider: boolean;
   token: string;
+  refreshToken: string;
   riderData: Record<string, unknown>;
-  fcmCommandSecret: string;
+  fcmCommandSecret?: string;
 }
 
 export type OtpStatus = 'PENDING' | 'VERIFIED' | 'EXPIRED' | 'MAX_ATTEMPTS';
