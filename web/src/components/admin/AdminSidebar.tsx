@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAdminStore } from '@/store/admin';
+import { useAdminSession } from '@/components/admin/AdminSessionContext';
 import { BRAND_SHORT } from '@/lib/branding';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -52,6 +53,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { getVisibleNavItems, ROLE_LABELS, ROLE_COLORS } from '@/lib/role-config';
+import type { SessionPayload } from '@/lib/permissions';
 import { LOGO_PATH } from '@/lib/branding';
 import { prefetchAdminScreen } from './AdminLayout';
 
@@ -105,25 +107,17 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
   const setActiveSection = useAdminStore((s) => s.setActiveSection);
   const toggleSidebar = useAdminStore((s) => s.toggleSidebar);
 
-  // Fetch admin session for granular permissions
-  const [session, setSession] = useState<any>(null);
+  // W4 / F-017: consume the shared AdminSessionContext instead of
+  // re-fetching /api/admin/auth/me on every sidebar mount (the provider
+  // already owns the session + refetch lifecycle).
+  const { session } = useAdminSession();
 
-  useEffect(() => {
-    fetch('/api/admin/auth/me')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.data) {
-          setSession(data.data);
-        }
-      })
-      .catch(() => {
-        /* Session check failed */
-      });
-  }, []);
-
-  const adminRole = session?.role || 'ADMIN';
+  const adminRole = session?.adminRole || session?.role || 'ADMIN';
   const visibleItems = useMemo(
-    () => getVisibleNavItems(session || adminRole),
+    // F-017: AdminSession is structurally compatible with the fields
+    // getVisibleNavItems reads (role/adminRole + permissions); the cast
+    // bridges the two session types without widening the context shape.
+    () => getVisibleNavItems((session as unknown as SessionPayload) || adminRole),
     [session, adminRole]
   );
 

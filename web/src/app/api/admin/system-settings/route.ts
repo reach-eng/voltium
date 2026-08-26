@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hasPermission } from '@/lib/permissions';
 import { updateSystemSettingSchema } from '@/lib/validators/admin';

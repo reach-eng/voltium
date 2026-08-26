@@ -14,7 +14,7 @@ import {
   forfeitDeposit as libForfeitDeposit,
   upsertDepositRecord as libUpsertDepositRecord,
   DepositStateError,
-} from '@/lib/services/deposit-service';
+} from '@/server/modules/deposits/deposit-service';
 
 export { DepositStateError };
 

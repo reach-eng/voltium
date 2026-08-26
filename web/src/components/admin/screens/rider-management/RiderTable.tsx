@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
 import { RiderRow } from './RiderRow';
 import type { Rider } from '@/lib/types/admin';
 
@@ -85,15 +85,47 @@ export function RiderTable({
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
+                  aria-sort={
+                    sortKey === 'fullName'
+                      ? sortDir === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  }
                   onClick={() => onSort('fullName')}
                 >
-                  Name {sortKey === 'fullName' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                  <span className="inline-flex items-center gap-1">
+                    Name
+                    {sortKey === 'fullName' ? (
+                      sortDir === 'asc' ? (
+                        <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                      )
+                    ) : null}
+                  </span>
                 </TableHead>
                 <TableHead
                   className="cursor-pointer select-none"
+                  aria-sort={
+                    sortKey === 'phone'
+                      ? sortDir === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                      : 'none'
+                  }
                   onClick={() => onSort('phone')}
                 >
-                  Phone {sortKey === 'phone' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                  <span className="inline-flex items-center gap-1">
+                    Phone
+                    {sortKey === 'phone' ? (
+                      sortDir === 'asc' ? (
+                        <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                      )
+                    ) : null}
+                  </span>
                 </TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Vehicle</TableHead>

@@ -4,7 +4,7 @@ import { hasPermission } from '@/lib/auth';
 import { dataManagementUseCases } from '@/server/modules/data-management/data-management.use-cases';
 import { restoreValidateSchema } from '@/server/modules/data-management/backup.schemas';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import { success, errors } from '@/lib/api-response';
 
 export const POST = withApiHandler(async (request: NextRequest) => {

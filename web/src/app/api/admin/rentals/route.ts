@@ -7,7 +7,7 @@ import { hasPermission, type Permission } from '@/lib/auth';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { validateBody, adminRentalActionSchema } from '@/lib/validators';
 import { rentalRepository } from '@/server/modules/rentals/rental.repository';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { redactPii } from '@/lib/pii-redact';
 
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
@@ -81,7 +82,11 @@ export async function createAuditLog(
           typeof params.details === 'string'
             ? params.details
             : params.details
-              ? JSON.stringify(params.details)
+              ? // W5 / F-097: deep-redact object details through the
+                // canonical pii-redact module. The previous raw stringify
+                // persisted whatever callers passed (phones, names,
+                // tokens in nested payloads) into the SOC2 trail.
+                JSON.stringify(redactPii(params.details))
               : null,
         expiresAt: getExpiresAt(params.action),
       },
@@ -93,8 +98,11 @@ export async function createAuditLog(
         `Audit log write failed for critical action ${params.action}: ${errorMessage(err)}`
       );
     }
-    const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
-    console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), errorMessage(err));
+    // W5 / F-097: the old hand-listed destructure (password/lockPassword/
+    // otp/idToken/token) missed most sensitive keys. Route the whole
+    // params object through redactPii — same key list as the logger and
+    // the main write path above.
+    console.error('[AUDIT_FAILED]', JSON.stringify(redactPii(params)), errorMessage(err));
   }
 }
 

@@ -6,7 +6,7 @@ import { parseDDMMYYYY } from '@/lib/date-utils';
 import { logAdminAction } from '@/server/modules/admin/admin.policy';
 import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
-import { DepositStateError } from '@/lib/services/deposit-service';
+import { DepositStateError } from '@/server/modules/deposits/deposit-service';
 import { toRupeesResponse } from '@/lib/api-money';
 import { z } from 'zod';
 

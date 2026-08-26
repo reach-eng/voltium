@@ -224,7 +224,7 @@ export const walletUseCases = {
     }
 
     if (!isTestRider && finalPurpose === 'SECURITY_DEPOSIT') {
-      const { upsertDepositRecord } = await import('@/lib/services/deposit-service');
+      const { upsertDepositRecord } = await import('@/server/modules/deposits/deposit-service');
       try {
         await upsertDepositRecord({
           riderId: riderDbId,

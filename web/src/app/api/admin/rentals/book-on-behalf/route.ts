@@ -29,7 +29,7 @@ import { logger } from '@/lib/logger';
 import { invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { createAuditLog } from '@/lib/audit-log';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import { validateBody } from '@/lib/validators';
 import { adminBookRentalOnBehalfSchema } from '@/lib/validators/admin';
 import { rentalUseCases } from '@/server/modules/rentals/rental.use-cases';

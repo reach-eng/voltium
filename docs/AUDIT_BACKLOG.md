@@ -59,10 +59,10 @@ messages must reference the ticket ID. Status: OPEN / FIXED / WONTFIX(reason).
 | CI-5 | Signed APK 90-day artifact retention | FIXED (14d) |
 | CI-6 | Slack webhook interpolation pattern ×4 | FIXED (env-indirect) |
 
-## Testing strategy backlog (top items)
+## TICKET-C-001 — chore(api): remove /api/rider/settings route + OpenAPI entry
 
-See testing-strategy audit §Gap-backlog: Clock injection (M), files_repository
-tests (M), adversarial E2E de-vacuum (S), golden failure-png purge + .gitignore
-(S), runner JUnit/timeouts/quarantine (M), TEST_MODE-off E2E shard (M),
-per-package coverage floors (S), offline replay E2E (L), Stryker scoped revival
-(M), Playwright rider specs (M).
+**Status:** Pending (server-side deletion after one release soak)  
+**Files:** `web/src/app/api/rider/settings/route.ts`, `contracts/openapi.ts`  
+**Context:** Flutter client surface deleted 2026-08-26 (see C-plan commit). No product
+requirement for server-synced rider prefs; settings screen is local-first (`SharedPreferences`).
+Full server-route removal deferred to avoid OpenAPI contract churn in the same release.

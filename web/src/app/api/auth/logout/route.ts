@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth';
 import { getSession } from '@/lib/get-session';
 import { createAuditLog } from '@/lib/audit-log';
 import { authUseCases } from '@/server/modules/auth/auth.use-cases';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await getSession(request);

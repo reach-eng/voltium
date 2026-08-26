@@ -311,7 +311,12 @@ export function BackupsTab() {
         });
         toast.success('Backup verified');
       } else {
-        setVerifyResult({ valid: false, message: json.error || 'Verification failed' });
+        setVerifyResult({
+          valid: false,
+          // W4 / F-011: centralised extraction — server text is surfaced
+          // only when it's a usable message string, else the fallback.
+          message: extractErrorMessage(json, 'Verification failed'),
+        });
         toast.error('Verification failed');
       }
     } catch {

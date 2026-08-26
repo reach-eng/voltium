@@ -8,7 +8,7 @@ import { parsePositiveInt } from '@/lib/api-utils';
 import { guarantorRepository } from '@/server/modules/guarantors/guarantor.repository';
 import { guarantorUseCases } from '@/server/modules/guarantors/guarantor.use-cases';
 import { logger } from '@/lib/logger';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();

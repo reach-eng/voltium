@@ -3,7 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 
 export const GET = withApiHandler(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

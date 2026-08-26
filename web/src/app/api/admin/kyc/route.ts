@@ -9,7 +9,7 @@ import { kycRepository } from '@/server/modules/kyc/kyc.repository';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
 import { approveKyc } from '@/server/modules/kyc/use-cases/approveKyc';
 import { KycApproveError } from '@/server/modules/kyc/use-cases/errors';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import { signRiderUrls } from '@/lib/sign-rider';
 
 export const GET = withApiHandler(async (request: NextRequest) => {

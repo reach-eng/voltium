@@ -1,9 +1,15 @@
 import pino from 'pino';
+// W5 / F-087: delegate masking to the canonical pii-redact module. The
+// local SENSITIVE_KEYS list had drifted from pii-redact.ts's superset
+// (missing keysecret/webhooksecret/merchantid, JWT patterns, hex-token
+// patterns, 16-char threshold). One source of truth for what is
+// sensitive; pino's log formatter now runs redactPii over every record.
+import { redactPii } from './pii-redact';
 
 // PR-112c: APP_ENV-first production gate. The error-context scrubber
-// (lines below) strips 4xx API errors to a minimal shape so we don't
-// log full request bodies. APP_ENV=staging is treated as production
-// for this gate (staging ships real SMS, real auth, real money flow).
+// strips 4xx API errors to a minimal shape so we don't log full request
+// bodies. APP_ENV=staging is treated as production for this gate
+// (staging ships real SMS, real auth, real money flow).
 const IS_PRODUCTION_LIKE =
   process.env.APP_ENV === 'production' ||
   process.env.APP_ENV === 'staging' ||
@@ -11,54 +17,10 @@ const IS_PRODUCTION_LIKE =
 
 type LogLevel = 'info' | 'error' | 'warn' | 'debug';
 
-const SENSITIVE_KEYS = [
-  'aadhaar',
-  'aadhaarNumber',
-  'pan',
-  'panNumber',
-  'phone',
-  'email',
-  'accountNumber',
-  'ifscCode',
-  'password',
-  'token',
-  'otp',
-];
-const LOWER_SENSITIVE_KEYS = SENSITIVE_KEYS.map((s) => s.toLowerCase());
-
-function maskSensitiveData(obj: unknown, seen?: WeakSet<object>): unknown {
-  if (!obj || typeof obj !== 'object') return obj;
-
-  if (seen?.has(obj)) return '[Circular]';
-  const seenSet = seen || new WeakSet<object>();
-  seenSet.add(obj);
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => maskSensitiveData(item, seenSet));
-  }
-
-  const masked: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-    const lowerKey = key.toLowerCase();
-    if (LOWER_SENSITIVE_KEYS.some((s) => lowerKey.includes(s))) {
-      if (typeof value === 'string') {
-        masked[key] = value.length > 4 ? `****${value.slice(-4)}` : '****';
-      } else {
-        masked[key] = '****';
-      }
-    } else if (typeof value === 'object' && value !== null) {
-      masked[key] = maskSensitiveData(value, seenSet);
-    } else {
-      masked[key] = value;
-    }
-  }
-  return masked;
-}
-
 const pinoInstance = pino({
   level: process.env.LOG_LEVEL || 'info',
   formatters: {
-    log: (obj) => maskSensitiveData(obj) as Record<string, unknown>,
+    log: (obj) => redactPii(obj) as Record<string, unknown>,
   },
 });
 

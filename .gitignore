@@ -211,3 +211,6 @@ web/verify-*.js
 .trash/
 .deprecated/
 .freebuff/
+.dev-server-*
+*.zip
+

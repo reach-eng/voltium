@@ -24,8 +24,8 @@ import {
   verifyLedgerIntegrity,
   backfillOpeningBalance,
   WalletServiceError,
-} from '@/lib/services/wallet-service';
-import type { LedgerCategory } from '@/lib/services/wallet-service';
+} from '@/server/modules/wallet/wallet-service';
+import type { LedgerCategory } from '@/server/modules/wallet/wallet-service';
 
 export { WalletServiceError };
 

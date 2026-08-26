@@ -3,7 +3,7 @@ import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { dataManagementUseCases } from '@/server/modules/data-management/data-management.use-cases';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import { success, errors } from '@/lib/api-response';
 
 function serializeBackupJob(job: any) {

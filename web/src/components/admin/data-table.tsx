@@ -176,6 +176,18 @@ export function DataTable<T>({
                   )}
                   style={column.width ? { width: column.width } : undefined}
                   onClick={() => column.sortable && handleSort(column.key)}
+                  // T-AR-SORT a11y: announce the sort state to
+                  // screen readers. "none" is the ARIA default for any
+                  // column that isn't the active sort key.
+                  aria-sort={
+                    !column.sortable
+                      ? undefined
+                      : sortKey === column.key
+                        ? sortDirection === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
+                  }
                 >
                   <div className="flex items-center gap-2">
                     {column.header}

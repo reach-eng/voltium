@@ -19,6 +19,9 @@ const MIME_TYPES: Record<string, string> = {
 import { fileService } from '@/server/modules/files/files.service';
 
 function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
+  // W5 / F-088: DENY unknown MIME types instead of silently accepting.
+  // The previous `return true` fallback meant any MIME not enumerated
+  // here bypassed content inspection entirely.
   if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
     return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   }
@@ -57,7 +60,9 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
       buffer[11] === 0x50 // 'WEBP'
     );
   }
-  if (mimeType === 'video/mp4') {
+  if (mimeType === 'video/mp4' || mimeType === 'video/quicktime') {
+    // Both MP4 and QuickTime(MOV) are ISO-BMFF containers: 'ftyp' box at
+    // offset 4. Brand-specific checks are unnecessary for validation.
     return (
       buffer.length >= 8 &&
       buffer[4] === 0x66 &&
@@ -66,7 +71,7 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
       buffer[7] === 0x70 // 'ftyp'
     );
   }
-  return true;
+  return false;
 }
 
 export async function GET(
