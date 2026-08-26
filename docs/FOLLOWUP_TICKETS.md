@@ -19,6 +19,20 @@
 
 > **Update (2026-08-26):** **Filter & Sort Review** (5-step, single PR-ready diff on `fix/audit-2026-08-22`) shipped. Found 4 new bugs across admin (web) + Flutter surfaces (2 functional, 1 mojibake, 1 copy) plus consistency debt. All 5 steps landed: admin sort arrows + ticket filter labels (P1), `aria-sort` + sort-unification on admin tables, history-screen shared enum/widget (server type-filter is a TODO — needs OpenAPI regen), `SortDropdown` generic enum alignment, and **server-side `sortBy`/`sortDir` on `/api/admin/transactions` with allowlist + cacheKey + repo column translation (`amount` → `amountInPaise`)**. Web unit suite 3193 → 3297 passing (+104). `tests/api-routes.test.ts` 205/205 against the live dev server. Flutter 1621 → 1656 passing (+35), with 5 pre-existing failures remaining (`PinnedHttpClient: no production TLS fingerprints configured` — orthogonal; tickets T-115 / PR-8 PickupHub refactor and T-117 / PR-9 bulk i18n remain deferred).
 
+> **Update (2026-08-27):** **9.5+ Production Hardening P0 sweep** shipped on `fix/admin-finance-p0-2-p0-3-rowlock-bulk-2026-08-24`. Source plan: `9.5-plus-hardening-plan.md` (user-supplied audit, 53 sections). 7 tickets landed in 7 focused PR-shaped commits:
+>
+> - **T-9P0-1** (plan §4): `scripts/check-release-secrets.mjs` + 7-case self-test (commit `0a862dfa`).
+> - **T-9P0-2** (plan §5): removed `?token=` from `getSession` + `getAdminSession`; Bearer + secure cookie only. 8-case regression test (commit `0a862dfa`).
+> - **T-9P0-3** (plan §6): removed `?token=` from `/api/metrics`; new `lib/safe-equal.ts` constant-time compare; 10-case unit test + 4-case live test (commit `c339c6c6`).
+> - **T-9P0-4** (plan §7): payment-gateway route fails closed (503 + `PAYMENT_GATEWAY_UNAVAILABLE`); `ERROR_CODES.PAYMENT_GATEWAY_UNAVAILABLE` + `errors.paymentGatewayUnavailable()` helpers; no fabricated TEST gateway in the response (commit `79c78026`).
+> - **T-9P0-5** (plan §8): Flutter TLS default `ca` in release; new `lib/core/network/tls_pins_loader.dart` wired from `main()`; CI passes `--dart-define=TLS_PIN_MODE=ca`; `flutter/scripts/check-release-config.sh` gate; 5-case Dart test (commit `9bf9b866`).
+> - **T-9P0-6** (plan §9): canonical money invariants pinned (21 cases); `wallet-adjust` route migrated from `Math.round(amount * 100)` to `rupeesToPaise` (commit `7fa01cd6`).
+> - **T-9P0-7** (plan §10): `IdempotencyKey.requestHash` SHA-256 column + Prisma migration; `computeRequestHash` helper with deterministic canonical JSON; `IdempotencyResult.status: 'conflict'` for same-key/different-body (10-case unit test). `metrics-auth.test.ts` updated to assert the new contract (commit `d67fc218`).
+>
+> Net: web unit 350 → 356 files, 3297 → 3375 tests passing (+78), 0 failed. Flutter `tls_pins_loader_test.dart` 5/5, `flutter analyze` clean. Live `/api/rider/payment-gateways/active` 503 + correct machine code. Live `tests/api-routes.test.ts` and `tests/integration/transaction/ + transactions_bulk` 11/11 (no regression from the T-9P0-3 change). Pre-existing failures (5 Flutter `PinnedHttpClient: no production TLS fingerprints configured`, 5+ integration suite OTP/vehicle/shift/referral) unchanged.
+>
+> P2 / P3 backlog recorded in `docs/AUDIT_BACKLOG.md` (9P2-1..9P2-10, 9P3-1..9P3-5) — outbox DLQ, payment state machine, versioned event schemas, IDOR suite, ESLint ratchet, observability, reconciliation, load/DR drills. Driver-role RBAC (§18) deferred pending product sign-off on the EMPLOYEE / FLEET_VENDOR_DRIVER / CONTRACTOR_PARTNER taxonomy.
+
 ### 🚀 Session Accomplishments (2026-08-26: Filter & Sort Review — admin + Flutter)
 - **T-AR-SORT · Step 1** (P1, A-1) — replaced literal `?` mojibake in `RiderTable.tsx` (Name/Phone headers) with lucide `ArrowUp`/`ArrowDown`. F-1 (ticket filter labels) was a false positive — the existing `TicketFilterLabel` extension already produces "In Progress".
 - **T-AR-SORT · Step 2** (P2, A-4 + A-2) — `aria-sort` on `data-table.tsx` (3-state primitive) and `RiderTable.tsx`; `RiderTable` now uses the data-table idiom.
