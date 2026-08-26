@@ -72,3 +72,15 @@ pre-commit:
           exit 1
         fi
       fail: true
+
+    # RMP Sprint 1 T1.5 (2026-08-27): gitleaks pre-commit hook.
+    # Blocks any commit that introduces a new secret string. The
+    # scanner works on the staged diff; the CI gate (separate job)
+    # runs `gitleaks detect --source .` on the full tree.
+    #
+    # Install: `brew install gitleaks` (macOS) or download from
+    # https://github.com/gitleaks/gitleaks/releases (Windows / Linux).
+    # Skip with `LEFTHOOK=0 git commit ...` only as a last resort.
+    gitleaks:
+      run: gitleaks protect --staged --redact --verbose
+      fail: true

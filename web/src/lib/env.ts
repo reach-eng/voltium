@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertEnvInvariants } from '@/server/security/env-guard';
 
 export const envSchema = z.object({
   // Base
@@ -344,6 +345,13 @@ export function assertNoSecretCollisions(): { collisions: string[]; hasCollision
 
 if (isServer) {
   assertNoSecretCollisions();
+  // RMP Sprint 1 T1.6 (2026-08-27): the env-guard is a second line of
+  // defense on top of the Zod parsing above. It refuses to boot the
+  // server if any of the production invariants is violated:
+  // dev-bypass flags, BACKUP_ENCRYPTION_ENABLED, sslmode=require,
+  // minimum secret length, cross-protocol distinctness. See
+  // docs/SECRET_ROTATION_INVENTORY.md for the secret policy.
+  assertEnvInvariants();
 }
 
 export const env = parsedEnv;
