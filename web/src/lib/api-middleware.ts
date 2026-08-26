@@ -98,7 +98,7 @@ export async function withRequestSizeLimit(
   };
 }
 
-import { ApiError } from '@/lib/api-error';
+import { ApiError, ERROR_CODES } from '@/lib/api-error';
 
 export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async (req: NextRequest): Promise<NextResponse> => {
@@ -167,4 +167,139 @@ export async function withRateLimit(
   };
 
   return withErrorHandler(wrappedHandler);
+}
+
+// ---------------------------------------------------------------------------
+// W5 / F-068: withApiHandler folded in from lib/api-handler.ts (deleted).
+// Single middleware surface for admin route handlers: size limit,
+// idempotency claim/complete/fail, GET 304 ETag evaluation, and typed
+// domain-error mapping (ApiError codes, Prisma P2025, state-machine
+// errors via instanceof � minifier-safe, not .name string matching).
+// ---------------------------------------------------------------------------
+
+import { errors } from '@/lib/api-response';
+import { RentalBookError } from '@/server/modules/rentals/use-cases/errors';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
+
+type DomainError = Error & { code?: string };
+
+function asDomainError(err: unknown): DomainError {
+  return err instanceof Error ? err : new Error(String(err));
+}
+
+export interface ApiHandlerOptions {
+  withIdempotency?: boolean;
+  maxSizeBytes?: number;
+}
+
+export function withApiHandler(
+  handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>,
+  options?: ApiHandlerOptions
+) {
+  return async (request: NextRequest, ...args: any[]) => {
+    if (options?.maxSizeBytes) {
+      const contentLength = request.headers.get('content-length');
+      if (contentLength && parseInt(contentLength, 10) > options.maxSizeBytes) {
+        return NextResponse.json({ success: false, error: 'Request too large' }, { status: 413 });
+      }
+    }
+
+    const key = options?.withIdempotency ? request.headers.get('x-idempotency-key') : null;
+    if (key && request.method === 'POST') {
+      const result = await checkOrClaimIdempotency(key);
+      if (result.status === 'completed') {
+        logger.info('[Idempotency] Serving cached response', { key, path: request.nextUrl.pathname });
+        return NextResponse.json(result.response);
+      }
+      if (result.status === 'processing') {
+        return NextResponse.json(
+          { success: false, error: 'A request with this idempotency key is already being processed' },
+          { status: 409 }
+        );
+      }
+    }
+
+    try {
+      const response = await handler(request, ...args);
+
+      if (key && request.method === 'POST') {
+        if (response.status >= 200 && response.status < 300) {
+          try {
+            const cloned = response.clone();
+            const json = await cloned.json();
+            await completeIdempotency(key, json);
+          } catch (err) {
+            logger.error('[Idempotency] Failed to cache response:', err);
+          }
+        } else {
+          await failIdempotency(key).catch(() => {});
+        }
+      }
+
+      // Automatic HTTP 304 Not Modified evaluation for GET requests
+      if (request.method === 'GET' && response.status === 200) {
+        const ifNoneMatch = request.headers.get('if-none-match');
+        const etag = response.headers.get('etag');
+
+        if (
+          etag &&
+          ifNoneMatch &&
+          (ifNoneMatch === etag || ifNoneMatch === `W/${etag}` || `W/${ifNoneMatch}` === etag)
+        ) {
+          const headers = new Headers(response.headers);
+          return new NextResponse(null, { status: 304, headers });
+        }
+      }
+
+      return response;
+    } catch (err: unknown) {
+      if (key && request.method === 'POST') {
+        await failIdempotency(key).catch(() => {});
+      }
+      const domainErr = asDomainError(err);
+      logger.error('[ApiHandler] Unhandled route error', redactPii({
+        path: request.nextUrl.pathname,
+        message: domainErr.message,
+        stack: domainErr.stack,
+      }));
+
+      if (err instanceof ApiError) {
+        const code = err.code;
+        if (code === ERROR_CODES.UNAUTHORIZED) return errors.unauthorized(String(err));
+        if (code === ERROR_CODES.FORBIDDEN) return errors.forbidden(String(err));
+        if (code === ERROR_CODES.NOT_FOUND) return errors.notFound(String(err));
+        if (code === ERROR_CODES.VALIDATION_ERROR) return errors.validation(String(err));
+        if (code === ERROR_CODES.CONFLICT) return errors.conflict(String(err));
+        if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests(String(err));
+        if (code === ERROR_CODES.GONE) return errors.gone(String(err));
+        return errors.badRequest(String(err));
+      }
+
+      // Prisma P2025 "record not found"
+      if ((err as any)?.code === 'P2025') {
+        return errors.notFound(domainErr.message);
+      }
+
+      if (err instanceof RentalBookError) {
+        const code = (err as DomainError).code;
+        if (code === 'NOT_FOUND') return errors.notFound(domainErr.message);
+        if (code === 'CONFLICT') return errors.conflict(domainErr.message);
+        return errors.badRequest(domainErr.message);
+      }
+
+      if (
+        err instanceof KycStateError ||
+        err instanceof GuarantorStateError ||
+        err instanceof DepositStateMachineError ||
+        err instanceof RentalStateError
+      ) {
+        return errors.conflict(domainErr.message);
+      }
+
+      return errors.internal(domainErr.message || 'Internal Server Error');
+    }
+  };
 }

@@ -1,7 +1,7 @@
 /**
  * API Handler — Unit Tests
  *
- * Tests src/lib/api-handler.ts — withApiHandler error-wrapping HOF.
+ * Tests src/lib/api-middleware.ts — withApiHandler error-wrapping HOF.
  *
  * Covers:
  *   - Successful handler passes through response
@@ -119,7 +119,7 @@ vi.mock('@/lib/api-response', () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import { withApiHandler } from '@/lib/api-handler';
+import { withApiHandler } from '@/lib/api-middleware';
 import {
   ApiError,
   ERROR_CODES,

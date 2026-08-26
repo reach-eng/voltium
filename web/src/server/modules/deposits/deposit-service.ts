@@ -15,7 +15,7 @@ import {
   creditSecurityDeposit,
   debitSecurityDeposit,
   creditWallet,
-} from '@/lib/services/wallet-service';
+} from '@/server/modules/wallet/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';

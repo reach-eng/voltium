@@ -105,7 +105,7 @@ describe('Phase W7 — Rider Lifecycle, KYC & Deposit Integrity', () => {
 
   describe('R-6: Deposit Refund Clamping & Partial Refund Lifecycle', () => {
     it('validates refund clamping against total and remaining deposit amount', async () => {
-      const { refundDeposit, DepositStateError } = await import('@/lib/services/deposit-service');
+      const { refundDeposit, DepositStateError } = await import('@/server/modules/deposits/deposit-service');
       const dbMock = (await import('@/lib/db')).db;
 
       // Mock transaction context
