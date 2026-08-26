@@ -8,44 +8,38 @@ import '../../utils/app_logger.dart';
 
 /// TLS Certificate Pinning Interceptor.
 ///
-/// AUDIT FIX (workflows P0-D — TLS pinning was fail-open): the previous
-/// implementation built the context with `withTrustedRoots: true` and only
-/// compared pins inside `badCertificateCallback`. Dart invokes that callback
-/// EXCLUSIVELY when default chain validation fails — so any certificate that
-/// chained to a system root completed the handshake without the pin ever
-/// being evaluated. A mis-issued CA certificate for our API host was a full
-/// MITM with zero enforcement.
-///
-/// NEW MODEL — trust nothing, pin everything:
-///   * The context is created with `withTrustedRoots: false` and no anchors,
-///     so default validation ALWAYS fails and the callback adjudicates EVERY
-///     handshake.
-///   * The callback accepts a connection only when BOTH hold:
-///       1. `host == pinnedHost`  (set from the API base URL)
-///       2. SHA-256(cert DER) matches one of the configured fingerprints
-///   * Cross-origin hosts (e.g. signed-URL uploads to S3/GCS) must NOT use
-///     this client — use [createExternalClient], which keeps standard system
-///     validation and never carries the API bearer token.
-///
-/// Debug builds bypass pinning entirely. Release builds with zero
-/// configured fingerprints throw at startup (D-P0-1) rather than shipping
-/// unpinned.
+/// AUDIT FIX (workflows P0-D & FL-12 CA-pin upgrade):
+/// Supported Modes via `--dart-define=TLS_PIN_MODE=ca|hash|off`:
+///   - `ca`: Restricts SecurityContext trust anchors to Voltium's explicit issuing
+///     CA bundle (withTrustedRoots: false). Any chain not issued by our explicit
+///     anchors fails validation outright (closes trusted-CA misissuance MITM).
+///   - `hash`: SHA-256 cert fingerprint matching in badCertificateCallback.
+///     Preserved as emergency rollback path.
+///   - `off`: Unpinned (debug builds only; release builds throw StateError).
 class PinnedHttpInterceptor {
+  /// Active TLS Pinning mode configured at build time.
+  static const String configuredPinMode =
+      String.fromEnvironment('TLS_PIN_MODE', defaultValue: 'hash');
+
   /// Default production SHA-256 certificate fingerprints for Voltium's TLS cert.
   /// Includes backup/next-rotation certificate fingerprints to prevent bricking on cert rotation.
   static const List<String> productionFingerprints = [];
 
   /// Dynamically registered certificate fingerprints.
-  ///
-  /// SECURITY NOTE: pins received over the channel they protect are circular
-  /// (a first-connection MITM can register its own fingerprint). If dynamic
-  /// provisioning is ever enabled, the payload MUST be verified against an
-  /// out-of-band signature/HMAC before reaching this method.
   static final List<String> _dynamicFingerprints = [];
+
+  /// Bundled trusted CA certificates (PEM or DER bytes) for `ca` mode.
+  static final List<Uint8List> _trustedCaCertBytes = [];
 
   /// The single hostname this client is allowed to talk to. Set by
   /// `ApiClient` from the resolved base URL before the first request.
   static String? pinnedHost;
+
+  @visibleForTesting
+  static bool? debugModeOverride;
+
+  @visibleForTesting
+  static String? pinModeOverride;
 
   /// Register dynamic pins received from a verified server configuration.
   static void setDynamicPins(List<String> pins) {
@@ -58,6 +52,29 @@ class PinnedHttpInterceptor {
     appDebug(
         '[PinnedHttpClient] Registered ${_dynamicFingerprints.length} dynamic TLS pins.');
   }
+
+  /// Register trusted CA certificate bytes for `ca` mode.
+  static void setTrustedCaCertBytes(List<Uint8List> certBytes) {
+    _trustedCaCertBytes.clear();
+    _trustedCaCertBytes.addAll(certBytes.where((b) => b.isNotEmpty));
+    appDebug(
+        '[PinnedHttpClient] Registered ${_trustedCaCertBytes.length} trusted CA certificates.');
+  }
+
+  /// Add a trusted CA certificate (PEM/DER bytes) to the active bundle.
+  static void addTrustedCaCert(Uint8List certBytes) {
+    if (certBytes.isNotEmpty) {
+      _trustedCaCertBytes.add(certBytes);
+    }
+  }
+
+  /// Clear all trusted CA certificates.
+  static void clearTrustedCaCerts() {
+    _trustedCaCertBytes.clear();
+  }
+
+  static List<Uint8List> get trustedCaCertBytes =>
+      List.unmodifiable(_trustedCaCertBytes);
 
   static List<String> get configuredFingerprints {
     const envPins = String.fromEnvironment('TLS_PIN_SHA256');
@@ -79,10 +96,55 @@ class PinnedHttpInterceptor {
   /// [expectedHost] is enforced inside the pin callback — a mismatched host
   /// is rejected regardless of certificate validity.
   static http.Client createClient({required String expectedHost}) {
-    if (kDebugMode) {
+    final isDebug = debugModeOverride ?? kDebugMode;
+    final mode = (pinModeOverride ?? configuredPinMode).toLowerCase().trim();
+
+    if (isDebug && mode == 'off') {
       return http.Client();
     }
 
+    if (!isDebug && mode == 'off') {
+      // DEEP-AUDIT D-P0-1: never silently disable TLS pinning in release.
+      throw StateError(
+        'PinnedHttpClient: TLS_PIN_MODE=off is not permitted in release builds.',
+      );
+    }
+
+    pinnedHost = expectedHost;
+
+    if (mode == 'ca') {
+      return _createCaPinnedClient(expectedHost);
+    } else {
+      return _createHashPinnedClient(expectedHost);
+    }
+  }
+
+  static http.Client _createCaPinnedClient(String expectedHost) {
+    if (_trustedCaCertBytes.isEmpty) {
+      // DEEP-AUDIT D-P0-1 / FL-12: fail-closed if no CA certs configured in ca mode
+      throw StateError(
+        'PinnedHttpClient: no trusted CA certificates configured for TLS_PIN_MODE=ca. '
+        'Ensure assets/certs/voltium-ca.pem is loaded or set via PinnedHttpInterceptor.setTrustedCaCertBytes().',
+      );
+    }
+
+    final context = SecurityContext(withTrustedRoots: false);
+    for (final bytes in _trustedCaCertBytes) {
+      context.setTrustedCertificatesBytes(bytes);
+    }
+
+    final httpClient = HttpClient(context: context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
+        appDebug(
+          '[PinnedHttpClient] Certificate rejected under CA trust-anchor mode for $host.',
+        );
+        return false; // Strict: reject unknown / invalid chains outright
+      };
+
+    return IOClient(httpClient);
+  }
+
+  static http.Client _createHashPinnedClient(String expectedHost) {
     final activeFingerprints = configuredFingerprints;
     if (activeFingerprints.isEmpty) {
       // DEEP-AUDIT D-P0-1: never silently disable TLS pinning in release.
@@ -94,11 +156,6 @@ class PinnedHttpInterceptor {
       );
     }
 
-    pinnedHost = expectedHost;
-
-    // Trust NOTHING: every handshake fails default validation and is
-    // adjudicated below. This is what makes the pin enforce on every
-    // connection instead of only on already-broken chains.
     final httpClient = HttpClient(
       context: SecurityContext(withTrustedRoots: false),
     )..badCertificateCallback = (X509Certificate cert, String host, int port) {

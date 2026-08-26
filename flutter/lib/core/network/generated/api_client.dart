@@ -419,11 +419,6 @@ class VoltiumApiClient {
     return response;
   }
 
-  /// Fetch system settings
-  Future<Map<String, dynamic>> getRiderSettings() async {
-    final response = await _client.get('/api/rider/settings');
-    return response;
-  }
 
   /// Sync device telemetry logs
   Future<Map<String, dynamic>> postRiderSyncDeviceData(
