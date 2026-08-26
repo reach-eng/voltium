@@ -44,13 +44,14 @@ class TransactionListTile extends StatelessWidget {
     final isCredit = type == 'CREDIT' || type.contains('TOPUP');
 
     // Determine display label.
+    final l10n = AppLocalizations.of(context);
     String displayLabel;
     if (!isCredit && purpose.toUpperCase() == 'RENTAL') {
-      displayLabel = 'Rent';
+      displayLabel = l10n?.wallet_txRent ?? 'Rent';
     } else if (purpose.toUpperCase() == 'SECURITY_DEPOSIT') {
-      displayLabel = 'Security';
+      displayLabel = l10n?.wallet_txSecurity ?? 'Security';
     } else if (!isCredit && remark.isNotEmpty) {
-      displayLabel = 'Deduction';
+      displayLabel = l10n?.wallet_txDeduction ?? 'Deduction';
     } else {
       displayLabel = purpose.isNotEmpty ? purpose : type;
     }
@@ -72,14 +73,18 @@ class TransactionListTile extends StatelessWidget {
         statusTextColor = colors.warningLightForeground;
         statusBgColor = colors.warningLight;
       } else if (purpose.contains('REFUND')) {
-        statusTextColor = AppColors.primary;
-        statusBgColor = colors.primarySurface;
+        // P0 contrast fix: scheme tokens are dark-aware. The static
+        // AppColors.primary text on dark primarySurface measured ~1.7:1.
+        final scheme = Theme.of(context).colorScheme;
+        statusTextColor = scheme.onPrimaryContainer;
+        statusBgColor = scheme.primaryContainer;
       } else if (isCredit) {
         statusTextColor = colors.successLightForeground;
         statusBgColor = colors.successLight;
       } else {
-        statusTextColor = AppColors.primary;
-        statusBgColor = colors.primarySurface;
+        final scheme = Theme.of(context).colorScheme;
+        statusTextColor = scheme.onPrimaryContainer;
+        statusBgColor = scheme.primaryContainer;
       }
     }
     return Padding(
@@ -786,7 +791,8 @@ class TransactionHistorySection extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Transactions',
+                AppLocalizations.of(context)?.wallet_recentTransactions ??
+                    'Recent Transactions',
                 style: AppTypography.labelLarge
                     .copyWith(color: AppColors.of(context).onSurfaceMuted),
               ),
@@ -794,7 +800,8 @@ class TransactionHistorySection extends ConsumerWidget {
               // (was ~22px of tappable text).
               Semantics(
                 button: true,
-                label: 'See all transactions',
+                label: AppLocalizations.of(context)?.wallet_seeAllSemantic ??
+                    'See all transactions',
                 child: InkWell(
                   key: const Key('seeAllTransactionsButton'),
                   onTap: () => _openHistory(context),
@@ -805,7 +812,7 @@ class TransactionHistorySection extends ConsumerWidget {
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      'See All',
+                      AppLocalizations.of(context)?.wallet_seeAll ?? 'See All',
                       style: AppTypography.labelMedium.copyWith(
                         color: AppColors.primaryLight,
                         fontWeight: FontWeight.w600,
@@ -822,12 +829,16 @@ class TransactionHistorySection extends ConsumerWidget {
             child: Row(
               children: [
                 AppLocalizations.of(context)?.history_all ?? 'All',
-                'Approved',
-                'Pending',
-                'Rejected',
-                'Rent',
-                'Security',
-                'Deduction'
+                AppLocalizations.of(context)?.wallet_filterApproved ??
+                    'Approved',
+                AppLocalizations.of(context)?.wallet_filterPending ?? 'Pending',
+                AppLocalizations.of(context)?.wallet_filterRejected ??
+                    'Rejected',
+                AppLocalizations.of(context)?.wallet_filterRent ?? 'Rent',
+                AppLocalizations.of(context)?.wallet_filterSecurity ??
+                    'Security',
+                AppLocalizations.of(context)?.wallet_filterDeduction ??
+                    'Deduction',
               ].map((f) {
                 final isSelected = selectedFilter == f;
                 return Padding(
@@ -894,7 +905,7 @@ class TransactionHistorySection extends ConsumerWidget {
                       }
                     },
                     child: Text(
-                      'Retry',
+                      AppLocalizations.of(context)?.wallet_retry ?? 'Retry',
                       style: AppTypography.labelMedium.copyWith(
                         fontWeight: FontWeight.w700,
                         color: colors.errorLightForeground,
@@ -915,8 +926,12 @@ class TransactionHistorySection extends ConsumerWidget {
                     ? const SizedBox.shrink()
                     : Text(
                         selectedFilter == 'All'
-                            ? 'No transactions yet'
-                            : 'No transactions matching filter',
+                            ? (AppLocalizations.of(context)
+                                    ?.wallet_noTransactions ??
+                                'No transactions yet')
+                            : (AppLocalizations.of(context)
+                                    ?.wallet_noTransactionsFiltered ??
+                                'No transactions matching filter'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           color: colors.onSurfaceMuted,
@@ -944,14 +959,17 @@ class TransactionHistorySection extends ConsumerWidget {
                 child: Center(
                   child: Semantics(
                     button: true,
-                    label:
+                    label: AppLocalizations.of(context)
+                            ?.wallet_viewAllSemantic(filtered.length) ??
                         'View all ${filtered.length} transactions in history',
                     child: TextButton.icon(
                       key: const Key('viewAllTransactionsButton'),
                       onPressed: () => _openHistory(context),
                       icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                       label: Text(
-                        'View all (${filtered.length})',
+                        AppLocalizations.of(context)
+                                ?.wallet_viewAll(filtered.length) ??
+                            'View all (${filtered.length})',
                         style: AppTypography.labelMedium.copyWith(
                           color: AppColors.primaryLight,
                           fontWeight: FontWeight.w600,

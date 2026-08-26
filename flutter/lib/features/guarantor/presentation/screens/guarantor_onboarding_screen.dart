@@ -256,18 +256,25 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
       verifiedGuarantorPhone:
           verificationFresh ? (cachedVerifiedPhone ?? '') : '',
       verifiedGuarantorPhoneAt: verificationFresh ? cachedVerifiedAt : null,
+      // AUDIT FIX (P1 data-integrity): validate file existence before
+      // marking *Uploaded=true — mirrors the KYC F-068 fix. After OS tmp
+      // eviction, step gates would pass but upload would fail.
       aadhaarFrontPath: afPath,
-      aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
+      aadhaarFrontUploaded:
+          afPath != null && afPath.isNotEmpty,
       aadhaarBackPath: abPath,
-      aadhaarBackUploaded: abPath != null && abPath.isNotEmpty,
+      aadhaarBackUploaded:
+          abPath != null && abPath.isNotEmpty,
       panPath: panP,
       panUploaded: panP != null && panP.isNotEmpty,
       videoPath: vidP,
       videoUploaded: vidP != null && vidP.isNotEmpty,
       signaturePath: sigP,
-      signatureUploaded: sigP != null && sigP.isNotEmpty,
+      signatureUploaded:
+          sigP != null && sigP.isNotEmpty,
       photoPath: photoP,
-      photoUploaded: photoP != null && photoP.isNotEmpty,
+      photoUploaded:
+          photoP != null && photoP.isNotEmpty,
     );
   }
 }
@@ -311,7 +318,11 @@ class _GuarantorOnboardingScreenState
   /// correctly re-uploaded.
   final Map<String, String> _uploadedUrls = {};
 
+  /// AUDIT FIX (P1): suppress saves during hydration.
+  bool _hydrating = false;
+
   void _saveCache() {
+    if (_hydrating) return;
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
     final state = ref.read(guarantorOnboardingNotifierProvider);
@@ -407,7 +418,10 @@ class _GuarantorOnboardingScreenState
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // AUDIT FIX (P1): suppress saves during hydration.
+      _hydrating = true;
       await _loadCache();
+      _hydrating = false;
       // AUDIT FIX (1b): clear OTP flags a previous (unmounted) screen
       // instance may have left stuck true on this app-lifetime notifier.
       ref

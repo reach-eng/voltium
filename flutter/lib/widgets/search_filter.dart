@@ -111,7 +111,7 @@ class FilterChipList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
+    // W5-design: colors come from the shared ChipTheme — no local overrides.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -123,12 +123,6 @@ class FilterChipList extends StatelessWidget {
               label: Text(item),
               selected: isSelected,
               onSelected: (_) => onSelected(item),
-              selectedColor: colors.primarySurface,
-              checkmarkColor: AppColors.primary,
-              backgroundColor: colors.card,
-              labelStyle: GoogleFonts.plusJakartaSans(
-                color: isSelected ? AppColors.primary : colors.onSurfaceVariant,
-              ),
             ),
           );
         }).toList(),

@@ -55,12 +55,22 @@ class TicketEntity {
               )
               .toList() ??
           [],
-      attachments: (json['attachments'] as List<dynamic>?)
-              ?.map((a) => a.toString())
-              .where((a) => a.isNotEmpty)
-              .toList() ??
-          [],
+      // AUDIT FIX (P0 data-population): the server stores attachments as
+      // a CSV string ("url1,url2"), not a JSON array. The old cast to
+      // List<dynamic> threw TypeError, crashing the ENTIRE ticket list.
+      attachments: _parseAttachments(json['attachments']),
     );
+  }
+
+  /// AUDIT FIX (P0): parse attachments from either a CSV string
+  /// (the server-side storage format) or a JSON array (defensive).
+  static List<String> _parseAttachments(dynamic raw) {
+    if (raw == null) return [];
+    if (raw is List) return raw.map((a) => a.toString()).toList();
+    if (raw is String && raw.isNotEmpty) {
+      return raw.split(',').where((a) => a.trim().isNotEmpty).toList();
+    }
+    return [];
   }
 
   static TicketStatus _parseStatus(String? status) {

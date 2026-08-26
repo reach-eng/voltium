@@ -469,38 +469,65 @@ class AppDurations {
 }
 
 class AppTheme {
+  /// W5-design: shared chip theme so every FilterChip/ChoiceChip inherits
+  /// dark-correct selected colors from the ColorScheme instead of hand-
+  /// rolled static AppColors overrides (P0 contrast fix — static
+  /// `AppColors.primary` on dark `primarySurface` measured ~1.7:1).
+  /// Height lands at ~40dp with the vertical padding, meeting the repo's
+  /// 44dp-minimum spirit for filter rows inside scrollables.
+  static ChipThemeData _chipTheme(ColorScheme cs) => ChipThemeData(
+        labelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: cs.onSurfaceVariant,
+        ),
+        secondaryLabelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: cs.onPrimaryContainer,
+        ),
+        backgroundColor: cs.surfaceContainerLow,
+        selectedColor: cs.primaryContainer,
+        checkmarkColor: cs.onPrimaryContainer,
+        shape: StadiumBorder(side: BorderSide(color: cs.outline)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+      );
+
   static ThemeData get lightTheme {
+    final cs = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      primary: AppColors.primary,
+      onPrimary: Colors.white,
+      secondary: AppColors.success,
+      onSecondary: Colors.white,
+      surface: AppColors.surface,
+      onSurface: AppColors.onSurface,
+      error: AppColors.error,
+    ).copyWith(
+      // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
+      // M3 `fromSeed` would auto-generate these from the seed color, but the
+      // brand spec defines explicit values that match `AppColors` 1:1.
+      primaryContainer: AppColors.primarySurface,
+      onPrimaryContainer: AppColors.primaryDark,
+      secondaryContainer: AppColors.successLight,
+      onSecondaryContainer: AppColors.successDark,
+      // `tertiary` = warning in our design system (3rd semantic priority).
+      tertiary: AppColors.warning,
+      onTertiary: Colors.white,
+      tertiaryContainer: AppColors.warningSurface,
+      onTertiaryContainer: AppColors.warningForeground,
+      surfaceContainerLow: AppColors.surfaceBright,
+      surfaceContainerHigh: AppColors.iconBackground,
+      onSurfaceVariant: AppColors.onSurfaceVariant,
+      outline: AppColors.outline,
+      outlineVariant: AppColors.outlineVariant,
+    );
     return ThemeData(
       useMaterial3: true,
       textTheme: GoogleFonts.plusJakartaSansTextTheme(),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.success,
-        onSecondary: Colors.white,
-        surface: AppColors.surface,
-        onSurface: AppColors.onSurface,
-        error: AppColors.error,
-      ).copyWith(
-        // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
-        // M3 `fromSeed` would auto-generate these from the seed color, but the
-        // brand spec defines explicit values that match `AppColors` 1:1.
-        primaryContainer: AppColors.primarySurface,
-        onPrimaryContainer: AppColors.primaryDark,
-        secondaryContainer: AppColors.successLight,
-        onSecondaryContainer: AppColors.successDark,
-        // `tertiary` = warning in our design system (3rd semantic priority).
-        tertiary: AppColors.warning,
-        onTertiary: Colors.white,
-        tertiaryContainer: AppColors.warningSurface,
-        onTertiaryContainer: AppColors.warningForeground,
-        surfaceContainerLow: AppColors.surfaceBright,
-        surfaceContainerHigh: AppColors.iconBackground,
-        onSurfaceVariant: AppColors.onSurfaceVariant,
-        outline: AppColors.outline,
-        outlineVariant: AppColors.outlineVariant,
-      ),
+      colorScheme: cs,
+      chipTheme: _chipTheme(cs),
       scaffoldBackgroundColor: AppColors.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -524,7 +551,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 60), // P3 fix: unified with dark theme + FilledButton (was 56 light-only)
           textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -627,37 +654,44 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     const darkColors = ThemeColors.dark;
+    final cs = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+      primary: AppColors.primaryLight,
+      onPrimary: Colors.white,
+      secondary: AppColors.success,
+      onSecondary: Colors.white,
+      surface: darkColors.surface,
+      onSurface: darkColors.onSurface,
+      error: AppColors.error,
+    ).copyWith(
+      // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
+      // P0 chip-contrast fix: primaryContainer must be a *lighter tint* in
+      // dark mode (standard M3). It previously mapped to
+      // `darkColors.primarySurface` = 0xFF1E293B — identical to `card` — so
+      // selected chips were invisible and onPrimaryContainer (0xFF2F6DDE on
+      // slate) measured ~2.4:1.
+      primaryContainer: AppColors.primaryLight,
+      onPrimaryContainer: Colors.white,
+      secondaryContainer: darkColors.successSurface,
+      onSecondaryContainer: darkColors.success,
+      tertiary: darkColors.warning,
+      onTertiary: Colors.black,
+      tertiaryContainer: darkColors.warningSurface,
+      onTertiaryContainer: darkColors.warningForeground,
+      surfaceContainerLow: darkColors.card,
+      surfaceContainerHigh: darkColors.inputFill,
+      onSurfaceVariant: darkColors.onSurfaceVariant,
+      outline: darkColors.outline,
+      outlineVariant: darkColors.outlineVariant,
+    );
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       textTheme:
           GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.dark,
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.success,
-        onSecondary: Colors.white,
-        surface: darkColors.surface,
-        onSurface: darkColors.onSurface,
-        error: AppColors.error,
-      ).copyWith(
-        // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
-        primaryContainer: darkColors.primarySurface,
-        onPrimaryContainer: AppColors.primaryLight,
-        secondaryContainer: darkColors.successSurface,
-        onSecondaryContainer: darkColors.success,
-        tertiary: darkColors.warning,
-        onTertiary: Colors.black,
-        tertiaryContainer: darkColors.warningSurface,
-        onTertiaryContainer: darkColors.warningForeground,
-        surfaceContainerLow: darkColors.card,
-        surfaceContainerHigh: darkColors.inputFill,
-        onSurfaceVariant: darkColors.onSurfaceVariant,
-        outline: darkColors.outline,
-        outlineVariant: darkColors.outlineVariant,
-      ),
+      colorScheme: cs,
+      chipTheme: _chipTheme(cs),
       scaffoldBackgroundColor: darkColors.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,

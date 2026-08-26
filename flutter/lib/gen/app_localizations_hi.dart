@@ -264,13 +264,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get wallet_transactionHistory => 'लेनदेन इतिहास';
 
   @override
-  String get wallet_viewAll => 'सभी देखें';
+  String wallet_viewAll(Object count) {
+    return 'सभी देखें ($count)';
+  }
 
   @override
-  String get wallet_recentTransactions => 'हालिया लेनदेन';
+  String get wallet_recentTransactions => 'हाल के लेन-देन';
 
   @override
-  String get wallet_noTransactions => 'अभी तक कोई लेनदेन नहीं';
+  String get wallet_noTransactions => 'अभी तक कोई लेन-देन नहीं';
 
   @override
   String get wallet_dailyRental => 'दैनिक किराया';
@@ -312,13 +314,37 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get history_title => 'लेनदेन इतिहास';
+  String get history_title => 'लेन-देन इतिहास';
 
   @override
   String get history_credits => 'क्रेडिट';
 
   @override
   String get history_debits => 'डेबिट';
+
+  @override
+  String get history_filterCredit => 'क्रेडिट';
+
+  @override
+  String get history_filterDebit => 'डेबिट';
+
+  @override
+  String get history_sortTooltip => 'लेन-देन क्रमित करें';
+
+  @override
+  String get history_sortNewest => 'नवीनतम पहले';
+
+  @override
+  String get history_sortOldest => 'सबसे पुराने पहले';
+
+  @override
+  String get history_sortHighest => 'उच्चतम राशि';
+
+  @override
+  String get history_sortLowest => 'न्यूनतम राशि';
+
+  @override
+  String get history_to => 'से';
 
   @override
   String get history_all => 'सभी';
@@ -337,7 +363,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get history_netAmount => 'शुद्ध';
 
   @override
-  String get history_totalCharged => 'कुल शुल्क';
+  String get history_totalCharged => 'कुल कटौती';
 
   @override
   String history_includesTax(String amount) {
@@ -2659,4 +2685,111 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get supportNotConfigured =>
       'सपोर्ट संपर्क कॉन्फ़िगर किया जा रहा है। कृपया थोड़ी देर में पुनः प्रयास करें।';
+
+  @override
+  String get wallet_seeAll => 'सभी देखें';
+
+  @override
+  String get wallet_seeAllSemantic => 'सभी लेन-देन देखें';
+
+  @override
+  String get wallet_filterAll => 'सभी';
+
+  @override
+  String get wallet_filterApproved => 'स्वीकृत';
+
+  @override
+  String get wallet_filterPending => 'लंबित';
+
+  @override
+  String get wallet_filterRejected => 'अस्वीकृत';
+
+  @override
+  String get wallet_filterRent => 'किराया';
+
+  @override
+  String get wallet_filterSecurity => 'सिक्योरिटी';
+
+  @override
+  String get wallet_filterDeduction => 'कटौती';
+
+  @override
+  String get wallet_txRent => 'किराया';
+
+  @override
+  String get wallet_txSecurity => 'सिक्योरिटी';
+
+  @override
+  String get wallet_txDeduction => 'कटौती';
+
+  @override
+  String get wallet_retry => 'पुनः प्रयास';
+
+  @override
+  String get wallet_noTransactionsFiltered =>
+      'इस फ़िल्टर से मेल खाता कोई लेन-देन नहीं';
+
+  @override
+  String wallet_viewAllSemantic(Object count) {
+    return 'इतिहास में $count लेन-देन सभी देखें';
+  }
+
+  @override
+  String get history_loadError => 'आपके लेन-देन लोड नहीं हो सके';
+
+  @override
+  String get history_retrySemantic => 'लेन-देन लोड करने का पुनः प्रयास करें';
+
+  @override
+  String get history_goBack => 'वापस जाएँ';
+
+  @override
+  String get history_refreshSemantic => 'लेन-देन ताज़ा करें';
+
+  @override
+  String get history_refresh => 'ताज़ा करें';
+
+  @override
+  String get history_emptyTitle => 'कोई लेन-देन नहीं मिला';
+
+  @override
+  String get history_loadMore => 'अधिक लेन-देन लोड करें';
+
+  @override
+  String get history_end => 'लेन-देन इतिहास का अंत';
+
+  @override
+  String get history_tabCredits => 'क्रेडिट';
+
+  @override
+  String get history_tabDebits => 'डेबिट';
+
+  @override
+  String get history_tapHint =>
+      'पूरी फ़ीस जानकारी देखने के लिए किसी भी लेन-देन पर टैप करें';
+
+  @override
+  String get history_fallbackLabel => 'लेन-देन';
+
+  @override
+  String get topup_requiredDepositBreakdown => 'आवश्यक डिपॉज़िट विवरण';
+
+  @override
+  String get topup_totalDepositPayable => 'कुल देय डिपॉज़िट';
+
+  @override
+  String get topup_minimumRequiredTopUp => 'न्यूनतम आवश्यक टॉप-अप';
+
+  @override
+  String get topup_fixedForInitialDeposit =>
+      'प्रारंभिक प्लान डिपॉज़िट के लिए निश्चित राशि';
+
+  @override
+  String get topup_enterAmountTitle => 'राशि दर्ज करें';
+
+  @override
+  String get topup_proceedToPayment => 'भुगतान के लिए आगे बढ़ें';
+
+  @override
+  String get topup_gatewayFee => 'गेटवे शुल्क';
 }

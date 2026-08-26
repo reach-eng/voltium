@@ -419,8 +419,10 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
-        // AUDIT FIX: cap unbounded paste before it ships to the API.
-        maxLength: 2000,
+        // AUDIT FIX: cap to match server Zod max(1000) — the old 2000
+        // let riders type 1001–2000 chars that the server silently
+        // rejected as a 400, losing their feedback.
+        maxLength: 1000,
         buildCounter: (_,
                 {required currentLength, required isFocused, maxLength}) =>
             null, // counter hidden; limit still enforced

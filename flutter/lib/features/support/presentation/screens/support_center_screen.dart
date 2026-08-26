@@ -49,7 +49,11 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final dataState = ref.watch(riderProvider.select((p) => p.dataState));
     final tlName = rider?.teamLeader;
-    final tlPhone = rider?.teamLeaderPhone ?? rider?.emergencyContact;
+    // AUDIT FIX (P1): the TL phone fallback previously used
+    // `rider?.emergencyContact` — putting a PERSONAL emergency contact's
+    // number behind the "Your Team Leader" card's Call button. Only use
+    // teamLeaderPhone now; if absent, hide the call action.
+    final tlPhone = rider?.teamLeaderPhone;
     final isLoading = rider == null &&
         (dataState == DataState.initial || dataState == DataState.loading);
 

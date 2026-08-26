@@ -542,19 +542,19 @@ abstract class AppLocalizations {
   /// **'Transaction History'**
   String get wallet_transactionHistory;
 
-  /// View all transactions link
+  /// Label on the truncation affordance at the bottom of the recent transactions list
   ///
   /// In en, this message translates to:
-  /// **'View All'**
-  String get wallet_viewAll;
+  /// **'View all ({count})'**
+  String wallet_viewAll(Object count);
 
-  /// Recent transactions section
+  /// Section heading on the wallet screen above the recent transactions list
   ///
   /// In en, this message translates to:
   /// **'Recent Transactions'**
   String get wallet_recentTransactions;
 
-  /// Empty transaction list
+  /// Empty-state copy when the wallet has no transactions
   ///
   /// In en, this message translates to:
   /// **'No transactions yet'**
@@ -632,7 +632,7 @@ abstract class AppLocalizations {
   /// **'{days} day streak! Keep going to unlock premium tiers.'**
   String wallet_unlockPremiumTiers(int days);
 
-  /// History screen title
+  /// AppBar title of the full transaction history screen
   ///
   /// In en, this message translates to:
   /// **'Transaction History'**
@@ -649,6 +649,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Debits'**
   String get history_debits;
+
+  /// Filter chip: only credit transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Credit'**
+  String get history_filterCredit;
+
+  /// Filter chip: only debit transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Debit'**
+  String get history_filterDebit;
+
+  /// Tooltip/semantic label for the sort button
+  ///
+  /// In en, this message translates to:
+  /// **'Sort transactions'**
+  String get history_sortTooltip;
+
+  /// Sort option: newest first
+  ///
+  /// In en, this message translates to:
+  /// **'Newest First'**
+  String get history_sortNewest;
+
+  /// Sort option: oldest first
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest First'**
+  String get history_sortOldest;
+
+  /// Sort option: highest amount first
+  ///
+  /// In en, this message translates to:
+  /// **'Highest Amount'**
+  String get history_sortHighest;
+
+  /// Sort option: lowest amount first
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest Amount'**
+  String get history_sortLowest;
+
+  /// Separator between start and end date fields
+  ///
+  /// In en, this message translates to:
+  /// **'to'**
+  String get history_to;
 
   /// All filter tab
   ///
@@ -680,10 +728,10 @@ abstract class AppLocalizations {
   /// **'Net'**
   String get history_netAmount;
 
-  /// Breakdown total label
+  /// Section heading in the transaction detail dialog for the debits total
   ///
   /// In en, this message translates to:
-  /// **'Total Charged'**
+  /// **'TOTAL CHARGED'**
   String get history_totalCharged;
 
   /// Tax info in breakdown
@@ -4965,6 +5013,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Support contact is being configured. Please try again shortly.'**
   String get supportNotConfigured;
+
+  /// Label on the 'See all transactions' button in the wallet recent list
+  ///
+  /// In en, this message translates to:
+  /// **'See All'**
+  String get wallet_seeAll;
+
+  /// Semantic label for the 'See all' button (TalkBack reads this)
+  ///
+  /// In en, this message translates to:
+  /// **'See all transactions'**
+  String get wallet_seeAllSemantic;
+
+  /// Wallet history filter chip: all transactions
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get wallet_filterAll;
+
+  /// Wallet history filter chip: only approved/completed
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get wallet_filterApproved;
+
+  /// Wallet history filter chip: only pending
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get wallet_filterPending;
+
+  /// Wallet history filter chip: only rejected/failed
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get wallet_filterRejected;
+
+  /// Wallet history filter chip: only rental debits
+  ///
+  /// In en, this message translates to:
+  /// **'Rent'**
+  String get wallet_filterRent;
+
+  /// Wallet history filter chip: only security-deposit debits
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get wallet_filterSecurity;
+
+  /// Wallet history filter chip: any other debit (defaulted category)
+  ///
+  /// In en, this message translates to:
+  /// **'Deduction'**
+  String get wallet_filterDeduction;
+
+  /// Display label for a rental-debit transaction row
+  ///
+  /// In en, this message translates to:
+  /// **'Rent'**
+  String get wallet_txRent;
+
+  /// Display label for a security-deposit transaction row
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get wallet_txSecurity;
+
+  /// Display label for a generic debit transaction row
+  ///
+  /// In en, this message translates to:
+  /// **'Deduction'**
+  String get wallet_txDeduction;
+
+  /// Retry button label on wallet error banner
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get wallet_retry;
+
+  /// Empty-state copy when a non-All filter yields 0 rows
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions matching filter'**
+  String get wallet_noTransactionsFiltered;
+
+  /// Semantic label for the truncation affordance (TalkBack reads this with the count)
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count} transactions in history'**
+  String wallet_viewAllSemantic(Object count);
+
+  /// Toast shown when the history screen fails to load transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your transactions'**
+  String get history_loadError;
+
+  /// Semantic label for the history retry button (TalkBack)
+  ///
+  /// In en, this message translates to:
+  /// **'Retry loading transactions'**
+  String get history_retrySemantic;
+
+  /// Back button label on the history screen
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get history_goBack;
+
+  /// Semantic label for the history refresh button
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh transactions'**
+  String get history_refreshSemantic;
+
+  /// Refresh button label on the history screen
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get history_refresh;
+
+  /// Empty-state title on the history screen
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions found'**
+  String get history_emptyTitle;
+
+  /// Load-more button label on the history screen
+  ///
+  /// In en, this message translates to:
+  /// **'Load more transactions'**
+  String get history_loadMore;
+
+  /// End-of-list marker shown when the history has no more pages
+  ///
+  /// In en, this message translates to:
+  /// **'End of transaction history'**
+  String get history_end;
+
+  /// History tab label: only credit transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Credits'**
+  String get history_tabCredits;
+
+  /// History tab label: only debit transactions
+  ///
+  /// In en, this message translates to:
+  /// **'Debits'**
+  String get history_tabDebits;
+
+  /// Hint text shown above the transaction list
+  ///
+  /// In en, this message translates to:
+  /// **'Tap any transaction to see the full fee breakdown'**
+  String get history_tapHint;
+
+  /// Fallback display label for a transaction with no description or purpose
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction'**
+  String get history_fallbackLabel;
+
+  /// Heading on the top-up amount screen when a security deposit is required
+  ///
+  /// In en, this message translates to:
+  /// **'Required Deposit Breakdown'**
+  String get topup_requiredDepositBreakdown;
+
+  /// Label for the locked (security-deposit) total
+  ///
+  /// In en, this message translates to:
+  /// **'Total Deposit Payable'**
+  String get topup_totalDepositPayable;
+
+  /// Label for the minimum top-up required when a plan is active
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum Required Top-Up'**
+  String get topup_minimumRequiredTopUp;
+
+  /// Helper text under the security-deposit amount
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed amount for initial plan deposit'**
+  String get topup_fixedForInitialDeposit;
+
+  /// Title on the top-up amount entry screen
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Amount'**
+  String get topup_enterAmountTitle;
+
+  /// CTA button label on the top-up amount entry screen
+  ///
+  /// In en, this message translates to:
+  /// **'PROCEED TO PAYMENT'**
+  String get topup_proceedToPayment;
+
+  /// Label for the gateway fee line in the top-up breakdown
+  ///
+  /// In en, this message translates to:
+  /// **'Gateway Fee'**
+  String get topup_gatewayFee;
 }
 
 class _AppLocalizationsDelegate

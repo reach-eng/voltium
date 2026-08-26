@@ -264,7 +264,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wallet_transactionHistory => 'Transaction History';
 
   @override
-  String get wallet_viewAll => 'View All';
+  String wallet_viewAll(Object count) {
+    return 'View all ($count)';
+  }
 
   @override
   String get wallet_recentTransactions => 'Recent Transactions';
@@ -321,6 +323,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history_debits => 'Debits';
 
   @override
+  String get history_filterCredit => 'Credit';
+
+  @override
+  String get history_filterDebit => 'Debit';
+
+  @override
+  String get history_sortTooltip => 'Sort transactions';
+
+  @override
+  String get history_sortNewest => 'Newest First';
+
+  @override
+  String get history_sortOldest => 'Oldest First';
+
+  @override
+  String get history_sortHighest => 'Highest Amount';
+
+  @override
+  String get history_sortLowest => 'Lowest Amount';
+
+  @override
+  String get history_to => 'to';
+
+  @override
   String get history_all => 'All';
 
   @override
@@ -337,7 +363,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get history_netAmount => 'Net';
 
   @override
-  String get history_totalCharged => 'Total Charged';
+  String get history_totalCharged => 'TOTAL CHARGED';
 
   @override
   String history_includesTax(String amount) {
@@ -2651,4 +2677,110 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get supportNotConfigured =>
       'Support contact is being configured. Please try again shortly.';
+
+  @override
+  String get wallet_seeAll => 'See All';
+
+  @override
+  String get wallet_seeAllSemantic => 'See all transactions';
+
+  @override
+  String get wallet_filterAll => 'All';
+
+  @override
+  String get wallet_filterApproved => 'Approved';
+
+  @override
+  String get wallet_filterPending => 'Pending';
+
+  @override
+  String get wallet_filterRejected => 'Rejected';
+
+  @override
+  String get wallet_filterRent => 'Rent';
+
+  @override
+  String get wallet_filterSecurity => 'Security';
+
+  @override
+  String get wallet_filterDeduction => 'Deduction';
+
+  @override
+  String get wallet_txRent => 'Rent';
+
+  @override
+  String get wallet_txSecurity => 'Security';
+
+  @override
+  String get wallet_txDeduction => 'Deduction';
+
+  @override
+  String get wallet_retry => 'Retry';
+
+  @override
+  String get wallet_noTransactionsFiltered => 'No transactions matching filter';
+
+  @override
+  String wallet_viewAllSemantic(Object count) {
+    return 'View all $count transactions in history';
+  }
+
+  @override
+  String get history_loadError => 'Couldn\'t load your transactions';
+
+  @override
+  String get history_retrySemantic => 'Retry loading transactions';
+
+  @override
+  String get history_goBack => 'Go back';
+
+  @override
+  String get history_refreshSemantic => 'Refresh transactions';
+
+  @override
+  String get history_refresh => 'Refresh';
+
+  @override
+  String get history_emptyTitle => 'No transactions found';
+
+  @override
+  String get history_loadMore => 'Load more transactions';
+
+  @override
+  String get history_end => 'End of transaction history';
+
+  @override
+  String get history_tabCredits => 'Credits';
+
+  @override
+  String get history_tabDebits => 'Debits';
+
+  @override
+  String get history_tapHint =>
+      'Tap any transaction to see the full fee breakdown';
+
+  @override
+  String get history_fallbackLabel => 'Transaction';
+
+  @override
+  String get topup_requiredDepositBreakdown => 'Required Deposit Breakdown';
+
+  @override
+  String get topup_totalDepositPayable => 'Total Deposit Payable';
+
+  @override
+  String get topup_minimumRequiredTopUp => 'Minimum Required Top-Up';
+
+  @override
+  String get topup_fixedForInitialDeposit =>
+      'Fixed amount for initial plan deposit';
+
+  @override
+  String get topup_enterAmountTitle => 'Enter Amount';
+
+  @override
+  String get topup_proceedToPayment => 'PROCEED TO PAYMENT';
+
+  @override
+  String get topup_gatewayFee => 'Gateway Fee';
 }

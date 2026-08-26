@@ -62,9 +62,15 @@ class SupportNotifier extends Notifier<SupportState> {
   /// then trigger a network refresh.
   void initSupportData() {
     state = state.copyWith(
+      // AUDIT FIX (P0 data-population): do NOT seed hardcoded phone/email.
+      // The previous values ('+919876543210' / 'support@voltium.app') were
+      // placeholders that rendered as real contact cards — riders dialled a
+      // number nobody owned. Leave them empty so the T-113 not-configured
+      // card renders until an admin publishes real contact info via
+      // the settings registry.
       supportConfig: const SupportConfig(
-        supportPhone: '+919876543210',
-        supportEmail: 'support@voltium.app',
+        supportPhone: '',
+        supportEmail: '',
         ticketChecklist: [
           'I have checked the vehicle battery levels.',
           'I have verified the internet connection on my device.',
