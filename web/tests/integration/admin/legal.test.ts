@@ -39,11 +39,17 @@ describe('PUT /api/admin/legal', () => {
   });
 
   afterAll(async () => {
-    // Restore original content
+    // Restore original content.
     await api('/api/admin/legal', {
       method: 'PUT',
       cookie: adminCookie,
       json: originalTerms,
+    });
+    // W9 / L-1: restores land as DRAFT — republish so riders keep seeing
+    // live terms on the shared environment.
+    await api('/api/admin/legal/terms/publish', {
+      method: 'POST',
+      cookie: adminCookie,
     });
   });
 
@@ -60,9 +66,18 @@ describe('PUT /api/admin/legal', () => {
     expect(status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.type).toBe('terms');
+    // W9 / L-1: a changed save drops the doc to DRAFT.
+    expect(body.data.status).toBe('DRAFT');
+    // Republish so subsequent suites / riders see live terms again.
+    const pub = await api('/api/admin/legal/terms/publish', {
+      method: 'POST',
+      cookie: adminCookie,
+    });
+    expect(pub.status).toBe(200);
+    expect(pub.body.data.status).toBe('PUBLISHED');
   });
 
-  it('2. supports all document types', async () => {
+  it('2. supports all document types (save + publish keeps riders covered)', async () => {
     for (const type of ['terms', 'privacy', 'refund', 'lease']) {
       const { status } = await api('/api/admin/legal', {
         method: 'PUT',
@@ -70,6 +85,13 @@ describe('PUT /api/admin/legal', () => {
         json: { type, title: `Test ${type}`, content: `Content for ${type}` },
       });
       expect(status).toBe(200);
+      // W9 / L-1: without publishing, these docs would be invisible to
+      // riders on the shared environment after the suite finishes.
+      const pub = await api(`/api/admin/legal/${type}/publish`, {
+        method: 'POST',
+        cookie: adminCookie,
+      });
+      expect(pub.status).toBe(200);
     }
   });
 
@@ -95,6 +117,63 @@ describe('PUT /api/admin/legal', () => {
     const { status } = await api('/api/admin/legal', {
       method: 'PUT',
       json: { type: 'terms', content: 'no auth' },
+    });
+    expect(status).toBe(401);
+  });
+});
+
+// W9 / L-1: end-to-end draft lifecycle — a changed save must NOT be
+// rider-visible until published.
+describe('L-1 draft/publish flow', () => {
+  let adminCookie: string;
+  const sentinel = `L1-SENTINEL-${Date.now()}`;
+
+  beforeAll(async () => {
+    adminCookie = (await adminLogin()).cookie;
+  });
+
+  afterAll(async () => {
+    await api('/api/admin/legal', {
+      method: 'PUT',
+      cookie: adminCookie,
+      json: originalTerms,
+    });
+    await api('/api/admin/legal/terms/publish', {
+      method: 'POST',
+      cookie: adminCookie,
+    });
+  });
+
+  it('save → hidden from riders → publish → visible', async () => {
+    // Save new content (lands as DRAFT).
+    const put = await api('/api/admin/legal', {
+      method: 'PUT',
+      cookie: adminCookie,
+      json: { type: 'terms', content: sentinel },
+    });
+    expect(put.status).toBe(200);
+    expect(put.body.data.status).toBe('DRAFT');
+
+    // Rider surface must NOT include the sentinel yet.
+    const before = await api('/api/rider/legal');
+    const beforeBody = before.body.data.find?.((d: { type: string }) => d.type === 'terms');
+    expect(beforeBody?.content ?? '').not.toContain(sentinel);
+
+    // Publish → rider surface shows it.
+    const pub = await api('/api/admin/legal/terms/publish', {
+      method: 'POST',
+      cookie: adminCookie,
+    });
+    expect(pub.status).toBe(200);
+
+    const after = await api('/api/rider/legal');
+    const afterBody = after.body.data.find((d: { type: string }) => d.type === 'terms');
+    expect(afterBody.content).toContain(sentinel);
+  });
+
+  it('publish returns 401 without auth', async () => {
+    const { status } = await api('/api/admin/legal/terms/publish', {
+      method: 'POST',
     });
     expect(status).toBe(401);
   });

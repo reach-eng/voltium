@@ -15,6 +15,7 @@ import {
   DollarSign,
   FileSignature,
   AlertTriangle,
+  UploadCloud,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -37,6 +38,7 @@ interface LegalDoc {
   title: string;
   content: string;
   updatedAt: string;
+  status?: 'DRAFT' | 'PUBLISHED';
 }
 
 // P2-2: single source of truth imported from validators/admin.ts — the same
@@ -124,6 +126,24 @@ export default function LegalManagement() {
     setContents((prev) => ({ ...prev, [type]: content }));
   };
 
+  // W9 / L-1: publish a DRAFT document (rider-visible). Idempotent.
+  const [publishing, setPublishing] = useState<string | null>(null);
+  const doPublish = async (type: string) => {
+    try {
+      setPublishing(type);
+      const res = await fetch(`/api/admin/legal/${type}/publish`, { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        toast.error(json.error || `Failed to publish ${type}`);
+        return;
+      }
+      toast.success(`${DOC_TYPES.find((d) => d.key === type)?.label || type} published`);
+      await fetchDocuments();
+    } finally {
+      setPublishing(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -152,6 +172,18 @@ export default function LegalManagement() {
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
                     <h3 className="text-lg font-semibold">{dt.label}</h3>
+                    {/* W9 / L-1: draft/published lifecycle badge. */}
+                    {documents[dt.key] && (
+                      <span
+                        className={
+                          documents[dt.key].status === 'DRAFT'
+                            ? 'inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400'
+                            : 'inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400'
+                        }
+                      >
+                        {documents[dt.key].status === 'DRAFT' ? 'Draft — not visible to riders' : 'Published'}
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     {documents[dt.key] && (
@@ -159,6 +191,23 @@ export default function LegalManagement() {
                         <Clock className="h-3.5 w-3.5" />
                         Last updated: {formatDateDDMMYYYY(documents[dt.key].updatedAt)}
                       </div>
+                    )}
+                    {documents[dt.key]?.status === 'DRAFT' && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="h-8 text-xs"
+                        disabled={publishing === dt.key}
+                        onClick={() => void doPublish(dt.key)}
+                      >
+                        {publishing === dt.key ? (
+                          'Publishing...'
+                        ) : (
+                          <>
+                            <UploadCloud className="h-3.5 w-3.5 mr-1" /> Publish to riders
+                          </>
+                        )}
+                      </Button>
                     )}
                     <Button
                       variant="outline"
@@ -232,8 +281,11 @@ export default function LegalManagement() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               The current version will be replaced permanently. The previous
-              version is kept in the document revision history for audit, but
-              the live rider-facing document updates immediately.
+              version is kept in the document revision history for audit.
+              {/* W9 / L-1: saves no longer go live instantly. */}
+              Saving marks the document as a{' '}
+              <span className="font-medium">Draft</span> — riders keep seeing
+              the published version until you press "Publish to riders".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -332,7 +332,13 @@ vi.mock('@/lib/db', () => ({
         findFirst: legalMocks.revisionFindFirst,
       },
     })),
-    legalDocument: { findMany: vi.fn(), upsert: legalMocks.upsert },
+    legalDocument: {
+      findMany: vi.fn(),
+      upsert: legalMocks.upsert,
+      // W9 / L-1: upsert pre-reads the existing doc for draft/publish
+      // semantics. Default to null = brand-new document path.
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
   },
 }));
 

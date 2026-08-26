@@ -5,10 +5,15 @@ import { NextRequest } from 'next/server';
 // legal screen must render documents served by the admin-managed legal module
 // instead of a hardcoded copy, so legal edits reach riders. This gates the
 // public GET endpoint the screen fetches (pre-login, so no session).
+//
+// W9 / L-1: the rider surface now reads listPublished() — DRAFT documents
+// (saved but not published) must never reach riders.
 
 vi.mock('@/server/modules/legal/legal.use-cases', () => ({
   legalUseCases: {
-    list: vi.fn(),
+    listPublished: vi.fn(),
+    publish: vi.fn(),
+    upsert: vi.fn(),
   },
 }));
 
@@ -33,12 +38,14 @@ const mockDocs = [
 describe('GET /api/rider/legal — public legal documents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(legalUseCases.list).mockResolvedValue(mockDocs);
+    vi.mocked(legalUseCases.listPublished).mockResolvedValue(mockDocs);
   });
 
-  it('returns the document list with type/title/content/updatedAt', async () => {
+  it('serves PUBLISHED documents only via listPublished', async () => {
     const res = await GET(new NextRequest('http://localhost/api/rider/legal'));
     expect(res.status).toBe(200);
+    // W9 / L-1: the route must use the PUBLISHED-filtered query.
+    expect(legalUseCases.listPublished).toHaveBeenCalledOnce();
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data).toHaveLength(2);
@@ -57,7 +64,7 @@ describe('GET /api/rider/legal — public legal documents', () => {
   });
 
   it('returns 500 with a friendly error when the DB query fails', async () => {
-    vi.mocked(legalUseCases.list).mockRejectedValue(new Error('db down'));
+    vi.mocked(legalUseCases.listPublished).mockRejectedValue(new Error('db down'));
     const res = await GET(new NextRequest('http://localhost/api/rider/legal'));
     expect(res.status).toBe(500);
     const body = await res.json();

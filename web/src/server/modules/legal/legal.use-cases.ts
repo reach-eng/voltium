@@ -21,21 +21,43 @@ export const legalUseCases = {
     return db.legalDocument.findMany({ orderBy: { type: 'asc' } });
   },
 
+  // W9 / L-1: rider-facing reads see PUBLISHED rows only. A document
+  // saved-but-not-yet-published (status DRAFT) must never reach riders.
+  async listPublished() {
+    return db.legalDocument.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { type: 'asc' },
+    });
+  },
+
   async upsert(data: { type: string; title?: string; content: string }, actorId: string) {
     const title = data.title || defaultTitle(data.type);
     const hash = contentHash(data.content);
 
-    // P1-2 (2026-08-05 legal/device audit): every save previously overwrote
-    // the doc with no recovery path — an accidental clear was gone forever.
-    // Write a revision row on each save so the audit trail + history can
-    // reconstruct the previous version. Skip the write when the content is
-    // byte-identical to the latest revision (reviewer nit: saves that change
-    // nothing must not fill history with noise).
+    // W9 / L-1: DRAFT/PUBLISHED lifecycle. A save that CHANGES content on
+    // an existing document produces unreviewed text — it drops the doc to
+    // DRAFT until an admin explicitly publishes. Byte-identical saves are
+    // true no-ops (no revision noise, no status churn). Brand-new
+    // documents start as DRAFT.
+    const existing = await db.legalDocument.findUnique({ where: { type: data.type } });
+
+    if (
+      existing &&
+      existing.title === title &&
+      contentHash(existing.content) === hash
+    ) {
+      return existing; // true no-op save
+    }
+
+    // Both changed-existing and brand-new documents start as DRAFT —
+    // nothing reaches riders until an admin publishes.
+    const nextStatus = 'DRAFT' as const;
+
     const doc = await db.$transaction(async (tx) => {
       const saved = await tx.legalDocument.upsert({
         where: { type: data.type },
-        update: { title, content: data.content },
-        create: { type: data.type, title, content: data.content },
+        update: { title, content: data.content, status: nextStatus },
+        create: { type: data.type, title, content: data.content, status: nextStatus },
       });
       const latest = await tx.legalDocumentRevision.findFirst({
         where: { legalDocumentId: saved.id },
@@ -76,6 +98,50 @@ export const legalUseCases = {
       });
     });
     return doc;
+  },
+
+  /**
+   * W9 / L-1: explicit go-live action. Flips DRAFT → PUBLISHED and stamps
+   * publishedAt. The rider surface (`listPublished`) serves only
+   * PUBLISHED rows, so this is the single gate between an edit and
+   * riders.
+   *
+   * Permission note: gated by `legal_manage` today (same as save). If
+   * the product wants editor ≠ publisher separation, add a dedicated
+   * `legal_publish` descriptor + matrix row — the N-6 typed matrix will
+   * force every call site to use a real key.
+   */
+  async publish(type: string, actorId: string) {
+    const doc = await db.legalDocument.findUnique({ where: { type } });
+    if (!doc) {
+      throw new Error(`Legal document not found: ${type}`);
+    }
+    if (doc.status === 'PUBLISHED' && doc.publishedAt) {
+      return doc; // idempotent publish
+    }
+    const published = await db.legalDocument.update({
+      where: { type },
+      data: { status: 'PUBLISHED', publishedAt: new Date() },
+    });
+
+    createAuditLog({
+      actorId,
+      action: 'legal.publish',
+      entity: 'legal',
+      entityId: published.id,
+      details: {
+        type,
+        title: published.title,
+        contentHash: contentHash(published.content),
+      },
+    }).catch(() => {
+      logger.error('legal.publish audit log write failed', {
+        entityId: published.id,
+        type,
+      });
+    });
+
+    return published;
   },
 
   /**

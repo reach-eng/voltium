@@ -749,13 +749,23 @@ model SystemSetting {
   @@map("system_settings")
 }
 
+enum LegalDocumentStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model LegalDocument {
-  id        String                  @id @default(cuid())
-  type      String                  @unique
-  title     String
-  content   String
-  updatedAt DateTime                @updatedAt
-  revisions LegalDocumentRevision[]
+  id          String              @id @default(cuid())
+  type        String              @unique
+  title       String
+  content     String
+  // W9 / L-1: saves that change content drop the doc to DRAFT; riders
+  // only ever see PUBLISHED rows. Default PUBLISHED keeps every
+  // pre-existing row live after the migration.
+  status      LegalDocumentStatus @default(PUBLISHED)
+  publishedAt DateTime?
+  updatedAt   DateTime            @updatedAt
+  revisions   LegalDocumentRevision[]
 
   @@map("legal_documents")
 }

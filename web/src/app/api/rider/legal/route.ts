@@ -10,7 +10,9 @@ import { legalUseCases } from '@/server/modules/legal/legal.use-cases';
 // matches the "docs change rarely" profile without a stale legal wall.
 export async function GET(request: NextRequest) {
   try {
-    const documents = await legalUseCases.list();
+    // W9 / L-1: riders see PUBLISHED documents only. A DRAFT (saved but
+    // not yet published) must never render during onboarding.
+    const documents = await legalUseCases.listPublished();
     return withCacheHeaders(
       success(
         documents.map((d: { type: string; title: string; content: string; updatedAt: Date }) => ({
