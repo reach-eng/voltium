@@ -8,6 +8,32 @@ import { logger } from './logger';
 // descriptions, and notification bodies.
 import { formatRupeesFromPaise } from './money';
 
+export const CATEGORY_MAP: Record<string, 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'> = {
+  KYC_UPDATE: 'KYC',
+  SUPPORT_REPLY: 'SYSTEM',
+  PAYMENT_DUE: 'PAYMENT',
+  REWARD: 'ANNOUNCEMENT',
+  SHIFT_REMINDER: 'SYSTEM',
+  BIRTHDAY_WISH: 'ANNOUNCEMENT',
+  REFERRAL_REWARD: 'ANNOUNCEMENT',
+  MANDATORY_UPDATE: 'SYSTEM',
+  WALLET_LOW: 'PAYMENT',
+};
+
+const CATEGORY_KEYWORDS: Record<'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT', RegExp[]> = {
+  PAYMENT: [/\bpayment\b/i, /\bwallet\b/i, /\btop[\s-]?up\b/i, /\brent\b/i, /\bdeposit\b/i, /\brefund\b/i, /₹/],
+  KYC: [/\bkyc\b/i, /\bverification\b/i, /\bverif(y|ied|ication)\b/i, /\bdocument\b/i, /\baadhaar\b/i, /\bpan\b/i],
+  MAINTENANCE: [/\bservice\b/i, /\bmaintenance\b/i, /\bvehicle\b/i, /\bbattery\b/i, /\bswap\b/i, /\binspect(ion)?\b/i],
+  ANNOUNCEMENT: [/\breward\b/i, /\boffer\b/i, /\bannouncement\b/i, /\bpromotion\b/i, /\bcoupon\b/i, /\bgift\b/i],
+};
+
+export function deriveCategoryFromTitle(title: string): 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM' {
+  for (const [category, patterns] of Object.entries(CATEGORY_KEYWORDS) as Array<[keyof typeof CATEGORY_KEYWORDS, RegExp[]]>) {
+    if (patterns.some((p) => p.test(title))) return category;
+  }
+  return 'SYSTEM';
+}
+
 /**
  * Centralized Notification Service
  * Handles business logic for triggering notifications and saving them to DB.
@@ -15,29 +41,14 @@ import { formatRupeesFromPaise } from './money';
 export const notificationService = {
   /**
    * Helper to create DB record and send FCM.
-   *
-   * T-95 (PR-5, 2026-08-23): the previous implementation caught
-   * ALL errors and returned `{ success: false, error }`. Callers
-   * (notably the OutboxEvent dispatcher) checked the return
-   * shape loosely, treated a transient DB blip the same as a
-   * permanent 4xx from FCM, and acked the OutboxEvent — losing
-   * the delivery and defeating the job-queue backoff.
-   *
-   * New contract:
-   *   - Transient errors (network, 5xx, DB blip) THROW so the
-   *     caller's try/catch engages the OutboxEvent retry path.
-   *   - Permanent client errors (4xx) are caught and returned
-   *     as `{ success: false, error, permanent: true }` so the
-   *     caller can ack-and-move-on without an infinite retry
-   *     loop.
-   *   - Success returns `{ success: true, ... }`.
    */
   async createAndSend(
     riderId: string,
     title: string,
     message: string,
     type: string,
-    data: Record<string, string> = {}
+    data: Record<string, string> = {},
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
   ): Promise<
     | { success: true; warning?: string; fcmResult?: unknown }
     | { success: false; error: unknown; permanent: boolean }
@@ -55,6 +66,10 @@ export const notificationService = {
       ? (rawUpper as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' | 'BIRTHDAY_WISH')
       : (TYPE_MAP[rawUpper] || 'INFO');
 
+    const derivedCategory = category
+      ?? CATEGORY_MAP[rawUpper]
+      ?? (sanitizedType === 'PAYMENT' ? 'PAYMENT' : sanitizedType === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
+
     let rider: { fcmToken: string | null } | null = null;
     try {
       // T-95: split the two operations so a failure in the DB
@@ -66,6 +81,7 @@ export const notificationService = {
           title,
           message,
           type: sanitizedType,
+          category: derivedCategory,
         },
       });
       rider = await db.rider.findUnique({
@@ -119,10 +135,17 @@ export const notificationService = {
         ? 'Your documents have been verified. You can now proceed to pick up your vehicle.'
         : `Your KYC was rejected: ${reason || 'Please re-upload your documents.'}`;
 
-    return this.createAndSend(riderId, title, message, 'KYC_UPDATE', {
-      screen: 'KYC_STATUS',
-      status,
-    });
+    return this.createAndSend(
+      riderId,
+      title,
+      message,
+      'KYC_UPDATE',
+      {
+        screen: 'KYC_STATUS',
+        status,
+      },
+      'KYC'
+    );
   },
 
   async notifySupportReply(riderId: string, ticketId: string, subject: string) {
@@ -135,7 +158,8 @@ export const notificationService = {
         screen: 'SUPPORT_TICKET',
         ticketId,
         triggerOverlay: 'SUPPORT_REPLY',
-      }
+      },
+      'SYSTEM'
     );
   },
 
@@ -183,7 +207,8 @@ export const notificationService = {
         // double-conversion.
         amountInPaise: String(amountInPaise),
         reminderType,
-      }
+      },
+      'PAYMENT'
     );
   },
 
@@ -195,7 +220,8 @@ export const notificationService = {
       'REWARD',
       {
         screen: 'REWARDS',
-      }
+      },
+      'ANNOUNCEMENT'
     );
   },
 
@@ -207,7 +233,8 @@ export const notificationService = {
       'BIRTHDAY_WISH',
       {
         triggerOverlay: 'BIRTHDAY_WISH',
-      }
+      },
+      'ANNOUNCEMENT'
     );
   },
 
@@ -220,7 +247,9 @@ export const notificationService = {
       riderId,
       'Upcoming Shift ⏰',
       `Your shift starts at ${startTime}. Please be ready!`,
-      'SHIFT_REMINDER'
+      'SHIFT_REMINDER',
+      {},
+      'SYSTEM'
     );
   },
 

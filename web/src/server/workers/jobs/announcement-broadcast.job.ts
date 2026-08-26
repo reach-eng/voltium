@@ -118,6 +118,7 @@ export const announcementBroadcastJob = {
           title: announcement.title,
           message: announcement.message,
           type: notificationType,
+          category: 'ANNOUNCEMENT',
         })),
         skipDuplicates: true,
       });

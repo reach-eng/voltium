@@ -2010,8 +2010,51 @@
   "@txtnotifTabMaintenance": { "description": "Notifications screen 'Maintenance' tab label" },
   "txtnotifTabAnnouncements": "Announcements",
   "@txtnotifTabAnnouncements": { "description": "Notifications screen 'Announcements' tab label" },
-  "txtnotifNoMatchHint": "Category filter only matches English titles today. Localised KYC / maintenance notifications will appear in 'All' until the server adds a `category` field.",
-  "@txtnotifNoMatchHint": { "description": "Dev-only hint shown when KYC or Maintenance tab is empty because of the title-keyword filter" },
+  "txtnotifEmptyAllTitle": "No notifications yet",
+  "@txtnotifEmptyAllTitle": { "description": "Notifications screen empty state title for the 'All' tab" },
+  "txtnotifEmptyAllBody": "You're all caught up!",
+  "@txtnotifEmptyAllBody": { "description": "Notifications screen empty state body for the 'All' tab" },
+  "txtnotifEmptyPaymentsTitle": "No payment notifications",
+  "@txtnotifEmptyPaymentsTitle": { "description": "Notifications screen empty state title for the 'Payments' tab" },
+  "txtnotifEmptyKycTitle": "No KYC notifications",
+  "@txtnotifEmptyKycTitle": { "description": "Notifications screen empty state title for the 'KYC' tab" },
+  "txtnotifEmptyMaintenanceTitle": "No maintenance notifications",
+  "@txtnotifEmptyMaintenanceTitle": { "description": "Notifications screen empty state title for the 'Maintenance' tab" },
+  "txtnotifEmptyAnnouncementsTitle": "No announcements",
+  "@txtnotifEmptyAnnouncementsTitle": { "description": "Notifications screen empty state title for the 'Announcements' tab" },
+  "txtnotifTooltipBack": "Back",
+  "@txtnotifTooltipBack": { "description": "Tooltip on the notifications screen back arrow" },
+  "txtnotifTooltipClearRead": "Clear read",
+  "@txtnotifTooltipClearRead": { "description": "Tooltip on the bulk-clear-read icon button" },
+  "txtnotifTooltipMarkAllRead": "Mark all read",
+  "@txtnotifTooltipMarkAllRead": { "description": "Tooltip on the mark-all-read icon button" },
+  "txtnotifTooltipOpenSettings": "Notification settings",
+  "@txtnotifTooltipOpenSettings": { "description": "Tooltip on the icon button that opens Notification Preferences" },
+  "txtnotifTimeMinutesAgo": "{count}m ago",
+  "@txtnotifTimeMinutesAgo": {
+    "description": "Relative time under one hour",
+    "placeholders": { "count": { "type": "int", "example": "5" } }
+  },
+  "txtnotifTimeHoursAgo": "{count}h ago",
+  "@txtnotifTimeHoursAgo": {
+    "description": "Relative time under one day",
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
+  "txtnotifTimeDaysAgo": "{count}d ago",
+  "@txtnotifTimeDaysAgo": {
+    "description": "Relative time under one week",
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "txtnotifTimeLongAgo": "{day}/{month}",
+  "@txtnotifTimeLongAgo": {
+    "description": "Absolute time when older than a week. Uses {day} and {month} as zero-padded two-digit numbers.",
+    "placeholders": {
+      "day": { "type": "int", "example": "23" },
+      "month": { "type": "int", "example": "8" }
+    }
+  },
+  "txtnotifPermissionDenied": "Notification permission was not granted",
+  "@txtnotifPermissionDenied": { "description": "Toast shown when the user toggles push notifications on but the OS denies the permission request" },
   "menu_signOut": "Sign out",
   "@menu_signOut": { "description": "Profile menu entry to log the rider out without deleting the account" },
   "menu_signOutConfirmTitle": "Sign out of Voltium?",

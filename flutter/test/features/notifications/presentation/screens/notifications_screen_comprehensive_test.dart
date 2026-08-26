@@ -229,7 +229,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(state: emptyState));
       await tester.pumpAndSettle();
 
-      expect(find.text('No all notifications'), findsOneWidget);
+      expect(find.text('No notifications yet'), findsOneWidget);
       expect(find.text("You're all caught up!"), findsOneWidget);
     });
   });

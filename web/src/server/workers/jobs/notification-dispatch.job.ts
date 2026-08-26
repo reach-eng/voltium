@@ -168,6 +168,7 @@ export const notificationDispatchJob = {
               // PAYMENT is the canonical DB enum for wallet/deposit
               // events; the exact event rides in the payload JSON.
               type: 'PAYMENT',
+              category: 'PAYMENT',
               title: (payload.title as string) ?? eventType.replace(/_/g, ' '),
               message: (payload.body as string) ?? eventType.replace(/_/g, ' '),
             },

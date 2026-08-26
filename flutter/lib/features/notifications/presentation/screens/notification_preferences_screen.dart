@@ -75,7 +75,11 @@ class _NotificationPreferencesScreenState
       if (!granted) {
         setState(() => _pushEnabled = false);
         if (mounted) {
-          Toast.error(context, 'Notification permission was not granted');
+          Toast.error(
+            context,
+            AppLocalizations.of(context)?.txtnotifPermissionDenied ??
+                'Notification permission was not granted',
+          );
         }
         return;
       }

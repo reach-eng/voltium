@@ -56,50 +56,44 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       case NotificationTab.all:
         return all;
       case NotificationTab.payments:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.paymentReceived ||
-                  n.type == AppNotificationType.paymentSent,
-            )
-            .toList();
-      case NotificationTab.kyc:
-        // AUDIT FIX (T-110): prefer structured fields where they exist. The
-        // AppNotificationType enum has NO dedicated KYC value (server
-        // sends KYC items as `system`), so keyword matching on the title
-        // is unavoidable here. LIMITATION: this only matches
-        // English-language titles; localized titles will not match.
-        // TODO(server): add `category` to the AppNotification payload so
-        // this filter becomes structured and locale-independent.
         return all.where((n) {
-          if (n.type != AppNotificationType.system) return false;
-          final t = n.title.toLowerCase();
-          return t.contains('kyc') ||
-              t.contains('verification') ||
-              t.contains('document');
+          if (n.category == NotificationCategory.payment) return true;
+          return n.type == AppNotificationType.payment ||
+              n.type == AppNotificationType.paymentReceived ||
+              n.type == AppNotificationType.paymentSent;
+        }).toList();
+      case NotificationTab.kyc:
+        // PR-N2 (2026-08-26): structured category check replaces
+        // the title-keyword match that broke for Hindi-titled
+        // notifications. Fall back to keyword for legacy rows
+        // (server pre-PR-N2, or pre-backfill) — those have
+        // `category == null`.
+        return all.where((n) {
+          if (n.category == NotificationCategory.kyc) return true;
+          if (n.category == null && n.type == AppNotificationType.system) {
+            final t = n.title.toLowerCase();
+            return t.contains('kyc') ||
+                t.contains('verification') ||
+                t.contains('document');
+          }
+          return false;
         }).toList();
       case NotificationTab.maintenance:
-        // AUDIT FIX (T-110): use the structured `vehicle` type when present and
-        // fall back to system-type keywords only for legacy records.
-        // Same English-title limitation as the KYC tab above.
-        // TODO(server): add `category` to the AppNotification payload.
         return all.where((n) {
+          if (n.category == NotificationCategory.maintenance) return true;
           if (n.type == AppNotificationType.vehicle) return true;
-          if (n.type != AppNotificationType.system) return false;
-          final t = n.title.toLowerCase();
-          return t.contains('service') || t.contains('maintenance');
+          if (n.category == null && n.type == AppNotificationType.system) {
+            final t = n.title.toLowerCase();
+            return t.contains('service') || t.contains('maintenance');
+          }
+          return false;
         }).toList();
       case NotificationTab.announcements:
-        // AUDIT FIX: promo-only. System items stay in All / their own
-        // category tabs — previously every `system` notification was
-        // duplicated into Announcements.
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.promo ||
-                  n.type == AppNotificationType.promotion,
-            )
-            .toList();
+        return all.where((n) {
+          if (n.category == NotificationCategory.announcement) return true;
+          return n.type == AppNotificationType.promo ||
+              n.type == AppNotificationType.promotion;
+        }).toList();
     }
   }
 
@@ -118,18 +112,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
   }
 
-  String _getTabLabel(NotificationTab tab) {
+  String _getTabLabel(NotificationTab tab, AppLocalizations l) {
     switch (tab) {
       case NotificationTab.all:
-        return 'All';
+        return l.txtnotifTabAll;
       case NotificationTab.payments:
-        return 'Payments';
+        return l.txtnotifTabPayments;
       case NotificationTab.kyc:
-        return 'KYC';
+        return l.txtnotifTabKyc;
       case NotificationTab.maintenance:
-        return 'Maintenance';
+        return l.txtnotifTabMaintenance;
       case NotificationTab.announcements:
-        return 'Announcements';
+        return l.txtnotifTabAnnouncements;
     }
   }
 
@@ -240,11 +234,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                             context: context,
                                             builder: (ctx) => AlertDialog(
                                               backgroundColor: colors.surface,
-                                              title: const Text(
-                                                'Delete Notification',
+                                              title: Text(
+                                                AppLocalizations.of(context)!
+                                                    .txtdeleteNotification,
                                               ),
-                                              content: const Text(
-                                                'Are you sure you want to delete this notification?',
+                                              content: Text(
+                                                AppLocalizations.of(context)!
+                                                    .txtareYouSureYouWantToDeleteThisNotification,
                                               ),
                                               actions: [
                                                 TextButton(
@@ -394,7 +390,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               _headerIconButton(
                 icon: Icons.arrow_back,
                 iconColor: AppColors.of(context).onSurface,
-                tooltip: 'Back',
+                tooltip: AppLocalizations.of(context)?.txtnotifTooltipBack ??
+                    'Back',
                 onTap: () => Navigator.maybePop(context),
               ),
               const SizedBox(width: 16),
@@ -428,7 +425,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 _headerIconButton(
                   icon: Icons.delete_sweep,
                   iconColor: AppColors.of(context).onSurfaceVariant,
-                  tooltip: 'Clear read',
+                  tooltip: AppLocalizations.of(context)
+                          ?.txtnotifTooltipClearRead ??
+                      'Clear read',
                   onTap: () => _clearReadNotifications(),
                 ),
               if (provider.notifications.any((n) => n.isRead))
@@ -438,7 +437,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   tapKey: const Key('markAllReadButton'),
                   icon: Icons.done_all,
                   iconColor: AppColors.primary,
-                  tooltip: 'Mark all read',
+                  tooltip: AppLocalizations.of(context)
+                          ?.txtnotifTooltipMarkAllRead ??
+                      'Mark all read',
                   onTap: () => ref
                       .read(engagementProvider.notifier)
                       .markAllNotificationsRead(),
@@ -447,7 +448,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               _headerIconButton(
                 icon: Icons.settings_outlined,
                 iconColor: AppColors.of(context).onSurfaceVariant,
-                tooltip: 'Notification settings',
+                tooltip: AppLocalizations.of(context)
+                        ?.txtnotifTooltipOpenSettings ??
+                    'Notification settings',
                 onTap: () => AppNavigator.push(
                   context,
                   const NotificationPreferencesScreen(),
@@ -506,7 +509,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        _getTabLabel(tab),
+                        _getTabLabel(
+                            tab,
+                            AppLocalizations.of(context)!),
                         style: AppTypography.labelMedium.copyWith(
                             color: isSelected
                                 ? Colors.white
@@ -527,6 +532,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   Widget _buildEmptyState() {
     final colors = AppColors.of(context);
+    final l = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -551,18 +557,33 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ),
           const SizedBox(height: 24),
           Text(
-            'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
+            _emptyStateTitle(l),
             style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: 8),
           Text(
-            "You're all caught up!",
+            l.txtnotifEmptyAllBody,
             style: GoogleFonts.plusJakartaSans(
                 fontSize: 14, color: colors.onSurfaceVariant),
           ),
         ],
       ),
     );
+  }
+
+  String _emptyStateTitle(AppLocalizations l) {
+    switch (_selectedTab) {
+      case NotificationTab.all:
+        return l.txtnotifEmptyAllTitle;
+      case NotificationTab.payments:
+        return l.txtnotifEmptyPaymentsTitle;
+      case NotificationTab.kyc:
+        return l.txtnotifEmptyKycTitle;
+      case NotificationTab.maintenance:
+        return l.txtnotifEmptyMaintenanceTitle;
+      case NotificationTab.announcements:
+        return l.txtnotifEmptyAnnouncementsTitle;
+    }
   }
 
   Widget _buildNotificationCard(
@@ -687,6 +708,48 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     AppNotification notif,
   ) {
     final colors = AppColors.of(context);
+    final category = notif.category;
+    if (category != null) {
+      switch (category) {
+        case NotificationCategory.payment:
+          return (
+            icon: Icons.currency_rupee,
+            color: AppColors.success,
+            bgColor: colors.successLight,
+            label: 'Payment'
+          );
+        case NotificationCategory.kyc:
+          return (
+            icon: Icons.shield_outlined,
+            color: AppColors.accentPurple,
+            bgColor: AppColors.accentPurple.withValues(alpha: 0.15),
+            label: 'KYC'
+          );
+        case NotificationCategory.maintenance:
+          return (
+            icon: Icons.build_outlined,
+            color: AppColors.primary,
+            bgColor: colors.primarySurface,
+            label: 'Maintenance'
+          );
+        case NotificationCategory.announcement:
+          return (
+            icon: Icons.campaign_outlined,
+            color: AppColors.accentPurple,
+            bgColor: AppColors.accentPurple.withValues(alpha: 0.15),
+            label: 'Announcement'
+          );
+        case NotificationCategory.system:
+          return (
+            icon: Icons.notifications_outlined,
+            color: colors.onSurfaceVariant,
+            bgColor: colors.iconBackground,
+            label: 'General'
+          );
+      }
+    }
+
+    // Legacy fallback for rows with category == null
     final title = notif.title.toLowerCase();
     if (notif.type == AppNotificationType.paymentReceived ||
         notif.type == AppNotificationType.paymentSent ||
@@ -743,13 +806,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   String _formatTime(DateTime dt) {
+    final l = AppLocalizations.of(context)!;
     var diff = DateTime.now().difference(dt);
     // AUDIT FIX: future-dated timestamps (clock skew) produced
     // "-5m ago" — clamp at zero.
     if (diff.isNegative) diff = Duration.zero;
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${dt.day}/${dt.month}';
+    if (diff.inMinutes < 60) return l.txtnotifTimeMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l.txtnotifTimeHoursAgo(diff.inHours);
+    if (diff.inDays < 7) return l.txtnotifTimeDaysAgo(diff.inDays);
+    return l.txtnotifTimeLongAgo(dt.day, dt.month);
   }
 }

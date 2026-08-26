@@ -586,6 +586,10 @@ model Notification {
   title     String
   message   String
   type      NotificationType
+  // PR-N2 (2026-08-26): explicit category for client tab filtering.
+  // Nullable to keep PR-N1-released clients working. Backfilled by
+  // the PR-N2 migration. Set at every create-site going forward.
+  category  NotificationCategory?
   priority  NotificationPriority @default(NORMAL)
   deepLink  String?
   isRead    Boolean              @default(false)
@@ -599,6 +603,7 @@ model Notification {
   @@index([riderId, isRead])
   @@index([riderId, createdAt])
   @@index([riderId, isRead, createdAt])
+  @@index([riderId, category, createdAt])
   @@map("notifications")
 }
 
@@ -1501,6 +1506,16 @@ enum NotificationType {
   BIRTHDAY_WISH
 
   @@map("notification_type")
+}
+
+enum NotificationCategory {
+  PAYMENT
+  KYC
+  MAINTENANCE
+  ANNOUNCEMENT
+  SYSTEM
+
+  @@map("notification_category")
 }
 
 enum NotificationPriority {

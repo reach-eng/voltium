@@ -12,11 +12,20 @@ Map<String, dynamic> _$AppNotificationToJson(AppNotification instance) =>
       'title': instance.title,
       'message': instance.message,
       'type': _$AppNotificationTypeEnumMap[instance.type]!,
+      'category': _$NotificationCategoryEnumMap[instance.category],
       'createdAt': instance.createdAt.toIso8601String(),
       'isRead': instance.isRead,
       'actionUrl': instance.actionUrl,
       'data': instance.data,
     };
+
+const _$NotificationCategoryEnumMap = {
+  NotificationCategory.payment: 'payment',
+  NotificationCategory.kyc: 'kyc',
+  NotificationCategory.maintenance: 'maintenance',
+  NotificationCategory.announcement: 'announcement',
+  NotificationCategory.system: 'system',
+};
 
 const _$AppNotificationTypeEnumMap = {
   AppNotificationType.info: 'info',

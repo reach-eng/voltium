@@ -28,12 +28,25 @@ enum AppNotificationType {
   promo,
 }
 
+/// PR-N2 (2026-08-26): explicit category for tab filtering.
+/// Mirrors the server `NotificationCategory` enum in
+/// `web/prisma/schema.prisma`. Optional for backward
+/// compatibility with PR-N1-release builds.
+enum NotificationCategory {
+  payment,
+  kyc,
+  maintenance,
+  announcement,
+  system,
+}
+
 @JsonSerializable(createFactory: false)
 class AppNotification {
   final String id;
   final String title;
   final String message;
   final AppNotificationType type;
+  final NotificationCategory? category; // PR-N2
   final DateTime createdAt;
   final bool isRead;
   final String? actionUrl;
@@ -45,17 +58,22 @@ class AppNotification {
     required this.message,
     required this.type,
     required this.createdAt,
+    this.category,
     this.isRead = false,
     this.actionUrl,
     this.data,
   });
 
-  AppNotification copyWith({bool? isRead}) {
+  AppNotification copyWith({
+    bool? isRead,
+    NotificationCategory? category,
+  }) {
     return AppNotification(
       id: id,
       title: title,
       message: message,
       type: type,
+      category: category ?? this.category,
       createdAt: createdAt,
       isRead: isRead ?? this.isRead,
       actionUrl: actionUrl,
@@ -72,6 +90,7 @@ class AppNotification {
         title: json['title']?.toString() ?? '',
         message: json['message']?.toString() ?? json['body']?.toString() ?? '',
         type: _parseType(json['type']),
+        category: _parseCategory(json['category']),
         createdAt: DateTime.tryParse(
               json['createdAt']?.toString() ??
                   json['timestamp']?.toString() ??
@@ -82,6 +101,16 @@ class AppNotification {
         actionUrl: json['actionUrl']?.toString(),
         data: json['data'] as Map<String, dynamic>?,
       );
+
+  /// PR-N2: tolerant of unknown / missing values.
+  static NotificationCategory? _parseCategory(dynamic raw) {
+    if (raw == null) return null;
+    final name = raw.toString().toLowerCase();
+    for (final v in NotificationCategory.values) {
+      if (v.name == name) return v;
+    }
+    return null; // unknown server value → treat as "no category"
+  }
 
   /// Phase 2.5: normalises both the new server-side values (INFO /
   /// ALERT / PROMOTION / etc.) and the legacy Flutter names

@@ -4972,11 +4972,95 @@ abstract class AppLocalizations {
   /// **'Announcements'**
   String get txtnotifTabAnnouncements;
 
-  /// Dev-only hint shown when KYC or Maintenance tab is empty because of the title-keyword filter
+  /// Notifications screen empty state title for the 'All' tab
   ///
   /// In en, this message translates to:
-  /// **'Category filter only matches English titles today. Localised KYC / maintenance notifications will appear in \'All\' until the server adds a `category` field.'**
-  String get txtnotifNoMatchHint;
+  /// **'No notifications yet'**
+  String get txtnotifEmptyAllTitle;
+
+  /// Notifications screen empty state body for the 'All' tab
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up!'**
+  String get txtnotifEmptyAllBody;
+
+  /// Notifications screen empty state title for the 'Payments' tab
+  ///
+  /// In en, this message translates to:
+  /// **'No payment notifications'**
+  String get txtnotifEmptyPaymentsTitle;
+
+  /// Notifications screen empty state title for the 'KYC' tab
+  ///
+  /// In en, this message translates to:
+  /// **'No KYC notifications'**
+  String get txtnotifEmptyKycTitle;
+
+  /// Notifications screen empty state title for the 'Maintenance' tab
+  ///
+  /// In en, this message translates to:
+  /// **'No maintenance notifications'**
+  String get txtnotifEmptyMaintenanceTitle;
+
+  /// Notifications screen empty state title for the 'Announcements' tab
+  ///
+  /// In en, this message translates to:
+  /// **'No announcements'**
+  String get txtnotifEmptyAnnouncementsTitle;
+
+  /// Tooltip on the notifications screen back arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get txtnotifTooltipBack;
+
+  /// Tooltip on the bulk-clear-read icon button
+  ///
+  /// In en, this message translates to:
+  /// **'Clear read'**
+  String get txtnotifTooltipClearRead;
+
+  /// Tooltip on the mark-all-read icon button
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get txtnotifTooltipMarkAllRead;
+
+  /// Tooltip on the icon button that opens Notification Preferences
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings'**
+  String get txtnotifTooltipOpenSettings;
+
+  /// Relative time under one hour
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String txtnotifTimeMinutesAgo(int count);
+
+  /// Relative time under one day
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String txtnotifTimeHoursAgo(int count);
+
+  /// Relative time under one week
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d ago'**
+  String txtnotifTimeDaysAgo(int count);
+
+  /// Absolute time when older than a week. Uses {day} and {month} as zero-padded two-digit numbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}/{month}'**
+  String txtnotifTimeLongAgo(int day, int month);
+
+  /// Toast shown when the user toggles push notifications on but the OS denies the permission request
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission was not granted'**
+  String get txtnotifPermissionDenied;
 
   /// Profile menu entry to log the rider out without deleting the account
   ///

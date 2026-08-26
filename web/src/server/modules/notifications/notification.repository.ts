@@ -5,6 +5,7 @@
  */
 
 import { db } from '@/lib/db';
+import { CATEGORY_MAP, deriveCategoryFromTitle } from '@/lib/notification-service';
 
 export const notificationRepository = {
   async findByRiderId(riderDbId: string, limit = 50) {
@@ -15,19 +16,34 @@ export const notificationRepository = {
     });
   },
 
-  async sendToRider(riderDbId: string, title: string, message: string, type: string = 'INFO') {
+  async sendToRider(
+    riderDbId: string,
+    title: string,
+    message: string,
+    type: string = 'INFO',
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
+  ) {
+    const rawUpper = (type || 'INFO').toUpperCase();
+    const categoryValue = category ?? CATEGORY_MAP[rawUpper] ?? (rawUpper === 'PAYMENT' ? 'PAYMENT' : rawUpper === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
+
     return db.notification.create({
       data: {
         riderId: riderDbId,
         title,
         message,
         type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+        category: categoryValue,
         isRead: false,
       },
     });
   },
 
-  async sendToAll(title: string, message: string, type: string = 'INFO') {
+  async sendToAll(
+    title: string,
+    message: string,
+    type: string = 'INFO',
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
+  ) {
     const notificationType = type as
       | 'INFO'
       | 'ALERT'
@@ -36,6 +52,8 @@ export const notificationRepository = {
       | 'VEHICLE'
       | 'SOS'
       | 'SYSTEM';
+    const rawUpper = (type || 'INFO').toUpperCase();
+    const categoryValue = category ?? CATEGORY_MAP[rawUpper] ?? (rawUpper === 'PAYMENT' ? 'PAYMENT' : rawUpper === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
     const batchSize = 500;
     let skip = 0;
     let count = 0;
@@ -56,6 +74,7 @@ export const notificationRepository = {
           title,
           message,
           type: notificationType,
+          category: categoryValue,
           isRead: false,
         })),
       });

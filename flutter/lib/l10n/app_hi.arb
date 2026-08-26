@@ -856,8 +856,51 @@
   "@txtnotifTabMaintenance": { "description": "Notifications screen 'Maintenance' tab label" },
   "txtnotifTabAnnouncements": "घोषणाएँ",
   "@txtnotifTabAnnouncements": { "description": "Notifications screen 'Announcements' tab label" },
-  "txtnotifNoMatchHint": "श्रेणी फ़िल्टर अभी केवल अंग्रेज़ी शीर्षकों से मेल खाता है। हिंदी केवाईसी / रखरखाव सूचनाएँ 'सभी' में दिखेंगी जब तक सर्वर `category` फ़ील्ड नहीं जोड़ता।",
-  "@txtnotifNoMatchHint": { "description": "Dev-only hint shown when KYC or Maintenance tab is empty because of the title-keyword filter" },
+  "txtnotifEmptyAllTitle": "अभी कोई सूचना नहीं",
+  "@txtnotifEmptyAllTitle": { "description": "Notifications screen empty state title for the 'All' tab" },
+  "txtnotifEmptyAllBody": "आप पूरी तरह अप-टू-डेट हैं!",
+  "@txtnotifEmptyAllBody": { "description": "Notifications screen empty state body for the 'All' tab" },
+  "txtnotifEmptyPaymentsTitle": "कोई भुगतान सूचना नहीं",
+  "@txtnotifEmptyPaymentsTitle": { "description": "Notifications screen empty state title for the 'Payments' tab" },
+  "txtnotifEmptyKycTitle": "कोई केवाईसी सूचना नहीं",
+  "@txtnotifEmptyKycTitle": { "description": "Notifications screen empty state title for the 'KYC' tab" },
+  "txtnotifEmptyMaintenanceTitle": "कोई रखरखाव सूचना नहीं",
+  "@txtnotifEmptyMaintenanceTitle": { "description": "Notifications screen empty state title for the 'Maintenance' tab" },
+  "txtnotifEmptyAnnouncementsTitle": "कोई घोषणा नहीं",
+  "@txtnotifEmptyAnnouncementsTitle": { "description": "Notifications screen empty state title for the 'Announcements' tab" },
+  "txtnotifTooltipBack": "वापस",
+  "@txtnotifTooltipBack": { "description": "Tooltip on the notifications screen back arrow" },
+  "txtnotifTooltipClearRead": "पढ़ी गई सूचनाएँ हटाएँ",
+  "@txtnotifTooltipClearRead": { "description": "Tooltip on the bulk-clear-read icon button" },
+  "txtnotifTooltipMarkAllRead": "सभी को पढ़ा हुआ चिह्नित करें",
+  "@txtnotifTooltipMarkAllRead": { "description": "Tooltip on the mark-all-read icon button" },
+  "txtnotifTooltipOpenSettings": "सूचना सेटिंग्स",
+  "@txtnotifTooltipOpenSettings": { "description": "Tooltip on the icon button that opens Notification Preferences" },
+  "txtnotifTimeMinutesAgo": "{count} मिनट पहले",
+  "@txtnotifTimeMinutesAgo": {
+    "description": "Relative time under one hour",
+    "placeholders": { "count": { "type": "int", "example": "5" } }
+  },
+  "txtnotifTimeHoursAgo": "{count} घंटे पहले",
+  "@txtnotifTimeHoursAgo": {
+    "description": "Relative time under one day",
+    "placeholders": { "count": { "type": "int", "example": "3" } }
+  },
+  "txtnotifTimeDaysAgo": "{count} दिन पहले",
+  "@txtnotifTimeDaysAgo": {
+    "description": "Relative time under one week",
+    "placeholders": { "count": { "type": "int", "example": "2" } }
+  },
+  "txtnotifTimeLongAgo": "{day}/{month}",
+  "@txtnotifTimeLongAgo": {
+    "description": "Absolute time when older than a week. Uses {day} and {month} as zero-padded two-digit numbers.",
+    "placeholders": {
+      "day": { "type": "int", "example": "23" },
+      "month": { "type": "int", "example": "8" }
+    }
+  },
+  "txtnotifPermissionDenied": "सूचना अनुमति नहीं दी गई",
+  "@txtnotifPermissionDenied": { "description": "Toast shown when the user toggles push notifications on but the OS denies the permission request" },
   "menu_signOut": "साइन आउट",
   "@menu_signOut": { "description": "Profile menu entry to log the rider out without deleting the account" },
   "menu_signOutConfirmTitle": "क्या आप वोल्टियम से साइन आउट करना चाहते हैं?",

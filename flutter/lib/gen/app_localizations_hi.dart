@@ -2662,8 +2662,57 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtnotifTabAnnouncements => 'घोषणाएँ';
 
   @override
-  String get txtnotifNoMatchHint =>
-      'श्रेणी फ़िल्टर अभी केवल अंग्रेज़ी शीर्षकों से मेल खाता है। हिंदी केवाईसी / रखरखाव सूचनाएँ \'सभी\' में दिखेंगी जब तक सर्वर `category` फ़ील्ड नहीं जोड़ता।';
+  String get txtnotifEmptyAllTitle => 'अभी कोई सूचना नहीं';
+
+  @override
+  String get txtnotifEmptyAllBody => 'आप पूरी तरह अप-टू-डेट हैं!';
+
+  @override
+  String get txtnotifEmptyPaymentsTitle => 'कोई भुगतान सूचना नहीं';
+
+  @override
+  String get txtnotifEmptyKycTitle => 'कोई केवाईसी सूचना नहीं';
+
+  @override
+  String get txtnotifEmptyMaintenanceTitle => 'कोई रखरखाव सूचना नहीं';
+
+  @override
+  String get txtnotifEmptyAnnouncementsTitle => 'कोई घोषणा नहीं';
+
+  @override
+  String get txtnotifTooltipBack => 'वापस';
+
+  @override
+  String get txtnotifTooltipClearRead => 'पढ़ी गई सूचनाएँ हटाएँ';
+
+  @override
+  String get txtnotifTooltipMarkAllRead => 'सभी को पढ़ा हुआ चिह्नित करें';
+
+  @override
+  String get txtnotifTooltipOpenSettings => 'सूचना सेटिंग्स';
+
+  @override
+  String txtnotifTimeMinutesAgo(int count) {
+    return '$count मिनट पहले';
+  }
+
+  @override
+  String txtnotifTimeHoursAgo(int count) {
+    return '$count घंटे पहले';
+  }
+
+  @override
+  String txtnotifTimeDaysAgo(int count) {
+    return '$count दिन पहले';
+  }
+
+  @override
+  String txtnotifTimeLongAgo(int day, int month) {
+    return '$day/$month';
+  }
+
+  @override
+  String get txtnotifPermissionDenied => 'सूचना अनुमति नहीं दी गई';
 
   @override
   String get menu_signOut => 'साइन आउट';

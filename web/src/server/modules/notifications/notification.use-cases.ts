@@ -7,7 +7,7 @@
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { notificationRepository } from './notification.repository';
-import { notificationService } from '@/lib/notification-service';
+import { CATEGORY_MAP, deriveCategoryFromTitle, notificationService } from '@/lib/notification-service';
 import { fcmService } from '@/lib/fcm';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
@@ -18,12 +18,23 @@ export const notificationUseCases = {
     return notificationRepository.findByRiderId(riderDbId, limit);
   },
 
-  async sendToRider(riderDbId: string, title: string, message: string, type?: string) {
-    return notificationRepository.sendToRider(riderDbId, title, message, type);
+  async sendToRider(
+    riderDbId: string,
+    title: string,
+    message: string,
+    type?: string,
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
+  ) {
+    return notificationRepository.sendToRider(riderDbId, title, message, type, category);
   },
 
-  async sendToAll(title: string, message: string, type?: string) {
-    return notificationRepository.sendToAll(title, message, type);
+  async sendToAll(
+    title: string,
+    message: string,
+    type?: string,
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
+  ) {
+    return notificationRepository.sendToAll(title, message, type, category);
   },
 
   async markRead(notificationId: string, riderDbId?: string) {
@@ -122,10 +133,14 @@ export const notificationUseCases = {
     title: string,
     message: string,
     type: string,
-    actorId: string
+    actorId: string,
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
   ) {
     const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
     if (!rider) throw new Error('Rider not found');
+
+    const rawUpper = (type || 'INFO').toUpperCase();
+    const categoryValue = category ?? CATEGORY_MAP[rawUpper] ?? (rawUpper === 'PAYMENT' ? 'PAYMENT' : rawUpper === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
 
     const notification = await db.notification.create({
       data: {
@@ -133,6 +148,7 @@ export const notificationUseCases = {
         title,
         message,
         type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+        category: categoryValue,
       },
     });
 
@@ -178,8 +194,12 @@ export const notificationUseCases = {
     // The job parses BROADCAST_RESUME:<n> out of the event's error field
     // (preserved by the reaper) and passes it here so already-sent batches
     // are not re-sent.
-    resumeFromSkip = 0
+    resumeFromSkip = 0,
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
   ) {
+    const rawUpper = (type || 'INFO').toUpperCase();
+    const categoryValue = category ?? CATEGORY_MAP[rawUpper] ?? (rawUpper === 'PAYMENT' ? 'PAYMENT' : rawUpper === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
+
     const BATCH_SIZE = 500;
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     let skip = resumeFromSkip;
@@ -198,6 +218,7 @@ export const notificationUseCases = {
           title,
           message,
           type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+          category: categoryValue,
         })),
       });
       // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): the broadcast used to stop at
@@ -241,14 +262,19 @@ export const notificationUseCases = {
     title: string,
     message: string,
     type: string,
-    actorId: string
+    actorId: string,
+    category?: 'PAYMENT' | 'KYC' | 'MAINTENANCE' | 'ANNOUNCEMENT' | 'SYSTEM'
   ) {
+    const rawUpper = (type || 'INFO').toUpperCase();
+    const categoryValue = category ?? CATEGORY_MAP[rawUpper] ?? (rawUpper === 'PAYMENT' ? 'PAYMENT' : rawUpper === 'PROMOTION' ? 'ANNOUNCEMENT' : deriveCategoryFromTitle(title));
+
     await db.notification.createMany({
       data: riderIds.map((riderId) => ({
         riderId,
         title,
         message,
         type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+        category: categoryValue,
       })),
     });
     // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): same push gap as send-to-all —

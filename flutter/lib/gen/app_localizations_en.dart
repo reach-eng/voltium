@@ -2655,8 +2655,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtnotifTabAnnouncements => 'Announcements';
 
   @override
-  String get txtnotifNoMatchHint =>
-      'Category filter only matches English titles today. Localised KYC / maintenance notifications will appear in \'All\' until the server adds a `category` field.';
+  String get txtnotifEmptyAllTitle => 'No notifications yet';
+
+  @override
+  String get txtnotifEmptyAllBody => 'You\'re all caught up!';
+
+  @override
+  String get txtnotifEmptyPaymentsTitle => 'No payment notifications';
+
+  @override
+  String get txtnotifEmptyKycTitle => 'No KYC notifications';
+
+  @override
+  String get txtnotifEmptyMaintenanceTitle => 'No maintenance notifications';
+
+  @override
+  String get txtnotifEmptyAnnouncementsTitle => 'No announcements';
+
+  @override
+  String get txtnotifTooltipBack => 'Back';
+
+  @override
+  String get txtnotifTooltipClearRead => 'Clear read';
+
+  @override
+  String get txtnotifTooltipMarkAllRead => 'Mark all read';
+
+  @override
+  String get txtnotifTooltipOpenSettings => 'Notification settings';
+
+  @override
+  String txtnotifTimeMinutesAgo(int count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String txtnotifTimeHoursAgo(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String txtnotifTimeDaysAgo(int count) {
+    return '${count}d ago';
+  }
+
+  @override
+  String txtnotifTimeLongAgo(int day, int month) {
+    return '$day/$month';
+  }
+
+  @override
+  String get txtnotifPermissionDenied =>
+      'Notification permission was not granted';
 
   @override
   String get menu_signOut => 'Sign out';
