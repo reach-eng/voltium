@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto';
 import { adminWalletAdjustSchema } from '@/lib/validators/admin';
 import { env } from '@/lib/env';
 import { toRupeesResponse } from '@/lib/api-money';
+import { rupeesToPaise } from '@/lib/money';
 
 // PR-89 (API N6): hard cap on a single admin DEBIT and second-admin
 // approval for debits above the threshold. Defaults:
@@ -60,7 +61,7 @@ export async function POST(
       );
     }
 
-    const amountInPaise = Math.round(amount * 100);
+    const amountInPaise = rupeesToPaise(amount);
 
     // PR-89 (API N6): accountStatus gate — reject adjustments for riders
     // whose lifecycle status is in the blocklist. Read once up-front to
