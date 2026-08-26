@@ -24,6 +24,13 @@ describe('api-error', () => {
       expect(ERROR_CODES.RATE_LIMITED).toBe('RATE_LIMITED');
       expect(ERROR_CODES.SERVICE_UNAVAILABLE).toBe('SERVICE_UNAVAILABLE');
     });
+
+    // 9.5+ Hardening §7 (T-9P0-4): explicit machine code for
+    // "no payment gateway configured" so clients can distinguish
+    // it from generic 500s.
+    it('exposes PAYMENT_GATEWAY_UNAVAILABLE (T-9P0-4)', () => {
+      expect(ERROR_CODES.PAYMENT_GATEWAY_UNAVAILABLE).toBe('PAYMENT_GATEWAY_UNAVAILABLE');
+    });
   });
 
   describe('ApiError', () => {

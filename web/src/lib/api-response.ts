@@ -297,4 +297,19 @@ export const errors = {
     message = 'Internal Server Error',
     options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
   ) => error(message, ERROR_CODES.SERVER_ERROR, 500, options),
+
+  // 9.5+ Hardening §7 (T-9P0-4): serviceUnavailable maps to a 503 with
+  // a stable machine code. Used by /api/rider/payment-gateways/active
+  // when no real gateway is configured. Before T-9P0-4 the route
+  // returned a fabricated default_razorpay TEST gateway (200) — see
+  // the diff in that file for the audit trail.
+  serviceUnavailable: (
+    message = 'Service Unavailable',
+    options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
+  ) => error(message, ERROR_CODES.SERVICE_UNAVAILABLE, 503, options),
+
+  paymentGatewayUnavailable: (
+    message = 'Payment gateway is temporarily unavailable',
+    options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
+  ) => error(message, ERROR_CODES.PAYMENT_GATEWAY_UNAVAILABLE, 503, options),
 };

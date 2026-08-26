@@ -9,6 +9,11 @@ export const ERROR_CODES = {
   RATE_LIMITED: 'RATE_LIMITED',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   GONE: 'GONE',
+  // 9.5+ Hardening §7 (T-9P0-4): explicit machine code so clients can
+  // distinguish "no payment gateway configured" from generic 500s. The
+  // legacy 500 path fabricated a TEST Razorpay gateway in this branch;
+  // we now return 503 + this code instead.
+  PAYMENT_GATEWAY_UNAVAILABLE: 'PAYMENT_GATEWAY_UNAVAILABLE',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
