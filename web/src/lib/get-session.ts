@@ -45,13 +45,18 @@ export async function getSession(request?: Request): Promise<SessionPayload | nu
       token = await getCookie(SESSION_COOKIE_NAME);
     }
 
-    // 3. Fallback to query parameter (common for image/media URL requests)
-    if (!token && request) {
-      try {
-        const url = new URL(request.url);
-        token = url.searchParams.get('token') || undefined;
-      } catch {}
-    }
+    // 9.5+ Hardening §5 (T-9P0-2): the prior `?token=` query-parameter
+    // fallback was removed. Session JWTs must NEVER be accepted from URL
+    // parameters — they end up in web-server access logs, browser history,
+    // referrer headers, and proxy logs. Image/media signed URLs use a
+    // separate, scoped, single-use token protocol that does not flow
+    // through this helper.
+    //
+    // If a request previously relied on `?token=` here, that flow must
+    // migrate to either the Bearer header (mobile) or the secure cookie
+    // (web). The regression test at
+    //   tests/security/session-query-token.test.ts
+    // pins this invariant.
 
     if (!token) return null;
     return await verifySessionToken(token);
@@ -94,13 +99,9 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
       token = await getCookie(ADMIN_SESSION_COOKIE_NAME);
     }
 
-    // 3. Fallback to query parameter
-    if (!token && request) {
-      try {
-        const url = new URL(request.url);
-        token = url.searchParams.get('token') || undefined;
-      } catch {}
-    }
+    // 9.5+ Hardening §5 (T-9P0-2): `?token=` admin-session query-parameter
+    // fallback was removed for the same reason as the rider helper above.
+    // Bearer + secure cookie are the only two accepted channels.
 
     if (!token) {
       return null;
