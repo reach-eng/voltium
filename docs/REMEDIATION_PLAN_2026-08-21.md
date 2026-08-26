@@ -284,6 +284,20 @@ Two engineers running the web chains in parallel: ~24 calendar days. One enginee
 
 ## Verification matrix (every phase exit)
 
+> **STATUS ADDENDUM — 2026-08-26 execution run.** Implemented & gated this run:
+> M-4/M-5/M-6, I-3, I-6, I-7, I-8, I-9 bundle, L-1 complete (migration applied),
+> FL-1, R-7c, R-7f (migration), F-096, F-060, F-061 ratchet (23-file debt list
+> frozen in eslint.config.mjs), F-062-partial n/a, F-068, F-087, F-088, F-097,
+> F-011 (verified pre-landed), F-017, plus verification sweep confirming
+> parallel-writer landings across W0/W2/W7/W8/W9/W10/W11/Flutter.
+>
+> **Remaining open (exact):** F-062 splits (`backup.service` 33KB,
+> `admin-riders.use-cases` 34KB, `rider.use-cases` 28KB) · Flutter **N4**
+> delete `services/voltium_api_service.dart` (241 lines / 28 delegating
+> methods / 17 importer files) · cross-cutting hygiene (root junk files,
+> husky-vs-lefthook dedupe) · env-gated suites (integration/API, coverage
+> pipelines, Playwright + emulator E2E).
+
 - Web: `npm run typecheck && npm run lint && npm run test:unit` (+ integration/API when dev server up) — coverage ≥85% gate holds.
 - Flutter: `flutter analyze && flutter test` (+ phased E2E runner for touched flows).
 - Each PR: tests added for every fixed finding; no skipped tests merged.
