@@ -175,7 +175,7 @@ export function flattenRider(
     // AUDIT FIX (data-population): EndRentalScreen reads batteryPercent
     // from the rider model, but flattenRider never mapped it from the
     // vehicle relation — always "Unavailable".
-    batteryPercent: (rider as any).vehicle?.batteryLevel?.toDouble() ?? null,
+    batteryPercent: (rider as any).vehicle?.batteryLevel ?? null,
     deliveryId: r.deliveryId ?? null,
     intent: r.intent ?? null,
     emergencyContact: r.emergencyContact ?? null,

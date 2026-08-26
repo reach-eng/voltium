@@ -30,6 +30,21 @@ class SupportCenterScreen extends ConsumerStatefulWidget {
 
 class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
   @override
+  void initState() {
+    super.initState();
+    // AUDIT FIX (data-population): refetch tickets when this screen mounts.
+    // Previously, after CreateTicketScreen pushed a new ticket, navigating
+    // back here showed the STALE list because neither provider auto-
+    // refreshed on navigation. This ensures Recent Tickets is always fresh
+    // without requiring pull-to-refresh.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(supportTicketsProvider.notifier).fetchTickets();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final dataState = ref.watch(riderProvider.select((p) => p.dataState));
