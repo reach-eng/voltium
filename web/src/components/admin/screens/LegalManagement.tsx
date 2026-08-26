@@ -31,6 +31,7 @@ import {
 import { toast } from 'sonner';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import { LEGAL_DOCUMENT_TYPES } from '@/lib/validators/admin';
+import { useAdminSession } from '@/components/admin/AdminSessionContext';
 
 interface LegalDoc {
   id: string;
@@ -53,6 +54,10 @@ const EMPTY_STATE_COPY =
   'This document has no content yet. Use the Edit view to add the first version.';
 
 export default function LegalManagement() {
+  // L-1b: read current admin session to gate publish button on legal_publish permission.
+  const { session } = useAdminSession();
+  const canPublish = !!session?.permissions?.includes('legal_publish');
+
   const [documents, setDocuments] = useState<Record<string, LegalDoc>>({});
   const [contents, setContents] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -192,7 +197,9 @@ export default function LegalManagement() {
                         Last updated: {formatDateDDMMYYYY(documents[dt.key].updatedAt)}
                       </div>
                     )}
-                    {documents[dt.key]?.status === 'DRAFT' && (
+                    {/* L-1b: Publish button visible only to admins with legal_publish permission.
+                        Editors (legal_manage only) see a muted chip instead. */}
+                    {documents[dt.key]?.status === 'DRAFT' && canPublish && (
                       <Button
                         variant="default"
                         size="sm"
@@ -208,6 +215,11 @@ export default function LegalManagement() {
                           </>
                         )}
                       </Button>
+                    )}
+                    {documents[dt.key]?.status === 'DRAFT' && !canPublish && (
+                      <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Draft — awaiting publisher
+                      </span>
                     )}
                     <Button
                       variant="outline"

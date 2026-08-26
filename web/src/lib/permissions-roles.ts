@@ -125,6 +125,9 @@ export const ROLE_PERMISSIONS: Readonly<Record<PermissionKey, RoleSet>> = {
   // OPERATIONS_ADMIN here broke the rbac.test contract.
   settings_manage: ['SUPER_ADMIN'],
   legal_manage: ['OPERATIONS_ADMIN'],
+  // L-1b: publish requires SUPER_ADMIN. Editors (OPERATIONS_ADMIN) can save
+  // to DRAFT via legal_manage but cannot make content rider-visible.
+  legal_publish: ['SUPER_ADMIN'],
   offers_manage: ['OPERATIONS_ADMIN'],
   jobs_view: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
   jobs_run: ['OPERATIONS_ADMIN'],

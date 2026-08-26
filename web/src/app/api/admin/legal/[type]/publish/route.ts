@@ -8,12 +8,15 @@ import { legalUseCases } from '@/server/modules/legal/legal.use-cases';
 export const dynamic = 'force-dynamic';
 
 /**
- * W9 / L-1: explicit publish gate.
+ * L-1b / W9 / L-1: explicit publish gate — SUPER_ADMIN only.
  *
  *   POST /api/admin/legal/[type]/publish
  *
  * Flips a DRAFT legal document to PUBLISHED (rider-visible). Idempotent:
  * publishing an already-published doc is a no-op that returns the row.
+ *
+ * Permission: `legal_publish` (SUPER_ADMIN). Editors who hold only
+ * `legal_manage` (OPERATIONS_ADMIN) can save/draft but cannot publish.
  */
 export async function POST(
   req: NextRequest,
@@ -21,7 +24,9 @@ export async function POST(
 ) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session, 'legal_manage')) return adminForbidden();
+  // L-1b: gate on legal_publish, not legal_manage. This ensures editors
+  // (OPERATIONS_ADMIN) cannot silently make DRAFT content rider-visible.
+  if (!hasPermission(session, 'legal_publish')) return adminForbidden();
 
   const { type } = await params;
   try {

@@ -126,6 +126,9 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   { key: 'team_leaders_manage', label: 'Manage Team Leaders', category: 'Admin' },
   { key: 'settings_manage', label: 'Manage Settings', category: 'Admin' },
   { key: 'legal_manage', label: 'Manage Legal', category: 'Admin' },
+  // L-1b: separate publish gate so editors (OPERATIONS_ADMIN) cannot
+  // silently make DRAFT content rider-visible. SUPER_ADMIN publishes.
+  { key: 'legal_publish', label: 'Publish Legal Documents', category: 'Admin' },
   { key: 'offers_manage', label: 'Manage Offers', category: 'Admin' },
   { key: 'jobs_view', label: 'View Background Jobs', category: 'Admin' },
   { key: 'jobs_run', label: 'Run Background Jobs', category: 'Admin' },

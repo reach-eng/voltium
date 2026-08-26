@@ -101,15 +101,15 @@ export const legalUseCases = {
   },
 
   /**
-   * W9 / L-1: explicit go-live action. Flips DRAFT → PUBLISHED and stamps
+   * L-1b / W9 / L-1: explicit go-live action. Flips DRAFT → PUBLISHED and stamps
    * publishedAt. The rider surface (`listPublished`) serves only
    * PUBLISHED rows, so this is the single gate between an edit and
    * riders.
    *
-   * Permission note: gated by `legal_manage` today (same as save). If
-   * the product wants editor ≠ publisher separation, add a dedicated
-   * `legal_publish` descriptor + matrix row — the N-6 typed matrix will
-   * force every call site to use a real key.
+   * Permission: `legal_publish` (SUPER_ADMIN only by default). Callers must
+   * verify this permission before invoking — the publish route enforces it
+   * via `hasPermission(session, 'legal_publish')`. Editors who hold only
+   * `legal_manage` (OPERATIONS_ADMIN) can save to DRAFT but cannot call this.
    */
   async publish(type: string, actorId: string) {
     const doc = await db.legalDocument.findUnique({ where: { type } });
