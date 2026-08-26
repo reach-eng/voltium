@@ -206,22 +206,6 @@ void main() {
       expect(() => repository.getEarnings(), throwsException);
     });
 
-    // getSettings
-    test('getSettings fetches and returns data', () async {
-      final mockSettings = {'notificationsEnabled': true};
-      when(() => mockVoltiumApiClient.getRiderSettings())
-          .thenAnswer((_) async => mockSettings);
-
-      final result = await repository.getSettings();
-      expect(result, mockSettings);
-    });
-
-    test('getSettings throws on error', () async {
-      when(() => mockVoltiumApiClient.getRiderSettings())
-          .thenThrow(Exception('Settings error'));
-
-      expect(() => repository.getSettings(), throwsException);
-    });
 
     // getDeviceDetails
     test('getDeviceDetails uses basic ApiClient', () async {

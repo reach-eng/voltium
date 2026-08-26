@@ -15,8 +15,6 @@ abstract class RiderRepository {
   /// Fetches rider earnings.
   Future<Map<String, dynamic>> getEarnings();
 
-  /// Fetches global rider app settings.
-  Future<Map<String, dynamic>> getSettings();
 
   /// Fetches native device policy status.
   Future<Map<String, dynamic>> getDeviceDetails();

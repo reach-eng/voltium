@@ -17,6 +17,9 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/features/support/presentation/support_labels.dart';
+import 'package:voltium_rider/features/support/domain/entity.dart'
+    show TicketStatus;
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
@@ -539,7 +542,7 @@ class RecentTicketsContainer extends ConsumerWidget {
                   padding: const EdgeInsets.only(right: 8.0),
                   child: ChoiceChip(
                     label: Text(
-                      filter.name.toUpperCase(),
+                      filter.label,
                       style: AppTypography.labelMedium.copyWith(
                           color: ticketState.filter == filter
                               ? Colors.white
@@ -616,9 +619,9 @@ class RecentTicketsContainer extends ConsumerWidget {
                         fontWeight: FontWeight.bold, color: colors.onSurface),
                   ),
                   subtitle: Text(
-                    'Status: ${ticket.status.name.toUpperCase()}',
+                    'Status: ${ticket.status.label}',
                     style: GoogleFonts.plusJakartaSans(
-                      color: ticket.status.name.toLowerCase() == 'closed'
+                      color: ticket.status == TicketStatus.closed
                           ? colors.onSurfaceVariant
                           : AppColors.primary,
                     ),

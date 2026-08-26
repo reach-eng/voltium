@@ -31,6 +31,23 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
   // flag, so rapid double-tap issued a second PUT before the first returned.
   bool _isSubmitting = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // AUDIT FIX (P2 data-population): pre-select the intent the rider
+    // already chose on a previous visit — a returning/partially-completed
+    // rider shouldn't have to re-select from scratch.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final savedIntent = ref.read(riderProvider).rider?.intent;
+      if (savedIntent == 'deliver') {
+        setState(() => _selectedIntent = IntentType.delivery);
+      } else if (savedIntent == 'personal') {
+        setState(() => _selectedIntent = IntentType.personal);
+      }
+    });
+  }
+
   /// AUDIT FIX (5a): the PUT and the provider refresh now live in separate
   /// try/catch blocks. Previously a successful PUT followed by a refresh
   /// failure showed "couldn't save" (false) and a retry issued a duplicate

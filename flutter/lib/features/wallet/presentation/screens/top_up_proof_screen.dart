@@ -1015,8 +1015,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   // exact fee locally but the gateway is the source of
                   // truth — label it an estimate.
                   isRiderBearer
-                      ? 'Gateway Fee (up to $_extraFeePercent%)'
-                      : 'Gateway Fee',
+                      ? '${AppLocalizations.of(context)?.topup_gatewayFee ?? 'Gateway Fee'} (up to $_extraFeePercent%)'
+                      : (AppLocalizations.of(context)?.topup_gatewayFee ??
+                          'Gateway Fee'),
                   style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
                       fontSize: 14)),

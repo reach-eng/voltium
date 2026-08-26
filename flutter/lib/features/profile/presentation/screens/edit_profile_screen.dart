@@ -399,7 +399,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               currentAddress: _addressController.text.trim(),
               emergencyContact: _emergencyContactController.text.trim(),
               guarantorName: _gNameController.text.trim(),
-              guarantorPhone: _gPhoneController.text.trim(),
+              // AUDIT FIX (P1): normalize guarantor phone to digits-only
+              // before PUT — the server regex `^\d{10}$` rejects formatted
+              // input (+91, spaces, dashes) that the OTP flow already
+              // normalized, causing a save 400 AFTER successful verify.
+              guarantorPhone:
+                  _gPhoneController.text.replaceAll(RegExp(r'\D'), ''),
               guarantorAddress: _gAddressController.text.trim(),
               // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
               profilePhoto: uploadedPhotoUrl,

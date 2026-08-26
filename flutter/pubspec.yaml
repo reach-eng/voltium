@@ -90,6 +90,7 @@ flutter:
     - assets/
     - assets/images/
     - assets/fonts/
+    - assets/certs/
     - lib/l10n/
 
   # Test-only assets (placeholder.png for golden tests, etc.) live in

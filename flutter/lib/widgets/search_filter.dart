@@ -131,44 +131,63 @@ class FilterChipList extends StatelessWidget {
   }
 }
 
-class SortDropdown extends StatelessWidget {
-  final List<String> options;
-  final String value;
-  final ValueChanged<String?> onChanged;
+class SortDropdown<T> extends StatelessWidget {
+  /// T-AR-SORT F-3 (2026-08-26): the legacy `SortDropdown` exposed a
+  /// generic `DropdownButton<String>` with no active-state affordance
+  /// and no screen-reader label. It now mirrors the wallet's
+  /// `PopupMenuButton` sort: enum-typed, with a tooltip, a primary-tinted
+  /// icon when a non-default order is active, and a leading check mark
+  /// on the currently selected option. Migration is generic — existing
+  /// callers passing `List<String>` just need to declare `<String>`.
+  final List<T> options;
+  final T value;
+  final String Function(T) label;
+  final ValueChanged<T?> onChanged;
+  final String tooltip;
+  final T defaultValue;
 
   const SortDropdown({
     super.key,
     required this.options,
     required this.value,
+    required this.label,
     required this.onChanged,
+    required this.tooltip,
+    required this.defaultValue,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: colors.outline),
+    final isCustom = value != defaultValue;
+    return PopupMenuButton<T>(
+      tooltip: tooltip,
+      icon: Icon(
+        Icons.sort,
+        color: isCustom
+            ? Theme.of(context).colorScheme.primary
+            : colors.onSurfaceMuted,
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          dropdownColor: colors.card,
-          icon: Icon(Icons.sort, size: 20, color: colors.onSurfaceMuted),
-          items: options.map((option) {
-            return DropdownMenuItem(
-              value: option,
-              child: Text(option,
-                  style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14, color: colors.onSurface)),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+      color: colors.card,
+      onSelected: onChanged,
+      itemBuilder: (context) => options.map((option) {
+        final isSelected = option == value;
+        return PopupMenuItem<T>(
+          value: option,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                child: isSelected
+                    ? const Icon(Icons.check, size: 16)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(label(option)),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

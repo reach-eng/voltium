@@ -26,6 +26,7 @@ class ChoosePlanScreen extends ConsumerStatefulWidget {
 
 class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   List<PlanModel> _plans = [];
+  Map<String, Map<String, dynamic>> _pricingData = {};
   bool _isLoading = true;
   String? _error;
   String? _selectedPlanId;
@@ -36,6 +37,31 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   void initState() {
     super.initState();
     _fetchPlans();
+  }
+
+  Future<void> _fetchPricing() async {
+    try {
+      // C-Wire: opportunistically fetch hub-scoped pricing & availability
+      final response =
+          await ref.read(voltiumApiClientProvider).getRiderPricing();
+      if (!mounted) return;
+      if (response['success'] == true && response['data'] is Map) {
+        final data = response['data'] as Map<String, dynamic>;
+        final plans = (data['plans'] as List? ?? []);
+        final map = <String, Map<String, dynamic>>{};
+        for (final p in plans) {
+          if (p is Map<String, dynamic> && p['id'] != null) {
+            map[p['id'].toString()] = {
+              'available': p['available'] ?? true,
+              'hubName': data['hub']?['name']?.toString() ?? '',
+            };
+          }
+        }
+        setState(() => _pricingData = map);
+      }
+    } catch (_) {
+      // Graceful degrade: pricing failure must NEVER block plan selection.
+    }
   }
 
   Future<void> _fetchPlans() async {
@@ -74,6 +100,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
             _selectedPlanId = _plans.first.id;
           }
         });
+        _fetchPricing();
       } else {
         setState(() {
           _error = response['message'] ?? 'Failed to load plans';
@@ -169,6 +196,16 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         }
         return;
       }
+      final selectedPricing = _pricingData[_selectedPlanId];
+      if (selectedPricing != null && selectedPricing['available'] == false) {
+        if (mounted) {
+          Toast.error(
+            context,
+            'This plan is currently unavailable at your hub.',
+          );
+        }
+        return;
+      }
       final securityDeposit = selectedPlan.securityDeposit;
       // PR-13: was a wrapper call to
       // `VoltiumApiService.subscribePlan`, a 1-line pass-through
@@ -251,6 +288,43 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
               color: isSelected ? Colors.white : AppColors.accentPurple,
               letterSpacing: 0.5,
             ),
+      ),
+    );
+  }
+
+  Widget _buildAvailabilityBadge({
+    required bool isAvailable,
+    required String hubName,
+    required bool isSelected,
+  }) {
+    final label = isAvailable
+        ? (hubName.isNotEmpty ? 'Available at $hubName' : 'Available')
+        : (hubName.isNotEmpty
+            ? 'Unavailable at $hubName'
+            : 'Unavailable at your hub');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isAvailable
+            ? (isSelected
+                ? Colors.white.withValues(alpha: 0.2)
+                : AppColors.success.withValues(alpha: 0.12))
+            : (isSelected
+                ? Colors.white.withValues(alpha: 0.15)
+                : AppColors.error.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.bodySmall.copyWith(
+          color: isAvailable
+              ? (isSelected ? Colors.white : AppColors.success)
+              : (isSelected
+                  ? Colors.white.withValues(alpha: 0.8)
+                  : AppColors.error),
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
       ),
     );
   }
@@ -412,6 +486,11 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                           plan.name.toLowerCase() ==
                                               currentPlanName.toLowerCase();
                                   final isBestValue = _isBestValuePlan(plan);
+                                  final pricing = _pricingData[plan.id];
+                                  final isUnavailable =
+                                      pricing != null && pricing['available'] == false;
+                                  final hubName =
+                                      pricing?['hubName'] as String? ?? '';
 
                                   // AUDIT FIX (MEDIUM): never invent marketing
                                   // features client-side when the API returns
@@ -425,10 +504,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                     key: Key('planCard_$index'),
                                     child: Semantics(
                                       selected: isSelected,
+                                      enabled: !isUnavailable,
                                       button: true,
                                       child: GestureDetector(
-                                        onTap: () => setState(
-                                            () => _selectedPlanId = plan.id),
+                                        onTap: isUnavailable
+                                            ? null
+                                            : () => setState(
+                                                () => _selectedPlanId = plan.id),
                                         child: AnimatedContainer(
                                           duration:
                                               const Duration(milliseconds: 250),
@@ -438,7 +520,9 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                           decoration: BoxDecoration(
                                             color: isSelected
                                                 ? AppColors.primary
-                                                : colors.card,
+                                                : (isUnavailable
+                                                    ? colors.card.withValues(alpha: 0.6)
+                                                    : colors.card),
                                             borderRadius: BorderRadius.circular(
                                                 AppRadius.radiusModal),
                                             border: Border.all(
@@ -497,61 +581,76 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                                 ),
                                                                 const SizedBox(
                                                                     height: 6),
-                                                                Row(
+                                                                Wrap(
+                                                                  crossAxisAlignment:
+                                                                      WrapCrossAlignment
+                                                                          .center,
+                                                                  spacing: 8,
+                                                                  runSpacing: 4,
                                                                   children: [
-                                                                    if (isBestValue) ...[
+                                                                    if (isBestValue)
                                                                       _buildBestValueBadge(
                                                                         isSelected:
                                                                             true,
                                                                       ),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            8,
+                                                                    if (pricing != null)
+                                                                      _buildAvailabilityBadge(
+                                                                        isAvailable:
+                                                                            !isUnavailable,
+                                                                        hubName:
+                                                                            hubName,
+                                                                        isSelected:
+                                                                            true,
                                                                       ),
-                                                                    ],
-                                                                    Expanded(
-                                                                      child:
-                                                                          Text(
-                                                                        plan.name,
-                                                                        style: GoogleFonts
-                                                                            .plusJakartaSans(
-                                                                          fontSize:
-                                                                              18,
-                                                                          fontWeight:
-                                                                              FontWeight.bold,
-                                                                          color:
-                                                                              Colors.white,
-                                                                        ),
+                                                                    Text(
+                                                                      plan.name,
+                                                                      style: GoogleFonts
+                                                                          .plusJakartaSans(
+                                                                        fontSize:
+                                                                            18,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        color:
+                                                                            Colors.white,
                                                                       ),
                                                                     ),
                                                                   ],
                                                                 ),
                                                               ],
                                                             )
-                                                          : Row(
+                                                          : Wrap(
+                                                              crossAxisAlignment:
+                                                                  WrapCrossAlignment
+                                                                      .center,
+                                                              spacing: 8,
+                                                              runSpacing: 4,
                                                               children: [
-                                                                if (isBestValue) ...[
+                                                                if (isBestValue)
                                                                   _buildBestValueBadge(
                                                                     isSelected:
                                                                         false,
                                                                   ),
-                                                                  const SizedBox(
-                                                                    width: 8,
+                                                                if (pricing != null)
+                                                                  _buildAvailabilityBadge(
+                                                                    isAvailable:
+                                                                        !isUnavailable,
+                                                                    hubName:
+                                                                        hubName,
+                                                                    isSelected:
+                                                                        false,
                                                                   ),
-                                                                ],
-                                                                Expanded(
-                                                                  child: Text(
-                                                                    plan.name,
-                                                                    style: GoogleFonts
-                                                                        .plusJakartaSans(
-                                                                      fontSize:
-                                                                          16,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
-                                                                      color: colors
-                                                                          .onSurface,
-                                                                    ),
+                                                                Text(
+                                                                  plan.name,
+                                                                  style: GoogleFonts
+                                                                      .plusJakartaSans(
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: isUnavailable
+                                                                        ? colors.onSurface.withValues(alpha: 0.6)
+                                                                        : colors.onSurface,
                                                                   ),
                                                                 ),
                                                               ],

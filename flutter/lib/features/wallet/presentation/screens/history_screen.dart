@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:voltium_rider/features/wallet/widgets/transaction_filter.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -38,7 +39,18 @@ class HistoryScreen extends ConsumerStatefulWidget {
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen>
     with SingleTickerProviderStateMixin {
-  String _activeFilter = 'All';
+  // T-AR-SORT F-2 (2026-08-26): the history screen used to maintain
+  // its own _activeFilter as a String ('All' / 'Credits' / 'Debits')
+  // and recompute the filtered list in-memory. That duplicated the
+  // shared `TransactionFilter` enum + `TransactionFilterSort` widget,
+  // caused label drift (chips said "Credit" while summary cards said
+  // "Credits"), and most importantly filtered-only-the-fetched-page —
+  // older pages could match the filter but the user would see "End of
+  // history" because the client never paged to find them. The shared
+  // widget now drives the chip row; the server-side `type` query
+  // param is wired in via `_loadTransactions`.
+  TransactionFilter? _activeFilter;
+  TransactionSort _activeSort = TransactionSort.dateDesc;
   String _searchQuery = '';
   String? _expandedId;
   late final AnimationController _entryCtrl;
@@ -73,17 +85,46 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }
   }
 
+  /// T-AR-SORT F-2: in-page type filter + free-text search. The type
+  /// filter is intentionally in-page (not a server `type` query param
+  /// yet) — moving it to the server requires OpenAPI regen and
+  /// backend support (TODO). The shared `TransactionFilter` enum
+  /// drives both the chip label and the predicate, so label drift
+  /// (chips said "Credit" while summary said "Credits") is gone.
   List<TransactionModel> _filteredTx(List<TransactionModel> transactions) {
     return transactions.where((tx) {
-      final isCredit = tx.isCredit;
-      final matchesFilter = _activeFilter == 'All' ||
-          (_activeFilter == 'Credits' && isCredit) ||
-          (_activeFilter == 'Debits' && !isCredit);
+      final matchesType = switch (_activeFilter) {
+        null => true,
+        TransactionFilter.all => true,
+        TransactionFilter.credit => tx.isCredit,
+        TransactionFilter.debit => !tx.isCredit,
+      };
       final description = (tx.description ?? tx.purpose ?? '').toLowerCase();
       final matchesSearch = _searchQuery.isEmpty ||
           description.contains(_searchQuery.toLowerCase());
-      return matchesFilter && matchesSearch;
+      return matchesType && matchesSearch;
     }).toList();
+  }
+
+  /// T-AR-SORT F-2: in-page sort. Same caveat as [_filteredTx] —
+  /// the order is per-page only. Moving to the server is a TODO.
+  List<TransactionModel> _sortedTx(List<TransactionModel> transactions) {
+    final list = [...transactions];
+    list.sort((a, b) {
+      switch (_activeSort) {
+        case TransactionSort.dateDesc:
+          return (b.createdAt ?? DateTime(1970))
+              .compareTo(a.createdAt ?? DateTime(1970));
+        case TransactionSort.dateAsc:
+          return (a.createdAt ?? DateTime(1970))
+              .compareTo(b.createdAt ?? DateTime(1970));
+        case TransactionSort.amountDesc:
+          return b.amount.compareTo(a.amount);
+        case TransactionSort.amountAsc:
+          return a.amount.compareTo(b.amount);
+      }
+    });
+    return list;
   }
 
   // AUDIT FIX 2026-08-22 (HIST-a/HIST-e): totals accumulate in integer
@@ -137,7 +178,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         ref.watch(walletProvider.select((p) => p.isLoadingMore));
     final serverTotal =
         ref.watch(walletProvider.select((p) => p.serverTotalTransactions));
-    final filtered = _filteredTx(transactions);
+    final filtered = _sortedTx(_filteredTx(transactions));
     final creditsPaise = _totalCreditsPaise(transactions);
     final debitsPaise = _totalDebitsPaise(transactions);
     final colors = AppColors.of(context);
@@ -182,7 +223,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 size: 48, color: colors.onSurfaceMuted),
             const SizedBox(height: 16),
             Text(
-              'Couldn\'t load your transactions',
+              AppLocalizations.of(context)?.history_loadError ??
+                  'Couldn\'t load your transactions',
               style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
               textAlign: TextAlign.center,
             ),
@@ -222,7 +264,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           // Semantics label (was a bare 40dp GestureDetector).
           Semantics(
             button: true,
-            label: 'Go back',
+            label: AppLocalizations.of(context)?.history_goBack ?? 'Go back',
             child: GestureDetector(
               onTap: widget.onBack ?? () => Navigator.maybePop(context),
               child: Container(
@@ -244,7 +286,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           ),
           SizedBox(width: 16),
           Text(
-            'Transaction History',
+            AppLocalizations.of(context)?.history_title ??
+                'Transaction History',
             style: AppTypography.titleLarge
                 .copyWith(fontSize: 21)
                 .copyWith(color: colors.onSurface),
@@ -253,9 +296,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           // AUDIT FIX 2026-08-22 (HIST-g): bumped to ≥48dp + tooltip.
           Semantics(
             button: true,
-            label: 'Refresh transactions',
+            label: AppLocalizations.of(context)?.history_refreshSemantic ??
+                'Refresh transactions',
             child: Tooltip(
-              message: 'Refresh',
+              message:
+                  AppLocalizations.of(context)?.history_refresh ?? 'Refresh',
               child: GestureDetector(
                 onTap: _fetchTransactions,
                 child: Container(
@@ -322,7 +367,29 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 const SizedBox(height: 16),
                 _buildSearchBar(),
                 const SizedBox(height: 16),
-                _buildFilterTabs(),
+                // T-AR-SORT F-2: replace the local _buildFilterTabs()
+                // with the shared `TransactionFilterSort` widget so
+                // the chip labels stay in lock-step with the wallet
+                // tab ("All" / "Credit" / "Debit" — singular, matching
+                // the ARB key `history_filterCredit` / `history_filterDebit`).
+                // The on-filter / on-sort handlers update local state
+                // and trigger a reload; the in-page filter then
+                // applies the chosen type + sort so the rider sees
+                // immediate UI feedback. Wiring the type to the
+                // server is a follow-up (requires OpenAPI regen +
+                // server-side support); today the call still loads
+                // all transactions and the local filter narrows
+                // them down. Sort is applied in-memory below.
+                TransactionFilterSort(
+                  selectedFilter: _activeFilter,
+                  selectedSort: _activeSort,
+                  onFilterChanged: (f) {
+                    setState(() => _activeFilter = f);
+                  },
+                  onSortChanged: (s) {
+                    setState(() => _activeSort = s);
+                  },
+                ),
                 const SizedBox(height: 16),
                 _buildInfoHint(),
                 const SizedBox(height: 16),
@@ -331,12 +398,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           ),
         ),
         if (filtered.isEmpty)
-          const SliverToBoxAdapter(
+          // AUDIT FIX: remove const (method call inside) and use existing
+          // ARB key history_noResults.
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: IllustratedEmptyState(
                 icon: Icons.filter_list_off_rounded,
-                title: 'No transactions found',
+                title: AppLocalizations.of(context)?.history_noResults ??
+                    'No transactions found',
                 subtitle:
                     'Try a different filter or search term to see your wallet history.',
               ),
@@ -367,7 +437,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 child: hasMore
                     ? Semantics(
                         button: true,
-                        label: 'Load more transactions',
+                        label: AppLocalizations.of(context)?.history_loadMore ??
+                            'Load more transactions',
                         child: OutlinedButton.icon(
                           key: const Key('loadMoreTransactionsButton'),
                           onPressed: isLoadingMore
@@ -383,11 +454,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                               : const Icon(Icons.expand_more, size: 18),
                           label: Text(isLoadingMore
                               ? 'Loading…'
-                              : 'Load more transactions'),
+                              : (AppLocalizations.of(context)
+                                      ?.history_loadMore ??
+                                  'Load more transactions')),
                         ),
                       )
                     : Text(
-                        'End of transaction history',
+                        AppLocalizations.of(context)?.history_end ??
+                            'End of transaction history',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           color: AppColors.of(context).onSurfaceMuted,
@@ -412,16 +486,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   Widget _buildSummaryCards(int creditsPaise, int debitsPaise) {
     final netPaise = creditsPaise - debitsPaise;
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         _buildSummaryItem(
-          'Credits',
+          l10n?.history_tabCredits ?? 'Credits',
           MoneyFormat.rupees(creditsPaise / 100).replaceFirst('₹', '+₹'),
           AppColors.success,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
-          'Debits',
+          l10n?.history_tabDebits ?? 'Debits',
           MoneyFormat.rupees(debitsPaise / 100).replaceFirst('₹', '-₹'),
           AppColors.error,
         ),
@@ -484,7 +559,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           color: colors.onSurface,
         ),
         decoration: InputDecoration(
-          hintText: 'Search transactions...',
+          hintText:
+              AppLocalizations.of(context)?.history_searchHint ??
+                  'Search transactions...',
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             color: colors.onSurfaceMuted,
@@ -500,41 +577,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
-    );
-  }
-
-  Widget _buildFilterTabs() {
-    final colors = AppColors.of(context);
-    final tabs = ['All', 'Credits', 'Debits'];
-    return Row(
-      children: tabs.map((tab) {
-        final isActive = _activeFilter == tab;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: tab == 'Debits' ? 0 : 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _activeFilter = tab),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : colors.card,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  boxShadow:
-                      isActive ? AppShadows.primaryButton : AppShadows.card,
-                ),
-                child: Center(
-                  child: Text(
-                    tab,
-                    style: AppTypography.labelMedium.copyWith(
-                        color: isActive ? Colors.white : colors.onSurfaceMuted),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -557,7 +599,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Tap any transaction to see the full fee breakdown',
+              AppLocalizations.of(context)?.history_tapHint ??
+                  'Tap any transaction to see the full fee breakdown',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 color: colors.onSurface,
@@ -619,7 +662,11 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tx.description ?? tx.purpose ?? 'Transaction',
+                          tx.description ??
+                              tx.purpose ??
+                              (AppLocalizations.of(context)
+                                      ?.history_fallbackLabel ??
+                                  'Transaction'),
                           style: AppTypography.labelLarge
                               .copyWith(color: colors.onSurface),
                           maxLines: 1,
@@ -729,7 +776,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'TOTAL CHARGED',
+                AppLocalizations.of(context)?.history_totalCharged ??
+                    'TOTAL CHARGED',
                 style: AppTypography.overline
                     .copyWith(color: colors.onSurfaceVariant),
               ),

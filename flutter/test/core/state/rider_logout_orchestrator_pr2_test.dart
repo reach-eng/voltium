@@ -73,8 +73,6 @@ class _MockRiderRepository implements RiderRepository {
   @override
   Future<Map<String, dynamic>> getEarnings() async => {};
   @override
-  Future<Map<String, dynamic>> getSettings() async => {};
-  @override
   Future<void> syncDeviceData(Map<String, dynamic> data) async {}
   @override
   Future<void> updateRiderProfile(Map<String, dynamic> data) async {}

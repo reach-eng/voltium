@@ -708,7 +708,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
 
   Widget _buildBattery(ColorScheme colorScheme, ThemeColors colors) {
     final rider = ref.watch(riderProvider).rider;
-    final double? batteryVal = rider?.batteryPercent;
+    // AUDIT FIX (P1): batteryPercent is non-nullable in RiderModel
+    // (defaults to 0.0). A rider with no assigned vehicle gets 0% —
+    // showing "Current battery: 0%" is materially misleading on an EV
+    // app. Treat <=0 as unavailable so the honest copy renders.
+    final double? batteryVal =
+        (rider?.batteryPercent ?? 0) > 0 ? rider?.batteryPercent : null;
     final String batteryText = batteryVal != null
         ? 'Current battery: ${batteryVal.toInt()}%'
         : 'Battery level: Unavailable';

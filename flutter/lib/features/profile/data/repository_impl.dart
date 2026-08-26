@@ -111,10 +111,6 @@ class RiderRepositoryImpl implements RiderRepository {
     return await _apiClient.getRiderEarnings();
   }
 
-  @override
-  Future<Map<String, dynamic>> getSettings() async {
-    return await _apiClient.getRiderSettings();
-  }
 
   @override
   Future<Map<String, dynamic>> getDeviceDetails() async {

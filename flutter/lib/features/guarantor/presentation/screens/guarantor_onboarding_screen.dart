@@ -260,21 +260,17 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
       // marking *Uploaded=true — mirrors the KYC F-068 fix. After OS tmp
       // eviction, step gates would pass but upload would fail.
       aadhaarFrontPath: afPath,
-      aadhaarFrontUploaded:
-          afPath != null && afPath.isNotEmpty,
+      aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
       aadhaarBackPath: abPath,
-      aadhaarBackUploaded:
-          abPath != null && abPath.isNotEmpty,
+      aadhaarBackUploaded: abPath != null && abPath.isNotEmpty,
       panPath: panP,
       panUploaded: panP != null && panP.isNotEmpty,
       videoPath: vidP,
       videoUploaded: vidP != null && vidP.isNotEmpty,
       signaturePath: sigP,
-      signatureUploaded:
-          sigP != null && sigP.isNotEmpty,
+      signatureUploaded: sigP != null && sigP.isNotEmpty,
       photoPath: photoP,
-      photoUploaded:
-          photoP != null && photoP.isNotEmpty,
+      photoUploaded: photoP != null && photoP.isNotEmpty,
     );
   }
 }

@@ -76,6 +76,10 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
           onPageChanged: (page) => setState(() => _currentPage = page),
           children: [
             TopUpAmountScreen(
+              // AUDIT FIX (P1): forward the caller's initialAmount so the
+              // rent-prompt's recommended amount reaches the amount field
+              // instead of being silently dropped.
+              initialAmount: widget.initialAmount,
               securityDeposit: ref
                   .watch(riderProvider)
                   .rider

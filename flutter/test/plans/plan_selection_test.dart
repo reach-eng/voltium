@@ -1,48 +1,60 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/choose_plan_screen.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
-class FakeVoltiumApiService extends Fake implements VoltiumApiService {
+class FakeVoltiumApiClient extends Fake implements VoltiumApiClient {
   @override
-  Future<Map<String, dynamic>> fetchPlans() async {
+  Future<Map<String, dynamic>> getRiderPlans() async {
     return {
       'success': true,
       'data': [
         {
           'id': 'plan-1',
           'name': 'Daily Plan',
+          'description': 'Ideal for daily riders',
           'price': 100.0,
+          'securityDeposit': 500.0,
           'durationDays': 1,
+          'features': ['Unlimited Swaps'],
+          'category': 'DAILY',
+          'bestValue': false,
+          'iconKey': 'daily',
         },
         {
           'id': 'plan-2',
           'name': 'Weekly Plan',
+          'description': 'Ideal for weekly riders',
           'price': 600.0,
+          'securityDeposit': 500.0,
           'durationDays': 7,
+          'features': ['Unlimited Swaps'],
+          'category': 'WEEKLY',
+          'bestValue': true,
+          'iconKey': 'weekly',
         },
-      ]
+      ],
     };
   }
 }
 
 /// Plan Selection Screen Widget Tests
 void main() {
-  setUpAll(() {
-    VoltiumApiService.instance = FakeVoltiumApiService();
-  });
+  final fakeClient = FakeVoltiumApiClient();
+
   Widget buildTestApp({required Widget child}) {
     return ProviderScope(
       overrides: [
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
+        voltiumApiClientProvider.overrideWithValue(fakeClient),
       ],
       child: MaterialApp(
         localizationsDelegates: const [
@@ -77,6 +89,7 @@ void main() {
         ),
       ));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
       final hasLoading =
           find.byType(CircularProgressIndicator).evaluate().isNotEmpty;

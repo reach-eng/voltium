@@ -107,13 +107,6 @@ void main() {
       expect(result['amount'], 500);
     });
 
-    test('getSettings calls getRiderSettings', () async {
-      when(() => mockVoltiumApiClient.getRiderSettings())
-          .thenAnswer((_) async => {'theme': 'dark'});
-
-      final result = await repository.getSettings();
-      expect(result['theme'], 'dark');
-    });
 
     test('getDeviceDetails calls api client directly', () async {
       when(() => mockApiClient.get(any()))

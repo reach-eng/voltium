@@ -219,9 +219,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   color: AppColors.primary, size: 20),
               const SizedBox(width: 8),
               Text(
-                isLocked
-                    ? 'Required Deposit Breakdown'
-                    : 'Required Deposit Breakdown',
+                AppLocalizations.of(context)?.topup_requiredDepositBreakdown ??
+                    'Required Deposit Breakdown',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -276,7 +275,13 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isLocked ? 'Total Deposit Payable' : 'Minimum Required Top-Up',
+                isLocked
+                    ? (AppLocalizations.of(context)
+                            ?.topup_totalDepositPayable ??
+                        'Total Deposit Payable')
+                    : (AppLocalizations.of(context)
+                            ?.topup_minimumRequiredTopUp ??
+                        'Minimum Required Top-Up'),
                 style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -404,7 +409,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Fixed amount for initial plan deposit',
+                                  AppLocalizations.of(context)
+                                          ?.topup_fixedForInitialDeposit ??
+                                      'Fixed amount for initial plan deposit',
                                   style: AppTypography.labelSmall.copyWith(
                                     color: colors.onSurfaceMuted,
                                   ),
@@ -589,7 +596,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'Enter Amount',
+            AppLocalizations.of(context)?.topup_enterAmountTitle ??
+                'Enter Amount',
             style: AppTypography.displayMedium
                 .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
@@ -634,7 +642,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             children: [
               Expanded(
                 child: Text(
-                  'PROCEED TO PAYMENT',
+                  AppLocalizations.of(context)?.topup_proceedToPayment ??
+                      'PROCEED TO PAYMENT',
                   textAlign: TextAlign.center,
                   style: AppTypography.labelLarge
                       .copyWith(fontWeight: FontWeight.w700)
