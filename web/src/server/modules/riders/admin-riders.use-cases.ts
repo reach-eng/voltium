@@ -421,6 +421,16 @@ export const adminRiderUseCases = {
   ) {
     const { actorId, actorRole } = context;
 
+    // W7 / R-7c: optional caller-supplied token for the balance-set
+    // idempotency key. Without it, the old target-amount key silently
+    // swallowed legitimate repeat adjustments; with it, programmatic
+    // callers get replay protection AND repeat adjustments apply.
+    const balanceAdjustmentToken =
+      typeof (data as Record<string, unknown>).balanceAdjustmentToken === 'string'
+        ? ((data as Record<string, unknown>).balanceAdjustmentToken as string)
+        : null;
+    delete (data as Record<string, unknown>).balanceAdjustmentToken;
+
     const existing = await getCachedRider(id, () => db.rider.findUnique({ where: { id } }));
     if (!existing) throw new Error('Rider not found');
 
@@ -572,6 +582,11 @@ export const adminRiderUseCases = {
           const targetBalance = walletData.balanceInPaise as number;
           const currentBalance = wallet.balanceInPaise;
           const diff = targetBalance - currentBalance;
+          // W7 / R-7c: key includes the caller token when provided; the
+          // fallback is unique-per-call so a repeat adjustment can never
+          // be mistaken for a replay of an older one.
+          const balanceKey =
+            balanceAdjustmentToken ?? `adj:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
           if (diff > 0) {
             await walletLedgerService.credit(
               {
@@ -579,7 +594,7 @@ export const adminRiderUseCases = {
                 amountInPaise: diff,
                 category: 'ADMIN_ADJUSTMENT',
                 actorId,
-                idempotencyKey: `admin:${id}:balance:${targetBalance}`,
+                idempotencyKey: `admin:${id}:balance:${balanceKey}`,
                 note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`,
               },
               tx
@@ -591,7 +606,7 @@ export const adminRiderUseCases = {
                 amountInPaise: Math.abs(diff),
                 category: 'ADMIN_ADJUSTMENT',
                 actorId,
-                idempotencyKey: `admin:${id}:balance:${targetBalance}`,
+                idempotencyKey: `admin:${id}:balance:${balanceKey}`,
                 note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`,
                 allowNegative: true,
               },

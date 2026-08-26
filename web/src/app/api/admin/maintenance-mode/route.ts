@@ -59,6 +59,16 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { enabled, message } = body;
 
+    // W10 / I-9: type-validate the payload. Previously `enabled: {}` was
+    // stringified to '[object Object]' and persisted as the mode value,
+    // and arbitrary JSON types landed verbatim in the rider banner.
+    if (typeof enabled !== 'boolean') {
+      return errors.badRequest('enabled must be a boolean');
+    }
+    if (typeof message !== 'string' || message.length > 500) {
+      return errors.badRequest('message must be a string of at most 500 characters');
+    }
+
     if (enabled === undefined || message === undefined) {
       return errors.badRequest('enabled and message fields are required');
     }

@@ -283,14 +283,14 @@ export const WORKERS: WorkerDefinition[] = [
 // Scheduled (cron-driven) workers — run directly on a timer, not event-polled
 // ---------------------------------------------------------------------------
 
-// P0-1 fix: fire-once guard for the daily engagement emitter.
-// Stores the IST date (YYYY-MM-DD) of the last successful emit.
-// Prevents the 60-tick window between 05:59 and 06:00 IST from
-// emitting 60 outbox rows.
-let lastEngagementFiredDate: string | null = null;
-// PR-VER-2026-08-06 (EVENT_BUS P0-3): fire-once guard for the daily wallet
-// reconciliation emitter (same pattern).
-let lastReconciliationFiredDate: string | null = null;
+// ---------------------------------------------------------------------------
+// Scheduled tasks
+// ---------------------------------------------------------------------------
+
+// W10 / I-9: the module-level fire-once guards for the daily engagement
+// and wallet-reconciliation emitters were replaced by DB-backed
+// idempotency keys (see SCHEDULED_TASKS below) — the in-memory versions
+// were lost on worker restart and duplicated across processes.
 
 const SCHEDULED_TASKS: Array<{
   name: string;
@@ -408,19 +408,31 @@ const SCHEDULED_TASKS: Array<{
       const todayIst = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kolkata',
       }).format(injectedClock.now());
-      if (lastReconciliationFiredDate === todayIst) return;
-      lastReconciliationFiredDate = todayIst;
+      // W10 / I-9: DB-backed idempotency claim replaces the module-level
+      // `lastReconciliationFiredDate` guard, which was lost on worker
+      // restart and duplicated across processes.
+      const { checkOrClaimIdempotency, completeIdempotency, failIdempotency } =
+        await import('@/lib/idempotency');
+      const claimKey = `reconciliation-emitter:${todayIst}`;
+      const reconClaim = await checkOrClaimIdempotency(claimKey, 86_400);
+      if (reconClaim.status !== 'not_found') return;
 
       const { OutboxService } = await import('./outbox');
-      await OutboxService.emit(
-        OutboxEventTypes.WALLET_RECONCILIATION,
-        { triggeredAt: injectedClock.now().toISOString(), trigger: 'scheduled' },
-        3,
-        undefined,
-        'background'
-      ).catch((e: Error) =>
-        logger.error('[Scheduler] Failed to emit wallet reconciliation', e)
-      );
+      try {
+        await OutboxService.emit(
+          OutboxEventTypes.WALLET_RECONCILIATION,
+          { triggeredAt: injectedClock.now().toISOString(), trigger: 'scheduled' },
+          3,
+          undefined,
+          'background'
+        );
+        await completeIdempotency(claimKey, {
+          emittedAt: injectedClock.now().toISOString(),
+        });
+      } catch (e: Error | unknown) {
+        await failIdempotency(claimKey).catch(() => {});
+        logger.error('[Scheduler] Failed to emit wallet reconciliation', e as Error);
+      }
     },
   },
   {
@@ -519,25 +531,36 @@ const SCHEDULED_TASKS: Array<{
       const todayIst = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kolkata',
       }).format(injectedClock.now());
-      if (lastEngagementFiredDate === todayIst) return;
-      lastEngagementFiredDate = todayIst;
+      // W10 / I-9: DB-backed claim replaces the module-level
+      // `lastEngagementFiredDate` guard (lost on restart, per-process).
+      const { checkOrClaimIdempotency, completeIdempotency, failIdempotency } =
+        await import('@/lib/idempotency');
+      const engagementKey = `daily-engagement-emitter:${todayIst}`;
+      const engClaim = await checkOrClaimIdempotency(engagementKey, 86_400);
+      if (engClaim.status !== 'not_found') return;
 
       const { OutboxService } = await import('./outbox');
       // PR-75: daily engagement is interactive (birthday wishes,
       // payment reminders) — the dailyEngagementJob is on the
       // interactive list.
-      await OutboxService.emit(
-        OutboxEventTypes.DAILY_ENGAGEMENT,
-        {
-          triggeredAt: injectedClock.now().toISOString(),
-          istDate: todayIst,
-        },
-        3,
-        undefined,
-        'interactive'
-      ).catch((e: Error) =>
-        logger.error('[Scheduler] Failed to emit daily engagement', e)
-      );
+      try {
+        await OutboxService.emit(
+          OutboxEventTypes.DAILY_ENGAGEMENT,
+          {
+            triggeredAt: injectedClock.now().toISOString(),
+            istDate: todayIst,
+          },
+          3,
+          undefined,
+          'interactive'
+        );
+        await completeIdempotency(engagementKey, {
+          emittedAt: injectedClock.now().toISOString(),
+        });
+      } catch (e: Error | unknown) {
+        await failIdempotency(engagementKey).catch(() => {});
+        logger.error('[Scheduler] Failed to emit daily engagement', e as Error);
+      }
     },
   },
 ];

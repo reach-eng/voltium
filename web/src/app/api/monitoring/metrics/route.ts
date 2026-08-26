@@ -1,15 +1,30 @@
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { getMetrics, getSlowQueries } from '@/lib/apm';
 import { getAdminSession } from '@/lib/get-session';
 import { logger } from '@/lib/logger';
 import { monitoringUseCases } from '@/server/modules/monitoring/monitoring.use-cases';
 
+// W10 / I-9: constant-time bearer comparison (the plain === on secrets is
+// a theoretical timing side channel that costs nothing to close).
+function safeBearerEqual(header: string | null, secret: string): boolean {
+  if (!header?.startsWith('Bearer ')) return false;
+  const provided = Buffer.from(header.slice(7));
+  const expected = Buffer.from(secret);
+  if (provided.length !== expected.length) {
+    // Burn comparable time so length mismatches don't leak length.
+    timingSafeEqual(provided, provided);
+    return false;
+  }
+  return timingSafeEqual(provided, expected);
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
-  const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`;
+  const isCron = !!cronSecret && safeBearerEqual(authHeader, cronSecret);
   const session = isCron ? null : await getAdminSession();
 
   if (!isCron && !session) {

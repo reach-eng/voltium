@@ -7,6 +7,7 @@
 
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { createAuditLog } from '@/lib/audit-log';
 import { validateGuarantorTransition, GuarantorStateError } from './guarantor-state-machine';
 import type { GuarantorStatus } from './guarantor.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
@@ -134,6 +135,14 @@ export const guarantorRepository = {
         data: { lifecycleStatus: 'GUARANTOR_APPROVED' },
       });
       invalidateRiderCache(riderDbId);
+      // W7 / R-7f: audit parity with KYC decisions.
+      createAuditLog({
+        actorId: reviewerId,
+        action: 'guarantor.approve',
+        entity: 'guarantor',
+        entityId: riderDbId,
+        details: { riderId: riderDbId },
+      }).catch(() => {});
       return decryptGuarantorData(guarantor);
     });
   },
@@ -150,7 +159,9 @@ export const guarantorRepository = {
     return db.$transaction(async (tx) => {
       const claimResult = await tx.guarantor.updateMany({
         where: { riderId: riderDbId, status: currentStatus },
-        data: { status: 'REJECTED' },
+        // W7 / R-7f: persist the review reason alongside the decision —
+        // previously the reason argument was accepted and discarded.
+        data: { status: 'REJECTED', rejectionReason: reason ?? null },
       });
       if (claimResult.count === 0) {
         throw new GuarantorStateError(
@@ -185,6 +196,14 @@ export const guarantorRepository = {
         // We do not throw — the guarantor rejection is still valid.
       }
       invalidateRiderCache(riderDbId);
+      // W7 / R-7f: audit parity with KYC decisions (reason persisted above).
+      createAuditLog({
+        actorId: reviewerId,
+        action: 'guarantor.reject',
+        entity: 'guarantor',
+        entityId: riderDbId,
+        details: { riderId: riderDbId, rejectionReason: reason ?? null },
+      }).catch(() => {});
       return decryptGuarantorData(guarantor);
     });
   },

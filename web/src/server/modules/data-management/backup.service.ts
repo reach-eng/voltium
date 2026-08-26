@@ -20,6 +20,7 @@ import {
   rmSync,
 } from 'fs';
 import { readdir as readdirAsync, stat as statAsync } from 'fs/promises';
+import { createReadStream } from 'fs';
 
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
@@ -464,8 +465,20 @@ export const backupService = {
       }
 
       // 5. Generate checksums (over the final file content, post-encryption)
-      const dbHash = createHash('sha256').update(readFileSync(databaseFile)).digest('hex');
-      const uploadsHash = createHash('sha256').update(readFileSync(uploadsFile)).digest('hex');
+      // W10 / I-9: STREAM the hash. readFileSync loaded entire multi-GB
+      // dumps into RAM just to hash them.
+      const hashFile = async (filePath: string): Promise<string> => {
+        const h = createHash('sha256');
+        await new Promise<void>((resolveHash, rejectHash) => {
+          createReadStream(filePath)
+            .on('data', (chunk) => h.update(chunk))
+            .on('error', rejectHash)
+            .on('end', () => resolveHash());
+        });
+        return h.digest('hex');
+      };
+      const dbHash = await hashFile(databaseFile);
+      const uploadsHash = await hashFile(uploadsFile);
 
       const checksumLines = [`${dbHash}  database.sql`, `${uploadsHash}  uploads.zip`];
       writeFileSync(checksumFile, checksumLines.join('\n') + '\n');

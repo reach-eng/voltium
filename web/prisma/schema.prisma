@@ -347,10 +347,14 @@ model KycProfile {
 }
 
 model Guarantor {
-  id           String          @id @default(cuid())
-  riderId      String          @unique
-  status       GuarantorStatus @default(PENDING)
-  name         String?
+  id             String          @id @default(cuid())
+  riderId        String          @unique
+  status         GuarantorStatus @default(PENDING)
+  // W7 / R-7f: capture WHY a guarantor was rejected — previously the
+  // review reason was discarded, making "who decided what and why"
+  // unanswerable.
+  rejectionReason String?
+  name           String?
   relation     String?
   dob          String?
   phone        String?

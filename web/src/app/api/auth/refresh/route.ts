@@ -145,7 +145,9 @@ export async function POST(request: NextRequest) {
     const response = success({
       token: newToken,
       refreshToken: newRefreshToken,
-      expiresIn: 60 * 60, // 1 hour in seconds
+      // F-096: match the admin path's 2h access-token TTL. The previous
+      // 1h value here was a drift from the documented 2h rider session.
+      expiresIn: 2 * 60 * 60, // 2 hours in seconds
     });
     response.cookies.set(SESSION_COOKIE_NAME, newToken, SESSION_COOKIE_OPTIONS);
     response.cookies.set('voltium_refresh', newRefreshToken, {
