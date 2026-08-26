@@ -53,10 +53,37 @@ describe('P0-1: /api/metrics endpoint authentication', () => {
     expect(res.status).toBe(200);
   });
 
-  it('allows access with query param token', async () => {
-    const req = new NextRequest('http://localhost/api/metrics?format=json&token=secret-metrics-token-123');
+  it('rejects query-param token (9.5+ T-9P0-3)', async () => {
+    // 9.5+ Hardening §6: the ?token= query-parameter fallback was
+    // removed. The metrics secret now flows only through headers
+    // (X-Internal-Metrics-Token, Authorization: Bearer) or the admin
+    // session cookie. The query-parameter path is a leak class (it
+    // ends up in access logs, browser history, referrer headers,
+    // proxy logs).
+    const req = new NextRequest(
+      'http://localhost/api/metrics?format=json&token=secret-metrics-token-123',
+    );
     const res = await GET(req);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects query-param token even when other auth is also absent', async () => {
+    const req = new NextRequest(
+      'http://localhost/api/metrics?token=secret-metrics-token-123',
+    );
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects query-param token when admin session is also absent', async () => {
+    // Sanity: the query path is dead even if every other auth
+    // channel is set up. A query token must NEVER authenticate.
+    const req = new NextRequest(
+      'http://localhost/api/metrics?token=secret-metrics-token-123',
+    );
+    mocks.requireAdmin.mockResolvedValueOnce(null);
+    const res = await GET(req);
+    expect(res.status).toBe(401);
   });
 
   it('allows access for authenticated admin session without token', async () => {

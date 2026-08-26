@@ -1260,6 +1260,15 @@ model IdempotencyKey {
   expiresAt DateTime
   createdAt DateTime          @default(now())
   status    IdempotencyStatus @default(PROCESSING)
+  // 9.5+ Hardening §10 (T-9P0-7): request fingerprint. The same
+  // Idempotency-Key with a different request body is a different
+  // operation; we surface that as a 409 IDEMPOTENCY_CONFLICT instead
+  // of silently replaying the cached response from a previous,
+  // semantically different call. Hash is SHA-256 of a normalized
+  // JSON-canonical form of the request body. Nullable so existing
+  // rows from before this migration continue to work (a missing
+  // hash on a completed row means "trust the cached response").
+  requestHash String?
 
   @@index([expiresAt])
   @@index([status])

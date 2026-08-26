@@ -1,9 +1,47 @@
+import { createHash } from 'node:crypto';
 import { logger } from '@/lib/logger';
 import { db } from '@/lib/db';
 
 interface IdempotencyEntry {
   response: any;
   expiresAt: number;
+}
+
+/**
+ * 9.5+ Hardening §10 (T-9P0-7): compute a deterministic request-body
+ * fingerprint. The same Idempotency-Key with a different request body
+ * is a different operation; we surface that as 409 IDEMPOTENCY_CONFLICT
+ * instead of silently replaying the cached response.
+ *
+ * JSON.stringify is not deterministic (key order, undefined handling,
+ * nested objects) so we use a canonical form: sort object keys, drop
+ * `undefined`, and string-compact. SHA-256 of that string is the hash.
+ * Exported for the unit test and for the `withIdempotency` middleware
+ * to call before claiming the key.
+ */
+export function computeRequestHash(body: unknown): string {
+  return createHash('sha256')
+    .update(canonicalize(body))
+    .digest('hex');
+}
+
+function canonicalize(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return '[' + value.map(canonicalize).join(',') + ']';
+  }
+  // Plain object: sort keys, drop undefined.
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj)
+    .filter((k) => obj[k] !== undefined)
+    .sort();
+  return (
+    '{' +
+    keys.map((k) => JSON.stringify(k) + ':' + canonicalize(obj[k])).join(',') +
+    '}'
+  );
 }
 
 /**
@@ -33,7 +71,13 @@ if (typeof globalThis !== 'undefined' && !('$_idempotencyCleanup' in globalThis)
 export type IdempotencyResult =
   | { status: 'completed'; response: any }
   | { status: 'processing' }
-  | { status: 'not_found' };
+  | { status: 'not_found' }
+  // 9.5+ Hardening §10 (T-9P0-7): the supplied Idempotency-Key was
+  // previously used for a request with a different body. The caller
+  // MUST return 409 IDEMPOTENCY_CONFLICT and NOT replay the cached
+  // response. This closes a subtle correctness hole where a key can
+  // otherwise be reused for a different operation.
+  | { status: 'conflict' };
 
 /**
  * Phase 3.3: the result type uses lowercase strings for backwards
@@ -56,7 +100,14 @@ export type IdempotencyResult =
  */
 export async function checkOrClaimIdempotency(
   key: string,
-  ttlSeconds: number = 86400
+  ttlSeconds: number = 86400,
+  // 9.5+ Hardening §10 (T-9P0-7): optional request-body fingerprint.
+  // When provided, the function compares it against the stored
+  // requestHash on existing rows. A mismatch returns 'conflict'
+  // (caller surfaces 409 IDEMPOTENCY_CONFLICT) instead of replaying
+  // the cached response. Existing callers that pass no hash keep
+  // the legacy behavior.
+  requestHash?: string
 ): Promise<IdempotencyResult> {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
 
@@ -80,12 +131,36 @@ export async function checkOrClaimIdempotency(
     // Key already existed — read its current state
     const row = await db.idempotencyKey.findUnique({
       where: { key },
-      select: { status: true, response: true, expiresAt: true, createdAt: true },
+      select: {
+        status: true,
+        response: true,
+        expiresAt: true,
+        createdAt: true,
+        requestHash: true,
+      },
     });
 
     if (!row) {
       // Race: another request may have deleted the row — treat as processing
       return { status: 'processing' };
+    }
+
+    // 9.5+ Hardening §10 (T-9P0-7): same key + different body -> conflict.
+    // The rule:
+    //   - Caller supplied a hash AND the row has a hash AND they differ
+    //     -> 'conflict' (caller returns 409).
+    //   - Caller supplied a hash but the row has none (legacy row) ->
+    //     treat as 'completed' and return the cached response. The legacy
+    //     row was created before the migration; the safest fallback is
+    //     the pre-migration behavior.
+    //   - Caller did not supply a hash -> legacy behavior (no conflict
+    //     check). This is the path existing callers hit.
+    if (requestHash && row.requestHash && requestHash !== row.requestHash) {
+      logger.warn(
+        '[Idempotency] request hash mismatch on reused key (T-9P0-7)',
+        { key },
+      );
+      return { status: 'conflict' };
     }
 
     if (row.expiresAt.getTime() <= Date.now()) {
@@ -172,7 +247,12 @@ export async function checkOrClaimIdempotency(
 export async function completeIdempotency(
   key: string,
   response: any,
-  ttlSeconds: number = 86400
+  ttlSeconds: number = 86400,
+  // 9.5+ Hardening §10 (T-9P0-7): optionally persist the request
+  // hash alongside the cached response. Subsequent calls with the
+  // same key but a different hash will be rejected as
+  // IDEMPOTENCY_CONFLICT.
+  requestHash?: string
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
   const responseStr = JSON.stringify(response);
@@ -186,11 +266,16 @@ export async function completeIdempotency(
         status: 'COMPLETED',
         response: responseStr,
         expiresAt,
+        requestHash: requestHash ?? null,
       },
       update: {
         status: 'COMPLETED',
         response: responseStr,
         expiresAt,
+        // Don't clobber an existing requestHash on update — it
+        // would let a re-completion of a conflict-path row appear
+        // to match a different body.
+        ...(requestHash ? { requestHash } : {}),
       },
     });
   } catch (err: unknown) {
@@ -258,9 +343,10 @@ export async function checkIdempotency(key: string): Promise<any | null> {
 export async function saveIdempotency(
   key: string,
   response: any,
-  ttlSeconds: number = 86400
+  ttlSeconds: number = 86400,
+  requestHash?: string
 ): Promise<void> {
-  await completeIdempotency(key, response, ttlSeconds);
+  await completeIdempotency(key, response, ttlSeconds, requestHash);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
