@@ -135,7 +135,18 @@ export async function POST(req: Request) {
       const latestBackup = await db.backupJob.findFirst({
         orderBy: { createdAt: 'desc' },
       });
-      const passed = !!latestBackup && latestBackup.status === 'COMPLETED';
+      // W10 / I-8: freshness floor. A COMPLETED record from months ago
+      // must not produce a green checksum step — that's how a wedged
+      // backup pipeline hides behind a passing drill score.
+      const FRESH_WINDOW_MS = 48 * 60 * 60 * 1000;
+      const isFresh =
+        !!latestBackup &&
+        Date.now() - latestBackup.createdAt.getTime() <= FRESH_WINDOW_MS;
+      const passed = !!latestBackup && latestBackup.status === 'COMPLETED' && isFresh;
+      const ageHours =
+        latestBackup
+          ? Math.round((Date.now() - latestBackup.createdAt.getTime()) / 3_600_000)
+          : null;
       steps.push({
         id: 'checksum_health',
         name: 'Latest Backup Record & Checksum',
@@ -143,9 +154,16 @@ export async function POST(req: Request) {
         passed,
         durationMs: Date.now() - step4Start,
         message: passed
-          ? `Latest backup (${latestBackup?.id}) completed cleanly`
-          : 'No valid completed backup record found',
-        details: { latestBackupId: latestBackup?.id, status: latestBackup?.status },
+          ? `Latest backup (${latestBackup?.id}) completed cleanly ${ageHours}h ago`
+          : latestBackup && latestBackup.status === 'COMPLETED'
+            ? `Latest completed backup is stale (${ageHours}h old; freshness window is 48h)`
+            : 'No valid completed backup record found',
+        details: {
+          latestBackupId: latestBackup?.id,
+          status: latestBackup?.status,
+          ageHours,
+          freshnessWindowHours: 48,
+        },
       });
     } catch (err: any) {
       steps.push({
@@ -220,6 +238,8 @@ export async function POST(req: Request) {
     return success(drillReport);
   } catch (err: any) {
     logger.error('[DR-Drill] Internal failure during DR drill', err);
-    return errors.internal(err.message || 'DR drill execution failed');
+    // W10 / I-8: generic body — internal error text (driver/fs messages)
+    // previously reached the client; details stay in the log only.
+    return errors.internal('DR drill execution failed');
   }
 }

@@ -12,7 +12,13 @@ vi.mock('@/lib/db', () => ({
       count: vi.fn().mockResolvedValue(5),
     },
     backupJob: {
-      findFirst: vi.fn().mockResolvedValue({ id: 'bkp_1', status: 'COMPLETED' }),
+      // W10 / I-8: the drill now enforces a 48h freshness floor on the
+      // checksum step — fixture uses a fresh timestamp to score 5/5.
+      findFirst: vi.fn().mockResolvedValue({
+        id: 'bkp_1',
+        status: 'COMPLETED',
+        createdAt: new Date(),
+      }),
     },
   },
 }));

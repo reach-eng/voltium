@@ -34,6 +34,52 @@ const DEVICE_PERMISSION_FIELDS: (keyof DevicePermissionFields)[] = [
   'displayOverlayGranted',
 ];
 
+// W10 / I-6: client-fault error classes — the sync route maps these to
+// 422/429 instead of the generic 500.
+export class SyncValidationError extends Error {}
+export class SyncQuotaError extends Error {}
+
+/**
+ * W10 / I-6: per-rider hourly volume quotas for device-data syncs.
+ * Batch caps alone didn't stop unbounded PII accumulation — a rider could
+ * replay capped batches forever. These caps are generous vs legitimate
+ * cadences (full-phonebook sync, periodic call-log dumps, ≤1 location
+ * ping/min) while hard-bounding each PII table's growth per rider.
+ */
+const SYNC_QUOTAS = {
+  CONTACTS: { perHour: 4000 },
+  CALL_LOGS: { perHour: 20_000 },
+  LOCATION: { perHour: 600 },
+} as const;
+
+const SYNC_QUOTA_MODEL = {
+  CONTACTS: 'userContact' as const,
+  CALL_LOGS: 'userCallLog' as const,
+  LOCATION: 'userLocation' as const,
+};
+
+async function assertSyncQuota(
+  riderDbId: string,
+  kind: keyof typeof SYNC_QUOTA_MODEL
+): Promise<void> {
+  // UserLocation has no createdAt column — its `timestamp` field is the
+  // ingestion time (DB default on create).
+  const timeField = kind === 'LOCATION' ? 'timestamp' : 'createdAt';
+  const model = db[SYNC_QUOTA_MODEL[kind]] as unknown as {
+    count: (args: Record<string, unknown>) => Promise<number>;
+  };
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const count = await model.count({
+    where: { riderId: riderDbId, [timeField]: { gte: hourAgo } },
+  });
+  const cap = SYNC_QUOTAS[kind].perHour;
+  if (count >= cap) {
+    throw new SyncQuotaError(
+      `Device-data sync quota exceeded for ${kind}: ${count}/${cap} rows in the last hour. Try again later.`
+    );
+  }
+}
+
 export const deviceComplianceUseCases = {
   async syncState(riderDbId: string, permissions: DevicePermissionFields) {
     const data: Record<string, boolean> = {};
@@ -129,10 +175,13 @@ export const deviceComplianceUseCases = {
   // P3-5/P3-6 (2026-08-05 legal/device audit): the sync routes accepted an
   // unbounded list — a compromised device (or a buggy app) could dump the
   // entire phonebook in one request. Cap each batch and log when truncated.
+
   async syncContacts(
     riderDbId: string,
     contacts: Array<{ name: string; phone: string; email?: string }>
   ) {
+    // W10 / I-6: per-rider hourly quota (see SYNC_QUOTAS below).
+    await assertSyncQuota(riderDbId, 'CONTACTS');
     const batch = contacts.slice(0, 1000);
     if (batch.length < contacts.length) {
       logger.warn('[DeviceCompliance] Contacts batch truncated', {
@@ -158,9 +207,12 @@ export const deviceComplianceUseCases = {
       name?: string;
       type?: string;
       duration?: number;
-      timestamp: string;
+      // W10 / I-6: the route's Zod schema coerces to Date before calling.
+      timestamp: string | Date;
     }>
   ) {
+    // W10 / I-6: per-rider hourly quota (see SYNC_QUOTAS above).
+    await assertSyncQuota(riderDbId, 'CALL_LOGS');
     const batch = logs.slice(0, 5000);
     if (batch.length < logs.length) {
       logger.warn('[DeviceCompliance] Call logs batch truncated', {
@@ -192,6 +244,8 @@ export const deviceComplianceUseCases = {
       batteryLevel?: number;
     }
   ) {
+    // W10 / I-6: per-rider hourly quota (see SYNC_QUOTAS above).
+    await assertSyncQuota(riderDbId, 'LOCATION');
     // HYGIENE-01 (2026-08-23): reject out-of-range or non-finite
     // coordinates BEFORE the DB transaction. The previous code
     // passed any number straight to `userLocation.create`, which

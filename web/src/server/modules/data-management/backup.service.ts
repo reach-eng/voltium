@@ -19,6 +19,7 @@ import {
   readFileSync,
   rmSync,
 } from 'fs';
+import { readdir as readdirAsync, stat as statAsync } from 'fs/promises';
 
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
@@ -375,7 +376,7 @@ export const backupService = {
 
     // Pre-flight check for disk space on the backup drive partition
     const uploadsRoot = await getUploadsRootAsync();
-    const uploadsSize = existsSync(uploadsRoot) ? calculateDirSize(uploadsRoot) : 0;
+    const uploadsSize = existsSync(uploadsRoot) ? await calculateDirSizeCached(uploadsRoot) : 0;
     const dbSize = await getDatabaseSize();
     const estimatedBackupSize = dbSize + uploadsSize;
     // Require at least 2x the estimated size, or a minimum safety buffer of 50MB
@@ -782,20 +783,20 @@ export const backupService = {
       // fallback to 0
     }
 
-    // Calculate uploads size
+    // Calculate uploads size (W10 / I-7: async budgeted + cached)
     if (existsSync(uploadsRoot)) {
-      uploadsSize = calculateDirSize(uploadsRoot);
+      uploadsSize = await calculateDirSizeCached(uploadsRoot);
     }
 
     // Calculate backups size
     if (existsSync(backupRoot)) {
-      backupsSize = calculateDirSize(backupRoot);
+      backupsSize = await calculateDirSizeCached(backupRoot);
     }
 
     // Calculate logs size
     const logsDir = join(process.cwd(), 'logs');
     if (existsSync(logsDir)) {
-      logsSize = calculateDirSize(logsDir);
+      logsSize = await calculateDirSizeCached(logsDir);
     }
 
     // Get disk info (cross-platform: PowerShell on Win, df on Unix)
@@ -812,21 +813,62 @@ export const backupService = {
   },
 };
 
-function calculateDirSize(dirPath: string): number {
+// W10 / I-7: ASYNC, BUDGETED directory sizing with a short TTL cache.
+// The previous `calculateDirSize` walked entire trees with readdirSync/
+// statSync inside request handlers — on a host with thousands of files
+// every Storage/Overview tab load froze the whole Node event loop.
+// - Async fs keeps the loop free between entries.
+// - Entry/depth budgets bound worst-case latency (log + stop when hit).
+// - A 60s TTL cache collapses tab-load bursts to at most one walk/min.
+const DIR_WALK_BUDGET = { maxEntries: 50_000, maxDepth: 16 } as const;
+const dirSizeCache = new Map<string, { size: number; expiresAt: number; truncated: boolean }>();
+const DIR_SIZE_CACHE_TTL_MS = 60 * 1000;
+
+async function calculateDirSizeCached(dirPath: string): Promise<number> {
+  const now = Date.now();
+  const hit = dirSizeCache.get(dirPath);
+  if (hit && hit.expiresAt > now) return hit.size;
+
   let size = 0;
-  try {
-    const entries = readdirSync(dirPath, { withFileTypes: true });
+  let visited = 0;
+  let truncated = false;
+
+  const walk = async (dir: string, depth: number): Promise<void> => {
+    if (depth > DIR_WALK_BUDGET.maxDepth || truncated) return;
+    let entries;
+    try {
+      entries = await readdirAsync(dir, { withFileTypes: true });
+    } catch {
+      return; // unreadable subdir — skip silently (previous behavior)
+    }
     for (const entry of entries) {
-      const fullPath = join(dirPath, entry.name);
+      if (++visited > DIR_WALK_BUDGET.maxEntries) {
+        truncated = true;
+        logger.warn('[BackupService] Directory size walk hit entry budget — result is a lower bound', {
+          dirPath,
+          maxEntries: DIR_WALK_BUDGET.maxEntries,
+        });
+        return;
+      }
+      const full = join(dir, entry.name);
       if (entry.isDirectory()) {
-        size += calculateDirSize(fullPath);
+        await walk(full, depth + 1);
+        if (truncated) return;
       } else if (entry.isFile()) {
-        size += statSync(fullPath).size;
+        try {
+          size += (await statAsync(full)).size;
+        } catch {}
       }
     }
-  } catch {}
+  };
+
+  await walk(dirPath, 0);
+  dirSizeCache.set(dirPath, { size, expiresAt: now + DIR_SIZE_CACHE_TTL_MS, truncated });
   return size;
 }
+
+// W10 / I-7: the old synchronous `calculateDirSize` was removed — every
+// caller now uses `calculateDirSizeCached` (async, budgeted, 60s TTL).
 
 function extractDbName(dbUrl: string): string {
   try {
