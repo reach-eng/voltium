@@ -355,13 +355,35 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
+      - name: Verify TLS production assets (9.5+ T-9P0-5)
+        # Plan §8: the production TLS trust anchor MUST exist on disk
+        # before the build runs. The check-release-config.sh script
+        # also gates on test/dev bypass strings and on `TLS_PIN_MODE=off`
+        # appearing in any workflow or shell script.
+        run: |
+          test -f flutter/assets/certs/voltium-ca.pem
+          test -s flutter/assets/certs/voltium-ca.pem
+          bash flutter/scripts/check-release-config.sh
+
       - name: Build Release APK
         # PR-28 (Rider N6): --split-per-abi produces 3 per-ABI APKs (~14MB each)
         # instead of a single universal APK (~35MB). Output files:
         #   app-arm64-v8a-release.apk    — real devices
         #   app-armeabi-v7a-release.apk  — older ARMv7 devices
         #   app-x86_64-release.apk       — emulators
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols/
+        #
+        # 9.5+ Hardening §8.5 (T-9P0-5): --dart-define=TLS_PIN_MODE=ca
+        # is REQUIRED for the production APK so PinnedHttpInterceptor's
+        # default resolves to CA mode. API_URL is supplied from the
+        # PRODUCTION_API_URL GitHub secret (no plaintext URLs in the
+        # commit).
+        run: |
+          flutter build apk --release \
+            --split-per-abi \
+            --obfuscate \
+            --split-debug-info=build/symbols/ \
+            --dart-define=TLS_PIN_MODE=ca \
+            --dart-define=API_URL=${{ secrets.PRODUCTION_API_URL }}
 
       - name: Upload Release APKs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

@@ -18,8 +18,19 @@ import '../../utils/app_logger.dart';
 ///   - `off`: Unpinned (debug builds only; release builds throw StateError).
 class PinnedHttpInterceptor {
   /// Active TLS Pinning mode configured at build time.
-  static const String configuredPinMode =
-      String.fromEnvironment('TLS_PIN_MODE', defaultValue: 'hash');
+  ///
+  /// 9.5+ Hardening §8 (T-9P0-5): the default flipped from `'hash'`
+  /// to release-mode-driven. `ca` is the production target because it
+  /// is rotation-friendly (the new CA cert is added to the bundle
+  /// without changing the binary); `hash` remains an explicit
+  /// emergency fallback. Debug builds default to `'off'` so the dev
+  /// loop is not blocked on pinning. The release CI must pass
+  /// `--dart-define=TLS_PIN_MODE=ca` (or `hash` for an emergency
+  /// release) explicitly.
+  static const String configuredPinMode = String.fromEnvironment(
+    'TLS_PIN_MODE',
+    defaultValue: kReleaseMode ? 'ca' : 'off',
+  );
 
   /// Default production SHA-256 certificate fingerprints for Voltium's TLS cert.
   /// Includes backup/next-rotation certificate fingerprints to prevent bricking on cert rotation.

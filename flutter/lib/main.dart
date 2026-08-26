@@ -22,6 +22,7 @@ import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
 import 'core/platform/platform_info.dart';
 import 'core/navigation/focus_observer.dart';
+import 'core/network/tls_pins_loader.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -59,6 +60,24 @@ Future<void> main() async {
     }
   }
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 9.5+ Hardening §8.4 (T-9P0-5): load the production TLS trust
+  // anchor before the first ApiClient construction. In `ca` mode the
+  // HTTP client cannot be built without these bytes; a release build
+  // that omits the load would throw on the first network call. The
+  // loader is a no-op when TLS_PIN_MODE != 'ca' so debug builds and
+  // hash-mode emergency builds pass through unchanged.
+  try {
+    await TlsPinsLoader.loadBundledCa();
+  } catch (e, st) {
+    // Bootstrap-time failure: a release APK without the CA asset
+    // cannot make API calls. Surface the error so the Crashlytics /
+    // PostHog / monitoring pipeline picks it up. We deliberately do
+    // not silently fall back to `off` here — that would be the very
+    // class of bypass T-9P0-5 exists to prevent.
+    appDebug('[main] TLS CA load failed: $e');
+    MonitoringService.logError(e, st, reason: 'TlsPinsLoader.loadBundledCa');
+  }
 
   // Cap image memory cache at 50 MB and 100 items to prevent OOM on lower-end devices
   PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024;
