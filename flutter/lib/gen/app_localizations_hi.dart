@@ -629,12 +629,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'SOS अलर्ट सक्रिय! आपातकालीन सेवाओं (112) को डायल किया जा रहा है...';
 
   @override
-  String get txttakeAPhoto => 'फ़ोटो लें';
-
-  @override
-  String get txtchooseFromGallery => 'गैलरी से चुनें';
-
-  @override
   String get txtotpSentToGuarantorPhone => 'गारंटर के फ़ोन पर OTP भेजा गया';
 
   @override
@@ -828,9 +822,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtbankDetails => 'बैंक विवरण';
 
   @override
-  String get txtclose => 'बंद करें';
-
-  @override
   String get txttakeSelfie => 'सेल्फी लें';
 
   @override
@@ -884,6 +875,56 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtnotificationPreferences => 'सूचना प्राथमिकताएं';
+
+  @override
+  String get notif_prefsMasterSection => 'मुख्य टॉगल';
+
+  @override
+  String get notif_prefsPushTitle => 'पुश नोटिफ़िकेशन';
+
+  @override
+  String get notif_prefsPushSubtitle =>
+      'Voltium से पुश नोटिफ़िकेशन प्राप्त करें';
+
+  @override
+  String get notif_prefsSoundTitle => 'ध्वनि';
+
+  @override
+  String get notif_prefsSoundSubtitle => 'नोटिफ़िकेशन के लिए ध्वनि बजाएं';
+
+  @override
+  String get notif_prefsVibrationTitle => 'कंपन';
+
+  @override
+  String get notif_prefsVibrationSubtitle => 'नोटिफ़िकेशन के लिए कंपन करें';
+
+  @override
+  String get notif_prefsCategoriesSection => 'नोटिफ़िकेशन श्रेणियाँ';
+
+  @override
+  String get notif_prefsPaymentsTitle => 'भुगतान';
+
+  @override
+  String get notif_prefsPaymentsSubtitle => 'टॉप-अप, किराया कटौती, रिफ़ंड';
+
+  @override
+  String get notif_prefsKycTitle => 'KYC';
+
+  @override
+  String get notif_prefsKycSubtitle => 'दस्तावेज़ सत्यापन अपडेट';
+
+  @override
+  String get notif_prefsMaintenanceTitle => 'रखरखाव';
+
+  @override
+  String get notif_prefsMaintenanceSubtitle => 'सर्विस रिमाइंडर, बैटरी स्वैप';
+
+  @override
+  String get notif_prefsAnnouncementsTitle => 'घोषणाएं';
+
+  @override
+  String get notif_prefsAnnouncementsSubtitle =>
+      'प्रमोशन, ऑफ़र, प्लेटफ़ॉर्म अपडेट';
 
   @override
   String get txtdeleteNotification => 'सूचना हटाएं';
@@ -1780,7 +1821,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settings_delete => 'हटाएं';
 
   @override
-  String get settings_deleteReason => 'मैं अपना खाता हटाना चाहता हूं';
+  String get settings_deleteReason => 'ऐप सेटिंग्स से अनुरोध किया गया';
 
   @override
   String get settings_deleteNotAvailable =>
@@ -1845,6 +1886,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtifscCode => 'IFSC कोड';
+
+  @override
+  String get txttakeAPhoto => 'फ़ोटो लें';
+
+  @override
+  String get txtchooseFromGallery => 'गैलरी से चुनें';
 
   @override
   String get txtclearPhotosOnly => 'केवल स्पष्ट फ़ोटो। प्रत्येक अधिकतम 5MB।';
@@ -2169,6 +2216,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String txttopUpAmountAction(String amount) {
     return '₹$amount टॉप अप करें';
   }
+
+  @override
+  String get txtclose => 'बंद करें';
 
   @override
   String get txtchangeTeamLeaderTitle => 'टीम लीडर बदलें';

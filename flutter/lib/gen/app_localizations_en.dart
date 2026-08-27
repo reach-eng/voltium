@@ -628,12 +628,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'SOS Alert Triggered! Dialing emergency services (112)...';
 
   @override
-  String get txttakeAPhoto => 'Take a Photo';
-
-  @override
-  String get txtchooseFromGallery => 'Choose from Gallery';
-
-  @override
   String get txtotpSentToGuarantorPhone => 'OTP sent to guarantor phone';
 
   @override
@@ -825,9 +819,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtbankDetails => 'Bank Details';
 
   @override
-  String get txtclose => 'Close';
-
-  @override
   String get txttakeSelfie => 'Take Selfie';
 
   @override
@@ -881,6 +872,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtnotificationPreferences => 'Notification Preferences';
+
+  @override
+  String get notif_prefsMasterSection => 'MASTER SWITCH';
+
+  @override
+  String get notif_prefsPushTitle => 'Push Notifications';
+
+  @override
+  String get notif_prefsPushSubtitle =>
+      'Receive push notifications from Voltium';
+
+  @override
+  String get notif_prefsSoundTitle => 'Sound';
+
+  @override
+  String get notif_prefsSoundSubtitle => 'Play sound for notifications';
+
+  @override
+  String get notif_prefsVibrationTitle => 'Vibration';
+
+  @override
+  String get notif_prefsVibrationSubtitle => 'Vibrate for notifications';
+
+  @override
+  String get notif_prefsCategoriesSection => 'NOTIFICATION CATEGORIES';
+
+  @override
+  String get notif_prefsPaymentsTitle => 'Payments';
+
+  @override
+  String get notif_prefsPaymentsSubtitle => 'Top-ups, rent deductions, refunds';
+
+  @override
+  String get notif_prefsKycTitle => 'KYC';
+
+  @override
+  String get notif_prefsKycSubtitle => 'Document verification updates';
+
+  @override
+  String get notif_prefsMaintenanceTitle => 'Maintenance';
+
+  @override
+  String get notif_prefsMaintenanceSubtitle =>
+      'Service reminders, battery swaps';
+
+  @override
+  String get notif_prefsAnnouncementsTitle => 'Announcements';
+
+  @override
+  String get notif_prefsAnnouncementsSubtitle =>
+      'Promotions, offers, platform updates';
 
   @override
   String get txtdeleteNotification => 'Delete Notification';
@@ -1843,6 +1885,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtifscCode => 'IFSC Code';
 
   @override
+  String get txttakeAPhoto => 'Take a Photo';
+
+  @override
+  String get txtchooseFromGallery => 'Choose from Gallery';
+
+  @override
   String get txtclearPhotosOnly => 'Clear photos only. Max 5MB each.';
 
   @override
@@ -2166,6 +2214,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get txtclose => 'Close';
+
+  @override
   String get txtchangeTeamLeaderTitle => 'Change Team Leader';
 
   @override
@@ -2432,7 +2483,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Security deposit proof submitted — we\'ll review it shortly.';
 
   @override
-  String get txttopUpProofSubmitted => 'Top-up proof submitted successfully!';
+  String get txttopUpProofSubmitted => 'Top-up receipt submitted successfully!';
 
   @override
   String get txtfailedToDeleteNotification => 'Failed to delete notification';

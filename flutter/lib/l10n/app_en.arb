@@ -903,6 +903,28 @@
   "txtfailedToSavePreferences": "Failed to save preferences",
   "txtsavePreferences": "Save Preferences",
   "txtnotificationPreferences": "Notification Preferences",
+  "notif_prefsMasterSection": "MASTER SWITCH",
+  "@notif_prefsMasterSection": {
+    "description": "Section header for the global on/off toggles on the notification preferences screen"
+  },
+  "notif_prefsPushTitle": "Push Notifications",
+  "notif_prefsPushSubtitle": "Receive push notifications from Voltium",
+  "notif_prefsSoundTitle": "Sound",
+  "notif_prefsSoundSubtitle": "Play sound for notifications",
+  "notif_prefsVibrationTitle": "Vibration",
+  "notif_prefsVibrationSubtitle": "Vibrate for notifications",
+  "notif_prefsCategoriesSection": "NOTIFICATION CATEGORIES",
+  "@notif_prefsCategoriesSection": {
+    "description": "Section header for the per-category notification toggles"
+  },
+  "notif_prefsPaymentsTitle": "Payments",
+  "notif_prefsPaymentsSubtitle": "Top-ups, rent deductions, refunds",
+  "notif_prefsKycTitle": "KYC",
+  "notif_prefsKycSubtitle": "Document verification updates",
+  "notif_prefsMaintenanceTitle": "Maintenance",
+  "notif_prefsMaintenanceSubtitle": "Service reminders, battery swaps",
+  "notif_prefsAnnouncementsTitle": "Announcements",
+  "notif_prefsAnnouncementsSubtitle": "Promotions, offers, platform updates",
   "txtdeleteNotification": "Delete Notification",
   "txtareYouSureYouWantToDeleteThisNotification": "Are you sure you want to delete this notification?",
   "txtnotificationDeleted": "Notification deleted",

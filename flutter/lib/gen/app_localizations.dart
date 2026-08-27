@@ -1227,18 +1227,6 @@ abstract class AppLocalizations {
   /// **'SOS Alert Triggered! Dialing emergency services (112)...'**
   String get txtsosAlertTriggeredDialing;
 
-  /// Take a photo sheet action
-  ///
-  /// In en, this message translates to:
-  /// **'Take a Photo'**
-  String get txttakeAPhoto;
-
-  /// Choose from gallery sheet action
-  ///
-  /// In en, this message translates to:
-  /// **'Choose from Gallery'**
-  String get txtchooseFromGallery;
-
   /// No description provided for @txtotpSentToGuarantorPhone.
   ///
   /// In en, this message translates to:
@@ -1341,7 +1329,7 @@ abstract class AppLocalizations {
   /// **'Unable to open document'**
   String get txtunableToOpenDocument;
 
-  /// Referral card title
+  /// AppBar title of the referral screen (Refer & Earn)
   ///
   /// In en, this message translates to:
   /// **'Refer & Earn'**
@@ -1583,12 +1571,6 @@ abstract class AppLocalizations {
   /// **'Bank Details'**
   String get txtbankDetails;
 
-  /// Close button label
-  ///
-  /// In en, this message translates to:
-  /// **'Close'**
-  String get txtclose;
-
   /// No description provided for @txttakeSelfie.
   ///
   /// In en, this message translates to:
@@ -1696,6 +1678,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notification Preferences'**
   String get txtnotificationPreferences;
+
+  /// Section header for the global on/off toggles on the notification preferences screen
+  ///
+  /// In en, this message translates to:
+  /// **'MASTER SWITCH'**
+  String get notif_prefsMasterSection;
+
+  /// No description provided for @notif_prefsPushTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Notifications'**
+  String get notif_prefsPushTitle;
+
+  /// No description provided for @notif_prefsPushSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receive push notifications from Voltium'**
+  String get notif_prefsPushSubtitle;
+
+  /// No description provided for @notif_prefsSoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound'**
+  String get notif_prefsSoundTitle;
+
+  /// No description provided for @notif_prefsSoundSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Play sound for notifications'**
+  String get notif_prefsSoundSubtitle;
+
+  /// No description provided for @notif_prefsVibrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get notif_prefsVibrationTitle;
+
+  /// No description provided for @notif_prefsVibrationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate for notifications'**
+  String get notif_prefsVibrationSubtitle;
+
+  /// Section header for the per-category notification toggles
+  ///
+  /// In en, this message translates to:
+  /// **'NOTIFICATION CATEGORIES'**
+  String get notif_prefsCategoriesSection;
+
+  /// No description provided for @notif_prefsPaymentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get notif_prefsPaymentsTitle;
+
+  /// No description provided for @notif_prefsPaymentsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-ups, rent deductions, refunds'**
+  String get notif_prefsPaymentsSubtitle;
+
+  /// No description provided for @notif_prefsKycTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC'**
+  String get notif_prefsKycTitle;
+
+  /// No description provided for @notif_prefsKycSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document verification updates'**
+  String get notif_prefsKycSubtitle;
+
+  /// No description provided for @notif_prefsMaintenanceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get notif_prefsMaintenanceTitle;
+
+  /// No description provided for @notif_prefsMaintenanceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Service reminders, battery swaps'**
+  String get notif_prefsMaintenanceSubtitle;
+
+  /// No description provided for @notif_prefsAnnouncementsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Announcements'**
+  String get notif_prefsAnnouncementsTitle;
+
+  /// No description provided for @notif_prefsAnnouncementsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotions, offers, platform updates'**
+  String get notif_prefsAnnouncementsSubtitle;
 
   /// No description provided for @txtdeleteNotification.
   ///
@@ -3531,6 +3609,18 @@ abstract class AppLocalizations {
   /// **'IFSC Code'**
   String get txtifscCode;
 
+  /// Take a photo sheet action
+  ///
+  /// In en, this message translates to:
+  /// **'Take a Photo'**
+  String get txttakeAPhoto;
+
+  /// Choose from gallery sheet action
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get txtchooseFromGallery;
+
   /// Document guidelines subtitle
   ///
   /// In en, this message translates to:
@@ -4102,6 +4192,12 @@ abstract class AppLocalizations {
   /// **'Top up ₹{amount}'**
   String txttopUpAmountAction(String amount);
 
+  /// Close button label
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get txtclose;
+
   /// Change team leader dialog title
   ///
   /// In en, this message translates to:
@@ -4585,7 +4681,7 @@ abstract class AppLocalizations {
   /// Toast shown after a regular top-up proof upload succeeds
   ///
   /// In en, this message translates to:
-  /// **'Top-up proof submitted successfully!'**
+  /// **'Top-up receipt submitted successfully!'**
   String get txttopUpProofSubmitted;
 
   /// Toast shown when notification delete fails on the server

@@ -91,6 +91,7 @@ class _NotificationPreferencesScreenState
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: colors.surface,
       body: Stack(
@@ -105,14 +106,14 @@ class _NotificationPreferencesScreenState
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                     children: [
                       _buildSection(
-                        title: 'MASTER SWITCH',
+                        title: l10n.notif_prefsMasterSection,
                         children: [
                           _buildToggleTile(
                             icon: Icons.notifications_active,
                             iconColor: AppColors.primary,
                             iconBg: AppColors.of(context).primarySurface,
-                            title: 'Push Notifications',
-                            subtitle: 'Receive push notifications from Voltium',
+                            title: l10n.notif_prefsPushTitle,
+                            subtitle: l10n.notif_prefsPushSubtitle,
                             value: _pushEnabled,
                             onChanged: (v) => setState(() => _pushEnabled = v),
                           ),
@@ -120,8 +121,8 @@ class _NotificationPreferencesScreenState
                             icon: Icons.volume_up,
                             iconColor: AppColors.accentPurple,
                             iconBg: AppColors.accentPurpleSurface,
-                            title: 'Sound',
-                            subtitle: 'Play sound for notifications',
+                            title: l10n.notif_prefsSoundTitle,
+                            subtitle: l10n.notif_prefsSoundSubtitle,
                             value: _soundEnabled,
                             onChanged: (v) => setState(() => _soundEnabled = v),
                           ),
@@ -129,8 +130,8 @@ class _NotificationPreferencesScreenState
                             icon: Icons.vibration,
                             iconColor: AppColors.warning,
                             iconBg: AppColors.warningSurface,
-                            title: 'Vibration',
-                            subtitle: 'Vibrate for notifications',
+                            title: l10n.notif_prefsVibrationTitle,
+                            subtitle: l10n.notif_prefsVibrationSubtitle,
                             value: _vibrationEnabled,
                             onChanged: (v) =>
                                 setState(() => _vibrationEnabled = v),
@@ -139,14 +140,14 @@ class _NotificationPreferencesScreenState
                       ),
                       const SizedBox(height: 20),
                       _buildSection(
-                        title: 'NOTIFICATION CATEGORIES',
+                        title: l10n.notif_prefsCategoriesSection,
                         children: [
                           _buildToggleTile(
                             icon: Icons.currency_rupee,
                             iconColor: AppColors.success,
                             iconBg: AppColors.of(context).successLight,
-                            title: 'Payments',
-                            subtitle: 'Top-ups, rent deductions, refunds',
+                            title: l10n.notif_prefsPaymentsTitle,
+                            subtitle: l10n.notif_prefsPaymentsSubtitle,
                             value: _paymentsEnabled,
                             onChanged: (v) =>
                                 setState(() => _paymentsEnabled = v),
@@ -155,8 +156,8 @@ class _NotificationPreferencesScreenState
                             icon: Icons.shield_outlined,
                             iconColor: AppColors.accentPurple,
                             iconBg: AppColors.accentPurpleSurface,
-                            title: 'KYC',
-                            subtitle: 'Document verification updates',
+                            title: l10n.notif_prefsKycTitle,
+                            subtitle: l10n.notif_prefsKycSubtitle,
                             value: _kycEnabled,
                             onChanged: (v) => setState(() => _kycEnabled = v),
                           ),
@@ -164,8 +165,8 @@ class _NotificationPreferencesScreenState
                             icon: Icons.build_outlined,
                             iconColor: AppColors.primary,
                             iconBg: AppColors.of(context).primarySurface,
-                            title: 'Maintenance',
-                            subtitle: 'Service reminders, battery swaps',
+                            title: l10n.notif_prefsMaintenanceTitle,
+                            subtitle: l10n.notif_prefsMaintenanceSubtitle,
                             value: _maintenanceEnabled,
                             onChanged: (v) =>
                                 setState(() => _maintenanceEnabled = v),
@@ -174,8 +175,8 @@ class _NotificationPreferencesScreenState
                             icon: Icons.campaign_outlined,
                             iconColor: AppColors.accentPurple,
                             iconBg: AppColors.accentPurpleSurface,
-                            title: 'Announcements',
-                            subtitle: 'Promotions, offers, platform updates',
+                            title: l10n.notif_prefsAnnouncementsTitle,
+                            subtitle: l10n.notif_prefsAnnouncementsSubtitle,
                             value: _announcementsEnabled,
                             onChanged: (v) =>
                                 setState(() => _announcementsEnabled = v),
@@ -202,7 +203,7 @@ class _NotificationPreferencesScreenState
                                 ),
                               )
                             : Text(
-                                'Save Preferences',
+                                l10n.txtsavePreferences,
                                 style: AppTypography.labelLarge
                                     .copyWith(fontWeight: FontWeight.w700)
                                     .copyWith(color: Colors.white),
@@ -238,6 +239,7 @@ class _NotificationPreferencesScreenState
 
   Widget _buildHeader() {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -265,7 +267,7 @@ class _NotificationPreferencesScreenState
           ),
           const SizedBox(width: 16),
           Text(
-            'Notification Preferences',
+            l10n.txtnotificationPreferences,
             style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
         ],
