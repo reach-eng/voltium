@@ -13,7 +13,7 @@ import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 
-class _SeededEngagementNotifier extends EngagementNotifier {
+class _SeededEngagementNotifier extends EngagementProvider {
   final EngagementState _seed;
   _SeededEngagementNotifier(this._seed);
 
@@ -25,7 +25,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({
+      'notif_announcements': true,
+    });
     await CacheService().init();
   });
 
@@ -174,7 +176,13 @@ void main() {
   });
 
   group('NotificationsScreen - Tab Filtering & Empty State', () {
-    testWidgets('filters notifications by category tab', (tester) async {
+    testWidgets(
+        'filters notifications by category tab with announcements enabled',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'notif_announcements': true,
+      });
+
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -210,6 +218,76 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Monsoon Special Offer'), findsOneWidget);
+    });
+
+    testWidgets(
+        'respects disabled category preference by emptying filtered tab (N-19)',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'notif_payments': false,
+        'notif_announcements': false,
+      });
+
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(buildTestApp());
+      await tester.pumpAndSettle();
+
+      // In All tab, payments and announcements are filtered out
+      expect(find.text('Payment Received'), findsNothing);
+      expect(find.text('Monsoon Special Offer'), findsNothing);
+      expect(find.text('KYC Verification Approved'), findsOneWidget);
+
+      // In Payments tab, empty
+      await tester.tap(find.text('Payments'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Payment Received'), findsNothing);
+      expect(find.text('No payments notifications'), findsOneWidget);
+    });
+
+    testWidgets(
+        'correctly categorises Hindi KYC notification via data map or title (N-20)',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final hindiKycNotifs = [
+        AppNotification(
+          id: 'notif-hindi-kyc',
+          title: 'केवाईसी सत्यापन स्वीकृत',
+          message: 'आपके दस्तावेज़ सफलतापूर्वक सत्यापित हो गए हैं।',
+          type: AppNotificationType.system,
+          data: {'category': 'kyc'},
+          createdAt: DateTime.now(),
+          isRead: false,
+        ),
+      ];
+
+      await tester.pumpWidget(buildTestApp(
+        state: EngagementState(
+          notifications: hindiKycNotifs,
+          unreadCount: 1,
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // Tap KYC tab
+      await tester.tap(find.text('KYC'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('केवाईसी सत्यापन स्वीकृत'), findsOneWidget);
     });
 
     testWidgets('renders empty state when no notifications match tab',

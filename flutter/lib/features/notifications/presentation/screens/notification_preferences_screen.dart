@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/notification_service.dart';
@@ -8,6 +7,8 @@ import 'package:voltium_rider/utils/toast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import '../../../../utils/app_logger.dart';
+
+import 'package:voltium_rider/features/notifications/data/notification_prefs_service.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -25,17 +26,10 @@ class _NotificationPreferencesScreenState
   bool _paymentsEnabled = true;
   bool _kycEnabled = true;
   bool _maintenanceEnabled = true;
-  bool _announcementsEnabled = true;
+  bool _announcementsEnabled = false;
 
   bool _isLoading = false;
-
-  static const String _keyPush = 'notif_push';
-  static const String _keySound = 'notif_sound';
-  static const String _keyVibration = 'notif_vibration';
-  static const String _keyPayments = 'notif_payments';
-  static const String _keyKyc = 'notif_kyc';
-  static const String _keyMaintenance = 'notif_maintenance';
-  static const String _keyAnnouncements = 'notif_announcements';
+  final NotificationPrefsService _prefsService = NotificationPrefsService();
 
   @override
   void initState() {
@@ -45,16 +39,16 @@ class _NotificationPreferencesScreenState
 
   Future<void> _loadPreferences() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final p = await _prefsService.load();
       if (!mounted) return;
       setState(() {
-        _pushEnabled = prefs.getBool(_keyPush) ?? true;
-        _soundEnabled = prefs.getBool(_keySound) ?? true;
-        _vibrationEnabled = prefs.getBool(_keyVibration) ?? true;
-        _paymentsEnabled = prefs.getBool(_keyPayments) ?? true;
-        _kycEnabled = prefs.getBool(_keyKyc) ?? true;
-        _maintenanceEnabled = prefs.getBool(_keyMaintenance) ?? true;
-        _announcementsEnabled = prefs.getBool(_keyAnnouncements) ?? true;
+        _pushEnabled = p.push;
+        _soundEnabled = p.sound;
+        _vibrationEnabled = p.vibration;
+        _paymentsEnabled = p.payments;
+        _kycEnabled = p.kyc;
+        _maintenanceEnabled = p.maintenance;
+        _announcementsEnabled = p.announcements;
       });
     } catch (e) {
       appDebug('Failed to load notification preferences: $e');
@@ -64,14 +58,15 @@ class _NotificationPreferencesScreenState
   Future<void> _savePreferences() async {
     setState(() => _isLoading = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_keyPush, _pushEnabled);
-      await prefs.setBool(_keySound, _soundEnabled);
-      await prefs.setBool(_keyVibration, _vibrationEnabled);
-      await prefs.setBool(_keyPayments, _paymentsEnabled);
-      await prefs.setBool(_keyKyc, _kycEnabled);
-      await prefs.setBool(_keyMaintenance, _maintenanceEnabled);
-      await prefs.setBool(_keyAnnouncements, _announcementsEnabled);
+      await _prefsService.save(NotificationPrefs(
+        push: _pushEnabled,
+        sound: _soundEnabled,
+        vibration: _vibrationEnabled,
+        payments: _paymentsEnabled,
+        kyc: _kycEnabled,
+        maintenance: _maintenanceEnabled,
+        announcements: _announcementsEnabled,
+      ));
       await NotificationService().refreshNotificationPreference();
 
       if (mounted) {

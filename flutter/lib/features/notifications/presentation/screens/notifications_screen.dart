@@ -10,12 +10,67 @@ import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 import 'notification_preferences_screen.dart';
+import 'package:voltium_rider/features/notifications/data/notification_prefs_service.dart';
 
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 enum NotificationTab { all, payments, kyc, maintenance, announcements }
+
+enum NotificationCategory {
+  payments,
+  kyc,
+  maintenance,
+  announcements,
+  general,
+}
+
+/// Normalises any AppNotification into its semantic category.
+/// Checks structured payload data first (locale-agnostic), then falls
+/// back to notification type and title/body heuristics.
+NotificationCategory getNotificationCategory(AppNotification n) {
+  final cat = n.data?['category']?.toString().toLowerCase();
+  if (cat == 'payment' || cat == 'payments')
+    return NotificationCategory.payments;
+  if (cat == 'kyc' || cat == 'onboarding') return NotificationCategory.kyc;
+  if (cat == 'maintenance' || cat == 'service' || cat == 'vehicle') {
+    return NotificationCategory.maintenance;
+  }
+  if (cat == 'announcements' || cat == 'promo' || cat == 'promotion') {
+    return NotificationCategory.announcements;
+  }
+
+  switch (n.type) {
+    case AppNotificationType.payment:
+    case AppNotificationType.paymentReceived:
+    case AppNotificationType.paymentSent:
+      return NotificationCategory.payments;
+    case AppNotificationType.vehicle:
+    case AppNotificationType.lowBattery:
+      return NotificationCategory.maintenance;
+    case AppNotificationType.promotion:
+    case AppNotificationType.promo:
+      return NotificationCategory.announcements;
+    default:
+      final title = n.title.toLowerCase();
+      final body = n.message.toLowerCase();
+      if (title.contains('kyc') ||
+          body.contains('kyc') ||
+          n.data?['screen'] == 'kyc' ||
+          n.data?['action'] == 'kyc') {
+        return NotificationCategory.kyc;
+      }
+      if (title.contains('maintenance') ||
+          title.contains('service') ||
+          title.contains('battery') ||
+          body.contains('maintenance') ||
+          body.contains('service')) {
+        return NotificationCategory.maintenance;
+      }
+      return NotificationCategory.general;
+  }
+}
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -29,11 +84,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     with SingleTickerProviderStateMixin {
   NotificationTab _selectedTab = NotificationTab.all;
   late TabController _tabController;
+  NotificationPrefs _prefs = const NotificationPrefs();
+  final NotificationPrefsService _prefsService = NotificationPrefsService();
 
   @override
   void initState() {
     super.initState();
     PostHogService.capture('notification_opened');
+    _loadPrefs();
     _tabController =
         TabController(length: NotificationTab.values.length, vsync: this);
     _tabController.addListener(() {
@@ -45,6 +103,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     });
   }
 
+  Future<void> _loadPrefs() async {
+    final p = await _prefsService.load();
+    if (mounted) {
+      setState(() {
+        _prefs = p;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -52,41 +119,50 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   List<AppNotification> _getFilteredNotifications(List<AppNotification> all) {
+    // PR-A (N-19/N-20): filter by active user notification preferences
+    final activeList = all.where((n) {
+      final category = getNotificationCategory(n);
+      switch (category) {
+        case NotificationCategory.payments:
+          return _prefs.payments;
+        case NotificationCategory.kyc:
+          return _prefs.kyc;
+        case NotificationCategory.maintenance:
+          return _prefs.maintenance;
+        case NotificationCategory.announcements:
+          return _prefs.announcements;
+        case NotificationCategory.general:
+          return true;
+      }
+    }).toList();
+
     switch (_selectedTab) {
       case NotificationTab.all:
-        return all;
+        return activeList;
       case NotificationTab.payments:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.paymentReceived ||
-                  n.type == AppNotificationType.paymentSent,
-            )
+        if (!_prefs.payments) return [];
+        return activeList
+            .where((n) =>
+                getNotificationCategory(n) == NotificationCategory.payments)
             .toList();
       case NotificationTab.kyc:
-        return all
+        if (!_prefs.kyc) return [];
+        return activeList
             .where(
-              (n) =>
-                  n.type == AppNotificationType.system &&
-                  n.title.toLowerCase().contains('kyc'),
-            )
+                (n) => getNotificationCategory(n) == NotificationCategory.kyc)
             .toList();
       case NotificationTab.maintenance:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.system &&
-                  (n.title.toLowerCase().contains('service') ||
-                      n.title.toLowerCase().contains('maintenance')),
-            )
+        if (!_prefs.maintenance) return [];
+        return activeList
+            .where((n) =>
+                getNotificationCategory(n) == NotificationCategory.maintenance)
             .toList();
       case NotificationTab.announcements:
-        return all
-            .where(
-              (n) =>
-                  n.type == AppNotificationType.promo ||
-                  n.type == AppNotificationType.system,
-            )
+        if (!_prefs.announcements) return [];
+        return activeList
+            .where((n) =>
+                getNotificationCategory(n) ==
+                NotificationCategory.announcements)
             .toList();
     }
   }
@@ -404,10 +480,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 ),
               if (unreadCount > 0) const SizedBox(width: 8),
               InkWell(
-                onTap: () => AppNavigator.push(
-                  context,
-                  const NotificationPreferencesScreen(),
-                ),
+                onTap: () async {
+                  await AppNavigator.pushForResult(
+                    context,
+                    const NotificationPreferencesScreen(),
+                  );
+                  if (mounted) _loadPrefs();
+                },
                 child: Container(
                   padding: const EdgeInsets.all(Spacing.md2),
                   decoration: BoxDecoration(
