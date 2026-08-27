@@ -735,8 +735,6 @@
   "@txtsosAlertTriggeredDialing": {
     "description": "SnackBar shown after the rider triggers Emergency SOS"
   },
-  "txttakeAPhoto": "Take a Photo",
-  "txtchooseFromGallery": "Choose from Gallery",
   "txtotpSentToGuarantorPhone": "OTP sent to guarantor phone",
   "txtphoneVerifiedSuccessfully": "Phone verified successfully",
   "txtguarantorDetails": "Guarantor Details",
@@ -829,6 +827,9 @@
     "description": "Label in the top-up flow breakdown for the optional advance rental fee"
   },
   "txttopUpProofSubmittedSuccessfully": "Top-up proof submitted successfully!",
+  "@txttopUpProofSubmittedSuccessfully": {
+    "description": "SnackBar shown after the rider submits a top-up/deposit proof photo"
+  },
   "txtupiIdCopiedToClipboard": "UPI ID copied to clipboard",
   "@txtupiIdCopiedToClipboard": {
     "description": "SnackBar shown when the rider copies the UPI ID for offline payment"
@@ -840,9 +841,6 @@
   "txttotalPayable": "Total Payable",
   "@txttotalPayable": {
     "description": "Receipt line label — the final total the rider pays (top-up + plan fee + deposit)"
-  },
-  "@txttopUpProofSubmittedSuccessfully": {
-    "description": "SnackBar shown after the rider submits a top-up/deposit proof photo"
   },
   "txtchangeLockPassword": "Change Lock Password",
   "@txtchangeLockPassword": {
@@ -887,7 +885,6 @@
   "txtclear": "Clear",
   "txtsave": "Save",
   "txtbankDetails": "Bank Details",
-  "txtclose": "Close",
   "txttakeSelfie": "Take Selfie",
   "txtcamera": "Camera",
   "txtgallery": "Gallery",
@@ -1025,7 +1022,6 @@
   "txtsubmitForApproval": "SUBMIT FOR APPROVAL",
   "txteditProfile": "Edit Profile",
   "txtguarantorPhone": "Guarantor Phone",
-  "txtverify": "Verify",
   "txtphoneVerified": "Phone verified",
   "txtquickLinks": "QUICK LINKS",
   "txtprofile": "Profile",
@@ -1553,8 +1549,6 @@
   },
   "txttopUpWalletAction": "Top Up Wallet",
   "@txttopUpWalletAction": { "description": "Top up wallet button label" },
-  "txtreferAndEarn": "Refer & Earn",
-  "@txtreferAndEarn": { "description": "Referral card title" },
   "txtshareCodeWithFriends": "Share your code with friends",
   "@txtshareCodeWithFriends": { "description": "Referral card subtitle" },
   "txtyourCode": "YOUR CODE",
