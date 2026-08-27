@@ -544,10 +544,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               Expanded(
                 child: Text(
                   // PR-D: was hardcoded 'PROCEED TO PAYMENT' (all-caps).
-                  // Now routes through `txttopupProceedToPayment` ARB key
-                  // so Hindi renders as "भुगतान करें" and EN as "Proceed to payment".
-                  AppLocalizations.of(context)?.txttopupProceedToPayment ??
-                      'Proceed to payment',
+                  // Now routes through `txtproceedToPayment` ARB key
+                  // so Hindi renders as "भुगतान के लिए आगे बढ़ें" and EN
+                  // as "Proceed to payment".
+                  AppLocalizations.of(context)!.txtproceedToPayment,
                   textAlign: TextAlign.center,
                   style: AppTypography.labelLarge
                       .copyWith(fontWeight: FontWeight.w700)

@@ -460,6 +460,7 @@
   "txttapToUploadPhoto": "फ़ोटो अपलोड करने के लिए टैप करें",
   "txtcameraOrGallery": "कैमरा या गैलरी",
   "txtsubmitProof": "प्रूफ़ जमा करें",
+  "txtproceedToInstantPay": "इंस्टैंट पे पर आगे बढ़ें ({total})",
   "txtstep1Of3": "कदम 1 का 3",
   "txtselectPurpose": "उद्देश्य चुनें",
   "txtstandardAmount": "मानक राशि",

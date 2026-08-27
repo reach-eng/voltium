@@ -2592,7 +2592,7 @@ abstract class AppLocalizations {
   /// No description provided for @txtproceedToPayment.
   ///
   /// In en, this message translates to:
-  /// **'PROCEED TO PAYMENT'**
+  /// **'Proceed to payment'**
   String get txtproceedToPayment;
 
   /// No description provided for @txttakePhoto.
@@ -2661,6 +2661,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submit Proof'**
   String get txtsubmitProof;
+
+  /// Submit-button label when payment mode is Instant (includes total amount)
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed to Instant Pay ({total})'**
+  String txtproceedToInstantPay(Object total);
 
   /// No description provided for @txtstep1Of3.
   ///

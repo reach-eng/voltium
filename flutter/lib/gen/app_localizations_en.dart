@@ -1357,7 +1357,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtstep2Of3 => 'Step 2 of 3';
 
   @override
-  String get txtproceedToPayment => 'PROCEED TO PAYMENT';
+  String get txtproceedToPayment => 'Proceed to payment';
 
   @override
   String get txttakePhoto => 'Take Photo';
@@ -1392,6 +1392,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtsubmitProof => 'Submit Proof';
+
+  @override
+  String txtproceedToInstantPay(Object total) {
+    return 'Proceed to Instant Pay ($total)';
+  }
 
   @override
   String get txtstep1Of3 => 'Step 1 of 3';

@@ -1063,9 +1063,13 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   ),
                 )
               : Text(
+                  // PR-D: was hardcoded 'Proceed to Instant Pay (₹$total)'.
+                  // Route through `txtproceedToInstantPay` ARB key so
+                  // Hindi renders correctly.
                   isInstant
-                      ? 'Proceed to Instant Pay (₹$total)'
-                      : 'Submit Proof',
+                      ? AppLocalizations.of(context)!
+                          .txtproceedToInstantPay('₹$total')
+                      : AppLocalizations.of(context)!.txtsubmitProof,
                   style: AppTypography.titleSmall.copyWith(
                       letterSpacing: 0.5,
                       color: canSubmit ? Colors.white : colors.onSurfaceMuted),

@@ -1396,6 +1396,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtsubmitProof => 'प्रूफ़ जमा करें';
 
   @override
+  String txtproceedToInstantPay(Object total) {
+    return 'इंस्टैंट पे पर आगे बढ़ें ($total)';
+  }
+
+  @override
   String get txtstep1Of3 => 'कदम 1 का 3';
 
   @override
