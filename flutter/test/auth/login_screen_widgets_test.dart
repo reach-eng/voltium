@@ -23,12 +23,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/login_footer.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_trigger_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/phone_entry_widget.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 void main() {
   group('PhoneEntryWidget', () {
     testWidgets('renders phone, referral, and OTP note', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: PhoneEntryWidget(
               entryController: AnimationController(
@@ -56,6 +65,13 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: PhoneEntryWidget(
               entryController: controller,
@@ -93,6 +109,13 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: PhoneEntryWidget(
               entryController: controller,
@@ -127,6 +150,13 @@ void main() {
       final changes = <String>[];
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: PhoneEntryWidget(
               entryController: controller,
@@ -153,6 +183,13 @@ void main() {
     testWidgets('renders with "Enter" label and key', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: OtpTriggerWidget(
               canSubmit: false,
@@ -171,6 +208,13 @@ void main() {
     testWidgets('shows spinner when isLoading=true', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: OtpTriggerWidget(
               canSubmit: true,
@@ -191,6 +235,13 @@ void main() {
       var taps = 0;
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: OtpTriggerWidget(
               canSubmit: true,
@@ -212,6 +263,13 @@ void main() {
       var taps = 0;
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: OtpTriggerWidget(
               canSubmit: false,
@@ -237,6 +295,13 @@ void main() {
       );
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: LoginFooter(
               entryController: controller,
@@ -260,6 +325,13 @@ void main() {
       final urls = <String>[];
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: LoginFooter(
               entryController: controller,

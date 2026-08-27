@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Riverpod 3.x moved the `Override` type to the `misc` library.
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -6,6 +7,7 @@ export 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 /// Wraps a widget in a MaterialApp and ProviderScope for golden testing.
@@ -32,6 +34,13 @@ Widget wrapForGolden(
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       theme: useAppThemes
           ? AppTheme.lightTheme.copyWith(
               // Drop the GoogleFonts text theme for golden determinism.
