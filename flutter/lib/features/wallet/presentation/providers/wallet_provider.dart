@@ -192,9 +192,15 @@ class WalletNotifier extends Notifier<WalletState> {
               id: t.id,
               riderId: riderId,
               amount: t.amountInRupees,
-              type: t.type == 'CREDIT'
-                  ? TransactionType.credit
-                  : TransactionType.debit,
+              // PR-B (2026-08-28) BUG FIX: the previous
+              // `t.type == 'CREDIT' ? credit : debit` silently
+              // misclassified any non-'CREDIT' type (e.g. 'HOLD',
+              // 'TRANSFER', 'ADJUSTMENT' if the backend ever adds
+              // them) as debit. Use the model's parseTransactionType
+              // helper which matches by .value (case-insensitive)
+              // and falls back to debit only for truly unknown
+              // values, which the notifier can log.
+              type: TransactionModel.parseTransactionType(t.type),
               purpose: t.purpose,
               status: _parseTransactionStatus(t.status),
               createdAt: t.createdAt,

@@ -150,7 +150,7 @@ class TransactionModel {
     return TransactionModel(
       id: json['id'] as String?,
       riderId: json['riderId'] as String? ?? '',
-      type: _parseTransactionType(json['type']),
+      type: parseTransactionType(json['type']),
       amount: _toDouble(json['amount']),
       purpose: json['purpose'] as String?,
       status: _parseTransactionStatus(json['status']),
@@ -235,7 +235,11 @@ class TransactionModel {
     return 0.0;
   }
 
-  static TransactionType _parseTransactionType(dynamic value) {
+  /// PR-B (2026-08-28): made public so the wallet notifier can use
+  /// the same robust parsing (previously private; the notifier had
+  /// its own `t.type == 'CREDIT' ? credit : debit` that silently
+  /// misclassified unknown types as debit).
+  static TransactionType parseTransactionType(dynamic value) {
     if (value == null) return TransactionType.debit;
     if (value is TransactionType) return value;
     final str = value.toString().toLowerCase();
