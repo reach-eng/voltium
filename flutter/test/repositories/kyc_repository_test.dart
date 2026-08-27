@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
@@ -29,6 +30,37 @@ void main() {
     mockApiClient = MockVoltiumApiClient();
     mockFilesRepository = MockFilesRepository();
     repository = KycRepository(mockApiClient, mockFilesRepository);
+
+    // In-memory secure-storage mock so save/load round-trips work
+    // (the global handler in flutter_test_config.dart returns null,
+    // which makes every write a no-op).
+    const secureStorageChannel =
+        MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+    final store = <String, String>{};
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(secureStorageChannel,
+            (MethodCall call) async {
+      switch (call.method) {
+        case 'read':
+          return store[call.arguments['key'] as String?];
+        case 'readAll':
+          return Map<String, String>.from(store);
+        case 'write':
+          store[call.arguments['key'] as String] =
+              call.arguments['value'] as String;
+          return null;
+        case 'delete':
+          store.remove(call.arguments['key'] as String);
+          return null;
+        case 'deleteAll':
+          store.clear();
+          return null;
+        case 'containsKey':
+          return store.containsKey(call.arguments['key'] as String);
+        default:
+          return null;
+      }
+    });
   });
 
   group('KycRepository', () {

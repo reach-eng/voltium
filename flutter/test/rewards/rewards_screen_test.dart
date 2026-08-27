@@ -2,9 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 Widget buildTestApp() {
-  return const ProviderScope(child: MaterialApp(home: RewardsScreen()));
+  return ProviderScope(
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const RewardsScreen(),
+    ),
+  );
 }
 
 void main() {

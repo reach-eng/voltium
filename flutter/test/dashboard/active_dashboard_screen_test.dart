@@ -28,7 +28,7 @@ class _TestRiderNotifier extends RiderNotifier {
   }
 }
 
-class _StubEngagementNotifier extends EngagementNotifier {
+class _StubEngagementNotifier extends EngagementProvider {
   @override
   EngagementState build() => const EngagementState();
 

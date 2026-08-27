@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,12 +31,7 @@ void main() {
       child: MaterialApp(
         locale: const Locale('en'),
         supportedLocales: LocaleProvider.supportedLocales,
-        localizationsDelegates: const [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: const SettingsScreen(),
       ),
     );
@@ -70,12 +64,30 @@ void main() {
     expect(find.byKey(const Key('confirmDeleteButton')), findsOneWidget);
     expect(find.byKey(const Key('cancelDeleteButton')), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('confirmDeleteButton')));
-    await tester.pump();
+    // AUDIT FIX (2026-08-22, HIGH): after confirming, a step-up lock
+    // password dialog opens before the actual deletion request. Without
+    // a network and a mocked lock-verify endpoint, the verify fails and
+    // the deletion submission never runs, so the test cannot assert a
+    // SnackBar. The step-up flow is exercised by the next test in the
+    // suite; this test only verifies the gate + dialog open.
+  });
 
-    // Confirming triggers the delete-request call; without a network the
-    // error snackbar appears (no silent no-op, no crash).
-    expect(find.byType(SnackBar), findsOneWidget);
+  testWidgets(
+      'confirming delete opens the step-up lock password dialog', (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final tile = find.byKey(const Key('deleteAccountButton'));
+    await tester.scrollUntilVisible(tile, 200);
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('confirmDeleteButton')));
+    await tester.pumpAndSettle();
+
+    // Step-up lock password dialog is shown after confirm.
+    expect(find.byKey(const Key('lockPasswordInput')), findsOneWidget);
+    expect(find.byKey(const Key('confirmVerifyLockButton')), findsOneWidget);
   });
 
   testWidgets('cancel leaves the screen untouched', (tester) async {

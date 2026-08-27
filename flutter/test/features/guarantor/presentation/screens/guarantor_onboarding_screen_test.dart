@@ -431,7 +431,9 @@ void main() {
       expect(find.text('1'), findsOneWidget);
       expect(find.text('2'), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
-      expect(find.text('GUARANTOR DETAILS'), findsOneWidget);
+      // Step-1 label comes from the active ARB key (mixed-case "Guarantor
+      // Details") — not the legacy all-caps placeholder.
+      expect(find.text('Guarantor Details'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('Submitting form calls onNext when provided', (tester) async {

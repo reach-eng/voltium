@@ -64,9 +64,21 @@ void main() {
       expect(find.text('Instant Payment'), findsAtLeastNWidgets(1));
       expect(find.textContaining('2.5%'), findsAtLeastNWidgets(1));
 
-      final proceedBtn = find.text('Proceed');
-      expect(proceedBtn, findsOneWidget);
-      await tester.tap(proceedBtn);
+      // The dialog's confirm button uses `txtproceedToPayment` ("Proceed to
+      // payment", per PR-D); the bottom submit button only renders the
+      // "Proceed to Instant Pay" copy once `_selectedPaymentMode` flips to
+      // `instant`, which happens after the rider confirms the alert.
+      final dialogProceed = find.text('Proceed to payment');
+      expect(dialogProceed, findsOneWidget);
+      await tester.tap(dialogProceed);
+      await tester.pumpAndSettle();
+
+      // After confirming the alert, the submit button renders
+      // "Proceed to Instant Pay (₹<total>)" via the txtproceedToInstantPay
+      // ARB key — the total is interpolated, so match by prefix.
+      expect(find.textContaining('Proceed to Instant Pay'),
+          findsAtLeastNWidgets(1));
+      await tester.tap(find.textContaining('Proceed to Instant Pay').last);
       await tester.pumpAndSettle();
 
       expect(find.text('Instant Payment Breakdown'), findsOneWidget);

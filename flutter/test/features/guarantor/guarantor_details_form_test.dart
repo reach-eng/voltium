@@ -8,16 +8,9 @@ import 'package:voltium_rider/theme/app_theme.dart';
 void main() {
   Widget buildTestable(Widget child, {Locale locale = const Locale('en')}) {
     return MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en'), Locale('hi')],
-      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
       theme: AppTheme.lightTheme,
       home: Scaffold(
         body: SingleChildScrollView(
@@ -122,8 +115,7 @@ void main() {
           find.byKey(const Key('guarantorFullNameField')), 'A');
       await tester.pump();
 
-      expect(find.text('Enter a valid name (at least 2 characters)'),
-          findsOneWidget);
+      expect(find.text('Enter a valid name'), findsOneWidget);
 
       // Enter valid name
       await tester.enterText(
@@ -157,14 +149,15 @@ void main() {
         ),
       );
 
-      // Enter a too-short phone number to trigger the length-only
-      // FormValidators.phone default (PR-B: the field no longer
-      // hardcodes the Indian-only indianPhone validator).
+      // Enter an invalid phone number. GuarantorDetailsCard hardcodes
+      // FormValidators.indianPhone, so a number that doesn't start with
+      // 6-9 (e.g. '12345') is rejected with the Indian-validator message.
       await tester.enterText(
           find.byKey(const Key('guarantorPhoneField')), '12345');
       await tester.pump();
 
-      expect(find.text('Phone must be 10 digits'), findsOneWidget);
+      expect(find.text('Enter a valid 10-digit Indian mobile number'),
+          findsOneWidget);
     });
 
     testWidgets(

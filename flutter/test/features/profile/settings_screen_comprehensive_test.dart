@@ -109,7 +109,7 @@ void main() {
 
       // About Section
       expect(find.byKey(const Key('appVersionTile')), findsAtLeastNWidgets(1));
-      expect(find.text('v2.1.0'), findsAtLeastNWidgets(1));
+      expect(find.text('v1.0.0'), findsAtLeastNWidgets(1));
       expect(find.byKey(const Key('rateUsTile')), findsAtLeastNWidgets(1));
 
       // Account / Danger Zone

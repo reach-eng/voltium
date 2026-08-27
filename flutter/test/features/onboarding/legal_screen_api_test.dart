@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/features/onboarding/presentation/screens/legal_screen.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/features/onboarding/presentation/screens/legal_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// 2026-08-05 legal/device audit P0-3: the legal screen must render documents
@@ -18,16 +18,25 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 /// through `rootBundle` inside the widget-test bundle, so the fallback test
 /// (a) asserts the fallback *titles* render in-widget and (b) verifies the
 /// bundled asset on disk still carries the offline legal copy.
+///
+/// PR-13 (2026-08-22): the legal screen now calls `ApiClient().getWithSWR`
+/// directly (the `VoltiumApiService` wrapper is gone). Tests inject the
+/// response via the `ApiClient.instanceForTest` seam by extending the class
+/// and overriding `getWithSWR`.
 
-class _FakeVoltiumApiService extends Fake implements VoltiumApiService {
-  _FakeVoltiumApiService(this._docs);
+class _FakeApiClient extends ApiClient {
+  _FakeApiClient({this.docs}) : super.testOverride(baseUrl: 'http://test.invalid');
 
-  final Map<String, dynamic>? _docs;
+  final Map<String, dynamic>? docs;
 
   @override
-  Future<Map<String, dynamic>> fetchLegalDocuments() async {
-    if (_docs == null) throw Exception('offline');
-    return _docs!;
+  Future<Map<String, dynamic>> getWithSWR(
+    String path, {
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
+    if (docs == null) throw Exception('offline');
+    return docs!;
   }
 }
 
@@ -35,20 +44,20 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
-    VoltiumApiService.instance = null;
+    ApiClient.instanceForTest = null;
   });
 
   tearDown(() {
-    VoltiumApiService.instance = null;
+    ApiClient.instanceForTest = null;
   });
 
   Widget buildScreen() {
-    return const MaterialApp(localizationsDelegates: const [
+    return const MaterialApp(localizationsDelegates: [
       AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate
-    ], supportedLocales: const [
+    ], supportedLocales: [
       Locale('en'),
       Locale('hi')
     ], home: LegalScreen(onNext: null, onBack: null));
@@ -56,7 +65,7 @@ void main() {
 
   testWidgets('renders API-served documents over the fallback copy',
       (tester) async {
-    VoltiumApiService.instance = _FakeVoltiumApiService({
+    ApiClient.instanceForTest = _FakeApiClient(docs: {
       'success': true,
       'data': [
         {
@@ -90,7 +99,7 @@ void main() {
 
   testWidgets('falls back to the bundled fallback when the API is unreachable',
       (tester) async {
-    VoltiumApiService.instance = _FakeVoltiumApiService(null);
+    ApiClient.instanceForTest = _FakeApiClient();
 
     await tester.pumpWidget(buildScreen());
     await tester.pumpAndSettle();

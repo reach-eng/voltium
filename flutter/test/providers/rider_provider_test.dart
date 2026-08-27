@@ -107,7 +107,7 @@ class MockRentalRepository implements RentalRepository {
 
 class MockFilesRepository implements FilesRepository {
   @override
-  Future<String> uploadFile(File file, String type) async {
+  Future<String> uploadFile(File file, dynamic category) async {
     return 'url';
   }
 

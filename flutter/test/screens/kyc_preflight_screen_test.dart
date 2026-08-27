@@ -10,12 +10,15 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/kyc_preflight_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 void main() {
   testWidgets('KycPreflightScreen renders 3 checklist items', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: KycPreflightScreen(onNext: _noop, onSkip: _noop),
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const KycPreflightScreen(onNext: _noop, onSkip: _noop),
       ),
     );
     await tester.pumpAndSettle();
@@ -31,6 +34,8 @@ void main() {
     var nextCount = 0;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: KycPreflightScreen(onNext: () => nextCount++),
       ),
     );
@@ -48,6 +53,8 @@ void main() {
     var skipCount = 0;
     await tester.pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: KycPreflightScreen(
           onNext: _noop,
           onSkip: () => skipCount++,
@@ -66,6 +73,8 @@ void main() {
   testWidgets('Skip button is hidden when onSkip is null', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: KycPreflightScreen(onNext: _noop),
       ),
     );

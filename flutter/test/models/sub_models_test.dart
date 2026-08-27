@@ -63,6 +63,7 @@ void main() {
         'name': 'Basic',
         'description': 'A basic plan',
         'price': 1500.0,
+        'securityDeposit': 500.0,
         'durationDays': 30,
         'features': ['GPS', 'Insurance'],
         'category': 'ECONOMY',
@@ -70,6 +71,7 @@ void main() {
       final model = PlanModel.fromJson(json);
       expect(model.id, 'p1');
       expect(model.price, 1500.0);
+      expect(model.securityDeposit, 500.0);
       expect(model.durationDays, 30);
       expect(model.features, ['GPS', 'Insurance']);
       expect(model.category, 'ECONOMY');
@@ -81,6 +83,7 @@ void main() {
         'name': 'X',
         'description': 'D',
         'price': 100.0,
+        'securityDeposit': 0.0,
         'durationDays': 7
       };
       final model = PlanModel.fromJson(json);
@@ -93,6 +96,7 @@ void main() {
         'name': 'X',
         'description': 'D',
         'price': 100.0,
+        'securityDeposit': 0.0,
         'durationDays': 7
       };
       final model = PlanModel.fromJson(json);
@@ -105,6 +109,7 @@ void main() {
         'name': 'X',
         'description': 'D',
         'price': 100.0,
+        'securityDeposit': 0.0,
         'durationDays': 7,
         'features': ['A'],
         'category': 'ECONOMY',

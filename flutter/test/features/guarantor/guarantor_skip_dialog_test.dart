@@ -37,7 +37,9 @@ void main() {
   testWidgets('renders the guarantor form', (tester) async {
     await tester.pumpWidget(buildScreen());
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Guarantor Details'), findsOneWidget);
+    // 'Guarantor Details' is rendered both in the section title and
+    // the step header — assert at-least-one rather than exactly-one.
+    expect(find.text('Guarantor Details'), findsAtLeastNWidgets(1));
     expect(tester.takeException(), isNull);
   });
 

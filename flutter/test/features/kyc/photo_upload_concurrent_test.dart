@@ -47,7 +47,7 @@ class _HoldingFilesRepository implements FilesRepository {
   }
 
   @override
-  Future<String> uploadFile(File file, String type) async {
+  Future<String> uploadFile(File file, dynamic category) async {
     calls++;
     active++;
     if (active > maxActive) maxActive = active;
@@ -55,7 +55,7 @@ class _HoldingFilesRepository implements FilesRepository {
     _gates.add(gate);
     await gate.future;
     active--;
-    return 'https://cdn.voltium.in/$type/${file.path.split('/').last}';
+    return 'https://cdn.voltium.in/$category/${file.path.split('/').last}';
   }
 
   @override

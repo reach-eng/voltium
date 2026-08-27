@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:universal_io/io.dart';
@@ -28,6 +29,36 @@ void main() {
     mockVoltiumApiClient = MockVoltiumApiClient();
     mockFilesRepository = MockFilesRepository();
     repository = KycRepository(mockVoltiumApiClient, mockFilesRepository);
+
+    // In-memory mock for flutter_secure_storage so saveFormCache /
+    // loadFormCache can round-trip values without real Keystore access.
+    const secureStorageChannel =
+        MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+    final store = <String, String>{};
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(secureStorageChannel,
+            (MethodCall call) async {
+      switch (call.method) {
+        case 'read':
+          return store[call.arguments['key'] as String?];
+        case 'readAll':
+          return Map<String, String>.from(store);
+        case 'write':
+          store[call.arguments['key'] as String] =
+              call.arguments['value'] as String;
+          return null;
+        case 'delete':
+          store.remove(call.arguments['key'] as String);
+          return null;
+        case 'deleteAll':
+          store.clear();
+          return null;
+        case 'containsKey':
+          return store.containsKey(call.arguments['key'] as String);
+        default:
+          return null;
+      }
+    });
 
     // Clear all cached riders before each test so tests don't leak
     // state to each other.
@@ -211,7 +242,13 @@ void main() {
         final r1Cache = await KycRepository.loadFormCache(riderId: 'r1');
         expect(r1Cache!['name'], 'Alice');
         expect(r1Cache['aadhaarFrontPath'], '/uploads/r1-aadhaar.jpg');
-        expect(r1Cache['bankAccount'], '1234567890');
+        // SECURITY FIX (F2, 2026-08-22): financial PII (bankAccount,
+        // bankIfsc) is intentionally stripped from persistent storage
+        // so a leaked backup or rooted device cannot recover it. The
+        // r1 in-memory map still carries it; only the secure-storage
+        // copy is sanitised.
+        expect(r1Cache.containsKey('bankAccount'), isFalse,
+            reason: 'financial PII must never reach persistent storage');
       },
     );
 
