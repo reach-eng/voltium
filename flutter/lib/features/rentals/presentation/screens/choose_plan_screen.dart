@@ -255,11 +255,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     );
   }
 
-  /// AUDIT FIX (LOW): extracted the old inline "name contains monthly/
-  /// elite" heuristic into a named helper. TODO(server): replace with a
-  /// server-provided flag (e.g. `plan.isBestValue`) once the backend
-  /// exposes one — name matching silently breaks on renames/i18n.
+  /// PR-B (2026-08-28): the previous version matched the plan name
+  /// to 'monthly'/'elite', which silently broke on renames and i18n.
+  /// Prefer the server-provided `isBestValue` flag if present, and
+  /// only fall back to the name heuristic for legacy server responses
+  /// that don't yet expose the flag.
   bool _isBestValuePlan(PlanModel plan) {
+    if (plan.isBestValue) return true;
     final name = plan.name.toLowerCase();
     return name.contains('monthly') || name.contains('elite');
   }

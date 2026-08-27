@@ -18,6 +18,12 @@ class PlanModel {
   final List<String> features;
   @JsonKey(defaultValue: '')
   final String category;
+  // PR-B (2026-08-28): optional server-provided flag. The previous
+  // implementation matched the plan name to 'monthly'/'elite', which
+  // broke on renames and i18n. New server responses should include
+  // `isBestValue`; the client reads it if present and falls back
+  // to the name heuristic only for old responses.
+  final bool isBestValue;
 
   const PlanModel({
     required this.id,
@@ -28,6 +34,7 @@ class PlanModel {
     required this.durationDays,
     required this.features,
     required this.category,
+    this.isBestValue = false,
   });
 
   factory PlanModel.fromJson(Map<String, dynamic> json) =>
