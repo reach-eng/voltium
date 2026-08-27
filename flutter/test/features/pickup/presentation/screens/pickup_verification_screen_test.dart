@@ -9,6 +9,8 @@ import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 class _MockVoltiumApiClient extends VoltiumApiClient {
   _MockVoltiumApiClient() : super(ApiClient());
@@ -72,6 +74,13 @@ void main() {
             )),
       ],
       child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         theme: AppTheme.lightTheme,
         home: PickupVerificationScreen(
           onNext: onNext,

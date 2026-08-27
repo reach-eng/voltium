@@ -4,13 +4,23 @@ import 'package:voltium_rider/features/device_compliance/presentation/screens/em
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 Widget buildTestApp() {
   return ProviderScope(
     overrides: [
       emergencyContactsService.overrideWith(() => EmergencyContactsService())
     ],
-    child: const MaterialApp(home: EmergencyContactsScreen()),
+    child: const MaterialApp(localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate
+    ], supportedLocales: const [
+      Locale('en'),
+      Locale('hi')
+    ], home: EmergencyContactsScreen()),
   );
 }
 

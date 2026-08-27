@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Seeds the Riverpod `riderProvider` directly (R4.3c-6 migration): the
 /// screen reads `ref.read(riderProvider).riderId` for the cache key, so the
@@ -48,6 +50,13 @@ void main() {
               )),
         ],
         child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),
@@ -174,6 +183,13 @@ void main() {
               )),
         ],
         child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),
@@ -394,6 +410,13 @@ void main() {
               )),
         ],
         child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en'), Locale('hi')],
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext, onBack: onBack),
           ),

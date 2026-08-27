@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_proof_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 Widget buildTestApp({ThemeMode themeMode = ThemeMode.light}) {
   return ProviderScope(
     child: MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       themeMode: themeMode,
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),

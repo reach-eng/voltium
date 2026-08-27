@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// PR-A (§3.5): the "Skip" action on the guarantor form must not pretend the
 /// guarantor is optional. The dialog now says a guarantor is *required* to
@@ -20,6 +22,13 @@ void main() {
   Widget buildScreen({VoidCallback? onNext}) {
     return ProviderScope(
       child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         home: GuarantorOnboardingScreen(onNext: onNext ?? () {}),
       ),
     );

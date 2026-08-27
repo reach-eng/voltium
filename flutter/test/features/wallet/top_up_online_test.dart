@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_proof_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// PR-A (§3.3 / audit #8 P0-1, P0-2): the "Instant Online Top-Up" option was
 /// removed because it launched a hardcoded Razorpay URL that 404s (no signed
@@ -11,6 +13,13 @@ void main() {
   Widget buildScreen() {
     return ProviderScope(
       child: const MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         home: TopUpProofScreen(amount: 2000),
       ),
     );

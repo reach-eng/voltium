@@ -6,6 +6,8 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_amount_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 class _SeededRiderNotifier extends RiderNotifier {
   _SeededRiderNotifier(this._seed);
@@ -40,6 +42,13 @@ void main() {
             )),
       ],
       child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         theme: AppTheme.lightTheme,
         home: TopUpAmountScreen(
           onProceed: onProceed,

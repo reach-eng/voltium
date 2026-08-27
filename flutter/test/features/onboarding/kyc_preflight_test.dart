@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/kyc_preflight_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// PR-A (§3.2 / audit #7 P0-3): the pre-flight checklist must be honest about
 /// what documents are needed. The misleading "Address Proof" tile was
@@ -8,6 +10,13 @@ import 'package:voltium_rider/features/onboarding/presentation/screens/kyc_prefl
 void main() {
   Widget buildScreen({VoidCallback? onNext, VoidCallback? onSkip}) {
     return MaterialApp(
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       home: KycPreflightScreen(onNext: onNext ?? () {}, onSkip: onSkip),
     );
   }

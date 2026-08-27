@@ -5,6 +5,8 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import '../../../../helpers/golden_test_helper.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 void main() {
   testWidgets('Golden test for ReferralScreen', (WidgetTester tester) async {
@@ -53,7 +55,15 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+      child: const MaterialApp(localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate
+      ], supportedLocales: const [
+        Locale('en'),
+        Locale('hi')
+      ], home: ReferralScreen()),
     ));
     // Let the post-frame lazy fetch attempt the (stubbed-out) API call.
     await tester.pump(const Duration(milliseconds: 500));
@@ -82,7 +92,15 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+      child: const MaterialApp(localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate
+      ], supportedLocales: const [
+        Locale('en'),
+        Locale('hi')
+      ], home: ReferralScreen()),
     ));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
@@ -107,7 +125,15 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [riderProvider.overrideWith(() => notifier)],
-      child: const MaterialApp(home: ReferralScreen()),
+      child: const MaterialApp(localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate
+      ], supportedLocales: const [
+        Locale('en'),
+        Locale('hi')
+      ], home: ReferralScreen()),
     ));
     await tester.pump(const Duration(milliseconds: 100));
 

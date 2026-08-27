@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_screen.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// 2026-08-05 legal/device audit P0-3: the legal screen must render documents
 /// served by the admin-managed legal module, with the bundled JSON fallback
@@ -41,7 +43,15 @@ void main() {
   });
 
   Widget buildScreen() {
-    return const MaterialApp(home: LegalScreen(onNext: null, onBack: null));
+    return const MaterialApp(localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate
+    ], supportedLocales: const [
+      Locale('en'),
+      Locale('hi')
+    ], home: LegalScreen(onNext: null, onBack: null));
   }
 
   testWidgets('renders API-served documents over the fallback copy',

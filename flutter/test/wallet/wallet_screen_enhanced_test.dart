@@ -10,6 +10,8 @@ import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Enhanced WalletScreen widget tests covering:
 /// - Header with title and refresh button
@@ -51,7 +53,15 @@ Widget buildTestApp() {
       riderProvider.overrideWith(() => _StaticRiderNotifier()),
       walletProvider.overrideWith(() => _StaticWalletNotifier()),
     ],
-    child: const MaterialApp(home: WalletScreen()),
+    child: const MaterialApp(localizationsDelegates: const [
+      AppLocalizations.delegate,
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate
+    ], supportedLocales: const [
+      Locale('en'),
+      Locale('hi')
+    ], home: WalletScreen()),
   );
 }
 
