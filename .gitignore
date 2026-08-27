@@ -211,3 +211,25 @@ web/verify-*.js
 .trash/
 .deprecated/
 .freebuff/
+
+# ── Hygiene: local runtime scratch (logs, audit notes, throwaway scripts) ─────
+# .runtime/ holds dev.log, commit-msg drafts, ad-hoc scan outputs.
+# Keep on disk for the current session, never commit.
+.runtime/
+
+# IDE session cache that shouldn't be in the tree.
+flutter/android/.kotlin/
+
+# Throwaway helper script kept locally for one-off UIX work.
+scripts/append_uix_horizon1.py
+
+# Loose scratch output from local test runs.
+test_full_run.txt
+test_id_map.txt
+test_ids.txt
+
+# golden_toolkit failure output directory — only the `goldens/` (masters)
+# subdirectory is committed; the `failures/` subdir is regenerated on each
+# golden mismatch and must not be tracked.
+**/test/**/failures/
+**/test/**/failures/**
