@@ -623,6 +623,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                         initialDate: initialDate,
                                         firstDate: firstDate,
                                         lastDate: lastDate,
+                                        // BUG FIX (PR-B, 2026-08-28):
+                                        // pass the active locale so the
+                                        // picker's UI renders in Hindi
+                                        // for hi-locale riders.
+                                        locale: Localizations.localeOf(context),
                                       );
                                       if (picked != null) {
                                         setState(() {

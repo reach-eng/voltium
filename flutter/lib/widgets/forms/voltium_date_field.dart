@@ -7,6 +7,13 @@ import '../../theme/app_typography.dart';
 import '_voltium_field_borders.dart';
 
 /// Standardized date of birth/date selection field for Voltium forms.
+///
+/// The [controller] is expected to hold an ISO-8601 date string
+/// (typically `yyyy-MM-dd`) — the same format the server consumes
+/// and the form's validators read. Display localization is the
+/// consumer's responsibility: when wiring `onTap` to `showDatePicker`,
+/// pass `locale: Localizations.localeOf(context)` so the picker's
+/// calendar renders in the active locale (PR-B, 2026-08-28).
 class VoltiumDateField extends StatelessWidget {
   final String label;
   final String hint;

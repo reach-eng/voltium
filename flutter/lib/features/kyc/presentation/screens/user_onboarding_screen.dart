@@ -331,6 +331,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       initialDate: initialDate,
       firstDate: DateTime(1940),
       lastDate: now,
+      // BUG FIX (PR-B, 2026-08-28): pass the active locale so the
+      // picker's calendar, day-of-week headers, and month labels
+      // render in Hindi for hi-locale riders (instead of always
+      // English, which was the platform default).
+      locale: Localizations.localeOf(context),
     );
     if (date != null && mounted) {
       _dobController.text =

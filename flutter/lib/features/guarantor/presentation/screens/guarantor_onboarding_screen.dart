@@ -1036,6 +1036,10 @@ class _GuarantorOnboardingScreenState
       initialDate: initial,
       firstDate: firstDate,
       lastDate: lastDate,
+      // BUG FIX (PR-B, 2026-08-28): pass the active locale so the
+      // picker's calendar, day-of-week headers, and month labels
+      // render in Hindi for hi-locale riders.
+      locale: Localizations.localeOf(context),
     );
     if (date != null && mounted) {
       _dobController.text =
