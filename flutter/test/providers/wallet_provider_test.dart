@@ -10,6 +10,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 
 class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
+  Map<int, List<entity.TransactionEntity>> pagedResponses = {};
 
   @override
   Future<entity.TopupRequest> submitTopup(entity.TopupRequest request) async {
@@ -20,6 +21,9 @@ class MockWalletRepository implements WalletRepository {
   @override
   Future<List<entity.TransactionEntity>> getTransactionHistory(String riderId,
       {int page = 1, int limit = 20}) async {
+    if (pagedResponses.containsKey(page)) {
+      return pagedResponses[page]!;
+    }
     return [
       entity.TransactionEntity(
         id: '1',
@@ -38,7 +42,7 @@ class MockWalletRepository implements WalletRepository {
 class MockFilesRepository implements FilesRepository {
   bool uploadCalled = false;
   @override
-  Future<String> uploadFile(File file, String type) async {
+  Future<String> uploadFile(File file, dynamic type) async {
     uploadCalled = true;
     return 'http://example.com/proof.jpg';
   }
@@ -107,6 +111,49 @@ void main() {
     // `TransactionEntity`). The `amount` field is already in rupees
     // (₹100.00) — no /100 conversion needed at the consumer layer.
     expect(state.transactions.first.amount, 100.0);
+  });
+
+  test(
+      'refreshTransactions paginates all pages to accumulate complete history (N-4)',
+      () async {
+    // Seed page 1 with 100 transactions and page 2 with 50 transactions
+    mockRepo.pagedResponses = {
+      1: List.generate(
+        100,
+        (i) => entity.TransactionEntity(
+          id: 'p1_$i',
+          amountInRupees: 50.0,
+          type: 'CREDIT',
+          status: 'SUCCESS',
+          createdAt: DateTime.now().subtract(Duration(minutes: i)),
+        ),
+      ),
+      2: List.generate(
+        50,
+        (i) => entity.TransactionEntity(
+          id: 'p2_$i',
+          amountInRupees: 20.0,
+          type: 'DEBIT',
+          status: 'SUCCESS',
+          createdAt: DateTime.now().subtract(Duration(hours: 1, minutes: i)),
+        ),
+      ),
+    };
+
+    await notifier.refreshTransactions(riderId: '1');
+    final state = readState();
+
+    // Verified: all 150 transactions from both pages are accumulated
+    expect(state.transactions.length, equals(150));
+    final creditTotal = state.transactions
+        .where((t) => t.isCredit)
+        .fold(0.0, (sum, t) => sum + t.amount);
+    final debitTotal = state.transactions
+        .where((t) => !t.isCredit)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    expect(creditTotal, equals(100 * 50.0)); // 5000
+    expect(debitTotal, equals(50 * 20.0)); // 1000
   });
 
   test('topUpWallet sets isToppingUp and uploads image', () async {

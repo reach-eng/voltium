@@ -65,7 +65,8 @@ void main() {
       await tester.pumpWidget(buildTestHost(onBack: () => backCalled = true));
       await tester.pumpAndSettle();
 
-      final backButton = find.byType(IconButton).first;
+      final backButton = find.byKey(const Key('backButton'));
+      expect(backButton, findsOneWidget);
       await tester.tap(backButton);
       await tester.pumpAndSettle();
 
@@ -81,8 +82,12 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      // Tap the Proceed / Top Up button
-      final proceedButton = find.byType(ElevatedButton);
+      // PR-D: verify the CTA label is sentence-case, NOT all-caps
+      expect(find.text('PROCEED TO PAYMENT'), findsNothing);
+      expect(find.text('Proceed to payment'), findsOneWidget);
+
+      // Tap by widget key (GestureDetector key set in the screen)
+      final proceedButton = find.byKey(const Key('proceedToPaymentButton'));
       expect(proceedButton, findsOneWidget);
 
       await tester.tap(proceedButton);

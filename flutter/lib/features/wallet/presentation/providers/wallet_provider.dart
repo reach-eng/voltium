@@ -164,8 +164,29 @@ class WalletNotifier extends Notifier<WalletState> {
 
   Future<void> _doRefreshTransactions({required String riderId}) async {
     try {
-      final txs = await _repo.getTransactionHistory(riderId);
-      final sorted = txs
+      // PR-N4 (N-4): paginate across all pages so history totals (Credits,
+      // Debits, Net) reflect the complete transaction history rather than
+      // being truncated to the first 20 records.
+      final List<entity.TransactionEntity> allTxs = [];
+      int currentPage = 1;
+      const int pageSize = 100;
+      bool hasMore = true;
+
+      while (hasMore) {
+        final pageTxs = await _repo.getTransactionHistory(
+          riderId,
+          page: currentPage,
+          limit: pageSize,
+        );
+        allTxs.addAll(pageTxs);
+        if (pageTxs.length < pageSize) {
+          hasMore = false;
+        } else {
+          currentPage++;
+        }
+      }
+
+      final sorted = allTxs
           .map(
             (t) => TransactionModel(
               id: t.id,
