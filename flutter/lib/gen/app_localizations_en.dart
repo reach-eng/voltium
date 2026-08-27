@@ -2458,4 +2458,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txtlockedOverlayContactSupportToUnlock =>
       'Please contact support to unlock.';
+
+  @override
+  String get hangTightVehicleAssignment => 'Vehicle assignment';
+
+  @override
+  String get hangTightPlanSelected => 'Plan selected';
+
+  @override
+  String get hangTightPickupConfirmation => 'Pickup confirmation';
+
+  @override
+  String get walletNoTransactionsForFilter => 'No transactions matching filter';
 }

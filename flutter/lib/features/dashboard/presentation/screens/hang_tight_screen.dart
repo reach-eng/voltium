@@ -59,7 +59,18 @@ class HangTightScreen extends ConsumerStatefulWidget {
   /// every subsequent 15s tick was the same dead-poll.
   final VoidCallback? onSessionExpired;
 
-  const HangTightScreen({super.key, this.onActivated, this.onSessionExpired});
+  /// PR-K.1 (2026-08-27): invoked when the rider taps "Fix KYC" on the
+  /// KYC rejection / correction card. The router wires this to
+  /// `_navigateToLocal(AuthState.intent)` so the rider can re-do the
+  /// KYC flow from the top.
+  final VoidCallback? onFixKyc;
+
+  const HangTightScreen({
+    super.key,
+    this.onActivated,
+    this.onSessionExpired,
+    this.onFixKyc,
+  });
 
   @override
   ConsumerState<HangTightScreen> createState() => _HangTightScreenState();
@@ -158,6 +169,14 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (_isKycAttention(rider)) ...[
+                      _KycRejectionCard(
+                        kycStatus: rider!.kycStatus,
+                        rejectionReason: rider.kycRejectionReason,
+                        onFixKyc: widget.onFixKyc,
+                      ),
+                      const SizedBox(height: Spacing.lg),
+                    ],
                     _buildStatusList(rider),
                     const SizedBox(height: Spacing.lg),
                     _buildNotificationHint(context),
@@ -246,10 +265,11 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
     final guarantorRow = _guarantorRow(rider?.guarantorStatus, () {
       AppNavigator.push(context, const SupportCenterScreen());
     });
-    final planRow = _planRow(rider?.currentPlan, rider?.planStatus, () {
+    final planRow =
+        _planRow(context, rider?.currentPlan, rider?.planStatus, () {
       AppNavigator.push(context, const SupportCenterScreen());
     });
-    final pickupRow = _pickupRow(rider?.pickupDone);
+    final pickupRow = _pickupRow(context, rider?.pickupDone);
     // PR-ONBOARDING-FLOW-2026-08-12: vehicle assignment is now driven
     // by the rider data, not a hardcoded `_StatusState.waiting`. If the
     // syncPickup step wrote `assignedVehicle`, flip the row to done.
@@ -265,7 +285,8 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
         label: _kycLabel(rider?.kycStatus),
         state: kycState,
         onTap: kycState == _StatusState.attention
-            ? () => AppNavigator.push(context, const SupportCenterScreen())
+            ? (widget.onFixKyc ??
+                () => AppNavigator.push(context, const SupportCenterScreen()))
             : null,
       ),
       _StatusRow(
@@ -273,7 +294,10 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
             ? Icons.check_circle_rounded
             : Icons.directions_car_rounded,
         iconColor: hasVehicle ? AppColors.success : colors().onSurfaceMuted,
-        label: 'Vehicle assignment',
+        // PR-E (i18n sweep): the row label was hardcoded English; route
+        // through `hangTightVehicleAssignment` so Hindi renders.
+        label: AppLocalizations.of(context)?.hangTightVehicleAssignment ??
+            'Vehicle assignment',
         state: hasVehicle ? _StatusState.done : _StatusState.waiting,
       ),
     ];
@@ -371,7 +395,8 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               // T-66: hardcoded English "Refresh" button label.
               // Localised via the new `txtrefresh` ARB key.
-              label: Text(AppLocalizations.of(context)!.txtrefresh),
+              label:
+                  Text(AppLocalizations.of(context)?.txtrefresh ?? 'Refresh'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 side: const BorderSide(color: AppColors.primary, width: 1.5),
@@ -402,8 +427,9 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
               // `suspension_contactSupport` ARB key (the closest
               // semantic match — "contact support" as a verb in
               // an error-state button).
-              label:
-                  Text(AppLocalizations.of(context)!.suspension_contactSupport),
+              label: Text(
+                  AppLocalizations.of(context)?.suspension_contactSupport ??
+                      'Contact support'),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -473,7 +499,8 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
 /// is always set; but we still derive it to keep the contract
 /// honest (a forced-deposit-failed flow could land here without a
 /// plan and we shouldn't show a green check).
-_StatusRow _planRow(String? currentPlan, String? planStatus,
+_StatusRow _planRow(
+    BuildContext context, String? currentPlan, String? planStatus,
     [VoidCallback? onAttention]) {
   final hasPlan =
       currentPlan != null && currentPlan.isNotEmpty && currentPlan != 'NONE';
@@ -500,7 +527,10 @@ _StatusRow _planRow(String? currentPlan, String? planStatus,
   return _StatusRow(
     icon: Icons.check_circle_rounded,
     iconColor: AppColors.success,
-    label: 'Plan selected',
+    // PR-E (i18n sweep): route through `hangTightPlanSelected` so
+    // Hindi renders.
+    label:
+        AppLocalizations.of(context)?.hangTightPlanSelected ?? 'Plan selected',
     state: _StatusState.done,
   );
 }
@@ -510,19 +540,27 @@ _StatusRow _planRow(String? currentPlan, String? planStatus,
 /// field, so they will flip together — a rider cannot see
 /// "Pickup confirmed: ✅" without also being routed to the
 /// dashboard on the next frame.
-_StatusRow _pickupRow(bool? pickupDone) {
+_StatusRow _pickupRow(BuildContext context, bool? pickupDone) {
   if (pickupDone == true) {
     return _StatusRow(
       icon: Icons.check_circle_rounded,
       iconColor: AppColors.success,
-      label: 'Pickup confirmed',
+      // PR-E (i18n sweep): was hardcoded 'Pickup confirmed'.
+      // The label is the "done" state, so route through
+      // `hangTightPickupConfirmation` and let the post-completion copy
+      // fall back to a future `hangTightPickupConfirmed` key if/when
+      // product wants the explicit done-state copy.
+      label: AppLocalizations.of(context)?.hangTightPickupConfirmation ??
+          'Pickup confirmation',
       state: _StatusState.done,
     );
   }
   return _StatusRow(
     icon: Icons.hourglass_top_rounded,
     iconColor: AppColors.slate400,
-    label: 'Pickup confirmation',
+    // PR-E (i18n sweep): was hardcoded 'Pickup confirmation'.
+    label: AppLocalizations.of(context)?.hangTightPickupConfirmation ??
+        'Pickup confirmation',
     state: _StatusState.waiting,
   );
 }
@@ -741,6 +779,107 @@ class _SpinningIconState extends State<_SpinningIcon>
     return RotationTransition(
       turns: _controller,
       child: widget.icon,
+    );
+  }
+}
+
+/// PR-K.1: returns true when the rider's KYC status needs action
+/// (rejected by admin OR info request from admin). Used to gate
+/// the prominent rejection card and the "Fix KYC" button.
+bool _isKycAttention(RiderModel? rider) {
+  final s = rider?.kycStatus;
+  return s == KycStatus.rejected || s == KycStatus.infoRequired;
+}
+
+/// PR-K.1: prominent card shown above the status list when KYC is in
+/// the attention state. Two visual variants: red (REJECTED) and amber
+/// (INFO_REQUIRED). One primary CTA: "Fix KYC" → `onFixKyc`.
+class _KycRejectionCard extends StatelessWidget {
+  final KycStatus kycStatus;
+  final String? rejectionReason;
+  final VoidCallback? onFixKyc;
+
+  const _KycRejectionCard({
+    required this.kycStatus,
+    required this.rejectionReason,
+    required this.onFixKyc,
+  });
+
+  bool get _isRejected => kycStatus == KycStatus.rejected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final isRejected = _isRejected;
+    final bgColor = isRejected ? colors.errorLight : colors.warningLight;
+    final fgColor = isRejected ? colors.error : colors.warningForeground;
+    final iconData =
+        isRejected ? Icons.error_rounded : Icons.help_outline_rounded;
+    final title = l10n?.txtkycRejectionOnHangTightTitle ?? 'KYC rejected';
+    final bodyFallback = isRejected
+        ? (l10n?.txtkycRejectionOnHangTightBody ??
+            'Please review the rejection remarks and re-submit your documents to continue.')
+        : (l10n?.txtkycInfoRequiredOnHangTightBody ??
+            'We need more information to verify your identity. Please re-submit your documents to continue.');
+    final reason = rejectionReason?.trim();
+    final body = (reason != null && reason.isNotEmpty) ? reason : bodyFallback;
+    final buttonLabel = l10n?.txtfixKycButton ?? 'Fix KYC';
+
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(color: fgColor.withValues(alpha: 0.4), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(iconData, color: fgColor, size: 24),
+              const SizedBox(width: Spacing.sm),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTypography.titleMedium
+                      .copyWith(color: fgColor, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm),
+          Text(
+            body,
+            style: AppTypography.bodySmall.copyWith(
+              color: colors.onSurface,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: Spacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('hangTightFixKycButton'),
+              onPressed: onFixKyc,
+              icon: const Icon(Icons.edit_document, size: 18),
+              label: Text(buttonLabel),
+              style: FilledButton.styleFrom(
+                backgroundColor: fgColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: Spacing.md),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                textStyle: AppTypography.labelLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

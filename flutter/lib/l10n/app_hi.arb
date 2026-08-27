@@ -767,6 +767,10 @@
   "txtlockedOverlayIncorrectPassword": "गलत पासवर्ड। वोल्टियम सपोर्ट से संपर्क करें।",
   "txtlockedOverlayVerificationFailed": "सत्यापन विफल। कृपया अपना नेटवर्क जाँचें और पुनः प्रयास करें।",
   "txtlockedOverlayAccountLocked": "वोल्टियम द्वारा आपका खाता लॉक कर दिया गया है।",
-  "txtlockedOverlayContactSupportToUnlock": "अनलॉक करने के लिए कृपया सपोर्ट से संपर्क करें।"
+  "txtlockedOverlayContactSupportToUnlock": "अनलॉक करने के लिए कृपया सपोर्ट से संपर्क करें।",
+  "hangTightVehicleAssignment": "वाहन असाइनमेंट",
+  "hangTightPlanSelected": "प्लान चुना गया",
+  "hangTightPickupConfirmation": "पिकअप पुष्टि",
+  "walletNoTransactionsForFilter": "इस फ़िल्टर से मेल खाता कोई लेनदेन नहीं"
 }
 

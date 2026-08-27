@@ -1941,18 +1941,18 @@ class AppLocalizationsHi extends AppLocalizations {
       'फ्लीट सुरक्षा और रिमोट लॉक सुविधाओं के लिए आवश्यक';
 
   @override
-  String get txtbackgroundLocationPermName => 'Background Location';
+  String get txtbackgroundLocationPermName => 'बैकग्राउंड लोकेशन';
 
   @override
   String get txtbackgroundLocationPermDesc =>
-      'Required for trip tracking when the app is in the background.';
+      'ऐप बैकग्राउंड में होने पर ट्रिप ट्रैकिंग के लिए आवश्यक।';
 
   @override
-  String get txtcallLogPermName => 'Call Log';
+  String get txtcallLogPermName => 'कॉल लॉग';
 
   @override
   String get txtcallLogPermDesc =>
-      'Used for ride-safety verification and emergency contact confirmation.';
+      'राइड सुरक्षा सत्यापन और आपातकालीन संपर्क पुष्टि के लिए उपयोग किया जाता है।';
 
   @override
   String get txtpreciseLocationRequired =>
@@ -2464,4 +2464,17 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get txtlockedOverlayContactSupportToUnlock =>
       'अनलॉक करने के लिए कृपया सपोर्ट से संपर्क करें।';
+
+  @override
+  String get hangTightVehicleAssignment => 'वाहन असाइनमेंट';
+
+  @override
+  String get hangTightPlanSelected => 'प्लान चुना गया';
+
+  @override
+  String get hangTightPickupConfirmation => 'पिकअप पुष्टि';
+
+  @override
+  String get walletNoTransactionsForFilter =>
+      'इस फ़िल्टर से मेल खाता कोई लेनदेन नहीं';
 }

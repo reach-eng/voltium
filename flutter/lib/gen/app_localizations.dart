@@ -4629,6 +4629,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please contact support to unlock.'**
   String get txtlockedOverlayContactSupportToUnlock;
+
+  /// HangTight status-list row: vehicle is assigned to the rider
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle assignment'**
+  String get hangTightVehicleAssignment;
+
+  /// HangTight status-list row: rider has an active plan
+  ///
+  /// In en, this message translates to:
+  /// **'Plan selected'**
+  String get hangTightPlanSelected;
+
+  /// HangTight status-list row: rider has not yet completed pickup
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup confirmation'**
+  String get hangTightPickupConfirmation;
+
+  /// Empty state when a non-All filter is active and no transactions match
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions matching filter'**
+  String get walletNoTransactionsForFilter;
 }
 
 class _AppLocalizationsDelegate

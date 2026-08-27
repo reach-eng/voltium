@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -623,7 +624,10 @@ class WalletActionButtons extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Top Up',
+                        // PR-E (i18n sweep): the "Top Up" label was
+                        // hardcoded English; route through the existing
+                        // `wallet_topUp` ARB key so Hindi renders.
+                        AppLocalizations.of(context)!.wallet_topUp,
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurface),
@@ -833,9 +837,14 @@ class TransactionHistorySection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
+                  // PR-E (i18n sweep): route the empty-state text
+                  // through the existing `wallet_noTransactions` ARB
+                  // key and the new `walletNoTransactionsForFilter`
+                  // key so Hindi renders correctly.
                   selectedFilter == 'All'
-                      ? 'No transactions yet'
-                      : 'No transactions matching filter',
+                      ? AppLocalizations.of(context)!.wallet_noTransactions
+                      : AppLocalizations.of(context)!
+                          .walletNoTransactionsForFilter,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: colors.onSurfaceMuted,

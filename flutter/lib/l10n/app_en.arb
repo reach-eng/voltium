@@ -1832,5 +1832,13 @@
   "txtlockedOverlayAccountLocked": "Your account has been locked by Voltium.",
   "@txtlockedOverlayAccountLocked": { "description": "Locked overlay headline when admin lock is active" },
   "txtlockedOverlayContactSupportToUnlock": "Please contact support to unlock.",
-  "@txtlockedOverlayContactSupportToUnlock": { "description": "Locked overlay body when admin lock is active" }
+  "@txtlockedOverlayContactSupportToUnlock": { "description": "Locked overlay body when admin lock is active" },
+  "hangTightVehicleAssignment": "Vehicle assignment",
+  "@hangTightVehicleAssignment": { "description": "HangTight status-list row: vehicle is assigned to the rider" },
+  "hangTightPlanSelected": "Plan selected",
+  "@hangTightPlanSelected": { "description": "HangTight status-list row: rider has an active plan" },
+  "hangTightPickupConfirmation": "Pickup confirmation",
+  "@hangTightPickupConfirmation": { "description": "HangTight status-list row: rider has not yet completed pickup" },
+  "walletNoTransactionsForFilter": "No transactions matching filter",
+  "@walletNoTransactionsForFilter": { "description": "Empty state when a non-All filter is active and no transactions match" }
 }
