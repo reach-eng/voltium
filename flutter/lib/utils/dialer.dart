@@ -9,7 +9,11 @@ Future<bool> launchDialer(
 }) async {
   final sanitized = phone.replaceAll(RegExp(r'[^0-9+]'), '');
   if (sanitized.isEmpty) return false;
-  final uri = Uri.parse('tel:');
+  // BUG FIX (PR-B, 2026-08-28): the previous version built
+  // `Uri.parse('tel:')` and discarded the phone number, so the
+  // system dialer opened with no number pre-filled. Build the URI
+  // with the sanitized number as the path.
+  final uri = Uri(scheme: 'tel', path: sanitized);
   try {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
