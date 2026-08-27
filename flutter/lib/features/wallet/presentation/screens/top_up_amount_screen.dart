@@ -50,10 +50,12 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
     // Auto-fill required top-up amount:
     // If Advance Rent was ticked during plan selection -> Security Deposit + Advance Rent Price
-    // Otherwise -> Security Deposit only
-    final planTotal = isAdvanceRentPaid
-        ? (secDeposit + rentPrice)
-        : (secDeposit > 0 ? secDeposit : (rentPrice > 0 ? rentPrice : 0));
+    // Otherwise -> Security Deposit only (PR-B: reuse the shared helper)
+    final planTotal = _planTotal(
+      isAdvanceRentPaid: isAdvanceRentPaid,
+      secDeposit: secDeposit,
+      rentPrice: rentPrice,
+    );
 
     final initial = widget.initialAmount;
     if (initial != null && initial > 0) {
@@ -98,8 +100,14 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   int get _finalAmount => int.tryParse(_customAmountCtrl.text) ?? 0;
 
+  /// PR-B (2026-08-28) BUG FIX: this getter used `ref.watch` which is
+  /// illegal outside `build()` — calling it from the Proceed button's
+  /// `onPressed` could throw "Bad state: This widget has been
+  /// unmounted" on rapid tap-during-teardown. Switched to `ref.read`
+  /// (safe in event handlers). The displayed value already updates on
+  /// each rebuild via _planTotal() called from _buildTopUpBreakdownCard.
   int get _requiredMinAmount {
-    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final rider = ref.read(riderProvider).rider;
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
     final secDeposit =
         (widget.securityDeposit != null && widget.securityDeposit! > 0)
@@ -109,13 +117,28 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         ? widget.rentalPrice!
         : (rider?.activeRentalPlanPrice.toInt() ?? 0);
 
-    final planTotal = isAdvanceRentPaid
-        ? (secDeposit + rentPrice)
-        : (secDeposit > 0 ? secDeposit : rentPrice);
+    final planTotal = _planTotal(
+      isAdvanceRentPaid: isAdvanceRentPaid,
+      secDeposit: secDeposit,
+      rentPrice: rentPrice,
+    );
 
-    final minTopup =
-        ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt();
+    final minTopup = ref.read(walletProvider).walletMinTopup.round();
     return planTotal > 0 ? planTotal : (minTopup > 0 ? minTopup : 100);
+  }
+
+  /// PR-B (2026-08-28): single source of truth for the top-up plan
+  /// total. Previously this formula appeared three times (initState,
+  /// _requiredMinAmount, _buildTopUpBreakdownCard) with subtly
+  /// different fallbacks that drifted.
+  static int _planTotal({
+    required bool isAdvanceRentPaid,
+    required int secDeposit,
+    required int rentPrice,
+  }) {
+    if (isAdvanceRentPaid) return secDeposit + rentPrice;
+    if (secDeposit > 0) return secDeposit;
+    return rentPrice;
   }
 
   bool get _canProceed {
@@ -144,9 +167,11 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
     if (secDeposit <= 0 && rentPrice <= 0) return const SizedBox.shrink();
 
-    final totalRequired = isAdvanceRentPaid
-        ? (secDeposit + rentPrice)
-        : (secDeposit > 0 ? secDeposit : rentPrice);
+    final totalRequired = _planTotal(
+      isAdvanceRentPaid: isAdvanceRentPaid,
+      secDeposit: secDeposit,
+      rentPrice: rentPrice,
+    );
 
     final colors = AppColors.of(context);
     return Container(
