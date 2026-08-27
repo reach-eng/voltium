@@ -345,7 +345,7 @@ class _GuarantorOnboardingScreenState
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
 
-    final cacheData = await GuarantorCache.loadFormCache(riderId);
+    final cacheData = GuarantorCache.loadFormCache(riderId);
     if (!mounted) return;
     if (cacheData != null) {
       try {
@@ -549,8 +549,8 @@ class _GuarantorOnboardingScreenState
     }
 
     // Prevent guarantor phone from being the same as rider phone
-    final tenDigitRiderPhone = _last10Digits(
-        ref.read(riderProvider).rider?.phone ?? '');
+    final tenDigitRiderPhone =
+        _last10Digits(ref.read(riderProvider).rider?.phone ?? '');
     if (phone == tenDigitRiderPhone) {
       _showError('Guarantor phone cannot be the same as your phone');
       return;
@@ -639,12 +639,11 @@ class _GuarantorOnboardingScreenState
       // `VerifyPhoneResponse`; the wrapper did `.toJson()` so
       // callers see a `Map<String, dynamic>`. Preserve that
       // shape here.
-      final response = (await ref
-              .read(voltiumApiClientProvider)
-              .postAuthVerifyPhone(
-                VerifyPhoneRequest(phone: phone, otp: otp),
-              ))
-          .toJson();
+      final response =
+          (await ref.read(voltiumApiClientProvider).postAuthVerifyPhone(
+                    VerifyPhoneRequest(phone: phone, otp: otp),
+                  ))
+              .toJson();
       final verified = verifyPhoneResponseVerified(response);
       if (!verified) {
         // AUDIT FIX (1b): reset regardless of mounted.
@@ -757,8 +756,8 @@ class _GuarantorOnboardingScreenState
         // AUDIT FIX (1d): only queue uploads for documents whose current
         // local path has no persisted URL — a retry after a partial
         // failure re-uploads only the missing pieces.
-        final Map<String, MapEntry<String, Future<String> Function()>>
-            tasks = {};
+        final Map<String, MapEntry<String, Future<String> Function()>> tasks =
+            {};
         void queue(String label, String? path, String category) {
           if (path == null || path.isEmpty) return;
           if (_uploadedUrls.containsKey(path)) return;

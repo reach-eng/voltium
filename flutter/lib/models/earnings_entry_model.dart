@@ -11,6 +11,7 @@ class EarningEntry {
   final int trips;
   final double hours;
   final String? notes;
+  final bool isSynced;
 
   EarningEntry({
     required this.id,
@@ -20,7 +21,30 @@ class EarningEntry {
     required this.trips,
     required this.hours,
     this.notes,
+    this.isSynced = false,
   });
+
+  EarningEntry copyWith({
+    String? id,
+    DateTime? date,
+    GigPlatform? platform,
+    double? amount,
+    int? trips,
+    double? hours,
+    String? notes,
+    bool? isSynced,
+  }) {
+    return EarningEntry(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      platform: platform ?? this.platform,
+      amount: amount ?? this.amount,
+      trips: trips ?? this.trips,
+      hours: hours ?? this.hours,
+      notes: notes ?? this.notes,
+      isSynced: isSynced ?? this.isSynced,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -30,6 +54,7 @@ class EarningEntry {
         'trips': trips,
         'hours': hours,
         'notes': notes,
+        'isSynced': isSynced,
       };
 
   factory EarningEntry.fromJson(Map<String, dynamic> json) => EarningEntry(
@@ -43,6 +68,7 @@ class EarningEntry {
         trips: json['trips'] as int,
         hours: (json['hours'] as num).toDouble(),
         notes: json['notes'] as String?,
+        isSynced: json['isSynced'] as bool? ?? false,
       );
 
   static String platformLabel(GigPlatform p) {

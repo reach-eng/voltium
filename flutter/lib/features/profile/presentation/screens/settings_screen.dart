@@ -301,7 +301,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   } catch (e) {
                     // AUDIT FIX (2026-08-22): was a silent `catch (_) {}`.
-                    appDebug('SettingsScreen: failed to open store listing: $e');
+                    appDebug(
+                        'SettingsScreen: failed to open store listing: $e');
                   }
                 },
               ),
@@ -406,8 +407,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               Navigator.pop(ctx);
               _showVerifyLockPasswordDialog(
                 context,
-                onVerified: () =>
-                    _submitAccountDeletionRequest(context, l10n),
+                onVerified: () => _submitAccountDeletionRequest(context, l10n),
               );
             },
             style: FilledButton.styleFrom(
@@ -792,8 +792,8 @@ class _VerifyLockPasswordDialogState extends State<_VerifyLockPasswordDialog> {
       // this dialog is a plain StatefulWidget, not ConsumerStatefulWidget.
       final result = await VoltiumApiClient(ApiClient())
           .postRiderDeviceVerifyLock({'password': pw});
-      final isSuccess = result['data']?['success'] == true ||
-          result['success'] == true;
+      final isSuccess =
+          result['data']?['success'] == true || result['success'] == true;
       if (!mounted) return;
       if (isSuccess) {
         Navigator.of(context).pop();

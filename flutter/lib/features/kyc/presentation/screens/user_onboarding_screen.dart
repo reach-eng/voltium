@@ -835,6 +835,46 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     return 'Something went wrong. Please try again.';
   }
 
+  int _completedFieldCount() {
+    int count = 0;
+    if (_nameController.text.trim().isNotEmpty) count++;
+    if (_fatherNameController.text.trim().isNotEmpty) count++;
+    if (_motherNameController.text.trim().isNotEmpty) count++;
+    if (_dobController.text.trim().isNotEmpty) count++;
+    if (_emailController.text.trim().isNotEmpty &&
+        FormValidators.email(_emailController.text.trim()) == null) {
+      count++;
+    }
+    // Phone number is pre-filled from rider profile (always complete)
+    count++;
+    if (_addressController.text.trim().isNotEmpty) count++;
+    return count;
+  }
+
+  Widget _buildFieldCountChip(int completed, int total) {
+    final colors = AppColors.of(context);
+    final isDone = completed == total;
+    return Container(
+      key: const Key('fieldCountChip'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isDone ? AppColors.successLight : colors.iconBackground,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(
+          color: isDone ? AppColors.success : colors.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Text(
+        '$completed/$total',
+        style: AppTypography.labelSmall.copyWith(
+          color: isDone ? AppColors.successDark : colors.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildStepIndicator() {
     final currentStep = ref.watch(
       userOnboardingNotifierProvider.select((s) => s.currentStep),
@@ -849,6 +889,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
           _buildDot(2, currentStep),
           _buildLine(),
           _buildDot(3, currentStep),
+          if (currentStep == 1) ...[
+            const SizedBox(width: 12),
+            _buildFieldCountChip(_completedFieldCount(), 7),
+          ],
         ],
       ),
     );

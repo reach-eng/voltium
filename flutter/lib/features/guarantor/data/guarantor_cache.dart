@@ -33,4 +33,12 @@ class GuarantorCache {
   static Future<void> clearFormCache(String riderId) async {
     await CacheService().remove(_getKey(riderId));
   }
+
+  static Future<void> clearCurrentDraft([String? riderId]) async {
+    if (riderId != null && riderId.isNotEmpty) {
+      await clearFormCache(riderId);
+    } else {
+      await CacheService().invalidatePattern(_baseKey);
+    }
+  }
 }

@@ -510,6 +510,10 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = HangTightScreen(
         key: const ValueKey('hangTight'),
         onActivated: () => state._navigateToLocal(AuthState.dashboard),
+        // PR-K.1: route the rider back to the intent screen so they can
+        // re-do the KYC flow. AuthState.intent renders
+        // Onboarding(OnboardingStep.intent) -> IntentOfUseScreen.
+        onFixKyc: () => state._navigateToLocal(AuthState.intent),
         // PR-ONBOARDING-FLOW-2026-08-13: a polling 401 means the rider's
         // JWT has expired (admin takes >1 hour to approve). Send them
         // to the login screen instead of leaving them stuck on a screen

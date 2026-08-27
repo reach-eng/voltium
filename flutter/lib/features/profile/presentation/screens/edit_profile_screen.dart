@@ -300,15 +300,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // `VerifyPhoneResponse`; the wrapper did `.toJson()` so
       // callers see a `Map<String, dynamic>`. Preserve that
       // shape here.
-      final response = (await ref
-              .read(voltiumApiClientProvider)
-              .postAuthVerifyPhone(
-                VerifyPhoneRequest(
-                  phone: phone,
-                  otp: _gOtpController.text,
-                ),
-              ))
-          .toJson();
+      final response =
+          (await ref.read(voltiumApiClientProvider).postAuthVerifyPhone(
+                    VerifyPhoneRequest(
+                      phone: phone,
+                      otp: _gOtpController.text,
+                    ),
+                  ))
+              .toJson();
       final verified =
           response['data']?['verified'] == true || response['verified'] == true;
       if (!verified) {
@@ -390,23 +389,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // to `putRiderProfile(UpdateProfileRequest.fromJson(data))`.
       // The body shape is identical to the wrapper's input.
       await ref.read(voltiumApiClientProvider).putRiderProfile(
-        UpdateProfileRequest(
-          riderId: rider.riderId,
-          fullName: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          fatherName: _fatherNameController.text.trim(),
-          motherName: _motherNameController.text.trim(),
-          dob: _dobController.text.isNotEmpty ? _dobController.text : null,
-          currentAddress: _addressController.text.trim(),
-          emergencyContact: _emergencyContactController.text.trim(),
-          guarantorName: _gNameController.text.trim(),
-          guarantorPhone: _gPhoneController.text.trim(),
-          guarantorAddress: _gAddressController.text.trim(),
-          // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
-          profilePhoto: uploadedPhotoUrl,
-          riderPhoto: uploadedPhotoUrl,
-        ),
-      );
+            UpdateProfileRequest(
+              riderId: rider.riderId,
+              fullName: _nameController.text.trim(),
+              email: _emailController.text.trim(),
+              fatherName: _fatherNameController.text.trim(),
+              motherName: _motherNameController.text.trim(),
+              dob: _dobController.text.isNotEmpty ? _dobController.text : null,
+              currentAddress: _addressController.text.trim(),
+              emergencyContact: _emergencyContactController.text.trim(),
+              guarantorName: _gNameController.text.trim(),
+              guarantorPhone: _gPhoneController.text.trim(),
+              guarantorAddress: _gAddressController.text.trim(),
+              // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
+              profilePhoto: uploadedPhotoUrl,
+              riderPhoto: uploadedPhotoUrl,
+            ),
+          );
 
       await provider.refreshFromApi();
 

@@ -66,7 +66,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
       // is identical to the wrapper's `.toJson()` output.
       // This screen is `StatefulWidget` (no `ref`); construct
       // ad hoc.
-      final response = await gen.VoltiumApiClient(ApiClient()).getRiderEarnings();
+      final response =
+          await gen.VoltiumApiClient(ApiClient()).getRiderEarnings();
       dynamic listRaw;
       if (response['earnings'] != null) {
         listRaw = response['earnings'];
@@ -468,8 +469,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off,
-              size: 14, color: AppColors.warningDark),
+          const Icon(Icons.cloud_off, size: 14, color: AppColors.warningDark),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
