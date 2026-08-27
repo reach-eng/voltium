@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const double lowBalanceThresholdRatio = 0.3;
@@ -99,4 +99,9 @@ class AppConstants {
   // new `currentPlanRef.securityDepositInPaise` join on the rider
   // dashboard). The old fallbacks drifted from server truth and were
   // the root cause of the audit's hardcoded-price finding.
+
+  /// AUDIT FIX 2026-08-22 (REF-b): referral bonus copy and deep-link base URL.
+  static const String referralBonusCopy =
+      'earn bonus rewards on their first ride.';
+  static const String referralDeepLinkBaseUrl = 'https://voltium.app/ref/';
 }
