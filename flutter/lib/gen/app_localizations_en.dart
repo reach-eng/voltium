@@ -2475,4 +2475,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walletNoTransactionsForFilter => 'No transactions matching filter';
+
+  @override
+  String get txtaddressHelperText => 'House no, street, city, state, pin code';
+
+  @override
+  String get txtchooseNewLockPassword => 'Choose a new 4-digit lock password.';
+
+  @override
+  String get txtdobFormatHint => 'YYYY-MM-DD';
+
+  @override
+  String get txtenterFatherName => 'Enter father\'s name';
+
+  @override
+  String get txtenterFullAddress => 'Enter full address';
+
+  @override
+  String get txtenterMotherName => 'Enter mother\'s name';
+
+  @override
+  String get txtenterPhoneHint => 'Enter 10-digit number';
+
+  @override
+  String get txtenterValidName => 'Enter a valid name';
+
+  @override
+  String get txtfixKycButton => 'Fix KYC';
+
+  @override
+  String get txtguarantorCurrentAddress => 'Current Address';
+
+  @override
+  String get txtguarantorEnterAddress => 'Enter your address';
+
+  @override
+  String get txtguarantorEnterFullName => 'Enter guarantor\'s full name';
+
+  @override
+  String get txtguarantorFathersName => 'Father\'s Name';
+
+  @override
+  String get txtguarantorFullName => 'Full Name';
+
+  @override
+  String get txtguarantorMothersName => 'Mother\'s Name';
+
+  @override
+  String get txtkycContextLine =>
+      'These details are required by RBI for two-wheeler rentals';
+
+  @override
+  String get txtkycGuarantorContextLine =>
+      'Your guarantor\'s details are required by RBI for verification';
+
+  @override
+  String get txtkycInfoRequiredOnHangTightBody =>
+      'We need more information to verify your identity. Please re-submit your documents to continue.';
+
+  @override
+  String get txtkycRejectionOnHangTightBody =>
+      'Please review the rejection remarks and re-submit your documents to continue.';
+
+  @override
+  String get txtkycRejectionOnHangTightTitle => 'KYC rejected';
+
+  @override
+  String get txtresendOtp => 'RESEND';
+
+  @override
+  String get txtsendOtp => 'SEND OTP';
 }

@@ -2482,4 +2482,74 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get walletNoTransactionsForFilter =>
       'इस फ़िल्टर से मेल खाता कोई लेनदेन नहीं';
+
+  @override
+  String get txtaddressHelperText => 'मकान नंबर, गली, शहर, राज्य, पिन कोड';
+
+  @override
+  String get txtchooseNewLockPassword => 'नया 4 अंकों का लॉक पासवर्ड चुनें।';
+
+  @override
+  String get txtdobFormatHint => 'YYYY-MM-DD';
+
+  @override
+  String get txtenterFatherName => 'पिता का नाम दर्ज करें';
+
+  @override
+  String get txtenterFullAddress => 'पूरा पता दर्ज करें';
+
+  @override
+  String get txtenterMotherName => 'माता का नाम दर्ज करें';
+
+  @override
+  String get txtenterPhoneHint => '10 अंकों की संख्या दर्ज करें';
+
+  @override
+  String get txtenterValidName => 'मान्य नाम दर्ज करें';
+
+  @override
+  String get txtfixKycButton => 'KYC ठीक करें';
+
+  @override
+  String get txtguarantorCurrentAddress => 'वर्तमान पता';
+
+  @override
+  String get txtguarantorEnterAddress => 'अपना पता दर्ज करें';
+
+  @override
+  String get txtguarantorEnterFullName => 'गारंटर का पूरा नाम दर्ज करें';
+
+  @override
+  String get txtguarantorFathersName => 'पिता का नाम';
+
+  @override
+  String get txtguarantorFullName => 'पूरा नाम';
+
+  @override
+  String get txtguarantorMothersName => 'माता का नाम';
+
+  @override
+  String get txtkycContextLine =>
+      'ये विवरण RBI द्वारा दुपहिया वाहन किराए पर लेने के लिए आवश्यक हैं';
+
+  @override
+  String get txtkycGuarantorContextLine =>
+      'RBI सत्यापन के लिए आपके गारंटर के विवरण आवश्यक हैं';
+
+  @override
+  String get txtkycInfoRequiredOnHangTightBody =>
+      'हमें आपकी पहचान सत्यापित करने के लिए और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से जमा करें।';
+
+  @override
+  String get txtkycRejectionOnHangTightBody =>
+      'कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।';
+
+  @override
+  String get txtkycRejectionOnHangTightTitle => 'KYC अस्वीकृत';
+
+  @override
+  String get txtresendOtp => 'फिर से भेजें';
+
+  @override
+  String get txtsendOtp => 'OTP भेजें';
 }

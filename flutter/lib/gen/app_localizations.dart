@@ -4659,6 +4659,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No transactions matching filter'**
   String get walletNoTransactionsForFilter;
+
+  /// No description provided for @txtaddressHelperText.
+  ///
+  /// In en, this message translates to:
+  /// **'House no, street, city, state, pin code'**
+  String get txtaddressHelperText;
+
+  /// No description provided for @txtchooseNewLockPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a new 4-digit lock password.'**
+  String get txtchooseNewLockPassword;
+
+  /// No description provided for @txtdobFormatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get txtdobFormatHint;
+
+  /// No description provided for @txtenterFatherName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter father\'s name'**
+  String get txtenterFatherName;
+
+  /// No description provided for @txtenterFullAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter full address'**
+  String get txtenterFullAddress;
+
+  /// No description provided for @txtenterMotherName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter mother\'s name'**
+  String get txtenterMotherName;
+
+  /// No description provided for @txtenterPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 10-digit number'**
+  String get txtenterPhoneHint;
+
+  /// No description provided for @txtenterValidName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid name'**
+  String get txtenterValidName;
+
+  /// No description provided for @txtfixKycButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix KYC'**
+  String get txtfixKycButton;
+
+  /// No description provided for @txtguarantorCurrentAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Address'**
+  String get txtguarantorCurrentAddress;
+
+  /// No description provided for @txtguarantorEnterAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your address'**
+  String get txtguarantorEnterAddress;
+
+  /// No description provided for @txtguarantorEnterFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter guarantor\'s full name'**
+  String get txtguarantorEnterFullName;
+
+  /// No description provided for @txtguarantorFathersName.
+  ///
+  /// In en, this message translates to:
+  /// **'Father\'s Name'**
+  String get txtguarantorFathersName;
+
+  /// No description provided for @txtguarantorFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get txtguarantorFullName;
+
+  /// No description provided for @txtguarantorMothersName.
+  ///
+  /// In en, this message translates to:
+  /// **'Mother\'s Name'**
+  String get txtguarantorMothersName;
+
+  /// No description provided for @txtkycContextLine.
+  ///
+  /// In en, this message translates to:
+  /// **'These details are required by RBI for two-wheeler rentals'**
+  String get txtkycContextLine;
+
+  /// No description provided for @txtkycGuarantorContextLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Your guarantor\'s details are required by RBI for verification'**
+  String get txtkycGuarantorContextLine;
+
+  /// No description provided for @txtkycInfoRequiredOnHangTightBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We need more information to verify your identity. Please re-submit your documents to continue.'**
+  String get txtkycInfoRequiredOnHangTightBody;
+
+  /// No description provided for @txtkycRejectionOnHangTightBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review the rejection remarks and re-submit your documents to continue.'**
+  String get txtkycRejectionOnHangTightBody;
+
+  /// No description provided for @txtkycRejectionOnHangTightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC rejected'**
+  String get txtkycRejectionOnHangTightTitle;
+
+  /// No description provided for @txtresendOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'RESEND'**
+  String get txtresendOtp;
+
+  /// No description provided for @txtsendOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'SEND OTP'**
+  String get txtsendOtp;
 }
 
 class _AppLocalizationsDelegate
