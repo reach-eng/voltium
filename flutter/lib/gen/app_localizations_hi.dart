@@ -303,6 +303,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get wallet_statusRejected => 'अस्वीकृत';
 
   @override
+  String get wallet_filterRent => 'किराया';
+
+  @override
+  String get wallet_filterSecurity => 'सुरक्षा जमा';
+
+  @override
+  String get wallet_filterDeduction => 'कटौती';
+
+  @override
+  String get wallet_statusRefundable => 'रिफ़ंड योग्य';
+
+  @override
+  String get wallet_statusNonRefundable => 'गैर-रिफ़ंड योग्य';
+
+  @override
   String get wallet_streakKeepGoing =>
       '5 दिन की स्ट्रीक बनाए रखने से प्रीमियम टियर अनलॉक होते हैं';
 

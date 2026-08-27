@@ -620,6 +620,36 @@ abstract class AppLocalizations {
   /// **'REJECTED'**
   String get wallet_statusRejected;
 
+  /// Transaction-history filter chip — debits whose purpose is RENTAL
+  ///
+  /// In en, this message translates to:
+  /// **'Rent'**
+  String get wallet_filterRent;
+
+  /// Transaction-history filter chip — debits whose purpose is SECURITY_DEPOSIT
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get wallet_filterSecurity;
+
+  /// Transaction-history filter chip — non-rental, non-deposit debits
+  ///
+  /// In en, this message translates to:
+  /// **'Deduction'**
+  String get wallet_filterDeduction;
+
+  /// Security deposit row sub-label when the deposit is refundable
+  ///
+  /// In en, this message translates to:
+  /// **'Refundable'**
+  String get wallet_statusRefundable;
+
+  /// Security deposit row sub-label when the deposit is non-refundable
+  ///
+  /// In en, this message translates to:
+  /// **'Non-Refundable'**
+  String get wallet_statusNonRefundable;
+
   /// Streak info text
   ///
   /// In en, this message translates to:

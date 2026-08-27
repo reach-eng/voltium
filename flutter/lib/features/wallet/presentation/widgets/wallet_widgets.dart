@@ -41,14 +41,15 @@ class TransactionListTile extends StatelessWidget {
         : (tx['remark'] ?? '').toString();
     final isCredit = type == 'CREDIT' || type.contains('TOPUP');
 
+    final l10n = AppLocalizations.of(context)!;
     // Determine display label.
     String displayLabel;
     if (!isCredit && purpose.toUpperCase() == 'RENTAL') {
-      displayLabel = 'Rent';
+      displayLabel = l10n.wallet_filterRent;
     } else if (purpose.toUpperCase() == 'SECURITY_DEPOSIT') {
-      displayLabel = 'Security';
+      displayLabel = l10n.wallet_filterSecurity;
     } else if (!isCredit && remark.isNotEmpty) {
-      displayLabel = 'Deduction';
+      displayLabel = l10n.wallet_filterDeduction;
     } else {
       displayLabel = purpose.isNotEmpty ? purpose : type;
     }
@@ -251,6 +252,7 @@ class SecurityDepositCard extends StatelessWidget {
     final double deposit = (rider.securityDeposit ?? 0).toDouble();
     final bool isRefundable = deposit >= AppConstants.depositRefundThreshold;
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -274,7 +276,7 @@ class SecurityDepositCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'SECURITY DEPOSIT',
+                    l10n.txtsecurityDeposit,
                     style: AppTypography.bodySmall
                         .copyWith(fontWeight: FontWeight.w800)
                         .copyWith(
@@ -304,7 +306,9 @@ class SecurityDepositCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      isRefundable ? 'Refundable' : 'Non-Refundable',
+                      isRefundable
+                          ? l10n.wallet_statusRefundable
+                          : l10n.wallet_statusNonRefundable,
                       style: AppTypography.labelMedium.copyWith(
                           color: isRefundable
                               ? AppColors.success
@@ -363,6 +367,7 @@ class WalletBalanceCard extends StatelessWidget {
     final balance = rider?.walletBalance ?? 0.0;
     final int streak = rider?.paymentStreak ?? 0;
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     final double rentAmount = (rider?.currentPlanPrice != null)
         ? (rider!.currentPlanPrice as num).toDouble()
@@ -465,7 +470,7 @@ class WalletBalanceCard extends StatelessWidget {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          'Available Balance',
+                          l10n.wallet_availableBalance,
                           style: GoogleFonts.plusJakartaSans(
                             color: colors.onSurfaceMuted,
                             fontSize: 12,
@@ -517,7 +522,7 @@ class WalletBalanceCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Payment Streak',
+                            l10n.wallet_paymentStreak,
                             style: GoogleFonts.plusJakartaSans(
                               color: colors.onSurfaceVariant,
                               fontSize: 12,
@@ -525,7 +530,7 @@ class WalletBalanceCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '$streak / 5 Days',
+                            l10n.wallet_streakOf(streak),
                             style: GoogleFonts.plusJakartaSans(
                               color: AppColors.primary,
                               fontSize: 12,
@@ -544,7 +549,7 @@ class WalletBalanceCard extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            '$streak day streak! Keep going to unlock premium tiers.',
+                            l10n.wallet_streakMessage(streak),
                             style: GoogleFonts.plusJakartaSans(
                               color: colors.onSurfaceMuted,
                               fontSize: 10,
@@ -586,6 +591,7 @@ class WalletActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Row(
       children: [
@@ -675,7 +681,7 @@ class WalletActionButtons extends StatelessWidget {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'History',
+                        l10n.wallet_history,
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurface),
@@ -710,6 +716,7 @@ class TransactionHistorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     final filtered = transactions.where((tx) {
       if (selectedFilter == 'All') return true;
@@ -745,6 +752,19 @@ class TransactionHistorySection extends StatelessWidget {
       return true;
     }).toList();
 
+    // Map internal filter identifiers to their localized chip labels.
+    // The internal strings stay in English so callers (wallet_screen.dart)
+    // can compare against a stable contract.
+    final Map<String, String> filterLabels = {
+      'All': l10n.history_all,
+      'Approved': l10n.wallet_statusApproved,
+      'Pending': l10n.wallet_statusPending,
+      'Rejected': l10n.wallet_statusRejected,
+      'Rent': l10n.wallet_filterRent,
+      'Security': l10n.wallet_filterSecurity,
+      'Deduction': l10n.wallet_filterDeduction,
+    };
+
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
@@ -760,7 +780,7 @@ class TransactionHistorySection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Transactions',
+                l10n.wallet_recentTransactions,
                 style: AppTypography.labelLarge
                     .copyWith(color: AppColors.of(context).onSurfaceMuted),
               ),
@@ -781,7 +801,7 @@ class TransactionHistorySection extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
-                    'See All',
+                    l10n.wallet_viewAll,
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.primaryLight,
                       fontWeight: FontWeight.w600,
@@ -795,22 +815,16 @@ class TransactionHistorySection extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                'All',
-                'Approved',
-                'Pending',
-                'Rejected',
-                'Rent',
-                'Security',
-                'Deduction'
-              ].map((f) {
+              children: filterLabels.entries.map((entry) {
+                final String f = entry.key;
+                final String label = entry.value;
                 final isSelected = selectedFilter == f;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
                     key: Key('filter${f}Chip'),
                     label: Text(
-                      f.toUpperCase(),
+                      label.toUpperCase(),
                       style: AppTypography.labelMedium.copyWith(
                           color: isSelected
                               ? Colors.white

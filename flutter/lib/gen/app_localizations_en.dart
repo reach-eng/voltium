@@ -303,6 +303,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wallet_statusRejected => 'REJECTED';
 
   @override
+  String get wallet_filterRent => 'Rent';
+
+  @override
+  String get wallet_filterSecurity => 'Security';
+
+  @override
+  String get wallet_filterDeduction => 'Deduction';
+
+  @override
+  String get wallet_statusRefundable => 'Refundable';
+
+  @override
+  String get wallet_statusNonRefundable => 'Non-Refundable';
+
+  @override
   String get wallet_streakKeepGoing =>
       'Maintaining a 5-day streak unlocks premium tiers';
 

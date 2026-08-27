@@ -393,6 +393,26 @@
   "@wallet_statusRejected": {
     "description": "Transaction status"
   },
+  "wallet_filterRent": "Rent",
+  "@wallet_filterRent": {
+    "description": "Transaction-history filter chip — debits whose purpose is RENTAL"
+  },
+  "wallet_filterSecurity": "Security",
+  "@wallet_filterSecurity": {
+    "description": "Transaction-history filter chip — debits whose purpose is SECURITY_DEPOSIT"
+  },
+  "wallet_filterDeduction": "Deduction",
+  "@wallet_filterDeduction": {
+    "description": "Transaction-history filter chip — non-rental, non-deposit debits"
+  },
+  "wallet_statusRefundable": "Refundable",
+  "@wallet_statusRefundable": {
+    "description": "Security deposit row sub-label when the deposit is refundable"
+  },
+  "wallet_statusNonRefundable": "Non-Refundable",
+  "@wallet_statusNonRefundable": {
+    "description": "Security deposit row sub-label when the deposit is non-refundable"
+  },
   "wallet_streakKeepGoing": "Maintaining a 5-day streak unlocks premium tiers",
   "@wallet_streakKeepGoing": {
     "description": "Streak info text"
