@@ -655,7 +655,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
                         'Security deposit proof submitted — we\'ll review it shortly.')
                     : (AppLocalizations.of(state.context)
                             ?.txttopUpProofSubmitted ??
-                        'Top-up proof submitted successfully!'),
+                        'Top-up receipt submitted successfully!'),
               );
             }
             state._navigateToLocal(

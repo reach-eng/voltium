@@ -1811,7 +1811,7 @@
   "@txtsessionExpiredPleaseLogIn": { "description": "Toast shown when the API returns 401 mid-session" },
   "txtsecurityDepositProofSubmitted": "Security deposit proof submitted — we'll review it shortly.",
   "@txtsecurityDepositProofSubmitted": { "description": "Toast shown after security-deposit proof upload succeeds" },
-  "txttopUpProofSubmitted": "Top-up proof submitted successfully!",
+  "txttopUpProofSubmitted": "Top-up receipt submitted successfully!",
   "@txttopUpProofSubmitted": { "description": "Toast shown after a regular top-up proof upload succeeds" },
   "txtfailedToDeleteNotification": "Failed to delete notification",
   "@txtfailedToDeleteNotification": { "description": "Toast shown when notification delete fails on the server" },
