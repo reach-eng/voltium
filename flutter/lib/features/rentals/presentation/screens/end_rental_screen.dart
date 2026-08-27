@@ -55,13 +55,22 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
 
   Future<void> _takePhoto(String key) async {
     if (AppConstants.isTestMode) {
-      // AUDIT FIX (LOW): test-only placeholder — 'mock_photo.png' is a
-      // relative path that only resolves in widget-test asset roots.
-      // Intentionally left as-is: this branch is unreachable outside
-      // TEST_MODE builds and is exercised by integration tests.
+      // PR-B (2026-08-28) BUG FIX: the previous test-mode stub used
+      // XFile('mock_photo.png'), a relative path that does not exist
+      // on a real device's filesystem. If TEST_MODE=true ever leaked
+      // into a release build, the first photo capture would throw
+      // FileSystemException and break the return-rental flow.
+      //
+      // Write a 1-byte placeholder into the OS temp dir so the XFile
+      // path is real. Subsequent upload attempts against a real
+      // network will still fail (TEST_MODE is a developer's escape
+      // hatch) but the file will at least resolve on disk.
+      final tmpDir = Directory.systemTemp.createTempSync('voltium_test_');
+      final placeholder = File('${tmpDir.path}/mock_photo.png');
+      placeholder.writeAsBytesSync(<int>[0]);
       if (mounted) {
         setState(() {
-          _photos[key] = XFile('mock_photo.png');
+          _photos[key] = XFile(placeholder.path);
           _uploadedUrls.remove(key);
         });
       }
