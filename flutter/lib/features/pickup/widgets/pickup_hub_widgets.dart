@@ -21,9 +21,10 @@ Widget buildInputLabel(BuildContext context, String text, {Color? color}) {
   final colors = AppColors.of(context);
   return Text(
     text,
-    style: AppTypography.overline.copyWith(
+    style: AppTypography.labelSmall.copyWith(
       color: color ?? colors.onSurfaceMuted,
       letterSpacing: 1.0,
+      fontWeight: FontWeight.w800,
     ),
   );
 }

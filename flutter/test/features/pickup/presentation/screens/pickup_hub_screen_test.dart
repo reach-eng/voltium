@@ -9,6 +9,35 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+
+class _FakeVoltiumApiClient extends VoltiumApiClient {
+  _FakeVoltiumApiClient() : super(ApiClient());
+  bool failHubs = false;
+
+  @override
+  Future<Map<String, dynamic>> getRiderHubs() async {
+    if (failHubs) {
+      throw ApiException('Server error', 500);
+    }
+    return {
+      'success': true,
+      'data': [
+        {
+          'id': 'hub_1',
+          'name': 'Central Hub',
+          'address': '123 Main St',
+          'latitude': 12.9716,
+          'longitude': 77.5946,
+          'operatingHours': '8am - 8pm',
+          'availableVehicles': 5,
+        }
+      ]
+    };
+  }
+}
+
 class _SeededRiderNotifier extends RiderNotifier {
   _SeededRiderNotifier(this._seed);
   final RiderModel _seed;
@@ -44,9 +73,12 @@ void main() {
     }) onNext,
     VoidCallback? onBack,
     String? initialEmergencyContact,
+    _FakeVoltiumApiClient? fakeApi,
   }) {
     return ProviderScope(
       overrides: [
+        if (fakeApi != null)
+          voltiumApiClientProvider.overrideWithValue(fakeApi),
         riderProvider.overrideWith(() => _SeededRiderNotifier(
               const RiderModel(
                 id: 'rider_123',
@@ -80,7 +112,7 @@ void main() {
     });
 
     testWidgets(
-        'transitions to error state with retry button on network failure',
+        'transitions to error state with retry button on network failure on first load',
         (tester) async {
       await tester.pumpWidget(buildTestHost(
         onNext: (_, __, ___, ____, _____, ______, _______, ________, _________,
@@ -111,6 +143,47 @@ void main() {
 
       expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
+    });
+
+    testWidgets(
+        'shows inline error banner and keeps form intact when refresh fails after hubs loaded (N-18)',
+        (tester) async {
+      final fakeApi = _FakeVoltiumApiClient();
+      await tester.pumpWidget(buildTestHost(
+        fakeApi: fakeApi,
+        onNext: (_, __, ___, ____, _____, ______, _______, ________, _________,
+            {emergencyContactReceipt}) {},
+      ));
+
+      await tester.pumpAndSettle();
+
+      // Form is loaded
+      expect(find.text('Pickup Verification'), findsOneWidget);
+      expect(find.byKey(const Key('pickupHubInlineErrorBanner')), findsNothing);
+
+      // Now simulate refresh error
+      fakeApi.failHubs = true;
+
+      // Trigger pull-to-refresh
+      await tester.fling(
+          find.text('Pickup Verification'), const Offset(0, 300), 1000);
+      await tester.pumpAndSettle();
+
+      // Form remains visible (not blown away into full-screen error)
+      expect(find.text('Pickup Verification'), findsOneWidget);
+      expect(
+          find.byKey(const Key('pickupHubInlineErrorBanner')), findsOneWidget);
+
+      // Now simulate network recovery and tap Retry on the inline banner
+      fakeApi.failHubs = false;
+      final retryBtn = find.byKey(const Key('pickupHubInlineRetryButton'));
+      expect(retryBtn, findsOneWidget);
+      await tester.tap(retryBtn);
+      await tester.pumpAndSettle();
+
+      // Banner is dismissed
+      expect(find.byKey(const Key('pickupHubInlineErrorBanner')), findsNothing);
+      expect(find.text('Pickup Verification'), findsOneWidget);
     });
   });
 }

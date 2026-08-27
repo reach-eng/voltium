@@ -89,6 +89,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   List<HubModel> _hubs = [];
   bool _isLoading = true;
   String? _error;
+  String? _refreshError;
   String? _selectedHubId;
   String? _selectedTeamLeader;
 
@@ -268,6 +269,19 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   }
 
   Future<void> _fetchHubs() async {
+    final isFirstLoad = _hubs.isEmpty;
+    if (isFirstLoad) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+        _refreshError = null;
+      });
+    } else {
+      setState(() {
+        _refreshError = null;
+      });
+    }
+
     try {
       // PR-13: was a wrapper call to `VoltiumApiService.fetchHubs`,
       // a 1-line pass-through to the generated `getRiderHubs` which
@@ -281,13 +295,20 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
               .map((e) => HubModel.fromJson(e as Map<String, dynamic>))
               .toList();
           _isLoading = false;
+          _error = null;
+          _refreshError = null;
           _hubRetryAttempt = 0; // success — reset retry counter
         });
         // PR-7 (PICKUP P0-2): re-apply the restored draft once hubs load.
         _applyInitialDraft();
       } else {
+        final msg = response['message'] ?? 'Failed to load hubs';
         setState(() {
-          _error = response['message'] ?? 'Failed to load hubs';
+          if (isFirstLoad) {
+            _error = msg;
+          } else {
+            _refreshError = msg;
+          }
           _isLoading = false;
         });
       }
@@ -297,27 +318,33 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // (validation, auth) — surface them. Transient errors (network
       // down, timeout) are retried with exponential backoff up to
       // _maxHubRetries before falling back to the manual retry button.
+      final errorMsg = e is ApiException ? e.message : 'Connection error: $e';
       if (e is ApiException && e.statusCode < 500) {
         setState(() {
-          _error = e.message;
+          if (isFirstLoad) {
+            _error = errorMsg;
+          } else {
+            _refreshError = errorMsg;
+          }
           _isLoading = false;
         });
         return;
       }
       if (_hubRetryAttempt >= _maxHubRetries) {
         setState(() {
-          _error = e is ApiException ? e.message : 'Connection error: $e';
+          if (isFirstLoad) {
+            _error = errorMsg;
+          } else {
+            _refreshError = errorMsg;
+          }
           _isLoading = false;
         });
         return;
       }
       final delay = Duration(seconds: 1 << _hubRetryAttempt); // 1s, 2s, 4s
       _hubRetryAttempt += 1;
-      // Keep _isLoading = true so the rider sees a spinner, not a
-      // blank screen, while the retry timer is running. The timer
-      // itself is not bound to the widget lifecycle (Timer would
-      // continue firing after dispose); a Future.delayed inside an
-      // async method is cancelled the moment the awaiter returns.
+      // Keep _isLoading = true so the rider sees a spinner on first load,
+      // while the retry timer is running.
       await Future.delayed(delay);
       if (!mounted) return;
       await _fetchHubs();
@@ -425,10 +452,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // The generated method returns a typed `ListVehiclesResponse`,
       // so re-encode it to JSON to preserve the `{ success, data }`
       // envelope shape the caller already expects.
-      final response = (await ref
-              .read(voltiumApiClientProvider)
-              .getVehicles(hubId))
-          .toJson();
+      final response =
+          (await ref.read(voltiumApiClientProvider).getVehicles(hubId))
+              .toJson();
       if (!mounted) return;
       // The API wraps the response in { success, data }. The data may
       // be a list directly (GET /api/vehicles) or nested under a key.
@@ -835,13 +861,66 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     );
   }
 
+  Widget _buildInlineErrorBanner(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      key: const Key('pickupHubInlineErrorBanner'),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.errorLight,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: colors.error.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.wifi_off_rounded,
+            color: colors.error,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _refreshError ?? 'Could not refresh hubs. Please try again.',
+              style: AppTypography.bodySmall.copyWith(
+                color: colors.error,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            key: const Key('pickupHubInlineRetryButton'),
+            onPressed: _fetchHubsWithManualReset,
+            style: TextButton.styleFrom(
+              foregroundColor: colors.error,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              'Retry',
+              style: AppTypography.labelMedium.copyWith(
+                color: colors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    if (_isLoading) {
+    if (_isLoading && _hubs.isEmpty) {
       return _buildLoadingState(context);
     }
-    if (_error != null) {
+    if (_error != null && _hubs.isEmpty) {
       return _buildErrorState(context);
     }
 
@@ -849,6 +928,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       backgroundColor: colors.surface,
       body: Column(
         children: [
+          if (_refreshError != null) _buildInlineErrorBanner(context),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _fetchHubs,

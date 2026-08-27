@@ -7,9 +7,25 @@ import 'package:voltium_rider/features/pickup/presentation/screens/pickup_verifi
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+
+class _MockVoltiumApiClient extends VoltiumApiClient {
+  _MockVoltiumApiClient() : super(ApiClient());
+  int postPickupCallCount = 0;
+
+  @override
+  Future<Map<String, dynamic>> postRiderSyncPickup(
+      Map<String, dynamic> body) async {
+    postPickupCallCount++;
+    return {'success': true, 'data': {}};
+  }
+}
+
 class _SeededRiderNotifier extends RiderNotifier {
   _SeededRiderNotifier(this._seed);
   final RiderModel _seed;
+  int refreshCallCount = 0;
 
   @override
   RiderState build() => RiderState(
@@ -19,6 +35,11 @@ class _SeededRiderNotifier extends RiderNotifier {
         dataState: DataState.fresh,
         hasFetchedOnce: true,
       );
+
+  @override
+  Future<void> refreshFromApi({bool silent = false}) async {
+    refreshCallCount++;
+  }
 }
 
 void main() {
@@ -29,17 +50,25 @@ void main() {
     String vehicleId = 'VH-101',
     String emergencyContact = '9876543210',
     String? pickupPhotoFront,
+    RiderModel? rider,
+    _MockVoltiumApiClient? mockApi,
+    _SeededRiderNotifier? riderNotifier,
   }) {
     return ProviderScope(
       overrides: [
-        riderProvider.overrideWith(() => _SeededRiderNotifier(
-              const RiderModel(
-                id: 'rider_123',
-                riderId: 'rider_123',
-                name: 'Test Rider',
-                phone: '9999999999',
-                lifecycleStatus: 'NEW',
-              ),
+        if (mockApi != null)
+          voltiumApiClientProvider.overrideWithValue(mockApi),
+        riderProvider.overrideWith(() =>
+            riderNotifier ??
+            _SeededRiderNotifier(
+              rider ??
+                  const RiderModel(
+                    id: 'rider_123',
+                    riderId: 'rider_123',
+                    name: 'Test Rider',
+                    phone: '9999999999',
+                    lifecycleStatus: 'NEW',
+                  ),
             )),
       ],
       child: MaterialApp(
@@ -107,6 +136,79 @@ void main() {
       final buttonAfter = tester.widget<ElevatedButton>(
           find.byKey(const Key('completePickupButton')));
       expect(buttonAfter.onPressed, isNotNull);
+    });
+
+    testWidgets(
+        'advances immediately without duplicate POST if pickup is already done (N-17)',
+        (tester) async {
+      bool nextCalled = false;
+      final mockApi = _MockVoltiumApiClient();
+      final notifier = _SeededRiderNotifier(
+        const RiderModel(
+          id: 'rider_123',
+          riderId: 'rider_123',
+          name: 'Test Rider',
+          phone: '9999999999',
+          lifecycleStatus: 'ACTIVE',
+          pickupDone: true,
+        ),
+      );
+
+      await tester.pumpWidget(buildTestHost(
+        onNext: () => nextCalled = true,
+        mockApi: mockApi,
+        riderNotifier: notifier,
+      ));
+      await tester.pumpAndSettle();
+
+      // Check the agreement box
+      await tester.tap(find.byKey(const Key('rentalAgreementCheckbox')));
+      await tester.pumpAndSettle();
+
+      // Tap complete pickup
+      await tester.tap(find.byKey(const Key('completePickupButton')));
+      await tester.pumpAndSettle();
+
+      // Verified: API POST was skipped because isPickupDone is true
+      expect(mockApi.postPickupCallCount, equals(0));
+      expect(nextCalled, isTrue);
+      expect(notifier.refreshCallCount, greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('performs POST and advances when pickup is pending (N-17)',
+        (tester) async {
+      bool nextCalled = false;
+      final mockApi = _MockVoltiumApiClient();
+      final notifier = _SeededRiderNotifier(
+        const RiderModel(
+          id: 'rider_123',
+          riderId: 'rider_123',
+          name: 'Test Rider',
+          phone: '9999999999',
+          lifecycleStatus: 'NEW',
+          pickupDone: false,
+        ),
+      );
+
+      await tester.pumpWidget(buildTestHost(
+        onNext: () => nextCalled = true,
+        mockApi: mockApi,
+        riderNotifier: notifier,
+      ));
+      await tester.pumpAndSettle();
+
+      // Check the agreement box
+      await tester.tap(find.byKey(const Key('rentalAgreementCheckbox')));
+      await tester.pumpAndSettle();
+
+      // Tap complete pickup
+      await tester.tap(find.byKey(const Key('completePickupButton')));
+      await tester.pumpAndSettle();
+
+      // Verified: API POST was called and state was refreshed
+      expect(mockApi.postPickupCallCount, equals(1));
+      expect(nextCalled, isTrue);
+      expect(notifier.refreshCallCount, equals(2));
     });
   });
 }

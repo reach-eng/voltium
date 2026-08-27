@@ -102,6 +102,15 @@ class _PickupVerificationScreenState
     final onNext = widget.onNext;
 
     try {
+      // PR-N17 (N-17): refresh latest rider state from API first to prevent
+      // duplicate pickup submissions under flaky network or retry scenarios.
+      await provider.refreshFromApi();
+      final currentRider = ref.read(riderProvider).rider;
+      if (currentRider != null && currentRider.isPickupDone) {
+        if (mounted) onNext();
+        return;
+      }
+
       // PR-13: was a wrapper call to
       // `VoltiumApiService.syncPickup`, a 1-line pass-through to the
       // generated `postRiderSyncPickup({...})` with the same body shape.
