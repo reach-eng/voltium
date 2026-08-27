@@ -134,7 +134,7 @@ void main() {
           findsNothing);
     });
 
-    testWidgets('3. Phone field validator catches invalid phone format',
+    testWidgets('3. Phone field validator catches invalid phone length',
         (tester) async {
       await tester.pumpWidget(
         buildTestable(
@@ -157,13 +157,14 @@ void main() {
         ),
       );
 
-      // Enter invalid phone starting with 1
+      // Enter a too-short phone number to trigger the length-only
+      // FormValidators.phone default (PR-B: the field no longer
+      // hardcodes the Indian-only indianPhone validator).
       await tester.enterText(
-          find.byKey(const Key('guarantorPhoneField')), '1234567890');
+          find.byKey(const Key('guarantorPhoneField')), '12345');
       await tester.pump();
 
-      expect(find.text('Enter a valid 10-digit Indian mobile number'),
-          findsOneWidget);
+      expect(find.text('Phone must be 10 digits'), findsOneWidget);
     });
 
     testWidgets(

@@ -83,8 +83,18 @@ class VoltiumPhoneField extends StatelessWidget {
     }
 
     final phoneDigits = (controller?.text ?? '').replaceAll(RegExp(r'\D'), '');
-    final canSendOtp =
-        !isSendingOtp && resendCooldown == 0 && phoneDigits.length == 10;
+    // BUG FIX (PR-B, 2026-08-28): the previous version gated the SEND
+    // OTP button on an exact 10-digit length and used the Indian-only
+    // FormValidators.indianPhone as the default validator. That silently
+    // broke the flow for any non-Indian phone and overrode a consumer's
+    // own validator. Default to FormValidators.phone (length check,
+    // locale-agnostic); consumers can pass a stricter validator via the
+    // existing `validator` param. Length gate is also widened to 7-15 to
+    // accept international formats.
+    final canSendOtp = !isSendingOtp &&
+        resendCooldown == 0 &&
+        phoneDigits.length >= 7 &&
+        phoneDigits.length <= 15;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,10 +109,10 @@ class VoltiumPhoneField extends StatelessWidget {
                 key: fieldKey,
                 controller: controller,
                 keyboardType: TextInputType.phone,
-                maxLength: 10,
+                maxLength: 15,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 readOnly: isPhoneVerified,
-                validator: validator ?? FormValidators.indianPhone,
+                validator: validator ?? FormValidators.phone,
                 style:
                     AppTypography.bodyMedium.copyWith(color: colors.onSurface),
                 decoration: InputDecoration(
