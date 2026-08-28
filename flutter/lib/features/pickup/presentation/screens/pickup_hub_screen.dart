@@ -433,8 +433,16 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
   }
 
   String _vehicleLabel(Map<String, dynamic> v) {
-    final number =
-        v['vehicleNumber'] as String? ?? v['licensePlate'] as String? ?? '';
+    // The typed `VehicleResponse.toJson()` exposes `registrationNumber`
+    // (server-side field name), not `vehicleNumber` / `licensePlate` —
+    // the previous label fallback never matched the typed envelope, so
+    // the picker silently rendered an empty label. Check all three keys
+    // so the legacy `_FakeVoltiumApiService` test data and the typed
+    // server response both render the vehicle number.
+    final number = v['registrationNumber'] as String? ??
+        v['vehicleNumber'] as String? ??
+        v['licensePlate'] as String? ??
+        '';
     final model = v['model'] as String? ?? '';
     return '$number${model.isNotEmpty ? ' • $model' : ''}';
   }

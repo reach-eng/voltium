@@ -9,8 +9,7 @@ class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
 class MockVoltiumApiService extends Mock implements VoltiumApiService {}
 
-class FakeVehicleReturnRequest extends Fake
-    implements VehicleReturnRequest {}
+class FakeVehicleReturnRequest extends Fake implements VehicleReturnRequest {}
 
 void main() {
   late MockVoltiumApiClient mockVoltiumApiClient;

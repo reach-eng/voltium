@@ -72,8 +72,8 @@ void main() {
     // suite; this test only verifies the gate + dialog open.
   });
 
-  testWidgets(
-      'confirming delete opens the step-up lock password dialog', (tester) async {
+  testWidgets('confirming delete opens the step-up lock password dialog',
+      (tester) async {
     await tester.pumpWidget(buildTestApp());
     await tester.pump(const Duration(milliseconds: 400));
 

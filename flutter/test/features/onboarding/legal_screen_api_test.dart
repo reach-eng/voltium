@@ -25,7 +25,8 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 /// and overriding `getWithSWR`.
 
 class _FakeApiClient extends ApiClient {
-  _FakeApiClient({this.docs}) : super.testOverride(baseUrl: 'http://test.invalid');
+  _FakeApiClient({this.docs})
+      : super.testOverride(baseUrl: 'http://test.invalid');
 
   final Map<String, dynamic>? docs;
 
