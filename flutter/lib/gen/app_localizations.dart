@@ -1552,12 +1552,6 @@ abstract class AppLocalizations {
   /// **'CONTACT SUPPORT'**
   String get txtcontactSupport;
 
-  /// Intent of use dialog title
-  ///
-  /// In en, this message translates to:
-  /// **'Intent of Use'**
-  String get txtintentOfUse;
-
   /// No description provided for @txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport.
   ///
   /// In en, this message translates to:
@@ -1654,12 +1648,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Photo Captured'**
   String get txtphotoCaptured;
-
-  /// Digital Signature document label
-  ///
-  /// In en, this message translates to:
-  /// **'Digital Signature'**
-  String get txtdigitalSignature;
 
   /// No description provided for @txtsignBelowToAuthorizeDocumentation.
   ///
@@ -2055,18 +2043,6 @@ abstract class AppLocalizations {
   String
       get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance;
 
-  /// Team leader card title
-  ///
-  /// In en, this message translates to:
-  /// **'Team Leader'**
-  String get txtteamLeader;
-
-  /// Assigned team leader sheet title
-  ///
-  /// In en, this message translates to:
-  /// **'Assigned Team Leader'**
-  String get txtassignedTeamLeader;
-
   /// No description provided for @txtrequestSubmittedToSupportTeam.
   ///
   /// In en, this message translates to:
@@ -2090,12 +2066,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PICKUP PHOTOS'**
   String get txtpickupPhotos;
-
-  /// Back to dashboard button label
-  ///
-  /// In en, this message translates to:
-  /// **'Back to Dashboard'**
-  String get txtbackToDashboard;
 
   /// No description provided for @txtassignmentDetails.
   ///
@@ -2969,12 +2939,6 @@ abstract class AppLocalizations {
   String
       get txtthisWillClearYourLocalTransactionHistoryThisActionCannotBeUndone;
 
-  /// Security deposit row label
-  ///
-  /// In en, this message translates to:
-  /// **'Security Deposit'**
-  String get txtsecurityDeposit;
-
   /// No description provided for @txtelectricVehicleRentalService.
   ///
   /// In en, this message translates to:
@@ -3005,35 +2969,11 @@ abstract class AppLocalizations {
   /// **'Go Back?'**
   String get txtgoBack;
 
-  /// Plan card header
-  ///
-  /// In en, this message translates to:
-  /// **'CURRENT SUBSCRIPTION'**
-  String get txtcurrentSubscription;
-
-  /// Time remaining box label
-  ///
-  /// In en, this message translates to:
-  /// **'TIME REMAINING'**
-  String get txttimeRemaining;
-
-  /// Next recharge box label
-  ///
-  /// In en, this message translates to:
-  /// **'NEXT RECHARGE'**
-  String get txtnextRecharge;
-
   /// No description provided for @txtshareYourCodeWithFriends.
   ///
   /// In en, this message translates to:
   /// **'Share your code with friends'**
   String get txtshareYourCodeWithFriends;
-
-  /// Your code uppercase label
-  ///
-  /// In en, this message translates to:
-  /// **'YOUR CODE'**
-  String get txtyourCode;
 
   /// Change TL button label
   ///
@@ -4137,6 +4077,12 @@ abstract class AppLocalizations {
   /// **'Vehicle Pending Assignment'**
   String get txtvehiclePendingAssignment;
 
+  /// Plan card header
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT SUBSCRIPTION'**
+  String get txtcurrentSubscription;
+
   /// No active plan label
   ///
   /// In en, this message translates to:
@@ -4160,6 +4106,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'MONTHLY PAYMENT'**
   String get txtmonthlyPayment;
+
+  /// Time remaining box label
+  ///
+  /// In en, this message translates to:
+  /// **'TIME REMAINING'**
+  String get txttimeRemaining;
+
+  /// Next recharge box label
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT RECHARGE'**
+  String get txtnextRecharge;
 
   /// Expired plan status label
   ///
@@ -4221,6 +4179,12 @@ abstract class AppLocalizations {
   /// **'Share your code with friends'**
   String get txtshareCodeWithFriends;
 
+  /// Your code uppercase label
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR CODE'**
+  String get txtyourCode;
+
   /// Referral code copied snackbar text
   ///
   /// In en, this message translates to:
@@ -4238,6 +4202,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Join Voltium'**
   String get txtjoinVoltiumSubject;
+
+  /// Team leader card title
+  ///
+  /// In en, this message translates to:
+  /// **'Team Leader'**
+  String get txtteamLeader;
 
   /// View details link
   ///
@@ -4335,6 +4305,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Top up ₹{amount}'**
   String txttopUpAmountAction(String amount);
+
+  /// Assigned team leader sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Team Leader'**
+  String get txtassignedTeamLeader;
 
   /// Close button label
   ///
@@ -4528,6 +4504,12 @@ abstract class AppLocalizations {
   /// **'Speedometer'**
   String get txtspeedometer;
 
+  /// Intent of use dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Intent of Use'**
+  String get txtintentOfUse;
+
   /// Personal use intent option
   ///
   /// In en, this message translates to:
@@ -4594,6 +4576,12 @@ abstract class AppLocalizations {
   /// **'End Date'**
   String get txtendDate;
 
+  /// Security deposit row label
+  ///
+  /// In en, this message translates to:
+  /// **'Security Deposit'**
+  String get txtsecurityDeposit;
+
   /// Payment streak row label
   ///
   /// In en, this message translates to:
@@ -4635,6 +4623,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Request Team Leader change'**
   String get txtrequestTlChange;
+
+  /// Back to dashboard button label
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Dashboard'**
+  String get txtbackToDashboard;
 
   /// No description provided for @txtback.
   ///
@@ -4755,6 +4749,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PAN Card'**
   String get txtpanCardLabel;
+
+  /// Digital Signature document label
+  ///
+  /// In en, this message translates to:
+  /// **'Digital Signature'**
+  String get txtdigitalSignature;
 
   /// Guarantor Aadhaar Front label
   ///

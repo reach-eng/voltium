@@ -811,9 +811,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtcontactSupport => 'सपोर्ट से संपर्क करें';
 
   @override
-  String get txtintentOfUse => 'उपयोग का उद्देश्य';
-
-  @override
   String get txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport =>
       'अपना मुख्य उपयोग चुनें ताकि हम आपके अनुभव और सहायता को कस्टमाइज़ कर सकें।';
 
@@ -862,9 +859,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtphotoCaptured => 'फ़ोटो कैप्चर हो गई';
-
-  @override
-  String get txtdigitalSignature => 'डिजिटल हस्ताक्षर';
 
   @override
   String get txtsignBelowToAuthorizeDocumentation =>
@@ -1075,12 +1069,6 @@ class AppLocalizationsHi extends AppLocalizations {
       'मैं पुष्टि करता/करती हूं कि मैंने वाहन की जांच कर ली है और उसकी देखभाल और ट्रैफिक अनुपालन की ज़िम्मेदारी स्वीकार करता/करती हूं।';
 
   @override
-  String get txtteamLeader => 'टीम लीडर';
-
-  @override
-  String get txtassignedTeamLeader => 'आवंटित टीम लीडर';
-
-  @override
   String get txtrequestSubmittedToSupportTeam =>
       'सपोर्ट टीम को अनुरोध भेजा गया';
 
@@ -1092,9 +1080,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtpickupPhotos => 'पिकअप फ़ोटो';
-
-  @override
-  String get txtbackToDashboard => 'डैशबोर्ड पर वापस जाएं';
 
   @override
   String get txtassignmentDetails => 'असाइनमेंट विवरण';
@@ -1564,9 +1549,6 @@ class AppLocalizationsHi extends AppLocalizations {
           'यह आपका स्थानीय लेनदेन इतिहास मिटा देगा। यह क्रिया वापस नहीं हो सकती।';
 
   @override
-  String get txtsecurityDeposit => 'सुरक्षा जमा';
-
-  @override
   String get txtelectricVehicleRentalService => 'इलेक्ट्रिक वाहन किराया सेवा';
 
   @override
@@ -1583,19 +1565,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtgoBack => 'वापस जाएं?';
 
   @override
-  String get txtcurrentSubscription => 'वर्तमान सदस्यता';
-
-  @override
-  String get txttimeRemaining => 'शेष समय';
-
-  @override
-  String get txtnextRecharge => 'अगला रिचार्ज';
-
-  @override
   String get txtshareYourCodeWithFriends => 'अपना कोड दोस्तों के साथ साझा करें';
-
-  @override
-  String get txtyourCode => 'आपका कोड';
 
   @override
   String get txtchangeTl => 'टीएल बदलें';
@@ -2176,6 +2146,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtvehiclePendingAssignment => 'वाहन आवंटन लंबित है';
 
   @override
+  String get txtcurrentSubscription => 'वर्तमान सदस्यता';
+
+  @override
   String get txtnoPlan => 'कोई प्लान नहीं';
 
   @override
@@ -2186,6 +2159,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtmonthlyPayment => 'मासिक भुगतान';
+
+  @override
+  String get txttimeRemaining => 'शेष समय';
+
+  @override
+  String get txtnextRecharge => 'अगला रिचार्ज';
 
   @override
   String get txtexpired => 'समाप्त';
@@ -2226,6 +2205,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtshareCodeWithFriends => 'दोस्तों के साथ अपना कोड साझा करें';
 
   @override
+  String get txtyourCode => 'आपका कोड';
+
+  @override
   String get txtreferralCodeCopied => 'रेफ़रल कोड कॉपी हो गया!';
 
   @override
@@ -2235,6 +2217,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtjoinVoltiumSubject => 'Voltium से जुड़ें';
+
+  @override
+  String get txtteamLeader => 'टीम लीडर';
 
   @override
   String get txtviewDetailsAction => 'विवरण देखें';
@@ -2296,6 +2281,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String txttopUpAmountAction(String amount) {
     return '₹$amount टॉप अप करें';
   }
+
+  @override
+  String get txtassignedTeamLeader => 'आवंटित टीम लीडर';
 
   @override
   String get txtclose => 'बंद करें';
@@ -2410,6 +2398,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtspeedometer => 'स्पीडोमीटर';
 
   @override
+  String get txtintentOfUse => 'उपयोग का उद्देश्य';
+
+  @override
   String get txtpersonalUse => 'व्यक्तिगत उपयोग';
 
   @override
@@ -2443,6 +2434,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtendDate => 'समाप्ति तिथि';
 
   @override
+  String get txtsecurityDeposit => 'सुरक्षा जमा';
+
+  @override
   String get txtpaymentStreak => 'भुगतान स्ट्रीक';
 
   @override
@@ -2465,6 +2459,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtrequestTlChange => 'टीम लीडर बदलने का अनुरोध करें';
+
+  @override
+  String get txtbackToDashboard => 'डैशबोर्ड पर वापस जाएं';
 
   @override
   String get txtback => 'वापस';
@@ -2529,6 +2526,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtpanCardLabel => 'पैन कार्ड';
+
+  @override
+  String get txtdigitalSignature => 'डिजिटल हस्ताक्षर';
 
   @override
   String get txtguarantorAadhaarFront => 'गारंटर का आधार (सामने)';
