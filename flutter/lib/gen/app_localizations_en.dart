@@ -987,7 +987,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtguarantorSkipSourceFallback =>
-      'Default — admin has not set a value yet';
+      'Default Ã¢â‚¬â€ admin has not set a value yet';
 
   @override
   String get txtguarantorSkipConfirm => 'SKIP & PAY EXTRA';
@@ -1032,7 +1032,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtloginEnterButton => 'Enter';
 
   @override
-  String get txtloginSendingButton => 'Sending…';
+  String get txtloginSendingButton => 'SendingÃ¢â‚¬Â¦';
 
   @override
   String get txtloginNetworkError => 'Network error. Please try again.';
@@ -1486,7 +1486,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtproofTopUpWillBeInstant(String fee) {
-    return 'Top up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top up amount.';
+    return 'Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹$fee) gateway fee will be added to your top up amount.';
   }
 
   @override
@@ -1499,11 +1499,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txtproofZeroGatewayFee => '₹0 (Paid by Voltium)';
+  String get txtproofZeroGatewayFee => 'Ã¢â€šÂ¹0 (Paid by Voltium)';
 
   @override
   String get txtproofTopUpWillBeInstantCovered =>
-      'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
+      'Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).';
 
   @override
   String get txtchangePhoto => 'Change Photo';
@@ -1737,6 +1737,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtkycApproved => 'KYC Approved';
+
+  @override
+  String get txtkycRejectionOnHangTightTitle => 'KYC rejected';
+
+  @override
+  String get txtkycRejectionOnHangTightBody =>
+      'Please review the rejection remarks and re-submit your documents to continue.';
+
+  @override
+  String get txtkycInfoRequiredOnHangTightBody =>
+      'We need more information to verify your identity. Please re-submit your documents to continue.';
+
+  @override
+  String get txtfixKycButton => 'Fix KYC';
 
   @override
   String get txtpending => 'PENDING';
@@ -1980,7 +1994,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtofflineDraftBanner =>
-      'You\'re offline — your draft is saved locally. Connect to internet to submit.';
+      'You\'re offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.';
 
   @override
   String get txtdocumentPreview => 'Document Preview';
@@ -2034,7 +2048,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtphonePermTooltip =>
-      'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.';
+      'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.';
 
   @override
   String get txtcontactsPermName => 'Contacts';
@@ -2105,7 +2119,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtillDoThisLater => 'I\'ll do this later';
 
   @override
-  String get txtsyncingLatestDocs => 'Syncing latest documents…';
+  String get txtsyncingLatestDocs => 'Syncing latest documentsÃ¢â‚¬Â¦';
 
   @override
   String get txtlegalAgreeCheckboxPrefix => 'I have read and agree to the ';
@@ -2132,7 +2146,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txtverifying => 'Verifying…';
+  String get txtverifying => 'VerifyingÃ¢â‚¬Â¦';
 
   @override
   String get txtverifyAndProceed => 'Verify & Proceed';
@@ -2203,12 +2217,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtminRechargeNotice(String amount) {
-    return 'A minimum recharge of ₹$amount is required to proceed further.';
+    return 'A minimum recharge of Ã¢â€šÂ¹$amount is required to proceed further.';
   }
 
   @override
   String txtlowBalanceWarningNotice(int amount) {
-    return 'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹$amount.';
+    return 'Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹$amount.';
   }
 
   @override
@@ -2282,17 +2296,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String txtrentDebitNoticeShortfall(
       String rent, String balance, String shortfall) {
-    return 'Rent of ₹$rent will be debited automatically. Your current wallet balance is ₹$balance (shortfall: ₹$shortfall).';
+    return 'Rent of Ã¢â€šÂ¹$rent will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹$balance (shortfall: Ã¢â€šÂ¹$shortfall).';
   }
 
   @override
   String txtrentDebitNoticeSufficient(String rent, String balance) {
-    return 'Rent of ₹$rent will be debited tomorrow 6 AM. Wallet balance ₹$balance is sufficient.';
+    return 'Rent of Ã¢â€šÂ¹$rent will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹$balance is sufficient.';
   }
 
   @override
   String txttopUpAmountAction(String amount) {
-    return 'Top up ₹$amount';
+    return 'Top up Ã¢â€šÂ¹$amount';
   }
 
   @override
@@ -2577,7 +2591,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtsecurityDepositProofSubmitted =>
-      'Security deposit proof submitted — we\'ll review it shortly.';
+      'Security deposit proof submitted Ã¢â‚¬â€ we\'ll review it shortly.';
 
   @override
   String get txttopUpProofSubmitted => 'Top up receipt submitted successfully!';
@@ -2626,7 +2640,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hangTightSettingUpBody =>
-      'We\'re setting up your account.\nThis usually takes 5–10 minutes.';
+      'We\'re setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.';
 
   @override
   String get hangTightNotificationHint =>
@@ -2640,7 +2654,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hangTightGuarantorReplacedPendingReview =>
-      'Guarantor replaced — pending review';
+      'Guarantor replaced Ã¢â‚¬â€ pending review';
 
   @override
   String get hangTightGuarantorUnderReview => 'Guarantor under review';
@@ -2655,7 +2669,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hangTightKycApproved => 'KYC approved';
 
   @override
-  String get hangTightKycRejectedResubmit => 'KYC rejected — please resubmit';
+  String get hangTightKycRejectedResubmit =>
+      'KYC rejected Ã¢â‚¬â€ please resubmit';
 
   @override
   String get hangTightKycExpired => 'KYC expired';
@@ -2700,9 +2715,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtenterValidName => 'Enter a valid name';
 
   @override
-  String get txtfixKycButton => 'Fix KYC';
-
-  @override
   String get txtguarantorCurrentAddress => 'Current Address';
 
   @override
@@ -2729,19 +2741,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your guarantor\'s details are required by RBI for verification';
 
   @override
-  String get txtkycInfoRequiredOnHangTightBody =>
-      'We need more information to verify your identity. Please re-submit your documents to continue.';
-
-  @override
-  String get txtkycRejectionOnHangTightBody =>
-      'Please review the rejection remarks and re-submit your documents to continue.';
-
-  @override
-  String get txtkycRejectionOnHangTightTitle => 'KYC rejected';
-
-  @override
   String get txtresendOtp => 'RESEND';
 
   @override
   String get txtsendOtp => 'SEND OTP';
+
+  @override
+  String get kycPushTitleApproved => 'KYC Approved';
+
+  @override
+  String get kycPushBodyApproved =>
+      'Your documents have been verified. You can now pick up your vehicle.';
+
+  @override
+  String get kycPushTitleRejected => 'KYC Update Required';
+
+  @override
+  String kycPushBodyRejected(Object reason) {
+    return 'Your KYC was rejected: $reason';
+  }
+
+  @override
+  String get kycPushBodyFallback => 'Please re-upload your documents.';
+
+  @override
+  String get kycPushTitleInfoRequired => 'More information needed';
+
+  @override
+  String get kycPushBodyInfoRequired =>
+      'We need a bit more information to verify your account. Please re-submit your documents to continue.';
 }

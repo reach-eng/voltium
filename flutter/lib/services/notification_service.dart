@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
+import '../gen/app_localizations.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -135,5 +136,48 @@ class NotificationService {
 
   Future<void> cancelAllNotifications() async {
     await _notifications.cancelAll();
+  }
+
+  // P2-12 (PR-G, 2026-08-28 workflows deferred): the server no
+  // longer pre-formats the KYC push notification body — it sends a
+  // type discriminator + structured data, and the Flutter client
+  // renders the localized string from the ARB bundle. This helper
+  // does the lookup. The FCM handler in fcm_service.dart calls
+  // this when a KYC message arrives.
+  //
+  // Returns null if the data does not describe a KYC event, so
+  // the FCM handler can fall through to its existing render path.
+  static ({String title, String body})? renderKycPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type == null) return null;
+    if (type != 'KYC_APPROVED' &&
+        type != 'KYC_REJECTED' &&
+        type != 'KYC_INFO_REQUESTED') {
+      return null;
+    }
+    final reason = data['reason'] as String?;
+    switch (type) {
+      case 'KYC_APPROVED':
+        return (
+          title: l10n.kycPushTitleApproved,
+          body: l10n.kycPushBodyApproved,
+        );
+      case 'KYC_REJECTED':
+        return (
+          title: l10n.kycPushTitleRejected,
+          body: reason != null && reason.isNotEmpty
+              ? l10n.kycPushBodyRejected(reason)
+              : l10n.kycPushBodyFallback,
+        );
+      case 'KYC_INFO_REQUESTED':
+        return (
+          title: l10n.kycPushTitleInfoRequired,
+          body: l10n.kycPushBodyInfoRequired,
+        );
+    }
+    return null;
   }
 }

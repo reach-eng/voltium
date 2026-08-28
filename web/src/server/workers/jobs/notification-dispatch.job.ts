@@ -20,7 +20,7 @@
  * Known payload types (from use-cases that emit NOTIFICATION_SEND):
  *   - KYC_APPROVED        { riderId, status, reason? }
  *   - KYC_REJECTED        { riderId, status, reason? }
- *   - KYC_INFO_REQUIRED   { riderId, status, reason? }
+ *   - KYC_INFO_REQUESTED  { riderId, status, reason? }
  *   - WALLET_TOPUP_APPROVED { riderId, amount, transactionId }
  *   - WALLET_TOPUP_REJECTED { riderId, amount, transactionId, reason }
  *   - SUPPORT_REPLY       { riderId, ticketId, subject }
@@ -43,7 +43,7 @@ import { fcmService } from '@/lib/fcm';
 export type NotificationPayloadType =
   | 'KYC_APPROVED'
   | 'KYC_REJECTED'
-  | 'KYC_INFO_REQUIRED'
+  | 'KYC_INFO_REQUESTED'
   | 'WALLET_TOPUP_APPROVED'
   | 'WALLET_TOPUP_REJECTED'
   | 'SUPPORT_REPLY'
@@ -130,10 +130,21 @@ export const notificationDispatchJob = {
         }
         return { delivered: true, channel: 'fcm+in-app' };
 
-      case 'KYC_INFO_REQUIRED':
+      case 'KYC_INFO_REQUESTED':
+        // P2-12 (PR-G, 2026-08-28 workflows deferred): the producer
+        // emits `KYC_INFO_REQUESTED` (the actual spelling used in
+        // production). The previous dispatcher accepted only
+        // `KYC_INFO_REQUIRED`, so the event fell into the default
+        // branch and was silently lost. The KYC payload type union
+        // at the top of this file is the canonical list — both
+        // spellings were previously listed there, but only REQUIRED
+        // was handled in the switch. The T-91 audit fix (PR-1,
+        // 2026-08-23) renamed the case; this is the post-rename
+        // pass that updates the producer/consumer type union and
+        // the call site to use the canonical spelling.
         await notificationService.notifyKycStatusChange(
           payload.riderId,
-          'INFO_REQUIRED',
+          'INFO_REQUESTED',
           payload.reason as string | undefined
         );
         return { delivered: true, channel: 'fcm' };

@@ -620,19 +620,19 @@ abstract class AppLocalizations {
   /// **'REJECTED'**
   String get wallet_statusRejected;
 
-  /// Transaction-history filter chip — debits whose purpose is RENTAL
+  /// Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is RENTAL
   ///
   /// In en, this message translates to:
   /// **'Rent'**
   String get wallet_filterRent;
 
-  /// Transaction-history filter chip — debits whose purpose is SECURITY_DEPOSIT
+  /// Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is SECURITY_DEPOSIT
   ///
   /// In en, this message translates to:
   /// **'Security'**
   String get wallet_filterSecurity;
 
-  /// Transaction-history filter chip — non-rental, non-deposit debits
+  /// Transaction-history filter chip Ã¢â‚¬â€ non-rental, non-deposit debits
   ///
   /// In en, this message translates to:
   /// **'Deduction'**
@@ -1455,19 +1455,19 @@ abstract class AppLocalizations {
   /// **'UPI ID copied to clipboard'**
   String get txtupiIdCopiedToClipboard;
 
-  /// Receipt line label — the top-up amount that gets added to the rider's wallet balance
+  /// Receipt line label Ã¢â‚¬â€ the top-up amount that gets added to the rider's wallet balance
   ///
   /// In en, this message translates to:
   /// **'Top Up Amount (Added to Wallet)'**
   String get txttopUpAmountAddedToWallet;
 
-  /// Receipt line label — the final total the rider pays (top-up + plan fee + deposit)
+  /// Receipt line label Ã¢â‚¬â€ the final total the rider pays (top-up + plan fee + deposit)
   ///
   /// In en, this message translates to:
   /// **'Total Payable'**
   String get txttotalPayable;
 
-  /// Settings → tile + dialog title for the lock-password verification flow
+  /// Settings Ã¢â€ â€™ tile + dialog title for the lock-password verification flow
   ///
   /// In en, this message translates to:
   /// **'Change Lock Password'**
@@ -1877,7 +1877,7 @@ abstract class AppLocalizations {
   /// **'Skip guarantor?'**
   String get txtguarantorSkipTitle;
 
-  /// Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.
+  /// Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. 'Ã¢â€šÂ¹1,000'.
   ///
   /// In en, this message translates to:
   /// **'Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You\'ll be charged the difference when you start your rental.'**
@@ -1892,7 +1892,7 @@ abstract class AppLocalizations {
   /// Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used
   ///
   /// In en, this message translates to:
-  /// **'Default — admin has not set a value yet'**
+  /// **'Default Ã¢â‚¬â€ admin has not set a value yet'**
   String get txtguarantorSkipSourceFallback;
 
   /// Confirm-button label on the skip-guarantor dialog
@@ -1978,7 +1978,7 @@ abstract class AppLocalizations {
   /// Login screen submit-button label while the OTP request is in flight
   ///
   /// In en, this message translates to:
-  /// **'Sending…'**
+  /// **'SendingÃ¢â‚¬Â¦'**
   String get txtloginSendingButton;
 
   /// Login screen SnackBar when the OTP send request fails on a non-API error (e.g. socket)
@@ -2833,7 +2833,7 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofTopUpWillBeInstant.
   ///
   /// In en, this message translates to:
-  /// **'Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.'**
+  /// **'Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹{fee}) gateway fee will be added to your top up amount.'**
   String txtproofTopUpWillBeInstant(String fee);
 
   /// No description provided for @txtproofTopUpNoExtraFee.
@@ -2851,13 +2851,13 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofZeroGatewayFee.
   ///
   /// In en, this message translates to:
-  /// **'₹0 (Paid by Voltium)'**
+  /// **'Ã¢â€šÂ¹0 (Paid by Voltium)'**
   String get txtproofZeroGatewayFee;
 
   /// No description provided for @txtproofTopUpWillBeInstantCovered.
   ///
   /// In en, this message translates to:
-  /// **'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
+  /// **'Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).'**
   String get txtproofTopUpWillBeInstantCovered;
 
   /// No description provided for @txtchangePhoto.
@@ -3302,6 +3302,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'KYC Approved'**
   String get txtkycApproved;
+
+  /// Title of the KYC rejection/correction card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'KYC rejected'**
+  String get txtkycRejectionOnHangTightTitle;
+
+  /// Body of the KYC rejection card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'Please review the rejection remarks and re-submit your documents to continue.'**
+  String get txtkycRejectionOnHangTightBody;
+
+  /// Body of the KYC correction-requested card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'We need more information to verify your identity. Please re-submit your documents to continue.'**
+  String get txtkycInfoRequiredOnHangTightBody;
+
+  /// Primary button on the KYC rejection/correction card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'Fix KYC'**
+  String get txtfixKycButton;
 
   /// No description provided for @txtpending.
   ///
@@ -3774,7 +3798,7 @@ abstract class AppLocalizations {
   /// Offline mode draft indicator banner
   ///
   /// In en, this message translates to:
-  /// **'You\'re offline — your draft is saved locally. Connect to internet to submit.'**
+  /// **'You\'re offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.'**
   String get txtofflineDraftBanner;
 
   /// Document preview modal title
@@ -3876,7 +3900,7 @@ abstract class AppLocalizations {
   /// Phone state permission tooltip
   ///
   /// In en, this message translates to:
-  /// **'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.'**
+  /// **'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.'**
   String get txtphonePermTooltip;
 
   /// Contacts permission tile name
@@ -4008,7 +4032,7 @@ abstract class AppLocalizations {
   /// Legal docs syncing indicator
   ///
   /// In en, this message translates to:
-  /// **'Syncing latest documents…'**
+  /// **'Syncing latest documentsÃ¢â‚¬Â¦'**
   String get txtsyncingLatestDocs;
 
   /// Legal agreement checkbox prefix text
@@ -4056,7 +4080,7 @@ abstract class AppLocalizations {
   /// OTP verify button loading state label
   ///
   /// In en, this message translates to:
-  /// **'Verifying…'**
+  /// **'VerifyingÃ¢â‚¬Â¦'**
   String get txtverifying;
 
   /// OTP verify button active label
@@ -4188,13 +4212,13 @@ abstract class AppLocalizations {
   /// Minimum recharge disclaimer
   ///
   /// In en, this message translates to:
-  /// **'A minimum recharge of ₹{amount} is required to proceed further.'**
+  /// **'A minimum recharge of Ã¢â€šÂ¹{amount} is required to proceed further.'**
   String txtminRechargeNotice(String amount);
 
   /// Low balance warning notice
   ///
   /// In en, this message translates to:
-  /// **'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.'**
+  /// **'Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹{amount}.'**
   String txtlowBalanceWarningNotice(int amount);
 
   /// Top up wallet button label
@@ -4320,20 +4344,20 @@ abstract class AppLocalizations {
   /// Rent debit notice with shortfall
   ///
   /// In en, this message translates to:
-  /// **'Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).'**
+  /// **'Rent of Ã¢â€šÂ¹{rent} will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹{balance} (shortfall: Ã¢â€šÂ¹{shortfall}).'**
   String txtrentDebitNoticeShortfall(
       String rent, String balance, String shortfall);
 
   /// Rent debit notice with sufficient balance
   ///
   /// In en, this message translates to:
-  /// **'Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.'**
+  /// **'Rent of Ã¢â€šÂ¹{rent} will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹{balance} is sufficient.'**
   String txtrentDebitNoticeSufficient(String rent, String balance);
 
   /// Top up button label with amount
   ///
   /// In en, this message translates to:
-  /// **'Top up ₹{amount}'**
+  /// **'Top up Ã¢â€šÂ¹{amount}'**
   String txttopUpAmountAction(String amount);
 
   /// Assigned team leader sheet title
@@ -4849,7 +4873,7 @@ abstract class AppLocalizations {
   /// Toast shown after security-deposit proof upload succeeds
   ///
   /// In en, this message translates to:
-  /// **'Security deposit proof submitted — we\'ll review it shortly.'**
+  /// **'Security deposit proof submitted Ã¢â‚¬â€ we\'ll review it shortly.'**
   String get txtsecurityDepositProofSubmitted;
 
   /// Toast shown after a regular top-up proof upload succeeds
@@ -4930,10 +4954,10 @@ abstract class AppLocalizations {
   /// **'Hang tight'**
   String get hangTightTitle;
 
-  /// HangTight hero body — 'your account is being set up'
+  /// HangTight hero body Ã¢â‚¬â€ 'your account is being set up'
   ///
   /// In en, this message translates to:
-  /// **'We\'re setting up your account.\nThis usually takes 5–10 minutes.'**
+  /// **'We\'re setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.'**
   String get hangTightSettingUpBody;
 
   /// HangTight hint that the rider will be notified when the account is active
@@ -4957,7 +4981,7 @@ abstract class AppLocalizations {
   /// No description provided for @hangTightGuarantorReplacedPendingReview.
   ///
   /// In en, this message translates to:
-  /// **'Guarantor replaced — pending review'**
+  /// **'Guarantor replaced Ã¢â‚¬â€ pending review'**
   String get hangTightGuarantorReplacedPendingReview;
 
   /// No description provided for @hangTightGuarantorUnderReview.
@@ -4987,7 +5011,7 @@ abstract class AppLocalizations {
   /// No description provided for @hangTightKycRejectedResubmit.
   ///
   /// In en, this message translates to:
-  /// **'KYC rejected — please resubmit'**
+  /// **'KYC rejected Ã¢â‚¬â€ please resubmit'**
   String get hangTightKycRejectedResubmit;
 
   /// No description provided for @hangTightKycExpired.
@@ -5074,12 +5098,6 @@ abstract class AppLocalizations {
   /// **'Enter a valid name'**
   String get txtenterValidName;
 
-  /// No description provided for @txtfixKycButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Fix KYC'**
-  String get txtfixKycButton;
-
   /// No description provided for @txtguarantorCurrentAddress.
   ///
   /// In en, this message translates to:
@@ -5128,24 +5146,6 @@ abstract class AppLocalizations {
   /// **'Your guarantor\'s details are required by RBI for verification'**
   String get txtkycGuarantorContextLine;
 
-  /// No description provided for @txtkycInfoRequiredOnHangTightBody.
-  ///
-  /// In en, this message translates to:
-  /// **'We need more information to verify your identity. Please re-submit your documents to continue.'**
-  String get txtkycInfoRequiredOnHangTightBody;
-
-  /// No description provided for @txtkycRejectionOnHangTightBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Please review the rejection remarks and re-submit your documents to continue.'**
-  String get txtkycRejectionOnHangTightBody;
-
-  /// No description provided for @txtkycRejectionOnHangTightTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'KYC rejected'**
-  String get txtkycRejectionOnHangTightTitle;
-
   /// No description provided for @txtresendOtp.
   ///
   /// In en, this message translates to:
@@ -5157,6 +5157,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SEND OTP'**
   String get txtsendOtp;
+
+  /// No description provided for @kycPushTitleApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC Approved'**
+  String get kycPushTitleApproved;
+
+  /// No description provided for @kycPushBodyApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Your documents have been verified. You can now pick up your vehicle.'**
+  String get kycPushBodyApproved;
+
+  /// No description provided for @kycPushTitleRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC Update Required'**
+  String get kycPushTitleRejected;
+
+  /// Body of the KYC rejection push notification. {reason} is the admin's rejection reason. Falls back to kycPushBodyFallback when reason is absent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your KYC was rejected: {reason}'**
+  String kycPushBodyRejected(Object reason);
+
+  /// No description provided for @kycPushBodyFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Please re-upload your documents.'**
+  String get kycPushBodyFallback;
+
+  /// No description provided for @kycPushTitleInfoRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'More information needed'**
+  String get kycPushTitleInfoRequired;
+
+  /// No description provided for @kycPushBodyInfoRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'We need a bit more information to verify your account. Please re-submit your documents to continue.'**
+  String get kycPushBodyInfoRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -1,4 +1,4 @@
-﻿{
+{
   "@@locale": "hi",
   "appTitle": "वोल्टफ्लीट",
   "common_loading": "लोड हो रहा है...",
@@ -839,6 +839,13 @@
   "txtkycRejectionOnHangTightBody": "कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।",
   "txtkycRejectionOnHangTightTitle": "KYC अस्वीकृत",
   "txtresendOtp": "फिर से भेजें",
-  "txtsendOtp": "OTP भेजें"
-}
+  "txtsendOtp": "OTP भेजें",
 
+  "kycPushTitleApproved": "KYC स्वीकृत",
+  "kycPushBodyApproved": "आपके दस्तावेज़ सत्यापित हो गए हैं। अब आप वाहन उठा सकते हैं।",
+  "kycPushTitleRejected": "KYC अपडेट आवश्यक",
+  "kycPushBodyRejected": "आपका KYC अस्वीकृत कर दिया गया: {reason}",
+  "kycPushBodyFallback": "कृपया अपने दस्तावेज़ फिर से अपलोड करें।",
+  "kycPushTitleInfoRequired": "अधिक जानकारी चाहिए",
+  "kycPushBodyInfoRequired": "आपके खाते को सत्यापित करने के लिए हमें थोड़ी और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से सबमिट करें।"
+}

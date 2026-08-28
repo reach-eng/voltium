@@ -115,16 +115,27 @@ export const notificationService = {
     }
   },
 
-  async notifyKycStatusChange(riderId: string, status: string, reason?: string) {
-    const title = status === 'APPROVED' ? 'KYC Approved! ✅' : 'KYC Update Required ⚠️';
-    const message =
-      status === 'APPROVED'
-        ? 'Your documents have been verified. You can now proceed to pick up your vehicle.'
-        : `Your KYC was rejected: ${reason || 'Please re-upload your documents.'}`;
-
-    return this.createAndSend(riderId, title, message, 'KYC_UPDATE', {
+  async notifyKycStatusChange(
+    riderId: string,
+    status: 'APPROVED' | 'REJECTED' | 'INFO_REQUESTED',
+    reason?: string,
+  ) {
+    // P2-12 (PR-G, 2026-08-28 workflows deferred): don't pre-format
+    // the title/message on the server. Send the discriminator +
+    // structured data; the Flutter client renders the localized
+    // string from its ARB bundle (kycPushTitleApproved /
+    // kycPushBodyApproved, etc.). This is the only way a Hindi
+    // rider sees the KYC push in Hindi — the previous shape
+    // hard-coded English text in the FCM payload.
+    //
+    // The empty `title` and `message` here mean the FCM
+    // `notification` block is empty; the Flutter side reads the
+    // FCM `data` block (which carries the discriminator) and
+    // renders the LOCAL notification with the localized strings.
+    return this.createAndSend(riderId, '', '', 'KYC_UPDATE', {
       screen: 'KYC_STATUS',
-      status,
+      type: `KYC_${status}`, // KYC_APPROVED | KYC_REJECTED | KYC_INFO_REQUESTED
+      ...(reason ? { reason } : {}),
     });
   },
 

@@ -395,15 +395,15 @@
   },
   "wallet_filterRent": "Rent",
   "@wallet_filterRent": {
-    "description": "Transaction-history filter chip — debits whose purpose is RENTAL"
+    "description": "Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is RENTAL"
   },
   "wallet_filterSecurity": "Security",
   "@wallet_filterSecurity": {
-    "description": "Transaction-history filter chip — debits whose purpose is SECURITY_DEPOSIT"
+    "description": "Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is SECURITY_DEPOSIT"
   },
   "wallet_filterDeduction": "Deduction",
   "@wallet_filterDeduction": {
-    "description": "Transaction-history filter chip — non-rental, non-deposit debits"
+    "description": "Transaction-history filter chip Ã¢â‚¬â€ non-rental, non-deposit debits"
   },
   "wallet_statusRefundable": "Refundable",
   "@wallet_statusRefundable": {
@@ -856,15 +856,15 @@
   },
   "txttopUpAmountAddedToWallet": "Top Up Amount (Added to Wallet)",
   "@txttopUpAmountAddedToWallet": {
-    "description": "Receipt line label — the top-up amount that gets added to the rider's wallet balance"
+    "description": "Receipt line label Ã¢â‚¬â€ the top-up amount that gets added to the rider's wallet balance"
   },
   "txttotalPayable": "Total Payable",
   "@txttotalPayable": {
-    "description": "Receipt line label — the final total the rider pays (top-up + plan fee + deposit)"
+    "description": "Receipt line label Ã¢â‚¬â€ the final total the rider pays (top-up + plan fee + deposit)"
   },
   "txtchangeLockPassword": "Change Lock Password",
   "@txtchangeLockPassword": {
-    "description": "Settings → tile + dialog title for the lock-password verification flow"
+    "description": "Settings Ã¢â€ â€™ tile + dialog title for the lock-password verification flow"
   },
   "txtlockPassword": "Lock Password",
   "@txtlockPassword": {
@@ -965,7 +965,7 @@
   },
   "txtguarantorSkipBody": "Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You'll be charged the difference when you start your rental.",
   "@txtguarantorSkipBody": {
-    "description": "Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.",
+    "description": "Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. 'Ã¢â€šÂ¹1,000'.",
     "placeholders": {
       "amount": { "type": "String" }
     }
@@ -974,7 +974,7 @@
   "@txtguarantorSkipSourceAdmin": {
     "description": "Sub-label on the skip dialog when the deposit amount came from the admin panel"
   },
-  "txtguarantorSkipSourceFallback": "Default — admin has not set a value yet",
+  "txtguarantorSkipSourceFallback": "Default Ã¢â‚¬â€ admin has not set a value yet",
   "@txtguarantorSkipSourceFallback": {
     "description": "Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used"
   },
@@ -1012,7 +1012,7 @@
   "@txtloginEnterButton": {
     "description": "Login screen primary submit button (sends OTP)"
   },
-  "txtloginSendingButton": "Sending…",
+  "txtloginSendingButton": "SendingÃ¢â‚¬Â¦",
   "@txtloginSendingButton": {
     "description": "Login screen submit-button label while the OTP request is in flight"
   },
@@ -1180,7 +1180,7 @@
   "txtproofPayViaUpi": "Pay via UPI",
   "txtproofInstantPaymentBreakdown": "Instant Payment Breakdown",
   "txtproofPointsToActiveGateway": "Points to current active payment gateway",
-  "txtproofTopUpWillBeInstant": "Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.",
+  "txtproofTopUpWillBeInstant": "Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹{fee}) gateway fee will be added to your top up amount.",
   "@txtproofTopUpWillBeInstant": {
     "placeholders": {
       "fee": {
@@ -1197,8 +1197,8 @@
       }
     }
   },
-  "txtproofZeroGatewayFee": "₹0 (Paid by Voltium)",
-  "txtproofTopUpWillBeInstantCovered": "Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
+  "txtproofZeroGatewayFee": "Ã¢â€šÂ¹0 (Paid by Voltium)",
+  "txtproofTopUpWillBeInstantCovered": "Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).",
   "txtchangePhoto": "Change Photo",
   "txttapToUploadPhoto": "Tap to upload photo",
   "txtcameraOrGallery": "Camera or gallery",
@@ -1273,6 +1273,14 @@
   "txtnoVehiclesMatchYourSearch": "No vehicles match your search",
   "txtkycRejected": "KYC REJECTED",
   "txtkycApproved": "KYC Approved",
+  "txtkycRejectionOnHangTightTitle": "KYC rejected",
+  "@txtkycRejectionOnHangTightTitle": { "description": "Title of the KYC rejection/correction card on the Hang Tight screen" },
+  "txtkycRejectionOnHangTightBody": "Please review the rejection remarks and re-submit your documents to continue.",
+  "@txtkycRejectionOnHangTightBody": { "description": "Body of the KYC rejection card on the Hang Tight screen" },
+  "txtkycInfoRequiredOnHangTightBody": "We need more information to verify your identity. Please re-submit your documents to continue.",
+  "@txtkycInfoRequiredOnHangTightBody": { "description": "Body of the KYC correction-requested card on the Hang Tight screen" },
+  "txtfixKycButton": "Fix KYC",
+  "@txtfixKycButton": { "description": "Primary button on the KYC rejection/correction card on the Hang Tight screen" },
   "txtpending": "PENDING",
   "txtaccountAction": "Account Action",
   "txtrequired": "Required",
@@ -1480,7 +1488,7 @@
   "@txtensureAllDetailsAccurate": { "description": "KYC confirmation disclaimer" },
   "txtselfieLiveCameraHint": "Live camera capture required for KYC verification",
   "@txtselfieLiveCameraHint": { "description": "Live camera hint for rider selfie" },
-  "txtofflineDraftBanner": "You're offline — your draft is saved locally. Connect to internet to submit.",
+  "txtofflineDraftBanner": "You're offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.",
   "@txtofflineDraftBanner": { "description": "Offline mode draft indicator banner" },
   "txtdocumentPreview": "Document Preview",
   "@txtdocumentPreview": { "description": "Document preview modal title" },
@@ -1514,7 +1522,7 @@
   "@txtphonePermName": { "description": "Phone state permission tile name" },
   "txtphonePermDesc": "Phone state (for safety call detection)",
   "@txtphonePermDesc": { "description": "Phone state permission tile description" },
-  "txtphonePermTooltip": "Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls — it never reads call history or contacts.",
+  "txtphonePermTooltip": "Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.",
   "@txtphonePermTooltip": { "description": "Phone state permission tooltip" },
   "txtcontactsPermName": "Contacts",
   "@txtcontactsPermName": { "description": "Contacts permission tile name" },
@@ -1558,7 +1566,7 @@
   "@txtimReady": { "description": "KYC preflight ready button" },
   "txtillDoThisLater": "I'll do this later",
   "@txtillDoThisLater": { "description": "KYC preflight skip button" },
-  "txtsyncingLatestDocs": "Syncing latest documents…",
+  "txtsyncingLatestDocs": "Syncing latest documentsÃ¢â‚¬Â¦",
   "@txtsyncingLatestDocs": { "description": "Legal docs syncing indicator" },
   "txtlegalAgreeCheckboxPrefix": "I have read and agree to the ",
   "@txtlegalAgreeCheckboxPrefix": { "description": "Legal agreement checkbox prefix text" },
@@ -1581,7 +1589,7 @@
       }
     }
   },
-  "txtverifying": "Verifying…",
+  "txtverifying": "VerifyingÃ¢â‚¬Â¦",
   "@txtverifying": { "description": "OTP verify button loading state label" },
   "txtverifyAndProceed": "Verify & Proceed",
   "@txtverifyAndProceed": { "description": "OTP verify button active label" },
@@ -1631,12 +1639,12 @@
     "description": "Streak progress label",
     "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
   },
-  "txtminRechargeNotice": "A minimum recharge of ₹{amount} is required to proceed further.",
+  "txtminRechargeNotice": "A minimum recharge of Ã¢â€šÂ¹{amount} is required to proceed further.",
   "@txtminRechargeNotice": {
     "description": "Minimum recharge disclaimer",
     "placeholders": { "amount": { "type": "String" } }
   },
-  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.",
+  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹{amount}.",
   "@txtlowBalanceWarningNotice": {
     "description": "Low balance warning notice",
     "placeholders": { "amount": { "type": "int" } }
@@ -1690,7 +1698,7 @@
   "@txtupcomingRentDebit": { "description": "Upcoming rent debit header" },
   "txttopUpBeforeTomorrow6am": "Top up before tomorrow 6 AM",
   "@txttopUpBeforeTomorrow6am": { "description": "Rent prompt card title" },
-  "txtrentDebitNoticeShortfall": "Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).",
+  "txtrentDebitNoticeShortfall": "Rent of Ã¢â€šÂ¹{rent} will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹{balance} (shortfall: Ã¢â€šÂ¹{shortfall}).",
   "@txtrentDebitNoticeShortfall": {
     "description": "Rent debit notice with shortfall",
     "placeholders": {
@@ -1699,7 +1707,7 @@
       "shortfall": { "type": "String" }
     }
   },
-  "txtrentDebitNoticeSufficient": "Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.",
+  "txtrentDebitNoticeSufficient": "Rent of Ã¢â€šÂ¹{rent} will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹{balance} is sufficient.",
   "@txtrentDebitNoticeSufficient": {
     "description": "Rent debit notice with sufficient balance",
     "placeholders": {
@@ -1707,7 +1715,7 @@
       "balance": { "type": "String" }
     }
   },
-  "txttopUpAmountAction": "Top up ₹{amount}",
+  "txttopUpAmountAction": "Top up Ã¢â€šÂ¹{amount}",
   "@txttopUpAmountAction": {
     "description": "Top up button label with amount",
     "placeholders": { "amount": { "type": "String" } }
@@ -1903,7 +1911,7 @@
   "@txtriderSessionNotReady": { "description": "Toast when a top-up / submission is attempted before the rider is fully initialized" },
   "txtsessionExpiredPleaseLogIn": "Your session expired. Please log in again to continue.",
   "@txtsessionExpiredPleaseLogIn": { "description": "Toast shown when the API returns 401 mid-session" },
-  "txtsecurityDepositProofSubmitted": "Security deposit proof submitted — we'll review it shortly.",
+  "txtsecurityDepositProofSubmitted": "Security deposit proof submitted Ã¢â‚¬â€ we'll review it shortly.",
   "@txtsecurityDepositProofSubmitted": { "description": "Toast shown after security-deposit proof upload succeeds" },
   "txttopUpProofSubmitted": "Top up receipt submitted successfully!",
   "@txttopUpProofSubmitted": { "description": "Toast shown after a regular top-up proof upload succeeds" },
@@ -1931,18 +1939,18 @@
   "@hangTightPickupConfirmation": { "description": "HangTight status-list row: rider has not yet completed pickup" },
   "hangTightTitle": "Hang tight",
   "@hangTightTitle": { "description": "HangTight hero title" },
-  "hangTightSettingUpBody": "We're setting up your account.\nThis usually takes 5–10 minutes.",
-  "@hangTightSettingUpBody": { "description": "HangTight hero body — 'your account is being set up'" },
+  "hangTightSettingUpBody": "We're setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.",
+  "@hangTightSettingUpBody": { "description": "HangTight hero body Ã¢â‚¬â€ 'your account is being set up'" },
   "hangTightNotificationHint": "We'll send a notification when your account is active. You don't need to keep this open.",
   "@hangTightNotificationHint": { "description": "HangTight hint that the rider will be notified when the account is active" },
   "hangTightGuarantorApproved": "Guarantor approved",
   "hangTightGuarantorNeedsAttention": "Guarantor needs attention",
-  "hangTightGuarantorReplacedPendingReview": "Guarantor replaced — pending review",
+  "hangTightGuarantorReplacedPendingReview": "Guarantor replaced Ã¢â‚¬â€ pending review",
   "hangTightGuarantorUnderReview": "Guarantor under review",
   "hangTightPlanSelection": "Plan selection",
   "hangTightPlanNeedsAttention": "Plan needs attention",
   "hangTightKycApproved": "KYC approved",
-  "hangTightKycRejectedResubmit": "KYC rejected — please resubmit",
+  "hangTightKycRejectedResubmit": "KYC rejected Ã¢â‚¬â€ please resubmit",
   "hangTightKycExpired": "KYC expired",
   "hangTightKycNeedsMoreInfo": "KYC needs more info",
   "hangTightKycUnderReview": "KYC under review",
@@ -1971,5 +1979,16 @@
   "txtkycRejectionOnHangTightBody": "Please review the rejection remarks and re-submit your documents to continue.",
   "txtkycRejectionOnHangTightTitle": "KYC rejected",
   "txtresendOtp": "RESEND",
-  "txtsendOtp": "SEND OTP"
+  "txtsendOtp": "SEND OTP",
+
+  "kycPushTitleApproved": "KYC Approved",
+  "kycPushBodyApproved": "Your documents have been verified. You can now pick up your vehicle.",
+  "kycPushTitleRejected": "KYC Update Required",
+  "kycPushBodyRejected": "Your KYC was rejected: {reason}",
+  "@kycPushBodyRejected": {
+    "description": "Body of the KYC rejection push notification. {reason} is the admin's rejection reason. Falls back to kycPushBodyFallback when reason is absent."
+  },
+  "kycPushBodyFallback": "Please re-upload your documents.",
+  "kycPushTitleInfoRequired": "More information needed",
+  "kycPushBodyInfoRequired": "We need a bit more information to verify your account. Please re-submit your documents to continue."
 }

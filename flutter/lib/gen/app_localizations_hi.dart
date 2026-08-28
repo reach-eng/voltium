@@ -1744,6 +1744,20 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtkycApproved => 'KYC स्वीकृत';
 
   @override
+  String get txtkycRejectionOnHangTightTitle => 'KYC अस्वीकृत';
+
+  @override
+  String get txtkycRejectionOnHangTightBody =>
+      'कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।';
+
+  @override
+  String get txtkycInfoRequiredOnHangTightBody =>
+      'हमें आपकी पहचान सत्यापित करने के लिए और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से जमा करें।';
+
+  @override
+  String get txtfixKycButton => 'KYC ठीक करें';
+
+  @override
   String get txtpending => 'लंबित';
 
   @override
@@ -2711,9 +2725,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtenterValidName => 'मान्य नाम दर्ज करें';
 
   @override
-  String get txtfixKycButton => 'KYC ठीक करें';
-
-  @override
   String get txtguarantorCurrentAddress => 'वर्तमान पता';
 
   @override
@@ -2740,19 +2751,33 @@ class AppLocalizationsHi extends AppLocalizations {
       'RBI सत्यापन के लिए आपके गारंटर के विवरण आवश्यक हैं';
 
   @override
-  String get txtkycInfoRequiredOnHangTightBody =>
-      'हमें आपकी पहचान सत्यापित करने के लिए और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से जमा करें।';
-
-  @override
-  String get txtkycRejectionOnHangTightBody =>
-      'कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।';
-
-  @override
-  String get txtkycRejectionOnHangTightTitle => 'KYC अस्वीकृत';
-
-  @override
   String get txtresendOtp => 'फिर से भेजें';
 
   @override
   String get txtsendOtp => 'OTP भेजें';
+
+  @override
+  String get kycPushTitleApproved => 'KYC स्वीकृत';
+
+  @override
+  String get kycPushBodyApproved =>
+      'आपके दस्तावेज़ सत्यापित हो गए हैं। अब आप वाहन उठा सकते हैं।';
+
+  @override
+  String get kycPushTitleRejected => 'KYC अपडेट आवश्यक';
+
+  @override
+  String kycPushBodyRejected(Object reason) {
+    return 'आपका KYC अस्वीकृत कर दिया गया: $reason';
+  }
+
+  @override
+  String get kycPushBodyFallback => 'कृपया अपने दस्तावेज़ फिर से अपलोड करें।';
+
+  @override
+  String get kycPushTitleInfoRequired => 'अधिक जानकारी चाहिए';
+
+  @override
+  String get kycPushBodyInfoRequired =>
+      'आपके खाते को सत्यापित करने के लिए हमें थोड़ी और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से सबमिट करें।';
 }
