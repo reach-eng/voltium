@@ -35,7 +35,17 @@ class VoltiumTextField extends StatelessWidget {
     required this.controller,
     this.validator,
     this.keyboardType = TextInputType.text,
-    this.textCapitalization = TextCapitalization.sentences,
+    // PR-I: default changed from TextCapitalization.sentences to
+    // TextCapitalization.none. The sentences default silently
+    // auto-capitalised "pan" → "Pan", which broke PAN regex
+    // validation in callers that pass a numeric/identifier
+    // value (Aadhaar, IFSC, vehicle number, etc.). The new
+    // default is the safe choice — fields that need
+    // sentence/word capitalization (free-text fields like
+    // address or proper-noun name fields) must pass an
+    // explicit textCapitalization. All current production
+    // call sites already do.
+    this.textCapitalization = TextCapitalization.none,
     this.maxLength,
     this.helperText,
     this.maxLines = 1,
