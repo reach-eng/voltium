@@ -35,7 +35,10 @@ void main() {
       expect(find.text('PHONE NUMBER'), findsOneWidget);
       expect(find.text('+91 98765 43210'), findsOneWidget);
       expect(find.byIcon(Icons.phone), findsOneWidget);
-      expect(find.byKey(const Key('sendOtpButton')), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('phone_sendOtpButton')),
+        findsNothing,
+      );
     });
 
     testWidgets(
@@ -58,7 +61,9 @@ void main() {
       );
 
       expect(find.text('GUARANTOR PHONE NUMBER'), findsOneWidget);
-      final sendBtn = find.byKey(const Key('sendOtpButton'));
+      final sendBtn = find.byKey(
+        const ValueKey<String>('guarantorPhoneField_sendOtpButton'),
+      );
       expect(sendBtn, findsOneWidget);
 
       await tester.tap(sendBtn);
@@ -82,8 +87,9 @@ void main() {
         ),
       );
 
-      final button =
-          tester.widget<ElevatedButton>(find.byKey(const Key('sendOtpButton')));
+      final button = tester.widget<ElevatedButton>(
+        find.byKey(const ValueKey<String>('guarantorPhoneField_sendOtpButton')),
+      );
       expect(button.onPressed, isNull);
     });
 
@@ -126,8 +132,9 @@ void main() {
       );
 
       expect(find.text('25s'), findsOneWidget);
-      final button =
-          tester.widget<ElevatedButton>(find.byKey(const Key('sendOtpButton')));
+      final button = tester.widget<ElevatedButton>(
+        find.byKey(const ValueKey<String>('guarantorPhoneField_sendOtpButton')),
+      );
       expect(button.onPressed, isNull);
     });
 
@@ -152,7 +159,9 @@ void main() {
       );
 
       expect(find.text('CustomOtpBoxesWidget'), findsOneWidget);
-      final verifyBtn = find.byKey(const Key('verifyOtpButton'));
+      final verifyBtn = find.byKey(
+        const ValueKey<String>('guarantorPhoneField_verifyOtpButton'),
+      );
       expect(verifyBtn, findsOneWidget);
 
       await tester.tap(verifyBtn);
@@ -198,8 +207,14 @@ void main() {
 
       expect(find.text('Phone Number Verified'), findsOneWidget);
       expect(find.byIcon(Icons.check_circle), findsOneWidget);
-      expect(find.byKey(const Key('sendOtpButton')), findsNothing);
-      expect(find.byKey(const Key('verifyOtpButton')), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('phone_sendOtpButton')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('phone_verifyOtpButton')),
+        findsNothing,
+      );
     });
   });
 }

@@ -184,7 +184,12 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const Key('sendOtpButton')), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('guarantorPhoneField_sendOtpButton'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('SEND OTP'), findsOneWidget);
     });
 
@@ -212,7 +217,12 @@ void main() {
       );
 
       expect(find.text('OtpBoxesSlot'), findsOneWidget);
-      expect(find.byKey(const Key('verifyOtpButton')), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('guarantorPhoneField_verifyOtpButton'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('VERIFY OTP'), findsOneWidget);
     });
 

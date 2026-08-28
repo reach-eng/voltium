@@ -12,6 +12,18 @@ import '_voltium_field_label.dart';
 /// 1. Read-only display mode (for rider phone)
 /// 2. Interactive OTP verification mode (for guarantor phone)
 class VoltiumPhoneField extends StatelessWidget {
+  /// Extract a stable string name from a [Key] for deriving child
+  /// widget keys. `Key.toString()` for `const Key('foo')` is
+  /// `[<'foo'>]`, so we strip the `[<'...'>]` wrapper. Returns 'phone'
+  /// if [key] is null or the toString doesn't match the expected
+  /// pattern (e.g. a [UniqueKey]).
+  static String _keyName(Key? key) {
+    if (key == null) return 'phone';
+    final raw = key.toString();
+    final match = RegExp(r"^\[<'(.+?)'>\]$").firstMatch(raw);
+    return match?.group(1) ?? 'phone';
+  }
+
   final String label;
   final bool isReadOnly;
   final String? readOnlyDisplay;
@@ -140,7 +152,18 @@ class VoltiumPhoneField extends StatelessWidget {
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
-                  key: const Key('sendOtpButton'),
+                  // Derive the key from [fieldKey] so two
+                  // [VoltiumPhoneField] instances on the same
+                  // screen don't collide on the same hardcoded
+                  // 'sendOtpButton' key. The previous constant key
+                  // made E2E selectors ambiguous — find.byKey
+                  // matched multiple widgets and only returned the
+                  // first. Fall back to 'phone' for tests that pass
+                  // no [fieldKey]. Key.toString() for a `const Key('x')`
+                  // is `[<'x'>]`, so we strip the `[<'...'>]` wrapper.
+                  key: ValueKey<String>(
+                    '${_keyName(fieldKey)}_sendOtpButton',
+                  ),
                   onPressed: canSendOtp ? onSendOtp : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.info,
@@ -208,7 +231,11 @@ class VoltiumPhoneField extends StatelessWidget {
                 child: SizedBox(
                   height: 48,
                   child: ElevatedButton(
-                    key: const Key('verifyOtpButton'),
+                    // See [sendOtpButton] above — derive from
+                    // [fieldKey] for uniqueness.
+                    key: ValueKey<String>(
+                      '${_keyName(fieldKey)}_verifyOtpButton',
+                    ),
                     onPressed: isVerifyingOtp ? null : onVerifyOtp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
