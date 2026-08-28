@@ -164,4 +164,23 @@ describe('Notification Dispatch Job', () => {
     expect(rows[0].title).toBe('Top-up');
     expect(rows[0].message).toBe('₹500 added');
   });
+
+  // T-95 (PR-E, 2026-08-28 workflows deferred): when
+  // notificationService.notifyKycStatusChange rethrows (5xx /
+  // network transient error), the dispatcher must let the
+  // rethrow propagate so the job-queue layer's backoff can
+  // engage. The OutboxEvent must NOT be acked as delivered.
+  it('T-95: lets notifyKycStatusChange rethrow propagate (5xx transient)', async () => {
+    const riderId = uuidv4();
+    (notificationService.notifyKycStatusChange as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      Object.assign(new Error('Service Unavailable'), { code: 503 }),
+    );
+
+    await expect(
+      notificationDispatchJob.process({
+        id: '9',
+        payload: { type: 'KYC_APPROVED', riderId },
+      }),
+    ).rejects.toThrow('Service Unavailable');
+  });
 });

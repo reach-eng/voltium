@@ -55,33 +55,63 @@ export const notificationService = {
 
       return { success: true, warning: 'Rider has no FCM token' };
     } catch (error) {
-      logger.error('[NotificationService] Error:', error);
-      // N-2 (PR-C, 2026-08-28 workflows polish): surface FCM delivery
-      // failures to PostHog so the on-call engineer can see the rate
-      // of dead-letter / transient errors without grepping logs.
-      // Event name: `fcm_push_error`. The `posthog.capture` helper
-      // already scrubs PII keys (phone, email, otp, etc.) and respects
-      // the rate limiter, so this is safe to fire on every failure.
+      // T-95 (PR-E, 2026-08-28 workflows deferred): the workflows
+      // audit's T-95 was supposed to add a 4xx-vs-transient
+      // classification to createAndSend. The audit claimed it
+      // shipped in PR-5 (2026-08-23), but the code shows only the
+      // duplicate-row removal was applied — the retry-contract
+      // half was missed. This block closes the gap.
       //
-      // TODO(workflows-audit T-95): once the 4xx-vs-transient
-      // classification is in place in createAndSend, the `status`
-      // property here will differentiate `fcm_push_dead_lettered`
-      // (4xx) from `fcm_push_transient_error` (5xx / network).
-      // For now both go into a single bucket.
+      // 4xx (Firebase Admin: bad token, unregistered device, invalid
+      // payload) is permanent: the token won't get any better;
+      // acking without retry is correct. The dispatcher's
+      // job-queue layer must see the failure (so it can update
+      // the audit trail) but must NOT requeue.
+      //
+      // 5xx and network errors are transient: re-throw so the
+      // job-queue backoff engages. The OutboxEvent stays
+      // PENDING/PROCESSING and will be retried on the next poll
+      // cycle.
+      const err = error as { code?: string | number; status?: number; message?: string };
+      const status = err?.code ?? err?.status;
+      const isPermanent =
+        typeof status === 'number' && status >= 400 && status < 500;
+
+      if (isPermanent) {
+        logger.warn(
+          '[NotificationService] FCM 4xx — permanent, acking without retry',
+          { riderId, type, status },
+        );
+        posthog.capture(
+          'fcm_push_dead_lettered',
+          {
+            riderId,
+            title,
+            type,
+            status,
+            error: err?.message ?? String(error),
+          },
+          riderId,
+        );
+        return { success: false, error, permanent: true };
+      }
+
+      logger.error(
+        '[NotificationService] FCM transient error — rethrowing for backoff',
+        { riderId, type, status, error: err?.message },
+      );
       posthog.capture(
-        'fcm_push_error',
+        'fcm_push_transient_error',
         {
           riderId,
           title,
           type,
-          status: (error as { code?: string | number; status?: number })?.code
-            ?? (error as { status?: number })?.status
-            ?? 'unknown',
-          error: (error as Error)?.message ?? String(error),
+          status: status ?? 'unknown',
+          error: err?.message ?? String(error),
         },
         riderId,
       );
-      return { success: false, error };
+      throw error;
     }
   },
 

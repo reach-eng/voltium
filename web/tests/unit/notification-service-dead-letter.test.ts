@@ -1,21 +1,15 @@
 /**
- * N-2 (PR-C, 2026-08-28 workflows polish): when an FCM push hits an
- * error, the notification service should surface the failure to
- * PostHog as a `fcm_push_error` event. Without this, on-call
- * engineers have to grep logs to find out which notifications
- * never landed.
+ * N-2 (PR-C) + T-95 (PR-E, 2026-08-28 workflows deferred): FCM push
+ * errors are surfaced to PostHog with the right event name based
+ * on the 4xx-vs-transient classification.
  *
- * The T-95 work (4xx-vs-transient classification) is not yet
- * shipped, so the current implementation fires a single event
- * name for both dead-letter (4xx) and transient (5xx / network)
- * errors. Once T-95 lands, this can split into two event names.
+ *  - 4xx → `fcm_push_dead_lettered` + `permanent: true` (ack, no retry)
+ *  - 5xx → `fcm_push_transient_error` + rethrow (job-queue backoff)
+ *  - network (no status code) → `fcm_push_transient_error` + rethrow
  *
- * This is a source-grep test. The real Prisma client is wired in
- * via `db.ts` and the FCM helper is wired in via `fcm.ts`, both
- * of which would require a deeper mock harness (DB + Firebase
- * Admin) to exercise at runtime. Source-grep is sufficient for
- * the user-visible behavior: a `posthog.capture` call in the
- * catch block.
+ * The previous source-grep test (PR-C) only verified the
+ * `fcm_push_error` event name. The T-95 fix splits the bucket
+ * into the two real categories.
  */
 import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
@@ -37,7 +31,7 @@ function extractCreateAndSendCatchBlock(source: string): string {
   // braces that confuse a simple regex.
   const catchStart = source.lastIndexOf('} catch (error) {');
   if (catchStart === -1) return '';
-  const blockStart = catchStart + '} '.length; // start of the `catch (...)` clause
+  const blockStart = catchStart + '} '.length;
   const openBrace = source.indexOf('{', blockStart);
   if (openBrace === -1) return '';
   let depth = 0;
@@ -54,28 +48,39 @@ function extractCreateAndSendCatchBlock(source: string): string {
   return '';
 }
 
-describe('notification service dead-letter counter (N-2)', () => {
+describe('notification service dead-letter / transient classification (N-2 + T-95)', () => {
   const source = fs.readFileSync(NOTIF_PATH, 'utf8');
   const catchBlock = extractCreateAndSendCatchBlock(source);
 
-  it('createAndSend has a catch block that fires PostHog', () => {
+  it('createAndSend has a catch block that classifies the FCM error', () => {
     expect(catchBlock).toBeTruthy();
+    // T-95: 4xx-vs-transient gate.
+    expect(catchBlock).toMatch(/isPermanent/);
+    // The PostHog call is still here, but the event name split:
     expect(catchBlock).toMatch(/posthog\.capture\(/);
   });
 
-  it('emits the fcm_push_error event with the right properties', () => {
-    expect(catchBlock).toMatch(/['"]fcm_push_error['"]/);
-    // Each property is a separate match — they live in an object literal
-    // that may span many lines, so a single non-greedy match across the
-    // call is unreliable. We just verify the names are present.
-    expect(catchBlock).toMatch(/riderId/);
-    expect(catchBlock).toMatch(/title/);
-    // The object uses shorthand `type,` not `type: type,`, so match
-    // on a comma-followed line (i.e. it's the last property before
-    // the closing brace of the object literal).
-    expect(catchBlock).toMatch(/type,/);
-    expect(catchBlock).toMatch(/status:/);
-    expect(catchBlock).toMatch(/error:/);
+  it('classifies 4xx as permanent (dead-lettered) and returns permanent: true', () => {
+    // The 4xx branch should fire `fcm_push_dead_lettered` and
+    // return `{ success: false, error, permanent: true }`.
+    expect(catchBlock).toMatch(/['"]fcm_push_dead_lettered['"]/);
+    // The return value carries the `permanent: true` flag.
+    expect(catchBlock).toMatch(/permanent:\s*true/);
+  });
+
+  it('classifies 5xx and network as transient and rethrows', () => {
+    // The 5xx / non-4xx branch should fire `fcm_push_transient_error`
+    // and re-throw the error.
+    expect(catchBlock).toMatch(/['"]fcm_push_transient_error['"]/);
+    // The throw statement is present.
+    expect(catchBlock).toMatch(/throw\s+error/);
+  });
+
+  it('does NOT use the old single-bucket event name (fcm_push_error)', () => {
+    // The PR-C event name was `fcm_push_error`. The T-95 fix
+    // splits into the two real categories; the old name should
+    // not appear in the catch block.
+    expect(catchBlock).not.toMatch(/['"]fcm_push_error['"]/);
   });
 
   it('imports posthog from the canonical client', () => {
