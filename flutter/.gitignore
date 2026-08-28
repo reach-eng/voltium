@@ -49,3 +49,14 @@ app.*.map.json
 /android/app/release
 
 coverage/
+
+# ── Hygiene: local agent / l10n-sweep scratch output (D10) ────────────────
+# Catch-all for the *.txt / *.json scratch output the l10n-sweep and
+# golden-fix loops leave in this directory (debug.py,
+# find_missing_keys.py, group_failures.py, test_v*.txt,
+# test_pre_commit.txt, etc.).
+*.txt
+*.json
+debug.py
+find_missing_keys.py
+group_failures.py
