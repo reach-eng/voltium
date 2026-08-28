@@ -37,47 +37,55 @@ class VoltiumDateField extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        buildVoltiumFieldLabel(context, label.toUpperCase()),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: AbsorbPointer(
-            child: TextFormField(
-              key: fieldKey,
-              controller: controller,
-              readOnly: true,
-              validator: validator,
-              style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: GoogleFonts.plusJakartaSans(
-                  color: colors.onSurfaceMuted.withValues(alpha: 0.7),
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor:
-                    enabled ? colors.iconBackground : colors.outlineVariant,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                border: VoltiumFieldBorders.normal(colors),
-                enabledBorder: VoltiumFieldBorders.enabled(colors),
-                focusedBorder: VoltiumFieldBorders.focused(colors),
-                errorBorder: VoltiumFieldBorders.error(colors),
-                focusedErrorBorder: VoltiumFieldBorders.focusedError(colors),
-                suffixIcon: Icon(
-                  Icons.calendar_today,
-                  size: 18,
-                  color: enabled ? AppColors.primary : colors.onSurfaceMuted,
+    // Wrap in [Semantics] so screen readers announce the date
+    // field as a single labeled text field. textField: true tells
+    // the screen reader this is an editable text input.
+    return Semantics(
+      textField: true,
+      label: label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildVoltiumFieldLabel(context, label.toUpperCase()),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: AbsorbPointer(
+              child: TextFormField(
+                key: fieldKey,
+                controller: controller,
+                readOnly: true,
+                validator: validator,
+                style:
+                    AppTypography.bodyMedium.copyWith(color: colors.onSurface),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: GoogleFonts.plusJakartaSans(
+                    color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
+                  filled: true,
+                  fillColor:
+                      enabled ? colors.iconBackground : colors.outlineVariant,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: VoltiumFieldBorders.normal(colors),
+                  enabledBorder: VoltiumFieldBorders.enabled(colors),
+                  focusedBorder: VoltiumFieldBorders.focused(colors),
+                  errorBorder: VoltiumFieldBorders.error(colors),
+                  focusedErrorBorder: VoltiumFieldBorders.focusedError(colors),
+                  suffixIcon: Icon(
+                    Icons.calendar_today,
+                    size: 18,
+                    color: enabled ? AppColors.primary : colors.onSurfaceMuted,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -55,77 +55,87 @@ class VoltiumTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        buildVoltiumFieldLabel(context, label.toUpperCase()),
-        const SizedBox(height: 6),
-        TextFormField(
-          key: fieldKey,
-          controller: controller,
-          validator: validator,
-          // readOnly is independent of enabled: a field can be enabled
-          // but not editable (e.g. primary phone shows a lock icon).
-          // If readOnly is true, the user can still focus the field to
-          // see the helper text but cannot change the value.
-          readOnly: readOnly,
-          keyboardType: keyboardType,
-          textCapitalization: textCapitalization,
-          maxLength: maxLength,
-          maxLines: maxLines,
-          minLines: minLines,
-          textInputAction: textInputAction,
-          onChanged: onChanged,
-          inputFormatters: inputFormatters,
-          autofillHints: autofillHints,
-          style: AppTypography.bodyMedium.copyWith(
-            color: enabled
-                ? (readOnly ? colors.onSurfaceMuted : colors.onSurface)
-                : colors.onSurfaceMuted,
-          ),
-          buildCounter: maxLength != null
-              ? (
-                  context, {
-                  required currentLength,
-                  required isFocused,
-                  maxLength,
-                }) {
-                  final isLimit = currentLength >= (maxLength ?? 0);
-                  return Text(
-                    '$currentLength/$maxLength',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: isLimit ? AppColors.error : colors.onSurfaceMuted,
-                      fontSize: 11,
-                    ),
-                  );
-                }
-              : null,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.plusJakartaSans(
-              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
-              fontSize: 14,
+    // Wrap in [Semantics] so screen readers (TalkBack, VoiceOver)
+    // announce the field as a single labeled text field rather
+    // than reading each sub-widget individually. textField: true
+    // tells the screen reader this is an editable text input.
+    return Semantics(
+      textField: true,
+      label: label,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildVoltiumFieldLabel(context, label.toUpperCase()),
+          const SizedBox(height: 6),
+          TextFormField(
+            key: fieldKey,
+            controller: controller,
+            validator: validator,
+            // readOnly is independent of enabled: a field can be enabled
+            // but not editable (e.g. primary phone shows a lock icon).
+            // If readOnly is true, the user can still focus the field to
+            // see the helper text but cannot change the value.
+            readOnly: readOnly,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            maxLength: maxLength,
+            maxLines: maxLines,
+            minLines: minLines,
+            textInputAction: textInputAction,
+            onChanged: onChanged,
+            inputFormatters: inputFormatters,
+            autofillHints: autofillHints,
+            style: AppTypography.bodyMedium.copyWith(
+              color: enabled
+                  ? (readOnly ? colors.onSurfaceMuted : colors.onSurface)
+                  : colors.onSurfaceMuted,
             ),
-            prefixIcon: prefixIcon,
-            suffixIcon: suffixIcon,
-            helperText: helperText,
-            helperStyle: AppTypography.bodySmall.copyWith(
-              color: colors.onSurfaceMuted,
-              fontSize: 12,
+            buildCounter: maxLength != null
+                ? (
+                    context, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) {
+                    final isLimit = currentLength >= (maxLength ?? 0);
+                    return Text(
+                      '$currentLength/$maxLength',
+                      style: AppTypography.labelSmall.copyWith(
+                        color:
+                            isLimit ? AppColors.error : colors.onSurfaceMuted,
+                        fontSize: 11,
+                      ),
+                    );
+                  }
+                : null,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.plusJakartaSans(
+                color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                fontSize: 14,
+              ),
+              prefixIcon: prefixIcon,
+              suffixIcon: suffixIcon,
+              helperText: helperText,
+              helperStyle: AppTypography.bodySmall.copyWith(
+                color: colors.onSurfaceMuted,
+                fontSize: 12,
+              ),
+              helperMaxLines: 2,
+              filled: true,
+              fillColor:
+                  enabled ? colors.iconBackground : colors.outlineVariant,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              border: VoltiumFieldBorders.normal(colors),
+              enabledBorder: VoltiumFieldBorders.enabled(colors),
+              focusedBorder: VoltiumFieldBorders.focused(colors),
+              errorBorder: VoltiumFieldBorders.error(colors),
+              focusedErrorBorder: VoltiumFieldBorders.focusedError(colors),
             ),
-            helperMaxLines: 2,
-            filled: true,
-            fillColor: enabled ? colors.iconBackground : colors.outlineVariant,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            border: VoltiumFieldBorders.normal(colors),
-            enabledBorder: VoltiumFieldBorders.enabled(colors),
-            focusedBorder: VoltiumFieldBorders.focused(colors),
-            errorBorder: VoltiumFieldBorders.error(colors),
-            focusedErrorBorder: VoltiumFieldBorders.focusedError(colors),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
