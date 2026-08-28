@@ -102,11 +102,11 @@ class AssignmentDetailsCard extends StatelessWidget {
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           const SizedBox(height: 24),
-          buildInputLabel(context, 'SELECT HUB'),
+          buildVoltiumFieldLabel(context, 'SELECT HUB'),
           const SizedBox(height: 8),
           buildHubDropdown(context, selectedHubId, hubs, onHubChanged),
           const SizedBox(height: 20),
-          buildInputLabel(context, 'TEAM LEADER'),
+          buildVoltiumFieldLabel(context, 'TEAM LEADER'),
           const SizedBox(height: 8),
           buildTeamLeaderDropdown(
             context,
@@ -115,7 +115,7 @@ class AssignmentDetailsCard extends StatelessWidget {
             teamLeaderOptions: teamLeaderOptions,
           ),
           const SizedBox(height: 20),
-          buildInputLabel(context, 'VEHICLE NUMBER'),
+          buildVoltiumFieldLabel(context, 'VEHICLE NUMBER'),
           const SizedBox(height: 8),
           buildVehicleDropdown(
             context: context,
@@ -127,7 +127,7 @@ class AssignmentDetailsCard extends StatelessWidget {
             onTap: onVehicleTap,
           ),
           const SizedBox(height: 20),
-          buildInputLabel(context, 'EMERGENCY CONTACT'),
+          buildVoltiumFieldLabel(context, 'EMERGENCY CONTACT'),
           const SizedBox(height: 8),
           EmergencyContactField(
             controller: emergencyContactController,
@@ -139,7 +139,7 @@ class AssignmentDetailsCard extends StatelessWidget {
           ),
           if (isOtpSent && !isOtpVerified) ...[
             const SizedBox(height: 20),
-            buildInputLabel(context, 'ENTER 6-DIGIT OTP'),
+            buildVoltiumFieldLabel(context, 'ENTER 6-DIGIT OTP'),
             const SizedBox(height: 8),
             // ONBOARDING-AUDIT 2026-08-14 P0-3: auto-submit when the
             // rider has typed all 6 digits. The previous version

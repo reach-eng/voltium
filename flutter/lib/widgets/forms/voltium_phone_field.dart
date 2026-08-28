@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../features/pickup/widgets/pickup_hub_widgets.dart'
-    show buildInputLabel;
 import '../../gen/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/form_validators.dart';
 import '_voltium_field_borders.dart';
+import '_voltium_field_label.dart';
 
 /// Standardized phone number field for Voltium forms supporting:
 /// 1. Read-only display mode (for rider phone)
@@ -55,7 +54,7 @@ class VoltiumPhoneField extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          buildInputLabel(context, label.toUpperCase()),
+          buildVoltiumFieldLabel(context, label.toUpperCase()),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -99,7 +98,7 @@ class VoltiumPhoneField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(context, label.toUpperCase()),
+        buildVoltiumFieldLabel(context, label.toUpperCase()),
         const SizedBox(height: 6),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

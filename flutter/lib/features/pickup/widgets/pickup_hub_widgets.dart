@@ -15,19 +15,24 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 // Pickup Hub styling constants have been moved to dynamic AppColors.of(context)
 // Note: AppColors.primary and AppColors.success are brand colors and remain static.
 
-/// Input label helper — callers in this file always pass BuildContext via
-/// a local `colors` variable captured in the build scope.
-Widget buildInputLabel(BuildContext context, String text, {Color? color}) {
-  final colors = AppColors.of(context);
-  return Text(
-    text,
-    style: AppTypography.labelSmall.copyWith(
-      color: color ?? colors.onSurfaceMuted,
-      letterSpacing: 1.0,
-      fontWeight: FontWeight.w800,
-    ),
-  );
-}
+// Re-export the shared form-field label helper. The form-widgets
+// library now owns the implementation; the pickup feature no
+// longer needs to host a feature-local copy.
+import '../../../widgets/forms/_voltium_field_label.dart';
+export '../../../widgets/forms/_voltium_field_label.dart'
+    show buildVoltiumFieldLabel;
+
+/// Deprecated: prefer [buildVoltiumFieldLabel] from the form-widgets
+/// library. Kept as a thin re-export so older call sites in the
+/// pickup feature continue to compile; new code should call the
+/// shared helper directly.
+@Deprecated('Use buildVoltiumFieldLabel from widgets/forms/ instead.')
+Widget buildInputLabel(
+  BuildContext context,
+  String text, {
+  Color? color,
+}) =>
+    buildVoltiumFieldLabel(context, text, color: color);
 
 /// Hub dropdown
 Widget buildHubDropdown(

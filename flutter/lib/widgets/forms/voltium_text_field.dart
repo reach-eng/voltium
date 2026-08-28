@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../features/pickup/widgets/pickup_hub_widgets.dart'
-    show buildInputLabel;
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '_voltium_field_borders.dart';
+import '_voltium_field_label.dart';
 
 /// Standardized text field used across Voltium onboarding and management forms.
 class VoltiumTextField extends StatelessWidget {
@@ -53,7 +52,7 @@ class VoltiumTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(context, label.toUpperCase()),
+        buildVoltiumFieldLabel(context, label.toUpperCase()),
         const SizedBox(height: 6),
         TextFormField(
           key: fieldKey,
