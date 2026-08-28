@@ -548,40 +548,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard_riderLabel => 'RIDER';
 
   @override
-  String get txtsomethingWentWrong => 'Something went wrong';
-
-  @override
-  String get txtreload => 'Reload';
-
-  @override
-  String get txtriderNotFoundPleaseContactSupport =>
-      'Rider not found. Please contact support.';
-
-  @override
-  String get txtvoltium => 'Voltium';
-
-  @override
-  String get txtcreateAccount => 'Create Account';
-
-  @override
-  String get txtloginWithPhone => 'Login with Phone';
-
-  @override
-  String get txtmanageYourJourneyWithPrecision =>
-      'Manage your journey with precision.';
-
-  @override
   String get txtwelcome => 'Welcome';
-
-  @override
-  String get txtenterTheRegisteredPhoneNumberToLoginOrEnterANewNumberToCreateAnotherAccount =>
-      'Enter the registered phone number to login or enter a new number to create another account.';
-
-  @override
-  String get txtaSecureOtpWillBeSent => 'A SECURE OTP WILL BE SENT';
-
-  @override
-  String get txtenter => 'Enter';
 
   @override
   String get txttermsOfService => 'Terms of Service';
@@ -596,26 +563,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtinitializeSystem => 'Initialize System';
 
   @override
-  String get txtdashboard => 'Dashboard';
-
-  @override
-  String get txtrejectionRemarks => 'Rejection Remarks';
-
-  @override
-  String get txtpickupYourVehicle => 'PICKUP YOUR VEHICLE';
-
-  @override
-  String get txtemergencyContacts => 'Emergency Contacts';
-
-  @override
   String get txtaddContact => 'Add Contact';
-
-  @override
-  String get txtnoEmergencyContacts => 'No emergency contacts';
-
-  @override
-  String get txtaddContactsToAlertInCaseOfEmergency =>
-      'Add contacts to alert in case of emergency';
 
   @override
   String get txtaddEmergencyContact => 'Add Emergency Contact';
@@ -625,9 +573,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtadd => 'Add';
-
-  @override
-  String get txtprimary => 'PRIMARY';
 
   @override
   String get txtsetAsPrimary => 'Set as Primary';
@@ -664,33 +609,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtverifyOtp => 'VERIFY OTP';
 
   @override
-  String get txtdocumentsUpload => 'Documents Upload';
-
-  @override
   String get txtclearPhotosOnlyMax5mbEach => 'Clear photos only. Max 5MB each.';
-
-  @override
-  String get txtguarantorSignature => 'Guarantor Signature';
-
-  @override
-  String get txtsignOnScreenToAuthorizeDetails =>
-      'Sign on screen to authorize details.';
-
-  @override
-  String get txtonboarding => 'Onboarding';
-
-  @override
-  String get txtstep => 'Step';
-
-  @override
-  String get txtoneMoreStep => 'One more step';
-
-  @override
-  String get txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely =>
-      'We need a few more details to set up your fleet profile securely.';
-
-  @override
-  String get txtfinishSetup => 'FINISH SETUP';
 
   @override
   String get txtunableToOpenDocument => 'Unable to open document';
@@ -808,17 +727,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtcontactSupport => 'CONTACT SUPPORT';
 
   @override
-  String get txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport =>
-      'Select your primary usage to help us customize your experience and support.';
-
-  @override
-  String get txtswitchingBetweenTypesIsPossibleLaterThroughAccountSettingsThoughCommercialAccessMayRequireAdditionalVerification =>
-      'Switching between types is possible later through account settings, though commercial access may require additional verification.';
-
-  @override
-  String get txtconfirmSelection => 'Confirm Selection';
-
-  @override
   String get txtdrawSignature => 'Draw Signature';
 
   @override
@@ -832,12 +740,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txttakeSelfie => 'Take Selfie';
-
-  @override
-  String get txtcamera => 'Camera';
-
-  @override
-  String get txtgallery => 'Gallery';
 
   @override
   String get txtpersonalDetails => 'Personal Details';
@@ -860,15 +762,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get txtsignBelowToAuthorizeDocumentation =>
       'Sign below to authorize documentation.';
-
-  @override
-  String get txtalmostThere => 'Almost there!';
-
-  @override
-  String get txtnotifications => 'Notifications';
-
-  @override
-  String get txtnoNotificationsYet => 'No notifications yet';
 
   @override
   String get txtpreferencesSaved => 'Preferences saved';
@@ -934,20 +827,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Promotions, offers, platform updates';
 
   @override
-  String get txtdeleteNotification => 'Delete Notification';
-
-  @override
-  String get txtareYouSureYouWantToDeleteThisNotification =>
-      'Are you sure you want to delete this notification?';
-
-  @override
   String get txtnotificationDeleted => 'Notification deleted';
-
-  @override
-  String get txtmarkAllRead => 'MARK ALL READ';
-
-  @override
-  String get txtauthorizedSignatory => 'Authorized Signatory';
 
   @override
   String get txtsignedBy => 'SIGNED BY';
@@ -972,9 +852,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtcontinue => 'Continue';
 
   @override
-  String get txtskip => 'Skip';
-
-  @override
   String get txtguarantorSkipTitle => 'Skip guarantor?';
 
   @override
@@ -993,24 +870,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtguarantorSkipConfirm => 'SKIP & PAY EXTRA';
 
   @override
-  String get txtprivacyChoices => 'Privacy choices';
-
-  @override
-  String get txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing =>
-      'Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.';
-
-  @override
-  String get txtrideTheFuture => 'Ride the Future';
-
-  @override
   String get txtconnectingToGrid => 'CONNECTING TO GRID';
 
   @override
   String get txtretry => 'Retry';
-
-  @override
-  String get txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide =>
-      'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!';
 
   @override
   String get txtsplashTagline => 'Electric scooter rentals';
@@ -1056,35 +919,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtotpResendError => 'Error resending OTP';
 
   @override
-  String get txtgoToDashboard => 'Go to Dashboard';
-
-  @override
   String get txtpleaseLogInAgain => 'Please log in again.';
 
   @override
-  String get txtfailedToCompletePickupPleaseTryAgain =>
-      'Failed to complete pickup. Please try again.';
-
-  @override
   String get txtfinalVerification => 'Final Verification';
-
-  @override
-  String get txtreadyToRoll => 'Ready to Roll?';
-
-  @override
-  String get txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle =>
-      'Please review and sign the digital rental agreement before collecting your vehicle.';
-
-  @override
-  String get txtdrawYourSignatureHere => 'Draw your signature here';
-
-  @override
-  String get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance =>
-      'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.';
-
-  @override
-  String get txtrequestSubmittedToSupportTeam =>
-      'Request submitted to support team';
 
   @override
   String get txtvehiclePhotos => 'Vehicle Photos';

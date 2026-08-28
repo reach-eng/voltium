@@ -548,40 +548,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dashboard_riderLabel => 'राइडर';
 
   @override
-  String get txtsomethingWentWrong => 'कुछ गलत हो गया';
-
-  @override
-  String get txtreload => 'रीलोड करें';
-
-  @override
-  String get txtriderNotFoundPleaseContactSupport =>
-      'राइडर नहीं मिला। कृपया सपोर्ट से संपर्क करें।';
-
-  @override
-  String get txtvoltium => 'वोल्टियम';
-
-  @override
-  String get txtcreateAccount => 'अकाउंट बनाएं';
-
-  @override
-  String get txtloginWithPhone => 'फ़ोन से लॉगिन करें';
-
-  @override
-  String get txtmanageYourJourneyWithPrecision =>
-      'अपनी यात्रा को सटीकता से प्रबंधित करें।';
-
-  @override
   String get txtwelcome => 'स्वागत है';
-
-  @override
-  String get txtenterTheRegisteredPhoneNumberToLoginOrEnterANewNumberToCreateAnotherAccount =>
-      'लॉगिन के लिए रजिस्टर्ड फ़ोन नंबर डालें या नया अकाउंट बनाने के लिए नया नंबर डालें।';
-
-  @override
-  String get txtaSecureOtpWillBeSent => 'एक सुरक्षित OTP भेजा जाएगा';
-
-  @override
-  String get txtenter => 'डालें';
 
   @override
   String get txttermsOfService => 'सेवा की शर्तें';
@@ -597,26 +564,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtinitializeSystem => 'सिस्टम शुरू करें';
 
   @override
-  String get txtdashboard => 'डैशबोर्ड';
-
-  @override
-  String get txtrejectionRemarks => 'अस्वीकृति टिप्पणियां';
-
-  @override
-  String get txtpickupYourVehicle => 'अपना वाहन उठाएं';
-
-  @override
-  String get txtemergencyContacts => 'आपातकालीन संपर्क';
-
-  @override
   String get txtaddContact => 'संपर्क जोड़ें';
-
-  @override
-  String get txtnoEmergencyContacts => 'कोई आपातकालीन संपर्क नहीं';
-
-  @override
-  String get txtaddContactsToAlertInCaseOfEmergency =>
-      'आपातकाल की स्थिति में अलर्ट के लिए संपर्क जोड़ें';
 
   @override
   String get txtaddEmergencyContact => 'आपातकालीन संपर्क जोड़ें';
@@ -626,9 +574,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtadd => 'जोड़ें';
-
-  @override
-  String get txtprimary => 'प्राथमिक';
 
   @override
   String get txtsetAsPrimary => 'प्राथमिक बनाएं';
@@ -665,33 +610,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtverifyOtp => 'OTP सत्यापित करें';
 
   @override
-  String get txtdocumentsUpload => 'दस्तावेज़ अपलोड';
-
-  @override
   String get txtclearPhotosOnlyMax5mbEach => 'साफ़ फ़ोटो। प्रत्येक अधिकतम 5MB।';
-
-  @override
-  String get txtguarantorSignature => 'गारंटर हस्ताक्षर';
-
-  @override
-  String get txtsignOnScreenToAuthorizeDetails =>
-      'विवरण प्रमाणित करने के लिए स्क्रीन पर हस्ताक्षर करें।';
-
-  @override
-  String get txtonboarding => 'ऑनबोर्डिंग';
-
-  @override
-  String get txtstep => 'कदम';
-
-  @override
-  String get txtoneMoreStep => 'एक और कदम';
-
-  @override
-  String get txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely =>
-      'आपकी फ़्लीट प्रोफ़ाइल को सुरक्षित रूप से सेट करने के लिए हमें कुछ और जानकारी चाहिए।';
-
-  @override
-  String get txtfinishSetup => 'सेटअप पूरा करें';
 
   @override
   String get txtunableToOpenDocument => 'दस्तावेज़ खोल नहीं पा रहे';
@@ -811,17 +730,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtcontactSupport => 'सपोर्ट से संपर्क करें';
 
   @override
-  String get txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport =>
-      'अपना मुख्य उपयोग चुनें ताकि हम आपके अनुभव और सहायता को कस्टमाइज़ कर सकें।';
-
-  @override
-  String get txtswitchingBetweenTypesIsPossibleLaterThroughAccountSettingsThoughCommercialAccessMayRequireAdditionalVerification =>
-      'टाइप बाद में अकाउंट सेटिंग्स से बदले जा सकते हैं, लेकिन कमर्शियल एक्सेस के लिए अतिरिक्त सत्यापन की ज़रूरत पड़ सकती है।';
-
-  @override
-  String get txtconfirmSelection => 'चयन की पुष्टि करें';
-
-  @override
   String get txtdrawSignature => 'हस्ताक्षर बनाएं';
 
   @override
@@ -835,12 +743,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txttakeSelfie => 'सेल्फी लें';
-
-  @override
-  String get txtcamera => 'कैमरा';
-
-  @override
-  String get txtgallery => 'गैलरी';
 
   @override
   String get txtpersonalDetails => 'व्यक्तिगत विवरण';
@@ -863,15 +765,6 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get txtsignBelowToAuthorizeDocumentation =>
       'दस्तावेज़ प्रमाणित करने के लिए नीचे हस्ताक्षर करें।';
-
-  @override
-  String get txtalmostThere => 'लगभग हो गया!';
-
-  @override
-  String get txtnotifications => 'सूचनाएं';
-
-  @override
-  String get txtnoNotificationsYet => 'अभी तक कोई सूचना नहीं';
 
   @override
   String get txtpreferencesSaved => 'प्राथमिकताएं सहेजी गईं';
@@ -936,20 +829,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'प्रमोशन, ऑफ़र, प्लेटफ़ॉर्म अपडेट';
 
   @override
-  String get txtdeleteNotification => 'सूचना हटाएं';
-
-  @override
-  String get txtareYouSureYouWantToDeleteThisNotification =>
-      'क्या आप इस सूचना को हटाना चाहते हैं?';
-
-  @override
   String get txtnotificationDeleted => 'सूचना हटा दी गई';
-
-  @override
-  String get txtmarkAllRead => 'सभी पढ़ा हुआ चिन्हित करें';
-
-  @override
-  String get txtauthorizedSignatory => 'अधिकृत हस्ताक्षरकर्ता';
 
   @override
   String get txtsignedBy => 'द्वारा हस्ताक्षरित';
@@ -974,9 +854,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtcontinue => 'जारी रखें';
 
   @override
-  String get txtskip => 'छोड़ें';
-
-  @override
   String get txtguarantorSkipTitle => 'गारंटर छोड़ें?';
 
   @override
@@ -996,24 +873,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtguarantorSkipConfirm => 'छोड़ें और अतिरिक्त भुगतान करें';
 
   @override
-  String get txtprivacyChoices => 'गोपनीयता विकल्प';
-
-  @override
-  String get txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing =>
-      'चुनें कि राइडर की सुरक्षा, सहायता और अनुपालन के लिए वोल्टियम क्या एकत्र कर सकता है। आगे बढ़ने से पहले आप यहां वैकल्पिक सहमति वापस ले सकते हैं।';
-
-  @override
-  String get txtrideTheFuture => 'भविष्य की सवारी करें';
-
-  @override
   String get txtconnectingToGrid => 'ग्रिड से जुड़ रहे हैं';
 
   @override
   String get txtretry => 'फिर से कोशिश करें';
-
-  @override
-  String get txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide =>
-      'सब कुछ सिंक हो गया है। आपका वाहन तैयार है और आपका डैशबोर्ड अब लाइव है। अपनी सवारी का आनंद लें!';
 
   @override
   String get txtsplashTagline => 'इलेक्ट्रिक स्कूटर किराए पर';
@@ -1061,35 +924,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtotpResendError => 'OTP दोबारा भेजने में त्रुटि';
 
   @override
-  String get txtgoToDashboard => 'डैशबोर्ड पर जाएं';
-
-  @override
   String get txtpleaseLogInAgain => 'कृपया दोबारा लॉगिन करें।';
 
   @override
-  String get txtfailedToCompletePickupPleaseTryAgain =>
-      'पिकअप पूरा नहीं हो पाया। कृपया फिर से कोशिश करें।';
-
-  @override
   String get txtfinalVerification => 'अंतिम सत्यापन';
-
-  @override
-  String get txtreadyToRoll => 'तैयार हैं?';
-
-  @override
-  String get txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle =>
-      'अपना वाहन लेने से पहले कृपया डिजिटल किराया समझौते की समीक्षा करें और हस्ताक्षर करें।';
-
-  @override
-  String get txtdrawYourSignatureHere => 'यहां अपना हस्ताक्षर बनाएं';
-
-  @override
-  String get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance =>
-      'मैं पुष्टि करता/करती हूं कि मैंने वाहन की जांच कर ली है और उसकी देखभाल और ट्रैफिक अनुपालन की ज़िम्मेदारी स्वीकार करता/करती हूं।';
-
-  @override
-  String get txtrequestSubmittedToSupportTeam =>
-      'सपोर्ट टीम को अनुरोध भेजा गया';
 
   @override
   String get txtvehiclePhotos => 'वाहन फ़ोटो';

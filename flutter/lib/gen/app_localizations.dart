@@ -1076,72 +1076,11 @@ abstract class AppLocalizations {
   /// **'RIDER'**
   String get dashboard_riderLabel;
 
-  /// No description provided for @txtsomethingWentWrong.
-  ///
-  /// In en, this message translates to:
-  /// **'Something went wrong'**
-  String get txtsomethingWentWrong;
-
-  /// No description provided for @txtreload.
-  ///
-  /// In en, this message translates to:
-  /// **'Reload'**
-  String get txtreload;
-
-  /// No description provided for @txtriderNotFoundPleaseContactSupport.
-  ///
-  /// In en, this message translates to:
-  /// **'Rider not found. Please contact support.'**
-  String get txtriderNotFoundPleaseContactSupport;
-
-  /// No description provided for @txtvoltium.
-  ///
-  /// In en, this message translates to:
-  /// **'Voltium'**
-  String get txtvoltium;
-
-  /// No description provided for @txtcreateAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Create Account'**
-  String get txtcreateAccount;
-
-  /// No description provided for @txtloginWithPhone.
-  ///
-  /// In en, this message translates to:
-  /// **'Login with Phone'**
-  String get txtloginWithPhone;
-
-  /// No description provided for @txtmanageYourJourneyWithPrecision.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage your journey with precision.'**
-  String get txtmanageYourJourneyWithPrecision;
-
   /// No description provided for @txtwelcome.
   ///
   /// In en, this message translates to:
   /// **'Welcome'**
   String get txtwelcome;
-
-  /// No description provided for @txtenterTheRegisteredPhoneNumberToLoginOrEnterANewNumberToCreateAnotherAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter the registered phone number to login or enter a new number to create another account.'**
-  String
-      get txtenterTheRegisteredPhoneNumberToLoginOrEnterANewNumberToCreateAnotherAccount;
-
-  /// No description provided for @txtaSecureOtpWillBeSent.
-  ///
-  /// In en, this message translates to:
-  /// **'A SECURE OTP WILL BE SENT'**
-  String get txtaSecureOtpWillBeSent;
-
-  /// No description provided for @txtenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter'**
-  String get txtenter;
 
   /// No description provided for @txttermsOfService.
   ///
@@ -1167,47 +1106,11 @@ abstract class AppLocalizations {
   /// **'Initialize System'**
   String get txtinitializeSystem;
 
-  /// No description provided for @txtdashboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Dashboard'**
-  String get txtdashboard;
-
-  /// No description provided for @txtrejectionRemarks.
-  ///
-  /// In en, this message translates to:
-  /// **'Rejection Remarks'**
-  String get txtrejectionRemarks;
-
-  /// No description provided for @txtpickupYourVehicle.
-  ///
-  /// In en, this message translates to:
-  /// **'PICKUP YOUR VEHICLE'**
-  String get txtpickupYourVehicle;
-
-  /// No description provided for @txtemergencyContacts.
-  ///
-  /// In en, this message translates to:
-  /// **'Emergency Contacts'**
-  String get txtemergencyContacts;
-
   /// No description provided for @txtaddContact.
   ///
   /// In en, this message translates to:
   /// **'Add Contact'**
   String get txtaddContact;
-
-  /// No description provided for @txtnoEmergencyContacts.
-  ///
-  /// In en, this message translates to:
-  /// **'No emergency contacts'**
-  String get txtnoEmergencyContacts;
-
-  /// No description provided for @txtaddContactsToAlertInCaseOfEmergency.
-  ///
-  /// In en, this message translates to:
-  /// **'Add contacts to alert in case of emergency'**
-  String get txtaddContactsToAlertInCaseOfEmergency;
 
   /// No description provided for @txtaddEmergencyContact.
   ///
@@ -1226,12 +1129,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add'**
   String get txtadd;
-
-  /// No description provided for @txtprimary.
-  ///
-  /// In en, this message translates to:
-  /// **'PRIMARY'**
-  String get txtprimary;
 
   /// No description provided for @txtsetAsPrimary.
   ///
@@ -1299,59 +1196,11 @@ abstract class AppLocalizations {
   /// **'VERIFY OTP'**
   String get txtverifyOtp;
 
-  /// No description provided for @txtdocumentsUpload.
-  ///
-  /// In en, this message translates to:
-  /// **'Documents Upload'**
-  String get txtdocumentsUpload;
-
   /// No description provided for @txtclearPhotosOnlyMax5mbEach.
   ///
   /// In en, this message translates to:
   /// **'Clear photos only. Max 5MB each.'**
   String get txtclearPhotosOnlyMax5mbEach;
-
-  /// No description provided for @txtguarantorSignature.
-  ///
-  /// In en, this message translates to:
-  /// **'Guarantor Signature'**
-  String get txtguarantorSignature;
-
-  /// No description provided for @txtsignOnScreenToAuthorizeDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign on screen to authorize details.'**
-  String get txtsignOnScreenToAuthorizeDetails;
-
-  /// No description provided for @txtonboarding.
-  ///
-  /// In en, this message translates to:
-  /// **'Onboarding'**
-  String get txtonboarding;
-
-  /// No description provided for @txtstep.
-  ///
-  /// In en, this message translates to:
-  /// **'Step'**
-  String get txtstep;
-
-  /// No description provided for @txtoneMoreStep.
-  ///
-  /// In en, this message translates to:
-  /// **'One more step'**
-  String get txtoneMoreStep;
-
-  /// No description provided for @txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely.
-  ///
-  /// In en, this message translates to:
-  /// **'We need a few more details to set up your fleet profile securely.'**
-  String get txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely;
-
-  /// No description provided for @txtfinishSetup.
-  ///
-  /// In en, this message translates to:
-  /// **'FINISH SETUP'**
-  String get txtfinishSetup;
 
   /// No description provided for @txtunableToOpenDocument.
   ///
@@ -1552,25 +1401,6 @@ abstract class AppLocalizations {
   /// **'CONTACT SUPPORT'**
   String get txtcontactSupport;
 
-  /// No description provided for @txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport.
-  ///
-  /// In en, this message translates to:
-  /// **'Select your primary usage to help us customize your experience and support.'**
-  String get txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport;
-
-  /// No description provided for @txtswitchingBetweenTypesIsPossibleLaterThroughAccountSettingsThoughCommercialAccessMayRequireAdditionalVerification.
-  ///
-  /// In en, this message translates to:
-  /// **'Switching between types is possible later through account settings, though commercial access may require additional verification.'**
-  String
-      get txtswitchingBetweenTypesIsPossibleLaterThroughAccountSettingsThoughCommercialAccessMayRequireAdditionalVerification;
-
-  /// No description provided for @txtconfirmSelection.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm Selection'**
-  String get txtconfirmSelection;
-
   /// No description provided for @txtdrawSignature.
   ///
   /// In en, this message translates to:
@@ -1600,18 +1430,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take Selfie'**
   String get txttakeSelfie;
-
-  /// No description provided for @txtcamera.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera'**
-  String get txtcamera;
-
-  /// No description provided for @txtgallery.
-  ///
-  /// In en, this message translates to:
-  /// **'Gallery'**
-  String get txtgallery;
 
   /// No description provided for @txtpersonalDetails.
   ///
@@ -1654,24 +1472,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign below to authorize documentation.'**
   String get txtsignBelowToAuthorizeDocumentation;
-
-  /// No description provided for @txtalmostThere.
-  ///
-  /// In en, this message translates to:
-  /// **'Almost there!'**
-  String get txtalmostThere;
-
-  /// No description provided for @txtnotifications.
-  ///
-  /// In en, this message translates to:
-  /// **'Notifications'**
-  String get txtnotifications;
-
-  /// No description provided for @txtnoNotificationsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No notifications yet'**
-  String get txtnoNotificationsYet;
 
   /// No description provided for @txtpreferencesSaved.
   ///
@@ -1793,35 +1593,11 @@ abstract class AppLocalizations {
   /// **'Promotions, offers, platform updates'**
   String get notif_prefsAnnouncementsSubtitle;
 
-  /// No description provided for @txtdeleteNotification.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Notification'**
-  String get txtdeleteNotification;
-
-  /// No description provided for @txtareYouSureYouWantToDeleteThisNotification.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this notification?'**
-  String get txtareYouSureYouWantToDeleteThisNotification;
-
   /// No description provided for @txtnotificationDeleted.
   ///
   /// In en, this message translates to:
   /// **'Notification deleted'**
   String get txtnotificationDeleted;
-
-  /// No description provided for @txtmarkAllRead.
-  ///
-  /// In en, this message translates to:
-  /// **'MARK ALL READ'**
-  String get txtmarkAllRead;
-
-  /// No description provided for @txtauthorizedSignatory.
-  ///
-  /// In en, this message translates to:
-  /// **'Authorized Signatory'**
-  String get txtauthorizedSignatory;
 
   /// No description provided for @txtsignedBy.
   ///
@@ -1865,12 +1641,6 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get txtcontinue;
 
-  /// Generic Skip button label
-  ///
-  /// In en, this message translates to:
-  /// **'Skip'**
-  String get txtskip;
-
   /// Title of the skip-guarantor confirmation dialog on the onboarding screen
   ///
   /// In en, this message translates to:
@@ -1901,25 +1671,6 @@ abstract class AppLocalizations {
   /// **'SKIP & PAY EXTRA'**
   String get txtguarantorSkipConfirm;
 
-  /// No description provided for @txtprivacyChoices.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy choices'**
-  String get txtprivacyChoices;
-
-  /// No description provided for @txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.'**
-  String
-      get txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing;
-
-  /// No description provided for @txtrideTheFuture.
-  ///
-  /// In en, this message translates to:
-  /// **'Ride the Future'**
-  String get txtrideTheFuture;
-
   /// No description provided for @txtconnectingToGrid.
   ///
   /// In en, this message translates to:
@@ -1931,13 +1682,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get txtretry;
-
-  /// No description provided for @txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide.
-  ///
-  /// In en, this message translates to:
-  /// **'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!'**
-  String
-      get txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide;
 
   /// Splash screen tagline below the brand name
   ///
@@ -2023,61 +1767,17 @@ abstract class AppLocalizations {
   /// **'Error resending OTP'**
   String get txtotpResendError;
 
-  /// No description provided for @txtgoToDashboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Go to Dashboard'**
-  String get txtgoToDashboard;
-
   /// No description provided for @txtpleaseLogInAgain.
   ///
   /// In en, this message translates to:
   /// **'Please log in again.'**
   String get txtpleaseLogInAgain;
 
-  /// No description provided for @txtfailedToCompletePickupPleaseTryAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to complete pickup. Please try again.'**
-  String get txtfailedToCompletePickupPleaseTryAgain;
-
   /// No description provided for @txtfinalVerification.
   ///
   /// In en, this message translates to:
   /// **'Final Verification'**
   String get txtfinalVerification;
-
-  /// No description provided for @txtreadyToRoll.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready to Roll?'**
-  String get txtreadyToRoll;
-
-  /// No description provided for @txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle.
-  ///
-  /// In en, this message translates to:
-  /// **'Please review and sign the digital rental agreement before collecting your vehicle.'**
-  String
-      get txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle;
-
-  /// No description provided for @txtdrawYourSignatureHere.
-  ///
-  /// In en, this message translates to:
-  /// **'Draw your signature here'**
-  String get txtdrawYourSignatureHere;
-
-  /// No description provided for @txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance.
-  ///
-  /// In en, this message translates to:
-  /// **'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.'**
-  String
-      get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance;
-
-  /// No description provided for @txtrequestSubmittedToSupportTeam.
-  ///
-  /// In en, this message translates to:
-  /// **'Request submitted to support team'**
-  String get txtrequestSubmittedToSupportTeam;
 
   /// No description provided for @txtvehiclePhotos.
   ///
