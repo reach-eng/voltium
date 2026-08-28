@@ -925,75 +925,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtfinalVerification => 'Final Verification';
 
   @override
-  String get txtvehiclePhotos => 'Vehicle Photos';
-
-  @override
   String get txtassignedVehicle => 'ASSIGNED VEHICLE';
-
-  @override
-  String get txtpickupPhotos => 'PICKUP PHOTOS';
-
-  @override
-  String get txtassignmentDetails => 'ASSIGNMENT DETAILS';
-
-  @override
-  String get txtemergencyContactVerifiedSuccessfully =>
-      'Emergency contact verified successfully';
-
-  @override
-  String get txtvehicleCondition => 'Vehicle Condition';
-
-  @override
-  String get txtmandatory => 'MANDATORY';
-
-  @override
-  String get txtphotoWithVehicle => 'Photo with Vehicle';
-
-  @override
-  String get txttakeASelfieNextToTheVehicleBeforeRiding =>
-      'Take a selfie next to the vehicle before riding';
-
-  @override
-  String get txtdeleteAccount => 'Delete Account';
-
-  @override
-  String get txtthisActionIsIrreversibleAllYourDataIncludingKycDocumentsWalletBalanceAndRentalHistoryWillBePermanentlyDeletedAreYouSure =>
-      'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?';
-
-  @override
-  String get txtaccountDeletionIsNotYetAvailablePleaseContactSupport =>
-      'Account deletion is not yet available. Please contact support.';
-
-  @override
-  String get txtsettings => 'Settings';
-
-  @override
-  String get txtphoneNumberChangeComingSoon =>
-      'Phone number change coming soon';
-
-  @override
-  String get txtpasswordChangeComingSoon => 'Password change coming soon';
-
-  @override
-  String get txtselectLanguage => 'Select Language';
-
-  @override
-  String get txtenglish => 'English';
-
-  @override
-  String get txtthisActionIsIrreversible => 'This action is irreversible';
-
-  @override
-  String get txtaddEntry => 'Add Entry';
-
-  @override
-  String get txtearningsLog => 'Earnings Log';
-
-  @override
-  String get txtnoEarningsLoggedYet => 'No earnings logged yet';
-
-  @override
-  String get txtselectProfilePhoto => 'Select Profile Photo';
 
   @override
   String get txtfailedToCapturePhoto => 'Failed to capture photo';
@@ -1015,106 +947,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtprofileUpdatedSuccessfully => 'Profile updated successfully';
 
   @override
-  String get txtfailedToUpdateProfilePleaseTryAgain =>
-      'Failed to update profile. Please try again.';
-
-  @override
-  String get txtsubmitForApproval => 'SUBMIT FOR APPROVAL';
-
-  @override
   String get txteditProfile => 'Edit Profile';
-
-  @override
-  String get txtguarantorPhone => 'Guarantor Phone';
-
-  @override
-  String get txtphoneVerified => 'Phone verified';
-
-  @override
-  String get txtquickLinks => 'QUICK LINKS';
 
   @override
   String get txtprofile => 'Profile';
 
   @override
-  String get txtweeklyEarnings => 'WEEKLY EARNINGS';
-
-  @override
-  String get txtthisWeek => 'THIS WEEK';
-
-  @override
-  String get txttrips => 'TRIPS';
-
-  @override
-  String get txthours => 'HOURS';
-
-  @override
-  String get txtweeklySummary => 'WEEKLY SUMMARY';
-
-  @override
-  String get txtprofileChangesRequireAdminApprovalBeforeBecomingActive =>
-      'Profile changes require admin approval before becoming active.';
-
-  @override
-  String get txtlogout => 'Logout';
-
-  @override
-  String get txtreferrals => 'Referrals';
-
-  @override
-  String get txtfailedToSubscribeCheckYourBalance =>
-      'Failed to subscribe. Check your balance.';
-
-  @override
-  String get txtbestValue => 'BEST VALUE';
-
-  @override
-  String get txtselectANewPlan => 'Select a new plan';
-
-  @override
-  String get txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime =>
-      'Choose the rental duration that best fits your needs. You can change this at any time.';
-
-  @override
-  String get txtconfirmNewPlan => 'Confirm New Plan';
-
-  @override
   String get txterrorSubmittingReturnPleaseTryAgain =>
       'Error submitting return. Please try again.';
-
-  @override
-  String get txtrequestSubmitted => 'Request Submitted!';
-
-  @override
-  String get txtyourVehicleReturnRequestHasBeenSentForApproval =>
-      'Your vehicle return request has been sent for approval.';
-
-  @override
-  String get txtendRental => 'End Rental';
-
-  @override
-  String get txtareYouSure => 'Are you sure?';
-
-  @override
-  String get txtreturningYourVehicleWillEndYourCurrentRentalPeriodMakeSureToCompleteAllInspectionSteps =>
-      'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.';
-
-  @override
-  String get txtreturnInspection => 'RETURN INSPECTION';
-
-  @override
-  String get txttakeReturnPhotosOfYourVehicle =>
-      'Take return photos of your vehicle';
-
-  @override
-  String get txtodometerReading => 'ODOMETER READING';
-
-  @override
-  String get txtbatteryLevel => 'Battery Level';
-
-  @override
-  String get txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact =>
-      'I confirm the vehicle is returned in good condition with all accessories intact.';
 
   @override
   String get txtconfirmReturn => 'Confirm Return';

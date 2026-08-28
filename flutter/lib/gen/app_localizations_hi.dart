@@ -930,74 +930,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtfinalVerification => 'अंतिम सत्यापन';
 
   @override
-  String get txtvehiclePhotos => 'वाहन फ़ोटो';
-
-  @override
   String get txtassignedVehicle => 'असाइन वाहन';
-
-  @override
-  String get txtpickupPhotos => 'पिकअप फ़ोटो';
-
-  @override
-  String get txtassignmentDetails => 'असाइनमेंट विवरण';
-
-  @override
-  String get txtemergencyContactVerifiedSuccessfully =>
-      'आपातकालीन संपर्क सफलतापूर्वक सत्यापित';
-
-  @override
-  String get txtvehicleCondition => 'वाहन की स्थिति';
-
-  @override
-  String get txtmandatory => 'अनिवार्य';
-
-  @override
-  String get txtphotoWithVehicle => 'वाहन के साथ फ़ोटो';
-
-  @override
-  String get txttakeASelfieNextToTheVehicleBeforeRiding =>
-      'सवारी शुरू करने से पहले वाहन के बगल में सेल्फी लें';
-
-  @override
-  String get txtdeleteAccount => 'अकाउंट हटाएं';
-
-  @override
-  String get txtthisActionIsIrreversibleAllYourDataIncludingKycDocumentsWalletBalanceAndRentalHistoryWillBePermanentlyDeletedAreYouSure =>
-      'यह क्रिया अपरिवर्तनीय है। KYC दस्तावेज़, वॉलेट बैलेंस और किराया इतिहास सहित आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा। क्या आप निश्चित हैं?';
-
-  @override
-  String get txtaccountDeletionIsNotYetAvailablePleaseContactSupport =>
-      'अकाउंट हटाना अभी उपलब्ध नहीं है। कृपया सपोर्ट से संपर्क करें।';
-
-  @override
-  String get txtsettings => 'सेटिंग्स';
-
-  @override
-  String get txtphoneNumberChangeComingSoon => 'फ़ोन नंबर बदलना जल्द आ रहा है';
-
-  @override
-  String get txtpasswordChangeComingSoon => 'पासवर्ड बदलना जल्द आ रहा है';
-
-  @override
-  String get txtselectLanguage => 'भाषा चुनें';
-
-  @override
-  String get txtenglish => 'English';
-
-  @override
-  String get txtthisActionIsIrreversible => 'यह क्रिया अपरिवर्तनीय है';
-
-  @override
-  String get txtaddEntry => 'एंट्री जोड़ें';
-
-  @override
-  String get txtearningsLog => 'कमाई का लॉग';
-
-  @override
-  String get txtnoEarningsLoggedYet => 'अभी तक कोई कमाई लॉग नहीं';
-
-  @override
-  String get txtselectProfilePhoto => 'प्रोफ़ाइल फ़ोटो चुनें';
 
   @override
   String get txtfailedToCapturePhoto => 'फ़ोटो कैप्चर नहीं हो पाई';
@@ -1019,105 +952,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtprofileUpdatedSuccessfully => 'प्रोफ़ाइल सफलतापूर्वक अपडेट';
 
   @override
-  String get txtfailedToUpdateProfilePleaseTryAgain =>
-      'प्रोफ़ाइल अपडेट नहीं हो पाई। कृपया फिर से कोशिश करें।';
-
-  @override
-  String get txtsubmitForApproval => 'अनुमोदन के लिए जमा करें';
-
-  @override
   String get txteditProfile => 'प्रोफ़ाइल संपादित करें';
-
-  @override
-  String get txtguarantorPhone => 'गारंटर फ़ोन';
-
-  @override
-  String get txtphoneVerified => 'फ़ोन सत्यापित';
-
-  @override
-  String get txtquickLinks => 'त्वरित लिंक';
 
   @override
   String get txtprofile => 'प्रोफ़ाइल';
 
   @override
-  String get txtweeklyEarnings => 'साप्ताहिक कमाई';
-
-  @override
-  String get txtthisWeek => 'इस हफ्ते';
-
-  @override
-  String get txttrips => 'ट्रिप';
-
-  @override
-  String get txthours => 'घंटे';
-
-  @override
-  String get txtweeklySummary => 'साप्ताहिक सारांश';
-
-  @override
-  String get txtprofileChangesRequireAdminApprovalBeforeBecomingActive =>
-      'प्रोफ़ाइल में बदलाव सक्रिय होने से पहले एडमिन अनुमोदन की ज़रूरत होती है।';
-
-  @override
-  String get txtlogout => 'लॉग आउट';
-
-  @override
-  String get txtreferrals => 'रेफ़रल';
-
-  @override
-  String get txtfailedToSubscribeCheckYourBalance =>
-      'सदस्यता नहीं ले पाए। अपना बैलेंस चेक करें।';
-
-  @override
-  String get txtbestValue => 'बेस्ट वैल्यू';
-
-  @override
-  String get txtselectANewPlan => 'नया प्लान चुनें';
-
-  @override
-  String get txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime =>
-      'अपनी ज़रूरत के हिसाब से किराया अवधि चुनें। इसे कभी भी बदला जा सकता है।';
-
-  @override
-  String get txtconfirmNewPlan => 'नए प्लान की पुष्टि करें';
-
-  @override
   String get txterrorSubmittingReturnPleaseTryAgain =>
       'वापसी जमा करने में गड़बड़ी। कृपया फिर से कोशिश करें।';
-
-  @override
-  String get txtrequestSubmitted => 'अनुरोध भेजा गया!';
-
-  @override
-  String get txtyourVehicleReturnRequestHasBeenSentForApproval =>
-      'आपका वाहन वापसी अनुरोध अनुमोदन के लिए भेज दिया गया है।';
-
-  @override
-  String get txtendRental => 'किराया समाप्त करें';
-
-  @override
-  String get txtareYouSure => 'क्या आप निश्चित हैं?';
-
-  @override
-  String get txtreturningYourVehicleWillEndYourCurrentRentalPeriodMakeSureToCompleteAllInspectionSteps =>
-      'वाहन वापस करने से आपकी वर्तमान किराया अवधि समाप्त हो जाएगी। सभी जांच चरण पूरे कर लें।';
-
-  @override
-  String get txtreturnInspection => 'वापसी जांच';
-
-  @override
-  String get txttakeReturnPhotosOfYourVehicle => 'अपने वाहन की वापसी फ़ोटो लें';
-
-  @override
-  String get txtodometerReading => 'ओडोमीटर रीडिंग';
-
-  @override
-  String get txtbatteryLevel => 'बैटरी लेवल';
-
-  @override
-  String get txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact =>
-      'मैं पुष्टि करता/करती हूं कि वाहन सभी एक्सेसरीज़ के साथ अच्छी स्थिति में वापस किया गया है।';
 
   @override
   String get txtconfirmReturn => 'वापसी की पुष्टि करें';

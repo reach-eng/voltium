@@ -1779,138 +1779,11 @@ abstract class AppLocalizations {
   /// **'Final Verification'**
   String get txtfinalVerification;
 
-  /// No description provided for @txtvehiclePhotos.
-  ///
-  /// In en, this message translates to:
-  /// **'Vehicle Photos'**
-  String get txtvehiclePhotos;
-
   /// No description provided for @txtassignedVehicle.
   ///
   /// In en, this message translates to:
   /// **'ASSIGNED VEHICLE'**
   String get txtassignedVehicle;
-
-  /// No description provided for @txtpickupPhotos.
-  ///
-  /// In en, this message translates to:
-  /// **'PICKUP PHOTOS'**
-  String get txtpickupPhotos;
-
-  /// No description provided for @txtassignmentDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'ASSIGNMENT DETAILS'**
-  String get txtassignmentDetails;
-
-  /// No description provided for @txtemergencyContactVerifiedSuccessfully.
-  ///
-  /// In en, this message translates to:
-  /// **'Emergency contact verified successfully'**
-  String get txtemergencyContactVerifiedSuccessfully;
-
-  /// No description provided for @txtvehicleCondition.
-  ///
-  /// In en, this message translates to:
-  /// **'Vehicle Condition'**
-  String get txtvehicleCondition;
-
-  /// No description provided for @txtmandatory.
-  ///
-  /// In en, this message translates to:
-  /// **'MANDATORY'**
-  String get txtmandatory;
-
-  /// No description provided for @txtphotoWithVehicle.
-  ///
-  /// In en, this message translates to:
-  /// **'Photo with Vehicle'**
-  String get txtphotoWithVehicle;
-
-  /// No description provided for @txttakeASelfieNextToTheVehicleBeforeRiding.
-  ///
-  /// In en, this message translates to:
-  /// **'Take a selfie next to the vehicle before riding'**
-  String get txttakeASelfieNextToTheVehicleBeforeRiding;
-
-  /// No description provided for @txtdeleteAccount.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Account'**
-  String get txtdeleteAccount;
-
-  /// No description provided for @txtthisActionIsIrreversibleAllYourDataIncludingKycDocumentsWalletBalanceAndRentalHistoryWillBePermanentlyDeletedAreYouSure.
-  ///
-  /// In en, this message translates to:
-  /// **'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?'**
-  String
-      get txtthisActionIsIrreversibleAllYourDataIncludingKycDocumentsWalletBalanceAndRentalHistoryWillBePermanentlyDeletedAreYouSure;
-
-  /// No description provided for @txtaccountDeletionIsNotYetAvailablePleaseContactSupport.
-  ///
-  /// In en, this message translates to:
-  /// **'Account deletion is not yet available. Please contact support.'**
-  String get txtaccountDeletionIsNotYetAvailablePleaseContactSupport;
-
-  /// No description provided for @txtsettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get txtsettings;
-
-  /// No description provided for @txtphoneNumberChangeComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone number change coming soon'**
-  String get txtphoneNumberChangeComingSoon;
-
-  /// No description provided for @txtpasswordChangeComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Password change coming soon'**
-  String get txtpasswordChangeComingSoon;
-
-  /// No description provided for @txtselectLanguage.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Language'**
-  String get txtselectLanguage;
-
-  /// No description provided for @txtenglish.
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get txtenglish;
-
-  /// No description provided for @txtthisActionIsIrreversible.
-  ///
-  /// In en, this message translates to:
-  /// **'This action is irreversible'**
-  String get txtthisActionIsIrreversible;
-
-  /// No description provided for @txtaddEntry.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Entry'**
-  String get txtaddEntry;
-
-  /// No description provided for @txtearningsLog.
-  ///
-  /// In en, this message translates to:
-  /// **'Earnings Log'**
-  String get txtearningsLog;
-
-  /// No description provided for @txtnoEarningsLoggedYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No earnings logged yet'**
-  String get txtnoEarningsLoggedYet;
-
-  /// No description provided for @txtselectProfilePhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Profile Photo'**
-  String get txtselectProfilePhoto;
 
   /// No description provided for @txtfailedToCapturePhoto.
   ///
@@ -1948,41 +1821,11 @@ abstract class AppLocalizations {
   /// **'Profile updated successfully'**
   String get txtprofileUpdatedSuccessfully;
 
-  /// No description provided for @txtfailedToUpdateProfilePleaseTryAgain.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to update profile. Please try again.'**
-  String get txtfailedToUpdateProfilePleaseTryAgain;
-
-  /// No description provided for @txtsubmitForApproval.
-  ///
-  /// In en, this message translates to:
-  /// **'SUBMIT FOR APPROVAL'**
-  String get txtsubmitForApproval;
-
   /// No description provided for @txteditProfile.
   ///
   /// In en, this message translates to:
   /// **'Edit Profile'**
   String get txteditProfile;
-
-  /// No description provided for @txtguarantorPhone.
-  ///
-  /// In en, this message translates to:
-  /// **'Guarantor Phone'**
-  String get txtguarantorPhone;
-
-  /// No description provided for @txtphoneVerified.
-  ///
-  /// In en, this message translates to:
-  /// **'Phone verified'**
-  String get txtphoneVerified;
-
-  /// No description provided for @txtquickLinks.
-  ///
-  /// In en, this message translates to:
-  /// **'QUICK LINKS'**
-  String get txtquickLinks;
 
   /// No description provided for @txtprofile.
   ///
@@ -1990,152 +1833,11 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get txtprofile;
 
-  /// No description provided for @txtweeklyEarnings.
-  ///
-  /// In en, this message translates to:
-  /// **'WEEKLY EARNINGS'**
-  String get txtweeklyEarnings;
-
-  /// No description provided for @txtthisWeek.
-  ///
-  /// In en, this message translates to:
-  /// **'THIS WEEK'**
-  String get txtthisWeek;
-
-  /// No description provided for @txttrips.
-  ///
-  /// In en, this message translates to:
-  /// **'TRIPS'**
-  String get txttrips;
-
-  /// No description provided for @txthours.
-  ///
-  /// In en, this message translates to:
-  /// **'HOURS'**
-  String get txthours;
-
-  /// No description provided for @txtweeklySummary.
-  ///
-  /// In en, this message translates to:
-  /// **'WEEKLY SUMMARY'**
-  String get txtweeklySummary;
-
-  /// No description provided for @txtprofileChangesRequireAdminApprovalBeforeBecomingActive.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile changes require admin approval before becoming active.'**
-  String get txtprofileChangesRequireAdminApprovalBeforeBecomingActive;
-
-  /// No description provided for @txtlogout.
-  ///
-  /// In en, this message translates to:
-  /// **'Logout'**
-  String get txtlogout;
-
-  /// No description provided for @txtreferrals.
-  ///
-  /// In en, this message translates to:
-  /// **'Referrals'**
-  String get txtreferrals;
-
-  /// No description provided for @txtfailedToSubscribeCheckYourBalance.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to subscribe. Check your balance.'**
-  String get txtfailedToSubscribeCheckYourBalance;
-
-  /// No description provided for @txtbestValue.
-  ///
-  /// In en, this message translates to:
-  /// **'BEST VALUE'**
-  String get txtbestValue;
-
-  /// No description provided for @txtselectANewPlan.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a new plan'**
-  String get txtselectANewPlan;
-
-  /// No description provided for @txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the rental duration that best fits your needs. You can change this at any time.'**
-  String
-      get txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime;
-
-  /// No description provided for @txtconfirmNewPlan.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm New Plan'**
-  String get txtconfirmNewPlan;
-
   /// No description provided for @txterrorSubmittingReturnPleaseTryAgain.
   ///
   /// In en, this message translates to:
   /// **'Error submitting return. Please try again.'**
   String get txterrorSubmittingReturnPleaseTryAgain;
-
-  /// No description provided for @txtrequestSubmitted.
-  ///
-  /// In en, this message translates to:
-  /// **'Request Submitted!'**
-  String get txtrequestSubmitted;
-
-  /// No description provided for @txtyourVehicleReturnRequestHasBeenSentForApproval.
-  ///
-  /// In en, this message translates to:
-  /// **'Your vehicle return request has been sent for approval.'**
-  String get txtyourVehicleReturnRequestHasBeenSentForApproval;
-
-  /// No description provided for @txtendRental.
-  ///
-  /// In en, this message translates to:
-  /// **'End Rental'**
-  String get txtendRental;
-
-  /// No description provided for @txtareYouSure.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure?'**
-  String get txtareYouSure;
-
-  /// No description provided for @txtreturningYourVehicleWillEndYourCurrentRentalPeriodMakeSureToCompleteAllInspectionSteps.
-  ///
-  /// In en, this message translates to:
-  /// **'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.'**
-  String
-      get txtreturningYourVehicleWillEndYourCurrentRentalPeriodMakeSureToCompleteAllInspectionSteps;
-
-  /// No description provided for @txtreturnInspection.
-  ///
-  /// In en, this message translates to:
-  /// **'RETURN INSPECTION'**
-  String get txtreturnInspection;
-
-  /// No description provided for @txttakeReturnPhotosOfYourVehicle.
-  ///
-  /// In en, this message translates to:
-  /// **'Take return photos of your vehicle'**
-  String get txttakeReturnPhotosOfYourVehicle;
-
-  /// No description provided for @txtodometerReading.
-  ///
-  /// In en, this message translates to:
-  /// **'ODOMETER READING'**
-  String get txtodometerReading;
-
-  /// No description provided for @txtbatteryLevel.
-  ///
-  /// In en, this message translates to:
-  /// **'Battery Level'**
-  String get txtbatteryLevel;
-
-  /// No description provided for @txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact.
-  ///
-  /// In en, this message translates to:
-  /// **'I confirm the vehicle is returned in good condition with all accessories intact.'**
-  String
-      get txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact;
 
   /// No description provided for @txtconfirmReturn.
   ///
