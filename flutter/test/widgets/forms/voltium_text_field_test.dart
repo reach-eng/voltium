@@ -62,8 +62,7 @@ void main() {
       expect(controller.text, 'Jane Doe');
     });
 
-    testWidgets('3. Disabled state sets readOnly and prevents typing',
-        (tester) async {
+    testWidgets('3. readOnly prevents typing', (tester) async {
       controller.text = 'Initial';
       await tester.pumpWidget(
         buildTestable(
@@ -72,7 +71,7 @@ void main() {
             label: 'Full Name',
             hint: 'Enter full name',
             controller: controller,
-            enabled: false,
+            readOnly: true,
           ),
         ),
       );

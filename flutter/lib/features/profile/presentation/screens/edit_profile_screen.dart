@@ -12,6 +12,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
+import 'package:voltium_rider/widgets/forms/forms.dart';
 import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -536,11 +537,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   const EditProfileSectionHeader(
                                     title: 'PERSONAL INFORMATION',
                                   ),
-                                  EditProfileTextField(
-                                    key: const Key('editFullNameField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editFullNameField'),
                                     label: 'Full Name',
+                                    hint: '',
                                     controller: _nameController,
-                                    icon: Icons.person_outline,
+                                    prefixIcon: const Icon(Icons.person_outline,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                     validator: (v) {
                                       if (v == null || v.trim().length < 2) {
                                         return 'Enter a valid name (at least 2 characters)';
@@ -549,28 +554,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     },
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editPhoneField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editPhoneField'),
                                     label: 'Phone Number',
+                                    hint: '',
                                     controller: _phoneController,
-                                    icon: Icons.phone_outlined,
-                                    keyboardType: TextInputType.phone,
-                                    readOnly: true,
+                                    prefixIcon: const Icon(Icons.phone_outlined,
+                                        size: 18),
                                     suffixIcon: Icon(
                                       Icons.lock_outline,
                                       size: 16,
                                       color: colors.outlineVariant,
                                     ),
+                                    keyboardType: TextInputType.phone,
+                                    readOnly: true,
                                     helperText:
                                         'Primary phone is verified and cannot be edited directly.',
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editEmailField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editEmailField'),
                                     label: 'Email Address',
+                                    hint: '',
                                     controller: _emailController,
-                                    icon: Icons.email_outlined,
+                                    prefixIcon: const Icon(Icons.email_outlined,
+                                        size: 18),
                                     keyboardType: TextInputType.emailAddress,
+                                    textCapitalization: TextCapitalization.none,
                                     validator: (v) {
                                       if (v != null &&
                                           v.trim().isNotEmpty &&
@@ -582,23 +592,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     },
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editFatherNameField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editFatherNameField'),
                                     label: 'Father\'s Name',
+                                    hint: '',
                                     controller: _fatherNameController,
-                                    icon: Icons.family_restroom_outlined,
+                                    prefixIcon: const Icon(
+                                        Icons.family_restroom_outlined,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editMotherNameField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editMotherNameField'),
                                     label: 'Mother\'s Name',
+                                    hint: '',
                                     controller: _motherNameController,
-                                    icon: Icons.family_restroom_outlined,
+                                    prefixIcon: const Icon(
+                                        Icons.family_restroom_outlined,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileDateField(
-                                    key: const Key('editDobField'),
+                                  VoltiumDateField(
+                                    fieldKey: const Key('editDobField'),
                                     label: 'Date of Birth',
+                                    hint: 'YYYY-MM-DD',
                                     controller: _dobController,
                                     onTap: () async {
                                       final firstDate = DateTime(1940);
@@ -638,18 +659,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     },
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editAddressField'),
+                                  VoltiumTextField(
+                                    fieldKey: const Key('editAddressField'),
                                     label: 'Current Address',
+                                    hint: '',
                                     controller: _addressController,
-                                    icon: Icons.home_outlined,
+                                    prefixIcon: const Icon(Icons.home_outlined,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
                                   ),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editEmergencyContactField'),
+                                  VoltiumTextField(
+                                    fieldKey:
+                                        const Key('editEmergencyContactField'),
                                     label: 'Emergency Contact Number',
+                                    hint: '',
                                     controller: _emergencyContactController,
-                                    icon: Icons.emergency_outlined,
+                                    prefixIcon: const Icon(
+                                        Icons.emergency_outlined,
+                                        size: 18),
                                     keyboardType: TextInputType.phone,
                                     validator: (v) {
                                       final clean =
@@ -697,20 +726,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   const EditProfileSectionHeader(
                                     title: 'GUARANTOR DETAILS',
                                   ),
-                                  EditProfileTextField(
-                                    key: const Key('editGuarantorNameField'),
+                                  VoltiumTextField(
+                                    fieldKey:
+                                        const Key('editGuarantorNameField'),
                                     label: 'Guarantor Name',
+                                    hint: '',
                                     controller: _gNameController,
-                                    icon: Icons.shield_outlined,
+                                    prefixIcon: const Icon(
+                                        Icons.shield_outlined,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                   ),
                                   const SizedBox(height: 16),
                                   _buildGuarantorPhoneField(),
                                   const SizedBox(height: 16),
-                                  EditProfileTextField(
-                                    key: const Key('editGuarantorAddressField'),
+                                  VoltiumTextField(
+                                    fieldKey:
+                                        const Key('editGuarantorAddressField'),
                                     label: 'Guarantor Address',
+                                    hint: '',
                                     controller: _gAddressController,
-                                    icon: Icons.home_outlined,
+                                    prefixIcon: const Icon(Icons.home_outlined,
+                                        size: 18),
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
                                   ),
                                 ],
                               ),

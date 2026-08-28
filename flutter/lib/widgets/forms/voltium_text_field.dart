@@ -19,11 +19,14 @@ class VoltiumTextField extends StatelessWidget {
   final int maxLines;
   final int? minLines;
   final bool enabled;
+  final bool readOnly;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final Key? fieldKey;
   final Iterable<String>? autofillHints;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   const VoltiumTextField({
     super.key,
@@ -38,11 +41,14 @@ class VoltiumTextField extends StatelessWidget {
     this.maxLines = 1,
     this.minLines,
     this.enabled = true,
+    this.readOnly = false,
     this.textInputAction,
     this.onChanged,
     this.inputFormatters,
     this.fieldKey,
     this.autofillHints,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
@@ -58,7 +64,11 @@ class VoltiumTextField extends StatelessWidget {
           key: fieldKey,
           controller: controller,
           validator: validator,
-          readOnly: !enabled,
+          // readOnly is independent of enabled: a field can be enabled
+          // but not editable (e.g. primary phone shows a lock icon).
+          // If readOnly is true, the user can still focus the field to
+          // see the helper text but cannot change the value.
+          readOnly: readOnly,
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           maxLength: maxLength,
@@ -68,7 +78,11 @@ class VoltiumTextField extends StatelessWidget {
           onChanged: onChanged,
           inputFormatters: inputFormatters,
           autofillHints: autofillHints,
-          style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
+          style: AppTypography.bodyMedium.copyWith(
+            color: enabled
+                ? (readOnly ? colors.onSurfaceMuted : colors.onSurface)
+                : colors.onSurfaceMuted,
+          ),
           buildCounter: maxLength != null
               ? (
                   context, {
@@ -92,6 +106,8 @@ class VoltiumTextField extends StatelessWidget {
               color: colors.onSurfaceMuted.withValues(alpha: 0.7),
               fontSize: 14,
             ),
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
             helperText: helperText,
             helperStyle: AppTypography.bodySmall.copyWith(
               color: colors.onSurfaceMuted,
