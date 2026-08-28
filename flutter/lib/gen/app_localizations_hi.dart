@@ -962,147 +962,16 @@ class AppLocalizationsHi extends AppLocalizations {
       'वापसी जमा करने में गड़बड़ी। कृपया फिर से कोशिश करें।';
 
   @override
-  String get txtconfirmReturn => 'वापसी की पुष्टि करें';
-
-  @override
-  String get txtpleaseTakeAllInspectionPhotosToContinue =>
-      'आगे बढ़ने के लिए कृपया सभी जांच फ़ोटो लें';
-
-  @override
-  String get txtsubscriptionConfirmed => 'सदस्यता की पुष्टि हो गई!';
-
-  @override
-  String get txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle =>
-      'आपका प्लान अब सक्रिय है। अब आप अपना वाहन लेने के लिए नजदीकी हब पर जा सकते हैं।';
-
-  @override
-  String get txtproceedToPickup => 'पिकअप के लिए आगे बढ़ें';
-
-  @override
-  String get txtrentalDetails => 'किराया विवरण';
-
-  @override
   String get txtrewards => 'इनाम';
 
   @override
-  String get txtnoResultsFound => 'कोई परिणाम नहीं मिला';
-
-  @override
-  String get txtstillNeedHelp => 'अभी भी मदद चाहिए?';
-
-  @override
-  String get txtquickTip => 'त्वरित टिप';
-
-  @override
-  String get txtprevious => 'पिछला';
-
-  @override
-  String get txtshareYourThoughts => 'अपनी राय साझा करें';
-
-  @override
-  String get txtyourFeedbackHelpsUsImproveTheExperienceForEveryone =>
-      'आपकी प्रतिक्रिया हमें सबके अनुभव को बेहतर बनाने में मदद करती है।';
-
-  @override
-  String get txtfeedback => 'प्रतिक्रिया';
-
-  @override
-  String get txtsubmitFeedback => 'प्रतिक्रिया जमा करें';
-
-  @override
-  String get txtenjoyingVoltium => 'वोल्टियम पसंद आ रहा है?';
-
-  @override
-  String get txttakeAMomentToRateYourExperienceItHelpsUsGrow =>
-      'अपने अनुभव को रेट करने के लिए थोड़ा समय निकालें। यह हमें बढ़ने में मदद करता है!';
-
-  @override
-  String get txtrateUs => 'हमें रेट करें';
-
-  @override
-  String get txtnotNow => 'अभी नहीं';
-
-  @override
-  String get txtsupportCenter => 'सपोर्ट सेंटर';
-
-  @override
-  String get txtsupportChecklist => 'सपोर्ट चेकलिस्ट';
-
-  @override
-  String get txtpleaseVerify => 'कृपया सत्यापित करें';
-
-  @override
-  String get txtbeforeCreatingATicketPleaseEnsureYouHaveCompletedTheseStepsToHelpUsResolveYourIssueFaster =>
-      'टिकट बनाने से पहले कृपया सुनिश्चित करें कि आपने ये चरण पूरे कर लिए हैं ताकि हम आपकी समस्या जल्दी हल कर सकें।';
-
-  @override
-  String get txtproceedToSupport => 'सपोर्ट के लिए आगे बढ़ें';
-
-  @override
-  String get txtkeepCheckingAllItemsToProceed =>
-      'आगे बढ़ने के लिए सभी आइटम चेक करते रहें';
-
-  @override
   String get txtcallNow => 'अभी कॉल करें';
-
-  @override
-  String get txtwhatIssueAreYouExperiencing => 'आपको क्या समस्या हो रही है?';
-
-  @override
-  String get txttroubleshootAnotherIssue => 'दूसरी समस्या का समाधान';
-
-  @override
-  String get txtselectPhotoSource => 'फ़ोटो स्रोत चुनें';
-
-  @override
-  String get txtraiseATicket => 'टिकट उठाएं';
-
-  @override
-  String get txtissueType => 'समस्या का प्रकार';
-
-  @override
-  String get txtdescription => 'विवरण';
-
-  @override
-  String get txtraiseTicket => 'टिकट उठाएं';
-
-  @override
-  String get txtanswerHonestlyForTheMostAccurateDiagnosis =>
-      'सबसे सटीक निदान के लिए ईमानदारी से जवाब दें।';
-
-  @override
-  String get txtyes => 'हां';
-
-  @override
-  String get txtdiagnosticPathTaken => 'निदान मार्ग लिया';
-
-  @override
-  String get txttransactionHistory => 'लेनदेन इतिहास';
-
-  @override
-  String get txttapAnyTransactionToSeeTheFullFeeBreakdown =>
-      'पूर्ण शुल्क विवरण देखने के लिए किसी भी लेनदेन पर टैप करें';
-
-  @override
-  String get txtnoTransactionsFound => 'कोई लेनदेन नहीं मिला';
-
-  @override
-  String get txttotalCharged => 'कुल शुल्क';
-
-  @override
-  String get txtenterAmount => 'राशि डालें';
-
-  @override
-  String get txthowMuchWouldYouLikeToAdd => 'आप कितना जोड़ना चाहेंगे?';
 
   @override
   String get txtstep2Of3 => 'कदम 2 का 3';
 
   @override
   String get txtproceedToPayment => 'भुगतान के लिए आगे बढ़ें';
-
-  @override
-  String get txttakePhoto => 'फ़ोटो लें';
 
   @override
   String get txtstep3Of3 => 'कदम 3 का 3';
@@ -1115,10 +984,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtproofOfTopUp => 'टॉप अप का प्रूफ़';
-
-  @override
-  String get txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment =>
-      'कृपया राइडर द्वारा वोल्टियम टीम सदस्य को कैश देते हुए या ऑनलाइन भुगतान की रसीद की फ़ोटो संलग्न करें।';
 
   @override
   String get txtuploadPhotoProof => 'फ़ोटो प्रूफ़ अपलोड करें';
@@ -1173,10 +1038,6 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get txtproofTopUpNoExtraFee =>
-      'टॉप अप तत्काल होगा। राइडर के लिए कोई अतिरिक्त शुल्क नहीं।';
-
-  @override
   String txtproofGatewayFee(String percent) {
     return 'गेटवे शुल्क ($percent%)';
   }
@@ -1207,24 +1068,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtstep1Of3 => 'कदम 1 का 3';
-
-  @override
-  String get txtselectPurpose => 'उद्देश्य चुनें';
-
-  @override
-  String get txtstandardAmount => 'मानक राशि';
-
-  @override
-  String get txtimportantInformation => 'महत्वपूर्ण जानकारी';
-
-  @override
-  String get txtcontinueToPayment => 'भुगतान जारी रखें';
-
-  @override
-  String get txtpaymentSubmitted => 'भुगतान जमा हो गया';
-
-  @override
-  String get txtverificationInProgress => 'सत्यापन जारी है';
 
   @override
   String get txttopUp => 'टॉप अप';

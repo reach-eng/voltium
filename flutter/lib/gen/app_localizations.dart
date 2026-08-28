@@ -1839,259 +1839,17 @@ abstract class AppLocalizations {
   /// **'Error submitting return. Please try again.'**
   String get txterrorSubmittingReturnPleaseTryAgain;
 
-  /// No description provided for @txtconfirmReturn.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm Return'**
-  String get txtconfirmReturn;
-
-  /// No description provided for @txtpleaseTakeAllInspectionPhotosToContinue.
-  ///
-  /// In en, this message translates to:
-  /// **'Please take all inspection photos to continue'**
-  String get txtpleaseTakeAllInspectionPhotosToContinue;
-
-  /// No description provided for @txtsubscriptionConfirmed.
-  ///
-  /// In en, this message translates to:
-  /// **'Subscription Confirmed!'**
-  String get txtsubscriptionConfirmed;
-
-  /// No description provided for @txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle.
-  ///
-  /// In en, this message translates to:
-  /// **'Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.'**
-  String
-      get txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle;
-
-  /// No description provided for @txtproceedToPickup.
-  ///
-  /// In en, this message translates to:
-  /// **'Proceed to Pickup'**
-  String get txtproceedToPickup;
-
-  /// No description provided for @txtrentalDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Rental Details'**
-  String get txtrentalDetails;
-
   /// No description provided for @txtrewards.
   ///
   /// In en, this message translates to:
   /// **'Rewards'**
   String get txtrewards;
 
-  /// No description provided for @txtnoResultsFound.
-  ///
-  /// In en, this message translates to:
-  /// **'No results found'**
-  String get txtnoResultsFound;
-
-  /// No description provided for @txtstillNeedHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Still need help?'**
-  String get txtstillNeedHelp;
-
-  /// No description provided for @txtquickTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Quick Tip'**
-  String get txtquickTip;
-
-  /// No description provided for @txtprevious.
-  ///
-  /// In en, this message translates to:
-  /// **'PREVIOUS'**
-  String get txtprevious;
-
-  /// No description provided for @txtshareYourThoughts.
-  ///
-  /// In en, this message translates to:
-  /// **'Share Your Thoughts'**
-  String get txtshareYourThoughts;
-
-  /// No description provided for @txtyourFeedbackHelpsUsImproveTheExperienceForEveryone.
-  ///
-  /// In en, this message translates to:
-  /// **'Your feedback helps us improve the experience for everyone.'**
-  String get txtyourFeedbackHelpsUsImproveTheExperienceForEveryone;
-
-  /// No description provided for @txtfeedback.
-  ///
-  /// In en, this message translates to:
-  /// **'Feedback'**
-  String get txtfeedback;
-
-  /// No description provided for @txtsubmitFeedback.
-  ///
-  /// In en, this message translates to:
-  /// **'SUBMIT FEEDBACK'**
-  String get txtsubmitFeedback;
-
-  /// No description provided for @txtenjoyingVoltium.
-  ///
-  /// In en, this message translates to:
-  /// **'Enjoying Voltium?'**
-  String get txtenjoyingVoltium;
-
-  /// No description provided for @txttakeAMomentToRateYourExperienceItHelpsUsGrow.
-  ///
-  /// In en, this message translates to:
-  /// **'Take a moment to rate your experience. It helps us grow!'**
-  String get txttakeAMomentToRateYourExperienceItHelpsUsGrow;
-
-  /// No description provided for @txtrateUs.
-  ///
-  /// In en, this message translates to:
-  /// **'RATE US'**
-  String get txtrateUs;
-
-  /// No description provided for @txtnotNow.
-  ///
-  /// In en, this message translates to:
-  /// **'NOT NOW'**
-  String get txtnotNow;
-
-  /// No description provided for @txtsupportCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Support Center'**
-  String get txtsupportCenter;
-
-  /// No description provided for @txtsupportChecklist.
-  ///
-  /// In en, this message translates to:
-  /// **'Support Checklist'**
-  String get txtsupportChecklist;
-
-  /// No description provided for @txtpleaseVerify.
-  ///
-  /// In en, this message translates to:
-  /// **'PLEASE VERIFY'**
-  String get txtpleaseVerify;
-
-  /// No description provided for @txtbeforeCreatingATicketPleaseEnsureYouHaveCompletedTheseStepsToHelpUsResolveYourIssueFaster.
-  ///
-  /// In en, this message translates to:
-  /// **'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.'**
-  String
-      get txtbeforeCreatingATicketPleaseEnsureYouHaveCompletedTheseStepsToHelpUsResolveYourIssueFaster;
-
-  /// No description provided for @txtproceedToSupport.
-  ///
-  /// In en, this message translates to:
-  /// **'Proceed to Support'**
-  String get txtproceedToSupport;
-
-  /// No description provided for @txtkeepCheckingAllItemsToProceed.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep checking all items to proceed'**
-  String get txtkeepCheckingAllItemsToProceed;
-
   /// No description provided for @txtcallNow.
   ///
   /// In en, this message translates to:
   /// **'Call Now'**
   String get txtcallNow;
-
-  /// No description provided for @txtwhatIssueAreYouExperiencing.
-  ///
-  /// In en, this message translates to:
-  /// **'What issue are you experiencing?'**
-  String get txtwhatIssueAreYouExperiencing;
-
-  /// No description provided for @txttroubleshootAnotherIssue.
-  ///
-  /// In en, this message translates to:
-  /// **'Troubleshoot Another Issue'**
-  String get txttroubleshootAnotherIssue;
-
-  /// No description provided for @txtselectPhotoSource.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Photo Source'**
-  String get txtselectPhotoSource;
-
-  /// No description provided for @txtraiseATicket.
-  ///
-  /// In en, this message translates to:
-  /// **'Raise a Ticket'**
-  String get txtraiseATicket;
-
-  /// No description provided for @txtissueType.
-  ///
-  /// In en, this message translates to:
-  /// **'ISSUE TYPE'**
-  String get txtissueType;
-
-  /// No description provided for @txtdescription.
-  ///
-  /// In en, this message translates to:
-  /// **'DESCRIPTION'**
-  String get txtdescription;
-
-  /// No description provided for @txtraiseTicket.
-  ///
-  /// In en, this message translates to:
-  /// **'RAISE TICKET'**
-  String get txtraiseTicket;
-
-  /// No description provided for @txtanswerHonestlyForTheMostAccurateDiagnosis.
-  ///
-  /// In en, this message translates to:
-  /// **'Answer honestly for the most accurate diagnosis.'**
-  String get txtanswerHonestlyForTheMostAccurateDiagnosis;
-
-  /// No description provided for @txtyes.
-  ///
-  /// In en, this message translates to:
-  /// **'Yes'**
-  String get txtyes;
-
-  /// No description provided for @txtdiagnosticPathTaken.
-  ///
-  /// In en, this message translates to:
-  /// **'Diagnostic path taken'**
-  String get txtdiagnosticPathTaken;
-
-  /// No description provided for @txttransactionHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Transaction History'**
-  String get txttransactionHistory;
-
-  /// No description provided for @txttapAnyTransactionToSeeTheFullFeeBreakdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap any transaction to see the full fee breakdown'**
-  String get txttapAnyTransactionToSeeTheFullFeeBreakdown;
-
-  /// No description provided for @txtnoTransactionsFound.
-  ///
-  /// In en, this message translates to:
-  /// **'No transactions found'**
-  String get txtnoTransactionsFound;
-
-  /// No description provided for @txttotalCharged.
-  ///
-  /// In en, this message translates to:
-  /// **'TOTAL CHARGED'**
-  String get txttotalCharged;
-
-  /// No description provided for @txtenterAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter Amount'**
-  String get txtenterAmount;
-
-  /// No description provided for @txthowMuchWouldYouLikeToAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'How much would you like to add?'**
-  String get txthowMuchWouldYouLikeToAdd;
 
   /// No description provided for @txtstep2Of3.
   ///
@@ -2104,12 +1862,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Proceed to payment'**
   String get txtproceedToPayment;
-
-  /// No description provided for @txttakePhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'Take Photo'**
-  String get txttakePhoto;
 
   /// No description provided for @txtstep3Of3.
   ///
@@ -2134,13 +1886,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Proof of Top Up'**
   String get txtproofOfTopUp;
-
-  /// No description provided for @txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment.
-  ///
-  /// In en, this message translates to:
-  /// **'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.'**
-  String
-      get txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment;
 
   /// No description provided for @txtuploadPhotoProof.
   ///
@@ -2238,12 +1983,6 @@ abstract class AppLocalizations {
   /// **'Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹{fee}) gateway fee will be added to your top up amount.'**
   String txtproofTopUpWillBeInstant(String fee);
 
-  /// No description provided for @txtproofTopUpNoExtraFee.
-  ///
-  /// In en, this message translates to:
-  /// **'Top up will be instant. No extra fee for rider.'**
-  String get txtproofTopUpNoExtraFee;
-
   /// No description provided for @txtproofGatewayFee.
   ///
   /// In en, this message translates to:
@@ -2297,42 +2036,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Step 1 of 3'**
   String get txtstep1Of3;
-
-  /// No description provided for @txtselectPurpose.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Purpose'**
-  String get txtselectPurpose;
-
-  /// No description provided for @txtstandardAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard Amount'**
-  String get txtstandardAmount;
-
-  /// No description provided for @txtimportantInformation.
-  ///
-  /// In en, this message translates to:
-  /// **'Important Information'**
-  String get txtimportantInformation;
-
-  /// No description provided for @txtcontinueToPayment.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue to Payment'**
-  String get txtcontinueToPayment;
-
-  /// No description provided for @txtpaymentSubmitted.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment Submitted'**
-  String get txtpaymentSubmitted;
-
-  /// No description provided for @txtverificationInProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'Verification in Progress'**
-  String get txtverificationInProgress;
 
   /// No description provided for @txttopUp.
   ///

@@ -957,148 +957,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Error submitting return. Please try again.';
 
   @override
-  String get txtconfirmReturn => 'Confirm Return';
-
-  @override
-  String get txtpleaseTakeAllInspectionPhotosToContinue =>
-      'Please take all inspection photos to continue';
-
-  @override
-  String get txtsubscriptionConfirmed => 'Subscription Confirmed!';
-
-  @override
-  String get txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle =>
-      'Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.';
-
-  @override
-  String get txtproceedToPickup => 'Proceed to Pickup';
-
-  @override
-  String get txtrentalDetails => 'Rental Details';
-
-  @override
   String get txtrewards => 'Rewards';
 
   @override
-  String get txtnoResultsFound => 'No results found';
-
-  @override
-  String get txtstillNeedHelp => 'Still need help?';
-
-  @override
-  String get txtquickTip => 'Quick Tip';
-
-  @override
-  String get txtprevious => 'PREVIOUS';
-
-  @override
-  String get txtshareYourThoughts => 'Share Your Thoughts';
-
-  @override
-  String get txtyourFeedbackHelpsUsImproveTheExperienceForEveryone =>
-      'Your feedback helps us improve the experience for everyone.';
-
-  @override
-  String get txtfeedback => 'Feedback';
-
-  @override
-  String get txtsubmitFeedback => 'SUBMIT FEEDBACK';
-
-  @override
-  String get txtenjoyingVoltium => 'Enjoying Voltium?';
-
-  @override
-  String get txttakeAMomentToRateYourExperienceItHelpsUsGrow =>
-      'Take a moment to rate your experience. It helps us grow!';
-
-  @override
-  String get txtrateUs => 'RATE US';
-
-  @override
-  String get txtnotNow => 'NOT NOW';
-
-  @override
-  String get txtsupportCenter => 'Support Center';
-
-  @override
-  String get txtsupportChecklist => 'Support Checklist';
-
-  @override
-  String get txtpleaseVerify => 'PLEASE VERIFY';
-
-  @override
-  String get txtbeforeCreatingATicketPleaseEnsureYouHaveCompletedTheseStepsToHelpUsResolveYourIssueFaster =>
-      'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.';
-
-  @override
-  String get txtproceedToSupport => 'Proceed to Support';
-
-  @override
-  String get txtkeepCheckingAllItemsToProceed =>
-      'Keep checking all items to proceed';
-
-  @override
   String get txtcallNow => 'Call Now';
-
-  @override
-  String get txtwhatIssueAreYouExperiencing =>
-      'What issue are you experiencing?';
-
-  @override
-  String get txttroubleshootAnotherIssue => 'Troubleshoot Another Issue';
-
-  @override
-  String get txtselectPhotoSource => 'Select Photo Source';
-
-  @override
-  String get txtraiseATicket => 'Raise a Ticket';
-
-  @override
-  String get txtissueType => 'ISSUE TYPE';
-
-  @override
-  String get txtdescription => 'DESCRIPTION';
-
-  @override
-  String get txtraiseTicket => 'RAISE TICKET';
-
-  @override
-  String get txtanswerHonestlyForTheMostAccurateDiagnosis =>
-      'Answer honestly for the most accurate diagnosis.';
-
-  @override
-  String get txtyes => 'Yes';
-
-  @override
-  String get txtdiagnosticPathTaken => 'Diagnostic path taken';
-
-  @override
-  String get txttransactionHistory => 'Transaction History';
-
-  @override
-  String get txttapAnyTransactionToSeeTheFullFeeBreakdown =>
-      'Tap any transaction to see the full fee breakdown';
-
-  @override
-  String get txtnoTransactionsFound => 'No transactions found';
-
-  @override
-  String get txttotalCharged => 'TOTAL CHARGED';
-
-  @override
-  String get txtenterAmount => 'Enter Amount';
-
-  @override
-  String get txthowMuchWouldYouLikeToAdd => 'How much would you like to add?';
 
   @override
   String get txtstep2Of3 => 'Step 2 of 3';
 
   @override
   String get txtproceedToPayment => 'Proceed to payment';
-
-  @override
-  String get txttakePhoto => 'Take Photo';
 
   @override
   String get txtstep3Of3 => 'Step 3 of 3';
@@ -1111,10 +979,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtproofOfTopUp => 'Proof of Top Up';
-
-  @override
-  String get txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment =>
-      'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.';
 
   @override
   String get txtuploadPhotoProof => 'Upload Photo Proof';
@@ -1168,10 +1032,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txtproofTopUpNoExtraFee =>
-      'Top up will be instant. No extra fee for rider.';
-
-  @override
   String txtproofGatewayFee(String percent) {
     return 'Gateway Fee ($percent%)';
   }
@@ -1202,24 +1062,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtstep1Of3 => 'Step 1 of 3';
-
-  @override
-  String get txtselectPurpose => 'Select Purpose';
-
-  @override
-  String get txtstandardAmount => 'Standard Amount';
-
-  @override
-  String get txtimportantInformation => 'Important Information';
-
-  @override
-  String get txtcontinueToPayment => 'Continue to Payment';
-
-  @override
-  String get txtpaymentSubmitted => 'Payment Submitted';
-
-  @override
-  String get txtverificationInProgress => 'Verification in Progress';
 
   @override
   String get txttopUp => 'Top Up';
