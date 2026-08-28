@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:universal_io/io.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -20,10 +21,12 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
+import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/services/cache_service.dart';
 import '../../../../utils/app_logger.dart';
 
 /// State for GuarantorOnboardingScreen managed via Riverpod Notifier.
@@ -911,17 +914,131 @@ class _GuarantorOnboardingScreenState
     }
   }
 
-  /// ONBOARDING-AUDIT 2026-08-14 (fix #5d): the previous "Skip for
-  /// now?" path was removed entirely. The button claimed a
-  /// higher-deposit tier would be unlocked by skipping, but the
-  /// backend never enforced `requiresHigherDeposit` — so the rider
-  /// was promised a consequence that did not exist. Worse, skipping
-  /// meant the rider had no guarantor on file, which (per the
-  /// active-path server contract) blocks the rental flow
-  /// outright. The button is gone from the screen below
-  /// (`onSkip: null`) and the handler was deleted. If you ever
-  /// want to re-introduce skipping, wire the server-side
-  /// `requiresHigherDeposit` flag end-to-end FIRST.
+  /// PR-GUARANTOR-SKIP (2026-08-28): the Skip button is back. A rider
+  /// who doesn't have a guarantor can opt to pay a higher security
+  /// deposit instead — the amount is admin-managed from the admin
+  /// panel's Configurations section and served via
+  /// `/api/admin/config/skip-guarantor` (see
+  /// `skipDepositConfigProvider`). Confirming the skip:
+  ///   1. persists `voltium_requires_higher_deposit:<riderId> = "true"`
+  ///      in shared-prefs so the downstream screens (plan choice, plan
+  ///      subscribe) can read it;
+  ///   2. clears the half-filled guarantor form cache so a resumed
+  ///      rider doesn't see stale form state;
+  ///   3. calls `widget.onNext()` to advance to the next step.
+  /// Cancelling the dialog does nothing — the flag is never set and
+  /// the cache stays.
+  Future<void> _onSkipPressed() async {
+    final l10n = AppLocalizations.of(context)!;
+    final config = await ref.read(skipDepositConfigProvider.future);
+    if (!mounted) return;
+
+    // Indian-locale grouping: ₹1,000 / ₹10,000. The admin manages the
+    // raw rupee amount; we only format the display.
+    final amountText =
+        '₹${NumberFormat.decimalPattern('en_IN').format(config.extraDepositRupees.round())}';
+    final sourceLabel = config.source == SkipDepositSource.admin
+        ? l10n.txtguarantorSkipSourceAdmin
+        : l10n.txtguarantorSkipSourceFallback;
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final colors = AppColors.of(ctx);
+        return AlertDialog(
+          key: const Key('skipGuarantorDialog'),
+          backgroundColor: colors.card,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: Colors.orange, size: 24),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.txtguarantorSkipTitle,
+                  style: AppTypography.titleMedium
+                      .copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.txtguarantorSkipBody(amountText),
+                style: AppTypography.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: config.source == SkipDepositSource.admin
+                      ? colors.primarySurface
+                      : colors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  sourceLabel,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: config.source == SkipDepositSource.admin
+                        ? AppColors.primaryLight
+                        : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              key: const Key('skipGuarantorCancelButton'),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
+            ),
+            FilledButton(
+              key: const Key('skipGuarantorConfirmButton'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.orange.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.txtguarantorSkipConfirm),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (proceed != true) return;
+    if (!mounted) return;
+
+    // 1. Persist the higher-deposit flag (per-rider) so plan screens
+    //    can read it without re-asking the rider.
+    final riderId = ref.read(riderProvider).riderId ??
+        ref.read(riderProvider).rider?.id;
+    if (riderId != null && riderId.isNotEmpty) {
+      await CacheService()
+          .setString('voltium_requires_higher_deposit:$riderId', 'true');
+    }
+
+    // 2. Clear the half-filled form cache so the rider doesn't see
+    //    stale state on resume.
+    if (riderId != null && riderId.isNotEmpty) {
+      await GuarantorCache.clearFormCache(riderId);
+    }
+
+    // 3. Advance to the next step. The downstream plan screen is
+    //    responsible for adding the higher-deposit amount to the
+    //    rider's existing security deposit.
+    PostHogService.capture('guarantor_skipped_for_higher_deposit');
+    widget.onNext?.call();
+  }
 
   Widget _buildStepIndicator() {
     final currentStep = ref.watch(
@@ -1169,12 +1286,12 @@ class _GuarantorOnboardingScreenState
               uploadProgressText: state.uploadProgressText,
               buttonText: state.currentStep < 3 ? 'NEXT STEP' : 'FINISH SETUP',
               onSubmit: _onBottomButtonPressed,
-              // ONBOARDING-AUDIT 2026-08-14 (fix #5d): the Skip button
-              // was removed. It promised a higher-deposit tier that the
-              // backend never enforced, and skipping would block the
-              // rental flow (a rider without a guarantor on file cannot
-              // start a rental per the active-path server contract).
-              onSkip: null,
+              // PR-GUARANTOR-SKIP (2026-08-28): re-enabled per rider
+              // request. The higher-deposit amount is admin-managed
+              // via `skipDepositConfigProvider`; confirming the skip
+              // persists `voltium_requires_higher_deposit:<riderId>`
+              // and calls onNext.
+              onSkip: _onSkipPressed,
             ),
           ],
         ),

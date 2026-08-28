@@ -1865,11 +1865,41 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get txtcontinue;
 
-  /// No description provided for @txtskip.
+  /// Generic Skip button label
   ///
   /// In en, this message translates to:
   /// **'Skip'**
   String get txtskip;
+
+  /// Title of the skip-guarantor confirmation dialog on the onboarding screen
+  ///
+  /// In en, this message translates to:
+  /// **'Skip guarantor?'**
+  String get txtguarantorSkipTitle;
+
+  /// Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You\'ll be charged the difference when you start your rental.'**
+  String txtguarantorSkipBody(String amount);
+
+  /// Sub-label on the skip dialog when the deposit amount came from the admin panel
+  ///
+  /// In en, this message translates to:
+  /// **'Configured by Voltium'**
+  String get txtguarantorSkipSourceAdmin;
+
+  /// Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used
+  ///
+  /// In en, this message translates to:
+  /// **'Default — admin has not set a value yet'**
+  String get txtguarantorSkipSourceFallback;
+
+  /// Confirm-button label on the skip-guarantor dialog
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP & PAY EXTRA'**
+  String get txtguarantorSkipConfirm;
 
   /// No description provided for @txtprivacyChoices.
   ///

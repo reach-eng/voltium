@@ -977,6 +977,25 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtskip => 'छोड़ें';
 
   @override
+  String get txtguarantorSkipTitle => 'गारंटर छोड़ें?';
+
+  @override
+  String txtguarantorSkipBody(String amount) {
+    return 'गारंटर छोड़ने पर आपकी योजना की जमा राशि के अतिरिक्त $amount की उच्च सुरक्षा जमा राशि लगेगी। यह राशि वोल्टियम द्वारा तय की जाती है और बदल सकती है। किराया शुरू करते समय अंतर आपसे लिया जाएगा।';
+  }
+
+  @override
+  String get txtguarantorSkipSourceAdmin =>
+      'वोल्टियम द्वारा कॉन्फ़िगर किया गया';
+
+  @override
+  String get txtguarantorSkipSourceFallback =>
+      'डिफ़ॉल्ट — व्यवस्थापक ने अभी मान सेट नहीं किया है';
+
+  @override
+  String get txtguarantorSkipConfirm => 'छोड़ें और अतिरिक्त भुगतान करें';
+
+  @override
   String get txtprivacyChoices => 'गोपनीयता विकल्प';
 
   @override

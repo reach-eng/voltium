@@ -975,6 +975,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtskip => 'Skip';
 
   @override
+  String get txtguarantorSkipTitle => 'Skip guarantor?';
+
+  @override
+  String txtguarantorSkipBody(String amount) {
+    return 'Skipping the guarantor requires a higher security deposit of $amount on top of your plan deposit. The amount is set by Voltium and may change. You\'ll be charged the difference when you start your rental.';
+  }
+
+  @override
+  String get txtguarantorSkipSourceAdmin => 'Configured by Voltium';
+
+  @override
+  String get txtguarantorSkipSourceFallback =>
+      'Default — admin has not set a value yet';
+
+  @override
+  String get txtguarantorSkipConfirm => 'SKIP & PAY EXTRA';
+
+  @override
   String get txtprivacyChoices => 'Privacy choices';
 
   @override

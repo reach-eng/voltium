@@ -1,26 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
+import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
-/// PR-A (§3.5): the "Skip" action on the guarantor form must not pretend the
-/// guarantor is optional. The dialog now says a guarantor is *required* to
-/// start renting — the honest consequence — before letting the rider skip.
-///
-/// ONBOARDING-AUDIT 2026-08-14 (fix #5d): the Skip button has been
-/// removed entirely. The reviewer flagged the previous behaviour as
-/// dead UI — the button promised a `requiresHigherDeposit` higher
-/// tier that the backend never enforced, and skipping the guarantor
-/// would block the rental flow at the server. The skip dialog
-/// tests below assert functionality that no longer exists; they
-/// are kept as `skip: true` markers so anyone re-introducing the
-/// flow can flip them back on. To re-introduce skipping, wire the
-/// server-side `requiresHigherDeposit` flag end-to-end FIRST.
+/// PR-GUARANTOR-SKIP (2026-08-28): the "Skip" action on the guarantor
+/// form is back. A rider who doesn't have a guarantor can opt to pay
+/// a higher security deposit instead. The amount is admin-managed from
+/// the admin panel's Configurations section and served via
+/// `skipDepositConfigProvider`. The dialog shows the amount and a
+/// "configured by Voltium" / "default" sub-label.
 void main() {
-  Widget buildScreen({VoidCallback? onNext}) {
+  // Seeds a fresh RiderNotifier so the screen has a riderId to write
+  // the higher-deposit flag against. Without this the screen's
+  // `riderId` would be null and the persistence would no-op.
+  Widget buildScreen({
+    VoidCallback? onNext,
+    String riderId = 'test_rider_skip_dialog',
+  }) {
     return ProviderScope(
+      overrides: [
+        riderProvider.overrideWith(() => _SeededRiderNotifier(
+              RiderModel(
+                id: riderId,
+                riderId: riderId,
+                name: 'Test Rider',
+                phone: '9999999999',
+                lifecycleStatus: 'NEW',
+              ),
+            )),
+        skipDepositConfigProvider.overrideWith((ref) async {
+          return const SkipDepositConfig(
+            extraDepositRupees: 1000,
+            source: SkipDepositSource.fallback,
+          );
+        }),
+      ],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -43,25 +63,62 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  // ONBOARDING-AUDIT 2026-08-14 (fix #5d): the Skip button is gone.
-  // The three tests below assert behaviour that no longer exists
-  // (skip → dialog → confirm/cancel). They are kept as `skip: true`
-  // markers so a future re-introduction can flip them back on. To
-  // re-enable, wire the server-side `requiresHigherDeposit` flag
-  // end-to-end FIRST.
-  testWidgets('skip opens a dialog that states the guarantor is required',
+  testWidgets('skip opens a dialog that states the higher-deposit amount',
       (tester) async {
-    // skip: the Skip button was removed (fix #5d). To re-enable,
-    // see the file-level comment.
-  }, skip: true);
+    await tester.pumpWidget(buildScreen());
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(find.byKey(const Key('skipGuarantorDialog')), findsOneWidget);
+    expect(find.text('Skip guarantor?'), findsOneWidget);
+    expect(find.textContaining('₹1,000'), findsOneWidget);
+    expect(find.byKey(const Key('skipGuarantorCancelButton')), findsOneWidget);
+    expect(find.byKey(const Key('skipGuarantorConfirmButton')), findsOneWidget);
+  });
 
   testWidgets('confirming skip calls onNext', (tester) async {
-    // skip: the Skip button was removed (fix #5d). To re-enable,
-    // see the file-level comment.
-  }, skip: true);
+    var onNextCalled = false;
+    await tester.pumpWidget(buildScreen(onNext: () {
+      onNextCalled = true;
+    }));
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const Key('skipGuarantorConfirmButton')));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(onNextCalled, isTrue);
+  });
 
   testWidgets('cancelling the skip dialog does not proceed', (tester) async {
-    // skip: the Skip button was removed (fix #5d). To re-enable,
-    // see the file-level comment.
-  }, skip: true);
+    var onNextCalled = false;
+    await tester.pumpWidget(buildScreen(onNext: () {
+      onNextCalled = true;
+    }));
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.byKey(const Key('skipGuarantorButton')));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.byKey(const Key('skipGuarantorCancelButton')));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(onNextCalled, isFalse);
+  });
+}
+
+class _SeededRiderNotifier extends RiderNotifier {
+  _SeededRiderNotifier(this._seed);
+  final RiderModel _seed;
+
+  @override
+  RiderState build() => RiderState(
+        rider: _seed,
+        riderId: _seed.riderId.isNotEmpty ? _seed.riderId : _seed.id,
+        phone: _seed.phone,
+        dataState: DataState.fresh,
+        hasFetchedOnce: true,
+      );
 }

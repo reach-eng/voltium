@@ -1,3 +1,12 @@
+/// PR-A (§6.4 / audit #6 P0-3) — the audit wanted to remove `call_log`
+/// from the onboarding permission list. The user reversed that: call
+/// log AND every other permission on this screen are intentionally
+/// required (2026-08-28 explicit instruction: "All the permissions on
+/// the permission page are completely necessary"). The tests below now
+/// assert the OPPOSITE of the original audit — every permission stays
+/// on the page and the copy is honest about what each one is for.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,13 +16,14 @@ import 'package:voltium_rider/features/device_compliance/presentation/providers/
 import 'package:voltium_rider/features/onboarding/presentation/screens/permissions_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
-/// PR-A (§6.4 / audit #6 P0-3) — REVERSED by the user (2026-08-21 standing
-/// rule: "call_log and flutter_contacts plugins are intentional and stay. Do
-/// not propose their removal in future audits"). The plugin and the
-/// onboarding permission request both stay. The assertions below that
-/// depended on call_log being removed are kept as `skip: true` so the
-/// test file still documents the historical audit, but the on-screen
-/// behaviour is intentionally unchanged.
+/// PR-A (§6.4 / audit #6 P0-3) — the audit wanted to remove `call_log`
+/// from the onboarding permission list. The user reversed that: call
+/// log AND every other permission on this screen are intentionally
+/// required (2026-08-28 explicit instruction: "All the permissions on
+/// the permission page are completely necessary"). The tests below now
+/// assert the OPPOSITE of the original audit — every permission stays
+/// on the page and the copy is honest about what each one is for.
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -55,23 +65,42 @@ void main() {
     );
   }
 
-  testWidgets('does not show a Call Log permission', (tester) async {
-    // skip: call_log is intentionally part of the onboarding list per the
-    // 2026-08-21 user rule (call_log + flutter_contacts stay). This test
-    // documents the originally-proposed audit but is no longer enforceable.
-  }, skip: true);
-
-  testWidgets('phone tile is honest: call-state copy, not call history',
+  testWidgets('Call Log permission is shown (user rule: all permissions necessary)',
       (tester) async {
-    // skip: see file header. Originally PR-VER-2026-08-06
-    // (ONBOARDING P0-2 residual) but the wording is no longer checked
-    // because the call_log request intentionally remains.
-  }, skip: true);
-
-  testWidgets('keeps the genuinely required permissions', (tester) async {
     await tester.pumpWidget(buildScreen());
     await tester.pump(const Duration(milliseconds: 600));
 
+    // The user's 2026-08-28 instruction explicitly reversed the audit
+    // that wanted to drop call_log from the onboarding list. Every
+    // permission on this page is necessary.
+    expect(find.textContaining('Call Log'), findsOneWidget,
+        reason: 'Call Log is a required onboarding permission per rider');
+  });
+
+  testWidgets(
+      'phone tile is honest: call-state copy, not call history',
+      (tester) async {
+    // PR-VER-2026-08-06 (ONBOARDING P0-2 residual): the phone permission
+    // maps to Android READ_PHONE_STATE. The tile must say "call state" /
+    // "call detection" — never imply it reads call history or contacts.
+    await tester.pumpWidget(buildScreen());
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.text('Phone State'), findsOneWidget);
+    expect(
+      find.text('Phone state (for safety call detection)'),
+      findsOneWidget,
+    );
+    // No wording that suggests call-history access.
+    expect(find.textContaining('history'), findsNothing);
+  });
+
+  testWidgets('keeps all genuinely required permissions', (tester) async {
+    await tester.pumpWidget(buildScreen());
+    await tester.pump(const Duration(milliseconds: 600));
+
+    // Every permission on this page is required per the rider
+    // (2026-08-28). Each shows its "Allow" affordance.
     expect(find.text('Location'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Camera'), findsOneWidget);

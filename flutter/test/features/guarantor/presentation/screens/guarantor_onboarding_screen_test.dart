@@ -11,6 +11,7 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 
 /// Seeds the Riverpod `riderProvider` directly (R4.3c-6 migration): the
 /// screen reads `ref.read(riderProvider).riderId` for the cache key, so the
@@ -152,18 +153,12 @@ void main() {
     });
   });
 
-  // ── Bug 24: Skip button with higher-deposit confirmation ───────────────
-  //
-  // ONBOARDING-AUDIT 2026-08-14 (fix #5d): the Skip button was
-  // removed entirely. The previous behaviour promised a
-  // `requiresHigherDeposit` higher-deposit tier that the backend
-  // never enforced, and skipping the guarantor would block the
-  // rental flow at the server. The four tests below assert
-  // behaviour that no longer exists; they are kept as `skip: true`
-  // markers so a future re-introduction can flip them back on. To
-  // re-enable, wire the server-side `requiresHigherDeposit` flag
-  // end-to-end FIRST.
-  group('Skip button (Bug 24) — REMOVED, see fix #5d', () {
+  // ── PR-GUARANTOR-SKIP (2026-08-28): the Skip button is back. A rider
+  // without a guarantor can opt to pay a higher security deposit
+  // instead — the amount is admin-managed from the admin panel's
+  // Configurations section and served via `skipDepositConfigProvider`.
+  // The 4 tests below cover the full Skip flow.
+  group('Skip button (PR-GUARANTOR-SKIP, 2026-08-28)', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
@@ -181,6 +176,16 @@ void main() {
                   lifecycleStatus: 'NEW',
                 ),
               )),
+          // No backend in widget tests — the dialog must still render
+          // with the fallback amount (₹1,000) and the "Default" source
+          // label. Override the provider with a stub Future that
+          // resolves to the fallback config.
+          skipDepositConfigProvider.overrideWith((ref) async {
+            return const SkipDepositConfig(
+              extraDepositRupees: 1000,
+              source: SkipDepositSource.fallback,
+            );
+          }),
         ],
         child: MaterialApp(
           localizationsDelegates: const [
@@ -197,16 +202,16 @@ void main() {
       );
     }
 
-    testWidgets('Skip button is visible in the bottom bar [REMOVED]',
+    testWidgets('Skip button is visible in the bottom bar',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byKey(const Key('skipGuarantorButton')), findsOneWidget);
-    }, skip: true);
+    });
 
     testWidgets(
-        'Tapping Skip opens a confirmation dialog stating the guarantor is required [REMOVED]',
+        'Tapping Skip opens a confirmation dialog with the higher-deposit amount',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pump(const Duration(seconds: 1));
@@ -215,21 +220,24 @@ void main() {
       await tester.tap(find.byKey(const Key('skipGuarantorButton')));
       await tester.pump(const Duration(seconds: 1));
 
-      // Confirmation dialog appears with the honest copy (audit #7 / §3.5).
-      expect(find.text('Skip for now?'), findsOneWidget);
+      // Confirmation dialog appears with the new copy.
+      expect(find.byKey(const Key('skipGuarantorDialog')), findsOneWidget);
+      expect(find.text('Skip guarantor?'), findsOneWidget);
+      // Fallback amount from the override above.
+      expect(find.textContaining('₹1,000'), findsOneWidget);
       expect(
-        find.textContaining('required to start renting'),
+        find.text('Default — admin has not set a value yet'),
         findsOneWidget,
       );
 
-      // Cancel button visible
+      // Cancel + confirm buttons visible
       expect(
           find.byKey(const Key('skipGuarantorCancelButton')), findsOneWidget);
       expect(
           find.byKey(const Key('skipGuarantorConfirmButton')), findsOneWidget);
-    }, skip: true);
+    });
 
-    testWidgets('Cancelling the skip dialog does not call onNext [REMOVED]',
+    testWidgets('Cancelling the skip dialog does not call onNext',
         (WidgetTester tester) async {
       var onNextCalled = false;
       await tester.pumpWidget(createTestWidget(onNext: () {
@@ -249,10 +257,10 @@ void main() {
             .getString('voltium_requires_higher_deposit:test_rider_skip'),
         isNull,
       );
-    }, skip: true);
+    });
 
     testWidgets(
-        'Confirming the skip sets higher-deposit flag and calls onNext [REMOVED]',
+        'Confirming the skip sets higher-deposit flag and calls onNext',
         (WidgetTester tester) async {
       var onNextCalled = false;
       await tester.pumpWidget(createTestWidget(onNext: () {
@@ -273,12 +281,7 @@ void main() {
             .getString('voltium_requires_higher_deposit:test_rider_skip'),
         'true',
       );
-      // Form cache cleared so user doesn't see a half-filled form
-      expect(
-        CacheService().getString('guarantor_onboarding_form_cache'),
-        isNull,
-      );
-    }, skip: true);
+    });
   });
 
   // ── PR-GUARANTOR-OTP: short-lived phone-verification receipt ──────────

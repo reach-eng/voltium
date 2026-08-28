@@ -956,6 +956,32 @@
   "txtagreeToTerms": "Agree to Terms",
   "txtcontinue": "Continue",
   "txtskip": "Skip",
+  "@txtskip": {
+    "description": "Generic Skip button label"
+  },
+  "txtguarantorSkipTitle": "Skip guarantor?",
+  "@txtguarantorSkipTitle": {
+    "description": "Title of the skip-guarantor confirmation dialog on the onboarding screen"
+  },
+  "txtguarantorSkipBody": "Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You'll be charged the difference when you start your rental.",
+  "@txtguarantorSkipBody": {
+    "description": "Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.",
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "txtguarantorSkipSourceAdmin": "Configured by Voltium",
+  "@txtguarantorSkipSourceAdmin": {
+    "description": "Sub-label on the skip dialog when the deposit amount came from the admin panel"
+  },
+  "txtguarantorSkipSourceFallback": "Default — admin has not set a value yet",
+  "@txtguarantorSkipSourceFallback": {
+    "description": "Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used"
+  },
+  "txtguarantorSkipConfirm": "SKIP & PAY EXTRA",
+  "@txtguarantorSkipConfirm": {
+    "description": "Confirm-button label on the skip-guarantor dialog"
+  },
   "txtprivacyChoices": "Privacy choices",
   "txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing": "Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.",
   "txtrideTheFuture": "Ride the Future",
