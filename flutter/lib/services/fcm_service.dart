@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
-import 'dart:developer' as developer;
+import '../utils/app_logger.dart' show appDebug;
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
@@ -67,13 +67,13 @@ class FCMService {
   }) async {
     final action = data['action'];
     if (action == null || action is! String || action.isEmpty) {
-      developer.log('FCM: Rejected payload with missing/invalid action');
+      appDebug('FCM: Rejected payload with missing/invalid action');
       return false;
     }
     final allowed =
         isSecurity ? _allowedSecurityActions : _allowedOverlayActions;
     if (!allowed.contains(action)) {
-      developer.log(
+      appDebug(
         'FCM: Rejected unknown ${isSecurity ? "security" : "overlay"} action: $action',
       );
       return false;
@@ -95,32 +95,32 @@ class FCMService {
 
     final secret = await _getCommandHmacSecret();
     if (secret == null || secret.isEmpty) {
-      developer.log('FCM: Rejected security command without HMAC secret');
+      appDebug('FCM: Rejected security command without HMAC secret');
       return false;
     }
 
     if (action == null || action is! String || action.isEmpty) {
-      developer.log('FCM: Rejected security command without action');
+      appDebug('FCM: Rejected security command without action');
       return false;
     }
 
     if (challenge == null || challenge is! String || challenge.isEmpty) {
-      developer.log('FCM: Rejected security command without challenge');
+      appDebug('FCM: Rejected security command without challenge');
       return false;
     }
 
     if (nonce == null || nonce is! String || nonce.isEmpty) {
-      developer.log('FCM: Rejected security command without nonce');
+      appDebug('FCM: Rejected security command without nonce');
       return false;
     }
 
     if (signature == null || signature is! String || signature.isEmpty) {
-      developer.log('FCM: Rejected security command without signature');
+      appDebug('FCM: Rejected security command without signature');
       return false;
     }
 
     if (ts == null || ts is! String || ts.isEmpty) {
-      developer.log('FCM: Rejected security command without timestamp');
+      appDebug('FCM: Rejected security command without timestamp');
       return false;
     }
 
@@ -130,14 +130,14 @@ class FCMService {
     );
     final age = DateTime.now().toUtc().difference(sentAt).abs();
     if (age > _securityReplayWindow) {
-      developer.log('FCM: Rejected stale security command');
+      appDebug('FCM: Rejected stale security command');
       return false;
     }
 
     final replayKey = '$nonce:$challenge:$ts';
     pruneExpiredChallenges();
     if (_seenSecurityChallenges.containsKey(replayKey)) {
-      developer.log('FCM: Rejected replayed security command');
+      appDebug('FCM: Rejected replayed security command');
       return false;
     }
 
@@ -147,7 +147,7 @@ class FCMService {
     ).convert(utf8.encode('$action.$ts.$nonce.$challenge')).toString();
 
     if (!constantTimeEquals(signature, expectedSignature)) {
-      developer.log('FCM: Rejected security command with invalid signature');
+      appDebug('FCM: Rejected security command with invalid signature');
       return false;
     }
 
@@ -214,7 +214,7 @@ class FCMService {
     _rider = rider;
 
     if (PlatformInfo.isWeb) {
-      developer.log('FCM: Initialization skipped on web');
+      appDebug('FCM: Initialization skipped on web');
       return;
     }
 
@@ -234,7 +234,7 @@ class FCMService {
     await _foregroundSubscription?.cancel();
     _foregroundSubscription =
         FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      developer.log('Foreground message received: ${message.data}');
+      appDebug('Foreground message received: ${message.data}');
       final data = message.data;
       if (data['type'] == 'SECURITY_COMMAND' &&
           await validatePayload(data, isSecurity: true)) {
@@ -255,7 +255,7 @@ class FCMService {
         if (newToken.isNotEmpty) _syncTokenToBackend(newToken);
       });
     } catch (e) {
-      developer.log('FCM: Token retrieval failed: $e');
+      appDebug('FCM: Token retrieval failed: $e');
     }
   }
 
@@ -263,9 +263,9 @@ class FCMService {
     try {
       await VoltiumApiClient(ApiClient())
           .postRidersRegisterToken({'fcmToken': token});
-      developer.log('FCM: Token synced to backend successfully');
+      appDebug('FCM: Token synced to backend successfully');
     } catch (e) {
-      developer.log('FCM: Failed to sync token to backend: $e');
+      appDebug('FCM: Failed to sync token to backend: $e');
     }
   }
 
@@ -321,7 +321,7 @@ class FCMService {
   /// saving their preferences.
   static Future<void> setPushMuted(bool muted) async {
     if (PlatformInfo.isWeb) {
-      developer.log('FCM: setPushMuted skipped on web');
+      appDebug('FCM: setPushMuted skipped on web');
       return;
     }
     final messaging = FirebaseMessaging.instance;
@@ -333,10 +333,10 @@ class FCMService {
           await messaging.subscribeToTopic(topic);
         }
       } catch (e) {
-        developer.log('FCM: setPushMuted topic=$topic muted=$muted failed: $e');
+        appDebug('FCM: setPushMuted topic=$topic muted=$muted failed: $e');
       }
     }
-    developer.log('FCM: setPushMuted($muted) — ${_backendTopics.length} topics processed');
+    appDebug('FCM: setPushMuted($muted) — ${_backendTopics.length} topics processed');
   }
 
   @visibleForTesting
@@ -344,7 +344,7 @@ class FCMService {
     final data = message.data;
     if (data['type'] == 'SECURITY_COMMAND') {
       final action = data['action'];
-      developer.log('Security command received: $action');
+      appDebug('Security command received: $action');
 
       try {
         // N-3 (PR-D, 2026-08-28 workflows polish): the action →
@@ -358,7 +358,7 @@ class FCMService {
         // added in exactly one place.
         await applySecurityAction(action, source: 'fg');
       } on PlatformException catch (e) {
-        developer.log('Error executing security command: ${e.message}');
+        appDebug('Error executing security command: ${e.message}');
       }
     }
   }
@@ -392,25 +392,25 @@ class FCMService {
         await SecureStorageService().setDeviceLocked(false);
       case 'DISABLE_CAMERA':
         _devicePolicy?.setCameraDisabled(true);
-        developer.log('DISABLE_CAMERA received in $source');
+        appDebug('DISABLE_CAMERA received in $source');
       case 'ENABLE_CAMERA':
         _devicePolicy?.setCameraDisabled(false);
-        developer.log('ENABLE_CAMERA received in $source');
+        appDebug('ENABLE_CAMERA received in $source');
       case 'ENFORCE_PASSCODE':
         _devicePolicy?.setPasscodeRequired(true);
-        developer.log('ENFORCE_PASSCODE received in $source');
+        appDebug('ENFORCE_PASSCODE received in $source');
       case 'CHECK_LOCATION_INTEGRITY':
         _devicePolicy?.triggerLocationVerification();
-        developer.log('CHECK_LOCATION_INTEGRITY received in $source');
+        appDebug('CHECK_LOCATION_INTEGRITY received in $source');
       case 'PERSIST_APP':
         _devicePolicy?.setAppPersistenceRequired(true);
-        developer.log('PERSIST_APP received in $source');
+        appDebug('PERSIST_APP received in $source');
       case 'ENFORCE_LOCATION':
         _devicePolicy?.setLocationRequired(true);
-        developer.log('ENFORCE_LOCATION received in $source');
+        appDebug('ENFORCE_LOCATION received in $source');
       case 'RESTRICT_APPS_CONTROL':
         _devicePolicy?.setRestrictedAppsMode(true);
-        developer.log('RESTRICT_APPS_CONTROL received in $source');
+        appDebug('RESTRICT_APPS_CONTROL received in $source');
       case 'FACTORY_RESET':
         await _channel.invokeMethod('factoryReset');
       case 'SYNC_DEVICE_DATA':
@@ -430,7 +430,7 @@ class FCMService {
   static void handleOverlayTrigger(RemoteMessage message) {
     final data = message.data;
     final action = data['action'];
-    developer.log('Overlay trigger received: $action');
+    appDebug('Overlay trigger received: $action');
 
     if (action == 'MANDATORY_UPDATE') {
       final url = data['url'];
@@ -460,7 +460,7 @@ class FCMService {
     try {
       return await FirebaseMessaging.instance.getToken();
     } catch (e) {
-      developer.log('Error getting FCM token: $e');
+      appDebug('Error getting FCM token: $e');
       return null;
     }
   }
@@ -473,7 +473,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (token != null) {
     BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   }
-  developer.log('Background message received: ${message.data}');
+  appDebug('Background message received: ${message.data}');
 
   final data = message.data;
   final isSecurity = data['type'] == 'SECURITY_COMMAND';
@@ -481,13 +481,12 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final action = data['action'];
 
   if (action == null || action is! String || action.isEmpty) {
-    developer
-        .log('FCM background: Rejected payload with missing/invalid action');
+    appDebug('FCM background: Rejected payload with missing/invalid action');
     return;
   }
 
   if (isSecurity && !FCMService._allowedSecurityActions.contains(action)) {
-    developer.log('FCM background: Rejected unknown security action: $action');
+    appDebug('FCM background: Rejected unknown security action: $action');
     return;
   }
 
@@ -496,7 +495,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 
   if (isOverlay && !FCMService._allowedOverlayActions.contains(action)) {
-    developer.log('FCM background: Rejected unknown overlay action: $action');
+    appDebug('FCM background: Rejected unknown overlay action: $action');
     return;
   }
 
@@ -510,7 +509,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       // ensures both paths produce the same side effects.
       await FCMService.applySecurityAction(action, source: 'bg');
     } catch (e) {
-      developer.log('Error in background security command: $e');
+      appDebug('Error in background security command: $e');
     }
   }
 }

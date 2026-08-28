@@ -243,6 +243,29 @@ void main() {
           reason: 'fg handler must not have its own action switch');
     });
   });
+
+  // PR-F (2026-08-28 workflows deferred): fcm_service.dart was
+  // using `developer.log` from `dart:developer` while 93 other
+  // files in the codebase use `appDebug` from `app_logger.dart`.
+  // Reverted to `appDebug` so the FCM service matches the project
+  // standard. These tests guard against the drift returning.
+  group('PR-F: fcm_service.dart logging consistency', () {
+    test('imports appDebug from app_logger.dart (not dart:developer)', () {
+      final src = _readFcmServiceSource();
+      expect(src, isNotNull, reason: 'fcm_service.dart must be readable');
+      expect(src, contains("import '../utils/app_logger.dart' show appDebug;"),
+          reason: 'fcm_service.dart must import appDebug from app_logger.dart');
+      expect(src, isNot(contains("import 'dart:developer'")),
+          reason: 'fcm_service.dart must not import dart:developer');
+    });
+
+    test('uses appDebug at all log call sites (>= 20)', () {
+      final src = _readFcmServiceSource();
+      final matches = RegExp(r'appDebug\(').allMatches(src!).length;
+      expect(matches, greaterThanOrEqualTo(20),
+          reason: 'fcm_service.dart should have >= 20 appDebug() call sites');
+    });
+  });
 }
 
 /// Read the fcm_service.dart source as a string. Returns null if
