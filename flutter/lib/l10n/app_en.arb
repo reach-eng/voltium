@@ -1142,6 +1142,42 @@
   "txtproofOfTopUp": "Proof of Top Up",
   "txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment": "Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.",
   "txtuploadPhotoProof": "Upload Photo Proof",
+  "txtproofInstantPayment": "Instant Payment",
+  "@txtproofInstantPayment": {
+    "description": "Header for the proof screen's instant-payment (online) option"
+  },
+  "txtproofSelectPaymentMethod": "SELECT PAYMENT METHOD",
+  "txtproofPayCash": "Cash",
+  "txtproofPayUpi": "UPI",
+  "txtproofPayInstant": "Instant",
+  "txtproofUpiIdLabel": "VOLTIUM UPI ID",
+  "txtproofCopyUpiId": "Copy UPI ID",
+  "txtproofUpiRefLabel": "UPI Reference / UTR Number",
+  "txtproofUpiRefHint": "Enter 12-digit UTR / Ref (optional)",
+  "txtproofTopUpAmountLabel": "TOP-UP AMOUNT",
+  "txtproofTransferToUpi": "Transfer to Voltium official UPI ID",
+  "txtproofPayViaUpi": "Pay via UPI",
+  "txtproofInstantPaymentBreakdown": "Instant Payment Breakdown",
+  "txtproofPointsToActiveGateway": "Points to current active payment gateway",
+  "txtproofTopUpWillBeInstant": "Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.",
+  "@txtproofTopUpWillBeInstant": {
+    "placeholders": {
+      "fee": {
+        "type": "String"
+      }
+    }
+  },
+  "txtproofTopUpNoExtraFee": "Top-up will be instant. No extra fee for rider.",
+  "txtproofGatewayFee": "Gateway Fee ({percent}%)",
+  "@txtproofGatewayFee": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "txtproofZeroGatewayFee": "₹0 (Paid by Voltium)",
+  "txtproofTopUpWillBeInstantCovered": "Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
   "txtchangePhoto": "Change Photo",
   "txttapToUploadPhoto": "Tap to upload photo",
   "txtcameraOrGallery": "Camera or gallery",

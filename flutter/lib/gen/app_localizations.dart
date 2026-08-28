@@ -2746,6 +2746,120 @@ abstract class AppLocalizations {
   /// **'Upload Photo Proof'**
   String get txtuploadPhotoProof;
 
+  /// Header for the proof screen's instant-payment (online) option
+  ///
+  /// In en, this message translates to:
+  /// **'Instant Payment'**
+  String get txtproofInstantPayment;
+
+  /// No description provided for @txtproofSelectPaymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT PAYMENT METHOD'**
+  String get txtproofSelectPaymentMethod;
+
+  /// No description provided for @txtproofPayCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get txtproofPayCash;
+
+  /// No description provided for @txtproofPayUpi.
+  ///
+  /// In en, this message translates to:
+  /// **'UPI'**
+  String get txtproofPayUpi;
+
+  /// No description provided for @txtproofPayInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant'**
+  String get txtproofPayInstant;
+
+  /// No description provided for @txtproofUpiIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VOLTIUM UPI ID'**
+  String get txtproofUpiIdLabel;
+
+  /// No description provided for @txtproofCopyUpiId.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy UPI ID'**
+  String get txtproofCopyUpiId;
+
+  /// No description provided for @txtproofUpiRefLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'UPI Reference / UTR Number'**
+  String get txtproofUpiRefLabel;
+
+  /// No description provided for @txtproofUpiRefHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 12-digit UTR / Ref (optional)'**
+  String get txtproofUpiRefHint;
+
+  /// No description provided for @txtproofTopUpAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOP-UP AMOUNT'**
+  String get txtproofTopUpAmountLabel;
+
+  /// No description provided for @txtproofTransferToUpi.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer to Voltium official UPI ID'**
+  String get txtproofTransferToUpi;
+
+  /// No description provided for @txtproofPayViaUpi.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay via UPI'**
+  String get txtproofPayViaUpi;
+
+  /// No description provided for @txtproofInstantPaymentBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant Payment Breakdown'**
+  String get txtproofInstantPaymentBreakdown;
+
+  /// No description provided for @txtproofPointsToActiveGateway.
+  ///
+  /// In en, this message translates to:
+  /// **'Points to current active payment gateway'**
+  String get txtproofPointsToActiveGateway;
+
+  /// No description provided for @txtproofTopUpWillBeInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.'**
+  String txtproofTopUpWillBeInstant(String fee);
+
+  /// No description provided for @txtproofTopUpNoExtraFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up will be instant. No extra fee for rider.'**
+  String get txtproofTopUpNoExtraFee;
+
+  /// No description provided for @txtproofGatewayFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Gateway Fee ({percent}%)'**
+  String txtproofGatewayFee(String percent);
+
+  /// No description provided for @txtproofZeroGatewayFee.
+  ///
+  /// In en, this message translates to:
+  /// **'₹0 (Paid by Voltium)'**
+  String get txtproofZeroGatewayFee;
+
+  /// No description provided for @txtproofTopUpWillBeInstantCovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
+  String get txtproofTopUpWillBeInstantCovered;
+
   /// No description provided for @txtchangePhoto.
   ///
   /// In en, this message translates to:

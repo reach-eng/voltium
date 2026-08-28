@@ -67,9 +67,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   color: AppColors.primaryLight, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Instant Payment',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Text(
+              AppLocalizations.of(context)!.txtproofInstantPayment,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -79,8 +79,10 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           children: [
             Text(
               isRiderBearer
-                  ? 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.'
-                  : 'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).',
+                  ? AppLocalizations.of(context)!
+                      .txtproofTopUpWillBeInstant('₹$fee')
+                  : AppLocalizations.of(context)!
+                      .txtproofTopUpWillBeInstantCovered,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 height: 1.4,
@@ -101,7 +103,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Points to current active payment gateway',
+                      AppLocalizations.of(context)!
+                          .txtproofPointsToActiveGateway,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -161,7 +164,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'SELECT PAYMENT METHOD',
+            AppLocalizations.of(context)!.txtproofSelectPaymentMethod,
             style: AppTypography.bodySmall
                 .copyWith(fontWeight: FontWeight.w600)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 0.5),
@@ -198,7 +201,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Cash',
+                          AppLocalizations.of(context)!.txtproofPayCash,
                           style: AppTypography.labelMedium.copyWith(
                             color: _selectedPaymentMode == PaymentMode.cash
                                 ? AppColors.primaryLight
@@ -242,7 +245,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'UPI',
+                          AppLocalizations.of(context)!.txtproofPayUpi,
                           style: AppTypography.labelMedium.copyWith(
                             color: _selectedPaymentMode == PaymentMode.upi
                                 ? AppColors.primaryLight
@@ -284,7 +287,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Instant',
+                          AppLocalizations.of(context)!.txtproofPayInstant,
                           style: AppTypography.labelMedium.copyWith(
                             color: _selectedPaymentMode == PaymentMode.instant
                                 ? AppColors.primaryLight
@@ -483,14 +486,14 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Text(
-              'Step 2 of 2',
+              AppLocalizations.of(context)!.txtstepXofY(2, 2),
               style: AppTypography.labelMedium
                   .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Upload Proof',
+            AppLocalizations.of(context)!.txtuploadProof,
             style: AppTypography.displayMedium
                 .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
@@ -537,13 +540,13 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pay via UPI',
+                      AppLocalizations.of(context)!.txtproofPayViaUpi,
                       style: AppTypography.titleSmall
                           .copyWith(color: colors.onSurface),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Transfer to Voltium official UPI ID',
+                      AppLocalizations.of(context)!.txtproofTransferToUpi,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: colors.onSurfaceMuted,
@@ -571,7 +574,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'VOLTIUM UPI ID',
+                        AppLocalizations.of(context)!.txtproofUpiIdLabel,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -603,7 +606,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   },
                   icon: const Icon(Icons.copy_rounded, size: 18),
                   color: AppColors.primaryLight,
-                  tooltip: 'Copy UPI ID',
+                  tooltip: AppLocalizations.of(context)!.txtproofCopyUpiId,
                 ),
               ],
             ),
@@ -611,7 +614,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           const SizedBox(height: 16),
           // UPI Reference / UTR Number input
           Text(
-            'UPI Reference / UTR Number',
+            AppLocalizations.of(context)!.txtproofUpiRefLabel,
             style: AppTypography.labelMedium.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w600,
@@ -633,7 +636,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               color: colors.onSurface,
             ),
             decoration: InputDecoration(
-              hintText: 'Enter 12-digit UTR / Ref (optional)',
+              hintText: AppLocalizations.of(context)!.txtproofUpiRefHint,
               hintStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: colors.onSurfaceMuted,
@@ -679,7 +682,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'TOP-UP AMOUNT',
+                AppLocalizations.of(context)!.txtproofTopUpAmountLabel,
                 style: AppTypography.bodySmall
                     .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(
@@ -702,7 +705,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               foregroundColor: AppColors.primaryLight,
             ),
             child: Text(
-              'Edit',
+              AppLocalizations.of(context)!.txtedit,
               style: AppTypography.bodyMedium
                   .copyWith(fontWeight: FontWeight.w600),
             ),
@@ -742,7 +745,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Proof of Top Up',
+                  AppLocalizations.of(context)!.txtproofOfTopUp,
                   style: AppTypography.titleSmall
                       .copyWith(color: colors.onSurface),
                 ),
@@ -789,7 +792,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Upload Photo Proof',
+                    AppLocalizations.of(context)!.txtuploadPhotoProof,
                     style: AppTypography.titleSmall
                         .copyWith(color: colors.onSurface),
                   ),
@@ -823,13 +826,13 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Tap to upload photo',
+                      AppLocalizations.of(context)!.txttapToUploadPhoto,
                       style: AppTypography.labelLarge
                           .copyWith(color: colors.onSurface),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Camera or gallery',
+                      AppLocalizations.of(context)!.txtcameraOrGallery,
                       style: GoogleFonts.plusJakartaSans(
                         color: colors.onSurfaceVariant,
                         fontSize: 14,
@@ -905,7 +908,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               const Icon(Icons.bolt, color: AppColors.primaryLight, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Instant Payment Breakdown',
+                AppLocalizations.of(context)!.txtproofInstantPaymentBreakdown,
                 style: AppTypography.titleSmall
                     .copyWith(color: AppColors.of(context).onSurface),
               ),
@@ -951,14 +954,15 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                  isRiderBearer
-                      ? 'Gateway Fee ($_extraFeePercent%)'
-                      : 'Gateway Fee',
+                  AppLocalizations.of(context)!
+                      .txtproofGatewayFee(_extraFeePercent.toString()),
                   style: GoogleFonts.plusJakartaSans(
                       color: AppColors.of(context).onSurfaceVariant,
                       fontSize: 14)),
               Text(
-                isRiderBearer ? '+₹$fee' : '₹0 (Paid by Voltium)',
+                isRiderBearer
+                    ? '+₹$fee'
+                    : AppLocalizations.of(context)!.txtproofZeroGatewayFee,
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w600,
                   color: isRiderBearer ? AppColors.warning : AppColors.success,

@@ -1439,6 +1439,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtuploadPhotoProof => 'Upload Photo Proof';
 
   @override
+  String get txtproofInstantPayment => 'Instant Payment';
+
+  @override
+  String get txtproofSelectPaymentMethod => 'SELECT PAYMENT METHOD';
+
+  @override
+  String get txtproofPayCash => 'Cash';
+
+  @override
+  String get txtproofPayUpi => 'UPI';
+
+  @override
+  String get txtproofPayInstant => 'Instant';
+
+  @override
+  String get txtproofUpiIdLabel => 'VOLTIUM UPI ID';
+
+  @override
+  String get txtproofCopyUpiId => 'Copy UPI ID';
+
+  @override
+  String get txtproofUpiRefLabel => 'UPI Reference / UTR Number';
+
+  @override
+  String get txtproofUpiRefHint => 'Enter 12-digit UTR / Ref (optional)';
+
+  @override
+  String get txtproofTopUpAmountLabel => 'TOP-UP AMOUNT';
+
+  @override
+  String get txtproofTransferToUpi => 'Transfer to Voltium official UPI ID';
+
+  @override
+  String get txtproofPayViaUpi => 'Pay via UPI';
+
+  @override
+  String get txtproofInstantPaymentBreakdown => 'Instant Payment Breakdown';
+
+  @override
+  String get txtproofPointsToActiveGateway =>
+      'Points to current active payment gateway';
+
+  @override
+  String txtproofTopUpWillBeInstant(String fee) {
+    return 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.';
+  }
+
+  @override
+  String get txtproofTopUpNoExtraFee =>
+      'Top-up will be instant. No extra fee for rider.';
+
+  @override
+  String txtproofGatewayFee(String percent) {
+    return 'Gateway Fee ($percent%)';
+  }
+
+  @override
+  String get txtproofZeroGatewayFee => '₹0 (Paid by Voltium)';
+
+  @override
+  String get txtproofTopUpWillBeInstantCovered =>
+      'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
+
+  @override
   String get txtchangePhoto => 'Change Photo';
 
   @override

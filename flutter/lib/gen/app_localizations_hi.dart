@@ -1440,6 +1440,71 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtuploadPhotoProof => 'फ़ोटो प्रूफ़ अपलोड करें';
 
   @override
+  String get txtproofInstantPayment => 'तत्काल भुगतान';
+
+  @override
+  String get txtproofSelectPaymentMethod => 'भुगतान विधि चुनें';
+
+  @override
+  String get txtproofPayCash => 'कैश';
+
+  @override
+  String get txtproofPayUpi => 'UPI';
+
+  @override
+  String get txtproofPayInstant => 'तत्काल';
+
+  @override
+  String get txtproofUpiIdLabel => 'वोल्टियम UPI आईडी';
+
+  @override
+  String get txtproofCopyUpiId => 'UPI आईडी कॉपी करें';
+
+  @override
+  String get txtproofUpiRefLabel => 'UPI रेफ़रेंस / UTR नंबर';
+
+  @override
+  String get txtproofUpiRefHint =>
+      '12 अंकों का UTR / रेफ़रेंस दर्ज करें (वैकल्पिक)';
+
+  @override
+  String get txtproofTopUpAmountLabel => 'टॉप-अप राशि';
+
+  @override
+  String get txtproofTransferToUpi =>
+      'वोल्टियम की आधिकारिक UPI आईडी पर ट्रांसफ़र करें';
+
+  @override
+  String get txtproofPayViaUpi => 'UPI से भुगतान करें';
+
+  @override
+  String get txtproofInstantPaymentBreakdown => 'तत्काल भुगतान विवरण';
+
+  @override
+  String get txtproofPointsToActiveGateway => 'वर्तमान सक्रिय भुगतान गेटवे पर';
+
+  @override
+  String txtproofTopUpWillBeInstant(String fee) {
+    return 'टॉप-अप तत्काल होगा। अपने टॉप-अप राशि पर 2.5% अतिरिक्त (₹$fee) गेटवे शुल्क जोड़ा जाएगा।';
+  }
+
+  @override
+  String get txtproofTopUpNoExtraFee =>
+      'टॉप-अप तत्काल होगा। राइडर के लिए कोई अतिरिक्त शुल्क नहीं।';
+
+  @override
+  String txtproofGatewayFee(String percent) {
+    return 'गेटवे शुल्क ($percent%)';
+  }
+
+  @override
+  String get txtproofZeroGatewayFee => '₹0 (वोल्टियम द्वारा भुगतान)';
+
+  @override
+  String get txtproofTopUpWillBeInstantCovered =>
+      'टॉप-अप तत्काल होगा। गेटवे शुल्क 100% वोल्टियम द्वारा वहन किया जाता है (राइडर के लिए ₹0 अतिरिक्त शुल्क)।';
+
+  @override
   String get txtchangePhoto => 'फ़ोटो बदलें';
 
   @override
