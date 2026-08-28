@@ -397,18 +397,38 @@ export const OutboxService = {
   },
 
   /**
-   * Retry all FAILED outbox events (reset to PENDING with attempts=0).
+   * Retry all FAILED outbox events.
+   *
+   * P2-8 (PR-B, 2026-08-28 workflows polish): preserve the `error`
+   * column AND the `attempts` counter for transient FAILED events
+   * (attempts < maxAttempts). The `error` column is the on-call
+   * engineer's first stop when investigating why a notification
+   * never landed; clearing it silently loses the last failure
+   * reason. Only events that have exhausted `maxAttempts` get a
+   * full reset (attempts=0, error=null) so the retry gets a fresh
+   * budget.
+   *
+   * Uses a single raw UPDATE with CASE expressions because Prisma's
+   * query builder doesn't support column-to-column comparison in
+   * WHERE. The CASE mirrors the same intent as the prior two-pass
+   * approach in half the round-trips and is easier to reason about.
    */
   async retryFailed(): Promise<number> {
-    const result = await db.outboxEvent.updateMany({
-      where: { status: 'FAILED' },
-      data: {
-        status: 'PENDING',
-        attempts: 0,
-        error: null,
-      },
-    });
-    return result.count;
+    const result = await db.$executeRaw`
+      UPDATE "outbox_events"
+      SET
+        "status" = 'PENDING',
+        "attempts" = CASE
+          WHEN "attempts" >= "maxAttempts" THEN 0
+          ELSE "attempts"
+        END,
+        "error" = CASE
+          WHEN "attempts" >= "maxAttempts" THEN NULL
+          ELSE "error"
+        END
+      WHERE "status" = 'FAILED'
+    `;
+    return Number(result);
   },
 
   /**

@@ -85,6 +85,47 @@ describe('Outbox Service', () => {
     expect(event?.error).toBeNull();
   });
 
+  // P2-8 (PR-B, 2026-08-28 workflows polish): a transient FAILED
+  // event (attempts < maxAttempts) must preserve its `error` and
+  // `attempts` columns so the on-call engineer can see the last
+  // failure reason. The fully-reset behavior above covers the
+  // exhausted-maxAttempts case.
+  it('should preserve error and attempts for transient FAILED events (P2-8)', async () => {
+    const transient = await testDb.outboxEvent.create({
+      data: {
+        eventType: 'ADMIN_ACTION',
+        payload: '{}',
+        status: 'FAILED',
+        attempts: 1,
+        maxAttempts: 3,
+        error: 'Transient: 503 from upstream',
+      },
+    });
+    const exhausted = await testDb.outboxEvent.create({
+      data: {
+        eventType: 'ADMIN_ACTION',
+        payload: '{}',
+        status: 'FAILED',
+        attempts: 3,
+        maxAttempts: 3,
+        error: 'Exhausted: max retries',
+      },
+    });
+
+    const retriedCount = await OutboxService.retryFailed();
+    expect(retriedCount).toBe(2);
+
+    const transientAfter = await testDb.outboxEvent.findUnique({ where: { id: transient.id } });
+    expect(transientAfter?.status).toBe('PENDING');
+    expect(transientAfter?.attempts).toBe(1); // preserved
+    expect(transientAfter?.error).toBe('Transient: 503 from upstream'); // preserved
+
+    const exhaustedAfter = await testDb.outboxEvent.findUnique({ where: { id: exhausted.id } });
+    expect(exhaustedAfter?.status).toBe('PENDING');
+    expect(exhaustedAfter?.attempts).toBe(0); // fully reset
+    expect(exhaustedAfter?.error).toBeNull(); // fully reset
+  });
+
   it('should emit an event within a transaction', async () => {
     await testDb.$transaction(async (tx) => {
       const eventId = await OutboxService.emit(
