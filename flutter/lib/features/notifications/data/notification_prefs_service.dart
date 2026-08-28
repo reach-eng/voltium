@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Typed model for user notification preferences.
@@ -41,8 +42,13 @@ class NotificationPrefs {
   }
 }
 
-/// Service wrapping SharedPreferences persistence for notification preferences.
-class NotificationPrefsService {
+/// Riverpod v3 AsyncNotifier that owns the rider's notification
+/// preferences. The previous design was a plain singleton
+/// `NotificationPrefsService` that every screen had to instantiate
+/// directly; tests couldn't override it and there was no shared
+/// source of truth. This provider lets any screen `ref.watch`
+/// the current prefs and `ref.read` to call `update(...)`.
+class NotificationPrefsNotifier extends AsyncNotifier<NotificationPrefs> {
   static const String keyPush = 'notif_push';
   static const String keySound = 'notif_sound';
   static const String keyVibration = 'notif_vibration';
@@ -51,7 +57,8 @@ class NotificationPrefsService {
   static const String keyMaintenance = 'notif_maintenance';
   static const String keyAnnouncements = 'notif_announcements';
 
-  Future<NotificationPrefs> load() async {
+  @override
+  Future<NotificationPrefs> build() async {
     final prefs = await SharedPreferences.getInstance();
     return NotificationPrefs(
       push: prefs.getBool(keyPush) ?? true,
@@ -64,14 +71,26 @@ class NotificationPrefsService {
     );
   }
 
+  /// Persist a new preference set and broadcast to all listeners.
+  /// Renamed from `update` to `save` to avoid colliding with
+  /// AsyncNotifier's `update` (Riverpod 3.x reserves that name).
   Future<void> save(NotificationPrefs p) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(keyPush, p.push);
-    await prefs.setBool(keySound, p.sound);
-    await prefs.setBool(keyVibration, p.vibration);
-    await prefs.setBool(keyPayments, p.payments);
-    await prefs.setBool(keyKyc, p.kyc);
-    await prefs.setBool(keyMaintenance, p.maintenance);
-    await prefs.setBool(keyAnnouncements, p.announcements);
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(keyPush, p.push);
+      await prefs.setBool(keySound, p.sound);
+      await prefs.setBool(keyVibration, p.vibration);
+      await prefs.setBool(keyPayments, p.payments);
+      await prefs.setBool(keyKyc, p.kyc);
+      await prefs.setBool(keyMaintenance, p.maintenance);
+      await prefs.setBool(keyAnnouncements, p.announcements);
+      return p;
+    });
   }
 }
+
+final notificationPrefsProvider =
+    AsyncNotifierProvider<NotificationPrefsNotifier, NotificationPrefs>(
+  NotificationPrefsNotifier.new,
+);

@@ -84,14 +84,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     with SingleTickerProviderStateMixin {
   NotificationTab _selectedTab = NotificationTab.all;
   late TabController _tabController;
-  NotificationPrefs _prefs = const NotificationPrefs();
-  final NotificationPrefsService _prefsService = NotificationPrefsService();
 
   @override
   void initState() {
     super.initState();
     PostHogService.capture('notification_opened');
-    _loadPrefs();
     _tabController =
         TabController(length: NotificationTab.values.length, vsync: this);
     _tabController.addListener(() {
@@ -103,34 +100,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     });
   }
 
-  Future<void> _loadPrefs() async {
-    final p = await _prefsService.load();
-    if (mounted) {
-      setState(() {
-        _prefs = p;
-      });
-    }
-  }
-
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
 
-  List<AppNotification> _getFilteredNotifications(List<AppNotification> all) {
-    // PR-A (N-19/N-20): filter by active user notification preferences
+  List<AppNotification> _getFilteredNotifications(
+      List<AppNotification> all, NotificationPrefs prefs) {
+    // PR-A (N-19/N-20): filter by active user notification preferences.
+    // PR-D: prefs is now passed in from the Riverpod provider so both
+    // the notifications list and the preferences screen share one
+    // source of truth.
     final activeList = all.where((n) {
       final category = getNotificationCategory(n);
       switch (category) {
         case NotificationCategory.payments:
-          return _prefs.payments;
+          return prefs.payments;
         case NotificationCategory.kyc:
-          return _prefs.kyc;
+          return prefs.kyc;
         case NotificationCategory.maintenance:
-          return _prefs.maintenance;
+          return prefs.maintenance;
         case NotificationCategory.announcements:
-          return _prefs.announcements;
+          return prefs.announcements;
         case NotificationCategory.general:
           return true;
       }
@@ -140,25 +132,25 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       case NotificationTab.all:
         return activeList;
       case NotificationTab.payments:
-        if (!_prefs.payments) return [];
+        if (!prefs.payments) return [];
         return activeList
             .where((n) =>
                 getNotificationCategory(n) == NotificationCategory.payments)
             .toList();
       case NotificationTab.kyc:
-        if (!_prefs.kyc) return [];
+        if (!prefs.kyc) return [];
         return activeList
             .where(
                 (n) => getNotificationCategory(n) == NotificationCategory.kyc)
             .toList();
       case NotificationTab.maintenance:
-        if (!_prefs.maintenance) return [];
+        if (!prefs.maintenance) return [];
         return activeList
             .where((n) =>
                 getNotificationCategory(n) == NotificationCategory.maintenance)
             .toList();
       case NotificationTab.announcements:
-        if (!_prefs.announcements) return [];
+        if (!prefs.announcements) return [];
         return activeList
             .where((n) =>
                 getNotificationCategory(n) ==
@@ -210,7 +202,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         builder: (context, ref, _) {
           final engagementState = ref.watch(engagementProvider);
           final notifications = engagementState.notifications;
-          final filtered = _getFilteredNotifications(notifications);
+          // Use the same Riverpod-provided prefs that the preferences
+          // screen writes through. While the async value is still
+          // loading, fall back to defaults so the first frame already
+          // shows the right tabs.
+          final asyncPrefs = ref.watch(notificationPrefsProvider);
+          final prefs = asyncPrefs.maybeWhen(
+            data: (p) => p,
+            orElse: () => const NotificationPrefs(),
+          );
+          final filtered = _getFilteredNotifications(notifications, prefs);
           final unreadCount = notifications.where((n) => !n.isRead).length;
 
           return Stack(
@@ -481,11 +482,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               if (unreadCount > 0) const SizedBox(width: 8),
               InkWell(
                 onTap: () async {
+                  // The build() below ref.watch'es the prefs
+                  // provider, so any save in the preferences screen
+                  // will automatically rebuild this list — no
+                  // manual refresh needed.
                   await AppNavigator.pushForResult(
                     context,
                     const NotificationPreferencesScreen(),
                   );
-                  if (mounted) _loadPrefs();
                 },
                 child: Container(
                   padding: const EdgeInsets.all(Spacing.md2),

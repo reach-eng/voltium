@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/notification_service.dart';
@@ -10,63 +11,34 @@ import '../../../../utils/app_logger.dart';
 
 import 'package:voltium_rider/features/notifications/data/notification_prefs_service.dart';
 
-class NotificationPreferencesScreen extends StatefulWidget {
+class NotificationPreferencesScreen extends ConsumerStatefulWidget {
   const NotificationPreferencesScreen({super.key});
 
   @override
-  State<NotificationPreferencesScreen> createState() =>
+  ConsumerState<NotificationPreferencesScreen> createState() =>
       _NotificationPreferencesScreenState();
 }
 
 class _NotificationPreferencesScreenState
-    extends State<NotificationPreferencesScreen> {
-  bool _pushEnabled = true;
-  bool _soundEnabled = true;
-  bool _vibrationEnabled = true;
-  bool _paymentsEnabled = true;
-  bool _kycEnabled = true;
-  bool _maintenanceEnabled = true;
-  bool _announcementsEnabled = false;
-
+    extends ConsumerState<NotificationPreferencesScreen> {
+  // Local edits — the rider's draft while they flip toggles. We
+  // only push the values through to the provider when they tap
+  // "Save Preferences" so cancelling the screen doesn't persist
+  // accidental changes.
+  late NotificationPrefs _draft;
   bool _isLoading = false;
-  final NotificationPrefsService _prefsService = NotificationPrefsService();
+  bool _initialised = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPreferences();
-  }
-
-  Future<void> _loadPreferences() async {
-    try {
-      final p = await _prefsService.load();
-      if (!mounted) return;
-      setState(() {
-        _pushEnabled = p.push;
-        _soundEnabled = p.sound;
-        _vibrationEnabled = p.vibration;
-        _paymentsEnabled = p.payments;
-        _kycEnabled = p.kyc;
-        _maintenanceEnabled = p.maintenance;
-        _announcementsEnabled = p.announcements;
-      });
-    } catch (e) {
-      appDebug('Failed to load notification preferences: $e');
-    }
+    _draft = const NotificationPrefs();
   }
 
   Future<void> _savePreferences() async {
     setState(() => _isLoading = true);
     try {
-      await _prefsService.save(NotificationPrefs(
-        push: _pushEnabled,
-        sound: _soundEnabled,
-        vibration: _vibrationEnabled,
-        payments: _paymentsEnabled,
-        kyc: _kycEnabled,
-        maintenance: _maintenanceEnabled,
-        announcements: _announcementsEnabled,
-      ));
+      await ref.read(notificationPrefsProvider.notifier).save(_draft);
       await NotificationService().refreshNotificationPreference();
 
       if (mounted) {
@@ -92,6 +64,18 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
+
+    // Seed the local draft from the provider's initial value the
+    // first time it resolves. After that the rider's edits stay
+    // local until they tap Save.
+    final asyncPrefs = ref.watch(notificationPrefsProvider);
+    asyncPrefs.whenData((p) {
+      if (!_initialised) {
+        _initialised = true;
+        _draft = p;
+      }
+    });
+    final prefs = _draft;
     return Scaffold(
       backgroundColor: colors.surface,
       body: Stack(
@@ -114,8 +98,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.of(context).primarySurface,
                             title: l10n.notif_prefsPushTitle,
                             subtitle: l10n.notif_prefsPushSubtitle,
-                            value: _pushEnabled,
-                            onChanged: (v) => setState(() => _pushEnabled = v),
+                            value: prefs.push,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(push: v)),
                           ),
                           _buildToggleTile(
                             icon: Icons.volume_up,
@@ -123,8 +108,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.accentPurpleSurface,
                             title: l10n.notif_prefsSoundTitle,
                             subtitle: l10n.notif_prefsSoundSubtitle,
-                            value: _soundEnabled,
-                            onChanged: (v) => setState(() => _soundEnabled = v),
+                            value: prefs.sound,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(sound: v)),
                           ),
                           _buildToggleTile(
                             icon: Icons.vibration,
@@ -132,9 +118,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.warningSurface,
                             title: l10n.notif_prefsVibrationTitle,
                             subtitle: l10n.notif_prefsVibrationSubtitle,
-                            value: _vibrationEnabled,
-                            onChanged: (v) =>
-                                setState(() => _vibrationEnabled = v),
+                            value: prefs.vibration,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(vibration: v)),
                           ),
                         ],
                       ),
@@ -148,9 +134,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.of(context).successLight,
                             title: l10n.notif_prefsPaymentsTitle,
                             subtitle: l10n.notif_prefsPaymentsSubtitle,
-                            value: _paymentsEnabled,
-                            onChanged: (v) =>
-                                setState(() => _paymentsEnabled = v),
+                            value: prefs.payments,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(payments: v)),
                           ),
                           _buildToggleTile(
                             icon: Icons.shield_outlined,
@@ -158,8 +144,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.accentPurpleSurface,
                             title: l10n.notif_prefsKycTitle,
                             subtitle: l10n.notif_prefsKycSubtitle,
-                            value: _kycEnabled,
-                            onChanged: (v) => setState(() => _kycEnabled = v),
+                            value: prefs.kyc,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(kyc: v)),
                           ),
                           _buildToggleTile(
                             icon: Icons.build_outlined,
@@ -167,9 +154,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.of(context).primarySurface,
                             title: l10n.notif_prefsMaintenanceTitle,
                             subtitle: l10n.notif_prefsMaintenanceSubtitle,
-                            value: _maintenanceEnabled,
-                            onChanged: (v) =>
-                                setState(() => _maintenanceEnabled = v),
+                            value: prefs.maintenance,
+                            onChanged: (v) => setState(
+                                () => _draft = _draft.copyWith(maintenance: v)),
                           ),
                           _buildToggleTile(
                             icon: Icons.campaign_outlined,
@@ -177,9 +164,9 @@ class _NotificationPreferencesScreenState
                             iconBg: AppColors.accentPurpleSurface,
                             title: l10n.notif_prefsAnnouncementsTitle,
                             subtitle: l10n.notif_prefsAnnouncementsSubtitle,
-                            value: _announcementsEnabled,
-                            onChanged: (v) =>
-                                setState(() => _announcementsEnabled = v),
+                            value: prefs.announcements,
+                            onChanged: (v) => setState(() =>
+                                _draft = _draft.copyWith(announcements: v)),
                           ),
                         ],
                       ),
