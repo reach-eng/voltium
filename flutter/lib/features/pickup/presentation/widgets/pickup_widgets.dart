@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
 import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/widgets/forms/forms.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -129,34 +130,33 @@ class AssignmentDetailsCard extends StatelessWidget {
           const SizedBox(height: 20),
           buildVoltiumFieldLabel(context, 'EMERGENCY CONTACT'),
           const SizedBox(height: 8),
-          EmergencyContactField(
+          // PR-E (2026-08-28): replaced the feature-local
+          // EmergencyContactField + OtpGrid pair with the shared
+          // VoltiumPhoneField. The field has the same params
+          // (controller, isOtpVerified, isOtpSent, isSendingOtp,
+          // onSendOtp, onVerifyOtp) plus a slot for the OTP box
+          // widget, so the visual is identical. The pre-existing
+          // OtpGrid still drives the 6-cell visual via the
+          // otpBoxes slot.
+          VoltiumPhoneField(
+            fieldKey: const Key('emergencyContactField'),
+            label: 'Emergency Contact Number',
             controller: emergencyContactController,
-            isOtpVerified: isOtpVerified,
+            isPhoneVerified: isOtpVerified,
             isOtpSent: isOtpSent,
             isSendingOtp: isSendingOtp,
+            isVerifyingOtp: isVerifyingOtp,
             onSendOtp: onSendOtp,
-            onChanged: onEmergencyContactChanged,
+            onVerifyOtp: onVerifyOtp,
+            otpBoxes: isOtpSent && !isOtpVerified
+                ? OtpGrid(
+                    controller: otpController,
+                    onCompleted: (_) {
+                      if (!isVerifyingOtp) onVerifyOtp();
+                    },
+                  )
+                : null,
           ),
-          if (isOtpSent && !isOtpVerified) ...[
-            const SizedBox(height: 20),
-            buildVoltiumFieldLabel(context, 'ENTER 6-DIGIT OTP'),
-            const SizedBox(height: 8),
-            // ONBOARDING-AUDIT 2026-08-14 P0-3: auto-submit when the
-            // rider has typed all 6 digits. The previous version
-            // had no onCompleted callback — the rider had to tap
-            // Verify by hand even after typing the full code.
-            OtpGrid(
-              controller: otpController,
-              onCompleted: (_) {
-                if (!isVerifyingOtp) onVerifyOtp();
-              },
-            ),
-            const SizedBox(height: 16),
-            buildVerifyOtpButton(
-              isVerifying: isVerifyingOtp,
-              onPressed: onVerifyOtp,
-            ),
-          ],
           if (isOtpVerified) ...[
             SizedBox(height: 12),
             Container(
