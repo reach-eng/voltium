@@ -315,7 +315,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('UPCOMING RENT DEBIT'), findsOneWidget);
-      expect(find.text('Top-up before tomorrow 6 AM'), findsOneWidget);
+      expect(find.text('Top up before tomorrow 6 AM'), findsOneWidget);
       expect(find.textContaining('shortfall: ₹800'), findsOneWidget);
       expect(find.text('Top up ₹800'), findsOneWidget);
     });

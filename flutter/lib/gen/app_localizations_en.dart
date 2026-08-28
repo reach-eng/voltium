@@ -752,13 +752,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txttopUpProofSubmittedSuccessfully =>
-      'Top-up proof submitted successfully!';
+      'Top up proof submitted successfully!';
 
   @override
   String get txtupiIdCopiedToClipboard => 'UPI ID copied to clipboard';
 
   @override
-  String get txttopUpAmountAddedToWallet => 'Top-Up Amount (Added to Wallet)';
+  String get txttopUpAmountAddedToWallet => 'Top Up Amount (Added to Wallet)';
 
   @override
   String get txttotalPayable => 'Total Payable';
@@ -1466,7 +1466,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtproofUpiRefHint => 'Enter 12-digit UTR / Ref (optional)';
 
   @override
-  String get txtproofTopUpAmountLabel => 'TOP-UP AMOUNT';
+  String get txtproofTopUpAmountLabel => 'TOP UP AMOUNT';
 
   @override
   String get txtproofTransferToUpi => 'Transfer to Voltium official UPI ID';
@@ -1483,12 +1483,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtproofTopUpWillBeInstant(String fee) {
-    return 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.';
+    return 'Top up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top up amount.';
   }
 
   @override
   String get txtproofTopUpNoExtraFee =>
-      'Top-up will be instant. No extra fee for rider.';
+      'Top up will be instant. No extra fee for rider.';
 
   @override
   String txtproofGatewayFee(String percent) {
@@ -1500,7 +1500,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtproofTopUpWillBeInstantCovered =>
-      'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
+      'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
 
   @override
   String get txtchangePhoto => 'Change Photo';
@@ -2211,7 +2211,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtlowBalanceWarningNotice(int amount) {
-    return 'Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹$amount.';
+    return 'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹$amount.';
   }
 
   @override
@@ -2274,7 +2274,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtupcomingRentDebit => 'UPCOMING RENT DEBIT';
 
   @override
-  String get txttopUpBeforeTomorrow6am => 'Top-up before tomorrow 6 AM';
+  String get txttopUpBeforeTomorrow6am => 'Top up before tomorrow 6 AM';
 
   @override
   String txtrentDebitNoticeShortfall(
@@ -2562,7 +2562,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Security deposit proof submitted — we\'ll review it shortly.';
 
   @override
-  String get txttopUpProofSubmitted => 'Top-up receipt submitted successfully!';
+  String get txttopUpProofSubmitted => 'Top up receipt submitted successfully!';
 
   @override
   String get txtfailedToDeleteNotification => 'Failed to delete notification';

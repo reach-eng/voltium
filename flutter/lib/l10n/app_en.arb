@@ -846,7 +846,7 @@
   "@txtadvanceRentalPlanFee": {
     "description": "Label in the top-up flow breakdown for the optional advance rental fee"
   },
-  "txttopUpProofSubmittedSuccessfully": "Top-up proof submitted successfully!",
+  "txttopUpProofSubmittedSuccessfully": "Top up proof submitted successfully!",
   "@txttopUpProofSubmittedSuccessfully": {
     "description": "SnackBar shown after the rider submits a top-up/deposit proof photo"
   },
@@ -854,7 +854,7 @@
   "@txtupiIdCopiedToClipboard": {
     "description": "SnackBar shown when the rider copies the UPI ID for offline payment"
   },
-  "txttopUpAmountAddedToWallet": "Top-Up Amount (Added to Wallet)",
+  "txttopUpAmountAddedToWallet": "Top Up Amount (Added to Wallet)",
   "@txttopUpAmountAddedToWallet": {
     "description": "Receipt line label — the top-up amount that gets added to the rider's wallet balance"
   },
@@ -1154,12 +1154,12 @@
   "txtproofCopyUpiId": "Copy UPI ID",
   "txtproofUpiRefLabel": "UPI Reference / UTR Number",
   "txtproofUpiRefHint": "Enter 12-digit UTR / Ref (optional)",
-  "txtproofTopUpAmountLabel": "TOP-UP AMOUNT",
+  "txtproofTopUpAmountLabel": "TOP UP AMOUNT",
   "txtproofTransferToUpi": "Transfer to Voltium official UPI ID",
   "txtproofPayViaUpi": "Pay via UPI",
   "txtproofInstantPaymentBreakdown": "Instant Payment Breakdown",
   "txtproofPointsToActiveGateway": "Points to current active payment gateway",
-  "txtproofTopUpWillBeInstant": "Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.",
+  "txtproofTopUpWillBeInstant": "Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.",
   "@txtproofTopUpWillBeInstant": {
     "placeholders": {
       "fee": {
@@ -1167,7 +1167,7 @@
       }
     }
   },
-  "txtproofTopUpNoExtraFee": "Top-up will be instant. No extra fee for rider.",
+  "txtproofTopUpNoExtraFee": "Top up will be instant. No extra fee for rider.",
   "txtproofGatewayFee": "Gateway Fee ({percent}%)",
   "@txtproofGatewayFee": {
     "placeholders": {
@@ -1177,7 +1177,7 @@
     }
   },
   "txtproofZeroGatewayFee": "₹0 (Paid by Voltium)",
-  "txtproofTopUpWillBeInstantCovered": "Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
+  "txtproofTopUpWillBeInstantCovered": "Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
   "txtchangePhoto": "Change Photo",
   "txttapToUploadPhoto": "Tap to upload photo",
   "txtcameraOrGallery": "Camera or gallery",
@@ -1620,7 +1620,7 @@
     "description": "Minimum recharge disclaimer",
     "placeholders": { "amount": { "type": "String" } }
   },
-  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹{amount}.",
+  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.",
   "@txtlowBalanceWarningNotice": {
     "description": "Low balance warning notice",
     "placeholders": { "amount": { "type": "int" } }
@@ -1672,7 +1672,7 @@
   "@txtdesignatedHub": { "description": "Designated hub fallback" },
   "txtupcomingRentDebit": "UPCOMING RENT DEBIT",
   "@txtupcomingRentDebit": { "description": "Upcoming rent debit header" },
-  "txttopUpBeforeTomorrow6am": "Top-up before tomorrow 6 AM",
+  "txttopUpBeforeTomorrow6am": "Top up before tomorrow 6 AM",
   "@txttopUpBeforeTomorrow6am": { "description": "Rent prompt card title" },
   "txtrentDebitNoticeShortfall": "Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).",
   "@txtrentDebitNoticeShortfall": {
@@ -1889,7 +1889,7 @@
   "@txtsessionExpiredPleaseLogIn": { "description": "Toast shown when the API returns 401 mid-session" },
   "txtsecurityDepositProofSubmitted": "Security deposit proof submitted — we'll review it shortly.",
   "@txtsecurityDepositProofSubmitted": { "description": "Toast shown after security-deposit proof upload succeeds" },
-  "txttopUpProofSubmitted": "Top-up receipt submitted successfully!",
+  "txttopUpProofSubmitted": "Top up receipt submitted successfully!",
   "@txttopUpProofSubmitted": { "description": "Toast shown after a regular top-up proof upload succeeds" },
   "txtfailedToDeleteNotification": "Failed to delete notification",
   "@txtfailedToDeleteNotification": { "description": "Toast shown when notification delete fails on the server" },

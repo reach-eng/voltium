@@ -1446,7 +1446,7 @@ abstract class AppLocalizations {
   /// SnackBar shown after the rider submits a top-up/deposit proof photo
   ///
   /// In en, this message translates to:
-  /// **'Top-up proof submitted successfully!'**
+  /// **'Top up proof submitted successfully!'**
   String get txttopUpProofSubmittedSuccessfully;
 
   /// SnackBar shown when the rider copies the UPI ID for offline payment
@@ -1458,7 +1458,7 @@ abstract class AppLocalizations {
   /// Receipt line label — the top-up amount that gets added to the rider's wallet balance
   ///
   /// In en, this message translates to:
-  /// **'Top-Up Amount (Added to Wallet)'**
+  /// **'Top Up Amount (Added to Wallet)'**
   String get txttopUpAmountAddedToWallet;
 
   /// Receipt line label — the final total the rider pays (top-up + plan fee + deposit)
@@ -2803,7 +2803,7 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofTopUpAmountLabel.
   ///
   /// In en, this message translates to:
-  /// **'TOP-UP AMOUNT'**
+  /// **'TOP UP AMOUNT'**
   String get txtproofTopUpAmountLabel;
 
   /// No description provided for @txtproofTransferToUpi.
@@ -2833,13 +2833,13 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofTopUpWillBeInstant.
   ///
   /// In en, this message translates to:
-  /// **'Top-up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top-up amount.'**
+  /// **'Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.'**
   String txtproofTopUpWillBeInstant(String fee);
 
   /// No description provided for @txtproofTopUpNoExtraFee.
   ///
   /// In en, this message translates to:
-  /// **'Top-up will be instant. No extra fee for rider.'**
+  /// **'Top up will be instant. No extra fee for rider.'**
   String get txtproofTopUpNoExtraFee;
 
   /// No description provided for @txtproofGatewayFee.
@@ -2857,7 +2857,7 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofTopUpWillBeInstantCovered.
   ///
   /// In en, this message translates to:
-  /// **'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
+  /// **'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
   String get txtproofTopUpWillBeInstantCovered;
 
   /// No description provided for @txtchangePhoto.
@@ -4206,7 +4206,7 @@ abstract class AppLocalizations {
   /// Low balance warning notice
   ///
   /// In en, this message translates to:
-  /// **'Top Up Now to Ride. Your balance is insufficient. Min top-up: ₹{amount}.'**
+  /// **'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.'**
   String txtlowBalanceWarningNotice(int amount);
 
   /// Top up wallet button label
@@ -4314,7 +4314,7 @@ abstract class AppLocalizations {
   /// Rent prompt card title
   ///
   /// In en, this message translates to:
-  /// **'Top-up before tomorrow 6 AM'**
+  /// **'Top up before tomorrow 6 AM'**
   String get txttopUpBeforeTomorrow6am;
 
   /// Rent debit notice with shortfall
@@ -4825,7 +4825,7 @@ abstract class AppLocalizations {
   /// Toast shown after a regular top-up proof upload succeeds
   ///
   /// In en, this message translates to:
-  /// **'Top-up receipt submitted successfully!'**
+  /// **'Top up receipt submitted successfully!'**
   String get txttopUpProofSubmitted;
 
   /// Toast shown when notification delete fails on the server

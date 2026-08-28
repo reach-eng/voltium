@@ -753,14 +753,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txttopUpProofSubmittedSuccessfully =>
-      'टॉप-अप प्रूफ़ सफलतापूर्वक सबमिट किया गया!';
+      'टॉप अप प्रूफ़ सफलतापूर्वक सबमिट किया गया!';
 
   @override
   String get txtupiIdCopiedToClipboard => 'UPI ID क्लिपबोर्ड पर कॉपी किया गया';
 
   @override
   String get txttopUpAmountAddedToWallet =>
-      'टॉप-अप राशि (वॉलेट में जोड़ी जाएगी)';
+      'टॉप अप राशि (वॉलेट में जोड़ी जाएगी)';
 
   @override
   String get txttotalPayable => 'कुल देय राशि';
@@ -920,7 +920,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get notif_prefsPaymentsTitle => 'भुगतान';
 
   @override
-  String get notif_prefsPaymentsSubtitle => 'टॉप-अप, किराया कटौती, रिफ़ंड';
+  String get notif_prefsPaymentsSubtitle => 'टॉप अप, किराया कटौती, रिफ़ंड';
 
   @override
   String get notif_prefsKycTitle => 'KYC';
@@ -1468,7 +1468,7 @@ class AppLocalizationsHi extends AppLocalizations {
       '12 अंकों का UTR / रेफ़रेंस दर्ज करें (वैकल्पिक)';
 
   @override
-  String get txtproofTopUpAmountLabel => 'टॉप-अप राशि';
+  String get txtproofTopUpAmountLabel => 'टॉप अप राशि';
 
   @override
   String get txtproofTransferToUpi =>
@@ -1485,12 +1485,12 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String txtproofTopUpWillBeInstant(String fee) {
-    return 'टॉप-अप तत्काल होगा। अपने टॉप-अप राशि पर 2.5% अतिरिक्त (₹$fee) गेटवे शुल्क जोड़ा जाएगा।';
+    return 'टॉप अप तत्काल होगा। अपने टॉप अप राशि पर 2.5% अतिरिक्त (₹$fee) गेटवे शुल्क जोड़ा जाएगा।';
   }
 
   @override
   String get txtproofTopUpNoExtraFee =>
-      'टॉप-अप तत्काल होगा। राइडर के लिए कोई अतिरिक्त शुल्क नहीं।';
+      'टॉप अप तत्काल होगा। राइडर के लिए कोई अतिरिक्त शुल्क नहीं।';
 
   @override
   String txtproofGatewayFee(String percent) {
@@ -1502,7 +1502,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get txtproofTopUpWillBeInstantCovered =>
-      'टॉप-अप तत्काल होगा। गेटवे शुल्क 100% वोल्टियम द्वारा वहन किया जाता है (राइडर के लिए ₹0 अतिरिक्त शुल्क)।';
+      'टॉप अप तत्काल होगा। गेटवे शुल्क 100% वोल्टियम द्वारा वहन किया जाता है (राइडर के लिए ₹0 अतिरिक्त शुल्क)।';
 
   @override
   String get txtchangePhoto => 'फ़ोटो बदलें';
@@ -2216,7 +2216,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String txtlowBalanceWarningNotice(int amount) {
-    return 'सवारी करने के लिए अभी टॉप अप करें। आपका बैलेंस अपर्याप्त है। न्यूनतम टॉप-अप: ₹$amount।';
+    return 'सवारी करने के लिए अभी टॉप अप करें। आपका बैलेंस अपर्याप्त है। न्यूनतम टॉप अप: ₹$amount।';
   }
 
   @override
@@ -2279,7 +2279,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtupcomingRentDebit => 'आगामी किराया कटौती';
 
   @override
-  String get txttopUpBeforeTomorrow6am => 'कल सुबह 6 बजे से पहले टॉप-अप करें';
+  String get txttopUpBeforeTomorrow6am => 'कल सुबह 6 बजे से पहले टॉप अप करें';
 
   @override
   String txtrentDebitNoticeShortfall(
@@ -2568,7 +2568,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'सिक्योरिटी डिपॉज़िट रसीद सबमिट हो गई — हम जल्द ही इसकी समीक्षा करेंगे।';
 
   @override
-  String get txttopUpProofSubmitted => 'टॉप-अप रसीद सफलतापूर्वक सबमिट हो गई!';
+  String get txttopUpProofSubmitted => 'टॉप अप रसीद सफलतापूर्वक सबमिट हो गई!';
 
   @override
   String get txtfailedToDeleteNotification => 'नोटिफ़िकेशन हटाने में विफल';
