@@ -213,11 +213,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     KycRepository.saveFormCache(riderId: riderId, data: cacheData);
   }
 
-  void _loadCache() {
+  /// PR-E (2026-08-28): the previous version was fire-and-forget —
+  /// the `.then` had no `.catch`, so any read error (corrupted
+  /// SharedPreferences, missing riderId, etc.) was silently
+  /// swallowed and the rider saw a blank form with no
+  /// explanation. Now we await, log structured errors, and
+  /// surface a toast so the rider knows to start fresh.
+  Future<void> _loadCache() async {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
-    KycRepository.loadFormCache(riderId: riderId).then((cacheData) {
+    try {
+      final cacheData = await KycRepository.loadFormCache(riderId: riderId);
       if (cacheData == null) return;
+      if (!mounted) return;
       _nameController.text = cacheData['name'] ?? '';
       _emailController.text = cacheData['email'] ?? '';
       _addressController.text = cacheData['address'] ?? '';
@@ -231,7 +239,14 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       ref
           .read(userOnboardingNotifierProvider.notifier)
           .populateFromCache(cacheData);
-    });
+    } catch (e, st) {
+      appDebug('KYC form cache load failed: $e\n$st');
+      if (!mounted) return;
+      Toast.error(
+        context,
+        'Could not restore your previous draft. Please start fresh.',
+      );
+    }
   }
 
   @override
