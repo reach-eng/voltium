@@ -1,7 +1,9 @@
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 import '../gen/app_localizations.dart';
+import 'cache_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -179,5 +181,49 @@ class NotificationService {
         );
     }
     return null;
+  }
+
+  // Fixed notification ID for the KYC push channel. Stable so
+  // a re-arrival replaces the previous KYC notification rather
+  // than stacking.
+  static const int _kycPushNotificationId = 9100;
+
+  // P2-12 follow-up (PR-H, 2026-08-28): the FCM-to-local-notification
+  // bridge. The server's KYC push is delivered as an FCM data
+  // message (no `notification` block on the wire — the server sends
+  // an empty title/message and relies on the client to render the
+  // localized string). This helper:
+  //
+  //  1. Reads the rider's saved locale from CacheService (the
+  //     locale_provider.dart write path is the source of truth).
+  //  2. Looks up the l10n via the synchronous `lookupAppLocalizations`
+  //     helper. We don't need a BuildContext here because the
+  //     generated lookup is a pure switch on `locale.languageCode`.
+  //  3. Calls `renderKycPushFromData` to resolve the discriminator
+  //     to a (title, body) pair.
+  //  4. Shows a local notification with that (title, body).
+  //
+  // If the data does not describe a KYC event (returns null), no
+  // notification is shown — the FCM handler can fall through to
+  // its existing render path for non-KYC messages.
+  //
+  // Returns true if a notification was shown, false otherwise.
+  static Future<bool> showKycPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderKycPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _kycPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'kyc_status',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showKycPushFromFcm failed: $e');
+      return false;
+    }
   }
 }

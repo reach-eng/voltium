@@ -10,6 +10,7 @@ import 'package:voltium_rider/features/wallet/presentation/providers/wallet_prov
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
+import 'notification_service.dart';
 import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -174,6 +175,18 @@ class FCMService {
     return diff == 0;
   }
 
+  // P2-12 follow-up (PR-H, 2026-08-28): the foreground and
+  // background FCM handlers both need to recognize KYC push
+  // types and route them through NotificationService.showKycPushFromFcm.
+  // Extracted as a static helper so the same predicate is used in
+  // both places and a source-grep test can verify it.
+  @visibleForTesting
+  static bool isKycPushType(String? type) {
+    return type == 'KYC_APPROVED' ||
+        type == 'KYC_REJECTED' ||
+        type == 'KYC_INFO_REQUESTED';
+  }
+
   @visibleForTesting
   static void initializeForTesting({
     required DevicePolicyProvider devicePolicy,
@@ -242,6 +255,14 @@ class FCMService {
       } else if (data['type'] == 'OVERLAY_TRIGGER' &&
           await validatePayload(data, isSecurity: false)) {
         handleOverlayTrigger(message);
+      } else if (isKycPushType(data['type'] as String?)) {
+        // P2-12 follow-up (PR-H, 2026-08-28): the server sends a
+        // KYC push as a data-only FCM message (no `notification`
+        // block on the wire). We render a local notification with
+        // the localized title/body. The helper loads the rider's
+        // saved locale from CacheService and looks up the ARB
+        // strings; see NotificationService.showKycPushFromFcm.
+        await NotificationService.showKycPushFromFcm(data);
       }
     });
 
@@ -478,7 +499,21 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final data = message.data;
   final isSecurity = data['type'] == 'SECURITY_COMMAND';
   final isOverlay = data['type'] == 'OVERLAY_TRIGGER';
+  final isKyc = FCMService.isKycPushType(data['type'] as String?);
   final action = data['action'];
+
+  // P2-12 follow-up (PR-H, 2026-08-28): KYC pushes don't carry an
+  // `action` field — they're data-only FCM messages with just the
+  // discriminator. Handle them BEFORE the action null-check, and
+  // skip the security/overlay whitelist gates that follow.
+  if (isKyc) {
+    try {
+      await NotificationService.showKycPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: KYC push failed: $e');
+    }
+    return;
+  }
 
   if (action == null || action is! String || action.isEmpty) {
     appDebug('FCM background: Rejected payload with missing/invalid action');

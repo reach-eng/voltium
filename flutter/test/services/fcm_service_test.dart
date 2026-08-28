@@ -266,6 +266,82 @@ void main() {
           reason: 'fcm_service.dart should have >= 20 appDebug() call sites');
     });
   });
+
+  // P2-12 follow-up (PR-H, 2026-08-28): the FCM-to-local-notification
+  // bridge for KYC pushes. Both the foreground handler (in
+  // `initialize`) and the background handler (`_firebaseMessagingBackgroundHandler`)
+  // must call NotificationService.showKycPushFromFcm for KYC types.
+  group('P2-12 follow-up: FCM handler wires KYC pushes', () {
+    test('isKycPushType returns true for the 3 KYC types', () {
+      expect(FCMService.isKycPushType('KYC_APPROVED'), isTrue);
+      expect(FCMService.isKycPushType('KYC_REJECTED'), isTrue);
+      expect(FCMService.isKycPushType('KYC_INFO_REQUESTED'), isTrue);
+    });
+
+    test('isKycPushType returns false for non-KYC types and null', () {
+      expect(FCMService.isKycPushType(null), isFalse);
+      expect(FCMService.isKycPushType('SECURITY_COMMAND'), isFalse);
+      expect(FCMService.isKycPushType('OVERLAY_TRIGGER'), isFalse);
+      expect(FCMService.isKycPushType('PAYMENT_DUE'), isFalse);
+      expect(FCMService.isKycPushType(''), isFalse);
+    });
+
+    test('foreground handler calls showKycPushFromFcm for KYC data', () {
+      // The FCM foreground listener in `initialize` must branch on
+      // the KYC type and call showKycPushFromFcm. This is the
+      // contract a Hindi rider depends on to see the KYC push
+      // in Hindi instead of English.
+      final src = _readFcmServiceSource();
+      expect(src, isNotNull);
+      // Find the foreground listener (the `onMessage.listen` block).
+      // The body of the listener should mention
+      // NotificationService.showKycPushFromFcm.
+      final fgIdx = src!.indexOf('FirebaseMessaging.onMessage.listen');
+      expect(fgIdx, greaterThan(-1), reason: 'foreground listener must exist');
+      // Find the matching closing of the listener. Brace-balanced.
+      final openBrace = src.indexOf('{', fgIdx);
+      expect(openBrace, greaterThan(-1));
+      int depth = 0;
+      int end = -1;
+      for (int i = openBrace; i < src.length; i++) {
+        if (src[i] == '{') depth++;
+        else if (src[i] == '}') {
+          depth--;
+          if (depth == 0) { end = i; break; }
+        }
+      }
+      expect(end, greaterThan(-1));
+      final listener = src.substring(openBrace, end + 1);
+      expect(listener, contains('NotificationService.showKycPushFromFcm'),
+          reason: 'foreground FCM listener must call showKycPushFromFcm for KYC pushes');
+    });
+
+    test('background handler calls showKycPushFromFcm for KYC data', () {
+      // Same as the foreground check, but for the
+      // _firebaseMessagingBackgroundHandler top-level function.
+      final src = _readFcmServiceSource();
+      expect(src, isNotNull);
+      final bgIdx = src!.indexOf('_firebaseMessagingBackgroundHandler');
+      expect(bgIdx, greaterThan(-1));
+      // The handler body — find the first `{` after the signature
+      // and brace-balance to the closing `}`.
+      final openBrace = src.indexOf('{', bgIdx);
+      expect(openBrace, greaterThan(-1));
+      int depth = 0;
+      int end = -1;
+      for (int i = openBrace; i < src.length; i++) {
+        if (src[i] == '{') depth++;
+        else if (src[i] == '}') {
+          depth--;
+          if (depth == 0) { end = i; break; }
+        }
+      }
+      expect(end, greaterThan(-1));
+      final handler = src.substring(openBrace, end + 1);
+      expect(handler, contains('NotificationService.showKycPushFromFcm'),
+          reason: 'background FCM handler must call showKycPushFromFcm for KYC pushes');
+    });
+  });
 }
 
 /// Read the fcm_service.dart source as a string. Returns null if
