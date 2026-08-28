@@ -235,9 +235,16 @@ export const notificationDispatchJob = {
 
       default: {
         const unknown = payload as { type: string };
-        logger.warn('[NotificationDispatch] Unknown payload type — acking', {
+        // P2-3 (PR-A, 2026-08-28 workflows polish): unknown payload types
+        // are a producer/consumer contract drift, not routine noise.
+        // Promote to `error` so log filters / alerts pick it up
+        // immediately. The existing `alerter.send` at
+        // `alertUnknownPayloadTypeOncePerHour` (T-91) is the page path;
+        // this is the audit trail.
+        logger.error('[NotificationDispatch] Unknown payload type — producer/consumer contract drift', {
           jobId: job.id,
           type: unknown.type,
+          event: 'unknown_payload_type',
         });
         return { delivered: false, channel: 'none', warning: 'unknown type' };
       }

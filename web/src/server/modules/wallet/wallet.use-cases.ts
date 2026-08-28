@@ -16,6 +16,7 @@ import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { walletRepository } from './wallet.repository';
 import { walletLedgerService } from './wallet-ledger.service';
 import { notificationService } from '@/lib/notification-service';
+import { formatRupeesFromPaise } from '@/lib/money';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
 import { WalletServiceError } from './wallet.errors';
@@ -189,7 +190,7 @@ export const walletUseCases = {
       proofUrl: metadata?.proofUrl,
       upiRef: metadata?.upiRef,
       idempotencyKey,
-      description: `${finalPurpose === 'SECURITY_DEPOSIT' ? 'Security Deposit' : 'Wallet Top-up'} of ₹${(amountPaise / 100).toFixed(2)}`,
+      description: `${finalPurpose === 'SECURITY_DEPOSIT' ? 'Security Deposit' : 'Wallet Top-up'} of ${formatRupeesFromPaise(amountPaise)}`,
     });
 
     if (isTestRider || isInstantSuccess) {
@@ -377,7 +378,7 @@ export const walletUseCases = {
     await notificationService.createAndSend(
       txn.riderId,
       'Top-up Approved ✅',
-      `Your top-up of ₹${(txn.amountInPaise / 100).toFixed(2)} has been approved.`,
+      `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} has been approved.`,
       'PAYMENT',
       { screen: 'WALLET' }
     );
@@ -417,7 +418,7 @@ export const walletUseCases = {
     await notificationService.createAndSend(
       txn.riderId,
       'Top-up Rejected ❌',
-      `Your top-up of ₹${(txn.amountInPaise / 100).toFixed(2)} was rejected: ${reason}`,
+      `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} was rejected: ${reason}`,
       'PAYMENT',
       { screen: 'WALLET' }
     );

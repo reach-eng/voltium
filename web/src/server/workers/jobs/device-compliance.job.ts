@@ -73,9 +73,19 @@ export const deviceComplianceJob = {
         }).catch(() => {});
       }
 
-      // Auto-resolve old violations if rider is now compliant
-      // (violations older than 7 days with no new violations get resolved)
-      const sevenDaysAgo = new Date(clock.now().getTime() - 7 * 24 * 60 * 60 * 1000);
+      // Auto-resolve old violations if rider is now compliant.
+      // P2-4 (PR-A, 2026-08-28 workflows polish): the 7-day window is
+      // now admin-configurable via the `deviceViolationAutoResolveDays`
+      // system setting. Default 7 days if the setting is missing. The
+      // setting is read inside the per-rider loop intentionally — most
+      // admins won't change it daily, and the read is a single indexed
+      // lookup. (We could cache per-run, but a run is 1×/minute; the
+      // overhead is negligible compared to the per-rider DB calls.)
+      const setting = await db.systemSetting.findUnique({
+        where: { key: 'deviceViolationAutoResolveDays' },
+      });
+      const autoResolveDays = setting ? parseInt(setting.value) || 7 : 7;
+      const sevenDaysAgo = new Date(clock.now().getTime() - autoResolveDays * 24 * 60 * 60 * 1000);
       const oldViolations = await db.deviceViolation.updateMany({
         where: {
           riderId: rider.id,
