@@ -2604,6 +2604,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hangTightPickupConfirmation => 'Pickup confirmation';
 
   @override
+  String get hangTightTitle => 'Hang tight';
+
+  @override
+  String get hangTightSettingUpBody =>
+      'We\'re setting up your account.\nThis usually takes 5–10 minutes.';
+
+  @override
+  String get hangTightNotificationHint =>
+      'We\'ll send a notification when your account is active. You don\'t need to keep this open.';
+
+  @override
+  String get hangTightGuarantorApproved => 'Guarantor approved';
+
+  @override
+  String get hangTightGuarantorNeedsAttention => 'Guarantor needs attention';
+
+  @override
+  String get hangTightGuarantorReplacedPendingReview =>
+      'Guarantor replaced — pending review';
+
+  @override
+  String get hangTightGuarantorUnderReview => 'Guarantor under review';
+
+  @override
+  String get hangTightPlanSelection => 'Plan selection';
+
+  @override
+  String get hangTightPlanNeedsAttention => 'Plan needs attention';
+
+  @override
+  String get hangTightKycApproved => 'KYC approved';
+
+  @override
+  String get hangTightKycRejectedResubmit => 'KYC rejected — please resubmit';
+
+  @override
+  String get hangTightKycExpired => 'KYC expired';
+
+  @override
+  String get hangTightKycNeedsMoreInfo => 'KYC needs more info';
+
+  @override
+  String get hangTightKycUnderReview => 'KYC under review';
+
+  @override
+  String get hangTightStatusPending => 'Pending';
+
+  @override
+  String get hangTightStatusActionNeeded => 'Action needed';
+
+  @override
   String get walletNoTransactionsForFilter => 'No transactions matching filter';
 
   @override

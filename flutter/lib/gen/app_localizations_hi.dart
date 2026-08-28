@@ -2610,6 +2610,60 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hangTightPickupConfirmation => 'पिकअप पुष्टि';
 
   @override
+  String get hangTightTitle => 'कृपया प्रतीक्षा करें';
+
+  @override
+  String get hangTightSettingUpBody =>
+      'हम आपका खाता सेट अप कर रहे हैं।\nइसमें आमतौर पर 5-10 मिनट लगते हैं।';
+
+  @override
+  String get hangTightNotificationHint =>
+      'आपका खाता सक्रिय होने पर हम सूचना भेजेंगे। आपको इसे खुला रखने की आवश्यकता नहीं है।';
+
+  @override
+  String get hangTightGuarantorApproved => 'गारंटर स्वीकृत';
+
+  @override
+  String get hangTightGuarantorNeedsAttention =>
+      'गारंटर पर ध्यान देने की आवश्यकता है';
+
+  @override
+  String get hangTightGuarantorReplacedPendingReview =>
+      'गारंटर बदला गया — समीक्षाधीन';
+
+  @override
+  String get hangTightGuarantorUnderReview => 'गारंटर समीक्षाधीन';
+
+  @override
+  String get hangTightPlanSelection => 'योजना चयन';
+
+  @override
+  String get hangTightPlanNeedsAttention =>
+      'योजना पर ध्यान देने की आवश्यकता है';
+
+  @override
+  String get hangTightKycApproved => 'KYC स्वीकृत';
+
+  @override
+  String get hangTightKycRejectedResubmit =>
+      'KYC अस्वीकृत — कृपया पुनः सबमिट करें';
+
+  @override
+  String get hangTightKycExpired => 'KYC समाप्त हो गया';
+
+  @override
+  String get hangTightKycNeedsMoreInfo => 'KYC के लिए अधिक जानकारी चाहिए';
+
+  @override
+  String get hangTightKycUnderReview => 'KYC समीक्षाधीन';
+
+  @override
+  String get hangTightStatusPending => 'लंबित';
+
+  @override
+  String get hangTightStatusActionNeeded => 'कार्रवाई आवश्यक';
+
+  @override
   String get walletNoTransactionsForFilter =>
       'इस फ़िल्टर से मेल खाता कोई लेनदेन नहीं';
 

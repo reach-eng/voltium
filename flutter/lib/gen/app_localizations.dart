@@ -4894,6 +4894,102 @@ abstract class AppLocalizations {
   /// **'Pickup confirmation'**
   String get hangTightPickupConfirmation;
 
+  /// HangTight hero title
+  ///
+  /// In en, this message translates to:
+  /// **'Hang tight'**
+  String get hangTightTitle;
+
+  /// HangTight hero body — 'your account is being set up'
+  ///
+  /// In en, this message translates to:
+  /// **'We\'re setting up your account.\nThis usually takes 5–10 minutes.'**
+  String get hangTightSettingUpBody;
+
+  /// HangTight hint that the rider will be notified when the account is active
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send a notification when your account is active. You don\'t need to keep this open.'**
+  String get hangTightNotificationHint;
+
+  /// No description provided for @hangTightGuarantorApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor approved'**
+  String get hangTightGuarantorApproved;
+
+  /// No description provided for @hangTightGuarantorNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor needs attention'**
+  String get hangTightGuarantorNeedsAttention;
+
+  /// No description provided for @hangTightGuarantorReplacedPendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor replaced — pending review'**
+  String get hangTightGuarantorReplacedPendingReview;
+
+  /// No description provided for @hangTightGuarantorUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Guarantor under review'**
+  String get hangTightGuarantorUnderReview;
+
+  /// No description provided for @hangTightPlanSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan selection'**
+  String get hangTightPlanSelection;
+
+  /// No description provided for @hangTightPlanNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan needs attention'**
+  String get hangTightPlanNeedsAttention;
+
+  /// No description provided for @hangTightKycApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC approved'**
+  String get hangTightKycApproved;
+
+  /// No description provided for @hangTightKycRejectedResubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC rejected — please resubmit'**
+  String get hangTightKycRejectedResubmit;
+
+  /// No description provided for @hangTightKycExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC expired'**
+  String get hangTightKycExpired;
+
+  /// No description provided for @hangTightKycNeedsMoreInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC needs more info'**
+  String get hangTightKycNeedsMoreInfo;
+
+  /// No description provided for @hangTightKycUnderReview.
+  ///
+  /// In en, this message translates to:
+  /// **'KYC under review'**
+  String get hangTightKycUnderReview;
+
+  /// No description provided for @hangTightStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get hangTightStatusPending;
+
+  /// No description provided for @hangTightStatusActionNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Action needed'**
+  String get hangTightStatusActionNeeded;
+
   /// Empty state when a non-All filter is active and no transactions match
   ///
   /// In en, this message translates to:

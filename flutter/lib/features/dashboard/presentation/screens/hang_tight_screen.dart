@@ -196,6 +196,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   /// screen — readers see the brand color and instantly know it's a
   /// Voltium onboarding state.
   Widget _buildHero(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
@@ -227,13 +228,13 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
           ),
           const SizedBox(height: Spacing.md),
           Text(
-            'Hang tight',
+            l10n.hangTightTitle,
             style: AppTypography.headingLarge
                 .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
           const SizedBox(height: Spacing.xs),
           Text(
-            "We're setting up your account.\nThis usually takes 5–10 minutes.",
+            l10n.hangTightSettingUpBody,
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium.copyWith(
               color: Colors.white.withValues(alpha: 0.88),
@@ -262,7 +263,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   /// vehicle rows are actually derived from live rider state" but
   /// the three hardcoded rows were not.
   Widget _buildStatusList(RiderModel? rider) {
-    final guarantorRow = _guarantorRow(rider?.guarantorStatus, () {
+    final guarantorRow = _guarantorRow(context, rider?.guarantorStatus, () {
       AppNavigator.push(context, const SupportCenterScreen());
     });
     final planRow =
@@ -282,7 +283,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
       _StatusRow(
         icon: _kycIcon(rider?.kycStatus),
         iconColor: _kycColor(rider?.kycStatus),
-        label: _kycLabel(rider?.kycStatus),
+        label: _kycLabel(context, rider?.kycStatus),
         state: kycState,
         onTap: kycState == _StatusState.attention
             ? (widget.onFixKyc ??
@@ -338,6 +339,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   /// actionable — the rider should not feel they need to keep the app
   /// open.
   Widget _buildNotificationHint(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
@@ -356,8 +358,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
           const SizedBox(width: Spacing.sm),
           Expanded(
             child: Text(
-              "We'll send a notification when your account is active. "
-              "You don't need to keep this open.",
+              l10n.hangTightNotificationHint,
               style: AppTypography.bodySmall.copyWith(
                 color: colors().onSurfaceVariant,
                 height: 1.4,
@@ -454,14 +455,19 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
 /// ONBOARDING-AUDIT 2026-08-14 (fix #2): derive the guarantor row
 /// from the rider's actual `GuarantorStatus`, not a hardcoded "done".
 /// Mirrors the `KycStatus` helpers below — same shape, same intent.
-_StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
+_StatusRow _guarantorRow(
+  BuildContext context,
+  GuarantorStatus? status, [
+  VoidCallback? onAttention,
+]) {
+  final l10n = AppLocalizations.of(context)!;
   switch (status) {
     case GuarantorStatus.approved:
     case GuarantorStatus.verified:
       return _StatusRow(
         icon: Icons.check_circle_rounded,
         iconColor: AppColors.success,
-        label: 'Guarantor approved',
+        label: l10n.hangTightGuarantorApproved,
         state: _StatusState.done,
       );
     case GuarantorStatus.rejected:
@@ -469,7 +475,7 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
       return _StatusRow(
         icon: Icons.error_rounded,
         iconColor: AppColors.error,
-        label: 'Guarantor needs attention',
+        label: l10n.hangTightGuarantorNeedsAttention,
         state: _StatusState.attention,
         onTap: onAttention,
       );
@@ -477,7 +483,7 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
       return _StatusRow(
         icon: Icons.autorenew_rounded,
         iconColor: AppColors.primary,
-        label: 'Guarantor replaced — pending review',
+        label: l10n.hangTightGuarantorReplacedPendingReview,
         state: _StatusState.inProgress,
       );
     case GuarantorStatus.submitted:
@@ -487,7 +493,7 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
       return _StatusRow(
         icon: Icons.hourglass_top_rounded,
         iconColor: AppColors.slate400,
-        label: 'Guarantor under review',
+        label: l10n.hangTightGuarantorUnderReview,
         state: _StatusState.inProgress,
       );
   }
@@ -502,13 +508,14 @@ _StatusRow _guarantorRow(GuarantorStatus? status, [VoidCallback? onAttention]) {
 _StatusRow _planRow(
     BuildContext context, String? currentPlan, String? planStatus,
     [VoidCallback? onAttention]) {
+  final l10n = AppLocalizations.of(context)!;
   final hasPlan =
       currentPlan != null && currentPlan.isNotEmpty && currentPlan != 'NONE';
   if (!hasPlan) {
     return _StatusRow(
       icon: Icons.hourglass_top_rounded,
       iconColor: AppColors.slate400,
-      label: 'Plan selection',
+      label: l10n.hangTightPlanSelection,
       state: _StatusState.waiting,
     );
   }
@@ -519,7 +526,7 @@ _StatusRow _planRow(
     return _StatusRow(
       icon: Icons.error_rounded,
       iconColor: AppColors.error,
-      label: 'Plan needs attention',
+      label: l10n.hangTightPlanNeedsAttention,
       state: _StatusState.attention,
       onTap: onAttention,
     );
@@ -603,22 +610,23 @@ Color _kycColor(KycStatus? status) {
 
 /// Label for the KYC row. Mirrors the icon helper — kept separate
 /// because a single label can't be derived from a single color.
-String _kycLabel(KycStatus? status) {
+String _kycLabel(BuildContext context, KycStatus? status) {
+  final l10n = AppLocalizations.of(context)!;
   switch (status) {
     case KycStatus.approved:
     case KycStatus.verified:
-      return 'KYC approved';
+      return l10n.hangTightKycApproved;
     case KycStatus.rejected:
-      return 'KYC rejected — please resubmit';
+      return l10n.hangTightKycRejectedResubmit;
     case KycStatus.expired:
-      return 'KYC expired';
+      return l10n.hangTightKycExpired;
     case KycStatus.infoRequired:
-      return 'KYC needs more info';
+      return l10n.hangTightKycNeedsMoreInfo;
     case KycStatus.submitted:
     case KycStatus.draft:
     case KycStatus.pending:
     default:
-      return 'KYC under review';
+      return l10n.hangTightKycUnderReview;
   }
 }
 
@@ -664,6 +672,7 @@ class _StatusRowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final isWaiting = row.state == _StatusState.waiting;
     final isAttention = row.state == _StatusState.attention;
 
@@ -701,7 +710,7 @@ class _StatusRowTile extends StatelessWidget {
           ),
           if (isWaiting)
             Text(
-              'Pending',
+              l10n.hangTightStatusPending,
               style: AppTypography.labelSmall.copyWith(
                 color: colors.onSurfaceVariant,
                 letterSpacing: 0.2,
@@ -712,7 +721,7 @@ class _StatusRowTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Action needed',
+                  l10n.hangTightStatusActionNeeded,
                   style: AppTypography.labelSmall.copyWith(
                     color: AppColors.warning,
                     letterSpacing: 0.2,
