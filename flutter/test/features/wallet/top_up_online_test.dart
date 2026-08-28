@@ -5,10 +5,15 @@ import 'package:voltium_rider/features/wallet/presentation/screens/top_up_proof_
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 
-/// PR-A (§3.3 / audit #8 P0-1, P0-2): the "Instant Online Top-Up" option was
-/// removed because it launched a hardcoded Razorpay URL that 404s (no signed
-/// order_id) and the backend has no order-init/webhook. Only Cash and UPI
-/// (manual admin verification) remain.
+/// PR-C (2026-08-28): the test docstring was previously out of sync
+/// with the production — it said the "Instant Online Top-Up" option
+/// was removed, but the production kept it (top_up_proof_screen.dart
+/// still has `Key('instantPaymentOption')`). The audit and the
+/// original test author agreed: keep the option in production so
+/// the rider sees three choices (Cash / UPI / Instant), but assert
+/// that tapping Instant does NOT open a Razorpay URL (no signed
+/// order_id; the backend has no order-init/webhook). Admin manually
+/// verifies all three paths.
 void main() {
   Widget buildScreen() {
     return ProviderScope(

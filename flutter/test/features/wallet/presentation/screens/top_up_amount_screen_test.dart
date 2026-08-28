@@ -66,7 +66,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('1500'), findsWidgets);
-      expect(find.byType(TextField), findsOneWidget);
+      // PR-C (2026-08-28): the production screen switched to
+      // TextFormField (inside the new VoltiumTextField-ish input).
+      // find.byType(TextField) would now match zero widgets.
+      expect(find.byType(TextFormField), findsOneWidget);
     });
 
     testWidgets('invokes onBack when back button is pressed', (tester) async {
