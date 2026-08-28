@@ -9,11 +9,23 @@ class VoltiumFormCard extends StatelessWidget {
   final Widget? contextLine;
   final List<Widget> children;
 
+  /// PR-E (2026-08-28): expose the form key so consumers can
+  /// trigger validate() / save() from outside (e.g. a parent's
+  /// "Continue" button). Optional — when null, the inner Form
+  /// uses its default key.
+  final GlobalKey<FormState>? formKey;
+
+  /// When non-null, overrides the default
+  /// [AutovalidateMode.onUserInteraction] on the inner Form.
+  final AutovalidateMode? autovalidateMode;
+
   const VoltiumFormCard({
     super.key,
     required this.title,
     this.contextLine,
     required this.children,
+    this.formKey,
+    this.autovalidateMode,
   });
 
   @override
@@ -42,7 +54,9 @@ class VoltiumFormCard extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           Form(
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+            key: formKey,
+            autovalidateMode:
+                autovalidateMode ?? AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: _buildSeparatedChildren(),
