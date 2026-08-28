@@ -20,12 +20,15 @@
 // fully drive for these tests).
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/hang_tight_screen.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/gen/app_localizations_en.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 
 /// Minimal stub notifier — `refreshFromApi` is a no-op so widget tests
@@ -76,6 +79,16 @@ Widget _buildHarness({required RiderModel rider}) {
       riderProvider.overrideWith(_StubRiderNotifier.new),
     ],
     child: MaterialApp(
+      // PR-D: the screen reads every visible string via
+      // AppLocalizations.of(context)!; without delegates the
+      // non-null assert throws on first build.
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en'), Locale('hi')],
       home: _Harness(rider: rider),
     ),
   );
@@ -118,13 +131,19 @@ class _HarnessState extends ConsumerState<_Harness> {
 }
 
 void main() {
+  // PR-D: every visible string in HangTightScreen is now routed
+  // through AppLocalizations. Construct one instance up front and
+  // read its getters so the assertions match whatever locale the
+  // test pumps (default: en).
+  final l10n = AppLocalizationsEn();
+
   group('HangTightScreen', () {
     testWidgets('renders title and subtitle', (tester) async {
       await tester.pumpWidget(_buildHarness(rider: _rider()));
       await tester.pump();
-      expect(find.text('Hang tight'), findsOneWidget);
+      expect(find.text(l10n.hangTightTitle), findsOneWidget);
       expect(
-        find.textContaining("We're setting up your account"),
+        find.textContaining(l10n.hangTightSettingUpBody.split('\n').first),
         findsOneWidget,
       );
     });
@@ -144,15 +163,15 @@ void main() {
         ),
       ));
       await tester.pump();
-      expect(find.text('Guarantor approved'), findsOneWidget);
-      expect(find.text('Plan selected'), findsOneWidget);
+      expect(find.text(l10n.hangTightGuarantorApproved), findsOneWidget);
+      expect(find.text(l10n.hangTightPlanSelected), findsOneWidget);
       // pickupDone is false in this state — the row says
       // "Pickup confirmation" (waiting), not "Pickup confirmed" (done).
       // The auto-redirect in the real screen handles that case before
       // the user can see it.
-      expect(find.text('Pickup confirmation'), findsOneWidget);
-      expect(find.text('KYC approved'), findsOneWidget);
-      expect(find.text('Vehicle assignment'), findsOneWidget);
+      expect(find.text(l10n.hangTightPickupConfirmation), findsOneWidget);
+      expect(find.text(l10n.hangTightKycApproved), findsOneWidget);
+      expect(find.text(l10n.hangTightVehicleAssignment), findsOneWidget);
     });
 
     testWidgets('shows Contact support + Refresh buttons', (tester) async {
@@ -160,15 +179,15 @@ void main() {
       await tester.pump();
       expect(find.byKey(const Key('hangTightSupportButton')), findsOneWidget);
       expect(find.byKey(const Key('hangTightRefreshButton')), findsOneWidget);
-      expect(find.text('Contact support'), findsOneWidget);
-      expect(find.text('Refresh'), findsOneWidget);
+      expect(find.text(l10n.suspension_contactSupport), findsOneWidget);
+      expect(find.text(l10n.txtrefresh), findsOneWidget);
     });
 
     testWidgets('shows the notification hint card', (tester) async {
       await tester.pumpWidget(_buildHarness(rider: _rider()));
       await tester.pump();
       expect(
-        find.textContaining("We'll send a notification"),
+        find.textContaining(l10n.hangTightNotificationHint),
         findsOneWidget,
       );
     });
@@ -190,7 +209,7 @@ void main() {
         // any progress indicator in the status list. The KYC label is
         // present; the spinner sits to its left.
         expect(find.byType(CircularProgressIndicator), findsWidgets);
-        expect(find.text('KYC under review'), findsOneWidget);
+        expect(find.text(l10n.hangTightKycUnderReview), findsOneWidget);
       },
     );
 
@@ -204,7 +223,7 @@ void main() {
       // "KYC approved", not "KYC under review". The spinner for the
       // KYC row is gone (the hero hourglass spinner is the only
       // remaining indicator on the screen).
-      expect(find.text('KYC approved'), findsOneWidget);
+      expect(find.text(l10n.hangTightKycApproved), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -214,8 +233,8 @@ void main() {
         rider: _rider(kyc: KycStatus.rejected),
       ));
       await tester.pump();
-      expect(find.text('KYC rejected — please resubmit'), findsOneWidget);
-      expect(find.text('Action needed'), findsOneWidget);
+      expect(find.text(l10n.hangTightKycRejectedResubmit), findsOneWidget);
+      expect(find.text(l10n.hangTightStatusActionNeeded), findsOneWidget);
       expect(find.byIcon(Icons.chevron_right_rounded), findsWidgets);
     });
 
