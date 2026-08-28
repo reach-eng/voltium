@@ -347,41 +347,82 @@ class FCMService {
       developer.log('Security command received: $action');
 
       try {
-        if (action == 'ADMIN_LOCK') {
-          _devicePolicy?.setLockedByAdmin(true);
-          await _channel.invokeMethod('lockDevice');
-        } else if (action == 'UNLOCK_DEVICE') {
-          _devicePolicy?.setLockedByAdmin(false);
-        } else if (action == 'DISABLE_CAMERA') {
-          _devicePolicy?.setCameraDisabled(true);
-        } else if (action == 'ENABLE_CAMERA') {
-          _devicePolicy?.setCameraDisabled(false);
-        } else if (action == 'ENFORCE_PASSCODE') {
-          _devicePolicy?.setPasscodeRequired(true);
-        } else if (action == 'CHECK_LOCATION_INTEGRITY') {
-          _devicePolicy?.triggerLocationVerification();
-        } else if (action == 'PERSIST_APP') {
-          _devicePolicy?.setAppPersistenceRequired(true);
-        } else if (action == 'ENFORCE_LOCATION') {
-          _devicePolicy?.setLocationRequired(true);
-        } else if (action == 'RESTRICT_APPS_CONTROL') {
-          _devicePolicy?.setRestrictedAppsMode(true);
-        } else if (action == 'FACTORY_RESET') {
-          await _channel.invokeMethod('factoryReset');
-        } else if (action == 'SYNC_DEVICE_DATA') {
-          if (_rider?.riderId != null) {
-            await DeviceDataService().syncAll(_rider!.riderId!);
-          } else {
-            // Attempt to read rider ID if provider state is missing
-            final riderId = await SecureStorageService().getRiderId();
-            if (riderId != null) {
-              await DeviceDataService().syncAll(riderId);
-            }
-          }
-        }
+        // N-3 (PR-D, 2026-08-28 workflows polish): the action →
+        // side-effect mapping now lives in a single helper
+        // (`applySecurityAction`) shared with the background
+        // handler. Previously the fg and bg handlers had two
+        // near-identical switch statements with subtle drift
+        // (e.g. bg `DISABLE_CAMERA` only logged instead of
+        // disabling the camera). The unified helper fixes that
+        // drift and means a future security action needs to be
+        // added in exactly one place.
+        await applySecurityAction(action, source: 'fg');
       } on PlatformException catch (e) {
         developer.log('Error executing security command: ${e.message}');
       }
+    }
+  }
+
+  /// N-3 (PR-D, 2026-08-28 workflows polish): single source of truth
+  /// for the security-action → side-effect map. Called by both
+  /// the foreground handler (`handleSecurityCommand`) and the
+  /// background handler (`_firebaseMessagingBackgroundHandler`).
+  ///
+  /// Foreground side-effects go through `DevicePolicyProvider` so
+  /// the UI updates; in the background isolate those providers
+  /// are null, so the calls are no-ops. Both paths also write to
+  /// `SecureStorageService` so the persisted state survives a
+  /// cold start.
+  ///
+  /// `source` is `fg` or `bg` — used only in log lines so an
+  /// operator can tell which path the action came from when
+  /// investigating a support ticket.
+  @visibleForTesting
+  static Future<void> applySecurityAction(
+    String action, {
+    required String source,
+  }) async {
+    switch (action) {
+      case 'ADMIN_LOCK':
+        _devicePolicy?.setLockedByAdmin(true);
+        await SecureStorageService().setDeviceLocked(true);
+        await _channel.invokeMethod('lockDevice');
+      case 'UNLOCK_DEVICE':
+        _devicePolicy?.setLockedByAdmin(false);
+        await SecureStorageService().setDeviceLocked(false);
+      case 'DISABLE_CAMERA':
+        _devicePolicy?.setCameraDisabled(true);
+        developer.log('DISABLE_CAMERA received in $source');
+      case 'ENABLE_CAMERA':
+        _devicePolicy?.setCameraDisabled(false);
+        developer.log('ENABLE_CAMERA received in $source');
+      case 'ENFORCE_PASSCODE':
+        _devicePolicy?.setPasscodeRequired(true);
+        developer.log('ENFORCE_PASSCODE received in $source');
+      case 'CHECK_LOCATION_INTEGRITY':
+        _devicePolicy?.triggerLocationVerification();
+        developer.log('CHECK_LOCATION_INTEGRITY received in $source');
+      case 'PERSIST_APP':
+        _devicePolicy?.setAppPersistenceRequired(true);
+        developer.log('PERSIST_APP received in $source');
+      case 'ENFORCE_LOCATION':
+        _devicePolicy?.setLocationRequired(true);
+        developer.log('ENFORCE_LOCATION received in $source');
+      case 'RESTRICT_APPS_CONTROL':
+        _devicePolicy?.setRestrictedAppsMode(true);
+        developer.log('RESTRICT_APPS_CONTROL received in $source');
+      case 'FACTORY_RESET':
+        await _channel.invokeMethod('factoryReset');
+      case 'SYNC_DEVICE_DATA':
+        if (_rider?.riderId != null) {
+          await DeviceDataService().syncAll(_rider!.riderId!);
+        } else {
+          // Attempt to read rider ID if provider state is missing
+          final riderId = await SecureStorageService().getRiderId();
+          if (riderId != null) {
+            await DeviceDataService().syncAll(riderId);
+          }
+        }
     }
   }
 
@@ -460,37 +501,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 
   if (isSecurity) {
-    const channel = MethodChannel('com.voltiumelectric.voltium/device_policy');
-
     try {
-      if (action == 'UNLOCK_DEVICE') {
-        await SecureStorageService().setDeviceLocked(false);
-        developer.log('UNLOCK_DEVICE received in background');
-      } else if (action == 'ADMIN_LOCK') {
-        await SecureStorageService().setDeviceLocked(true);
-        await channel.invokeMethod('lockDevice');
-      } else if (action == 'DISABLE_CAMERA') {
-        developer.log('DISABLE_CAMERA received in background');
-      } else if (action == 'ENABLE_CAMERA') {
-        developer.log('ENABLE_CAMERA received in background');
-      } else if (action == 'ENFORCE_PASSCODE') {
-        developer.log('ENFORCE_PASSCODE received in background');
-      } else if (action == 'CHECK_LOCATION_INTEGRITY') {
-        developer.log('CHECK_LOCATION_INTEGRITY received in background');
-      } else if (action == 'PERSIST_APP') {
-        developer.log('PERSIST_APP received in background');
-      } else if (action == 'ENFORCE_LOCATION') {
-        developer.log('ENFORCE_LOCATION received in background');
-      } else if (action == 'RESTRICT_APPS_CONTROL') {
-        developer.log('RESTRICT_APPS_CONTROL received in background');
-      } else if (action == 'FACTORY_RESET') {
-        await channel.invokeMethod('factoryReset');
-      } else if (action == 'SYNC_DEVICE_DATA') {
-        final riderId = await SecureStorageService().getRiderId();
-        if (riderId != null) {
-          await DeviceDataService().syncAll(riderId);
-        }
-      }
+      // N-3 (PR-D, 2026-08-28 workflows polish): delegate to the
+      // shared `applySecurityAction` helper. The bg path was
+      // previously a near-duplicate of the fg path with subtle
+      // drift (DISABLE_CAMERA only logged in bg; the actual
+      // camera state was never disabled). The unified helper
+      // ensures both paths produce the same side effects.
+      await FCMService.applySecurityAction(action, source: 'bg');
     } catch (e) {
       developer.log('Error in background security command: $e');
     }

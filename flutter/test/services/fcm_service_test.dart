@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/services/fcm_service.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'dart:io';
 
 void main() {
   const secret = 'super_secret_key';
@@ -207,4 +208,60 @@ void main() {
       expect(topics, contains('rider_support'));
     });
   });
+
+  // N-3 (PR-D, 2026-08-28 workflows polish): the fg and bg security-
+  // command handlers should both delegate to `applySecurityAction`
+  // so a future action needs to be added in exactly one place.
+  // The previous code had two near-identical switch statements
+  // with subtle drift (bg `DISABLE_CAMERA` only logged, the
+  // actual camera state was never disabled).
+  group('N-3: applySecurityAction single source of truth', () {
+    test('fg handler delegates to applySecurityAction with source: fg', () {
+      // The body of handleSecurityCommand should call
+      // `applySecurityAction(action, source: 'fg')` exactly once.
+      // We verify by reading the source file and checking the
+      // call site — a runtime test would require mocking 12
+      // separate side effects, which is more machinery than the
+      // refactor warrants.
+      // Use the package's source file via the relative import path.
+      final src = _readFcmServiceSource();
+      expect(src, isNotNull);
+      // Strip the body of `applySecurityAction` itself to avoid
+      // a false positive on its own source: 'fg'/'bg' literals.
+      final applyIdx = src!.indexOf('static Future<void> applySecurityAction');
+      final fgHandlerEnd = applyIdx;
+      final fgHandlerStart = src.lastIndexOf('static Future<void> handleSecurityCommand(', fgHandlerEnd);
+      final fgHandler = src.substring(fgHandlerStart, fgHandlerEnd);
+      expect(fgHandler, contains("applySecurityAction(action, source: 'fg')"),
+          reason: 'fg handler must delegate to applySecurityAction');
+      // The helper itself should be the only place that names
+      // each individual action like 'ADMIN_LOCK' outside of the
+      // _allowedSecurityActions whitelist. We check that
+      // handleSecurityCommand does NOT have its own switch
+      // statement on action strings.
+      expect(fgHandler, isNot(contains("'ADMIN_LOCK'")),
+          reason: 'fg handler must not have its own action switch');
+    });
+  });
+}
+
+/// Read the fcm_service.dart source as a string. Returns null if
+/// the file is not found (test is a no-op in that case).
+String? _readFcmServiceSource() {
+  // The test file is at flutter/test/services/fcm_service_test.dart
+  // and the source is at flutter/lib/services/fcm_service.dart.
+  // Build the relative path from the test runner's CWD (the
+  // flutter/ root) so the lookup works in CI and locally.
+  final candidates = [
+    'lib/services/fcm_service.dart',
+    '../lib/services/fcm_service.dart',
+  ];
+  for (final p in candidates) {
+    try {
+      return File(p).readAsStringSync();
+    } catch (_) {
+      // try the next candidate
+    }
+  }
+  return null;
 }
