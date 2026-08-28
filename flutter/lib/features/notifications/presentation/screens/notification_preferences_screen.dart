@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import '../../../../utils/app_logger.dart';
 
+import 'package:voltium_rider/services/fcm_service.dart';
 import 'package:voltium_rider/features/notifications/data/notification_prefs_service.dart';
 
 class NotificationPreferencesScreen extends ConsumerStatefulWidget {
@@ -38,8 +39,16 @@ class _NotificationPreferencesScreenState
   Future<void> _savePreferences() async {
     setState(() => _isLoading = true);
     try {
+      // N-1 (PR-C, 2026-08-28 workflows polish): capture the prior
+      // push value so we know whether the rider just toggled push
+      // on/off. The subscribe/unsubscribe call is fire-and-forget
+      // (errors are swallowed inside FCMService.setPushMuted).
+      final previous = await ref.read(notificationPrefsProvider.future);
       await ref.read(notificationPrefsProvider.notifier).save(_draft);
       await NotificationService().refreshNotificationPreference();
+      if (previous.push != _draft.push) {
+        await FCMService.setPushMuted(!_draft.push);
+      }
 
       if (mounted) {
         setState(() => _isLoading = false);

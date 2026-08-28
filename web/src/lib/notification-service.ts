@@ -1,6 +1,7 @@
 import { db } from './db';
 import { fcmService } from './fcm';
 import { logger } from './logger';
+import { posthog } from './posthog-client';
 
 /**
  * Centralized Notification Service
@@ -55,6 +56,31 @@ export const notificationService = {
       return { success: true, warning: 'Rider has no FCM token' };
     } catch (error) {
       logger.error('[NotificationService] Error:', error);
+      // N-2 (PR-C, 2026-08-28 workflows polish): surface FCM delivery
+      // failures to PostHog so the on-call engineer can see the rate
+      // of dead-letter / transient errors without grepping logs.
+      // Event name: `fcm_push_error`. The `posthog.capture` helper
+      // already scrubs PII keys (phone, email, otp, etc.) and respects
+      // the rate limiter, so this is safe to fire on every failure.
+      //
+      // TODO(workflows-audit T-95): once the 4xx-vs-transient
+      // classification is in place in createAndSend, the `status`
+      // property here will differentiate `fcm_push_dead_lettered`
+      // (4xx) from `fcm_push_transient_error` (5xx / network).
+      // For now both go into a single bucket.
+      posthog.capture(
+        'fcm_push_error',
+        {
+          riderId,
+          title,
+          type,
+          status: (error as { code?: string | number; status?: number })?.code
+            ?? (error as { status?: number })?.status
+            ?? 'unknown',
+          error: (error as Error)?.message ?? String(error),
+        },
+        riderId,
+      );
       return { success: false, error };
     }
   },

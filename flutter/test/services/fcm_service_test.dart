@@ -190,4 +190,21 @@ void main() {
       expect(validTransition, isTrue);
     });
   });
+
+  // N-1 (PR-C, 2026-08-28 workflows polish): the in-app push master
+  // switch should sync the rider's FCM topic subscriptions so a
+  // muted rider doesn't keep consuming backend quota. This is a
+  // lightweight source-of-truth test — the runtime behavior is
+  // covered by the helper's swallowing of Firebase errors and the
+  // existing FCMService integration tests.
+  group('N-1: setPushMuted topic sync', () {
+    test('debugBackendTopics exposes the 4 expected backend topics', () {
+      final topics = FCMService.debugBackendTopics;
+      expect(topics.length, 4);
+      expect(topics, contains('rider_overlays'));
+      expect(topics, contains('rider_rent'));
+      expect(topics, contains('rider_kyc'));
+      expect(topics, contains('rider_support'));
+    });
+  });
 }

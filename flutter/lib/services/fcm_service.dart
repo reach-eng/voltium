@@ -279,6 +279,66 @@ class FCMService {
     _seenSecurityChallenges.clear();
   }
 
+  // N-1 (PR-C, 2026-08-28 workflows polish): the in-app push master
+  // switch (`NotificationPrefs.push`) suppresses PRESENTATION of
+  // OVERLAY_TRIGGER messages (see the foreground handler above at
+  // the `if (!NotificationService().notificationsEnabled) return;`
+  // branch), but the rider's FCM token stays subscribed to backend
+  // topics — the backend keeps paying for the sends and the rider
+  // has no way to opt out of the noise at the protocol level. This
+  // helper subscribes/unsubscribes to the known backend topics so a
+  // muted rider doesn't consume backend quota and can't receive data
+  // updates the UI has no use for.
+  //
+  // The 4 topic names are backend-defined; the Flutter side mirrors
+  // them as constants here. If/when the backend adopts a new topic,
+  // add it to this list.
+  static const List<String> _backendTopics = [
+    'rider_overlays',
+    'rider_rent',
+    'rider_kyc',
+    'rider_support',
+  ];
+
+  @visibleForTesting
+  static List<String> get debugBackendTopics => List.unmodifiable(_backendTopics);
+
+  /// Subscribe to (or unsubscribe from) the backend topics the rider
+  /// is opted into. Called by the notification-preferences screen
+  /// after the user saves the push master switch.
+  ///
+  /// - `muted = true`  → unsubscribe from all known backend topics
+  /// - `muted = false` → re-subscribe to all known backend topics
+  ///
+  /// SECURITY_COMMANDs are unaffected — admin device-control
+  /// messages bypass the topic system and are processed even when
+  /// the rider has muted push (see the `data['type'] == 'SECURITY_COMMAND'`
+  /// branch above). The rider cannot mute admin commands.
+  ///
+  /// Errors are swallowed: a backend topic that doesn't exist
+  /// (yet) is a no-op on the Firebase side, and a network blip
+  /// during subscribe/unsubscribe shouldn't block the rider from
+  /// saving their preferences.
+  static Future<void> setPushMuted(bool muted) async {
+    if (PlatformInfo.isWeb) {
+      developer.log('FCM: setPushMuted skipped on web');
+      return;
+    }
+    final messaging = FirebaseMessaging.instance;
+    for (final topic in _backendTopics) {
+      try {
+        if (muted) {
+          await messaging.unsubscribeFromTopic(topic);
+        } else {
+          await messaging.subscribeToTopic(topic);
+        }
+      } catch (e) {
+        developer.log('FCM: setPushMuted topic=$topic muted=$muted failed: $e');
+      }
+    }
+    developer.log('FCM: setPushMuted($muted) — ${_backendTopics.length} topics processed');
+  }
+
   @visibleForTesting
   static Future<void> handleSecurityCommand(RemoteMessage message) async {
     final data = message.data;
