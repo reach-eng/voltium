@@ -209,10 +209,14 @@ class _DashboardContentWidget extends ConsumerWidget {
             titleSpacing: 20,
             title: Builder(builder: (context) {
               final headerColors = AppColors.of(context);
-              final nowIst = DateTime.now()
-                  .toUtc()
-                  .add(const Duration(hours: 5, minutes: 30));
-              final hour = nowIst.hour;
+              // Greet the rider based on the device's local time, not a
+              // fixed IST conversion. India-only or fixed-offset
+              // time-of-day calls made the greeting wrong for any rider
+              // in a different time zone (e.g. 6am in Dubai or 3am in
+              // San Francisco showed "Good Evening" instead of
+              // "Good Morning"). DateTime.now() returns local time on
+              // every Dart platform, so .hour is already device-local.
+              final hour = DateTime.now().hour;
               final firstName = rider.name.split(' ').first;
               final fallbackRider = l10n?.txtguestRider ?? 'Rider';
               final displayName = firstName.isEmpty ? fallbackRider : firstName;
