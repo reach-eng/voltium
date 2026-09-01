@@ -224,8 +224,7 @@ Widget createRouter({_FakeVoltiumApiClient? apiClient}) {
       voltiumApiClientProvider.overrideWithValue(fakeApi),
       riderRepositoryProvider.overrideWithValue(_MockRiderRepository()),
       rentalRepositoryProvider.overrideWithValue(RentalRepositoryImpl(vClient)),
-      walletRepositoryProvider
-          .overrideWithValue(WalletRepositoryImpl(client, vClient)),
+      walletRepositoryProvider.overrideWithValue(WalletRepositoryImpl(vClient)),
       supportRepositoryProvider
           .overrideWithValue(SupportRepositoryImpl(vClient)),
       filesRepositoryProvider

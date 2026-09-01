@@ -1,4 +1,3 @@
-import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart' as api;
 import 'package:voltium_rider/features/wallet/domain/entity.dart';
@@ -8,11 +7,7 @@ import 'package:voltium_rider/features/wallet/domain/repository.dart';
 class WalletRepositoryImpl implements WalletRepository {
   final VoltiumApiClient _apiClient;
 
-  // PR-VER-2026-08-06 (WALLET P0-2/P0-4): `_client` was only used by the
-  // removed `deleteTransactionHistory` (HISTORY_IMMUTABLE — history is a
-  // permanent record). The `client` param is kept so call sites and test
-  // doubles that construct with two args keep compiling.
-  WalletRepositoryImpl(ApiClient client, this._apiClient);
+  WalletRepositoryImpl(this._apiClient);
 
   @override
   Future<TopupRequest> submitTopup(TopupRequest request) async {
@@ -35,6 +30,17 @@ class WalletRepositoryImpl implements WalletRepository {
 
   @override
   Future<List<TransactionEntity>> getTransactionHistory(
+    // The server scopes the result to the authenticated rider via
+    // session auth (see web/src/app/api/transaction/history/route.ts
+    // → `requireRiderSession`). This parameter is kept only to document
+    // the caller's intent; it is NOT forwarded to the server. The
+    // server's session-derived rider ID is the sole scope authority.
+    // Passing a stale or wrong value here cannot leak another rider's
+    // data — the server rejects any non-matching session.
+    @Deprecated(
+      'Server scopes via session auth; the riderDbId parameter is '
+      'no longer needed and will be removed in a future release.',
+    )
     String riderDbId, {
     int page = 1,
     int limit = 20,

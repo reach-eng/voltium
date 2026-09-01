@@ -248,5 +248,5 @@ final filesRepositoryProvider = Provider<FilesRepository>((ref) {
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return WalletRepositoryImpl(client, vClient);
+  return WalletRepositoryImpl(vClient);
 });

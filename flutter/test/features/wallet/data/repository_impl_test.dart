@@ -1,19 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart' as api;
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart';
-
-class MockApiClient extends Mock implements ApiClient {}
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
 
 class FakeTopupRequest extends Fake implements api.TopupRequest {}
 
 void main() {
-  late MockApiClient mockApiClient;
   late MockVoltiumApiClient mockVoltiumApiClient;
   late WalletRepositoryImpl repository;
 
@@ -22,9 +18,8 @@ void main() {
   });
 
   setUp(() {
-    mockApiClient = MockApiClient();
     mockVoltiumApiClient = MockVoltiumApiClient();
-    repository = WalletRepositoryImpl(mockApiClient, mockVoltiumApiClient);
+    repository = WalletRepositoryImpl(mockVoltiumApiClient);
   });
 
   group('WalletRepositoryImpl', () {

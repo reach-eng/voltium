@@ -44,7 +44,7 @@ void main() {
           rentalRepositoryProvider
               .overrideWithValue(RentalRepositoryImpl(vClient)),
           walletRepositoryProvider
-              .overrideWithValue(WalletRepositoryImpl(client, vClient)),
+              .overrideWithValue(WalletRepositoryImpl(vClient)),
           supportRepositoryProvider
               .overrideWithValue(SupportRepositoryImpl(vClient)),
           filesRepositoryProvider
