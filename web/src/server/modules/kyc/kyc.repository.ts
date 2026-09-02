@@ -157,7 +157,21 @@ export const kycRepository = {
     return db.$transaction(async (tx) => {
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
-        data: { status: 'APPROVED' },
+        // AUDIT-RECON 2026-09-02 batch 6 P0-3: lock the profile post-
+        // approval by setting editableFields = []. The rider-side
+        // check at flutter/lib/features/kyc/presentation/screens/
+        // user_onboarding_screen.dart:988-995 is
+        //   kycEditableFields == null || isEmpty
+        //   ? true   // editable
+        //   : contains(fieldName)
+        // A null/empty editableFields means "no restriction" — the
+        // rider can edit every field. The reject path (line ~209)
+        // sets editableFields to the reviewer-supplied list, but
+        // the APPROVE path was leaving it untouched, so an approved
+        // rider could re-submit their name / DOB / Aadhaar number
+        // after approval. Lock everything on approval so a future
+        // re-submit requires an admin REJECT first.
+        data: { status: 'APPROVED', editableFields: [] },
       });
       await tx.rider.update({
         where: { id: riderDbId },

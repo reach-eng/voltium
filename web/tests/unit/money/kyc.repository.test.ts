@@ -137,12 +137,42 @@ describe('kycRepository', () => {
       });
 
       await kycRepository.approveKyc(riderDbId, 'admin-1');
-      
+
       const kyc = await testDb.kycProfile.findUnique({ where: { riderId: riderDbId } });
       expect(kyc?.status).toBe('APPROVED');
 
       const rider = await testDb.rider.findUnique({ where: { id: riderDbId } });
       expect(rider?.lifecycleStatus).toBe('KYC_APPROVED');
+    });
+
+    // AUDIT-RECON 2026-09-02 batch 6 P0-3: approval must lock the
+    // profile by setting editableFields = []. The rider Flutter app
+    // checks `kycEditableFields == null || isEmpty` and treats both
+    // as "editable" — so leaving the column at null/old-value after
+    // approval would let the rider re-submit name/DOB/Aadhaar.
+    it('locks editableFields to [] on approval (audit batch 6 P0-3)', async () => {
+      await testDb.kycProfile.create({
+        data: {
+          riderId: riderDbId,
+          status: 'SUBMITTED',
+          // Pre-populate with a non-empty list to prove approval
+          // overwrites it (not just leaves it alone).
+          editableFields: ['fullName', 'dob'],
+        },
+      });
+      await testDb.rider.update({
+        where: { id: riderDbId },
+        data: { lifecycleStatus: 'KYC_SUBMITTED' },
+      });
+
+      await kycRepository.approveKyc(riderDbId, 'admin-1');
+
+      const kyc = await testDb.kycProfile.findUnique({ where: { riderId: riderDbId } });
+      expect(kyc?.status).toBe('APPROVED');
+      // Prisma's editableFields column is JSON — accept either a JS
+      // array or a parsed-null equivalent.
+      const fields = kyc?.editableFields as unknown;
+      expect(Array.isArray(fields) ? fields : []).toEqual([]);
     });
 
     it('throws when approving from DRAFT status (invalid transition)', async () => {
