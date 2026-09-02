@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 14 consecutive
-audit batches (2026-09-02) where 53 of 80 items (66%) were stale,
+issues in the Voltium repo. The lesson comes from 15 consecutive
+audit batches (2026-09-02) where 57 of 84 items (68%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 14-batch accuracy record (2026-09-02)
+## 1. The 15-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -34,7 +34,8 @@ batches. If you generate audits, run them before you file an item.
 | 13 | test coverage (TEST-008..015) | 7 (3 deferred) | 5 | 0 | 0 | 0 |
 | 14 | test coverage (TEST-016..023) | 8 (2 deferred) | 4 | 1 | 2 | 1 (TEST-021) |
 | 15 | DPDP compliance (CMP-001..009) | 9 (2 deferred) | 4 | 0 | 0 | 3 (CMP-004 code + CMP-005 doc + CMP-006 doc); CMP-007/009 deferred |
-| | **Total** | **87** | **50 (57%)** | **7 (8%)** | **4 (5%)** | **18 (21%)** |
+| 16 | telemetry + pubspec (CMP-011..014) | 4 | 4 | 0 | 0 | 0 |
+| | **Total** | **91** | **54 (59%)** | **7 (8%)** | **4 (4%)** | **18 (20%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -258,7 +259,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-15. Future audit passes can use this
+stale claim in batches 8-16. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -331,6 +332,15 @@ prior batch results before re-filing a "no alerter" claim.
 | CMP-007 | Data principal rights not implemented (no `/api/rider/data-export`) | Partial: erasure is implemented (`web/src/app/api/rider/account/delete-request/route.ts`, PR-3 — records `deletionRequestedAt` + audit log entry). Consent is implemented (`web/src/app/api/rider/consent/route.ts`). Access / export is NOT. | **Real (partial), deferred** — multi-day work, separate ticket |
 | CMP-008 | Consent flow for call_log/contacts not implemented | `flutter/lib/features/onboarding/presentation/screens/permissions_screen.dart:7, 67-72, 113-134, 246-330` — call_log + contacts tiles map to `ConsentType.callLogs` / `ConsentType.contacts`, call `ConsentService().setConsent(...)`. Consent flow IS implemented (FLUTTER_CONSENT P1-1). | **Stale** — already implemented |
 | CMP-009 | DPO not designated | No org-chart or DPO reference. Governance gap, not engineering. | **Real, deferred** — separate ticket; until filled, the breach runbook's "DPO designate" references resolve to CTO + CEO joint sign-off |
+
+### Batch 16 (CMP-011..014 — Flutter telemetry / pubspec)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| CMP-011 | `flutter_contacts` access not gated by consent screen | `flutter_contacts` is only used in `flutter/lib/services/device_data_service.dart:128` (`FlutterContacts.getAll`). The call is gated by `ConsentService().hasConsent(ConsentType.contacts)` at line 122. The audit pointed at `features/device_compliance/` but that directory only contains the policy provider + emergency screens — no flutter_contacts usage. | **Stale** — consent-gated, wrong directory cited |
+| CMP-012 | `flutter_background_service` version mismatch (5.x vs 6.x) | `flutter_background_service` is **not in `flutter/pubspec.yaml`** at all (full pubspec verified: 53 lines, no entry). Package is not a dependency. | **Stale** — package not used |
+| CMP-013 | 4 overlapping telemetry systems (PostHog / OTel / Firebase / homegrown) | The 3 services (`analytics_service.dart`, `performance_service.dart`, `monitoring_service.dart`) are a **layered architecture around a single PostHog backend**, not 4 separate systems. The layering is documented in `monitoring_service.dart:2, 16, 26, 28` (PR-11, 2026-08-21): "Flutter code MUST NOT import `package:posthog_flutter/...`" — all PostHog access is wrapped in `PostHogService` and routed through `MonitoringService`. There is no OTel, no Firebase Analytics, no Sentry, no Crashlytics in the dependencies or services. | **Stale** — layered, not overlapping (3 layers, 1 backend) |
+| CMP-014 | `opentelemetry_dart 0.0.2` pre-release pinned in production | `opentelemetry_dart` is **not in `flutter/pubspec.yaml`** at all (full pubspec verified: 53 lines, no entry). Package is not a dependency. | **Stale** — package not used |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
