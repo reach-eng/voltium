@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 18 consecutive
-audit batches (2026-09-02) where 67 of 101 items (66%) were stale,
+issues in the Voltium repo. The lesson comes from 19 consecutive
+audit batches (2026-09-02) where 73 of 110 items (66%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 18-batch accuracy record (2026-09-02)
+## 1. The 19-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -38,7 +38,8 @@ batches. If you generate audits, run them before you file an item.
 | 17 | payment security + SLA (CMP-015..018) | 4 | 3 | 0 | 0 | 1 (CMP-018 SLA doc) |
 | 18 | a11y + i18n + repo hygiene (CMP-019..025) | 7 (4 deferred) | 2 | 0 | 0 | 1 (CMP-025 git rm) |
 | 19 | ADR compliance (ADR-V001..V004) | 9 (2 deferred) | 5 | 0 | 0 | 2 (ADR-V001-3 + ADR-V004-2) |
-| | **Total** | **111** | **64 (58%)** | **7 (6%)** | **4 (4%)** | **22 (20%)** |
+| 20 | drift + state machine (NET-001..009) | 9 (1 deferred) | 6 | 0 | 0 | 3 (NET-003 doc + NET-005 worker; NET-004 deferred) |
+| | **Total** | **120** | **70 (58%)** | **7 (6%)** | **4 (3%)** | **25 (21%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -262,7 +263,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-19. Future audit passes can use this
+stale claim in batches 8-20. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -379,6 +380,20 @@ prior batch results before re-filing a "no alerter" claim.
 | ADR-V003-2 | Zod schemas not exported from shared module | `web/src/lib/validators.ts` exports 50+ Zod schemas (`export const sendOtpSchema`, `verifyOtpSchema`, `updateProfileSchema`, `createAnnouncementSchema`, `awardRewardSchema`, etc.). Routes import via `import { validateBody, createAnnouncementSchema } from '@/lib/validators'`. | **Stale** — schemas are exported |
 | ADR-V004-1 | Dual state management (Provider + Riverpod) | **Real, deferred** — `flutter/pubspec.yaml:19, 47` has both `provider: ^6.1.2` and `flutter_riverpod: ^3.3.2`. ADR-0004 says "Flutter" but doesn't mandate one state library. Migrating one to the other is multi-day (50+ Provider call sites, riverpod codegen decisions). | **Real, deferred** — multi-day migration |
 | ADR-V004-2 | Dormant GoRouter coexists with state-machine router | **Real, ship-it-sized** — `flutter/pubspec.yaml` had `go_router: ^14.6.2` but the codebase has **zero** `package:go_router/...` imports (full grep). The app uses a custom `AppRouter` widget at `lib/app/router.dart` wired into `MaterialApp` at `main.dart:279`. Fixed in `b1e37349` — removed the dependency. The audit pointed at `router/app_router.dart` (wrong path — actual is `lib/app/router.dart`). | **Real** — fixed |
+
+### Batch 20 (NET-001..009 — drift + state machine)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| NET-001 | Guarantor workflow deprecated vs `BACKEND_WORKFLOW_READY.md` lists it live | `BACKEND_WORKFLOW_READY.md` **does not exist** anywhere in the tree. Only `docs/WORKFLOWS.md` and `docs/WORKFLOWS_DEFERRED_PLAN_2026-08-28.md` exist. The audit cited a non-existent file. | **Stale** — file does not exist |
+| NET-002 | Money Storage Drift at `AGENTS.md:205` | `AGENTS.md:205` is about Rental Plans `durationDays`, NOT money storage. The line is the user-memory note: "A plan's durationDays is strictly determined by its type". The Rupees-First Migration is a separate plan (`docs/plans/2026-08-08-rupees-first-completion.md`). There is no "Money Storage" rule in AGENTS.md. | **Stale** — wrong line cited |
+| NET-003 | Sentry claim in CHANGELOG vs NO_CLOUD_DATA.md | **Real, ship-it-sized** — `CHANGELOG.md:18-19` said "Integrated Sentry into the Flutter application". `docs/NO_CLOUD_DATA.md:21` lists Sentry under **NOT Allowed** error-tracking vendors. Fixed in `2c63cc49` — replaced the Sentry claim with PostHog (the actual implementation, PR-11 / 2026-08-21, established in batch 16). | **Real** — fixed |
+| NET-004 | Husky + Lefthook dual hook system | **Real, deferred** — `lefthook.yml` (2.5K, TEST-STRATEGY-AUDIT T-P2-3, 2026-08-08) and `.husky/pre-commit` (320 bytes, gitleaks + lint + typecheck + format) coexist. The inline comment at `lefthook.yml:1-15` documents the rationale (pre-commit cheap failures vs CI full suite). Both can coexist as long as the workflow is clear. | **Real, deferred** — per user choice |
+| NET-005 | KYC APPROVED → EXPIRED has no trigger | **Real, ship-it-sized** — `web/src/server/modules/kyc/kyc-state-machine.ts:23` declared the transition but no worker performed it. Fixed in `2cf6ba6e` — added `expiresAt` column to KycProfile, the `kyc-expiry.job.ts` worker (IST-date idempotency, atomic audit log + status update, 365-day window matching the AuditLog retention for kyc.*), wired into `SCHEDULED_TASKS`, with 4 passing tests. | **Real** — fixed |
+| NET-006 | Vehicle RETIRED state has no admin UI trigger | **Stale** — `BulkStatusModal.tsx:41` has `<SelectItem value="RETIRED">Retired</SelectItem>` in the admin vehicle-management flow. | **Stale** — UI present |
+| NET-007 | Vehicle LOST state has no documented procedure | **Stale** — `BulkStatusModal.tsx:40` has `<SelectItem value="LOST">Lost</SelectItem>`. The state machine doc at `STATE_MACHINES.md:236` shows the transition. | **Stale** — UI present |
+| NET-008 | Plan.durationDays derived from type, body input ignored | **Stale (by design)** — this is the user-memory design rule: "A plan's durationDays is strictly determined by its type (DAILY=1, WEEKLY=7, MONTHLY=30). The backend automatically calculates this on create/update, overriding any manual input." `plan.use-cases.ts:114-117, 191, 201` enforce it explicitly. | **Stale** — by design |
+| NET-009 | RBAC Role Count Drift: 8 vs 5 | **Stale** — already fixed in batch 5 (commit `ff283110`). `STATE_MACHINES.md:291-302` and `PROJECT_OVERVIEW_2026-07-30.md:533` both now list 8 roles. The PROJECT_OVERVIEW even has the inline comment: "this section was last touched 2026-07-30 and was stale until reconciled 2026-09-02". | **Already fixed** — re-raised |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
