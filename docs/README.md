@@ -4,7 +4,7 @@ Voltium is a premium electric vehicle rental and management platform, designed f
 
 ## Tech Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router; `web/package.json` pins `^15.5.19`)
 - **Database**: [Prisma](https://www.prisma.io/) with PostgreSQL (local instance)
 - **Frontend Logic**: [React 18](https://reactjs.org/), [Zustand](https://zustand-demo.pmnd.rs/) (State Management)
 - **Styling**: Vanilla CSS, TailwindCSS, Framer Motion (Animations)

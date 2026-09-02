@@ -50,7 +50,11 @@ dependencies:
   logger: ^2.7.0
   call_log: ^6.0.1
   flutter_animate: ^4.5.2
-  go_router: ^14.6.2
+  # go_router removed in audit batch 19 (ADR-V004-2, 2026-09-02):
+  # zero `package:go_router/...` imports in the codebase. The app
+  # uses a custom AppRouter widget (lib/app/router.dart) inside
+  # MaterialApp; main.dart:279 wires `AppRouter()` directly.
+  # The pubspec.lock entry will be pruned on the next `flutter pub get`.
 
 dev_dependencies:
   flutter_test:
