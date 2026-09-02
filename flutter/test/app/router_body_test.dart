@@ -40,7 +40,7 @@ void main() {
       return ProviderScope(
         overrides: [
           riderRepositoryProvider
-              .overrideWithValue(RiderRepositoryImpl(client, vClient)),
+              .overrideWithValue(RiderRepositoryImpl(vClient)),
           rentalRepositoryProvider
               .overrideWithValue(RentalRepositoryImpl(vClient)),
           walletRepositoryProvider

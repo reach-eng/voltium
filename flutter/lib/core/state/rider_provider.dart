@@ -605,7 +605,7 @@ final riderProvider = NotifierProvider<RiderNotifier, RiderState>(
 final riderRepositoryProvider = Provider<RiderRepository>((ref) {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return RiderRepositoryImpl(client, vClient);
+  return RiderRepositoryImpl(vClient);
 });
 
 final rentalRepositoryProvider = Provider<RentalRepository>((ref) {

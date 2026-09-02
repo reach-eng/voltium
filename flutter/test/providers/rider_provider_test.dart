@@ -48,21 +48,6 @@ class MockRiderRepository implements RiderRepository {
   Future<void> registerFCMToken(String token) async {
     registerFCMTokenCalled = true;
   }
-
-  @override
-  Future<Map<String, dynamic>> getDeviceDetails() async => {};
-
-  @override
-  Future<Map<String, dynamic>> getEarnings() async => {};
-
-  @override
-  Future<Map<String, dynamic>> getSettings() async => {};
-
-  @override
-  Future<void> syncDeviceData(Map<String, dynamic> data) async {}
-
-  @override
-  Future<void> updateRiderProfile(Map<String, dynamic> data) async {}
 }
 
 class MockRentalRepository implements RentalRepository {
