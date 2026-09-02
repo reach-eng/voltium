@@ -58,7 +58,7 @@ After executing `npm run db:deploy`, perform the following 5 verification steps:
 Every active operator MUST keep the following 3 admin console views open during their shift:
 
 1. **Background Jobs Console** (`http://localhost:8081/admin/background-jobs`)
-   - Monitors status of 8 system cron tasks (Wallet Reconciliation, Auto-Debit, Device Compliance, Telemetry Cleanup, etc.).
+   - Monitors status of 11 system worker types (Wallet Reconciliation, Auto-Debit, Device Compliance, Telemetry Cleanup, Notification Dispatch, Daily Engagement, Rent Due Check, Referral Reward, SMS, Audit Log Cleanup, Notification Cleanup). See `RUNBOOK.md` §Background Workers for the full table with cron schedules and concurrency.
    - Visualizes `lastError` callouts for failed jobs and estimated `nextRun` schedules.
 
 2. **Wallet Reconciliation & Report Inspector** (`http://localhost:8081/admin/background-jobs#reconciliation`)
