@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 12 consecutive
-audit batches (2026-09-02) where 38 of 64 items (59%) were stale,
+issues in the Voltium repo. The lesson comes from 13 consecutive
+audit batches (2026-09-02) where 49 of 71 items (69%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 12-batch accuracy record (2026-09-02)
+## 1. The 13-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -32,7 +32,8 @@ batches. If you generate audits, run them before you file an item.
 | 11 | CI / docs | 6 (5 open) | 4 | 0 | 0 | 1 |
 | 12 | cron test gaps (TG-1..11) | 7 | 2 | 2 | 1 | 1 (subset: TG-5, TG-7, TG-11 of 11 gaps) |
 | 13 | test coverage (TEST-008..015) | 7 (3 deferred) | 5 | 0 | 0 | 0 |
-| | **Total** | **70** | **42 (60%)** | **6 (9%)** | **2 (3%)** | **14 (20%)** |
+| 14 | test coverage (TEST-016..023) | 8 (2 deferred) | 4 | 1 | 2 | 1 (TEST-021) |
+| | **Total** | **78** | **46 (59%)** | **7 (9%)** | **4 (5%)** | **15 (19%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -256,7 +257,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-13. Future audit passes can use this
+stale claim in batches 8-14. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -302,6 +303,19 @@ prior batch results before re-filing a "no alerter" claim.
 | TEST-015 | `audits/PRIOR_AUDIT_REVIEW_PLAN_2026-08-06.md` lists 13 MISSING test files | The `audits/` directory does not exist on the current branch at all (`Get-ChildItem audits` returns nothing). The audit is citing a file from a tree that is no longer present. | **Stale** — source file gone |
 | TEST-008 | Money-path testcontainers only 38% complete | **Real, in-progress** — multi-day work, tracked in `COVERAGE_PLAN.md §3-4`. Not shipping in this batch. | **Deferred** — out of scope |
 | TEST-009 | Worker job tests Phase 2 only 22 of 101 planned | **Real, in-progress** — multi-day work, tracked in `COVERAGE_PLAN.md §5`. Not shipping in this batch. | **Deferred** — out of scope |
+
+### Batch 14 (TEST-016..023 test coverage / docs claims)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| TEST-016 | `flutter_coverage.sh` 85% line gate not re-run in latest readiness | `RELEASE_READINESS_2026-07-29.md:87,101` explicitly says "were not re-run in this session. Both pipelines have been historically green; the gate is not blocking release." Audit misread "not re-run in this session" as "missing". | **Stale / not-a-bug** — intentional gap |
+| TEST-017 | `npm run test:coverage:combined` 85% gate not re-run | Same as TEST-016 — same doc lines. | **Stale / not-a-bug** — intentional gap |
+| TEST-018 | Per-day wallet-adjust cap not enforced (per-call ₹50K only) | Already shipped in `833531d6` (batch 5). `web/src/lib/env.ts:128` has `MAX_ADMIN_DEBIT_PER_DAY_INR: 200000`; `web/tests/unit/api/admin-wallet-adjust-caps.test.ts:277-287` has the per-day aggregate test ("AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap"). | **Already fixed** — re-raised |
+| TEST-019 | 155 ops × 10 tests = 1,550+ new integration tests not yet landed | **Real, deferred** — `INTEGRATION_TEST_COVERAGE_PLAN.md` itself says "Plan ready, awaiting execution approval". Multi-day work, not in this batch. | **Deferred** — out of scope |
+| TEST-020 | 3 of 5 audit-verification passes report ≤70% P0 fix rate | Only 4 `AUDIT_VERIFICATION_*` files exist (no "5" pass — file count is 4: `_2026-07-29`, `_2_2026-07-29`, `_3_2026-07-30`, `_4_2026-07-30`). The audit cited "PASS3-7" but those files don't exist. | **Stale** — wrong file count |
+| TEST-021 | `SCREEN_WORKFLOW_COVERAGE.md` lists all screens "Implemented" — no test traceability | **Real** — fixed in `4ca28384`. Added a `Test coverage` column to both admin and rider tables with concrete file paths. Updated the public-beta rule to require the column on new rows. | **Real** — fixed |
+| TEST-022 | `DEVICE_TEST_PLAYBOOK.md` is manual-only; no Firebase Test Lab automation | **Real, deferred** — requires Firebase project setup + service-account config + Test Lab matrix. Multi-day work, not in this batch. | **Deferred** — out of scope |
+| TEST-023 | 3 skipped tests need design decisions (rate-limit DB / restore-safety / use-case stub) | `FAILED_TESTS_2026-08-01.md:225-226` lists the 3 design questions correctly, but the test-count header (35 failed, 1830 passing) is stale — actual is 0 failed / 2,958 passing. Design questions remain open and unowned. | **Stale (test counts) + Real (3 design questions open)** |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
