@@ -28,7 +28,9 @@ batches. If you generate audits, run them before you file an item.
 | 7 | ops / docs | 5 | 4 | 0 | 0 | 1 |
 | 8 | infra / CI | 5 | 5 | 0 | 0 | 0 |
 | 9 | deploys / scripts | 4 (open) | 4 | 0 | 0 | 0 |
-| | **Total** | **45** | **29 (64%)** | **4 (9%)** | **1 (2%)** | **11 (24%)** |
+| 10 | docs / CI | 4 (open) | 2 | 0 | 0 | 2 |
+| 11 | CI / docs | 6 (5 open) | 4 | 0 | 0 | 1 |
+| | **Total** | **55** | **35 (64%)** | **4 (7%)** | **1 (2%)** | **14 (25%)** |
 
 The dominant failure mode across all 9 batches: **the audit
 re-states prior findings without reading the inline
@@ -244,6 +246,37 @@ If you only have time to run one command before filing an item:
 ```bash
 git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' -- <file>
 ```
+
+---
+
+## 8. Per-batch stale-claim evidence (the receipts)
+
+The following table records the exact line refs that prove each
+stale claim in batches 8-11. Future audit passes can use this
+section as a reference for "the audit got this wrong before —
+don't repeat it".
+
+### Batch 10 (`.github/workflows/...yml` claims)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| 1 | `nightly-load.yml` k6 has `continue-on-error: true` (broken) | Line 84: `continue-on-error: true` is intentional with an `if: always()` Slack notification (lines 99-109) and artifact upload (lines 86-90). The inline comment at line 84 explains: "Do not fail the whole build if SLO fails, we want to review artifact". | **Stale** — design is correct |
+| 2 | `e2e-windows.yml` hardcodes psql password | Lines 34-36 (R10 polish #15) document: "generate a per-run random postgres password instead of hardcoding 'postgres'". Lines 48, 118 use a 24-char random password per run. | **Stale** — already random per-run |
+| 3 | `daily-smoke-tests.yml` Android emulator requires KVM | The `reactivecircus/android-emulator-runner` at line 97 uses `emulator-options: -no-window -gpu swiftshader_indirect` (line 103) — explicit software rendering that does NOT require KVM. | **Stale** — software rendering already configured |
+| 4 | `flutter-ci-cd.yml` paths filter excludes `web/**` (Prisma schema regen) | The paths filter (lines 6-17) includes `flutter/**`, `web/src/contracts/**` (OpenAPI spec), `web/prisma/**` (Prisma schema), and `.github/workflows/flutter-ci-cd.yml`. The Flutter pipeline correctly triggers on all 3 sources it depends on. | **Stale** — paths filter is correctly scoped |
+| 6 | `RUNBOOK_OPERATOR_DAY1.md:88` outbox queue-lag has no alerter | Already shipped in commit `a804eb63` (batch 7) — the new `outbox-queue-lag.job.ts` posts to the Slack webhook every 5 minutes when the threshold is crossed. The runbook was updated in the same commit. | **Already fixed** — re-raised |
+
+### Batch 11 (`docs/RUNBOOK_OPERATOR_DAY1.md` claims)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| 5 | RUNBOOK_OPERATOR_DAY1.md says 8 cron tasks, RUNBOOK lists 11 | `RUNBOOK_OPERATOR_DAY1.md:61` said "8 system cron tasks"; `RUNBOOK.md:146-156` listed 11 worker types. | **Real** — fixed in `12f4c650` |
+| 6 | `RUNBOOK_OPERATOR_DAY1.md:88` outbox queue-lag has no alerter | Already shipped in commit `a804eb63` (batch 7). | **Already fixed** — re-raised |
+
+The "item 6 re-raised" pattern is the single biggest source of
+audit noise — the same finding was shipped in batch 7 and re-flagged
+in batches 10 and 11. The audit tool/source should cross-reference
+prior batch results before re-filing a "no alerter" claim.
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
