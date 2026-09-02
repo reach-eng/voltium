@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 9 consecutive
-audit batches (2026-09-02) where 24 of 45 items (53%) were stale,
+issues in the Voltium repo. The lesson comes from 12 consecutive
+audit batches (2026-09-02) where 38 of 64 items (59%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 9-batch accuracy record (2026-09-02)
+## 1. The 12-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -30,13 +30,17 @@ batches. If you generate audits, run them before you file an item.
 | 9 | deploys / scripts | 4 (open) | 4 | 0 | 0 | 0 |
 | 10 | docs / CI | 4 (open) | 2 | 0 | 0 | 2 |
 | 11 | CI / docs | 6 (5 open) | 4 | 0 | 0 | 1 |
-| | **Total** | **55** | **35 (64%)** | **4 (7%)** | **1 (2%)** | **14 (25%)** |
+| 12 | cron test gaps (TG-1..11) | 7 | 2 | 2 | 1 | 1 (subset: TG-5, TG-7, TG-11 of 11 gaps) |
+| 13 | test coverage (TEST-008..015) | 7 (3 deferred) | 5 | 0 | 0 | 0 |
+| | **Total** | **70** | **42 (60%)** | **6 (9%)** | **2 (3%)** | **14 (20%)** |
 
-The dominant failure mode across all 9 batches: **the audit
+The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
 PR-referencing comments that document the prior fix.** Items
-1, 2, 3, 5, 6, 7, 9 all had the prior fix documented in a
-comment within ~20 lines of the cited line number.
+1, 2, 3, 5, 6, 7, 9, 12, 13 all had the prior fix documented
+in a comment within ~20 lines of the cited line number, or the
+named file already existed on the current branch (Q1 of the
+pre-flight checklist).
 
 ---
 
@@ -252,7 +256,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-11. Future audit passes can use this
+stale claim in batches 8-13. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -277,6 +281,27 @@ The "item 6 re-raised" pattern is the single biggest source of
 audit noise — the same finding was shipped in batch 7 and re-flagged
 in batches 10 and 11. The audit tool/source should cross-reference
 prior batch results before re-filing a "no alerter" claim.
+
+### Batch 12 (cron test gaps from `audits/2026-08-05-scheduled-cron-tasks.md`)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| TG-2 | worker job tests missing | `web/tests/unit/workers/` already has 6 job test files (audit-cleanup, outbox-flush, outbox-queue-lag, reconciliation, scheduled-backup, start-workers) — gaps are partial, not zero. | **Stale** — partial coverage exists |
+| TG-3 | idempotency tests missing | Already covered in `outbox-flush.job.test.ts` and `audit-cleanup.job.test.ts`. | **Already fixed** — partial coverage |
+| TG-9 | cron schedule drift detection missing | The audit drift detection lives in `scripts/check-schedule-drift.sh` + a CI step at `.github/workflows/ci-cd.yml:188-194` — not in the worker test suite. | **Not a bug** — covered by a different test layer |
+| TG-5 / TG-7 / TG-11 | 3 of 11 test gaps | Shipped in `c8be44c7` — `outbox-cleanup-completed`, `scheduled-backup-restore-lock`, `start-workers-idempotent` (10 new test cases, 386 lines). | **Real** — 3 fixed, 8 deferred |
+
+### Batch 13 (test coverage from `COVERAGE_PLAN.md`, `INTEGRATION_TEST_COVERAGE_PLAN.md`, `FLUTTER_AUDIT_VERIFICATION_REPORT`)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| TEST-011 | `tests/scripts/check-migration-safety.test.sh` does not exist | The test file is `web/tests/unit/check-migration-safety.test.ts` (spawnSync-based vitest, not a `.sh` test). The audit's cited path is wrong; the real file exists with multiple test cases. | **Stale** — wrong path, file exists |
+| TEST-012 | Pickup module has zero integration tests | `flutter/integration_test/e2e_individual/46_pickup_screen_test.dart` (62 lines, PR-8 PICKUP P0-1) — first pickup integration test, self-described as "the seed". | **Stale** — file exists |
+| TEST-013 | Emergency feature has zero integration tests | `flutter/integration_test/e2e_individual/48_emergency_sos_test.dart` (54 lines, PR-9 EMERGENCY P0-5) — first emergency integration test, self-described as "the seed". | **Stale** — file exists |
+| TEST-014 | Wallet top-up has zero integration tests | `flutter/integration_test/e2e_individual/12_wallet_topup_test.dart` (50 lines) + `37_wallet_topup_balance_test.dart` (5203 bytes) — two top-up tests. | **Stale** — 2 files exist |
+| TEST-015 | `audits/PRIOR_AUDIT_REVIEW_PLAN_2026-08-06.md` lists 13 MISSING test files | The `audits/` directory does not exist on the current branch at all (`Get-ChildItem audits` returns nothing). The audit is citing a file from a tree that is no longer present. | **Stale** — source file gone |
+| TEST-008 | Money-path testcontainers only 38% complete | **Real, in-progress** — multi-day work, tracked in `COVERAGE_PLAN.md §3-4`. Not shipping in this batch. | **Deferred** — out of scope |
+| TEST-009 | Worker job tests Phase 2 only 22 of 101 planned | **Real, in-progress** — multi-day work, tracked in `COVERAGE_PLAN.md §5`. Not shipping in this batch. | **Deferred** — out of scope |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
