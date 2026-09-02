@@ -19,6 +19,7 @@ import { db } from '@/lib/db';
 import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { fcmService } from '@/lib/fcm';
 import type { RiderLifecycleStatus } from '@prisma/client';
 
 export interface AnnouncementBroadcastPayload {
@@ -59,25 +60,37 @@ export const announcementBroadcastJob = {
       ? (announcement.targetIds as string[])
       : [];
 
-    let recipients: { id: string }[] = [];
+    let recipients: { id: string; fcmToken: string | null }[] = [];
     if (announcement.targetAudience === 'ALL') {
-      recipients = await db.rider.findMany({ select: { id: true } });
+      recipients = await db.rider.findMany({ select: { id: true, fcmToken: true } });
     } else if (announcement.targetAudience === 'BY_HUB') {
       recipients = await db.rider.findMany({
         where: { pickupHub: { in: targetIds } },
-        select: { id: true },
+        select: { id: true, fcmToken: true },
       });
     } else if (announcement.targetAudience === 'BY_STATUS') {
       recipients = await db.rider.findMany({
         where: { lifecycleStatus: { in: targetIds as RiderLifecycleStatus[] } },
-        select: { id: true },
+        select: { id: true, fcmToken: true },
       });
     } else if (announcement.targetAudience === 'BY_PLAN') {
       recipients = await db.rider.findMany({
         where: { currentPlan: { in: targetIds } },
-        select: { id: true },
+        select: { id: true, fcmToken: true },
       });
     }
+
+    // AUDIT-RECON 2026-09-02 batch 4 P0-1: the `channel` field on
+    // Announcement distinguishes in-app (INFO) from push (PUSH). The
+    // schema and the validator already let the admin pick a channel,
+    // but the broadcast worker only ever wrote to the Notification
+    // table — a PUSH announcement arrived in the bell icon on next
+    // open but never woke the device. Honor the channel here: PUSH
+    // → also fire an FCM push per rider with a token; INFO → in-app
+    // only (current behavior). Best-effort: a missing/stale token
+    // silently skips the push, the in-app row is the source of truth
+    // (matches the pattern in notification.use-cases.ts:144).
+    const shouldPush = announcement.channel === 'PUSH';
 
     const notificationType = announcement.channel === 'PUSH' ? 'ALERT' : 'INFO';
 
@@ -120,6 +133,35 @@ export const announcementBroadcastJob = {
         })),
         skipDuplicates: true,
       });
+      // AUDIT-RECON 2026-09-02 batch 4 P0-1: per-rider FCM push for
+      // channel === 'PUSH'. Fired AFTER the in-app row is written so
+      // the bell-icon entry is the source of truth if FCM is down.
+      // Best-effort: a missing/stale token silently skips (matches
+      // notification.use-cases.ts:144). We don't await the promises
+      // to keep the batch loop off the FCM critical path — a slow
+      // FCM round-trip shouldn't hold up the next DB batch.
+      if (shouldPush) {
+        for (const r of batch) {
+          if (!r.fcmToken) continue;
+          fcmService
+            .sendPushNotification(
+              r.fcmToken,
+              announcement.title,
+              announcement.message,
+              {
+                screen: 'NOTIFICATIONS',
+                announcementId: announcement.id,
+              },
+            )
+            .catch((err) =>
+              logger.warn('[AnnouncementBroadcast] FCM push failed', {
+                announcementId: announcement.id,
+                riderId: r.id,
+                err: err instanceof Error ? err.message : String(err),
+              }),
+            );
+        }
+      }
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
