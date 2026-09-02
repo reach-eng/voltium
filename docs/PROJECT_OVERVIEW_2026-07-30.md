@@ -530,12 +530,15 @@ web/src/app/admin/
 
 ### 10.2 Admin RBAC
 
-5 roles (per `SECURITY.md` and `lib/permissions.ts`):
-- `SUPER_ADMIN` — full system access
-- `ADMIN` — operations + finance + KYC + tickets
-- `MANAGER` — view + create
-- `FLEET_MANAGER` — vehicle/hub CRUD + rider updates
-- `TEAM_LEADER` — KYC/guarantor review + ticket resolution
+8 roles (per `lib/auth.ts` expanded-roles comment + `STATE_MACHINES.md:291-302`; this section was last touched 2026-07-30 and was stale until reconciled 2026-09-02 — the prior "5 roles" list referenced a pre-2026-08 schema):
+- `SUPER_ADMIN` — full system access (implicitly has every permission)
+- `OPERATIONS_ADMIN` — daily fleet operations
+- `KYC_REVIEWER` — KYC + guarantor review only
+- `FINANCE_ADMIN` — wallet, deposits, refunds
+- `SUPPORT_AGENT` — support tickets only
+- `HUB_MANAGER` — vehicle pickup/return at hub
+- `FLEET_MANAGER` — vehicle/hub CRUD
+- `READ_ONLY` — dashboard/reports only
 
 `withRbac(requiredRole, handler)` wrapper. 50+ permission keys in `lib/permissions.ts`. The `rbac.ts` + `permissions.ts` were consolidated in PR-P1.2 (Ticket #15).
 
