@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 19 consecutive
-audit batches (2026-09-02) where 73 of 110 items (66%) were stale,
+issues in the Voltium repo. The lesson comes from 20 consecutive
+audit batches (2026-09-02) where 83 of 120 items (69%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 19-batch accuracy record (2026-09-02)
+## 1. The 20-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -39,7 +39,8 @@ batches. If you generate audits, run them before you file an item.
 | 18 | a11y + i18n + repo hygiene (CMP-019..025) | 7 (4 deferred) | 2 | 0 | 0 | 1 (CMP-025 git rm) |
 | 19 | ADR compliance (ADR-V001..V004) | 9 (2 deferred) | 5 | 0 | 0 | 2 (ADR-V001-3 + ADR-V004-2) |
 | 20 | drift + state machine (NET-001..009) | 9 (1 deferred) | 6 | 0 | 0 | 3 (NET-003 doc + NET-005 worker; NET-004 deferred) |
-| | **Total** | **120** | **70 (58%)** | **7 (6%)** | **4 (3%)** | **25 (21%)** |
+| 21 | security re-validation (F-006..DB-002) | 10 | 9 | 0 | 1 | 0 |
+| | **Total** | **130** | **79 (61%)** | **7 (5%)** | **5 (4%)** | **25 (19%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -263,7 +264,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-20. Future audit passes can use this
+stale claim in batches 8-21. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -394,6 +395,21 @@ prior batch results before re-filing a "no alerter" claim.
 | NET-007 | Vehicle LOST state has no documented procedure | **Stale** — `BulkStatusModal.tsx:40` has `<SelectItem value="LOST">Lost</SelectItem>`. The state machine doc at `STATE_MACHINES.md:236` shows the transition. | **Stale** — UI present |
 | NET-008 | Plan.durationDays derived from type, body input ignored | **Stale (by design)** — this is the user-memory design rule: "A plan's durationDays is strictly determined by its type (DAILY=1, WEEKLY=7, MONTHLY=30). The backend automatically calculates this on create/update, overriding any manual input." `plan.use-cases.ts:114-117, 191, 201` enforce it explicitly. | **Stale** — by design |
 | NET-009 | RBAC Role Count Drift: 8 vs 5 | **Stale** — already fixed in batch 5 (commit `ff283110`). `STATE_MACHINES.md:291-302` and `PROJECT_OVERVIEW_2026-07-30.md:533` both now list 8 roles. The PROJECT_OVERVIEW even has the inline comment: "this section was last touched 2026-07-30 and was stale until reconciled 2026-09-02". | **Already fixed** — re-raised |
+
+### Batch 21 (F-006..DB-002 — security re-validation)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| F-006 | OTP `isNewRider` defaults `false` (KYC bypass) | `web/src/server/modules/auth/auth.use-cases.ts:121, 139` — `isNewRider` defaults to `false` and is only set to `true` inside the `if (!rider)` block when a new rider row is actually created. The default is the safe state; the "bypass" claim is inverted. | **Stale** — safe default, only flipped on actual creation |
+| F-019 | Token refresh race + unguarded jsonDecode | `web/src/app/api/auth/refresh/route.ts:25` uses `request.json().catch(() => ({}))` (tryParse pattern, not unguarded `JSON.parse`). `flutter/lib/core/network/api_client.dart:59-63, 166-176` implements single-flight refresh: while a refresh is in progress, concurrent 401-handlers `_await` the same `_refreshInFlight` Future. The server-side race is mitigated by the client-side coalescing. The audit's own pre-verification "FALSE — `_safeJsonDecode` + single-flight refresh in place" is correct. | **Stale** — single-flight in place |
+| F-020 | `call_log` plugin (Play Store policy red flag) | Per user memory (2026-08-21): "`call_log` and `flutter_contacts` plugins are intentional and stay. Do not propose their removal in future audits." Per distribution decision (2026-08-27): "**No Play Store release.**" Both reasons make the Play Store policy claim inapplicable. | **Not a bug** — intentional, no Play Store |
+| SEC-003 / REL-024 | KYC PII plain-text in admin | `web/src/components/admin/screens/kyc-management/KycDetailDialog.tsx:27, 31` — `showPii` reveal toggle + `maskString()` helper applied to aadhaar / pan / accountNumber / ifscCode. Already verified in batch 15 (CMP-001). | **Stale** — masked, with opt-in reveal |
+| SEC-004 / CMP-002 / REL-025 / ADM-PAY-001 | Payment gateway creds plain text | `web/src/lib/credentials.ts:5-26` (PR-8, 2026-08-06 fix-plan) — AES-256-GCM at rest with key-versioned envelope. `PaymentGatewayEditDialog.tsx:43-45, 110-114` (write-only form). Already verified in batches 15 (CMP-002) and 17 (CMP-015). | **Stale** — encrypted at rest + write-only form |
+| SEC-006 | Flutter CI keystore left on disk | `flutter/android/.gitignore:24-26` ignores `key.properties`, `*.keystore`, `*.jks`. `git ls-files` confirms `key.properties` and `debug.keystore` are NOT tracked. Both files exist on disk for local builds but are correctly excluded from the repo. | **Stale** — properly ignored |
+| SEC-007 | Firebase config in plaintext | `flutter/android/app/google-services.json` has **dummy values** (`1234567890`, `dummy-project-id`, `dummy-api-key`) — clearly placeholder for CI. `flutter/lib/firebase_options.dart` is a thin shim that loads from `flutter/lib/core/firebase/firebase_config.dart` via `--dart-define` at build time. Real Firebase credentials are NOT in source. | **Stale** — placeholder, real keys via dart-define |
+| SEC-008 | `ALLOW_DEV_PII_KEY` hardcoded dev key in source | It's an **env var flag**, not a hardcoded key. `web/src/lib/env.ts:96, 137-144` — production is explicitly forbidden (Zod schema throws on `ALLOW_DEV_PII_KEY=true` in prod). `web/src/lib/pii-crypto.ts:28-32` — the "dev key" is process-unique generated at startup from a random value, never a hardcoded secret. | **Stale** — env var, not hardcoded |
+| SEC-009 / CMP-003 / INF-003 | `db-backup.sh` plaintext SQL dumps | `scripts/db-backup.sh:5-7, 140-153, 192-199` — AES-256-CBC + PBKDF2 default, env-driven `BACKUP_ENCRYPTION_KEY`, `--no-encrypt` requires explicit `--i-understand-the-pii-risk` flag. Already verified in batch 15 (CMP-003). | **Stale** — encrypted by default |
+| DB-002 | No `SELECT FOR UPDATE` on wallet approve | Concurrency is enforced via **CAS (compare-and-swap) via `updateMany`** — the modern Prisma equivalent of `SELECT FOR UPDATE`. `web/src/server/modules/transactions/transaction.repository.ts` uses `updateMany({ where: { id, status: 'PENDING' } })` and treats `count === 0` as a `CONFLICT`. `web/tests/unit/wallet-approve-concurrency.test.ts` covers the concurrent-approval race explicitly (3 cases: atomic claim, second-approval CONFLICT, status-already-transitioned REJECT). | **Stale** — CAS is the Prisma equivalent |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
