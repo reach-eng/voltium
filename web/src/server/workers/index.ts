@@ -30,6 +30,14 @@ import { deviceComplianceJob } from './jobs/device-compliance.job';
 import { referralRewardJob } from './jobs/referral-reward.job';
 import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
+// NET-005 (audit batch 20, 2026-09-02): KYC APPROVED -> EXPIRED
+// transition (declared in kyc-state-machine.ts:23) now has a
+// scheduled worker. Sweeps KycProfile rows where
+// status=APPROVED and expiresAt < now, atomically transitions
+// them to EXPIRED, and writes a KYC_EXPIRED audit log row
+// (GDPR Art. 30 record). 365-day window matches the AuditLog
+// retention for kyc.* actions.
+import { kycExpiryJob } from './jobs/kyc-expiry.job';
 import { notificationsCleanupJob } from './jobs/notifications-cleanup.job';
 // PR-7 (2026-08-06 fix-plan; 1st audit P0-1): hard-anonymizes riders whose
 // soft-deletion is older than 7 days (GDPR/DPDP §6 data minimization). The
@@ -323,6 +331,21 @@ const SCHEDULED_TASKS: Array<{
     intervalMs: 60_000, // checked every minute; idempotency key guards execution
     processor: async () => {
       await telemetryCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    // NET-005 (audit batch 20, 2026-09-02): KYC APPROVED -> EXPIRED.
+    // Checked every minute; the job's IST-date idempotency key
+    // makes it fire-once-per-day. The worker's where-clause
+    // filters on status=APPROVED AND expiresAt < now, so the
+    // first sweep after this commit transitions all rows that
+    // were APPROVED before the migration ran (the migration
+    // backfilled them with expiresAt = now + 365d, so they
+    // will not be eligible for ~365 days).
+    name: 'kyc-expiry',
+    intervalMs: 60_000,
+    processor: async () => {
+      await kycExpiryJob.process({ id: 'scheduled' });
     },
   },
   {

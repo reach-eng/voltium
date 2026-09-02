@@ -410,6 +410,12 @@ model KycProfile {
   accountNumber   String?
   ifscCode        String?
   rejectionReason String?
+  // NET-005 (audit batch 20, 2026-09-02): expiresAt is set on approval
+  // (kyc.repository.ts approve path) and swept daily by
+  // kyc-expiry.job.ts. APPROVED rows with expiresAt < now() transition
+  // to EXPIRED. The 365-day window matches AuditLog retention for
+  // kyc.* actions (web/src/lib/audit-log.ts:4-10).
+  expiresAt       DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   editableFields  String[]
@@ -419,6 +425,7 @@ model KycProfile {
   @@index([riderId])
   @@index([status, riderId])
   @@index([updatedAt])
+  @@index([status, expiresAt])
   @@map("kyc_profiles")
 }
 

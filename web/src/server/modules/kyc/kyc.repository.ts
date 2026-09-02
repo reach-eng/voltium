@@ -171,7 +171,18 @@ export const kycRepository = {
         // rider could re-submit their name / DOB / Aadhaar number
         // after approval. Lock everything on approval so a future
         // re-submit requires an admin REJECT first.
-        data: { status: 'APPROVED', editableFields: [] },
+        //
+        // NET-005 (audit batch 20, 2026-09-02): also set expiresAt
+        // so the kyc-expiry.job.ts worker can later transition this
+        // row from APPROVED to EXPIRED when the 365-day window
+        // passes. The window matches the AuditLog retention for
+        // kyc.* actions (web/src/lib/audit-log.ts:4-10) so the
+        // expiry horizon and the audit trail horizon are aligned.
+        data: {
+          status: 'APPROVED',
+          editableFields: [],
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        },
       });
       await tx.rider.update({
         where: { id: riderDbId },
