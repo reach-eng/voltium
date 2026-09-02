@@ -351,8 +351,14 @@ jobs:
     name: Flutter Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      # SHA-pinned to the same commit the rest of this file uses for
+      # actions/checkout (line 33) and the same commit flutter-ci-cd.yml
+      # line 289 uses for subosito/flutter-action. Pinning the SHAs
+      # prevents a tag-republish attack from silently swapping the
+      # action body. Dependabot (.github/dependabot.yml) will surface
+      # upstream tag updates as PRs so the SHAs can be rotated.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
       - run: cd flutter && flutter pub get
       - name: Run i18n localization tests
         run: cd flutter && flutter test test/core/i18n_test.dart
