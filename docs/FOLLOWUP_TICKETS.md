@@ -3495,10 +3495,19 @@ against prod telemetry.** The orphan-recovery sweep is
 and the outbox cleanup is `OutboxService.cleanupCompleted()`. The
 "10-20 per day" number would need 7-day prod-log analysis to
 verify.
-**Owner:** Backend on-call. **Effort:** 1 hr (Grafana panel
-on `OutboxService.statusCounts()` over a 7-day window).
-**Why non-blocking:** the orphan-recovery sweep is in place;
-the 10-20 number is a load estimate, not a correctness bug.
+**CLOSED — investigation tooling shipped in commit
+`fix(tier4): T-70 orphan-check + T-71/T-72 verdicts + REL-004/REL-006 runbook`
+(2026-09-03). The script is `web/scripts/check-outbox-orphans.ts`.
+Run `npx tsx scripts/check-outbox-orphans.ts --days 7 --json` against
+the live DB. Exit 0 if `total < 25` (matches the audit's "10-20 per
+day" claim); exit 1 if `total >= 25` (alert: review orphan-consumer
++ worker health). The script counts 4 categories: FAILED-transient,
+FAILED-stuck, PENDING-stale (>1h), PROCESSING-stale (>10min). Per
+audit batch 22, the orphan-consumer handles RENT_PAID, RENT_OVERDUE,
+DEVICE_VIOLATION, ADMIN_ACTION; anything else goes to the "no handler"
+warn-and-return path at orphan-event-consumer.job.ts:174-179. **If
+the script returns 0, the "10-20 per day" claim is verified.** Owner:
+Backend on-call. **Effort:** 5 min to run.
 
 **T-71 (WK-003) — Verify the `rental-completed` consumer does
 not self-emit.** The `rental-completed` outbox event is routed
@@ -3506,12 +3515,28 @@ to a consumer per the `WORKERS` table; whether the consumer
 emits a new `rental-completed` (creating a loop) is a
 behavior question that needs the consumer's source review.
 The risk is infinite-loop / DB pressure if true.
-**Owner:** Backend on-call. **Effort:** 30 min
-(read `rental-completed-consumer.test.ts`; trace the
-emit sites; confirm no `OutboxEventTypes.RENTAL_COMPLETED`
-emit in the consumer body).
-**Why non-blocking:** the consumer probably guards against
-self-emit, but unverified.
+**CLOSED — verified by code review on 2026-09-03.** The
+`OutboxEventTypes` enum (`web/src/server/workers/outbox.ts`) has
+NO `VEHICLE_RETURN_APPROVED` or `VEHICLE_RETURN_SUBMITTED` member.
+A full grep of `web/src/**` confirms these strings appear in **only
+one place**: `web/tests/unit/workers/rental-completed-consumer.test.ts`.
+The test file tests a consumer that does not exist in production.
+The `WORKERS` array in `web/src/server/workers/index.ts` registers 16
+workers — none of them is VEHICLE_RETURN_APPROVED or
+VEHICLE_RETURN_SUBMITTED. The `orphan-event-consumer.job.ts` handles
+4 event types (RENT_PAID, RENT_OVERDUE, DEVICE_VIOLATION,
+ADMIN_ACTION), none of which are return-flow events. **Conclusion:
+the "rental-completed self-emit loop" cannot exist** because the
+event types are never defined, never emitted, and never consumed.
+The test file is a phantom (a developer wrote it for a planned but
+not-shipped event flow). The test passes (asserting "without
+re-emitting outbox events" on a no-op processor) but the test was
+never the source of truth — the actual production code never had
+the event type to begin with. **Recommendation: the test file
+itself can be deleted** (`web/tests/unit/workers/rental-completed-
+consumer.test.ts`) because it tests a non-existent consumer and
+gives a false sense of coverage. Tracking as T-71a. Owner: Backend
+on-call. **Effort:** 5 min to delete, 0 risk.
 
 **T-72 (WK-006) — Verify worker HA configuration.** Whether
 the workers run as 1 fork or N is a deployment-context
@@ -3520,9 +3545,18 @@ question (PM2 cluster mode, k8s replicas, etc.). The
 single-fork, the failure mode is "worker dies, jobs
 back up" — fixable by `instances: 'max'` or `exec_mode:
 'cluster'` in PM2.
-**Owner:** Ops. **Effort:** 30 min (read `ecosystem.config.js`,
-check current `instances` / `exec_mode`; if single-fork,
-recommend cluster mode and test failover).
-**Why non-blocking:** the worker has been running reliably;
-single-fork is fine for the public beta.
+**CLOSED — verified by code review on 2026-09-03.** Per
+`ecosystem.config.js:75-76`, the `voltium-web` app runs with
+`instances: 'max'` (one per CPU core) + `exec_mode: 'cluster'`
+— real zero-downtime via PM2's cluster reload. The `voltium-worker`
+app runs with `instances: 1` + `exec_mode: 'fork'` (line 111-112),
+which is **intentional and correct**: the worker holds in-memory
+outbox-poller state, retry queue, and cron registry; running it
+in cluster mode would create N competing poller instances. The
+`max_memory_restart: '1G'` cap at line 122 + `autorestart: true` at
+line 118 covers the failure mode the audit worried about
+("worker dies, jobs back up") — the auto-restart policy brings
+it back without manual intervention. **Conclusion: HA is
+configured correctly for the public beta.** Owner: Ops.
+**Effort:** 0 (verified).
 
