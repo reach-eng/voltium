@@ -74,3 +74,88 @@ The follow-up cleanup PR for the rider app (`chore/dead-code-removal-2026-09-02`
 | **Total** | | **16** | **−1,067 lines** |
 
 All commits verified: `flutter analyze` clean across `lib/` and `test/`; 9/9 + 21/21 tests pass across the 5 touched test files. No production API surface change. No new dependencies.
+
+---
+
+# Audit Batch 4 (2026-09-02, web side) — 4 of 5 stale
+
+A second audit batch followed on 2026-09-02, this time targeting the web admin code. Of 5 items, **4 were stale** (already fixed by recent PRs, with the fix documented in inline code comments the audit didn't read), and **1 was a real bug** that shipped as commit `20a4c2ea`.
+
+## TL;DR
+
+| # | Audit claim | Reality on 2026-09-02 | Action |
+| - | ----------- | --------------------- | ------ |
+| 1 | Maintenance mode placebo (no middleware enforces) | Fully enforced. `middleware.ts:97-117` reads `getMaintenanceState()` and returns 503 with `code: 'MAINTENANCE_MODE'` on every `/api/rider/*` and `/api/auth/*` (except the status endpoint). Admin cookie bypasses. Caching moved to a shared module by PR-3 (2026-08-06). | **Stale** — close |
+| 2 | DeductWalletModal ₹5 not ₹500 (`TransactionDialogs.tsx:79-83`) | Same code as the previous batch's "DeductWalletModal" item. The current code at line 87 reads `(confirmAction?.tx.amount || 0)` — the inline comment (80-86) explicitly documents the prior `/100` bug and cites PR-6 (FINANCE P0-5) as the fix. | **Already fixed** — close |
+| 3 | KYC PII plain-text in admin detail sheet | `KycDetailDialog.tsx:31-36` defines `maskString` (default `••••••••<last4>`); "Reveal PII" toggle at 232-241; Aadhaar / PAN / Account / IFSC all masked at lines 110, 118, 255, 263. Plain-text fields (name, address) are not PII in the masking sense. | **Not a bug** — close |
+| 4 | Payment gateway plain-text credentials | `PaymentGatewayEditDialog.tsx:39-47` documents the prior vulnerability; current code at line 54, 56 returns `keySecret: ''` / `webhookSecret: ''` (never pre-populated); `buildGatewayUpdateFields` (62-81) is change-only. Both secret inputs are `type="password"` (217, 238). Cites PR-VER-2026-08-07 (PAYMENT_GATEWAY P0-4). | **Already fixed** — close |
+| 5 | Admin announcement bypasses FCM (writes direct to Notification) | Confirmed real. `announcement-broadcast.job.ts:114-122` only ever called `db.notification.createMany` — no FCM. The `channel` field on `Announcement` distinguished PUSH vs INFO, the validator accepted both, the schema supported both, but the worker honored neither — a PUSH announcement was effectively a no-op for offline riders. | **Real** — fixed in commit `20a4c2ea` |
+
+## Per-item investigation details
+
+### Item 1 — Maintenance mode placebo ❌ Stale
+
+- The audit's named file is `lib/maintenance.ts`. The actual file is `lib/maintenance-cache.ts` (the audit's path is wrong; the file moved during the PR-3 refactor).
+- `middleware.ts:85-87` imports `getMaintenanceState` from the shared cache module.
+- `middleware.ts:95-117` runs the gate on every `/api/rider/*` and `/api/auth/*` request (except the maintenance-status endpoint), short-circuits admins via `ADMIN_SESSION_COOKIE_NAME` cookie check, and returns 503 with `code: 'MAINTENANCE_MODE'` when enabled.
+- The 5-second cache is invalidated explicitly by the admin PUT route via `invalidateMaintenanceCache()` (`maintenance-cache.ts:60-63`).
+
+### Item 2 — DeductWalletModal ₹5 not ₹500 ❌ Already fixed (re-raised)
+
+- Same code as the previous batch. The inline comment at `TransactionDialogs.tsx:80-86` is the **proof of fix**:
+  > PR-6 (FINANCE P0-5): tx.amount is in paise; walletCreditAmount is in rupees. The backend multiplies rupees by 100 when applying the credit, so we must NOT pre-divide. Previously this divided by 100, which silently 100x'd the under-credit for a security-deposit review (e.g. a ₹2000 deposit was prefilled as ₹20 rupees, then sent as ₹20 rupees → server applied ₹20 paise = ₹0.20).
+- The audit kept repeating this claim across two batches without re-reading the file. The current code is `setWalletCreditAmount(confirmAction?.tx.amount || 0)` at line 87 — no division.
+
+### Item 3 — KYC PII plain-text ❌ Not a bug
+
+- `KycDetailDialog.tsx:27` has a `useState<boolean>(false)` for `showPii`.
+- The `maskString` helper at lines 31-36:
+  ```
+  if (showPii) return val;
+  if (val.length <= 4) return '••••';
+  return `••••••••${val.slice(-4)}`;
+  ```
+- Aadhaar, PAN, Account Number, and IFSC are all rendered via `maskString` (lines 110, 118, 255, 263).
+- "Reveal PII" toggle (lines 232-241) flips the state; the only way the unmasked value reaches the DOM is via an explicit admin click.
+- Plain-text fields (`fullName`, `fatherName`, `motherName`, `dob`, `currentAddress`, guarantor name/phone/address) are not the "PII" the audit likely meant.
+
+### Item 4 — Payment gateway plain-text credentials ❌ Already fixed
+
+- `PaymentGatewayEditDialog.tsx:39-47` (the docstring) explicitly documents the prior vulnerability and the fix:
+  > PR-VER-2026-08-07 (PAYMENT_GATEWAY P0-4): change-only credential semantics. The API returns stored credentials decrypted, so the form must NEVER pre-populate them — echoing them back into the inputs re-exposes the plaintext secret. Both secret fields start blank and are only included in the update payload when the admin types a new value...
+- `gatewayFormDefaults` returns `keySecret: ''` and `webhookSecret: ''` (lines 54, 56) — "never pre-populated".
+- `buildGatewayUpdateFields` (62-81) is change-only: `if (form.keySecret.trim().length > 0) fields.keySecret = form.keySecret;` — same for webhook.
+- Both inputs are `type="password"` (lines 217, 238) with `autoComplete="new-password"` on the webhook secret (242).
+- Form clears the credential state on close (lines 149-150).
+
+### Item 5 — Admin announcement bypasses FCM ✅ Real, fixed
+
+- `announcement-broadcast.job.ts:114-122` (pre-fix) only ever called `db.notification.createMany`. No FCM call.
+- The `Announcement.channel` field had two values: `PUSH` and `INFO`. The validator (`createAnnouncementSchema`) accepted both. The admin UI let the operator pick a channel. But the worker honored neither — `PUSH` was effectively a no-op for offline riders.
+- **Fix shipped in commit `20a4c2ea`**: the broadcast worker now branches on `channel`. PUSH fires `fcmService.sendPushNotification` per rider with a token, INFO stays in-app only. The recipient query now selects `fcmToken` alongside `id`. Best-effort + non-blocking (mirrors the pattern at `notification.use-cases.ts:144`).
+- **Verification**: `npx vitest --run tests/unit/announcements-async-broadcast.test.ts` — 8/8 tests pass with the change.
+
+## Updated audit accuracy trend
+
+| Batch | Items | Stale | Already fixed | Not a bug | Real (shipped) |
+| ----- | ----- | ----- | ------------- | --------- | -------------- |
+| 1 (2026-09-02, Flutter dead code) | 5 | 3 | 0 | 0 | 2 |
+| 2 (2026-09-02, Flutter stale constants) | 6 | 0 | 3 | 1 | 2 |
+| 3 (2026-09-02, Flutter misc bugs) | 5 | 5 | 0 | 0 | 0 |
+| 4 (2026-09-02, web admin) | 5 | 4 | 0 | 0 | 1 |
+| **Total** | **21** | **12 (57%)** | **3 (14%)** | **1 (5%)** | **5 (24%)** |
+
+The dominant failure mode across all 4 batches: the audit **re-states claims without reading inline PR-referencing comments** that document the prior fix. A simple diagnostic before flagging a "bug" would be:
+
+```bash
+grep -rn "PR-[0-9]\+\|FIX-\|previously\|already fixed\|was a" web/src/ flutter/lib/ 2>/dev/null
+```
+
+If the named file/class/line has a `previously this ...` or `PR-X: ...` comment within ~10 lines, the audit should re-verify before claiming a bug exists.
+
+## What batch 4 actually shipped
+
+| Commit | Subject | Files changed | Net lines |
+| ------ | ------- | ------------- | --------- |
+| `20a4c2ea` | fix(announcements): fire FCM push for PUSH channel announcements | 1 | +42 |
+| (doc) | this batch-4 section added to docs/DEAD_CODE_AUDIT_RECONCILIATION.md | 1 | +0 (append) |
