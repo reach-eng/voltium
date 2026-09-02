@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 15 consecutive
-audit batches (2026-09-02) where 57 of 84 items (68%) were stale,
+issues in the Voltium repo. The lesson comes from 16 consecutive
+audit batches (2026-09-02) where 60 of 88 items (68%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 15-batch accuracy record (2026-09-02)
+## 1. The 16-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -35,7 +35,8 @@ batches. If you generate audits, run them before you file an item.
 | 14 | test coverage (TEST-016..023) | 8 (2 deferred) | 4 | 1 | 2 | 1 (TEST-021) |
 | 15 | DPDP compliance (CMP-001..009) | 9 (2 deferred) | 4 | 0 | 0 | 3 (CMP-004 code + CMP-005 doc + CMP-006 doc); CMP-007/009 deferred |
 | 16 | telemetry + pubspec (CMP-011..014) | 4 | 4 | 0 | 0 | 0 |
-| | **Total** | **91** | **54 (59%)** | **7 (8%)** | **4 (4%)** | **18 (20%)** |
+| 17 | payment security + SLA (CMP-015..018) | 4 | 3 | 0 | 0 | 1 (CMP-018 SLA doc) |
+| | **Total** | **95** | **57 (60%)** | **7 (7%)** | **4 (4%)** | **19 (20%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -259,7 +260,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-16. Future audit passes can use this
+stale claim in batches 8-17. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -341,6 +342,15 @@ prior batch results before re-filing a "no alerter" claim.
 | CMP-012 | `flutter_background_service` version mismatch (5.x vs 6.x) | `flutter_background_service` is **not in `flutter/pubspec.yaml`** at all (full pubspec verified: 53 lines, no entry). Package is not a dependency. | **Stale** — package not used |
 | CMP-013 | 4 overlapping telemetry systems (PostHog / OTel / Firebase / homegrown) | The 3 services (`analytics_service.dart`, `performance_service.dart`, `monitoring_service.dart`) are a **layered architecture around a single PostHog backend**, not 4 separate systems. The layering is documented in `monitoring_service.dart:2, 16, 26, 28` (PR-11, 2026-08-21): "Flutter code MUST NOT import `package:posthog_flutter/...`" — all PostHog access is wrapped in `PostHogService` and routed through `MonitoringService`. There is no OTel, no Firebase Analytics, no Sentry, no Crashlytics in the dependencies or services. | **Stale** — layered, not overlapping (3 layers, 1 backend) |
 | CMP-014 | `opentelemetry_dart 0.0.2` pre-release pinned in production | `opentelemetry_dart` is **not in `flutter/pubspec.yaml`** at all (full pubspec verified: 53 lines, no entry). Package is not a dependency. | **Stale** — package not used |
+
+### Batch 17 (CMP-015..018 — payment security + reconciliation SLA)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| CMP-015 | Payment gateway credentials plain text (PCI-DSS) | `web/src/lib/credentials.ts:5-26` — **PR-8 (2026-08-06 fix-plan, 7th audit P0) encrypted `keySecret` + `webhookSecret` at rest** using `encryptCredential()` (AES-256-GCM, key-versioned). The dialog form is also write-only (CMP-002 / batch 15). Audit missed BOTH layers. | **Stale** — encrypted at rest (PR-8) + write-only form (CMP-002) |
+| CMP-016 | Webhook signature verification skipped in dev (fail-open) | The audit's cited file `routes/payment/webhooks.ts` **does not exist** in the current tree. A full enumeration of `web/src/app/api/**/*.ts` (135 route files) shows no `/api/payment/webhooks/*` route. Payment-gateway routes are admin-side only (POST/PUT/GET); no inbound webhook handler exists. | **Stale** — file does not exist |
+| CMP-017 | Idempotency key not enforced on all payment webhooks | Same as CMP-016 — there is no webhook handler to add an idempotency key to. | **Stale** — file does not exist |
+| CMP-018 | Payment reconciliation job has no SLA documentation | **Real (doc-only)** — `wallet-reconciliation.job.ts` has no SLA constant. The only mention in runbooks is the 15-minute runtime estimate at `RUNBOOK.md:163` (informational, not a SLO). Fixed in `09f1d786` — added §5 "Wallet Reconciliation SLA" to `RUNBOOK_INCIDENT_RESPONSE.md` with 5 SLO metrics (24h cadence, drift detection threshold, 4h resolution window, 15-min runtime, 0 false-negative rate), 4-step breach response, and "why these numbers" rationale. | **Real (doc-only)** — fixed |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
