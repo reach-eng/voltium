@@ -91,9 +91,16 @@ mkdir D:\VoltiumServer\logs
 
 ## 7. Start with PM2
 
+Voltium uses [ecosystem.config.js](file:///e:/voltium/ecosystem.config.js) as
+the PM2 entry point — the same config used by `scripts/bootstrap.sh` (the
+laptop one-command setup) and the production deploy scripts. The prior
+this-runbook-pointed-at `.zscripts/start.sh` reference was a stale
+typo path; that file does not exist on this branch.
+
 ```powershell
 npm install -g pm2
-pm2 start .zscripts/start.sh --name voltium
+cd web
+pm2 start ..\ecosystem.config.js
 pm2 save
 pm2 startup
 ```
