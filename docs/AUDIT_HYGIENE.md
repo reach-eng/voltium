@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 22 consecutive
-audit batches (2026-09-02) where 100 of 143 items (70%) were stale,
+issues in the Voltium repo. The lesson comes from 23 consecutive
+audit batches (2026-09-02) where 108 of 152 items (71%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 22-batch accuracy record (2026-09-02)
+## 1. The 23-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -42,7 +42,8 @@ batches. If you generate audits, run them before you file an item.
 | 21 | security re-validation (F-006..DB-002) | 10 | 9 | 0 | 1 | 0 |
 | 22 | data + worker + safety (DB-003..FLT-DECIMAL) | 12 (3 unverified) | 9 | 0 | 0 | 0 |
 | 23 | infra + safety re-validation (ADM-MNT..INF-005) | 11 (2 re-raised unverifiable) | 8 | 0 | 1 | 0 |
-| | **Total** | **153** | **96 (63%)** | **7 (5%)** | **6 (4%)** | **25 (16%)** |
+| 24 | deploy + release re-validation (INF-006..REL-025) | 9 (2 unverifiable) | 6 | 0 | 0 | 0 |
+| | **Total** | **162** | **102 (63%)** | **7 (4%)** | **6 (4%)** | **25 (15%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -266,7 +267,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-23. Future audit passes can use this
+stale claim in batches 8-24. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -456,6 +457,20 @@ always the prior fix.
 | INF-001 | check-migration-safety.sh is a no-op | `web/tests/unit/check-migration-safety.test.ts` (3 cases, all pass). Same as TEST-011 (batch 13). | **Stale (re-raised, already fixed)** |
 | INF-002 | check-secret-rotation.sh is a fake check | `scripts/check-secret-rotation.ts` (PR-94a, INF-CI/CD-3) is a real TS implementation that calls `checkSecretRotation()` and exits 1 on any stale key. `scripts/check-secret-rotation.sh` (PR-139, INF-CI/CD-4) is a thin shell wrapper that exec's the TS file. The CI step `.github/workflows/ci-cd.yml:162` runs the .sh which runs the .ts — both real, both wired. | **Stale** — real implementation |
 | INF-005 | CI coverage-gap job has `continue-on-error: true` | `.github/workflows/ci-cd.yml:307-308` "Check API coverage gap" step has **no** `continue-on-error: true`. It runs `npm run test:coverage-gap` and the workflow fails on non-zero exit. The 85% line gate is the separate `test:coverage:merge` step at lines 310-313 with `MIN_COVERAGE: '85.0'`. | **Stale** — gate is enforced |
+
+### Batch 24 (INF-006..REL-025 — deploy + release re-validation)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| INF-006 | PM2 `kill_timeout` / `listen_timeout` too short | `ecosystem.config.js:92, 95, 127` — `kill_timeout: 30000` ("Bumped from 10s — graceful shutdown of in-flight requests"), `listen_timeout: 60000` ("Bumped from 30s — Next.js cold start"), `kill_signal: 'SIGINT'`, `kill_retry_time: 5000`. All 5 timeouts were bumped from the too-short defaults. Inline comments document the rationale at every line. | **Stale** — all 5 timeouts bumped |
+| INF-007 | `deploy-prod.sh` rollback uses fragile `git revert HEAD` | `scripts/deploy-prod.sh:22-24, 85, 97` — rollback uses `git checkout "$PREVIOUS_TAG"` based on `git tag --sort=-creatordate \| grep -E "^deploy-${ENV_NAME}-" \| head -2 \| tail -1`. Tag-based rollback is the recommended pattern. | **Stale** — tag-based rollback |
+| INF-008 | `deploy-staging` job runs on `ubuntu-latest` (no PM2 state) | `.github/workflows/ci-cd.yml:339-348` — the `deploy-staging` job is **commented out**. The block explicitly documents: "This job previously ran on ubuntu-latest (fresh VM each run) which meant PM2 had no persistent state and the deploy was a no-op. Staging deploys are run manually via `./scripts/deploy-staging.sh`". The job that runs on `ubuntu-latest` is `flutter-test` (line 352), not deploy. | **Stale** — job disabled, manual deploy via `scripts/deploy-staging.sh` |
+| INF-009 | PM2 single-instance "zero downtime" is not zero-downtime | `ecosystem.config.js:75-76` — `instances: 'max'` (one per CPU core) + `exec_mode: 'cluster'`. Real zero-downtime via PM2's cluster reload. The `voltium-web` app runs in cluster mode with N=max instances; the `voltium-worker` is single-instance (intentional — outbox scheduler state). | **Stale** — cluster mode in place |
+| REL-004 | Public beta entry gates not verified | Unverifiable from code. Needs the beta laptop + manual smoke-test pass. | **Unverified** — out of scope (per audit pre-verification) |
+| REL-006 | Public beta exit criteria: 6 manual criteria | Unverifiable from code. Needs the beta laptop + ops + business sign-off. | **Unverified** — out of scope (per audit pre-verification) |
+| REL-023 | DeductWalletModal decimal bug | `TransactionDialogs.tsx:80-87` PR-6 (FINANCE P0-5) explicit fix: "tx.amount is in paise; walletCreditAmount is in rupees. The backend multiplies rupees by 100 when [saving]". `wallet-adjust/route.ts:25-27` confirms: `MAX_DEBIT_PAISE = env.MAX_ADMIN_DEBIT_INR * 100`. Same as FLT-DECIMAL-001 (batch 22) and CMP-001 (batch 15). | **Stale (re-raised)** |
+| REL-024 | KYC PII plain-text | `KycDetailDialog.tsx:27, 31` — `showPii` reveal toggle + `maskString()`. Same as SEC-003 (batch 21) and CMP-001 (batches 15, 23). | **Stale (re-raised)** |
+| REL-025 | Payment gateway plain-text credentials | `web/src/lib/credentials.ts:5-26` AES-256-GCM at rest (PR-8). `PaymentGatewayEditDialog.tsx:43-45, 110-114` write-only form. Same as SEC-004 (batch 21) and CMP-002 (batch 15) and CMP-015 (batches 17, 23). | **Stale (re-raised)** |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
