@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 17 consecutive
-audit batches (2026-09-02) where 62 of 92 items (67%) were stale,
+issues in the Voltium repo. The lesson comes from 18 consecutive
+audit batches (2026-09-02) where 67 of 101 items (66%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 17-batch accuracy record (2026-09-02)
+## 1. The 18-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -37,7 +37,8 @@ batches. If you generate audits, run them before you file an item.
 | 16 | telemetry + pubspec (CMP-011..014) | 4 | 4 | 0 | 0 | 0 |
 | 17 | payment security + SLA (CMP-015..018) | 4 | 3 | 0 | 0 | 1 (CMP-018 SLA doc) |
 | 18 | a11y + i18n + repo hygiene (CMP-019..025) | 7 (4 deferred) | 2 | 0 | 0 | 1 (CMP-025 git rm) |
-| | **Total** | **102** | **59 (58%)** | **7 (7%)** | **4 (4%)** | **20 (20%)** |
+| 19 | ADR compliance (ADR-V001..V004) | 9 (2 deferred) | 5 | 0 | 0 | 2 (ADR-V001-3 + ADR-V004-2) |
+| | **Total** | **111** | **64 (58%)** | **7 (6%)** | **4 (4%)** | **22 (20%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -261,7 +262,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-18. Future audit passes can use this
+stale claim in batches 8-19. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -364,6 +365,20 @@ prior batch results before re-filing a "no alerter" claim.
 | CMP-023 | No colour-blindness testing | **Real** — no `protanopia` / `deuteranopia` / `colorBlind` matches anywhere in `flutter/test/` or `flutter/integration_test/`. | **Real, deferred** — multi-day; needs a test image set + render pipeline |
 | CMP-024 | i18n: 320 untranslated Hindi messages | **Real (count close)** — `app_en.arb` has 1328 string keys; `app_hi.arb` has 848. **480 missing, not 320** (audit undercounted). Per the i18n policy (memory PR-89 + 2026-08-21), `app_en.arb` and `app_hi.arb` must carry proper translations — no English fallbacks. If a Hindi translation is uncertain, mark `// hi-review:` for the human translator. No `// hi-review:` markers are present. | **Real, deferred** — translation is human-translator work; doc-only policy add was deferred per user choice |
 | CMP-025 | `flutter/analyze_out.txt` + `flutter/analyze_waiver.txt` in repo root | **Real, ship-it-sized** — both files were git-tracked. `flutter/.gitignore:58-59` has a `*.txt` / `*.json` catch-all but it was added AFTER the analyzer output was committed (the file is from 2026-08-04; the catch-all is later). `git rm` doesn't untrack already-tracked files. Fixed in `ae84c734` — `git rm` both + strengthen the `.gitignore` comment. | **Real** — fixed |
+
+### Batch 19 (ADR-V001..V004 — ADR compliance)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| ADR-V001-1 | Some routes use `pages/` instead of `app/` | A full enumeration of `web/src/**` shows **no `pages/` directory** anywhere. All Next.js routes live under `app/`. | **Stale** — `pages/` dir does not exist |
+| ADR-V001-2 | `force-dynamic` not applied to all admin routes | 18 route files have `force-dynamic` (`grep` count); admin routes that read live data (auth, payments, audit logs, health, metrics) all have it. The audit didn't name which routes are "missing" — the claim is unverifiable as stated. | **Stale (vague)** — 18 already wired, no specifics given |
+| ADR-V001-3 | Next.js version drift (14/15/16 across docs) | `web/package.json:121` pins `^15.5.19`. `docs/README.md:7` claimed "Next.js 16". `README.md` and `PROJECT_OVERVIEW_2026-07-30.md` don't cite a specific version. Fixed in `b1e37349`. | **Real** — fixed (Next 16 → Next 15 in `docs/README.md`) |
+| ADR-V002-1 | Raw SQL queries in some use-cases | 5 `$queryRaw` calls in 3 files: `analytics/analytics.use-cases.ts:16, 134`, `data-management/backup.service.ts:104`, `data-management/data-management.use-cases.ts:280, 443`. Real surface, but not all raw is bad — these are aggregate queries that Prisma's query-builder doesn't express well. The "5 raw calls" presence doesn't violate the ADR (which mandates Prisma over Drizzle, not "no raw SQL ever"). | **Stale** — ADR doesn't forbid raw SQL; aggregate uses are reasonable |
+| ADR-V002-2 | `$queryRaw` used without parameterisation in 2 places | All 5 `$queryRaw` calls use `${...}` template substitutions, which Prisma **does parameterize** (sends as SQL parameters, not string concat). No `Prisma.sql\`...\`` patterns either. | **Stale** — all 5 calls parameterized |
+| ADR-V003-1 | Manual validation instead of Zod in 4 routes | Routes I spot-checked (`admin/announcements`, `admin/jobs`, `admin/rewards`) all use Zod via `validateBody(..., body)` from `@/lib/validators`. 66 `req.json()` references in 47 files (most do validate); 37 Zod import references in 19 files. The audit didn't name which 4 routes — unverifiable as stated. | **Stale (vague)** — routes verified use Zod; no specifics given |
+| ADR-V003-2 | Zod schemas not exported from shared module | `web/src/lib/validators.ts` exports 50+ Zod schemas (`export const sendOtpSchema`, `verifyOtpSchema`, `updateProfileSchema`, `createAnnouncementSchema`, `awardRewardSchema`, etc.). Routes import via `import { validateBody, createAnnouncementSchema } from '@/lib/validators'`. | **Stale** — schemas are exported |
+| ADR-V004-1 | Dual state management (Provider + Riverpod) | **Real, deferred** — `flutter/pubspec.yaml:19, 47` has both `provider: ^6.1.2` and `flutter_riverpod: ^3.3.2`. ADR-0004 says "Flutter" but doesn't mandate one state library. Migrating one to the other is multi-day (50+ Provider call sites, riverpod codegen decisions). | **Real, deferred** — multi-day migration |
+| ADR-V004-2 | Dormant GoRouter coexists with state-machine router | **Real, ship-it-sized** — `flutter/pubspec.yaml` had `go_router: ^14.6.2` but the codebase has **zero** `package:go_router/...` imports (full grep). The app uses a custom `AppRouter` widget at `lib/app/router.dart` wired into `MaterialApp` at `main.dart:279`. Fixed in `b1e37349` — removed the dependency. The audit pointed at `router/app_router.dart` (wrong path — actual is `lib/app/router.dart`). | **Real** — fixed |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
