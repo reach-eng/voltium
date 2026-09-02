@@ -55,6 +55,14 @@ coverage/
 # golden-fix loops leave in this directory (debug.py,
 # find_missing_keys.py, group_failures.py, test_v*.txt,
 # test_pre_commit.txt, etc.).
+#
+# CMP-025 (audit batch 18, 2026-09-02): the two files
+# `analyze_out.txt` (87K flutter analyze log) and `analyze_waiver.txt`
+# (waived-rule list) were committed to the repo root in earlier
+# PRs before this catch-all existed. They have been `git rm`'d in
+# the CMP-025 commit. New analyzer output should be written to
+# `build/analyzer/` or piped to a temp file OUTSIDE the repo —
+# see the AUDIT_HYGIENE.md batch 18 receipt for the full rationale.
 *.txt
 *.json
 debug.py
