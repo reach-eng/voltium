@@ -7,6 +7,11 @@
  *   3. DEBIT above LARGE_DEBIT_THRESHOLD_INR with a valid coAdminId
  *      succeeds.
  *
+ * AUDIT-RECON 2026-09-02 batch 5 P0-1: also covers the per-day
+ * aggregate DEBIT cap (MAX_ADMIN_DEBIT_PER_DAY_INR). A determined
+ * admin could otherwise issue unlimited back-to-back ₹50k debits
+ * as long as each is under the per-call cap.
+ *
  * Other surface area is covered in `wallet-audit-fixes.test.ts`; this
  * file focuses on the cap + co-admin gate that did not exist before
  * PR-89.
@@ -22,6 +27,7 @@ vi.mock('@/lib/env', () => ({
   env: {
     MAX_ADMIN_DEBIT_INR: 50000,
     LARGE_DEBIT_THRESHOLD_INR: 10000,
+    MAX_ADMIN_DEBIT_PER_DAY_INR: 200000,
   },
 }));
 
@@ -55,6 +61,10 @@ const mockAdmin = {
 
 let createdTxn: any = null;
 let ledgerCalled: any = null;
+// AUDIT-RECON 2026-09-02 batch 5 P0-1: aggregate mock for the per-day
+// cap. Defaults to 0 (no prior debits today); per-test override lets
+// us simulate a near-cap admin.
+let todayDebitPaise: number = 0;
 
 vi.mock('@/lib/db', () => ({
   db: {
@@ -63,6 +73,11 @@ vi.mock('@/lib/db', () => ({
     },
     admin: {
       findUnique: vi.fn(),
+    },
+    transaction: {
+      aggregate: vi.fn(async () => ({
+        _sum: { amountInPaise: todayDebitPaise },
+      })),
     },
     $transaction: vi.fn(async (cb: any) => {
       const fakeTx = {
@@ -127,6 +142,7 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
     vi.clearAllMocks();
     createdTxn = null;
     ledgerCalled = null;
+    todayDebitPaise = 0;
     (db.rider.findUnique as any).mockResolvedValue(mockRider);
     (db.admin.findUnique as any).mockResolvedValue(mockAdmin);
   });
@@ -256,5 +272,46 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
     });
     expect(res.status).toBe(200);
     expect(ledgerCalled?.type).toBe('DEBIT');
+  });
+
+  // AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap.
+  // Default per-day cap is ₹2,00,000 (= 20,000,000 paise). Each test
+  // sets todayDebitPaise directly to simulate the admin's prior
+  // activity without needing a real DB.
+  it('rejects DEBIT when today + this request exceed the per-day cap', async () => {
+    todayDebitPaise = 19_000_000; // ₹1,90,000 already today
+    const res = await callPost({
+      type: 'DEBIT',
+      amount: 50000, // this request would push to ₹2,40,000 > ₹2,00,000 cap
+      reason: 'A back-to-back debit that would push the admin over the daily ceiling',
+      coAdminId: 'co-admin-2', // even co-approval does not bypass the aggregate cap
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error?.message).toMatch(/Daily admin debit cap exceeded/i);
+    expect((db as any).$transaction).not.toHaveBeenCalled();
+  });
+
+  it('allows a DEBIT that lands exactly at the per-day cap (boundary)', async () => {
+    todayDebitPaise = 19_500_000; // ₹1,95,000 already today
+    const res = await callPost({
+      type: 'DEBIT',
+      amount: 5000, // this request = ₹50,000, total ₹2,00,000 = exactly at cap
+      reason: 'A small debit that lands exactly at the daily ceiling',
+    });
+    expect(res.status).toBe(200);
+    expect(ledgerCalled?.type).toBe('DEBIT');
+  });
+
+  it('does not enforce the per-day cap on CREDIT operations', async () => {
+    todayDebitPaise = 19_900_000; // near the cap, but irrelevant for CREDIT
+    const res = await callPost({
+      type: 'CREDIT',
+      amount: 50000,
+      proofUrl: 'https://example.com/proof.png',
+      reason: 'CREDIT is not subject to the per-day DEBIT cap',
+    });
+    expect(res.status).toBe(200);
+    expect(ledgerCalled?.type).toBe('CREDIT');
   });
 });

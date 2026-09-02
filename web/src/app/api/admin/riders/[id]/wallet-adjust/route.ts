@@ -16,8 +16,15 @@ import { toRupeesResponse } from '@/lib/api-money';
 // approval for debits above the threshold. Defaults:
 //   MAX_ADMIN_DEBIT_INR = 50000
 //   LARGE_DEBIT_THRESHOLD_INR = 10000
+// AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap on a
+// single admin's DEBITs. The per-call cap + co-approval gate stop any
+// single large debit, but a determined admin could still issue
+// unlimited back-to-back ₹50k debits as long as each is under the
+// per-call cap. The aggregate cap (default ₹2,00,000/day) puts a
+// ceiling on cumulative daily drain per admin.
 const MAX_DEBIT_PAISE = env.MAX_ADMIN_DEBIT_INR * 100;
 const LARGE_DEBIT_PAISE = env.LARGE_DEBIT_THRESHOLD_INR * 100;
+const MAX_DEBIT_PER_DAY_PAISE = env.MAX_ADMIN_DEBIT_PER_DAY_INR * 100;
 // PR-89 (API N6): reason minimum length for DEBIT operations.
 const MIN_REASON_LEN = 10;
 // PR-89 (API N6): rider lifecycle states for which a wallet adjustment
@@ -79,9 +86,42 @@ export async function POST(
     // wallet beyond MAX_ADMIN_DEBIT_INR in one request.
     if (type === 'DEBIT' && amountInPaise > MAX_DEBIT_PAISE) {
       return errors.badRequest(
-        `Debit amount ₹${amount} exceeds maximum allowed admin debit limit of ₹${env.MAX_ADMIN_DEBIT_INR}`
+        `Debit amount ₹${amount} exceeds maximum allowed admin debit limit of ₹${env.MAX_ADMIN_DEBIT_INR}`,
       );
     }
+
+    // AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap. Read
+    // the admin's total DEBIT in paise since UTC midnight and reject
+    // if the new request would push them over the daily ceiling. The
+    // cap tracks the ORIGINAL admin (`approvedBy`), so co-approved
+    // debits still count against the original admin's daily budget —
+    // a determined admin cannot bypass the cap by having a co-admin
+    // sign off on every back-to-back call. UTC midnight keeps the
+    // boundary deterministic regardless of server timezone; switch
+    // to IST midnight (+5:30) if the business wants IST-aligned days.
+    if (type === 'DEBIT') {
+      const now = new Date();
+      const todayUtcMidnight = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+      );
+      const todayAggregate = await db.transaction.aggregate({
+        where: {
+          approvedBy: session.adminId,
+          type: 'DEBIT',
+          status: 'APPROVED',
+          createdAt: { gte: todayUtcMidnight },
+        },
+        _sum: { amountInPaise: true },
+      });
+      const todayDebitPaise = todayAggregate._sum.amountInPaise ?? 0;
+      if (todayDebitPaise + amountInPaise > MAX_DEBIT_PER_DAY_PAISE) {
+        return errors.badRequest(
+          `Daily admin debit cap exceeded. Today: ₹${(todayDebitPaise / 100).toFixed(2)} + this request ₹${amount} > max ₹${env.MAX_ADMIN_DEBIT_PER_DAY_INR} per day.`,
+        );
+      }
+    }
+
+    // PR-89 (API N6): for amounts above the threshold, require a
 
     // PR-89 (API N6): for amounts above the threshold, require a
     // second active admin to co-approve. The co-admin id must exist

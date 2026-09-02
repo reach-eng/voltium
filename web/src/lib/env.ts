@@ -118,6 +118,14 @@ export const envSchema = z.object({
   // multiplies by 100 to get paise.
   MAX_ADMIN_DEBIT_INR: z.coerce.number().int().positive().default(50000),
   LARGE_DEBIT_THRESHOLD_INR: z.coerce.number().int().positive().default(10000),
+  // AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap on a
+  // single admin's DEBITs. The per-call cap + co-approval gate stop
+  // any single large debit, but a determined admin can still issue
+  // unlimited back-to-back ₹50k debits as long as each is under the
+  // per-call cap. The aggregate cap puts a ceiling on cumulative
+  // daily drain per admin. Default ₹2,00,000 = 4 max per-call debits
+  // + headroom for the co-approved lane.
+  MAX_ADMIN_DEBIT_PER_DAY_INR: z.coerce.number().int().positive().default(200000),
 }).refine(
   (data) => {
     const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
