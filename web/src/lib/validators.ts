@@ -238,7 +238,13 @@ export const updateVehicleSchema = z.object({
 export const sendNotificationSchema = z.object({
   title: z.string().min(3).max(200),
   message: z.string().min(5).max(1000),
-  type: z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE']).default('INFO'),
+  // AUDIT-RECON 2026-09-02 batch 6 P0-2: the admin Send Notification
+  // dialog (SendNotificationDialog.tsx) offers a 'System' option that
+  // sends type='SYSTEM'. The previous enum rejected it (Zod 422), so
+  // every "System" send failed silently with a 422 toast while the
+  // 5 other types succeeded. The NotificationType type was also
+  // updated to match (notification.types.ts).
+  type: z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SYSTEM']).default('INFO'),
   riderIds: z.array(z.string()).optional(),
   // P1-13/P2-11 (2026-08-05 ops audit): the legacy singular `riderId` was
   // read straight off the raw body with no validation — a non-string value

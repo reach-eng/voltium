@@ -4,7 +4,7 @@
  * Push notification, in-app notification, and device token types.
  */
 
-export type NotificationType = 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE';
+export type NotificationType = 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SYSTEM';
 
 export interface Notification {
   id: string;
