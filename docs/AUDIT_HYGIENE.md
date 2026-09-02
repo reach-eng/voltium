@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 16 consecutive
-audit batches (2026-09-02) where 60 of 88 items (68%) were stale,
+issues in the Voltium repo. The lesson comes from 17 consecutive
+audit batches (2026-09-02) where 62 of 92 items (67%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 16-batch accuracy record (2026-09-02)
+## 1. The 17-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -36,7 +36,8 @@ batches. If you generate audits, run them before you file an item.
 | 15 | DPDP compliance (CMP-001..009) | 9 (2 deferred) | 4 | 0 | 0 | 3 (CMP-004 code + CMP-005 doc + CMP-006 doc); CMP-007/009 deferred |
 | 16 | telemetry + pubspec (CMP-011..014) | 4 | 4 | 0 | 0 | 0 |
 | 17 | payment security + SLA (CMP-015..018) | 4 | 3 | 0 | 0 | 1 (CMP-018 SLA doc) |
-| | **Total** | **95** | **57 (60%)** | **7 (7%)** | **4 (4%)** | **19 (20%)** |
+| 18 | a11y + i18n + repo hygiene (CMP-019..025) | 7 (4 deferred) | 2 | 0 | 0 | 1 (CMP-025 git rm) |
+| | **Total** | **102** | **59 (58%)** | **7 (7%)** | **4 (4%)** | **20 (20%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -260,7 +261,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-17. Future audit passes can use this
+stale claim in batches 8-18. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -351,6 +352,18 @@ prior batch results before re-filing a "no alerter" claim.
 | CMP-016 | Webhook signature verification skipped in dev (fail-open) | The audit's cited file `routes/payment/webhooks.ts` **does not exist** in the current tree. A full enumeration of `web/src/app/api/**/*.ts` (135 route files) shows no `/api/payment/webhooks/*` route. Payment-gateway routes are admin-side only (POST/PUT/GET); no inbound webhook handler exists. | **Stale** — file does not exist |
 | CMP-017 | Idempotency key not enforced on all payment webhooks | Same as CMP-016 — there is no webhook handler to add an idempotency key to. | **Stale** — file does not exist |
 | CMP-018 | Payment reconciliation job has no SLA documentation | **Real (doc-only)** — `wallet-reconciliation.job.ts` has no SLA constant. The only mention in runbooks is the 15-minute runtime estimate at `RUNBOOK.md:163` (informational, not a SLO). Fixed in `09f1d786` — added §5 "Wallet Reconciliation SLA" to `RUNBOOK_INCIDENT_RESPONSE.md` with 5 SLO metrics (24h cadence, drift detection threshold, 4h resolution window, 15-min runtime, 0 false-negative rate), 4-step breach response, and "why these numbers" rationale. | **Real (doc-only)** — fixed |
+
+### Batch 18 (CMP-019..025 — Flutter a11y + i18n + repo hygiene)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| CMP-019 | No visible focus indicators on text fields (WCAG 2.1 SC 1.4.13, 2.4.7) | `flutter/lib/theme/app_theme.dart:557-580` (PR-10, 2026-08-21) — 1px resting border + 2px primary focused border + error/focusedError states. The audit cited `theme/app_theme.dart:277-286` which is the `AppGradients` class (unrelated to focus). | **Stale** — wrong line range, focus indicators present |
+| CMP-020 | Dark mode only overrides 5 of ~30 color tokens | The `darkTheme` (`app_theme.dart:628`) uses `darkColors.*` 23 times; the `colorScheme` at line 645-660 explicitly wires 9 surface tokens (PR-62 / AUDIT_DESIGN_SYSTEM N2). Audit miscounted. | **Stale** — miscount, 23 darkColors references + 9 surface tokens |
+| CMP-021 | No screen reader labels on icon-only buttons | **Real (partial)** — 38 `IconButton` calls across 29 files, only 11 with `tooltip:` and 0 with `semanticLabel:`. The `a11yButton` helper at `lib/utils/accessibility.dart` exists and is tested. Fix is per-call-site, multi-day. | **Real, deferred** — 27/38 IconButtons lack labels; ship a subset in a follow-up |
+| CMP-022 | No dynamic type support (text sizes hardcoded) | **Real** — `lib/theme/app_typography.dart:40-80+` uses hardcoded `fontSize: 40, 32, 28, 24, 20, ...` with no `MediaQuery.textScalerOf` integration. System text-size setting is ignored. Fix requires Material 3 `Typography.material2021()` or per-style wrapping. | **Real, deferred** — multi-day migration |
+| CMP-023 | No colour-blindness testing | **Real** — no `protanopia` / `deuteranopia` / `colorBlind` matches anywhere in `flutter/test/` or `flutter/integration_test/`. | **Real, deferred** — multi-day; needs a test image set + render pipeline |
+| CMP-024 | i18n: 320 untranslated Hindi messages | **Real (count close)** — `app_en.arb` has 1328 string keys; `app_hi.arb` has 848. **480 missing, not 320** (audit undercounted). Per the i18n policy (memory PR-89 + 2026-08-21), `app_en.arb` and `app_hi.arb` must carry proper translations — no English fallbacks. If a Hindi translation is uncertain, mark `// hi-review:` for the human translator. No `// hi-review:` markers are present. | **Real, deferred** — translation is human-translator work; doc-only policy add was deferred per user choice |
+| CMP-025 | `flutter/analyze_out.txt` + `flutter/analyze_waiver.txt` in repo root | **Real, ship-it-sized** — both files were git-tracked. `flutter/.gitignore:58-59` has a `*.txt` / `*.json` catch-all but it was added AFTER the analyzer output was committed (the file is from 2026-08-04; the catch-all is later). `git rm` doesn't untrack already-tracked files. Fixed in `ae84c734` — `git rm` both + strengthen the `.gitignore` comment. | **Real** — fixed |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
