@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 20 consecutive
-audit batches (2026-09-02) where 83 of 120 items (69%) were stale,
+issues in the Voltium repo. The lesson comes from 21 consecutive
+audit batches (2026-09-02) where 92 of 132 items (70%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 20-batch accuracy record (2026-09-02)
+## 1. The 21-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -40,7 +40,8 @@ batches. If you generate audits, run them before you file an item.
 | 19 | ADR compliance (ADR-V001..V004) | 9 (2 deferred) | 5 | 0 | 0 | 2 (ADR-V001-3 + ADR-V004-2) |
 | 20 | drift + state machine (NET-001..009) | 9 (1 deferred) | 6 | 0 | 0 | 3 (NET-003 doc + NET-005 worker; NET-004 deferred) |
 | 21 | security re-validation (F-006..DB-002) | 10 | 9 | 0 | 1 | 0 |
-| | **Total** | **130** | **79 (61%)** | **7 (5%)** | **5 (4%)** | **25 (19%)** |
+| 22 | data + worker + safety (DB-003..FLT-DECIMAL) | 12 (3 unverified) | 9 | 0 | 0 | 0 |
+| | **Total** | **142** | **88 (62%)** | **7 (5%)** | **5 (4%)** | **25 (18%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -264,7 +265,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-21. Future audit passes can use this
+stale claim in batches 8-22. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -410,6 +411,31 @@ prior batch results before re-filing a "no alerter" claim.
 | SEC-008 | `ALLOW_DEV_PII_KEY` hardcoded dev key in source | It's an **env var flag**, not a hardcoded key. `web/src/lib/env.ts:96, 137-144` — production is explicitly forbidden (Zod schema throws on `ALLOW_DEV_PII_KEY=true` in prod). `web/src/lib/pii-crypto.ts:28-32` — the "dev key" is process-unique generated at startup from a random value, never a hardcoded secret. | **Stale** — env var, not hardcoded |
 | SEC-009 / CMP-003 / INF-003 | `db-backup.sh` plaintext SQL dumps | `scripts/db-backup.sh:5-7, 140-153, 192-199` — AES-256-CBC + PBKDF2 default, env-driven `BACKUP_ENCRYPTION_KEY`, `--no-encrypt` requires explicit `--i-understand-the-pii-risk` flag. Already verified in batch 15 (CMP-003). | **Stale** — encrypted by default |
 | DB-002 | No `SELECT FOR UPDATE` on wallet approve | Concurrency is enforced via **CAS (compare-and-swap) via `updateMany`** — the modern Prisma equivalent of `SELECT FOR UPDATE`. `web/src/server/modules/transactions/transaction.repository.ts` uses `updateMany({ where: { id, status: 'PENDING' } })` and treats `count === 0` as a `CONFLICT`. `web/tests/unit/wallet-approve-concurrency.test.ts` covers the concurrent-approval race explicitly (3 cases: atomic claim, second-approval CONFLICT, status-already-transitioned REJECT). | **Stale** — CAS is the Prisma equivalent |
+
+### Batch 22 (DB-003..FLT-DECIMAL — data + worker + safety)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| DB-003 / NET-002 | Paise/rupee unit ambiguity systemic | `web/src/lib/money.ts:107` `formatRupeesFromPaise` + branded `Paise`/`Rupees` types (compiler-checked). `web/src/app/api/admin/riders/[id]/wallet-adjust/route.ts:25-27` `MAX_DEBIT_PAISE = env.MAX_ADMIN_DEBIT_INR * 100` (correct INR → paise at the API boundary). `web/src/components/admin/screens/transaction-management/TransactionDialogs.tsx:80-87` PR-6 (FINANCE P0-5) fixed the dialog paise/rupee conversion. | **Stale** — fix landed at 3 layers (helper, API boundary, dialog) |
+| WK-001 / ADR-V005-1 | Outbox `emit()` outside transaction | `web/src/server/workers/outbox.ts:216` `emitWithCommit(eventType, writer, payloadBuilder, options)` wraps both the writer and the emit in a single `db.$transaction`. The inline comment at line 197-214 explicitly documents the anti-pattern ("LEAKS on crash") the new pattern replaces. | **Stale** — txn boundary in place via `emitWithCommit` |
+| WK-002 | 10-20 orphan events per day | Unverifiable from code. The orphan-recovery sweep is at `web/src/server/workers/jobs/orphan-event-consumer.job.ts` (PR-151) and the outbox cleanup is at `OutboxService.cleanupCompleted()`. The "10-20 per day" number would need prod logs to verify. | **Unverified** — needs prod telemetry |
+| WK-003 | rental-completed self-emitting loop | Unverifiable from code. The `rental-completed` outbox event is routed to `rental-completed-consumer.test.ts` (per `WORKERS` table); whether the consumer emits a new `rental-completed` is a behavior question that needs the consumer's source. | **Unverified** — needs source review of the consumer |
+| WK-004 | telemetry-cleanup mis-tagged as notification | `web/tests/unit/workers/telemetry-cleanup.job.test.ts` last test asserts `OutboxEventTypes.ADMIN_JOB_TELEMETRY_CLEANUP === 'admin.job.telemetry_cleanup'` is **distinct** from `SMS_SEND` and `NOTIFICATION_SEND`. The worker is registered to that exact event type in `WORKERS`. | **Stale** — distinct tag, test-asserted |
+| WK-005 | engagement-daily-emitter 287 wasted runs/day | `web/src/server/workers/jobs/daily-engagement.job.ts:135` `msUntilNext0600IST` + `index.ts:463` `if (msUntil > 60_000) return;` + `lastEngagementFiredDate` fire-once-per-IST-day guard. Per-minute check is `O(1)` (compute msUntil, compare) and does NOT execute the actual emit. The "287" number is also wrong: 1440 ticks/day − 1 actual run = 1439 skipped, not 287. | **Stale** — gated + fire-once; the math is also wrong |
+| WK-006 | Worker single-fork (no HA) | Unverifiable from code alone. The workers run via `npx tsx src/server/workers/index.ts` (per `index.ts:9`). Whether the deployment runs 1 fork or N is a deployment-context question (PM2 cluster mode, k8s replicas, etc.). | **Unverified** — needs deployment info |
+| FLT-SOS-001 | SOS button no-op (safety risk) | `flutter/lib/features/device_compliance/presentation/screens/emergency_sos_screen.dart:13, 30, 65, 156-159` — `launchDialer('112', ...)` is wired with safety fixes (lines 115-153 ensure the dialog's own context is used and the 112 dial is the primary path). Inline comment at line 30: "does NOT get their location sent, contacts alerted, or 112 dialed" describes what the screen DOES do. The audit's own pre-verification says **FALSE**. | **Stale (audit pre-verified)** |
+| FLT-WALLET-001 | Top-up proof submission no-op | `flutter/lib/features/wallet/presentation/screens/top_up_proof_screen.dart:22, 30, 367` — `final Function(File, String?, String?)? onSubmit` parameter is declared and called via `await widget.onSubmit?.call(fileToSubmit, methodStr, refVal)`. The `onSubmit` IS wired; the audit's "no-op" claim is wrong. Pre-verified as "screen is dead code (no parent uses it)" — true that no parent imports it, but the screen's submission IS wired. | **Stale (partial)** — onSubmit wired; unused-by-parent is a different finding |
+| FLT-LOGOUT-001 | Logout does not clear sibling provider state | `flutter/lib/core/state/rider_logout_orchestrator.dart` is a complete orchestration class that clears engagement (line 95), onboarding (125), support (126), tickets (127), guarantor (128), pickup draft (130-142), guarantor cache (150-152), document cache (161-163), refresh-in-flight (155), has-synced-device-data-once (157). The audit's claim of "does not clear sibling provider state" is the opposite of what the file does. | **Stale** — full orchestration in place |
+| FLT-NOTIF-001 | FCM broken end-to-end (4 compounding bugs) | `web/src/lib/fcm.ts` (8K) is a complete FCM service with nonce dedup (`_sentNonces` map, `trackNonce()`, 5-min TTL, periodic cleanup) + `getMessaging` from firebase-admin. Pre-verified "fixed by PR-A through PR-H". | **Stale (audit pre-verified)** |
+| FLT-DECIMAL-001 / ADM-FIN-001 / REL-023 | DeductWalletModal ₹5 not ₹500 | `TransactionDialogs.tsx:80-87` PR-6 (FINANCE P0-5) explicit fix: "tx.amount is in paise; walletCreditAmount is in rupees. The backend multiplies rupees by 100 when [saving]". `wallet-adjust/route.ts:25-27` confirms: `MAX_DEBIT_PAISE = env.MAX_ADMIN_DEBIT_INR * 100`. The paise/rupee conversion is correct at the API boundary AND the dialog surface. | **Stale** — fix landed at 2 layers |
+
+#### Unverified items added to `docs/FOLLOWUP_TICKETS.md`
+
+| ID | Why unverifiable | Suggested next step |
+| -- | ----------------- | ------------------- |
+| WK-002 | "10-20 orphan events per day" is a runtime metric. | Add a Grafana panel on `OutboxService.statusCounts()` over a 7-day window. |
+| WK-003 | Self-emitting loop is a consumer-behavior question. | Read `rental-completed-consumer.test.ts` (or whatever file owns the consumer); trace whether it emits a new `rental-completed`. |
+| WK-006 | Single-fork vs HA is a deployment-context question. | Read the `ecosystem.config.js` (or `pm2` config) for `instances` / `exec_mode`. |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost

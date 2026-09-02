@@ -3481,3 +3481,48 @@ future use.
 review. **Why non-blocking:** product decision on which
 language to add next; current en + hi is the full product
 spec.
+
+---
+
+## Audit batch 22 (2026-09-02) — unverified items
+
+The audit re-raised 3 worker-runtime items that the code itself
+cannot answer; they need prod telemetry or deployment context.
+
+**T-70 (WK-002) — Verify the "10-20 orphan events per day" claim
+against prod telemetry.** The orphan-recovery sweep is
+`web/src/server/workers/jobs/orphan-event-consumer.job.ts` (PR-151)
+and the outbox cleanup is `OutboxService.cleanupCompleted()`. The
+"10-20 per day" number would need 7-day prod-log analysis to
+verify.
+**Owner:** Backend on-call. **Effort:** 1 hr (Grafana panel
+on `OutboxService.statusCounts()` over a 7-day window).
+**Why non-blocking:** the orphan-recovery sweep is in place;
+the 10-20 number is a load estimate, not a correctness bug.
+
+**T-71 (WK-003) — Verify the `rental-completed` consumer does
+not self-emit.** The `rental-completed` outbox event is routed
+to a consumer per the `WORKERS` table; whether the consumer
+emits a new `rental-completed` (creating a loop) is a
+behavior question that needs the consumer's source review.
+The risk is infinite-loop / DB pressure if true.
+**Owner:** Backend on-call. **Effort:** 30 min
+(read `rental-completed-consumer.test.ts`; trace the
+emit sites; confirm no `OutboxEventTypes.RENTAL_COMPLETED`
+emit in the consumer body).
+**Why non-blocking:** the consumer probably guards against
+self-emit, but unverified.
+
+**T-72 (WK-006) — Verify worker HA configuration.** Whether
+the workers run as 1 fork or N is a deployment-context
+question (PM2 cluster mode, k8s replicas, etc.). The
+`ecosystem.config.js` is the canonical place to look. If
+single-fork, the failure mode is "worker dies, jobs
+back up" — fixable by `instances: 'max'` or `exec_mode:
+'cluster'` in PM2.
+**Owner:** Ops. **Effort:** 30 min (read `ecosystem.config.js`,
+check current `instances` / `exec_mode`; if single-fork,
+recommend cluster mode and test failover).
+**Why non-blocking:** the worker has been running reliably;
+single-fork is fine for the public beta.
+
