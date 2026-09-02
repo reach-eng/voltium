@@ -85,7 +85,15 @@ Voltium operates a primary/secondary on-call rotation:
 ### Shift Handoff Procedure
 At shift end:
 1. Verify no unresolved `wallet.reconciliation_mismatch` alerts are pending.
-2. Confirm outbox queue lag is < 50 items.
+2. Confirm the outbox-queue-lag alerter is firing cleanly. The
+   automated alerter (workers/jobs/outbox-queue-lag.job.ts) posts
+   to the configured Slack/Discord webhook every 5 minutes when
+   the unprocessed outbox count (PENDING + PROCESSING) crosses
+   `OUTBOX_QUEUE_LAG_ALERT_THRESHOLD` (default 50) or when any
+   PROCESSING event is older than 5 minutes (a worker crash
+   signal). The alerter replaces the previous manual "confirm
+   queue lag is < 50" step; the shift-end check is to confirm
+   no alerts are in flight, not to manually count rows.
 3. Post shift summary in `#ops-handoff`.
 
 ---

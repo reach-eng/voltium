@@ -126,6 +126,11 @@ export const envSchema = z.object({
   // daily drain per admin. Default ₹2,00,000 = 4 max per-call debits
   // + headroom for the co-approved lane.
   MAX_ADMIN_DEBIT_PER_DAY_INR: z.coerce.number().int().positive().default(200000),
+  // AUDIT-RECON 2026-09-02 batch 7 P0-1: the outbox queue-lag alerter
+  // (see workers/jobs/outbox-queue-lag.job.ts) posts to Slack when the
+  // pending+processing count crosses this threshold. Default 50 —
+  // matches the manual step in RUNBOOK_OPERATOR_DAY1.md:88.
+  OUTBOX_QUEUE_LAG_ALERT_THRESHOLD: z.coerce.number().int().positive().default(50),
 }).refine(
   (data) => {
     const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';

@@ -47,6 +47,12 @@ import { orphanBackupCleanupJob } from './jobs/orphan-backup-cleanup.job';
 // the request transaction into this background job (same pattern as
 // notification-broadcast.job.ts).
 import { announcementBroadcastJob } from './jobs/announcement-broadcast.job';
+// AUDIT-RECON 2026-09-02 batch 7 P0-1: the outbox queue-lag alerter.
+// RUNBOOK_OPERATOR_DAY1.md:88 used to say "confirm outbox queue lag
+// is < 50 items" as a manual shift-handoff step — this job
+// automates the check and posts to Slack when the count crosses
+// OUTBOX_QUEUE_LAG_ALERT_THRESHOLD (default 50). Runs every 5 min.
+import { checkOutboxQueueLag } from './jobs/outbox-queue-lag.job';
 // notifications.job.ts is deprecated (BLOCKER 1.4). Its birthday/payment
 // reminder logic moved to daily-engagement.job.ts; its outbox mapping was
 // the misroute that dropped per-event KYC/topup notifications. The file
@@ -456,6 +462,20 @@ const SCHEDULED_TASKS: Array<{
       ).catch((e: Error) =>
         logger.error('[Scheduler] Failed to emit daily engagement', e)
       );
+    },
+  },
+  {
+    // AUDIT-RECON 2026-09-02 batch 7 P0-1: outbox queue-lag alerter.
+    // Checks PENDING + PROCESSING counts every 5 min; fires the
+    // alerter (Slack webhook via lib/alerter) when the total crosses
+    // OUTBOX_QUEUE_LAG_ALERT_THRESHOLD (default 50) OR when any
+    // PROCESSING event is older than 5 min (a worker crash signal).
+    // 5 min cadence is the alert rate cap — a sustained backlog
+    // posts at most 12 messages/hour to the channel.
+    name: 'outbox-queue-lag-alerter',
+    intervalMs: 5 * 60_000,
+    processor: async (injectedClock) => {
+      await checkOutboxQueueLag(injectedClock.now());
     },
   },
 ];
