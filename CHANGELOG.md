@@ -13,7 +13,7 @@ All notable changes to the Voltium project will be documented in this file.
 
 ### ⏱️ Monitoring & Stability (Phase 5)
 
-- **Error Tracking**: Integrated Sentry into the Flutter application for real-time crash reporting and non-fatal error tracking.
+- **Error Tracking**: Integrated PostHog into the Flutter application for real-time crash reporting and non-fatal error tracking. NET-003 (audit batch 20, 2026-09-02): the original changelog mentioned Sentry; this was corrected to PostHog to match `docs/NO_CLOUD_DATA.md:21` which lists Sentry as a "NOT Allowed" error-tracking vendor under the laptop-only architecture. The codebase never used Sentry — `monitoring_service.dart:2, 16, 26, 28` (PR-11, 2026-08-21) wraps PostHog as the canonical vendor.
 - **Performance Metrics**: Implemented `PerformanceService` to measure screen load times and initialization durations.
 - **Daily Smoke Tests**: Configured a scheduled GitHub Action to validate critical user flows (Auth, Wallet, Rental) every morning.
 - **Breadcrumbs**: Instrumented `ApiService` and `OfflineStorageService` with diagnostic breadcrumbs for improved production debugging.
