@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/app_config.dart';
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -37,8 +38,9 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
 
     final colors = AppColors.of(context);
     final supportConfig = ref.watch(supportProvider).supportConfig;
-    final supportPhone = supportConfig?.supportPhone ?? '+919876543210';
-    final supportEmail = supportConfig?.supportEmail ?? 'support@voltium.app';
+    final supportPhone =
+        supportConfig?.supportPhone ?? AppConfig.supportPhoneCompact;
+    final supportEmail = supportConfig?.supportEmail ?? AppConfig.supportEmail;
 
     return Scaffold(
       backgroundColor: colors.surface,

@@ -84,9 +84,21 @@ Widget buildHubDropdown(
   );
 }
 
-/// Fixed team-leader options shown in the pickup hub form. Shared with
-/// [PickupHubScreen]'s draft-restore guard (a restored team leader that is
-/// not in this list is dropped rather than crashing the dropdown).
+/// Fallback team-leader options for the pickup hub dropdown.
+///
+/// The primary list is server-driven: `PickupHubScreen._fetchTeamLeaders`
+/// (pickup_hub_screen.dart:547) calls `getRiderTeamLeaders(hubId)` and
+/// uses the result. This constant is the **last-resort fallback** used
+/// when that fetch fails, hasn't completed yet, or returns an empty list
+/// (e.g. on the first build of the screen before the user picks a hub, or
+/// on network failure). Shared with the draft-restore guard in
+/// `PickupHubScreen` — a restored team leader that is not in this list
+/// is dropped rather than crashing the dropdown.
+///
+/// When real team leaders are available server-side, this list is only
+/// what the rider sees during the first ~500ms before the network
+/// response lands. Replace with a real fetch-only path when the
+/// `getRiderTeamLeaders` endpoint is stable.
 const kPickupTeamLeaderOptions = [
   'Rajesh Kumar (TL-01)',
   'Not assigned',

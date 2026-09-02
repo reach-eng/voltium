@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/utils/app_config.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -23,7 +24,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   Future<void> _callSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
-    final phone = supportConfig?.supportPhone ?? '+919876543210';
+    final phone = supportConfig?.supportPhone ?? AppConfig.supportPhoneCompact;
     final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final uri = Uri.parse('tel:$sanitized');
     if (await canLaunchUrl(uri)) {
@@ -33,7 +34,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   Future<void> _emailSupport() async {
     final supportConfig = ref.read(supportProvider).supportConfig;
-    final email = supportConfig?.supportEmail ?? 'support@voltium.app';
+    final email = supportConfig?.supportEmail ?? AppConfig.supportEmail;
     final uri = Uri.parse('mailto:$email');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);

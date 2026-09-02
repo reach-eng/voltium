@@ -8,6 +8,12 @@
 //
 // The notifier pulls its `SupportRepository` from a Riverpod
 // provider so tests can inject fakes.
+//
+// Seed values for `supportPhone` / `supportEmail` come from
+// `AppConfig` (lib/utils/app_config.dart) — the single source of
+// truth for the support contact. They are the in-memory placeholder
+// shown until the first successful `_repo.fetchSupportConfig()` call
+// returns server-driven values.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +23,7 @@ import 'package:voltium_rider/features/support/data/repository_impl.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/models/support_model.dart';
+import 'package:voltium_rider/utils/app_config.dart';
 
 import '../../../../utils/app_logger.dart';
 
@@ -63,8 +70,8 @@ class SupportNotifier extends Notifier<SupportState> {
   void initSupportData() {
     state = state.copyWith(
       supportConfig: const SupportConfig(
-        supportPhone: '+919876543210',
-        supportEmail: 'support@voltium.app',
+        supportPhone: AppConfig.supportPhoneCompact,
+        supportEmail: AppConfig.supportEmail,
         ticketChecklist: [
           'I have checked the vehicle battery levels.',
           'I have verified the internet connection on my device.',
