@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { redactPii } from '@/lib/pii-redact';
 
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
@@ -47,19 +48,31 @@ export async function createAuditLog(params: {
   details?: string | Record<string, unknown>;
 }): Promise<void> {
   try {
+    // CMP-004 (DPDP audit batch 15, 2026-09-02): redact PII at write time so
+    // the database never persists raw Aadhaar / PAN / account / phone / email
+    // values inside `details` or `entityId`. Before this fix, redaction only
+    // happened at the admin GET read path (web/src/app/api/admin/audit-logs/
+    // route.ts:50-68, PR-153) — leaving raw PII readable to anyone with DB
+    // access and violating DPDP Act §8(4) (storage limitation).
+    const redactedEntityId =
+      params.entityId != null
+        ? (redactPii(params.entityId) as string)
+        : null;
+    const redactedDetails =
+      params.details == null
+        ? null
+        : typeof params.details === 'string'
+          ? JSON.stringify(redactPii(parseIfJson(params.details)))
+          : (JSON.stringify(redactPii(params.details)) as string);
+
     await db.auditLog.create({
       data: {
         actorId: params.actorId,
         actorType: (params.actorType || 'ADMIN') as 'ADMIN' | 'SYSTEM' | 'RIDER',
         action: params.action,
         entity: params.entity,
-        entityId: params.entityId || null,
-        details:
-          typeof params.details === 'string'
-            ? params.details
-            : params.details
-              ? JSON.stringify(params.details)
-              : null,
+        entityId: redactedEntityId,
+        details: redactedDetails,
         expiresAt: getExpiresAt(params.action),
       },
     });
@@ -70,8 +83,34 @@ export async function createAuditLog(params: {
         `Audit log write failed for critical action ${params.action}: ${errorMessage(err)}`
       );
     }
-    const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
+    // CMP-004 (DPDP audit batch 15): the prior safeParams strip only removed
+    // 5 keys (password / lockPassword / otp / idToken / token). Run the
+    // full redactPii pass so Aadhaar / PAN / account / phone / email values
+    // in `details` and `entityId` never reach stdout in the failure path.
+    const redactedParams = redactPii(params);
+    const { password, lockPassword, otp, idToken, token, ...safeParams } =
+      redactedParams as Record<string, unknown>;
     console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), errorMessage(err));
+  }
+}
+
+/**
+ * CMP-004 helper: parse a string as JSON if it looks like JSON, otherwise
+ * return the raw string. Lets redactPii inspect structured keys inside an
+ * already-stringified `details` payload before re-serialization.
+ */
+function parseIfJson(value: string): unknown {
+  const trimmed = value.trim();
+  if (
+    trimmed.length === 0 ||
+    (trimmed[0] !== '{' && trimmed[0] !== '[')
+  ) {
+    return value;
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
   }
 }
 
