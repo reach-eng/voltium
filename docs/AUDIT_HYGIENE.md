@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 21 consecutive
-audit batches (2026-09-02) where 92 of 132 items (70%) were stale,
+issues in the Voltium repo. The lesson comes from 22 consecutive
+audit batches (2026-09-02) where 100 of 143 items (70%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 21-batch accuracy record (2026-09-02)
+## 1. The 22-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -41,7 +41,8 @@ batches. If you generate audits, run them before you file an item.
 | 20 | drift + state machine (NET-001..009) | 9 (1 deferred) | 6 | 0 | 0 | 3 (NET-003 doc + NET-005 worker; NET-004 deferred) |
 | 21 | security re-validation (F-006..DB-002) | 10 | 9 | 0 | 1 | 0 |
 | 22 | data + worker + safety (DB-003..FLT-DECIMAL) | 12 (3 unverified) | 9 | 0 | 0 | 0 |
-| | **Total** | **142** | **88 (62%)** | **7 (5%)** | **5 (4%)** | **25 (18%)** |
+| 23 | infra + safety re-validation (ADM-MNT..INF-005) | 11 (2 re-raised unverifiable) | 8 | 0 | 1 | 0 |
+| | **Total** | **153** | **96 (63%)** | **7 (5%)** | **6 (4%)** | **25 (16%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -265,7 +266,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-22. Future audit passes can use this
+stale claim in batches 8-23. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -436,6 +437,25 @@ prior batch results before re-filing a "no alerter" claim.
 | WK-002 | "10-20 orphan events per day" is a runtime metric. | Add a Grafana panel on `OutboxService.statusCounts()` over a 7-day window. |
 | WK-003 | Self-emitting loop is a consumer-behavior question. | Read `rental-completed-consumer.test.ts` (or whatever file owns the consumer); trace whether it emits a new `rental-completed`. |
 | WK-006 | Single-fork vs HA is a deployment-context question. | Read the `ecosystem.config.js` (or `pm2` config) for `instances` / `exec_mode`. |
+
+If it returns a match within ±20 lines of the audit's cited line,
+**read the comment** before flagging the item. It is almost
+always the prior fix.
+
+### Batch 23 (ADM-MNT..INF-005 — infra + safety re-validation)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| ADM-MNT-001 | Maintenance mode placebo (no middleware) | `web/src/middleware.ts:85-110` (PR-3, 2026-08-06 fix plan) — `getMaintenanceState()` is imported from `lib/maintenance-cache.ts`, the middleware checks `pathname !== '/api/rider/maintenance-status'` so the status endpoint stays open, and returns a `MAINTENANCE_MODE` error with the configured message when the toggle is on. | **Stale** — middleware in place |
+| ADM-ANNOUNCE-001 | Admin announcement bypasses FCM | `web/src/server/workers/jobs/announcement-broadcast.job.ts:22, 89, 136, 145-148` — `fcmService.sendPushNotification(token, ...)` is called per recipient. AUDIT-RECON 2026-09-02 batch 4 P0-1 (commit `20a4c2ea`). FCM failure is logged but does not abort the batch. | **Stale** — FCM wired in worker |
+| CMP-001 | KYC PII plain-text (DPDP) | `KycDetailDialog.tsx:27, 31` — `showPii` reveal toggle + `maskString()`. Same as SEC-003 (batch 21) and CMP-001 (batch 15). | **Stale (re-raised)** |
+| CMP-010 | call_log plugin (Play Store red flag) | User memory (2026-08-21): `call_log` and `flutter_contacts` are intentional. Distribution decision (2026-08-27): no Play Store. Same as F-020 (batch 21). | **Not a bug (re-raised)** |
+| CMP-015 | Payment credentials plain text (PCI-DSS) | `web/src/lib/credentials.ts:5-26` AES-256-GCM at rest (PR-8). `PaymentGatewayEditDialog.tsx:43-45, 110-114` write-only form. Same as SEC-004 (batch 21) and CMP-002 (batch 15) and CMP-015 (batch 17). | **Stale (re-raised)** |
+| ADR-V005-2 | ADR-0005: 10-20 orphan events per day | Same as WK-002 (batch 22). Unverifiable from code. Tracked as **T-70** in `docs/FOLLOWUP_TICKETS.md`. | **Unverified (re-raised)** |
+| ADR-V005-3 | ADR-0005: rental-completed self-emitting loop | Same as WK-003 (batch 22). Unverifiable from code. Tracked as **T-71** in `docs/FOLLOWUP_TICKETS.md`. | **Unverified (re-raised)** |
+| INF-001 | check-migration-safety.sh is a no-op | `web/tests/unit/check-migration-safety.test.ts` (3 cases, all pass). Same as TEST-011 (batch 13). | **Stale (re-raised, already fixed)** |
+| INF-002 | check-secret-rotation.sh is a fake check | `scripts/check-secret-rotation.ts` (PR-94a, INF-CI/CD-3) is a real TS implementation that calls `checkSecretRotation()` and exits 1 on any stale key. `scripts/check-secret-rotation.sh` (PR-139, INF-CI/CD-4) is a thin shell wrapper that exec's the TS file. The CI step `.github/workflows/ci-cd.yml:162` runs the .sh which runs the .ts — both real, both wired. | **Stale** — real implementation |
+| INF-005 | CI coverage-gap job has `continue-on-error: true` | `.github/workflows/ci-cd.yml:307-308` "Check API coverage gap" step has **no** `continue-on-error: true`. It runs `npm run test:coverage-gap` and the workflow fails on non-zero exit. The 85% line gate is the separate `test:coverage:merge` step at lines 310-313 with `MIN_COVERAGE: '85.0'`. | **Stale** — gate is enforced |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
