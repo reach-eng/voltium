@@ -1,8 +1,8 @@
 # Audit Hygiene — How to Spot a Stale Claim Before You Open a PR
 
 **Audience**: anyone (or any tool) generating audit reports that flag
-issues in the Voltium repo. The lesson comes from 13 consecutive
-audit batches (2026-09-02) where 49 of 71 items (69%) were stale,
+issues in the Voltium repo. The lesson comes from 14 consecutive
+audit batches (2026-09-02) where 53 of 80 items (66%) were stale,
 already-fixed, or not-a-bug.
 
 **The single rule**: **before flagging a "bug" item, prove the bug
@@ -15,7 +15,7 @@ batches. If you generate audits, run them before you file an item.
 
 ---
 
-## 1. The 13-batch accuracy record (2026-09-02)
+## 1. The 14-batch accuracy record (2026-09-02)
 
 | # | Batch theme | Items | Stale | Already fixed | Not a bug | Real (shipped) |
 | - | ----------- | ----- | ----- | ------------- | --------- | -------------- |
@@ -33,7 +33,8 @@ batches. If you generate audits, run them before you file an item.
 | 12 | cron test gaps (TG-1..11) | 7 | 2 | 2 | 1 | 1 (subset: TG-5, TG-7, TG-11 of 11 gaps) |
 | 13 | test coverage (TEST-008..015) | 7 (3 deferred) | 5 | 0 | 0 | 0 |
 | 14 | test coverage (TEST-016..023) | 8 (2 deferred) | 4 | 1 | 2 | 1 (TEST-021) |
-| | **Total** | **78** | **46 (59%)** | **7 (9%)** | **4 (5%)** | **15 (19%)** |
+| 15 | DPDP compliance (CMP-001..009) | 9 (2 deferred) | 4 | 0 | 0 | 3 (CMP-004 code + CMP-005 doc + CMP-006 doc); CMP-007/009 deferred |
+| | **Total** | **87** | **50 (57%)** | **7 (8%)** | **4 (5%)** | **18 (21%)** |
 
 The dominant failure mode across all 12 batches: **the audit
 re-states prior findings without reading the inline
@@ -257,7 +258,7 @@ git grep -nE 'PR-[0-9]+|previously this|already fixed|was a wrapper|fix plan' --
 ## 8. Per-batch stale-claim evidence (the receipts)
 
 The following table records the exact line refs that prove each
-stale claim in batches 8-14. Future audit passes can use this
+stale claim in batches 8-15. Future audit passes can use this
 section as a reference for "the audit got this wrong before —
 don't repeat it".
 
@@ -316,6 +317,20 @@ prior batch results before re-filing a "no alerter" claim.
 | TEST-021 | `SCREEN_WORKFLOW_COVERAGE.md` lists all screens "Implemented" — no test traceability | **Real** — fixed in `4ca28384`. Added a `Test coverage` column to both admin and rider tables with concrete file paths. Updated the public-beta rule to require the column on new rows. | **Real** — fixed |
 | TEST-022 | `DEVICE_TEST_PLAYBOOK.md` is manual-only; no Firebase Test Lab automation | **Real, deferred** — requires Firebase project setup + service-account config + Test Lab matrix. Multi-day work, not in this batch. | **Deferred** — out of scope |
 | TEST-023 | 3 skipped tests need design decisions (rate-limit DB / restore-safety / use-case stub) | `FAILED_TESTS_2026-08-01.md:225-226` lists the 3 design questions correctly, but the test-count header (35 failed, 1830 passing) is stale — actual is 0 failed / 2,958 passing. Design questions remain open and unowned. | **Stale (test counts) + Real (3 design questions open)** |
+
+### Batch 15 (DPDP compliance / CMP-001..009)
+
+| # | Claim | Reality | Stale because |
+| - | ----- | ------- | -------------- |
+| CMP-001 | KYC PII plain-text in admin detail sheet | `web/src/components/admin/screens/kyc-management/KycDetailDialog.tsx:31` has a `maskString()` helper; lines 110, 118, 255, 263 use it on aadhaar / pan / accountNumber / ifscCode. Aadhaar + PAN are already masked. | **Stale** — PII is masked |
+| CMP-002 | Payment gateway credentials plain text | `web/src/components/admin/screens/payment-gateway/PaymentGatewayEditDialog.tsx:43-45, 110-114, 149-150, 217, 238` — explicit "never pre-populated" / "blank to keep the existing secret unchanged" / `type="password"` / auto-clears the secret from form. Write-only secret pattern, correct security model. | **Stale** — write-only form, not plain text |
+| CMP-003 | `db-backup.sh` plaintext SQL dumps | `scripts/db-backup.sh:5-7, 140-153, 192-199` — **AES-256-CBC + PBKDF2 encryption by default**, env-driven key, `--no-encrypt` requires explicit `--i-understand-the-pii-risk` flag. Encryption is the default, not absent. | **Stale** — encryption is the default |
+| CMP-004 | Audit-log redaction missing for Aadhaar | The read path was fixed (PR-153, `web/src/app/api/admin/audit-logs/route.ts:50-68`). The write path (`web/src/lib/audit-log.ts`) was NOT — it persisted raw PII to `AuditLog.details` and `entityId`. Pre-existing test `tests/unit/audit-log-aadhaar-redaction.test.ts` was failing 3/3. | **Real** — fixed in `75a599ae` (wired `redactPii` into `createAuditLog` at write time + replaced the 5-key `safeParams` strip with the full `redactPii` pass on the failure-fallback path) |
+| CMP-005 | PII retention undocumented for `device_data_service.dart` | The audit's pointer at the Flutter file was misdirected — it's a sync (upload) helper with no local cache. The real retention is server-side via the `telemetryCleanupJob` (PR-154, `web/src/server/workers/jobs/telemetry-cleanup.job.ts`) which sweeps `UserLocation` / `UserCallLog` / `UserContact` with a 30-day cutoff, atomically with an `AuditLog` row. The mechanism existed; the doc explaining it did not. | **Real (doc-only)** — fixed in `b497b05f` (`docs/PRIVACY_DATA_RETENTION.md`) |
+| CMP-006 | Breach notification (72h SLA) not documented | No `*DPDP*` / `*PRIVACY*` / `*COMPLIANCE*` files; `RUNBOOK_INCIDENT_RESPONSE.md` had no breach / 72h / DPDP references. | **Real** — fixed in `d6dd58e8` (`docs/RUNBOOK_DPDP_BREACH.md` — the DPDP Act §8(7) 72h notification procedure with the 6-stage audit chain, per-Data-Principal notification rules, escalation matrix, post-mortem template) |
+| CMP-007 | Data principal rights not implemented (no `/api/rider/data-export`) | Partial: erasure is implemented (`web/src/app/api/rider/account/delete-request/route.ts`, PR-3 — records `deletionRequestedAt` + audit log entry). Consent is implemented (`web/src/app/api/rider/consent/route.ts`). Access / export is NOT. | **Real (partial), deferred** — multi-day work, separate ticket |
+| CMP-008 | Consent flow for call_log/contacts not implemented | `flutter/lib/features/onboarding/presentation/screens/permissions_screen.dart:7, 67-72, 113-134, 246-330` — call_log + contacts tiles map to `ConsentType.callLogs` / `ConsentType.contacts`, call `ConsentService().setConsent(...)`. Consent flow IS implemented (FLUTTER_CONSENT P1-1). | **Stale** — already implemented |
+| CMP-009 | DPO not designated | No org-chart or DPO reference. Governance gap, not engineering. | **Real, deferred** — separate ticket; until filled, the breach runbook's "DPO designate" references resolve to CTO + CEO joint sign-off |
 
 If it returns a match within ±20 lines of the audit's cited line,
 **read the comment** before flagging the item. It is almost
