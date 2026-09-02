@@ -157,6 +157,12 @@ export const supportUseCases = {
       message: t.message,
       status: t.status,
       assignedTo: t.assignedTo,
+      // AUDIT-RECON 2026-09-02 batch 6 P0-4: include ticket-level
+      // attachments (comma-separated URL list per the rider app)
+      // so the admin can see evidence photos in the list row + the
+      // detail dialog. The DB column was always populated; the
+      // response was previously stripping it.
+      attachments: t.attachments,
       resolvedAt: t.resolvedAt,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
@@ -216,6 +222,11 @@ export const supportUseCases = {
       message: ticket.message,
       status: ticket.status,
       assignedTo: ticket.assignedTo,
+      // AUDIT-RECON 2026-09-02 batch 6 P0-4: surface ticket-level
+      // attachments so the admin detail dialog can render the
+      // photos a rider submitted with the ticket. Was previously
+      // dropped in the formatted response.
+      attachments: ticket.attachments,
       resolvedAt: ticket.resolvedAt,
       createdAt: ticket.createdAt,
       updatedAt: ticket.updatedAt,

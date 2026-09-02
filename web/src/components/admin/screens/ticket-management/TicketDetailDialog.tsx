@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageSquare, UserPlus, Loader2 } from 'lucide-react';
+import { MessageSquare, UserPlus, Loader2, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { StatusBadge, PriorityBadge, STATUS_FLOW } from './helpers';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { Ticket, TicketMessage, AdminUser } from './types';
@@ -104,6 +104,68 @@ export function TicketDetailDialog({
               {selectedTicket.message}
             </p>
           </div>
+
+          {/* AUDIT-RECON 2026-09-02 batch 6 P0-4: render evidence
+              attachments. The rider Flutter app sends
+              `attachments` as a comma-separated list of uploaded
+              URLs (create_ticket_screen.dart:100 — joined via
+              `uploadedUrls.where((u) => u.isNotEmpty).join(',')`).
+              The Prisma column is `attachments String?`
+              (schema.prisma:645). Until this commit, the data
+              landed in the DB but the admin dialog never read
+              `selectedTicket.attachments`, so admins could not see
+              the photos a rider submitted with the ticket. */}
+          {selectedTicket.attachments &&
+            selectedTicket.attachments.trim().length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4" /> Evidence Attachments (
+                  {
+                    selectedTicket.attachments
+                      .split(',')
+                      .filter((u) => u.trim().length > 0).length
+                  }
+                  )
+                </h4>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {selectedTicket.attachments
+                    .split(',')
+                    .map((u) => u.trim())
+                    .filter((u) => u.length > 0)
+                    .map((url, idx) => (
+                      <a
+                        key={`${url}-${idx}`}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative block aspect-square rounded-lg overflow-hidden border border-border/50 bg-muted/30 hover:border-primary/50 transition-colors"
+                        title={url}
+                      >
+                        <img
+                          src={url}
+                          alt={`Attachment ${idx + 1}`}
+                          loading="lazy"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // If the image URL 404s (CDN down, signed
+                            // URL expired, etc.) fall back to a
+                            // generic icon so the admin can still see
+                            // that an attachment was attached and
+                            // open it in a new tab.
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity">
+                          <ExternalLink className="w-4 h-4 text-white" />
+                        </div>
+                      </a>
+                    ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Click an image to open at full size in a new tab.
+                </p>
+              </div>
+            )}
 
           {/* Message Thread */}
           <div className="space-y-2">

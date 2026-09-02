@@ -35,9 +35,39 @@ export const supportRepository = {
   },
 
   async findById(ticketId: string) {
+    // AUDIT-RECON 2026-09-02 batch 6 P0-4: `attachments` is a scalar
+    // column on SupportTicket (prisma/schema.prisma:645) — a
+    // comma-separated list of uploaded photo URLs. It must be in
+    // `select` (not `include`, which is for relations). Switched the
+    // query to `select` so we can pull the scalar alongside the
+    // `messages` relation. The list of columns matches what
+    // `db.supportTicket.findUnique` returns by default minus the
+    // heavy encrypted-PII fields the admin detail view doesn't need.
+    const ticketSelect = {
+      id: true,
+      ticketId: true,
+      riderId: true,
+      vehicleId: true,
+      category: true,
+      priority: true,
+      subject: true,
+      message: true,
+      status: true,
+      troubleshootPath: true,
+      assignedTo: true,
+      isEscalated: true,
+      escalatedAt: true,
+      escalatedBy: true,
+      resolvedAt: true,
+      deletedAt: true,
+      attachments: true,
+      createdAt: true,
+      updatedAt: true,
+      messages: { orderBy: { createdAt: 'asc' as const } },
+    } as const;
     const direct = await db.supportTicket.findUnique({
       where: { id: ticketId },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      select: ticketSelect,
     });
     if (direct) return direct;
 
@@ -46,7 +76,7 @@ export const supportRepository = {
       where: {
         OR: [{ ticketId }, { ticketId: formattedTicketId }],
       },
-      include: { messages: { orderBy: { createdAt: 'asc' } } },
+      select: ticketSelect,
     });
   },
 
@@ -136,22 +166,48 @@ export const supportRepository = {
   },
 
   async findByIdWithMessages(ticketId: string) {
-    const direct = await db.supportTicket.findUnique({
-      where: { id: ticketId },
-      include: {
-        rider: { select: { fullName: true, riderId: true, phone: true } },
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          select: {
-            id: true,
-            senderId: true,
-            senderType: true,
-            message: true,
-            attachments: true,
-            createdAt: true,
-          },
+    // AUDIT-RECON 2026-09-02 batch 6 P0-4: `attachments` is a
+    // scalar column (schema.prisma:645), so it goes in `select` not
+    // `include`. Restructured to a single `select` block that pulls
+    // all SupportTicket columns the admin detail view needs
+    // (incl. the existing rider + messages relations) plus the
+    // previously-dropped attachments column.
+    const ticketSelect = {
+      id: true,
+      ticketId: true,
+      riderId: true,
+      vehicleId: true,
+      category: true,
+      priority: true,
+      subject: true,
+      message: true,
+      status: true,
+      troubleshootPath: true,
+      assignedTo: true,
+      isEscalated: true,
+      escalatedAt: true,
+      escalatedBy: true,
+      resolvedAt: true,
+      deletedAt: true,
+      attachments: true,
+      createdAt: true,
+      updatedAt: true,
+      rider: { select: { fullName: true, riderId: true, phone: true } },
+      messages: {
+        orderBy: { createdAt: 'asc' as const },
+        select: {
+          id: true,
+          senderId: true,
+          senderType: true,
+          message: true,
+          attachments: true,
+          createdAt: true,
         },
       },
+    } as const;
+    const direct = await db.supportTicket.findUnique({
+      where: { id: ticketId },
+      select: ticketSelect,
     });
     if (direct) return direct;
 
@@ -160,20 +216,7 @@ export const supportRepository = {
       where: {
         OR: [{ ticketId }, { ticketId: formattedTicketId }],
       },
-      include: {
-        rider: { select: { fullName: true, riderId: true, phone: true } },
-        messages: {
-          orderBy: { createdAt: 'asc' },
-          select: {
-            id: true,
-            senderId: true,
-            senderType: true,
-            message: true,
-            attachments: true,
-            createdAt: true,
-          },
-        },
-      },
+      select: ticketSelect,
     });
   },
 
