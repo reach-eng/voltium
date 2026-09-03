@@ -41,6 +41,7 @@ describe('file upload token HMAC key (PR-92 / Backend S2)', () => {
     process.env.ALLOW_DEV_PII_KEY = 'false';
     process.env.ENABLE_TEST_OTP = 'false';
     process.env.ENABLE_DEV_ADMIN_LOGIN = 'false';
+    process.env.TEST_MODE = 'false';
     // P1-8 (2026-08-05 legal/device audit): INTERNAL_API_URL is now
     // hard-required in production — the prod env simulation must set it.
     process.env.INTERNAL_API_URL = 'http://127.0.0.1:8081';

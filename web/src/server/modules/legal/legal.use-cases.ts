@@ -21,37 +21,46 @@ export const legalUseCases = {
     return db.legalDocument.findMany({ orderBy: { type: 'asc' } });
   },
 
-  async upsert(data: { type: string; title?: string; content: string }, actorId: string) {
+  async upsert(data: { type: string; title?: string; content?: string; isActive?: boolean }, actorId: string) {
     const title = data.title || defaultTitle(data.type);
-    const hash = contentHash(data.content);
+    const hasContent = typeof data.content === 'string';
+    const hash = hasContent ? contentHash(data.content!) : '';
 
-    // P1-2 (2026-08-05 legal/device audit): every save previously overwrote
-    // the doc with no recovery path — an accidental clear was gone forever.
-    // Write a revision row on each save so the audit trail + history can
-    // reconstruct the previous version. Skip the write when the content is
-    // byte-identical to the latest revision (reviewer nit: saves that change
-    // nothing must not fill history with noise).
+    const updateData: Record<string, any> = {};
+    if (data.title !== undefined) updateData.title = title;
+    if (hasContent) updateData.content = data.content;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    const createData: Record<string, any> = {
+      type: data.type,
+      title,
+      content: data.content ?? '',
+      isActive: data.isActive ?? true,
+    };
+
     const doc = await db.$transaction(async (tx) => {
       const saved = await tx.legalDocument.upsert({
         where: { type: data.type },
-        update: { title, content: data.content },
-        create: { type: data.type, title, content: data.content },
+        update: updateData,
+        create: createData as any,
       });
-      const latest = await tx.legalDocumentRevision.findFirst({
-        where: { legalDocumentId: saved.id },
-        orderBy: { createdAt: 'desc' },
-        select: { contentHash: true },
-      });
-      if (latest?.contentHash !== hash) {
-        await tx.legalDocumentRevision.create({
-          data: {
-            legalDocumentId: saved.id,
-            title,
-            content: data.content,
-            contentHash: hash,
-            createdBy: actorId,
-          },
+      if (hasContent) {
+        const latest = await tx.legalDocumentRevision.findFirst({
+          where: { legalDocumentId: saved.id },
+          orderBy: { createdAt: 'desc' },
+          select: { contentHash: true },
         });
+        if (latest?.contentHash !== hash) {
+          await tx.legalDocumentRevision.create({
+            data: {
+              legalDocumentId: saved.id,
+              title,
+              content: data.content!,
+              contentHash: hash,
+              createdBy: actorId,
+            },
+          });
+        }
       }
       return saved;
     });
