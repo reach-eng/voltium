@@ -3,6 +3,13 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { invalidateCache } from '@/lib/cache';
 
+function normalizeValidUntil(val: string | Date): Date {
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    return new Date(`${val}T23:59:59.999Z`);
+  }
+  return new Date(val);
+}
+
 export const couponUseCases = {
   async list(page: number, limit: number, search?: string | null) {
     // PR-9 (2026-08-06 fix plan): the admin coupons screen previously had
@@ -70,7 +77,7 @@ export const couponUseCases = {
         minAmount: data.minAmount != null ? Math.round(data.minAmount * 100) : null,
         maxUses: data.maxUses ?? null,
         validFrom: new Date(data.validFrom),
-        validUntil: new Date(data.validUntil),
+        validUntil: normalizeValidUntil(data.validUntil),
         isActive: data.isActive,
       },
     });
@@ -88,7 +95,7 @@ export const couponUseCases = {
   async update(id: string, data: Record<string, unknown>, actorId: string) {
     const updateData = { ...data };
     if (updateData.validFrom) updateData.validFrom = new Date(updateData.validFrom as string);
-    if (updateData.validUntil) updateData.validUntil = new Date(updateData.validUntil as string);
+    if (updateData.validUntil) updateData.validUntil = normalizeValidUntil(updateData.validUntil as string | Date);
     if (updateData.code) updateData.code = (updateData.code as string).toUpperCase();
     // PR-VER-2026-08-06 (SHIFTS P0-3): the old update only converted
     // `discountValue` when `discountType === 'FIXED'` — a PERCENTAGE update
@@ -112,7 +119,7 @@ export const couponUseCases = {
       // P1: authoritative PERCENTAGE cap (update may carry value-only with
       // the existing coupon's type resolved above).
       if (discountType === 'PERCENTAGE' && Number(updateData.discountValue) > 100) {
-        throw new Error('PERCENTAGE discountValue cannot exceed 100');
+        throw new Error('Percentage discount must be between 1 and 100');
       }
       delete updateData.discountValue;
     }

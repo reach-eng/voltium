@@ -92,7 +92,7 @@ export const adminRepository = {
     if (params.isActive !== undefined) data.isActive = params.isActive;
 
     const shouldInvalidateSession =
-      params.role !== undefined || params.permissions !== undefined || params.isActive !== undefined;
+      params.password !== undefined || params.role !== undefined || params.permissions !== undefined || params.isActive !== undefined;
 
     if (shouldInvalidateSession) {
       return db.$transaction(async (tx) => {

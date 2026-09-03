@@ -74,10 +74,10 @@ export function hasPermission(
 
     if (effectiveRole === 'SUPER_ADMIN') return true;
 
-    // Explicit permissions from the session take precedence over role-based lookup
+    // Explicit custom permissions are additive with role-based permissions
     const perms = session.adminPermissions || (session as any).permissions;
-    if (perms && Array.isArray(perms) && perms.length > 0) {
-      return perms.includes(permission);
+    if (perms && Array.isArray(perms) && perms.includes(permission)) {
+      return true;
     }
 
     // Fall back to role-based lookup
@@ -120,6 +120,9 @@ export function parsePermissions(raw: string | string[] | null | undefined): str
       ? parsed.filter((p): p is string => typeof p === 'string')
       : [];
   } catch {
+    if (raw.includes(',')) {
+      return raw.split(',').map((s) => s.trim()).filter(Boolean);
+    }
     return [];
   }
 }

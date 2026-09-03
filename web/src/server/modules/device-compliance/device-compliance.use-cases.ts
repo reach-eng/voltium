@@ -192,6 +192,13 @@ export const deviceComplianceUseCases = {
       batteryLevel?: number;
     }
   ) {
+    if (typeof data.lat !== 'number' || isNaN(data.lat) || data.lat < -90 || data.lat > 90) {
+      throw new Error('Invalid latitude coordinate: must be between -90 and 90');
+    }
+    if (typeof data.lng !== 'number' || isNaN(data.lng) || data.lng < -180 || data.lng > 180) {
+      throw new Error('Invalid longitude coordinate: must be between -180 and 180');
+    }
+
     const [location] = await db.$transaction([
       db.userLocation.create({
         data: {

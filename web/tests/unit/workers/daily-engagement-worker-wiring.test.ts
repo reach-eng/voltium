@@ -22,7 +22,9 @@ const WORKERS_INDEX = resolve(
   __dirname,
   '../../../src/server/workers/index.ts'
 );
-const JOBS_ROUTE = resolve(__dirname, '../../../src/app/api/admin/jobs/route.ts');
+const JOBS_ROUTE = existsSync(resolve(__dirname, '../../../src/server/workers/job-outbox-config.ts'))
+  ? resolve(__dirname, '../../../src/server/workers/job-outbox-config.ts')
+  : resolve(__dirname, '../../../src/app/api/admin/jobs/route.ts');
 
 function src(path: string): string {
   return readFileSync(path, 'utf-8');

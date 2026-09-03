@@ -93,6 +93,7 @@ export function calculateKycScore(rider: any): number {
   let score = 0;
 
   if (kyc.status === 'APPROVED') score = 100;
+  else if (kyc.status === 'SUBMITTED') score = 70;
   else if (kyc.status === 'PENDING') score = 50;
   else if (kyc.status === 'REJECTED') score = 20;
   else if (kyc.status === 'INFO_REQUIRED') score = 30;

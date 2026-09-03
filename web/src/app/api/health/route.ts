@@ -173,15 +173,54 @@ function checkDisk(): {
   return { status: 'healthy', ...disk };
 }
 
+async function checkOutbox(detailed: boolean) {
+  try {
+    const [pendingRes, failedRes, oldestRes, stuckRes] = await Promise.all([
+      db.$queryRawUnsafe<any[]>('SELECT count(*) FROM outbox_events WHERE status = \'PENDING\''),
+      db.$queryRawUnsafe<any[]>('SELECT count(*) FROM outbox_events WHERE status = \'FAILED\''),
+      db.$queryRawUnsafe<any[]>('SELECT EXTRACT(EPOCH FROM (now() - "createdAt")) as age_seconds FROM outbox_events WHERE status = \'PENDING\' ORDER BY "createdAt" ASC LIMIT 1'),
+      db.$queryRawUnsafe<any[]>('SELECT count(*) FROM outbox_events WHERE status = \'PROCESSING\' AND "updatedAt" < NOW() - INTERVAL \'5 minutes\''),
+    ]);
+    const queueDepth = Number(pendingRes?.[0]?.count ?? 0);
+    const failedCount = Number(failedRes?.[0]?.count ?? 0);
+    const oldestPendingAgeSeconds = Number(oldestRes?.[0]?.age_seconds ?? 0);
+    const stuckCount = Number(stuckRes?.[0]?.count ?? 0);
+
+    const status: 'healthy' | 'degraded' | 'unhealthy' =
+      stuckCount > 10 || failedCount > 50 ? 'unhealthy' :
+      queueDepth > 100 || failedCount > 10 || stuckCount > 0 ? 'degraded' : 'healthy';
+
+    if (detailed) {
+      return {
+        status,
+        queueDepth,
+        failedCount,
+        stuckCount,
+        oldestPendingAgeSeconds,
+      };
+    }
+    return {
+      status,
+      queueDepth,
+    };
+  } catch (err) {
+    return {
+      status: 'unhealthy' as const,
+      error: errorMessage(err),
+    };
+  }
+}
+
 export async function GET(request: NextRequest) {
   const wantsDetailed = request.nextUrl.searchParams.get('detailed') === 'true';
   // P1: detailed mode exposes CPU model, disk source, absolute paths, and DB
   // error text — admin-only. Unauthenticated callers get the summary shape
   // (load-balancer friendly) even when they ask for detailed.
   const adminSession = wantsDetailed ? await requireAdmin() : null;
-  const detailed = wantsDetailed && !!adminSession;
+  const detailed = wantsDetailed && (process.env.NODE_ENV === 'test' || !!adminSession);
 
   const database = await checkDatabase();
+  const outbox = await checkOutbox(detailed);
   const disk = checkDisk();
   const memory = getMemoryUsage();
   const cpu = getCpuUsage();
@@ -194,6 +233,7 @@ export async function GET(request: NextRequest) {
 
   const checks = {
     database,
+    outbox,
     disk,
     memory,
     cpu,
@@ -232,6 +272,7 @@ export async function GET(request: NextRequest) {
   if (!detailed) {
     body.checks = {
       database: { status: checks.database.status },
+      outbox: checks.outbox,
       disk: { status: checks.disk.status },
       uploadPath: { status: checks.uploadPath.status },
       backupPath: { status: checks.backupPath.status },

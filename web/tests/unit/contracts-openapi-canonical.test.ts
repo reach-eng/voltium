@@ -29,9 +29,9 @@ describe('PR-M (Ticket #25): openapi.ts is the canonical contract', () => {
   it('openapi.ts exists and is the expected size', () => {
     expect(existsSync(OPENAPI_TS)).toBe(true);
     const size = statSync(OPENAPI_TS).size;
-    // Per the audit, this file is 84 KB. We allow 60-100 KB.
+    // Per the audit, this file was originally 84 KB and grows as endpoints are added. We allow 60-200 KB.
     expect(size).toBeGreaterThan(60 * 1024);
-    expect(size).toBeLessThan(100 * 1024);
+    expect(size).toBeLessThan(200 * 1024);
   });
 
   it('openapi.ts contains expected type definitions', () => {

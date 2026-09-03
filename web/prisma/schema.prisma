@@ -507,6 +507,7 @@ model Wallet {
   @@map("wallets")
 }
 
+/// WalletLedger represents the append-only, immutable source of truth for all wallet balance changes.
 model WalletLedger {
   id             String          @id @default(cuid())
   walletId       String
@@ -600,6 +601,7 @@ model RentalLease {
   @@map("rental_leases")
 }
 
+/// Transaction represents an immutable financial journal entry.
 model Transaction {
   id              String                 @id @default(cuid())
   riderId         String

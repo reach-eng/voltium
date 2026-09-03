@@ -104,6 +104,30 @@ export const vehicleRepository = {
   // retired the vehicle — same action, opposite durability. Unify on soft
   // delete: set deletedAt + RETIRED; every read path filters deletedAt: null.
   async bulkDelete(ids: string[]) {
+    const activeLeases =
+      typeof db.rentalLease?.count === 'function'
+        ? await db.rentalLease.count({
+            where: {
+              vehicleId: { in: ids },
+              status: {
+                in: [
+                  'BOOKED',
+                  'PICKUP_SCHEDULED',
+                  'ACTIVE',
+                  'OVERDUE',
+                  'RETURN_PENDING',
+                  'SUSPENDED',
+                ],
+              },
+            },
+          })
+        : 0;
+    if (activeLeases > 0) {
+      throw new Error(
+        `Cannot delete vehicles: ${activeLeases} vehicle(s) currently have active or booked rental leases`
+      );
+    }
+
     const result = await db.vehicle.updateMany({
       where: { id: { in: ids }, deletedAt: null },
       data: { deletedAt: new Date(), status: 'RETIRED' },

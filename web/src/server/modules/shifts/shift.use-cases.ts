@@ -23,17 +23,39 @@ function parseParts(partsJson: string | null | undefined): ShiftPart[] {
  * Given an optional parts array and fallback startTime/endTime,
  * returns the parts to store and the display startTime/endTime.
  */
+function toMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
 function computeShiftTimes(
   parts: ShiftPart[] | undefined | null,
   startTime?: string,
   endTime?: string
 ): { partsJson: string | null; startTime: string; endTime: string } {
   if (parts && parts.length > 0) {
+    for (const part of parts) {
+      if (part.startTime === part.endTime) {
+        throw new Error('Invalid shift part: start time and end time cannot be identical');
+      }
+    }
     const sorted = [...parts].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const baseStart = sorted[0].startTime;
+    const baseMinutes = toMinutes(baseStart);
+
+    const offset = (time: string) => {
+      const t = toMinutes(time);
+      return t >= baseMinutes ? t - baseMinutes : t + 1440 - baseMinutes;
+    };
+
+    const latestEndTime = parts.reduce(
+      (latest, p) => (offset(p.endTime) > offset(latest) ? p.endTime : latest),
+      parts[0].endTime
+    );
     return {
       partsJson: JSON.stringify(sorted),
-      startTime: sorted[0].startTime,
-      endTime: sorted[sorted.length - 1].endTime,
+      startTime: baseStart,
+      endTime: latestEndTime,
     };
   }
   // Fallback to plain startTime/endTime (no parts)
@@ -177,12 +199,13 @@ export const shiftUseCases = {
     const leaseCount = await db.rentalLease.count({ where: { shiftId: id } });
     if (leaseCount > 0) {
       throw new Error(
-        `Cannot delete shift: ${leaseCount} lease(s) are using it. Remove them first.`
+        `Cannot delete shift: ${leaseCount} active or booked lease(s) are using it. Remove them first.`
       );
     }
-    await db.shift.delete({ where: { id } });
+    const deleted = await db.shift.delete({ where: { id } });
     createAuditLog({ actorId, action: 'shift.delete', entity: 'shift', entityId: id }).catch(
       () => {}
     );
+    return deleted;
   },
 };

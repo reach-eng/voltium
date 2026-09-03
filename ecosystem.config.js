@@ -108,8 +108,8 @@ module.exports = {
       cwd: webCwd,
       script: 'dist/workers.js',
       args: '',
-      instances: 1,
-      exec_mode: 'fork',
+      instances: process.env.WORKER_INSTANCES ? parseInt(process.env.WORKER_INSTANCES, 10) : 1,
+      exec_mode: process.env.WORKER_EXEC_MODE || (process.env.WORKER_INSTANCES && parseInt(process.env.WORKER_INSTANCES, 10) > 1 ? 'cluster' : 'fork'),
       watch: false,
       env: {
         ...commonEnv,

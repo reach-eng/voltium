@@ -9,13 +9,21 @@ export const RETENTION_PERIODS: Record<string, number> = {
   rider_update: 180,
   bulk_action: 365,
   system: 30,
+  transaction: 2555,
+  financial: 2555,
 };
 
 const DEFAULT_RETENTION_DAYS = 90;
 
 function getRetentionDays(action: string): number {
-  const actionType = action.split('.')[0];
-  return RETENTION_PERIODS[actionType] ?? DEFAULT_RETENTION_DAYS;
+  const [prefix, sub] = action.split('.');
+  if (prefix === 'transaction' || prefix === 'financial' || prefix === 'wallet') {
+    return RETENTION_PERIODS.transaction ?? 2555;
+  }
+  if (prefix === 'admin' && (sub === 'login' || sub === 'logout' || sub === 'auth')) {
+    return RETENTION_PERIODS.auth ?? 90;
+  }
+  return RETENTION_PERIODS[prefix] ?? DEFAULT_RETENTION_DAYS;
 }
 
 export function getExpiresAt(action: string): Date {

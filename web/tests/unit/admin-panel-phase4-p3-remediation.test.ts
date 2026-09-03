@@ -33,6 +33,8 @@ describe('Admin Panel Phase 4 (P3 Polish) Remediation Suite', () => {
         { id: 'faq_3', question: 'Q3', order: 0, createdAt: new Date('2026-01-03') },
       ];
 
+      vi.mocked(db.faq.findMany).mockResolvedValue(mockFaqs as any);
+
       vi.mocked(db.faq.update).mockImplementation((({ where, data }: any) =>
         Promise.resolve({ ...mockFaqs.find((f) => f.id === where.id), ...data } as any)
       ) as any);

@@ -4,6 +4,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
 import { invalidateCache } from '@/lib/cache';
+import { validateVehicleTransition } from './vehicle-state-machine';
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -245,11 +246,14 @@ export const vehicleUseCases = {
     const vehicle = await vehicleRepository.findById(vehicleId);
     if (!vehicle) throw new Error('VEHICLE_NOT_FOUND');
     const activeLease = await db.rentalLease.findFirst({
-      where: { vehicleId, status: { in: ['BOOKED', 'ACTIVE', 'RETURN_PENDING'] } },
+      where: { vehicleId, status: { in: ['BOOKED', 'ACTIVE', 'RETURN_PENDING', 'OVERDUE'] } },
     });
     if (activeLease) throw new Error('VEHICLE_HAS_ACTIVE_LEASE');
 
-    const result = await vehicleRepository.update(vehicleId, { status: 'RETIRED' });
+    const result = await vehicleRepository.update(vehicleId, {
+      status: 'RETIRED',
+      deletedAt: new Date(),
+    });
     invalidateCache('vehicles_list:*');
     invalidateCache('admin:vehicles:*');
     createAuditLog({
@@ -277,6 +281,13 @@ export const vehicleUseCases = {
     switch (action) {
       case 'changeStatus': {
         if (!value) throw new Error('Status value is required');
+        const vehicles = await db.vehicle.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, status: true },
+        });
+        for (const v of vehicles) {
+          validateVehicleTransition(v.status as any, value as any);
+        }
         const result = await vehicleRepository.bulkUpdateStatus(ids, {
           status: value as VehicleStatus,
         });

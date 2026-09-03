@@ -965,7 +965,7 @@
   },
   "txtguarantorSkipBody": "Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You'll be charged the difference when you start your rental.",
   "@txtguarantorSkipBody": {
-    "description": "Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. 'Ã¢â€šÂ¹1,000'.",
+    "description": "Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.",
     "placeholders": {
       "amount": { "type": "String" }
     }
@@ -1180,7 +1180,7 @@
   "txtproofPayViaUpi": "Pay via UPI",
   "txtproofInstantPaymentBreakdown": "Instant Payment Breakdown",
   "txtproofPointsToActiveGateway": "Points to current active payment gateway",
-  "txtproofTopUpWillBeInstant": "Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹{fee}) gateway fee will be added to your top up amount.",
+  "txtproofTopUpWillBeInstant": "Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.",
   "@txtproofTopUpWillBeInstant": {
     "placeholders": {
       "fee": {
@@ -1197,8 +1197,8 @@
       }
     }
   },
-  "txtproofZeroGatewayFee": "Ã¢â€šÂ¹0 (Paid by Voltium)",
-  "txtproofTopUpWillBeInstantCovered": "Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).",
+  "txtproofZeroGatewayFee": "₹0 (Paid by Voltium)",
+  "txtproofTopUpWillBeInstantCovered": "Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).",
   "txtchangePhoto": "Change Photo",
   "txttapToUploadPhoto": "Tap to upload photo",
   "txtcameraOrGallery": "Camera or gallery",
@@ -1589,7 +1589,7 @@
       }
     }
   },
-  "txtverifying": "VerifyingÃ¢â‚¬Â¦",
+  "txtverifying": "Verifying…",
   "@txtverifying": { "description": "OTP verify button loading state label" },
   "txtverifyAndProceed": "Verify & Proceed",
   "@txtverifyAndProceed": { "description": "OTP verify button active label" },
@@ -1639,12 +1639,12 @@
     "description": "Streak progress label",
     "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } }
   },
-  "txtminRechargeNotice": "A minimum recharge of Ã¢â€šÂ¹{amount} is required to proceed further.",
+  "txtminRechargeNotice": "A minimum recharge of ₹{amount} is required to proceed further.",
   "@txtminRechargeNotice": {
     "description": "Minimum recharge disclaimer",
     "placeholders": { "amount": { "type": "String" } }
   },
-  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹{amount}.",
+  "txtlowBalanceWarningNotice": "Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.",
   "@txtlowBalanceWarningNotice": {
     "description": "Low balance warning notice",
     "placeholders": { "amount": { "type": "int" } }
@@ -1698,7 +1698,7 @@
   "@txtupcomingRentDebit": { "description": "Upcoming rent debit header" },
   "txttopUpBeforeTomorrow6am": "Top up before tomorrow 6 AM",
   "@txttopUpBeforeTomorrow6am": { "description": "Rent prompt card title" },
-  "txtrentDebitNoticeShortfall": "Rent of Ã¢â€šÂ¹{rent} will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹{balance} (shortfall: Ã¢â€šÂ¹{shortfall}).",
+  "txtrentDebitNoticeShortfall": "Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).",
   "@txtrentDebitNoticeShortfall": {
     "description": "Rent debit notice with shortfall",
     "placeholders": {
@@ -1707,7 +1707,7 @@
       "shortfall": { "type": "String" }
     }
   },
-  "txtrentDebitNoticeSufficient": "Rent of Ã¢â€šÂ¹{rent} will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹{balance} is sufficient.",
+  "txtrentDebitNoticeSufficient": "Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.",
   "@txtrentDebitNoticeSufficient": {
     "description": "Rent debit notice with sufficient balance",
     "placeholders": {
@@ -1715,7 +1715,7 @@
       "balance": { "type": "String" }
     }
   },
-  "txttopUpAmountAction": "Top up Ã¢â€šÂ¹{amount}",
+  "txttopUpAmountAction": "Top up ₹{amount}",
   "@txttopUpAmountAction": {
     "description": "Top up button label with amount",
     "placeholders": { "amount": { "type": "String" } }

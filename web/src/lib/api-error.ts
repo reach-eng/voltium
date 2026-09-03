@@ -91,7 +91,7 @@ export class BadRequestError extends ApiError {
 }
 
 export class RateLimitError extends ApiError {
-  constructor(message: string = 'Rate limit exceeded', public readonly details?: unknown) {
+  constructor(message: string = 'Too many requests', public readonly details?: unknown) {
     super(message, ERROR_CODES.RATE_LIMITED, 429);
     this.name = 'RateLimitError';
   }
@@ -137,7 +137,7 @@ export function normalizeError(err: unknown): NormalizedErrorPayload {
   }
   return {
     code: ERROR_CODES.SERVER_ERROR,
-    message: err instanceof Error ? err.message : 'Unknown error',
+    message: err instanceof Error ? err.message : typeof err === 'string' ? err : 'Unknown error',
     status: 500,
   };
 }

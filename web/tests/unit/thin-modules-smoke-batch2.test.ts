@@ -98,7 +98,7 @@ describe('coupons (thin module) — smoke tests (#22.1 batch 2)', () => {
           code: 'PROMO10',
           discountValueInPaise: 10,
           validFrom: new Date('2026-01-01'),
-          validUntil: new Date('2026-12-31'),
+          validUntil: new Date('2026-12-31T23:59:59.999Z'),
         }),
       })
     );

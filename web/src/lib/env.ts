@@ -85,8 +85,8 @@ export const envSchema = z.object({
   BACKUP_SECONDARY_ROOT: z.string().optional(),
   BACKUP_ENCRYPTION_ENABLED: z
     .string()
-    .default('false')
-    .transform((v) => v === 'true'),
+    .default('true')
+    .transform((v) => v !== 'false'),
   BACKUP_ENCRYPTION_KEY: z.string().optional(),
   MAINTENANCE_MODE: z
     .string()

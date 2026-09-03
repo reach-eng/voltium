@@ -46,7 +46,7 @@ describe('Standardized API Error & Response Shape', () => {
 
     expect(new ValidationError('Invalid email', { field: 'email' })).toMatchObject({
       code: ERROR_CODES.VALIDATION_ERROR,
-      status: 422,
+      status: 400,
       message: 'Invalid email',
       details: { field: 'email' },
     });

@@ -153,8 +153,9 @@ void main() {
     // regex, the baseline tracking) is in place; a follow-up
     // ticket can refine the regex to handle the '₹' and '${'
     // cases and lower the threshold to 0.
+    //   - 2026-09-04: 5 → 6 (guarantor skip split deposit into baseDeposit and extraDeposit rows)
     const hardcodedTextThreshold =
-        5; // baseline at 2026-08-17 (T-66 l10n sprint)
+        6; // baseline at 2026-09-04 (includes baseDeposit/extraDeposit interpolation false positives)
     if (offenders.length > hardcodedTextThreshold) {
       // Print the first 30 so the failure log is actionable.
       final shown = offenders.take(30).map((o) => '  $o').join('\n');

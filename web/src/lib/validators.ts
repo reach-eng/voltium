@@ -246,7 +246,10 @@ export const sendNotificationSchema = z.object({
   // every "System" send failed silently with a 422 toast while the
   // 5 other types succeeded. The NotificationType type was also
   // updated to match (notification.types.ts).
-  type: z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SYSTEM']).default('INFO'),
+  type: z.preprocess(
+    (val) => (typeof val === 'string' ? val.toUpperCase() : val),
+    z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SYSTEM'])
+  ).default('INFO'),
   riderIds: z.array(z.string()).optional(),
   // P1-13/P2-11 (2026-08-05 ops audit): the legacy singular `riderId` was
   // read straight off the raw body with no validation — a non-string value
@@ -257,15 +260,29 @@ export const sendNotificationSchema = z.object({
 });
 
 // ==================== ADMIN - OFFERS ====================
-export const createOfferSchema = z.object({
-  title: z.string().min(2, 'Title is required').max(200),
-  description: z.string().min(5, 'Description is required').max(2000),
-  validFrom: z.string().min(1, 'validFrom is required'),
-  validUntil: z.string().min(1, 'validUntil is required'),
-  isSponsored: z.boolean().optional().default(false),
-  isActive: z.boolean().optional().default(true),
-  icon: z.string().max(100).optional(),
-});
+export const createOfferSchema = z
+  .object({
+    title: z.string().min(2, 'Title is required').max(200),
+    description: z.string().min(5, 'Description is required').max(2000),
+    validFrom: z.string().min(1, 'validFrom is required'),
+    validUntil: z.string().min(1, 'validUntil is required'),
+    isSponsored: z.boolean().optional().default(false),
+    isActive: z.boolean().optional().default(true),
+    icon: z.string().max(100).optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom).getTime();
+      const until = new Date(val.validUntil).getTime();
+      if (!isNaN(from) && !isNaN(until) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
+    }
+  });
 
 // ==================== ADMIN - COUPONS ====================
 // P1: PERCENTAGE discountValue is a percent (stored as-is), not money —
@@ -296,8 +313,19 @@ export const createCouponSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['discountValue'],
-        message: 'PERCENTAGE discountValue cannot exceed 100',
+        message: 'Percentage discount cannot exceed 100%',
       });
+    }
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom).getTime();
+      const until = new Date(val.validUntil).getTime();
+      if (!isNaN(from) && !isNaN(until) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
     }
   });
 
@@ -319,8 +347,19 @@ export const updateCouponSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['discountValue'],
-        message: 'PERCENTAGE discountValue cannot exceed 100',
+        message: 'Percentage discount cannot exceed 100%',
       });
+    }
+    if (val.validFrom && val.validUntil) {
+      const from = new Date(val.validFrom).getTime();
+      const until = new Date(val.validUntil).getTime();
+      if (!isNaN(from) && !isNaN(until) && until < from) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['validUntil'],
+          message: 'validUntil must be after or equal to validFrom',
+        });
+      }
     }
   });
 

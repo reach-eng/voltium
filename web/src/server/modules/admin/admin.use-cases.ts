@@ -62,6 +62,18 @@ export const adminUseCases = {
       throw new Error('Admin not found');
     }
 
+    if (
+      existing.role === 'SUPER_ADMIN' &&
+      existing.isActive &&
+      ((params.isActive !== undefined && !params.isActive) ||
+        (params.role !== undefined && params.role !== 'SUPER_ADMIN'))
+    ) {
+      const superAdminCount = await adminRepository.count({ role: 'SUPER_ADMIN', isActive: true });
+      if (superAdminCount <= 1) {
+        throw new Error('Cannot deactivate or demote the last active SUPER_ADMIN');
+      }
+    }
+
     const admin = await adminRepository.update(id, params);
 
     await logAdminAction({

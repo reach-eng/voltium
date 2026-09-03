@@ -32,18 +32,16 @@ export const notificationService = {
         ? (rawUpper as any)
         : (TYPE_MAP[rawUpper] || 'INFO');
 
-      // 1 & 2. Save notification to DB (if title/message present) and fetch rider FCM token concurrently
+      // 1 & 2. Save notification to DB and fetch rider FCM token concurrently
       const [_, rider] = await Promise.all([
-        (title || message)
-          ? db.notification.create({
-              data: {
-                riderId,
-                title,
-                message,
-                type: sanitizedType,
-              },
-            })
-          : Promise.resolve(null),
+        db.notification.create({
+          data: {
+            riderId,
+            title: title || 'Notification',
+            message: message || '',
+            type: sanitizedType,
+          },
+        }),
         db.rider.findUnique({
           where: { id: riderId },
           select: { fcmToken: true },

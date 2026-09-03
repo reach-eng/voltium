@@ -118,6 +118,21 @@ List<_TierSpec> _parseAppTypography(File file) {
       currentFamily = null;
       continue;
     }
+    if (raw.trim().startsWith(');') && currentTier != null) {
+      if (currentSize != null && currentWeight != null) {
+        specs.add(_TierSpec(
+          tier: currentTier,
+          fontSize: currentSize,
+          fontWeight: currentWeight,
+          fontFamily: currentFamily,
+        ));
+      }
+      currentTier = null;
+      currentSize = null;
+      currentWeight = null;
+      currentFamily = null;
+      continue;
+    }
     final size = sizeRe.firstMatch(raw);
     if (size != null && currentTier != null) {
       currentSize = int.parse(size.group(1)!);

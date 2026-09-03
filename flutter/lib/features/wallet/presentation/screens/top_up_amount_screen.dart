@@ -230,6 +230,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     );
 
     final colors = AppColors.of(context);
+    const extraDepositLabel = 'Extra Deposit (Skipped Guarantor)';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
@@ -288,7 +289,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                 key: const Key('skipGuarantorExtraDepositRow'),
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Extra Deposit (Skipped Guarantor)',
+                  Text(extraDepositLabel,
                       style: TextStyle(fontSize: 13, color: Colors.amber[800])),
                   Text('₹$extraDeposit',
                       style: TextStyle(

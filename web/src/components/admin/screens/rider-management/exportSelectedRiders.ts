@@ -9,10 +9,11 @@ import type { Rider } from './types';
  */
 export function buildSelectedRiderCsv(riders: Rider[], selectedIds: Set<string>): string {
   const header = 'Rider ID,Name,Phone,State,KYC Status';
+  const escapeCsv = (val: string) => `"${val.replace(/"/g, '""')}"`;
   const rows = riders
     .filter((r) => selectedIds.has(r.id))
     .map((r) =>
-      [r.riderId, `"${r.fullName || ''}"`, r.phone, r.state, r.kycStatus].join(',')
+      [r.riderId, escapeCsv(r.fullName || ''), r.phone, r.state, r.kycStatus].join(',')
     );
   return [header, ...rows].join('\n');
 }

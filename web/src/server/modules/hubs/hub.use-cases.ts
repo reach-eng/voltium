@@ -157,7 +157,7 @@ export const hubUseCases = {
 
   async bulkDelete(ids: string[], actorId: string) {
     const hubsWithVehicles = await db.hub.findMany({
-      where: { id: { in: ids }, deletedAt: null, vehicles: { some: {} } },
+      where: { id: { in: ids }, deletedAt: null, vehicles: { some: { deletedAt: null } } },
       select: { id: true },
     });
     if (hubsWithVehicles.length > 0) {

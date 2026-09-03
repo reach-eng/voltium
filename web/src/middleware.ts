@@ -21,6 +21,23 @@ export async function middleware(request: NextRequest) {
 
   // P0-1: Maintenance Mode Enforcement for rider traffic
   const pathname = request.nextUrl.pathname;
+
+  // API Version Validation
+  if (pathname.startsWith('/api/')) {
+    const pathMatch = pathname.match(/^\/api\/(v\d+)\//);
+    if (pathMatch && pathMatch[1] !== 'v1') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNSUPPORTED_API_VERSION',
+            message: `API version ${pathMatch[1]} is not supported`,
+          },
+        },
+        { status: 400 }
+      );
+    }
+  }
   if (
     (pathname.startsWith('/api/rider/') || pathname.startsWith('/api/auth/')) &&
     pathname !== '/api/rider/maintenance-status'
@@ -68,6 +85,11 @@ export async function middleware(request: NextRequest) {
   Object.entries(getEdgeSecurityHeaders(nonce)).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('Api-Version', 'v1');
+    response.headers.set('X-Api-Version', '1.0.0');
+  }
 
   // ── CORS ────────────────────────────────────────────────────────────────
   const origin = request.headers.get('origin');

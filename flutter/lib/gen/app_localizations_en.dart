@@ -1486,7 +1486,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtproofTopUpWillBeInstant(String fee) {
-    return 'Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹$fee) gateway fee will be added to your top up amount.';
+    return 'Top up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top up amount.';
   }
 
   @override
@@ -1499,11 +1499,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txtproofZeroGatewayFee => 'Ã¢â€šÂ¹0 (Paid by Voltium)';
+  String get txtproofZeroGatewayFee => '₹0 (Paid by Voltium)';
 
   @override
   String get txtproofTopUpWillBeInstantCovered =>
-      'Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).';
+      'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).';
 
   @override
   String get txtchangePhoto => 'Change Photo';
@@ -2146,7 +2146,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get txtverifying => 'VerifyingÃ¢â‚¬Â¦';
+  String get txtverifying => 'Verifying…';
 
   @override
   String get txtverifyAndProceed => 'Verify & Proceed';
@@ -2217,12 +2217,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String txtminRechargeNotice(String amount) {
-    return 'A minimum recharge of Ã¢â€šÂ¹$amount is required to proceed further.';
+    return 'A minimum recharge of ₹$amount is required to proceed further.';
   }
 
   @override
   String txtlowBalanceWarningNotice(int amount) {
-    return 'Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹$amount.';
+    return 'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹$amount.';
   }
 
   @override
@@ -2296,17 +2296,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String txtrentDebitNoticeShortfall(
       String rent, String balance, String shortfall) {
-    return 'Rent of Ã¢â€šÂ¹$rent will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹$balance (shortfall: Ã¢â€šÂ¹$shortfall).';
+    return 'Rent of ₹$rent will be debited automatically. Your current wallet balance is ₹$balance (shortfall: ₹$shortfall).';
   }
 
   @override
   String txtrentDebitNoticeSufficient(String rent, String balance) {
-    return 'Rent of Ã¢â€šÂ¹$rent will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹$balance is sufficient.';
+    return 'Rent of ₹$rent will be debited tomorrow 6 AM. Wallet balance ₹$balance is sufficient.';
   }
 
   @override
   String txttopUpAmountAction(String amount) {
-    return 'Top up Ã¢â€šÂ¹$amount';
+    return 'Top up ₹$amount';
   }
 
   @override

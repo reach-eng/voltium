@@ -24,6 +24,7 @@ vi.mock('@/lib/db', () => ({
     shift: {
       create: vi.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'shf_1', ...data })),
       update: vi.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'shf_1', ...data })),
+      delete: vi.fn().mockResolvedValue({ id: 'shf_1' }),
     },
     rentalLease: {
       count: vi.fn().mockResolvedValue(0),

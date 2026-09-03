@@ -1,6 +1,14 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { invalidateCache } from '@/lib/cache';
+
+function normalizeValidUntil(val: string | Date): Date {
+  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    return new Date(`${val}T23:59:59.999Z`);
+  }
+  return new Date(val);
+}
 
 export const offerUseCases = {
   async listAdmin(page: number, limit: number, search?: string | null) {
@@ -47,12 +55,13 @@ export const offerUseCases = {
         title: data.title,
         description: data.description || '',
         validFrom: new Date(data.validFrom),
-        validUntil: new Date(data.validUntil),
+        validUntil: normalizeValidUntil(data.validUntil),
         isSponsored: data.isSponsored,
         isActive: data.isActive,
         icon: data.icon ?? null,
       },
     });
+    invalidateCache('admin:offers:*');
     createAuditLog({
       actorId,
       action: 'offer.create',
@@ -66,8 +75,9 @@ export const offerUseCases = {
   async update(id: string, data: Record<string, unknown>, actorId: string) {
     const updateData = { ...data };
     if (updateData.validFrom) updateData.validFrom = new Date(updateData.validFrom as string);
-    if (updateData.validUntil) updateData.validUntil = new Date(updateData.validUntil as string);
+    if (updateData.validUntil) updateData.validUntil = normalizeValidUntil(updateData.validUntil as string | Date);
     const offer = await db.offer.update({ where: { id }, data: updateData });
+    invalidateCache('admin:offers:*');
     createAuditLog({
       actorId,
       action: 'offer.update',
@@ -80,6 +90,7 @@ export const offerUseCases = {
 
   async delete(id: string, actorId: string) {
     await db.offer.delete({ where: { id } });
+    invalidateCache('admin:offers:*');
     createAuditLog({ actorId, action: 'offer.delete', entity: 'offer', entityId: id }).catch((e) =>
       logger.error('Audit log failed', e)
     );

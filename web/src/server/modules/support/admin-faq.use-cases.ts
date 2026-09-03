@@ -87,13 +87,16 @@ export const adminFaqUseCases = {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= allFaqs.length) return allFaqs;
 
-    const currentFaq = allFaqs[index];
     const targetFaq = allFaqs[targetIndex];
+    const reordered = [...allFaqs];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
 
-    await db.$transaction([
-      db.faq.update({ where: { id: currentFaq.id }, data: { order: targetFaq.order } }),
-      db.faq.update({ where: { id: targetFaq.id }, data: { order: currentFaq.order } }),
-    ]);
+    const updates = reordered.map((faq, newOrder) =>
+      db.faq.update({ where: { id: faq.id }, data: { order: newOrder } })
+    );
+
+    await db.$transaction(updates);
 
     createAuditLog({
       actorId,

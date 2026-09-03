@@ -13,6 +13,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { notificationService } from '@/lib/notification-service';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { CreateTicketDto, TicketReplyDto } from './support.schemas';
+import { validateTicketTransition, type TicketStatus } from './ticket-state-machine';
 
 export const supportUseCases = {
   async createTicket(riderDbId: string, input: CreateTicketDto) {
@@ -65,6 +66,15 @@ export const supportUseCases = {
   },
 
   async updateTicket(ticketId: string, input: Record<string, unknown>) {
+    if (input.status) {
+      const existing = await db.supportTicket.findUnique({
+        where: { id: ticketId },
+        select: { status: true },
+      });
+      if (existing) {
+        validateTicketTransition(existing.status as TicketStatus, input.status as TicketStatus);
+      }
+    }
     // P1: `assignedTo` was free text — typos/deleted admins produced dangling
     // assignments. Resolve against live admins: set the FK pointer alongside
     // the legacy string (UI compat). Unknown ids are rejected, not stored.
@@ -143,22 +153,24 @@ export const supportUseCases = {
       ...(status ? { status: status as Prisma.SupportTicketWhereInput['status'] } : {}),
     };
 
-    const [tickets, total, openCount, inProgressCount, resolvedCount, closedCount] = await Promise.all([
-      db.supportTicket.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          rider: { select: { fullName: true, riderId: true, phone: true } },
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      db.supportTicket.count({ where }),
-      db.supportTicket.count({ where: { ...searchWhere, status: 'OPEN' } }),
-      db.supportTicket.count({ where: { ...searchWhere, status: 'IN_PROGRESS' } }),
-      db.supportTicket.count({ where: { ...searchWhere, status: 'RESOLVED' } }),
-      db.supportTicket.count({ where: { ...searchWhere, status: 'CLOSED' } }),
-    ]);
+    const [tickets, total, openCount, inProgressCount, waitingOnRiderCount, resolvedCount, closedCount] =
+      await Promise.all([
+        db.supportTicket.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            rider: { select: { fullName: true, riderId: true, phone: true } },
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        db.supportTicket.count({ where }),
+        db.supportTicket.count({ where: { ...searchWhere, status: 'OPEN' } }),
+        db.supportTicket.count({ where: { ...searchWhere, status: 'IN_PROGRESS' } }),
+        db.supportTicket.count({ where: { ...searchWhere, status: 'WAITING_ON_RIDER' } }),
+        db.supportTicket.count({ where: { ...searchWhere, status: 'RESOLVED' } }),
+        db.supportTicket.count({ where: { ...searchWhere, status: 'CLOSED' } }),
+      ]);
 
     const formatted = tickets.map((t) => ({
       id: t.id,
@@ -172,11 +184,6 @@ export const supportUseCases = {
       message: t.message,
       status: t.status,
       assignedTo: t.assignedTo,
-      // AUDIT-RECON 2026-09-02 batch 6 P0-4: include ticket-level
-      // attachments (comma-separated URL list per the rider app)
-      // so the admin can see evidence photos in the list row + the
-      // detail dialog. The DB column was always populated; the
-      // response was previously stripping it.
       attachments: t.attachments,
       resolvedAt: t.resolvedAt,
       createdAt: t.createdAt,
@@ -186,9 +193,10 @@ export const supportUseCases = {
     return {
       tickets: formatted,
       statusCounts: {
-        all: openCount + inProgressCount + resolvedCount + closedCount,
+        all: openCount + inProgressCount + waitingOnRiderCount + resolvedCount + closedCount,
         OPEN: openCount,
         IN_PROGRESS: inProgressCount,
+        WAITING_ON_RIDER: waitingOnRiderCount,
         RESOLVED: resolvedCount,
         CLOSED: closedCount,
       },

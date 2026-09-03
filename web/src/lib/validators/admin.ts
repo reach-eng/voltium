@@ -252,10 +252,14 @@ export const updateLegalAdminSchema = z
   .object({
     type: z.enum(LEGAL_DOCUMENT_KEYS as [string, ...string[]]),
     title: z.string().max(200).optional(),
-    content: z.string().max(100000).optional(),
+    content: z.string().min(1, 'content is required').max(100000).optional(),
     isActive: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => data.content !== undefined || data.isActive !== undefined, {
+    message: 'content is required unless toggling isActive',
+    path: ['content'],
+  });
 
 // ==================== ADMIN - SETTINGS UPDATE (new, strict wrap) ====================
 // Same pattern as `updateLegalAdminSchema`. The shared

@@ -184,7 +184,7 @@ describe('offers (thin module) — smoke tests (#22.1)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           validFrom: new Date('2026-01-01'),
-          validUntil: new Date('2026-12-31'),
+          validUntil: new Date('2026-12-31T23:59:59.999Z'),
           isSponsored: true,
           isActive: true,
         }),
@@ -203,7 +203,7 @@ describe('offers (thin module) — smoke tests (#22.1)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           validFrom: new Date('2026-02-01'),
-          validUntil: new Date('2026-06-01'),
+          validUntil: new Date('2026-06-01T23:59:59.999Z'),
         }),
       })
     );
