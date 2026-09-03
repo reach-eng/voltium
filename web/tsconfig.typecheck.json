@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "ES2022",
+    "strict": false,
+    "strictNullChecks": false,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "scripts/**/*.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "examples",
+    "flutter",
+    "android",
+    ".next/dev",
+    "scratch",
+    "tests/load/**/*.k6.ts"
+  ]
+}

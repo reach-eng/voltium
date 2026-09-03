@@ -37,6 +37,10 @@ UNGUARDED_TEST_MODE=""
 while IFS= read -r file; do
   # Check lines with TEST_MODE in the file
   while IFS= read -r line; do
+    # Skip full comment lines
+    if [[ "$line" =~ ^[[:space:]]*// ]]; then
+      continue
+    fi
     if [[ "$line" == *"TEST_MODE"* ]]; then
       if [[ "$line" != *"!kReleaseMode"* && "$line" != *"kReleaseMode"* ]]; then
         UNGUARDED_TEST_MODE="${UNGUARDED_TEST_MODE}${file}: ${line}\n"
@@ -99,6 +103,16 @@ if [ -z "$DEV_ADMIN_CHECK" ] || [ -z "$TEST_OTP_CHECK" ]; then
   FAILED=1
 else
   echo "PASS: env.ts gates ENABLE_DEV_ADMIN_LOGIN and ENABLE_TEST_OTP"
+fi
+echo ""
+
+# 7. No DATABASE_OFFLINE references in production web/src/
+echo "Checking Gate 7: No DATABASE_OFFLINE references in production web/src/..."
+if bash "$SCRIPT_DIR/check-no-database-offline.sh"; then
+  echo "PASS: No DATABASE_OFFLINE references in web/src/"
+else
+  echo "FAIL: check-no-database-offline.sh failed"
+  FAILED=1
 fi
 echo ""
 

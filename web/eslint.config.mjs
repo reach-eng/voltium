@@ -1,96 +1,74 @@
-import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
-import nextTypescript from 'eslint-config-next/typescript';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import nextPlugin from '@next/eslint-plugin-next';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactPlugin from 'eslint-plugin-react';
 
 const eslintConfig = [
-  ...nextCoreWebVitals,
-  ...nextTypescript,
   {
-    rules: {
-      // TypeScript rules — keep practical ones enabled
-      '@typescript-eslint/no-explicit-any': 'off', // pragmatic for repositories and handlers
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off', // pragmatic for API responses
-      '@typescript-eslint/ban-ts-comment': 'off', // needed for edge cases
-      '@typescript-eslint/prefer-as-const': 'off',
-
-      // React rules
-      'react-hooks/exhaustive-deps': 'off',
-      'react-hooks/purity': 'off',
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/rules-of-hooks': 'off',
-      'react-hooks/static-components': 'off',
-      'react-hooks/use-memo': 'off',
-      'react-hooks/preserve-manual-memoization': 'off',
-      'react-hooks/incompatible-library': 'off',
-      'react-hooks/immutability': 'off',
-      'react-hooks/globals': 'off',
-      'react-hooks/refs': 'off',
-      'react-hooks/error-boundaries': 'off',
-      'react-hooks/set-state-in-render': 'off',
-      'react-hooks/unsupported-syntax': 'off',
-      'react-hooks/config': 'off',
-      'react-hooks/gating': 'off',
-      'react-compiler/react-compiler': 'off',
-      'react/no-unescaped-entities': 'off',
-      'react/display-name': 'off',
-      'react/prop-types': 'off',
-
-      // Next.js rules
-      '@next/next/no-img-element': 'off',
-      '@next/next/no-html-link-for-pages': 'off',
-
-      // General JavaScript rules
-      'prefer-const': 'off',
-      'no-unused-vars': 'off',
-      'no-console': 'off',
-      'no-debugger': 'warn',
-      'no-empty': 'off',
-      'no-irregular-whitespace': 'off',
-      'no-case-declarations': 'off',
-      'no-fallthrough': 'off',
-      'no-mixed-spaces-and-tabs': 'error',
-      'no-redeclare': 'off',
-      'no-undef': 'off',
-      'no-unreachable': 'warn',
-      'no-useless-escape': 'off',
+    files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
+    plugins: {
+      '@next/next': nextPlugin,
+      '@typescript-eslint': tsPlugin,
+      'react-hooks': reactHooks,
+      'react': reactPlugin,
     },
-  },
-  {
-    files: ['tests/unit/**/*.ts', 'tests/unit/**/*.tsx', 'tests/**/*.test.ts', 'tests/**/*.ts'],
     languageOptions: {
-      globals: {
-        describe: 'readonly',
-        test: 'readonly',
-        it: 'readonly',
-        expect: 'readonly',
-        beforeAll: 'readonly',
-        afterAll: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        vi: 'readonly',
-        RequestInit: 'readonly',
-        HeadersInit: 'readonly',
-        Response: 'readonly',
-        Request: 'readonly',
-        console: 'readonly',
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
       },
     },
     rules: {
+      // Next.js recommended & core-web-vitals rules
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+
+      // React Hooks
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      // TypeScript & JS quality
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      'prefer-const': 'warn',
+      'no-debugger': 'error',
+      'no-unreachable': 'error',
+      'no-mixed-spaces-and-tabs': 'error',
+
+      // Pragmatic overrides for existing backend/DB/dynamic patterns
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/prefer-as-const': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/display-name': 'off',
+      'react/prop-types': 'off',
+      'no-console': 'off',
+      '@next/next/no-img-element': 'off',
+    },
+  },
+  {
+    files: ['src/app/layout.tsx'],
+    rules: {
+      '@next/next/no-page-custom-font': 'off',
+    },
+  },
+  {
+    files: ['tests/**/*.{ts,tsx,js,jsx}'],
+    rules: {
       '@typescript-eslint/no-unused-vars': 'off',
       'no-console': 'off',
     },
   },
   {
-    files: ['scripts/**/*.ts', 'scripts/**/*.js', 'scripts/**/*.mjs'],
+    files: ['scripts/**/*.{ts,js,mjs}'],
     rules: {
-      'no-console': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-console': 'off',
     },
   },
   {
@@ -100,42 +78,19 @@ const eslintConfig = [
       'out/**',
       'build/**',
       'coverage/**',
-      'coverage',
+      'coverage-integration/**',
+      'coverage-combined/**',
       'dist/**',
       'next-env.d.ts',
       'examples/**',
-      'skills',
+      'skills/**',
       'scratch/**',
       'flutter/**',
       'android/**',
-      'tests/load/**',
-      'tests/generate-tests.js',
-      'test-profile.ts',
-      'script.js',
-      'approve_rider.ts',
-      'check.ts',
-      'scripts/**',
-      '*.js',
-      '*.mjs',
-      '*.cjs',
-      '*.ts',
       'public/**',
     ],
-  },
-  {
-    // Next.js App Router uses src/app/layout.tsx, not pages/_document.js.
-    // The no-page-custom-font rule is a false positive for the App Router
-    // when the only <link rel="stylesheet"> in <head> targets Google Fonts.
-    files: ['src/app/layout.tsx'],
-    rules: {
-      '@next/next/no-page-custom-font': 'off',
-    },
-  },
-  {
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
   },
 ];
 
 export default eslintConfig;
+

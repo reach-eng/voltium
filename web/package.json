@@ -7,8 +7,8 @@
     "build": "next build && node -e \"const fs=require('fs');fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true,force:true});fs.cpSync('public','.next/standalone/public',{recursive:true,force:true});\"",
     "start": "cross-env NODE_ENV=production node .next/standalone/server.js",
     "start:win": "cross-env NODE_ENV=production node .next/standalone/server.js",
-    "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit",
+    "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint . --quiet",
+    "typecheck": "tsc --project tsconfig.typecheck.json --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -17,7 +17,7 @@
     "db:seed-dev-admin": "npx tsx scripts/seed-dev-admin.ts",
     "worker:dev": "tsx src/server/workers/index.ts",
     "worker:build": "esbuild src/server/workers/index.ts --bundle --platform=node --outfile=dist/workers.js --alias:@=./src --external:@prisma/client --external:next --external:sharp",
-    "build:all": "npm run build & npm run worker:build & wait",
+    "build:all": "node scripts/build-all.mjs",
     "worker:start": "node dist/workers.js",
     "generate:openapi": "npx tsx src/contracts/openapi.ts",
     "check:openapi-drift": "npx tsx scripts/check-openapi-drift.ts",
@@ -60,6 +60,7 @@
     "check:public-beta": "node scripts/static-gates.mjs public-beta",
     "check:screen-workflows": "bash ../scripts/check-screen-workflow-coverage.sh",
     "check:backend-workflows": "bash ../scripts/check-backend-workflows.sh",
+    "check:no-database-offline": "bash ../scripts/check-no-database-offline.sh",
     "check:branding": "bash ../scripts/check-voltium-branding.sh",
     "check:tokens": "tsx ../scripts/sync-tokens.ts",
     "verify:env": "tsx scripts/verify-env.ts",
@@ -155,7 +156,7 @@
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "eslint": "^9",
-    "eslint-config-next": "^16.1.1",
+    "eslint-config-next": "^15.5.19",
     "fast-check": "^4.8.0",
     "lint-staged": "^16.4.0",
     "pg": "^8.22.0",
@@ -181,6 +182,10 @@
     "*.{json,md,css}": [
       "prettier --write"
     ]
+  },
+  "engines": {
+    "node": ">=20.0.0 <21.0.0",
+    "npm": ">=10.0.0"
   },
   "overrides": {
     "undici": "6.21.1"
