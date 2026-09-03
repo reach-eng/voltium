@@ -17,20 +17,73 @@ console.log('🔄 Merging Unit & Integration Coverage Reports...');
 
 const map = createCoverageMap.createCoverageMap({});
 
+let unitMap = null;
+let intMap = null;
+
 if (fs.existsSync(unitCoveragePath)) {
   console.log('  └─ Loading unit coverage map...');
-  const unitMap = JSON.parse(fs.readFileSync(unitCoveragePath, 'utf8'));
+  unitMap = JSON.parse(fs.readFileSync(unitCoveragePath, 'utf8'));
   map.merge(unitMap);
 } else {
-  console.warn('  ⚠️ Unit coverage map not found at:', unitCoveragePath);
+  const msg = `Unit coverage map not found at: ${unitCoveragePath}`;
+  if (process.env.ALLOW_PARTIAL_COVERAGE !== '1') {
+    console.error(`❌ ${msg}`);
+    process.exit(1);
+  } else {
+    console.warn(`⚠️ ${msg}`);
+  }
 }
 
 if (fs.existsSync(integrationCoveragePath)) {
   console.log('  └─ Loading integration coverage map...');
-  const intMap = JSON.parse(fs.readFileSync(integrationCoveragePath, 'utf8'));
+  intMap = JSON.parse(fs.readFileSync(integrationCoveragePath, 'utf8'));
   map.merge(intMap);
 } else {
-  console.warn('  ⚠️ Integration coverage map not found at:', integrationCoveragePath);
+  const msg = `Integration coverage map not found at: ${integrationCoveragePath}`;
+  if (process.env.ALLOW_PARTIAL_COVERAGE !== '1') {
+    console.error(`❌ ${msg}`);
+    process.exit(1);
+  } else {
+    console.warn(`⚠️ ${msg}`);
+  }
+}
+
+// ─── V8 → Istanbul Seam Quantification ─────────────────────────
+if (unitMap && intMap) {
+  const normalize = (p) => p.replace(/\\/g, '/').toLowerCase();
+  const unitFiles = new Set(Object.keys(unitMap).map(normalize));
+  const intFiles = new Set(Object.keys(intMap).map(normalize));
+
+  const overlap = [...unitFiles].filter((f) => intFiles.has(f));
+  const intUnique = [...intFiles].filter((f) => !unitFiles.has(f));
+  const unitUnique = [...unitFiles].filter((f) => !intFiles.has(f));
+
+  let totalDrift = 0;
+  let measuredFiles = 0;
+
+  for (const [unitPath, unitData] of Object.entries(unitMap)) {
+    const norm = normalize(unitPath);
+    const intMatchKey = Object.keys(intMap).find((k) => normalize(k) === norm);
+    if (intMatchKey) {
+      const intData = intMap[intMatchKey];
+      const uStmts = Object.keys(unitData.statementMap || {}).length;
+      const iStmts = Object.keys(intData.statementMap || {}).length;
+      if (uStmts > 0) {
+        totalDrift += Math.abs(uStmts - iStmts) / uStmts;
+        measuredFiles++;
+      }
+    }
+  }
+
+  const avgDriftPct = measuredFiles > 0 ? ((totalDrift / measuredFiles) * 100).toFixed(2) : '0.00';
+
+  console.log('\n🧵 V8 → ISTANBUL COVERAGE SEAM QUANTIFICATION:');
+  console.log(`  Unit-tested files         : ${unitFiles.size}`);
+  console.log(`  Integration-tested files  : ${intFiles.size}`);
+  console.log(`  Overlapping files         : ${overlap.length}`);
+  console.log(`  Integration-unique files  : ${intUnique.length}`);
+  console.log(`  Unit-unique files         : ${unitUnique.length}`);
+  console.log(`  Sourcemap statement drift : ${avgDriftPct}% avg discrepancy across overlapping files`);
 }
 
 if (!fs.existsSync(combinedOutputDir)) {

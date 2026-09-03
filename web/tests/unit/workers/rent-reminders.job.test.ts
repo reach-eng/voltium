@@ -294,4 +294,46 @@ describe('Rent Reminders Job', () => {
     const txn = await testDb.transaction.findFirst({ where: { riderId } });
     expect(txn?.idempotencyKey).toMatch(/^rent:.+:period:0$/);
   });
+
+  it('F-04: should auto-debit active leases with status ACTIVE', async () => {
+    const { riderId, wallet, vehicleId, shiftId } = await setupEntities();
+
+    await testDb.wallet.update({
+      where: { id: wallet.id },
+      data: { balanceInPaise: 10000 }
+    });
+
+    const leaseId = uuidv4();
+    await testDb.rentalLease.create({
+      data: {
+        id: leaseId,
+        riderId,
+        shiftId,
+        vehicleId,
+        status: 'ACTIVE',
+        leaseDate: clock.now().toISOString().split('T')[0],
+        basePriceInPaise: 5000,
+        finalPriceInPaise: 5000,
+        startTime: '10:00',
+        nextRentDueAt: clock.now(),
+        periodNo: 1,
+      }
+    });
+
+    const result = await rentRemindersJob.process({ id: 'active-test' });
+    expect(result.checkedRentals).toBe(1);
+    expect(result.autoDebited).toBe(1);
+    expect(result.overdueDetected).toBe(0);
+
+    const updatedWallet = await testDb.wallet.findUnique({ where: { id: wallet.id } });
+    expect(updatedWallet?.balanceInPaise).toBe(5000);
+
+    const updatedLease = await testDb.rentalLease.findUnique({ where: { id: leaseId } });
+    expect(updatedLease?.periodNo).toBe(2);
+    expect(updatedLease?.status).toBe('ACTIVE');
+
+    const txn = await testDb.transaction.findFirst({ where: { riderId } });
+    expect(txn?.amountInPaise).toBe(5000);
+    expect(txn?.purpose).toBe('RENT_PAYMENT');
+  });
 });

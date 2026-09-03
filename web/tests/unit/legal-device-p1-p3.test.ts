@@ -271,7 +271,6 @@ describe('P1-12: syncState only writes whitelisted permission columns', () => {
     await deviceComplianceUseCases.syncState('rider_1', {
       locationGranted: true,
       cameraGranted: false,
-      // @ts-expect-error — unknown key is a type error now, proving the cast is gone
       nfcGranted: true,
     } as never);
     // Prisma update() takes a single { where, data } object arg

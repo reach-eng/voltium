@@ -122,7 +122,7 @@ describe('Auth — OTP Send', () => {
 
   it('generates OTP and returns exists=false for new rider', async () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     setupMocks({ existingRider: false });
 
     const result = await authUseCases.sendOtp(
@@ -131,7 +131,7 @@ describe('Auth — OTP Send', () => {
     );
 
     // 'exists' field removed to prevent user enumeration
-    expect(result.exists).toBeUndefined();
+    expect((result as any).exists).toBeUndefined();
     expect(result.otp).toBeDefined();
     expect(mockGenerateOtp).toHaveBeenCalledWith('9876543210');
     expect(mockDb.outboxEvent.create).toHaveBeenCalledWith(
@@ -141,7 +141,7 @@ describe('Auth — OTP Send', () => {
         }),
       })
     );
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 
   it('returns response without exists field for existing rider', async () => {
@@ -150,7 +150,7 @@ describe('Auth — OTP Send', () => {
     const result = await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-2' });
 
     // 'exists' field removed to prevent user enumeration
-    expect(result.exists).toBeUndefined();
+    expect((result as any).exists).toBeUndefined();
   });
 
   it('throws RateLimitError when IP rate limit exceeded', async () => {
@@ -174,13 +174,13 @@ describe('Auth — OTP Send', () => {
 
   it('includes OTP in dev mode response', async () => {
     const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     setupMocks({ existingRider: false });
 
     const result = await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-5' });
 
     expect(result.otp).toBe('123456');
-    process.env.NODE_ENV = originalEnv;
+    (process.env as any).NODE_ENV = originalEnv;
   });
 });
 
@@ -262,7 +262,7 @@ describe('Auth — OTP Verify', () => {
     );
   });
 
-  it('awards referral reward when referral code is provided', async () => {
+  it('attributes referredBy with NO immediate reward when referral code is provided (P0 2026-09-03: payout deferred to ACTIVE)', async () => {
     // Don't use setupMocks — set up mocks manually for this test to control findUnique queue
     mockCheckRateLimit.mockResolvedValue({ allowed: true });
     mockGenerateOtp.mockResolvedValue('123456');
@@ -279,10 +279,11 @@ describe('Auth — OTP Verify', () => {
       phone: '9876543210',
     });
 
-    // verifyOtp flow: phone lookup → create → wallet → referrer lookup → reward → relations fetch
+    // verifyOtp flow: phone lookup → create (with referredBy) → wallet → relations fetch.
+    // No referrer lookup / Reward mint at signup anymore — the single money
+    // path (processReferralReward / referral-reward.job) pays ₹200 on ACTIVE.
     mockDb.rider.findUnique
       .mockResolvedValueOnce(null) // no existing rider by phone
-      .mockResolvedValueOnce({ id: 'referrer-db-id', referralCode: 'CODE-ABCD' }) // referrer
       .mockResolvedValueOnce({
         // full rider with relations
         id: 'rider-db-id-123',
@@ -300,13 +301,12 @@ describe('Auth — OTP Verify', () => {
       referralCode: 'CODE-ABCD',
     });
 
-    expect(mockDb.reward.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        riderId: 'referrer-db-id',
-        title: 'Successful Referral',
-        points: 500,
-      }),
-    });
+    expect(mockDb.rider.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ referredBy: 'CODE-ABCD' }),
+      })
+    );
+    expect(mockDb.reward.create).not.toHaveBeenCalled();
   });
 
   it('throws when phone and OTP are both missing', async () => {

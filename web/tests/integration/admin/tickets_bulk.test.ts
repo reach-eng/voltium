@@ -5,8 +5,7 @@ describe('Admin API: POST /api/admin/tickets/bulk', () => {
   let cookie: string;
 
   beforeAll(async () => {
-    const login = await adminLogin({ role: 'super_admin' });
-    cookie = login.cookie;
+    cookie = await adminLogin();
   });
 
   it('should return 401 if missing auth', async () => {
@@ -34,7 +33,7 @@ describe('Admin API: POST /api/admin/tickets/bulk', () => {
     });
     
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = res.body;
     expect(data.success).toBe(true);
     expect(data.data).toHaveProperty('count');
   });

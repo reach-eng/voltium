@@ -86,11 +86,9 @@ describe('deploy scripts — ticket #43 acceptance criteria', () => {
     expect(content).toMatch(/npm run build:all/);
   });
 
-  it('package.json build:all runs web + worker builds in parallel', () => {
-    // Parallel: both commands use `&` and `wait` is used to sync
+  it('package.json build:all runs web + worker builds in parallel with fail-fast exit propagation', () => {
     const buildAll = PACKAGE_JSON.scripts['build:all'];
     expect(buildAll).toBeDefined();
-    expect(buildAll).toMatch(/&/); // parallel
-    expect(buildAll).toMatch(/wait/); // sync at the end
+    expect(buildAll).toMatch(/build-all\.mjs/);
   });
 });

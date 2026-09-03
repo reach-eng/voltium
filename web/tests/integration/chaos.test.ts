@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { db } from '@/lib/db';
-import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
-import { webhookHandler } from '@/server/modules/webhooks/webhook.handler';
 
 describe('Chaos Engineering & Resilience Tests', () => {
   const BASE_URL = 'http://127.0.0.1:8081';

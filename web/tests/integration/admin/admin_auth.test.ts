@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { api, adminLogin } from '../helpers';
-import { resolveAdminCredentials } from '../admin-auth-helper';
+import { resolveAdminCredentials } from '../../admin-auth-helper';
 
 describe('Admin Authentication Integration Tests', () => {
   const testEmail = 'admin@voltium.io';

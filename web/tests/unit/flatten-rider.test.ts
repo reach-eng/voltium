@@ -120,4 +120,30 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
     expect(flat.fcmToken).toBeUndefined();
     expect(flat.tokenVersion).toBeUndefined();
   });
+
+  test('F-10: should map accountStatus, rentalStatus, and planStatus correctly for CLOSED, SUSPENDED, RETURN_PENDING', () => {
+    const closedRider = {
+      ...mockRider,
+      lifecycleStatus: 'CLOSED',
+    };
+    const flatClosed = flattenRider(closedRider as any);
+    expect(flatClosed.accountStatus).toBe('CLOSED');
+    expect(flatClosed.rentalStatus).toBe('CLOSED');
+    expect(flatClosed.planStatus).toBe('NONE');
+
+    const suspendedRider = {
+      ...mockRider,
+      lifecycleStatus: 'SUSPENDED',
+    };
+    const flatSuspended = flattenRider(suspendedRider as any);
+    expect(flatSuspended.accountStatus).toBe('SUSPENDED');
+    expect(flatSuspended.rentalStatus).toBe('ACTIVE');
+
+    const returnPendingRider = {
+      ...mockRider,
+      lifecycleStatus: 'RETURN_PENDING',
+    };
+    const flatReturnPending = flattenRider(returnPendingRider as any);
+    expect(flatReturnPending.rentalStatus).toBe('RETURN_PENDING');
+  });
 });

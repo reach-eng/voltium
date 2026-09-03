@@ -9,7 +9,7 @@ import { DELETE } from '@/app/api/transaction/history/route';
 
 describe('Wallet Workflow Full-Stack Fixes Unit Tests', () => {
   describe('Transaction History Immutability', () => {
-    test('DELETE /api/transaction/history returns 403 Forbidden', async () => {
+    test('DELETE /api/transaction/history returns 405 Method Not Allowed', async () => {
       const req = new NextRequest('http://localhost:8081/api/transaction/history', {
         method: 'DELETE',
         headers: {
@@ -18,7 +18,8 @@ describe('Wallet Workflow Full-Stack Fixes Unit Tests', () => {
       });
 
       const res = await DELETE(req);
-      expect(res.status).toBe(403);
+      // P1: 405, not 403 — the collection is never deletable.
+      expect(res.status).toBe(405);
 
       const data = await res.json();
       expect(data.success).toBe(false);

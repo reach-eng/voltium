@@ -27,6 +27,8 @@ const session = {
   adminRole: 'SUPER_ADMIN',
 };
 
+const makeReq = () => new Request('http://localhost/api/admin/auth/me') as any;
+
 describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,7 +37,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
   it('returns 401 when unauthenticated', async () => {
     mocks.getAdminSession.mockResolvedValue(null);
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(401);
   });
@@ -52,7 +54,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
       adminPermissions: ['riders_view'],
     });
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -76,7 +78,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
       password: '$argon2id$v=19$m=65536$c29tZXNhbHQ$eGhhc2g',
     });
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -95,7 +97,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
       adminPermissions: [],
     });
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(403);
   });
@@ -104,7 +106,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
     mocks.getAdminSession.mockResolvedValue(session);
     mocks.getMe.mockRejectedValue(new Error('connection refused'));
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(503);
     const body = await res.json();
@@ -115,7 +117,7 @@ describe('GET /api/admin/auth/me (P0-8 / TG-5 / TG-6)', () => {
     mocks.getAdminSession.mockResolvedValue(session);
     mocks.getMe.mockResolvedValue(null);
 
-    const res = await GET(new Request('http://localhost/api/admin/auth/me'));
+    const res = await GET(makeReq());
 
     expect(res.status).toBe(401);
   });

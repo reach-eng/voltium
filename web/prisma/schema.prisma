@@ -39,6 +39,8 @@ model Admin {
   // the assigner on one incident and the resolver on another.
   incidentsAssigned Incident[]           @relation("IncidentAssignedAdmin")
   incidentsResolved Incident[]           @relation("IncidentResolvedByAdmin")
+  // P1: back-relation for SupportTicket.assignedToId (mirrors incidents).
+  ticketsAssigned SupportTicket[]        @relation("TicketAssignedAdmin")
 
   @@index([role])
   @@index([email])
@@ -143,6 +145,9 @@ model Vehicle {
   @@index([vehicleId])
   @@index([hubId, status])
   @@index([currentRiderId])
+  // P1: soft-delete filter is injected into every vehicle read (db.ts) —
+  // without this index those reads seq-scan.
+  @@index([deletedAt])
   @@map("vehicles")
 }
 
@@ -159,6 +164,8 @@ model Shift {
   deletedAt   DateTime?
   leases      RentalLease[]
 
+  // P1: soft-delete filter index (see vehicles).
+  @@index([deletedAt])
   @@map("shifts")
 }
 
@@ -183,6 +190,8 @@ model RentalPlan {
   // PR-P3.2: back-relation for Rider.currentPlanRef
   currentPlanRiders      Rider[]        @relation("RiderCurrentPlan")
 
+  // P1: soft-delete filter index (see vehicles).
+  @@index([deletedAt])
   @@map("rental_plans")
 }
 
@@ -240,7 +249,12 @@ model Rider {
   teamLeaderId            String?
   emergencyContact        String?
   referralCode            String                 @unique
+  // P1: referral chain was an unenforced free-text column (typos created
+  // dangling referrals). Self-FK to the referrer's referralCode; deleting a
+  // referrer nulls the link (history keeps the referee row).
   referredBy              String?
+  referredByRider         Rider?                 @relation("ReferralChain", fields: [referredBy], references: [referralCode], onDelete: SetNull)
+  referralsGiven          Rider[]                @relation("ReferralChain")
   locationGranted         Boolean                @default(false)
   batteryGranted          Boolean                @default(false)
   contactsGranted         Boolean                @default(false)
@@ -284,6 +298,7 @@ model Rider {
   // device is the source of truth for offline startup; the server
   // copy is the source of truth for cross-device sync.
   preferredLocale         String?
+  requiresHigherDeposit   Boolean                @default(false)
   currentPlanPrice        Int?
   pickupPhotoFront        String?
   pickupPhotoBack         String?
@@ -302,6 +317,7 @@ model Rider {
   incidents               Incident[]
   kycProfile              KycProfile?
   notifications           Notification[]
+  notificationDeliveries  NotificationDelivery[]
   permissions             RiderPermission[]
   adminLock               RiderAdminLock?
   pickupPhoto             RiderPickupPhoto?
@@ -332,6 +348,8 @@ model Rider {
   walletLedger            WalletLedger[]
   rewards                 Reward[]
   consents                Consent[]
+  // P1: back-relation for SyncQueue.riderId FK.
+  syncQueue               SyncQueue[]
 
   @@index([phone])
   @@index([riderId])
@@ -342,6 +360,12 @@ model Rider {
   @@index([teamLeaderId])
   @@index([createdAt])
   @@index([updatedAt])
+  // P1: hot worker/admin filters (lifecycleStatus sweeps) and the
+  // soft-delete predicate injected into every rider read had no indexes.
+  @@index([lifecycleStatus])
+  @@index([deletedAt])
+  // P1: search-by-email seq-scanned (non-unique: dupes allowed, index only).
+  @@index([email])
   @@map("riders")
 }
 
@@ -353,6 +377,9 @@ model Consent {
   policyVersion String   @default("public-beta-v1")
   source        String   @default("DEVICE") // 'DEVICE' | 'SERVER'
   createdAt     DateTime @default(now())
+  // P1: forensics/purge ordering previously relied on createdAt only.
+  // Nullable so existing rows migrate without a backfill.
+  updatedAt     DateTime? @updatedAt
 
   rider Rider @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
@@ -385,7 +412,11 @@ model VehicleReturn {
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   rider               Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  vehicle             Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
+  // P1: was Cascade — deleting a vehicle wiped its leases/tickets/returns
+  // (operational + financial history). Restrict like Vehicle.hubId: retire
+  // the vehicle (soft-delete) instead; raw-SQL hard deletes are blocked
+  // while history references it.
+  vehicle             Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Restrict)
 
   @@index([riderId])
   @@index([vehicleId])
@@ -453,6 +484,8 @@ model Guarantor {
 
   @@index([riderId])
   @@index([status])
+  // P1: soft-delete filter index (see vehicles).
+  @@index([deletedAt])
   @@map("guarantors")
 }
 
@@ -553,7 +586,8 @@ model RentalLease {
   updatedAt         DateTime     @updatedAt
   rider             Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
   shift             Shift        @relation(fields: [shiftId], references: [id], onDelete: Restrict)
-  vehicle           Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
+  // P1: was Cascade (see VehicleReturns note) — lease history survives the vehicle.
+  vehicle           Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Restrict)
 
   @@unique([vehicleId, shiftId, leaseDate])
   @@index([riderId, leaseDate])
@@ -598,10 +632,14 @@ model Transaction {
   approvedAt      DateTime?
   rejectionReason String?
   idempotencyKey  String?                @unique
+  // P1: reversal chain was an unenforced free-text column. Self-FK makes
+  // REVERSED status traceable and blocks dangling reversal links.
   reversedTxnId   String?
   createdAt       DateTime               @default(now())
   depositRecord   DepositRecord?
   rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Restrict)
+  reversedTxn     Transaction?           @relation("ReversalChain", fields: [reversedTxnId], references: [id], onDelete: SetNull)
+  reversals       Transaction[]          @relation("ReversalChain")
   breakdowns      TransactionBreakdown[]
   ledgerEntries   WalletLedger[]
 
@@ -614,6 +652,8 @@ model Transaction {
   @@index([riderId, createdAt])
   // H6-2026-08-13: index for rider history with audience filter
   @@index([riderId, audience, createdAt])
+  // P1: reversal-chain lookup index.
+  @@index([reversedTxnId])
   @@map("transactions")
 }
 
@@ -625,8 +665,12 @@ model TransactionBreakdown {
   type          BreakdownType @default(CHARGE)
   sortOrder     Int           @default(0)
   createdAt     DateTime      @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt     DateTime?     @updatedAt
   transaction   Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
+  // P1: per-transaction breakdown fetch was an unindexed join.
+  @@index([transactionId])
   @@map("transaction_breakdowns")
 }
 
@@ -642,6 +686,10 @@ model SupportTicket {
   status           SupportTicketStatus @default(OPEN)
   troubleshootPath String?
   assignedTo       String?
+  // P1: live assignment pointer (mirrors Incident.assignedToId). The legacy
+  // `assignedTo` string stays for UI compat; new writes set both (see
+  // support.use-cases.updateTicket). Nulls when the admin is deleted.
+  assignedToId     String?
   resolvedAt       DateTime?
   isEscalated      Boolean             @default(false)
   escalatedAt      DateTime?
@@ -651,14 +699,19 @@ model SupportTicket {
   deletedAt        DateTime?
   attachments      String?
   rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  vehicle          Vehicle?            @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Cascade)
+  // P1: was Cascade (see VehicleReturns note) — ticket history survives the vehicle.
+  vehicle          Vehicle?            @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Restrict)
+  assignedAdmin    Admin?              @relation("TicketAssignedAdmin", fields: [assignedToId], references: [id], onDelete: SetNull)
   messages         TicketMessage[]
 
   @@index([status])
   @@index([riderId])
   @@index([priority])
   @@index([assignedTo])
+  @@index([assignedToId])
   @@index([riderId, status])
+  // P1: soft-delete filter index (see vehicles).
+  @@index([deletedAt])
   @@map("support_tickets")
 }
 
@@ -670,6 +723,8 @@ model TicketMessage {
   message     String
   attachments String?
   createdAt   DateTime      @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt   DateTime?     @updatedAt
   ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
@@ -687,7 +742,10 @@ model Notification {
   deepLink  String?
   isRead    Boolean              @default(false)
   createdAt DateTime             @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt DateTime?            @updatedAt
   rider     Rider                @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
 
   @@index([riderId])
   @@index([isRead])
@@ -709,10 +767,17 @@ model NotificationDelivery {
   deliveredAt    DateTime?
   error          String?
   createdAt      DateTime                   @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt      DateTime?                  @updatedAt
+  // P0 fix 2026-09-03: FKs were missing — deletes of Notification/Rider left
+  // orphans with no cascade/restrict and joins were unchecked.
+  notification   Notification               @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  rider          Rider                      @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([status])
   @@index([notificationId])
+  @@unique([notificationId, riderId, channel])
   @@map("notification_deliveries")
 }
 
@@ -757,6 +822,11 @@ model SyncQueue {
   retryCount Int        @default(0)
   createdAt  DateTime   @default(now())
   syncedAt   DateTime?
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt  DateTime?  @updatedAt
+  // P1: queue rows belonged to no one — rider purges left them behind.
+  // Cascade: a purged rider's unsynced queue is meaningless.
+  rider      Rider      @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([status])
@@ -802,6 +872,8 @@ model Offer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // P1: offer-list scans filtered on (isActive, validUntil).
+  @@index([isActive, validUntil])
   @@map("offers")
 }
 
@@ -820,6 +892,8 @@ model Coupon {
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
 
+  // P1: coupon-list scans filtered on (isActive, validUntil).
+  @@index([isActive, validUntil])
   @@map("coupons")
 }
 
@@ -833,8 +907,12 @@ model Reward {
   points     Int
   createdAt  DateTime  @default(now())
   redeemedAt DateTime?
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt  DateTime? @updatedAt
   rider      Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
+  // P1: rider reward-history scans were unindexed.
+  @@index([riderId])
   @@map("rewards")
 }
 
@@ -953,6 +1031,8 @@ model AnnouncementDelivery {
   deliveredAt    DateTime?
   readAt         DateTime?
   createdAt      DateTime                   @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt      DateTime?                  @updatedAt
   announcement   Announcement               @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   rider          Rider                      @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
@@ -1164,9 +1244,13 @@ model UserContact {
   phone     String
   email     String?
   createdAt DateTime @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt DateTime? @updatedAt
   rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
+  // P1: admin rider-contact list orders by name within a rider.
+  @@index([riderId, name])
   @@map("user_contacts")
 }
 
@@ -1179,6 +1263,8 @@ model UserCallLog {
   duration  Int
   timestamp DateTime
   createdAt DateTime @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt DateTime? @updatedAt
   rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
@@ -1195,6 +1281,8 @@ model UserLocation {
   speed     Float?
   isMocked  Boolean  @default(false)
   timestamp DateTime @default(now())
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt DateTime? @updatedAt
   rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
@@ -1376,6 +1464,8 @@ model IdempotencyKey {
   expiresAt DateTime
   createdAt DateTime          @default(now())
   status    IdempotencyStatus @default(PROCESSING)
+  // P1: forensics ordering (nullable — no backfill needed).
+  updatedAt DateTime?         @updatedAt
 
   @@index([expiresAt])
   @@index([status])

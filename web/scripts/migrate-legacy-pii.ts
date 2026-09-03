@@ -77,6 +77,12 @@ function isLegacyOrLowerVersion(cipherText: string | null | undefined, latestVer
   return parseInt(m[1], 10) < latestVersion;
 }
 
+const TABLE_TO_MODEL: Record<string, string> = {
+  kyc_profiles: 'kycProfile',
+  guarantors: 'guarantor',
+  riders: 'rider',
+};
+
 async function processColumn(
   col: PiiColumn,
   apply: boolean,
@@ -87,9 +93,10 @@ async function processColumn(
   let errors = 0;
 
   // Find the model on the db client
-  const model = (db as any)[col.table.replace(/_([a-z])/g, (_, c) => c.toUpperCase())];
+  const modelName = TABLE_TO_MODEL[col.table] || col.table;
+  const model = (db as any)[modelName];
   if (!model) {
-    logger.error(`Model not found: ${col.table}`);
+    logger.error(`Model not found: ${col.table} (tried ${modelName})`);
     return { scanned: 0, migrated: 0, errors: 1 };
   }
 

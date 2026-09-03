@@ -350,6 +350,14 @@ describe('Rider Lifecycle State Machine', () => {
     expect(isValidRiderTransition('RETURN_PENDING', 'CLOSED')).toBe(true);
   });
 
+  it('allows direct closure from ACTIVE → CLOSED', () => {
+    expect(isValidRiderTransition('ACTIVE', 'CLOSED')).toBe(true);
+  });
+
+  it('allows SUSPENDED → CLOSED', () => {
+    expect(isValidRiderTransition('SUSPENDED', 'CLOSED')).toBe(true);
+  });
+
   it('prevents skipping mandatory states', () => {
     expect(isValidRiderTransition('NEW', 'ACTIVE')).toBe(false);
   });

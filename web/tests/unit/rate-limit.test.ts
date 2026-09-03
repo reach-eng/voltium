@@ -54,10 +54,10 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = futureDate();
     let points = 0;
 
-    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+    vi.mocked(db.$queryRawUnsafe).mockImplementation((() => {
       points += 1;
       return Promise.resolve([{ points, resetAt: windowEnd }]);
-    });
+    }) as any);
 
     const r1 = await checkRateLimit('user:seq');
     expect(r1.remaining).toBe(59);
@@ -74,10 +74,10 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = futureDate();
     let points = 0;
 
-    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+    vi.mocked(db.$queryRawUnsafe).mockImplementation((() => {
       points = Math.min(points + 1, 4);
       return Promise.resolve([{ points, resetAt: windowEnd }]);
-    });
+    }) as any);
 
     const config = { windowMs: MINUTE, maxRequests: 3 };
 
@@ -103,10 +103,10 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = new Date(Date.now() + MINUTE);
     let points = 0;
 
-    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+    vi.mocked(db.$queryRawUnsafe).mockImplementation((() => {
       points += 1;
       return Promise.resolve([{ points, resetAt: windowEnd }]);
-    });
+    }) as any);
 
     const config = { windowMs: MINUTE, maxRequests: 1 };
 
@@ -154,11 +154,11 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = futureDate();
     let callCount = 0;
 
-    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+    vi.mocked(db.$queryRawUnsafe).mockImplementation((() => {
       callCount++;
       const points = Math.min(callCount, 61);
       return Promise.resolve([{ points, resetAt: windowEnd }]);
-    });
+    }) as any);
 
     for (let i = 0; i < 60; i++) {
       const r = await checkRateLimit('user:default');

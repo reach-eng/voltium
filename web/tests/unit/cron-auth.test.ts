@@ -181,3 +181,42 @@ describe('requireCronAuth — timing-safety spec (#47)', () => {
     expect(res).toBeNull();
   });
 });
+
+describe('F-21: /api/cron/announcements route auth protection', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it('fails closed with 503 when CRON_SECRET is unset', async () => {
+    const { GET } = await import('@/app/api/cron/announcements/route');
+    delete process.env.CRON_SECRET;
+    const req = mockRequest({ authorization: 'Bearer some-cron-token' });
+    const res = await GET(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.success).toBe(false);
+    expect(body.error).toContain('misconfigured');
+  });
+
+  it('rejects unauthenticated requests with 401 when authorization header is missing', async () => {
+    process.env.CRON_SECRET = 'super-secret-cron-key-16-chars';
+    const { GET } = await import('@/app/api/cron/announcements/route');
+    const req = mockRequest();
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects requests with wrong token with 401', async () => {
+    process.env.CRON_SECRET = 'super-secret-cron-key-16-chars';
+    const { GET } = await import('@/app/api/cron/announcements/route');
+    const req = mockRequest({ authorization: 'Bearer wrong-secret-token' });
+    const res = await GET(req);
+    expect(res.status).toBe(401);
+  });
+});

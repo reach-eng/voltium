@@ -2,11 +2,24 @@ import { db } from '../src/lib/db';
 import { hashPassword } from '../src/lib/password';
 
 async function main() {
+  // P0: refuse to run in production — this script upserts a SUPER_ADMIN
+  // with a caller-supplied password. Running it on prod (even with a
+  // "strong" password from env) is an accidental privilege escalation.
+  if (process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production') {
+    console.error('Refusing to run seed-dev-admin in production (APP_ENV/NODE_ENV=production). Use the admin UI or a reviewed migration.');
+    process.exit(1);
+  }
+
   const email = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@voltium.io';
   const password = process.env.ADMIN_PASSWORD;
 
   if (!password) {
     console.error('Error: ADMIN_PASSWORD environment variable is not set.');
+    process.exit(1);
+  }
+  // P0: length gate — matches web/prisma/seed.ts (≥16 chars).
+  if (password.length < 16) {
+    console.error('ADMIN_PASSWORD must be at least 16 characters (P0 gate).');
     process.exit(1);
   }
 

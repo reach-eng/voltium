@@ -112,7 +112,7 @@ describe('security-events — PII redaction in app logger and audit log (#45)', 
 
     const logEntry = capturedLog.find((e) => e.message.includes('test.nested'));
     const ctx = logEntry!.context as Record<string, unknown>;
-    const nested = ctx.context as { user: { email: string; phone: string } };
+    const nested = ctx.context as any;
     expect(nested.user.email).toBe('[REDACTED]');
     expect(nested.user.phone).toBe('[REDACTED]');
     expect(nested.action).toBe('login');

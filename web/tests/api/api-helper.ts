@@ -6,11 +6,11 @@ export let adminCookie: string | null = null;
 
 export async function initAdminAuth() {
   if (adminCookie) return;
-  try {
-    // P0-2: auto-login route is deleted — authenticate with real credentials.
-    adminCookie = await adminLoginTo(BASE);
-  } catch (err) {
-    console.error('Failed to log in as admin for API tests', err);
+  // P0-2: auto-login route is deleted — authenticate with real credentials.
+  // Fail hard if admin login fails so tests cannot go green-vacuous.
+  adminCookie = await adminLoginTo(BASE);
+  if (!adminCookie) {
+    throw new Error('initAdminAuth: adminLoginTo succeeded but returned empty adminCookie');
   }
 }
 
@@ -23,7 +23,10 @@ export async function api(
     ...(options.headers as any),
   };
 
-  if (adminCookie && path.startsWith('/api/admin')) {
+  if (path.startsWith('/api/admin')) {
+    if (!adminCookie) {
+      throw new Error(`Cannot request ${path} without adminCookie: admin authentication is required.`);
+    }
     headers['Cookie'] = adminCookie;
   }
 

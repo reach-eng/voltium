@@ -30,7 +30,7 @@ describe('Referral Bonus Math', () => {
       value: '25000',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
 
     const bonus = await getReferralBonusRupees();
     
@@ -47,7 +47,7 @@ describe('Referral Bonus Math', () => {
       value: '20000',
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    } as any);
 
     const bonus = await getReferralBonusRupees();
     

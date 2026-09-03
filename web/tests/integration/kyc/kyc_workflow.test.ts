@@ -71,7 +71,8 @@ describe('KYC Workflow Integration', () => {
   // 5. Path traversal attempt is rejected
   it('4 & 5. Path traversal attempt is rejected and containment enforced', async () => {
     const phone = generateRandomPhone();
-    const { token, id } = await api('/api/rider/kyc', {
+    const { token, id } = await riderLogin(phone);
+    const { status } = await api('/api/rider/kyc', {
       method: 'POST',
       token,
       json: {
@@ -85,7 +86,7 @@ describe('KYC Workflow Integration', () => {
       },
     });
     // Path traversal triggers validation failure or conflict
-    expect([400, 422, 403]).toContain(phone.status);
+    expect([400, 422, 403]).toContain(status);
   });
 
   // 6. KYC status becomes SUBMITTED

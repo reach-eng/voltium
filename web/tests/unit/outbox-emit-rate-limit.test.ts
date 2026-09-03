@@ -45,6 +45,8 @@ import {
   __forceEmitRateLimitOnForTests,
 } from '@/server/workers/outbox';
 
+const EventTypes: any = OutboxEventTypes;
+
 describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
   beforeEach(() => {
     mocks.outboxEvent.create.mockReset();
@@ -63,7 +65,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
   it('first 1,000 emits of WALLET_TOPUP_APPROVED in a minute succeed', async () => {
     for (let i = 0; i < 1000; i++) {
       await OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_APPROVED,
+        EventTypes.WALLET_TOPUP_APPROVED,
         { i, amountInPaise: 100 },
         3,
         undefined,
@@ -76,7 +78,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
   it('1,001st emit throws OutboxEmitRateLimitedError', async () => {
     for (let i = 0; i < 1000; i++) {
       await OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_APPROVED,
+        EventTypes.WALLET_TOPUP_APPROVED,
         { i },
         3,
         undefined,
@@ -86,7 +88,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     // The 1,001st emit for the same eventType must throw.
     await expect(
       OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_APPROVED,
+        EventTypes.WALLET_TOPUP_APPROVED,
         { over: 'limit' },
         3,
         undefined,
@@ -120,7 +122,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     // But WALLET_TOPUP_APPROVED still has its full 1,000 budget.
     await expect(
       OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_APPROVED,
+        EventTypes.WALLET_TOPUP_APPROVED,
         { ok: true },
         3,
         undefined,
@@ -173,7 +175,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     });
     for (let i = 0; i < 1000; i++) {
       await OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_REJECTED,
+        EventTypes.WALLET_TOPUP_REJECTED,
         { i },
         3,
         undefined,
@@ -183,7 +185,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     const before = createCount;
     await expect(
       OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_REJECTED,
+        EventTypes.WALLET_TOPUP_REJECTED,
         { over: 'limit' },
         3,
         undefined,
@@ -200,7 +202,7 @@ describe('OutboxService.emit — producer-side rate limit (D-P1-9)', () => {
     const huge = 'x'.repeat(70_000); // > 64KB cap
     await expect(
       OutboxService.emit(
-        OutboxEventTypes.WALLET_TOPUP_APPROVED,
+        EventTypes.WALLET_TOPUP_APPROVED,
         { data: huge },
         3,
         undefined,

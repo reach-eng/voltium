@@ -155,8 +155,8 @@ describe('completePickupVerification use case — precondition failures', () => 
     });
   });
 
-  it('throws PickupVerificationError(INVALID_STATE) when rider is not in PICKUP_SCHEDULED', async () => {
-    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'ACTIVE' });
+  it('throws PickupVerificationError(INVALID_STATE) when rider is in an invalid status (e.g. SUSPENDED)', async () => {
+    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'SUSPENDED' });
 
     await expect(completePickupVerification('rider-1', TWO_PHOTOS)).rejects.toMatchObject({
       name: 'PickupVerificationError',
@@ -164,6 +164,20 @@ describe('completePickupVerification use case — precondition failures', () => 
     });
 
     expect(mockSyncPickup).not.toHaveBeenCalled();
+  });
+
+  it('accepts rider in ACTIVE state (re-pickup scenario)', async () => {
+    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'ACTIVE' });
+
+    await completePickupVerification('rider-1', TWO_PHOTOS);
+    expect(mockSyncPickup).toHaveBeenCalled();
+  });
+
+  it('accepts rider in KYC_APPROVED state', async () => {
+    mockRiderFindUnique.mockResolvedValue({ ...PICKUP_RIDER, lifecycleStatus: 'KYC_APPROVED' });
+
+    await completePickupVerification('rider-1', TWO_PHOTOS);
+    expect(mockSyncPickup).toHaveBeenCalled();
   });
 });
 

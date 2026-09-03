@@ -45,7 +45,7 @@ describe('PR-111: dev OTP `111111` check is the LAST gate', () => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.APP_ENV = 'development';
     process.env.ENABLE_TEST_OTP = 'true';
     // Force in-memory store path
@@ -54,7 +54,7 @@ describe('PR-111: dev OTP `111111` check is the LAST gate', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as any).NODE_ENV = originalNodeEnv;
     process.env.APP_ENV = originalAppEnv;
     process.env.ENABLE_TEST_OTP = '';
     process.env.OTP_STORE_PROVIDER = '';
@@ -96,14 +96,14 @@ describe('PR-111: dev OTP `111111` check is the LAST gate (DB branch)', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.APP_ENV = 'development';
     process.env.ENABLE_TEST_OTP = 'true';
     process.env.OTP_STORE_PROVIDER = 'postgres';
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as any).NODE_ENV = originalNodeEnv;
     process.env.APP_ENV = originalAppEnv;
     process.env.ENABLE_TEST_OTP = '';
     process.env.OTP_STORE_PROVIDER = '';

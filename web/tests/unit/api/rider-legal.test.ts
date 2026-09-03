@@ -33,7 +33,7 @@ const mockDocs = [
 describe('GET /api/rider/legal — public legal documents', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(legalUseCases.list).mockResolvedValue(mockDocs);
+    vi.mocked(legalUseCases.list).mockResolvedValue(mockDocs as any);
   });
 
   it('returns the document list with type/title/content/updatedAt', async () => {

@@ -98,7 +98,7 @@ describe('auth — self-referral blocked (#52)', () => {
     }
   });
 
-  it('DOES create a Reward row when referrer is a different rider', async () => {
+  it('stores referredBy and creates NO immediate Reward — payout is deferred to ACTIVE via the referral job (P0 2026-09-03)', async () => {
     const referrerRider = {
       id: 'referrer-db-id',
       riderId: 'VF-RD-REFER',
@@ -116,11 +116,11 @@ describe('auth — self-referral blocked (#52)', () => {
     };
 
     // First call: findUnique(phone) → null (no existing rider for phone)
-    // Second call: findUnique(referralCode) → referrerRider
-    // Third call (post-create): findUnique(id) with include → newRider
+    // Second call (post-create): findUnique(id) with include → newRider
+    // (No referral-code lookup at signup anymore — referredBy is stored on
+    // create; the single money path pays when the referee reaches ACTIVE.)
     mockDb.rider.findUnique
-      .mockResolvedValueOnce(null) // sendOtp check
-      .mockResolvedValueOnce(referrerRider) // referral lookup
+      .mockResolvedValueOnce(null) // phone lookup
       .mockResolvedValueOnce(newRider); // post-create fetch with include
     mockDb.rider.create.mockResolvedValue(newRider);
     mockDb.wallet.create.mockResolvedValue({ id: 'wallet-1' });
@@ -132,14 +132,15 @@ describe('auth — self-referral blocked (#52)', () => {
       referralCode: 'REFERRER-CODE',
     });
 
-    // Verify a Reward was created for the referrer
-    expect(mockDb.reward.create).toHaveBeenCalledWith(
+    // referredBy is attributed on the new rider row …
+    expect(mockDb.rider.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          riderId: referrerRider.id, // rewards the REFERRER, not the new rider
-        }),
+        data: expect.objectContaining({ referredBy: 'REFERRER-CODE' }),
       })
     );
+    // … and NO Reward row is minted at signup (single money path pays ₹200
+    // via processReferralReward / referral-reward.job on first ACTIVE).
+    expect(mockDb.reward.create).not.toHaveBeenCalled();
   });
 });
 
@@ -163,7 +164,7 @@ describe('auth — sendOtp does NOT return exists field (#52)', () => {
     );
 
     // 'exists' must be undefined regardless of whether rider exists
-    expect(result.exists).toBeUndefined();
+    expect((result as any).exists).toBeUndefined();
   });
 
   it('sendOtp result has no exists property for new phone (new rider case)', async () => {
@@ -175,6 +176,6 @@ describe('auth — sendOtp does NOT return exists field (#52)', () => {
       { ip: '127.0.0.1', correlationId: 'test-2' }
     );
 
-    expect(result.exists).toBeUndefined();
+    expect((result as any).exists).toBeUndefined();
   });
 });

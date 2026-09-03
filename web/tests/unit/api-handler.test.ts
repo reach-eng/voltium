@@ -415,11 +415,14 @@ describe('withApiHandler — unknown errors', () => {
     await expectErrorResponse(wrapped, 500, 'SERVER_ERROR');
   });
 
-  it('includes error message in 500 response', async () => {
+  it('returns a GENERIC 500 message (raw internals never reach the client)', async () => {
+    // P1: unknown-error text (Prisma tables, constraint IDs, paths) is
+    // logged server-side with redactPii; the client gets a generic message.
     const handler = vi.fn().mockRejectedValue(new Error('Critical failure'));
     const wrapped = withApiHandler(handler);
-    const res = await wrapped(mockRequest());
-    expect(res.body.error.message).toContain('Critical failure');
+    const res: any = await wrapped(mockRequest());
+    expect(res.body.error.message).not.toContain('Critical failure');
+    expect(res.body.error.message).toBe('Internal Server Error');
   });
 });
 
@@ -461,7 +464,7 @@ describe('withApiHandler — middleware integration', () => {
     const wrapped = withApiHandler(middleware);
     const req = mockRequest();
 
-    const result = await wrapped(req);
+    const result: any = await wrapped(req);
     expect(result.status).toBe(401);
     expect(result.body.error.code).toBe('UNAUTHORIZED');
   });
@@ -470,7 +473,7 @@ describe('withApiHandler — middleware integration', () => {
     const middleware = vi.fn().mockRejectedValue(new ValidationError('Missing field'));
     const wrapped = withApiHandler(middleware);
 
-    const result = await wrapped(mockRequest());
+    const result: any = await wrapped(mockRequest());
     // errors.validation() returns 422, not 400
     expect(result.status).toBe(422);
     expect(result.body.error.code).toBe('VALIDATION_ERROR');
@@ -480,7 +483,7 @@ describe('withApiHandler — middleware integration', () => {
     const middleware = vi.fn().mockRejectedValue(new NotFoundError('Rider'));
     const wrapped = withApiHandler(middleware);
 
-    const result = await wrapped(mockRequest());
+    const result: any = await wrapped(mockRequest());
     expect(result.status).toBe(404);
     expect(result.body.error.code).toBe('NOT_FOUND');
   });

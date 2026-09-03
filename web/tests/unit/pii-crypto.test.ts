@@ -11,7 +11,7 @@ describe('pii-crypto', () => {
     delete process.env.PII_ENCRYPTION_KEY;
     delete process.env.ALLOW_DEV_PII_KEY;
     delete process.env.APP_ENV;
-    delete process.env.NODE_ENV;
+    delete (process.env as any).NODE_ENV;
   });
 
   it('should encrypt and decrypt correctly', () => {
@@ -56,7 +56,7 @@ describe('pii-crypto', () => {
   });
 
   it('throws in production when no PII key is set, even with NODE_ENV=production', async () => {
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     process.env.ALLOW_DEV_PII_KEY = 'true';
     vi.resetModules();
     const { encryptPii: prodEncrypt } = await import('@/lib/pii-crypto');
@@ -64,7 +64,7 @@ describe('pii-crypto', () => {
   });
 
   it('falls back to dev key in development when ALLOW_DEV_PII_KEY=true', async () => {
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.APP_ENV = 'development';
     process.env.ALLOW_DEV_PII_KEY = 'true';
     vi.resetModules();
@@ -76,7 +76,7 @@ describe('pii-crypto', () => {
   });
 
   it('throws in development when no PII key is set and ALLOW_DEV_PII_KEY is not set', async () => {
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.APP_ENV = 'development';
     vi.resetModules();
     const { encryptPii: devEncrypt } = await import('@/lib/pii-crypto');

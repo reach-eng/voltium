@@ -44,7 +44,7 @@ describe('PR-K.1 Rider lifecycle stage migration', () => {
 
   it('is idempotent — uses IF NOT EXISTS guards for enum + column + backfill', () => {
     // Enum creation guard (uses pg_type check)
-    expect(sql).toMatch(/CREATE\s+TYPE\s+"RiderLifecycleStage".*IF\s+NOT\s+EXISTS/s);
+    expect(sql).toMatch(/CREATE\s+TYPE\s+"RiderLifecycleStage"[\s\S]*IF\s+NOT\s+EXISTS/);
     // Column add guard (uses information_schema.columns check)
     expect(sql).toMatch(
       /SELECT\s+1\s+FROM\s+information_schema\.columns[\s\S]{0,200}ADD\s+COLUMN\s+"lifecycleStage"/
@@ -119,10 +119,10 @@ describe('PR-K.1 Rider lifecycle stage migration', () => {
     });
 
     it('maps outcome states (ACTIVE, CLOSED, SUSPENDED, RETURN_PENDING) to the right stage', () => {
-      expect(sql).toMatch(/WHEN\s+'ACTIVE'.*THEN\s+'ACTIVE'/s);
-      expect(sql).toMatch(/WHEN\s+'SUSPENDED'.*THEN\s+'PAUSED'/s);
-      expect(sql).toMatch(/WHEN\s+'RETURN_PENDING'.*THEN\s+'PAUSED'/s);
-      expect(sql).toMatch(/WHEN\s+'CLOSED'.*THEN\s+'CLOSED'/s);
+      expect(sql).toMatch(/WHEN\s+'ACTIVE'[\s\S]*THEN\s+'ACTIVE'/);
+      expect(sql).toMatch(/WHEN\s+'SUSPENDED'[\s\S]*THEN\s+'PAUSED'/);
+      expect(sql).toMatch(/WHEN\s+'RETURN_PENDING'[\s\S]*THEN\s+'PAUSED'/);
+      expect(sql).toMatch(/WHEN\s+'CLOSED'[\s\S]*THEN\s+'CLOSED'/);
     });
 
     it('maps in-progress states to IN_PROGRESS', () => {

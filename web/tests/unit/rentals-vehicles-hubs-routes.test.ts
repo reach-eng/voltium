@@ -2,7 +2,7 @@
  * TG (2026-08-05 rentals/vehicles/hubs audit) — route-level regression tests.
  *
  *   - P1.4:   admin rentals PUT validates the action via the closed Zod enum;
- *             a typo'd action is a 400 (the old `String.includes('RETURN')`
+ *             a typo'd action is a 422 (the old `String.includes('RETURN')`
  *             gate let e.g. RETURNX into the return bucket). The permission is
  *             derived from the VALIDATED action, not a string match.
  *   - P1.7/P3.15: admin vehicles DELETE returns 404 on an unknown id and 409
@@ -86,9 +86,10 @@ describe('P1.4: rentals PUT validates the action via a closed Zod enum', () => {
     );
   });
 
-  it('400s a typo\'d action that the old includes() gate would have bucketed', async () => {
+  it('422s a typo\'d action that the old includes() gate would have bucketed', async () => {
     const res = await rentalsPUT(makeRequest('/api/admin/rentals', { leaseId: 'L1', action: 'RETURNX' }));
-    expect(res.status).toBe(400);
+    // P1: Zod failures are 422 across the API (was 400 on this route).
+    expect(res.status).toBe(422);
     expect(m.executeLeaseAction).not.toHaveBeenCalled();
     // The permission gate was never reached for the invalid action
     expect(m.hasPermission).not.toHaveBeenCalledWith('OPERATIONS_ADMIN', 'rentals_return_inspection');

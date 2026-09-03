@@ -41,7 +41,7 @@ describe('Backup Lock Service Tests', () => {
       key: 'BACKUP_LOCK_STATUS',
       value: 'RESTORE_RUNNING',
       updatedAt: new Date(),
-    });
+    } as any);
 
     const result = await backupLockService.acquireLock('BACKUP_RUNNING', 'test-owner');
     expect(result).toBe(false);

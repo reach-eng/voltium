@@ -25,7 +25,7 @@ describe('POST /api/device/data — TEST_MODE dev-bypass gate', () => {
   it('rejects dev-bypass in staging environment even if TEST_MODE is true', async () => {
     process.env.TEST_MODE = 'true';
     process.env.APP_ENV = 'staging';
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
 
     const req = new NextRequest('http://localhost/api/device/data', {
       method: 'POST',

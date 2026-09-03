@@ -87,7 +87,7 @@ function makeTx() {
   m.db.$transaction = vi.fn(async (fn: (tx: any) => Promise<unknown>) => fn(m.tx));
 }
 
-const BOOKED_LEASE = {
+const BOOKED_LEASE: any = {
   id: 'L1',
   riderId: 'R1',
   vehicleId: 'V1',
@@ -188,7 +188,7 @@ describe('P1.1: executeLeaseAction CLOSE writes UTC endTime (P1.3)', () => {
   });
 
   it('frees the vehicle and clears the rider assignment, guarded', async () => {
-    const lease = { ...BOOKED_LEASE, status: 'RETURN_PENDING', rider: { lifecycleStatus: 'RETURN_PENDING' } };
+    const lease: any = { ...BOOKED_LEASE, status: 'RETURN_PENDING', rider: { lifecycleStatus: 'RETURN_PENDING' } };
     await rentalRepository.executeLeaseAction(lease, 'CLOSE');
     expect(m.tx.vehicle.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: 'AVAILABLE', assignedAt: null } })
@@ -202,7 +202,7 @@ describe('P1.1: executeLeaseAction CLOSE writes UTC endTime (P1.3)', () => {
   });
 
   it('writes endTime as UTC HH:MM (toISOString), not server-local time', async () => {
-    const lease = { ...BOOKED_LEASE, status: 'RETURN_PENDING', rider: { lifecycleStatus: 'RETURN_PENDING' } };
+    const lease: any = { ...BOOKED_LEASE, status: 'RETURN_PENDING', rider: { lifecycleStatus: 'RETURN_PENDING' } };
     await rentalRepository.executeLeaseAction(lease, 'CLOSE');
     const data = m.tx.rentalLease.updateMany.mock.calls[0][0].data;
     expect(data.status).toBe('CLOSED');
@@ -539,7 +539,7 @@ describe('P2.6: hub update audit captures the diff, not the raw payload', () => 
 
   it('logs changedFields with before/after values', async () => {
     await hubUseCases.updateHub('h1', { name: 'B' }, 'admin1');
-    const audit = m.createAuditLog.mock.calls[0][0];
+    const audit = (m.createAuditLog.mock.calls as any)[0]?.[0];
     expect(audit.action).toBe('hub.update');
     expect(audit.details.changedFields).toEqual(['name']);
     expect(audit.details.before).toEqual({ name: 'A' });
@@ -548,7 +548,7 @@ describe('P2.6: hub update audit captures the diff, not the raw payload', () => 
 
   it('does not report unchanged fields as changed', async () => {
     await hubUseCases.updateHub('h1', { city: 'Mumbai' }, 'admin1');
-    const audit = m.createAuditLog.mock.calls[0][0];
+    const audit = (m.createAuditLog.mock.calls as any)[0]?.[0];
     expect(audit.details.changedFields).toEqual([]);
   });
 });

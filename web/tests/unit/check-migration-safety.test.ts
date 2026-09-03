@@ -20,9 +20,20 @@ const SCRIPT_PATH = resolve(__dirname, '../../../scripts/check-migration-safety.
 const BASH = process.env.BASH_PATH || 'C:\\Program Files\\Git\\bin\\bash.exe';
 
 function runScript(workspaceRoot: string): { status: number | null; stdout: string; stderr: string } {
+  // P0 fix 2026-09-03: the gate anchors relative MIGRATION_DIR at the repo
+  // root, so fixtures must pass an ABSOLUTE dir pointing at the synthetic
+  // tree (otherwise the script would scan the real repo). Converted to Git
+  // Bash form (/c/…) — backslash or C:/ paths do not resolve in find/test.
+  const absMigDir = join(workspaceRoot, 'web', 'prisma', 'migrations')
+    .replace(/\\/g, '/')
+    .replace(/^([A-Za-z]):/, (_, d: string) => `/${d.toLowerCase()}`);
+  const posixScript = SCRIPT_PATH.replace(/\\/g, '/').replace(
+    /^([A-Za-z]):/,
+    (_, d: string) => `/${d.toLowerCase()}`
+  );
   const result = spawnSync(
     BASH,
-    ['-c', `cd "${workspaceRoot}" && MIGRATION_DIR='web/prisma/migrations' bash "${SCRIPT_PATH}"`],
+    ['-c', `cd "${workspaceRoot}" && MIGRATION_DIR='${absMigDir}' bash "${posixScript}"`],
     { encoding: 'utf-8' }
   );
   return {
@@ -41,6 +52,16 @@ describe('check-migration-safety.sh (#34)', () => {
     migDir = join(workdir, 'web', 'prisma', 'migrations');
     mkdirSync(migDir, { recursive: true });
   });
+
+  // P0 fix 2026-09-03: real layout is <name>/migration.sql (one level
+  // deeper). The safety gate uses `find ... -name migration.sql`, so
+  // fixtures must use the nested layout — flat *.sql files are (correctly)
+  // ignored, matching production behavior.
+  function writeMig(name: string, sql: string, base: string = migDir): void {
+    const dir = join(base, name);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'migration.sql'), sql);
+  }
 
   afterEach(() => {
     try {
@@ -65,14 +86,14 @@ describe('check-migration-safety.sh (#34)', () => {
   });
 
   it('exits 0 on safe migration (CREATE TABLE only)', () => {
-    writeFileSync(join(migDir, '20240101_init.sql'), 'CREATE TABLE foo (id INT);');
+    writeMig('20240101_init', 'CREATE TABLE foo (id INT);');
     const result = runScript(workdir);
     expect(result.status).toBe(0);
     expect(result.stdout).toMatch(/Migration safety check complete/);
   });
 
   it('exits 1 on DROP COLUMN migration', () => {
-    writeFileSync(join(migDir, '20240101_danger.sql'), 'ALTER TABLE foo DROP COLUMN bar;');
+    writeMig('20240101_danger', 'ALTER TABLE foo DROP COLUMN bar;');
     const result = runScript(workdir);
     expect(result.status).toBe(1);
     expect(result.stdout).toMatch(/DROP COLUMN/);
@@ -80,23 +101,23 @@ describe('check-migration-safety.sh (#34)', () => {
   });
 
   it('exits 1 on DROP TABLE migration', () => {
-    writeFileSync(join(migDir, '20240101_danger.sql'), 'DROP TABLE foo;');
+    writeMig('20240101_danger', 'DROP TABLE foo;');
     const result = runScript(workdir);
     expect(result.status).toBe(1);
     expect(result.stdout).toMatch(/DROP TABLE/);
   });
 
   it('exits 1 on TRUNCATE migration', () => {
-    writeFileSync(join(migDir, '20240101_danger.sql'), 'TRUNCATE TABLE foo;');
+    writeMig('20240101_danger', 'TRUNCATE TABLE foo;');
     const result = runScript(workdir);
     expect(result.status).toBe(1);
     expect(result.stdout).toMatch(/TRUNCATE/);
   });
 
   it('exits 1 on multiple dangerous files', () => {
-    writeFileSync(join(migDir, '20240101_a.sql'), 'CREATE TABLE a (id INT);');
-    writeFileSync(join(migDir, '20240102_b.sql'), 'ALTER TABLE a DROP COLUMN c;');
-    writeFileSync(join(migDir, '20240103_c.sql'), 'TRUNCATE TABLE b;');
+    writeMig('20240101_a', 'CREATE TABLE a (id INT);');
+    writeMig('20240102_b', 'ALTER TABLE a DROP COLUMN c;');
+    writeMig('20240103_c', 'TRUNCATE TABLE b;');
     const result = runScript(workdir);
     expect(result.status).toBe(1);
     expect(result.stdout).toMatch(/DROP COLUMN/);
@@ -104,8 +125,8 @@ describe('check-migration-safety.sh (#34)', () => {
   });
 
   it('detects destructive patterns even when split across lines', () => {
-    writeFileSync(
-      join(migDir, '20240101_multi.sql'),
+    writeMig(
+      '20240101_multi',
       'ALTER TABLE\n  foo\nDROP COLUMN bar;'
     );
     const result = runScript(workdir);
@@ -121,7 +142,7 @@ describe('check-migration-safety.sh (#34)', () => {
     const altWorkdir = mkdtempSync(join(tmpdir(), 'mig-safety-alt-'));
     const altMigDir = join(altWorkdir, 'web', 'prisma', 'migrations');
     mkdirSync(altMigDir, { recursive: true });
-    writeFileSync(join(altMigDir, '20240101_danger.sql'), 'DROP TABLE foo;');
+    writeMig('20240101_danger', 'DROP TABLE foo;', altMigDir);
 
     const result = runScript(altWorkdir);
     // Even with a non-canonical path, the script MUST find the file and fail.
@@ -129,5 +150,33 @@ describe('check-migration-safety.sh (#34)', () => {
     expect(result.stdout).toMatch(/DROP TABLE/);
 
     rmSync(altWorkdir, { recursive: true, force: true });
+  });
+
+  it('grandfathered history (applied paise/JSON/settings migrations) passes', () => {
+    // These three shipped long ago and are applied in every environment —
+    // the gate must not fail CI forever on history.
+    writeMig('20260729150000_float_to_paise', 'ALTER TABLE "wallets" DROP COLUMN "amount";');
+    writeMig('20260730131814_convert_json_columns', 'ALTER TABLE "sync_queues" DROP COLUMN "payload";');
+    writeMig('20260712000001_consolidate_settings', 'DROP TABLE IF EXISTS settings;');
+    const result = runScript(workdir);
+    expect(result.status).toBe(0);
+  });
+
+  it('a NEW migration with DROP COLUMN still fails loudly', () => {
+    writeMig('20260729150000_float_to_paise', 'ALTER TABLE "wallets" DROP COLUMN "amount";');
+    writeMig('20260903000009_new_drop', 'ALTER TABLE "riders" DROP COLUMN "phone";');
+    const result = runScript(workdir);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toMatch(/20260903000009_new_drop/);
+  });
+
+  it('DROP CONSTRAINT is not flagged (transactional, non-lossy DDL)', () => {
+    // e.g. replacing a CHECK constraint: drop + re-add in one transaction.
+    writeMig(
+      '20260903000009_floor',
+      'ALTER TABLE "wallets" DROP CONSTRAINT wallet_balance_nonnegative;'
+    );
+    const result = runScript(workdir);
+    expect(result.status).toBe(0);
   });
 });

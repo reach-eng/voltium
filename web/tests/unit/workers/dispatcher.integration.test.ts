@@ -28,7 +28,7 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
       now: () => new Date(mockDate),
       set: vi.fn(),
       reset: vi.fn()
-    };
+    } as any;
     
     // Inject globally for JobQueue DB operations
     clock.set(customClock);
@@ -50,7 +50,7 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
 
     // We will manually enqueue a job and call JobQueue.processJobs
     // directly with a failing processor to verify the backoff logic.
-    const testJobId = await OutboxService.emit('test.backoff', { msg: 'fail' }, 3);
+    const testJobId = await OutboxService.emit('test.backoff' as any, { msg: 'fail' }, 3);
 
     let processCount = 0;
     const failingProcessor = async () => {

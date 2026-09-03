@@ -6,7 +6,7 @@ describe('Audit Verification Report 2026-08-06 Contracts', () => {
     expect(typeof couponUseCases.update).toBe('function');
   });
 
-  it('submitReturn: emits OutboxEventTypes.RENT_PAID on return submission', async () => {
+  it('OutboxEventTypes: RENT_PAID is defined', async () => {
     const { OutboxEventTypes } = await import('@/server/workers/outbox');
     expect(OutboxEventTypes.RENT_PAID).toBeDefined();
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { api } from '../../helpers';
+import { api } from '../helpers';
 import { resolveAdminCredentials } from '../../admin-auth-helper';
 
 describe('POST /api/admin/auth/refresh', () => {

@@ -39,7 +39,7 @@ describe('OTP store — dev bypass requires existing entry (#46)', () => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    process.env.NODE_ENV = 'development';
+    (process.env as any).NODE_ENV = 'development';
     process.env.APP_ENV = 'development';
     // Force in-memory store (no postgres)
     process.env.OTP_STORE_PROVIDER = 'memory';
@@ -47,7 +47,7 @@ describe('OTP store — dev bypass requires existing entry (#46)', () => {
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
+    (process.env as any).NODE_ENV = originalNodeEnv;
     process.env.APP_ENV = originalAppEnv;
   });
 

@@ -103,7 +103,7 @@ const { requireRiderSession } = await import('../../src/lib/rider-auth');
 beforeAll(() => {
   process.env.ENABLE_RIDER_IMPERSONATION = 'true';
   process.env.APP_ENV = 'development';
-  process.env.NODE_ENV = 'development';
+  (process.env as any).NODE_ENV = 'development';
 });
 
 // ---------------------------------------------------------------------------
@@ -129,7 +129,7 @@ function createMockRequest(
     configurable: true,
   });
 
-  return req;
+  return req as any;
 }
 
 // ---------------------------------------------------------------------------

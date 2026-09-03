@@ -15,12 +15,12 @@ describe('support.policy', () => {
 
   describe('requireSupportAgent', () => {
     it('throws AdminAuthError if no session', async () => {
-      (getSessionMod.getAdminSession as jest.Mock).mockResolvedValue(null);
+      (getSessionMod.getAdminSession as any).mockResolvedValue(null);
       await expect(requireSupportAgent()).rejects.toThrow(AdminAuthError);
     });
 
     it('throws AdminForbiddenError if lacking tickets_view', async () => {
-      (getSessionMod.getAdminSession as jest.Mock).mockResolvedValue({
+      (getSessionMod.getAdminSession as any).mockResolvedValue({
         adminRole: 'READ_ONLY',
       });
       await expect(requireSupportAgent()).rejects.toThrow(AdminForbiddenError);
@@ -28,14 +28,14 @@ describe('support.policy', () => {
 
     it('returns session if role has tickets_view', async () => {
       const mockSession = { adminRole: 'SUPPORT_AGENT' };
-      (getSessionMod.getAdminSession as jest.Mock).mockResolvedValue(mockSession);
+      (getSessionMod.getAdminSession as any).mockResolvedValue(mockSession);
       const session = await requireSupportAgent();
       expect(session).toBe(mockSession);
     });
 
     it('returns session if SUPER_ADMIN', async () => {
       const mockSession = { adminRole: 'SUPER_ADMIN' };
-      (getSessionMod.getAdminSession as jest.Mock).mockResolvedValue(mockSession);
+      (getSessionMod.getAdminSession as any).mockResolvedValue(mockSession);
       const session = await requireSupportAgent();
       expect(session).toBe(mockSession);
     });

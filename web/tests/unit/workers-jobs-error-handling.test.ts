@@ -53,7 +53,7 @@ function readSafe(path: string): string {
 describe('PR-M (Ticket #23): workers jobs error-handling consistency', () => {
   const jobs = listJobs();
 
-  it('has 16 worker jobs', () => {
+  it('has 20 worker jobs', () => {
     // 13 = the original 12 + notification-broadcast.job.ts (P0-1/P0-9,
     // 2026-08-05 ops audit — admin broadcast outbox consumer).
     // 14 = + data-deletion-purge.job.ts (PR-7, 2026-08-06 fix-plan —
@@ -62,7 +62,12 @@ describe('PR-M (Ticket #23): workers jobs error-handling consistency', () => {
     // async announcement fanout out of the request transaction).
     // 16 = + orphan-backup-cleanup.job.ts (PR-7, 2026-08-06 fix-plan —
     // purges PRE_RESTORE backups orphaned by failed restores).
-    expect(jobs.length).toBe(16);
+    // 17 = + failed-job-cleanup.job.ts (DLQ/failed job retention).
+    // 18 = + kyc-expiry.job.ts (NET-005, daily KYC expiration sweep).
+    // 19 = + outbox-cleanup.job.ts (outbox table retention purge).
+    // 20 = + outbox-queue-lag.job.ts (queue lag monitoring & alerting).
+    // 21 = + blob-gc.job.ts (storage blob garbage collection).
+    expect(jobs.length).toBe(21);
   });
 
   describe.each(jobs)('job %s', (jobPath) => {

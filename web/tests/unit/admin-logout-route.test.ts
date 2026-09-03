@@ -40,7 +40,7 @@ vi.mock('@/lib/auth', () => ({
 
 import { POST } from '@/app/api/admin/auth/logout/route';
 
-function makeRequest(): Request {
+function makeRequest(): any {
   return new Request('http://localhost/api/admin/auth/logout', { method: 'POST' });
 }
 

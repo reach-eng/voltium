@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { testDb } from '../unit/_setup/test-postgres';
+import { testDb } from '../_setup/test-postgres';
 import { JobQueue } from '../../src/lib/job-queue';
 import { OutboxService } from '../../src/server/workers/outbox';
 import { clock } from '../../src/lib/clock';
@@ -18,7 +18,7 @@ describe('Worker Dispatcher & JobQueue Integration', () => {
 
   it('demonstrates job enqueueing, processing, and state machine transitions', async () => {
     // 1. Enqueue job
-    const eventId = await OutboxService.emit('test.job', { foo: 'bar' });
+    const eventId = await OutboxService.emit('test.job' as any, { foo: 'bar' });
     
     const initialEvent = await testDb.outboxEvent.findUnique({ where: { id: eventId } });
     expect(initialEvent?.status).toBe('PENDING');
@@ -43,7 +43,7 @@ describe('Worker Dispatcher & JobQueue Integration', () => {
 
   it('demonstrates retry on failure with injected clock backoff', async () => {
     // 1. Enqueue job with maxAttempts = 3
-    const eventId = await OutboxService.emit('test.retry', { fail: true }, 3);
+    const eventId = await OutboxService.emit('test.retry' as any, { fail: true }, 3);
     
     // 2. First attempt fails
     await JobQueue.processJobs('test.retry', async (job) => {

@@ -83,7 +83,8 @@ describe('coupons (thin module) — smoke tests (#22.1 batch 2)', () => {
         code: 'promo10',
         description: '10% off',
         discountType: 'PERCENTAGE',
-        discountValue: 1000,
+        // P1: PERCENTAGE is capped at 100 (the old fixture's 1000 = 1000%).
+        discountValue: 10,
         validFrom: '2026-01-01',
         validUntil: '2026-12-31',
         isActive: true,
@@ -95,7 +96,7 @@ describe('coupons (thin module) — smoke tests (#22.1 batch 2)', () => {
       expect.objectContaining({
         data: expect.objectContaining({
           code: 'PROMO10',
-          discountValueInPaise: 1000,
+          discountValueInPaise: 10,
           validFrom: new Date('2026-01-01'),
           validUntil: new Date('2026-12-31'),
         }),

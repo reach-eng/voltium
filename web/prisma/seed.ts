@@ -490,6 +490,10 @@ async function main() {
   console.log('Created riders');
 
   // ==================== KYC PROFILES ====================
+  // P1: all identity values below are synthetic textbook examples
+  // (sequential Aadhaar digits, ABCDE-pattern PANs, placehold.co images) —
+  // never real PII. Seed refuses APP_ENV=production (see top of file), so
+  // these rows can only land in local/staging databases.
   const kycProfiles = [
     {
       riderId: 'rider-1',

@@ -27,6 +27,8 @@ describe('Referral Reward Job', () => {
     // PR-77: the job now reads `referralBonus` from system_settings,
     // defaulting to 20000 paise (₹200) when not set. This test
     // verifies the default fallback path.
+    // P0 fix 2026-09-03: payout requires the referee to be ACTIVE
+    // (rank >= 11), so the fixture creates an ACTIVE referee.
     const referrerId = uuidv4();
     const referredId = uuidv4();
     const referralCode = uuidv4().slice(0, 8);
@@ -36,6 +38,15 @@ describe('Referral Reward Job', () => {
         riderId: uuidv4(),
         phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
         referralCode,
+      },
+    });
+    await testDb.rider.create({
+      data: {
+        id: referredId,
+        riderId: uuidv4(),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        referralCode: uuidv4().slice(0, 8),
+        lifecycleStatus: 'ACTIVE',
       },
     });
     const wallet = await testDb.wallet.create({
@@ -86,6 +97,16 @@ describe('Referral Reward Job', () => {
         referralCode,
       },
     });
+    // P0 fix 2026-09-03: ACTIVE referee required for payout.
+    await testDb.rider.create({
+      data: {
+        id: referredId,
+        riderId: uuidv4(),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        referralCode: uuidv4().slice(0, 8),
+        lifecycleStatus: 'ACTIVE',
+      },
+    });
     const wallet = await testDb.wallet.create({
       data: { riderId: referrerId, balanceInPaise: 0 },
     });
@@ -124,5 +145,63 @@ describe('Referral Reward Job', () => {
     const result = await referralRewardJob.process(job);
     expect(result.errors).toBe(1);
     expect(result.rewardsCredited).toBe(0);
+  });
+
+  it('P0: defers payout until the referee is ACTIVE (no wallet change pre-activation)', async () => {
+    const referrerId = uuidv4();
+    const referredId = uuidv4();
+    const referralCode = uuidv4().slice(0, 8);
+    await testDb.rider.create({
+      data: {
+        id: referrerId,
+        riderId: uuidv4(),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        referralCode,
+      },
+    });
+    const wallet = await testDb.wallet.create({
+      data: { riderId: referrerId, balanceInPaise: 0 },
+    });
+    // Referee signed up (NEW) but never activated.
+    await testDb.rider.create({
+      data: {
+        id: referredId,
+        riderId: uuidv4(),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        referralCode: uuidv4().slice(0, 8),
+        lifecycleStatus: 'NEW',
+      },
+    });
+
+    const deferred = await referralRewardJob.process({
+      id: 'test-job',
+      payload: { referredRiderId: referredId, referralCode },
+    });
+    expect(deferred.errors).toBe(0);
+    expect(deferred.rewardsCredited).toBe(0);
+    const untouched = await testDb.wallet.findUnique({ where: { id: wallet.id } });
+    expect(untouched?.balanceInPaise).toBe(0);
+
+    // After activation the same payload pays exactly once.
+    await testDb.rider.update({
+      where: { id: referredId },
+      data: { lifecycleStatus: 'ACTIVE' },
+    });
+    const paid = await referralRewardJob.process({
+      id: 'test-job',
+      payload: { referredRiderId: referredId, referralCode },
+    });
+    expect(paid.errors).toBe(0);
+    expect(paid.rewardsCredited).toBe(1);
+
+    // Re-run is idempotent (ledger key arbiter).
+    const replay = await referralRewardJob.process({
+      id: 'test-job',
+      payload: { referredRiderId: referredId, referralCode },
+    });
+    expect(replay.errors).toBe(0);
+    expect(replay.rewardsCredited).toBe(1);
+    const final = await testDb.wallet.findUnique({ where: { id: wallet.id } });
+    expect(final?.balanceInPaise).toBe(20000);
   });
 });

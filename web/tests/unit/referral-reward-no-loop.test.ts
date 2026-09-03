@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mocks = vi.hoisted(() => ({
   findUniqueRider: vi.fn(),
   findUniqueSetting: vi.fn(),
+  findUniqueLedger: vi.fn(),
   transaction: vi.fn(),
   credit: vi.fn(),
   emit: vi.fn(),
@@ -13,6 +14,7 @@ vi.mock('@/lib/db', () => ({
   db: {
     rider: { findUnique: mocks.findUniqueRider },
     systemSetting: { findUnique: mocks.findUniqueSetting },
+    walletLedger: { findUnique: mocks.findUniqueLedger },
     $transaction: mocks.transaction,
   },
 }));
@@ -33,10 +35,15 @@ describe('Referral Reward Self-Loop Prevention', () => {
   });
 
   it('credits referral reward without self-emitting REFERRAL_REWARD outbox event', async () => {
-    mocks.findUniqueRider.mockResolvedValue({
-      id: 'r_referrer',
-      wallet: { id: 'w_referrer' },
-    });
+    // P0 fix 2026-09-03: job reads referrer, then referee (must be ACTIVE),
+    // then the ledger key. Mock the sequence accordingly.
+    mocks.findUniqueRider
+      .mockResolvedValueOnce({
+        id: 'r_referrer',
+        wallet: { id: 'w_referrer' },
+      })
+      .mockResolvedValueOnce({ id: 'r_referred', lifecycleStatus: 'ACTIVE' });
+    mocks.findUniqueLedger.mockResolvedValue(null);
     mocks.findUniqueSetting.mockResolvedValue({ value: '5000' });
     mocks.transaction.mockImplementation((cb: any) =>
       cb({
@@ -60,10 +67,13 @@ describe('Referral Reward Self-Loop Prevention', () => {
   // so a future refactor can't silently switch it to rupees.
   it('stores Reward.points as PAISE (not rupees) for the referral bonus', async () => {
     const rewardCreate = vi.fn().mockResolvedValue({ id: 'rw_2' });
-    mocks.findUniqueRider.mockResolvedValue({
-      id: 'r_referrer',
-      wallet: { id: 'w_referrer' },
-    });
+    mocks.findUniqueRider
+      .mockResolvedValueOnce({
+        id: 'r_referrer',
+        wallet: { id: 'w_referrer' },
+      })
+      .mockResolvedValueOnce({ id: 'r_referred', lifecycleStatus: 'ACTIVE' });
+    mocks.findUniqueLedger.mockResolvedValue(null);
     mocks.findUniqueSetting.mockResolvedValue({ value: '25000' }); // ₹250
     mocks.transaction.mockImplementation((cb: any) =>
       cb({

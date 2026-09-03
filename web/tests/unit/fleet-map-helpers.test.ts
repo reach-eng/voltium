@@ -6,7 +6,7 @@ describe('fleetMapHelpers - getRiderStatus', () => {
   const createMockRider = (lifecycleStatus: string): FleetRider => ({
     id: '1',
     riderId: 'R123',
-    name: 'Test Rider',
+    fullName: 'Test Rider',
     phone: '1234567890',
     batteryLevel: 100,
     lastKnownLat: 12.9716,
@@ -16,7 +16,7 @@ describe('fleetMapHelpers - getRiderStatus', () => {
     hubId: 'hub-1',
     hubName: 'Main Hub',
     lifecycleStatus,
-  });
+  } as any);
 
   it('maps ACTIVE and RETURN_PENDING to "active"', () => {
     expect(getRiderStatus(createMockRider('ACTIVE'))).toBe('active');

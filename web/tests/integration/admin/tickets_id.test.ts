@@ -5,8 +5,7 @@ describe('Admin API: GET /api/admin/tickets/[id]', () => {
   let cookie: string;
 
   beforeAll(async () => {
-    const login = await adminLogin({ role: 'super_admin' });
-    cookie = login.cookie;
+    cookie = await adminLogin();
   });
 
   it('should return 401 if missing auth', async () => {
@@ -32,7 +31,7 @@ describe('Admin API: GET /api/admin/tickets/[id]', () => {
     
     expect([200, 404]).toContain(res.status);
     if (res.status === 200) {
-      const data = await res.json();
+      const data = res.body;
       expect(data.success).toBe(true);
       expect(data.data).toBeDefined();
     }

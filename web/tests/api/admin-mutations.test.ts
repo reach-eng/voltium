@@ -25,11 +25,11 @@ async function api(path: string, options: RequestInit = {}) {
 }
 
 beforeAll(async () => {
-  try {
-    // P0-2: auto-login route is deleted — authenticate with real credentials.
-    adminCookie = await adminLoginTo(BASE);
-  } catch (err) {
-    console.error('Failed to log in as admin for API tests', err);
+  // P0-2: auto-login route is deleted — authenticate with real credentials.
+  // Fail hard if admin login fails so tests cannot go green-vacuous.
+  adminCookie = await adminLoginTo(BASE);
+  if (!adminCookie) {
+    throw new Error('adminLoginTo succeeded but returned empty adminCookie');
   }
 });
 

@@ -46,7 +46,7 @@ describe('CacheEntry.staleAt + isStale', () => {
     // Use the public API: getOrSetResponse (which calls cache.set).
     // set's staleMs param is internal; the public SWR variant is
     // what callers actually use.
-    await cache.getOrSetResponse('swr-key', async () => 'first', 60, 30);
+    await (cache.getOrSetResponse as any)('swr-key', async () => 'first', 60, 30);
     expect(cache.getCachedResponse('swr-key')).toBe('first');
   });
 });

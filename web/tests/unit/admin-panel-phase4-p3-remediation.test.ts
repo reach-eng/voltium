@@ -33,10 +33,9 @@ describe('Admin Panel Phase 4 (P3 Polish) Remediation Suite', () => {
         { id: 'faq_3', question: 'Q3', order: 0, createdAt: new Date('2026-01-03') },
       ];
 
-      vi.mocked(db.faq.findMany).mockResolvedValueOnce(mockFaqs as any);
-      vi.mocked(db.faq.update).mockImplementation(({ where, data }) =>
+      vi.mocked(db.faq.update).mockImplementation((({ where, data }: any) =>
         Promise.resolve({ ...mockFaqs.find((f) => f.id === where.id), ...data } as any)
-      );
+      ) as any);
 
       // Reorder faq_2 upwards (to index 0)
       await adminFaqUseCases.reorder('faq_2', 'up', 'admin_1');

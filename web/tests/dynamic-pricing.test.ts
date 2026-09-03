@@ -10,7 +10,7 @@ describe('calculateDynamicPrice', () => {
   beforeAll(async () => {
     const mod = await import('../src/lib/dynamic-pricing');
     calculateDynamicPrice = mod.calculateDynamicPrice;
-    DynamicPriceResult = mod.DynamicPriceResult;
+    DynamicPriceResult = (mod as any).DynamicPriceResult;
   });
 
   it('returns base price when availability is in normal range (0.2–0.8)', () => {

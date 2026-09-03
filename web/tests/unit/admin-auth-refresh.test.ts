@@ -42,7 +42,7 @@ import { recordTokenBump, _resetSessionRotationForTests } from '@/lib/session-ro
 const newAccessToken = 'new-access-token-abc';
 const newRefreshToken = 'new-refresh-token-xyz';
 
-function makeRequest(body: unknown): Request {
+function makeRequest(body: unknown): any {
   return new Request('http://localhost/api/admin/auth/refresh', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -170,7 +170,7 @@ describe('POST /api/admin/auth/refresh (P0-3 / P0-9)', () => {
       body: '{not json',
     });
 
-    const res = await POST(req);
+    const res = await POST(req as any);
 
     expect(res.status).toBe(400);
     expect(mocks.verifySessionToken).not.toHaveBeenCalled();

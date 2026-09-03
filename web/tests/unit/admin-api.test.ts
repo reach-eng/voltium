@@ -195,7 +195,7 @@ describe('adminApi mutating methods are never deduped', () => {
 
 describe('adminApi response shape', () => {
   it('returns parsed { success: true, data } on 2xx with wrapped body', async () => {
-    fetchResponder = () =>
+    fetchResponder = async () =>
       new Response(JSON.stringify({ success: true, data: { name: 'test' } }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -207,7 +207,7 @@ describe('adminApi response shape', () => {
   });
 
   it('returns { success: false, error } on 5xx', async () => {
-    fetchResponder = () =>
+    fetchResponder = async () =>
       new Response(JSON.stringify({ success: false, error: { message: 'boom' } }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -277,6 +277,29 @@ describe('adminApi x-request-id (PR-41, N8)', () => {
     // force a server-log collision.
     expect(headers['x-request-id']).not.toBe('caller-supplied-should-be-overridden');
     expect(headers['x-request-id']).toMatch(UUID_RE);
+  });
+
+  it('sends x-correlation-id and includes credentials', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.get('/api/admin/riders');
+    expect(fetchCalls).toHaveLength(1);
+    const headers = (fetchCalls[0].init?.headers ?? {}) as Record<string, string>;
+    expect(headers['x-correlation-id']).toMatch(UUID_RE);
+    expect(fetchCalls[0].init?.credentials).toBe('include');
+  });
+
+  it('preserves envelope message and statusCode on success', async () => {
+    fetchResponder = async () =>
+      new Response(
+        JSON.stringify({ success: true, data: { id: 123 }, message: 'Updated successfully' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    const { adminApi } = await getFreshApi();
+    const result = await adminApi.post('/api/admin/riders/123', { name: 'Test' });
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({ id: 123 });
+    expect(result.message).toBe('Updated successfully');
+    expect(result.statusCode).toBe(200);
   });
 });
 

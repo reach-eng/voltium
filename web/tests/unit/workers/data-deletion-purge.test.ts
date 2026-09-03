@@ -71,7 +71,7 @@ describe('dataDeletionPurgeJob', () => {
     expect(result).toEqual({ purged: 1 });
     // Explicit `deletedAt: { not: null }` overrides the soft-delete
     // middleware default so purged-but-still-deleted rows are visible.
-    const where = vi.mocked(db.rider.findMany).mock.calls[0][0].where;
+    const where: any = vi.mocked(db.rider.findMany).mock.calls[0][0]?.where;
     expect(where.lifecycleStatus).toBe('CLOSED');
     // `deletedAt: { not: null, ... }` is set EXPLICITLY — this is what
     // overrides the soft-delete middleware default (`deletedAt: null`),

@@ -26,6 +26,7 @@ vi.mock('@/lib/logger', () => ({ logger: mocks.logger }));
 import { GET } from '@/app/api/rider/kyc/route';
 
 const session = { riderDbId: 'rider-1', phone: '9876543210' };
+const makeReq = () => new Request('http://localhost/api/rider/kyc') as any;
 
 describe('GET /api/rider/kyc — bank detail regression (PR-ONBOARDING-2026-08-11)', () => {
   beforeEach(() => {
@@ -48,7 +49,8 @@ describe('GET /api/rider/kyc — bank detail regression (PR-ONBOARDING-2026-08-1
       rejectionReason: null,
     });
 
-    const res = await GET(new Request('http://localhost/api/rider/kyc'));
+    const makeReq = () => new Request('http://localhost/api/rider/kyc') as any;
+    const res = await GET(makeReq());
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -73,7 +75,7 @@ describe('GET /api/rider/kyc — bank detail regression (PR-ONBOARDING-2026-08-1
       rejectionReason: null,
     });
 
-    const res = await GET(new Request('http://localhost/api/rider/kyc'));
+    const res = await GET(makeReq());
     const body = await res.json();
 
     expect(body.data.bankAccount).toBeNull();
@@ -85,7 +87,7 @@ describe('GET /api/rider/kyc — bank detail regression (PR-ONBOARDING-2026-08-1
       new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 })
     );
 
-    const res = await GET(new Request('http://localhost/api/rider/kyc'));
+    const res = await GET(makeReq());
     expect(res.status).toBe(401);
   });
 });

@@ -24,7 +24,7 @@
  *      files and caused "Can't reach database server" errors
  */
 export default async function globalSetup(): Promise<void> {
-  process.env.NODE_ENV = 'test';
+  (process.env as any).NODE_ENV = 'test';
 
   if (process.env.DATABASE_URL) {
     if (!process.env.DATABASE_URL.includes('schema=')) {

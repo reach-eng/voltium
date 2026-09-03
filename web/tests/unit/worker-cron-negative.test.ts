@@ -34,7 +34,7 @@ describe('Worker Endpoint — auth guard logic', () => {
     delete process.env.WORKER_SECRET;
     // Simulate the guard logic from route.ts
     if (!process.env.WORKER_SECRET) {
-      if (process.env.NODE_ENV === 'production') {
+      if ((process.env as any).NODE_ENV === 'production') {
         expect(true).toBe(true); // would return 503
       } else {
         expect(process.env.NODE_ENV).not.toBe('production'); // would return 401
@@ -43,7 +43,7 @@ describe('Worker Endpoint — auth guard logic', () => {
   });
 
   it('would return 503 when WORKER_SECRET is not set (prod mode)', () => {
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     delete process.env.WORKER_SECRET;
     expect(process.env.WORKER_SECRET).toBeUndefined();
     expect(process.env.NODE_ENV).toBe('production');

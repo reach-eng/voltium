@@ -116,7 +116,7 @@ describe('PR-149: DB state-machine triggers', () => {
       expect(body, `${spec.functionName} must RAISE EXCEPTION on invalid transition`)
         .toContain('RAISE EXCEPTION');
       expect(body, `${spec.functionName} must include the OLD/NEW statuses in the error`)
-        .toMatch(/OLD\.status.*NEW\.status/s);
+        .toMatch(/OLD\.status[\s\S]*NEW\.status/);
     }
   });
 });

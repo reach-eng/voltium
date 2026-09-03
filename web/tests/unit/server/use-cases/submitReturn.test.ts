@@ -41,11 +41,16 @@ const mockDb = {
 const mockAuditLog = vi.fn().mockResolvedValue(undefined);
 const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 const mockInvalidate = vi.fn();
+const mockOutboxEmit = vi.fn();
 
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mockAuditLog }));
 vi.mock('@/lib/logger', () => ({ logger: mockLogger }));
 vi.mock('@/lib/server-cache', () => ({ invalidateRiderCache: mockInvalidate }));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: { emit: mockOutboxEmit },
+  OutboxEventTypes: { RENT_PAID: 'rent.paid' },
+}));
 
 // Import after mocks
 const { submitReturn } = await import('@/server/modules/rentals/use-cases/submitReturn');
@@ -135,6 +140,14 @@ describe('submitReturn use case — happy path', () => {
     await submitReturn('rider-1', { photoUrls: FOUR_PHOTOS });
 
     expect(mockInvalidate).toHaveBeenCalledWith('rider-1');
+  });
+
+  it('F-25: does NOT emit RENT_PAID outbox event on vehicle return submission', async () => {
+    mockDb.rider.findUnique.mockResolvedValue(ACTIVE_RIDER);
+
+    await submitReturn('rider-1', { photoUrls: FOUR_PHOTOS });
+
+    expect(mockOutboxEmit).not.toHaveBeenCalled();
   });
 });
 

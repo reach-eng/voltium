@@ -44,7 +44,7 @@ async function main() {
       data: {
         riderId: rider.id,
         balanceInPaise: 100000, // Start with ₹1000
-        securityDeposit: 0,
+        securityDepositInPaise: 0,
         depositStatus: 'NOT_SUBMITTED',
         paymentStreak: 0,
         version: 1,

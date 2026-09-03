@@ -10,6 +10,16 @@ mkdir -p "$TARGET_DIR"
 if [ -d "$FLUTTER_WEB_DIR" ]; then
   cp -r "$FLUTTER_WEB_DIR"/* "$TARGET_DIR/"
   if [ -f "$TARGET_DIR/index.html" ]; then
+    # P0 2026-09-04: <base href="/"> 404s all subpath assets when served from
+    # /rider-app/. The build must use --base-href="/rider-app/"; this guard
+    # fails loud if someone built with the default base-href.
+    HREF=$(sed -n 's/.*<base href="\([^"]*\)".*/\1/p' "$TARGET_DIR/index.html" | head -n1)
+    if [ "$HREF" != "/rider-app/" ]; then
+      echo "[FAIL] $TARGET_DIR/index.html has <base href=\"$HREF\"> but rider-app must be built with --base-href \"/rider-app/\"."
+      echo "       Rebuild: cd flutter && flutter build web --release --base-href \"/rider-app/\""
+      rm -rf "$TARGET_DIR"
+      exit 1
+    fi
     echo "[OK] Flutter web build copied to $TARGET_DIR"
     echo "     Accessible at: http://localhost:8081/rider-app/"
   else

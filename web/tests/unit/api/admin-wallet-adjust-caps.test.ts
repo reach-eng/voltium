@@ -75,9 +75,13 @@ vi.mock('@/lib/db', () => ({
       findUnique: vi.fn(),
     },
     transaction: {
+      findUnique: vi.fn().mockResolvedValue(null),
       aggregate: vi.fn(async () => ({
         _sum: { amountInPaise: todayDebitPaise },
       })),
+    },
+    wallet: {
+      findUnique: vi.fn(async () => ({ balanceInPaise: 100000 })),
     },
     $transaction: vi.fn(async (cb: any) => {
       const fakeTx = {
@@ -313,5 +317,65 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
     });
     expect(res.status).toBe(200);
     expect(ledgerCalled?.type).toBe('CREDIT');
+  });
+
+  describe('F-22: retry idempotency without randomUUID', () => {
+    it('generates deterministic idempotencyKey that does NOT contain randomUUID', async () => {
+      const res = await callPost({
+        type: 'DEBIT',
+        amount: 200,
+        reason: 'Testing deterministic idempotencyKey generation',
+      });
+      expect(res.status).toBe(200);
+      expect(createdTxn?.idempotencyKey).toBeDefined();
+      expect(createdTxn.idempotencyKey).toMatch(/^admin-adjust:rider-1:admin-1:DEBIT:20000:\d+$/);
+    });
+
+    it('uses x-idempotency-key header when provided', async () => {
+      const req = new NextRequest('http://localhost/api/admin/riders/rider-1/wallet-adjust', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'DEBIT',
+          amount: 200,
+          reason: 'Testing client-supplied idempotency key header',
+        }),
+        headers: {
+          'content-type': 'application/json',
+          'x-idempotency-key': 'client-key-xyz-123',
+        },
+      });
+      const params = Promise.resolve({ id: 'rider-1' });
+      const res = await POST(req, { params });
+      expect(res.status).toBe(200);
+      expect(createdTxn?.idempotencyKey).toBe('admin-adjust:rider-1:admin-1:client-key-xyz-123');
+    });
+
+    it('deduplicates retry when transaction with same idempotencyKey already exists', async () => {
+      (db.transaction.findUnique as any).mockResolvedValueOnce({
+        id: 'existing-txn-123',
+        status: 'APPROVED',
+      });
+
+      const req = new NextRequest('http://localhost/api/admin/riders/rider-1/wallet-adjust', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'DEBIT',
+          amount: 200,
+          reason: 'Testing retry deduplication',
+        }),
+        headers: {
+          'content-type': 'application/json',
+          'x-idempotency-key': 'retry-key-abc',
+        },
+      });
+      const params = Promise.resolve({ id: 'rider-1' });
+      const res = await POST(req, { params });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      // Ensure $transaction was NOT invoked on deduplication
+      expect((db as any).$transaction).not.toHaveBeenCalled();
+    });
   });
 });

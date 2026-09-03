@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { api, adminLogin, riderLogin, generateRandomPhone } from '../../helpers';
+import { api, adminLogin, riderLogin, generateRandomPhone } from '../helpers';
 
 describe('GET /api/admin/riders/[id]/device-data', () => {
   let adminCookie: string;

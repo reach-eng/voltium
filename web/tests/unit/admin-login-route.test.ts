@@ -50,7 +50,7 @@ vi.mock('@/server/modules/admin/admin.use-cases', () => ({
 import { POST } from '@/app/api/admin/auth/login/route';
 import { LoginError } from '@/server/modules/admin/login-error';
 
-function makeRequest(body: unknown): Request {
+function makeRequest(body: unknown): any {
   return new Request('http://localhost/api/admin/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -135,7 +135,7 @@ describe('POST /api/admin/auth/login (P0-4 / P0-7)', () => {
       headers: { 'content-type': 'application/json' },
       body: '{not json',
     });
-    const res = await POST(req);
+    const res = await POST(req as any);
     expect(res.status).toBe(400);
   });
 
@@ -208,7 +208,7 @@ describe('POST /api/admin/auth/login (P0-4 / P0-7)', () => {
       body: JSON.stringify({ email: 'admin@voltium.in', password: 'right' }),
     });
 
-    const res = await POST(req);
+    const res = await POST(req as any);
 
     expect(res.status).toBe(403);
     // The rate limiter must not even run for a rejected cross-origin call
@@ -227,7 +227,7 @@ describe('POST /api/admin/auth/login (P0-4 / P0-7)', () => {
       body: JSON.stringify({ email: 'admin@voltium.in', password: 'right' }),
     });
 
-    const res = await POST(req);
+    const res = await POST(req as any);
 
     expect(res.status).toBe(200);
   });

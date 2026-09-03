@@ -78,10 +78,29 @@ async function main() {
 
     console.log('📊 Generating c8 integration coverage report...');
     try {
-      await runCommand('npx', ['c8', 'report']);
-      console.log('✅ Integration coverage report generated in ./coverage-integration/! ');
+      await runCommand('npx', [
+        'c8',
+        'report',
+        '--reporter=json',
+        '--reporter=text-summary',
+        `--reports-dir=${integrationCoverageDir}`,
+        `--temp-directory=${v8CoverageDir}`,
+      ]);
+
+      const expectedFinal = path.resolve(integrationCoverageDir, 'coverage-final.json');
+      const jsonReport = path.resolve(integrationCoverageDir, 'coverage.json');
+      if (!fs.existsSync(expectedFinal) && fs.existsSync(jsonReport)) {
+        fs.copyFileSync(jsonReport, expectedFinal);
+      }
+
+      if (fs.existsSync(expectedFinal)) {
+        console.log('✅ Integration coverage report generated in ./coverage-integration/! ');
+      } else {
+        throw new Error(`Expected coverage report not found at ${expectedFinal}`);
+      }
     } catch (c8Err) {
-      console.error('⚠️ c8 report generation failed:', c8Err.message);
+      console.error('❌ c8 report generation failed:', c8Err.message);
+      process.exitCode = 1;
     }
   }
 }

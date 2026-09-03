@@ -83,14 +83,14 @@ describe('P0-3: workflow-coverage is dev-only + analytics_view-gated', () => {
 
   it('returns 404 on a plain NODE_ENV=production build (APP_ENV unset)', async () => {
     delete process.env.APP_ENV;
-    process.env.NODE_ENV = 'production';
+    (process.env as any).NODE_ENV = 'production';
     const res = await loadRoute();
     expect(res.status).toBe(404);
   });
 
   it('serves the route when APP_ENV is unset (CI/local, no .env committed)', async () => {
     delete process.env.APP_ENV;
-    delete process.env.NODE_ENV;
+    delete (process.env as any).NODE_ENV;
     const res = await loadRoute();
     expect(res.status).toBe(200);
     expect(mocks.requireAdmin).toHaveBeenCalled();

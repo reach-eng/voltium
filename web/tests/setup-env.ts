@@ -35,7 +35,7 @@ process.env.ALLOW_DEV_PII_KEY = 'true';
 // (see src/lib/db.ts). Tests run with NODE_ENV=development by default
 // (loaded from .env), which would cap the pool at 10 and cause
 // connection exhaustion across 55+ test files.
-process.env.NODE_ENV = 'test';
+(process.env as any).NODE_ENV = 'test';
 
 if (process.env.DATABASE_URL) {
   if (!process.env.DATABASE_URL.includes('schema=')) {

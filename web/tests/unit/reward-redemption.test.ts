@@ -101,7 +101,7 @@ describe('Tier System & Reward Redemption', () => {
       vi.mocked(db.transaction.create).mockResolvedValue({ id: 'txn-1' } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: { id: 'reward-1' } } as any as any);
 
       const json = await res.json();
       expect(json.success).toBe(true);
@@ -135,7 +135,7 @@ describe('Tier System & Reward Redemption', () => {
       } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: { id: 'reward-1' } } as any);
 
       const json = await res.json();
       expect(json.success).toBe(false);
@@ -155,7 +155,7 @@ describe('Tier System & Reward Redemption', () => {
       } as any);
 
       const req = new NextRequest('http://localhost/api/rider/rewards/reward-1/redeem', { method: 'POST' });
-      const res = await POST(req, { params: { id: 'reward-1' } });
+      const res = await POST(req, { params: { id: 'reward-1' } } as any);
 
       const json = await res.json();
       expect(json.success).toBe(false);

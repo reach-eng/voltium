@@ -26,7 +26,7 @@ describe('Setting Use Cases - Edge Cases', () => {
     // Assuming walletMinTopup is a monetary key and paiseToRupees divides by 100
     // Actually the logic does String(paiseToRupees(Number(value)))
     expect(result.settings.walletMinTopup).toBeDefined();
-    expect(result.featureFlags.flagA).toBe(true);
+    expect((result.featureFlags as any).flagA).toBe(true);
   });
 
   it('update upserts correctly', async () => {

@@ -28,7 +28,7 @@ const hoisted = vi.hoisted(() => {
     useCaseCreateMock: vi.fn(),
     rateLimitMock: vi.fn().mockResolvedValue({ allowed: true }),
     emitMock: vi.fn().mockResolvedValue('event_1'),
-    dbMock: {} as Record<string, unknown>,
+    dbMock: {} as Record<string, any>,
   };
 });
 

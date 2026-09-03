@@ -120,7 +120,7 @@ describe('prod fail-closed guard for REQUIRE_EMERGENCY_CONTACT_RECEIPT', () => {
     return spawnSync(process.execPath, ['-e', code], {
       encoding: 'utf-8',
       env: { ...process.env, ...envOverrides },
-    });
+    } as any);
   }
 
   it('rejects production boot when the enforcement flag is unset', () => {

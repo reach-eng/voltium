@@ -182,7 +182,7 @@ describe('KYC — Submit', () => {
       aadhaarBack: 'url-aadhaar-back',
       panCard: 'url-pan',
       profilePhoto: 'url-photo',
-    });
+    } as any);
 
     expect(mockKycRepository.submitKyc).toHaveBeenCalledWith(
       'rider-123',
@@ -202,7 +202,7 @@ describe('KYC — Submit', () => {
 
     await kycUseCases.submitKyc('rider-123', {
       aadhaarFront: 'url-aadhaar-front',
-    });
+    } as any);
 
     expect(mockKycRepository.savePartialKyc).toHaveBeenCalled();
     expect(mockKycRepository.submitKyc).not.toHaveBeenCalled();
@@ -219,7 +219,7 @@ describe('KYC — Submit', () => {
 
     await kycUseCases.submitKyc('rider-123', {
       aadhaarFront: 'new-aadhaar-front',
-    });
+    } as any);
 
     // submitKyc is called with only the new prismaData (not merged)
     // The existing data is only used to decide submit vs partial
@@ -240,7 +240,7 @@ describe('KYC — Submit', () => {
     await kycUseCases.submitKyc('rider-123', {
       bankAccount: '1234567890',
       bankIfsc: 'SBIN0001234',
-    });
+    } as any);
 
     expect(mockKycRepository.savePartialKyc).toHaveBeenCalledWith(
       'rider-123',
@@ -259,7 +259,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     mockKycRepository.approveKyc.mockResolvedValue({ id: 'kyc-1', status: 'APPROVED' });
     mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
-    const result = await kycUseCases.reviewKyc('rider-123', 'admin-1', { action: 'APPROVE' });
+    const result = await kycUseCases.reviewKyc('rider-123', 'admin-1', { action: 'APPROVE' } as any);
 
     expect(mockKycRepository.approveKyc).toHaveBeenCalledWith('rider-123', 'admin-1');
     expect(result.status).toBe('APPROVED');
@@ -272,7 +272,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REJECT',
       rejectionReason: 'Blurry document',
-    });
+    } as any);
 
     expect(mockKycRepository.rejectKyc).toHaveBeenCalledWith(
       'rider-123',
@@ -288,7 +288,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REQUEST_INFO',
       infoRequest: 'Please provide clear photo',
-    });
+    } as any);
 
     expect(mockKycRepository.requestInfo).toHaveBeenCalledWith(
       'rider-123',
@@ -317,7 +317,7 @@ describe('Guarantor — Submit', () => {
       relationship: 'brother',
       aadhaarFront: 'url-front',
       aadhaarBack: 'url-back',
-    });
+    } as any);
 
     expect(mockGuarantorRepository.submitGuarantor).toHaveBeenCalledWith(
       'rider-123',
@@ -340,7 +340,7 @@ describe('Guarantor — Review', () => {
 
     const result = await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
       action: 'APPROVE',
-    });
+    } as any);
 
     expect(mockGuarantorRepository.approveGuarantor).toHaveBeenCalledWith('rider-123', 'admin-1');
     expect(result.status).toBe('APPROVED');
@@ -355,7 +355,7 @@ describe('Guarantor — Review', () => {
     await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
       action: 'REJECT',
       rejectionReason: 'Invalid documents',
-    });
+    } as any);
 
     expect(mockGuarantorRepository.rejectGuarantor).toHaveBeenCalledWith(
       'rider-123',
@@ -373,7 +373,7 @@ describe('Guarantor — Review', () => {
     await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
       action: 'REQUEST_INFO',
       infoRequest: 'Update phone number',
-    });
+    } as any);
 
     expect(mockGuarantorRepository.requestInfo).toHaveBeenCalledWith(
       'rider-123',
@@ -850,7 +850,7 @@ describe('Support — Ticket Flow', () => {
       message: 'App crashes on login',
       category: 'technical',
       priority: 'high',
-    });
+    } as any);
 
     expect(result.ticketId).toBe('#0043-A1B2');
     expect(mockSupportRepository.create).toHaveBeenCalledWith(
@@ -865,15 +865,15 @@ describe('Support — Ticket Flow', () => {
     mockSupportRepository.findById.mockResolvedValue({ id: 'ticket-1', status: 'OPEN' });
     mockSupportRepository.addMessage.mockResolvedValue({ id: 'msg-1', ticketId: 'ticket-1' });
 
-    await sharedSupportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {
+    await sharedSupportUseCases.replyToTicket('ticket-1', 'rider-123', 'RIDER', {
       message: 'Still experiencing the issue',
-      attachments: [],
+      attachments: [] as string[],
     });
 
     expect(mockSupportRepository.addMessage).toHaveBeenCalledWith(
       'ticket-1',
       'rider-123',
-      'rider',
+      'RIDER',
       'Still experiencing the issue',
       []
     );
