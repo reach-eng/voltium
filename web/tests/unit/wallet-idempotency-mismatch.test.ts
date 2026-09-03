@@ -50,7 +50,7 @@ vi.mock('@/lib/server-cache', () => ({
 }));
 vi.mock('@/server/workers/outbox', () => ({
   OutboxService: { emit: mocks.outboxEmit },
-  OutboxEventTypes: { WALLET_TOPUP_REJECTED: 'WALLET_TOPUP_REJECTED' },
+  OutboxEventTypes: { NOTIFICATION_SEND: 'notification.send' },
 }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mocks.auditLog }));
 vi.mock('@/lib/logger', () => ({
@@ -140,14 +140,16 @@ describe('Wallet Idempotency — cancel-and-replace on amount change (PR-ONBOARD
     });
 
     expect(mocks.outboxEmit).toHaveBeenCalledWith(
-      'WALLET_TOPUP_REJECTED',
+      'notification.send',
       expect.objectContaining({
         riderId: 'r_1',
         transactionId: 'tx_old',
         reason: 'superseded_by_new_amount',
+        type: 'WALLET_TOPUP_REJECTED',
       }),
       expect.any(Number),
-      expect.anything()
+      expect.anything(),
+      'interactive'
     );
   });
 
