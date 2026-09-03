@@ -81,3 +81,29 @@ export async function GET(req: NextRequest) {
     return errors.internal('Failed to fetch audit logs');
   }
 }
+
+export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) return adminUnauthorized();
+
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { riderId, action = 'admin.kyc_pii_revealed', details } = body;
+
+    const { createAuditLog } = await import('@/lib/audit-log');
+    const log = await createAuditLog({
+      actorId: session.adminId || 'unknown',
+      actorType: 'ADMIN',
+      action,
+      entity: 'Rider',
+      entityId: riderId,
+      details,
+    });
+
+    return success({ log });
+  } catch (error) {
+    logger.error('[AUDIT_LOGS_POST]', redactPii(error));
+    return errors.internal('Failed to record audit log');
+  }
+}
+

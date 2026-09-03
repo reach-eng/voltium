@@ -9,6 +9,7 @@ present,POST,/api/admin/announcements,/api/admin/announcements,D:\voltium\web\sr
 present,GET,/api/admin/audit/cleanup,/api/admin/audit/cleanup,D:\voltium\web\src\app\api\admin\audit\cleanup\route.ts
 present,POST,/api/admin/audit/cleanup,/api/admin/audit/cleanup,D:\voltium\web\src\app\api\admin\audit\cleanup\route.ts
 present,GET,/api/admin/audit-logs,/api/admin/audit-logs,D:\voltium\web\src\app\api\admin\audit-logs\route.ts
+present,POST,/api/admin/audit-logs,/api/admin/audit-logs,D:\voltium\web\src\app\api\admin\audit-logs\route.ts
 present,POST,/api/admin/auth/login,/api/admin/auth/login,D:\voltium\web\src\app\api\admin\auth\login\route.ts
 present,POST,/api/admin/auth/logout,/api/admin/auth/logout,D:\voltium\web\src\app\api\admin\auth\logout\route.ts
 present,GET,/api/admin/auth/me,/api/admin/auth/me,D:\voltium\web\src\app\api\admin\auth\me\route.ts
