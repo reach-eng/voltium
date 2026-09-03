@@ -1,0 +1,131 @@
+name: Firebase Test Lab Android Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Test Type'
+        required: true
+        default: 'robo'
+        type: choice
+        options:
+          - robo
+          - instrumentation
+      flavor:
+        description: 'Build Flavor'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+      device_model:
+        description: 'Device Model (e.g. Pixel6, redfin, oriole)'
+        required: false
+        default: 'Pixel6'
+        type: string
+      os_version:
+        description: 'Android OS Version'
+        required: false
+        default: '33'
+        type: string
+
+  schedule:
+    # Weekly smoke crawl across physical devices on Sunday midnight UTC
+    - cron: '0 0 * * 0'
+
+jobs:
+  test-lab:
+    name: Firebase Test Lab (${{ github.event.inputs.test_type || 'robo' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      FLUTTER_VERSION: '3.41.4'
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID || 'voltium-mobile-prod' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+        working-directory: ./flutter
+
+      - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build Application APK
+        run: |
+          FLAVOR="${{ github.event.inputs.flavor || 'dev' }}"
+          flutter build apk --flavor "$FLAVOR" --debug
+        working-directory: ./flutter
+
+      - name: Build Test APK (Instrumentation only)
+        if: ${{ github.event.inputs.test_type == 'instrumentation' }}
+        run: |
+          FLAVOR="${{ github.event.inputs.flavor || 'dev' }}"
+          pushd android
+          ./gradlew "app:assemble${FLAVOR^}DebugAndroidTest"
+          popd
+        working-directory: ./flutter
+
+      - name: Run Firebase Test Lab
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        run: |
+          MODE="${{ github.event.inputs.test_type || 'robo' }}"
+          FLAVOR="${{ github.event.inputs.flavor || 'dev' }}"
+          MODEL="${{ github.event.inputs.device_model || 'Pixel6' }}"
+          VERSION="${{ github.event.inputs.os_version || '33' }}"
+
+          gcloud config set project "${{ env.FIREBASE_PROJECT_ID }}"
+
+          APP_APK="build/app/outputs/apk/${FLAVOR}/debug/app-${FLAVOR}-debug.apk"
+          if [[ ! -f "$APP_APK" ]]; then
+            APP_APK="build/app/outputs/flutter-apk/app-${FLAVOR}-debug.apk"
+          fi
+
+          if [[ "$MODE" == "robo" ]]; then
+            gcloud firebase test android run \
+              --type robo \
+              --app "$APP_APK" \
+              --device "model=${MODEL},version=${VERSION},locale=en,orientation=portrait" \
+              --timeout 5m
+          else
+            TEST_APK="build/app/outputs/apk/androidTest/${FLAVOR}/debug/app-${FLAVOR}-debug-androidTest.apk"
+            gcloud firebase test android run \
+              --type instrumentation \
+              --app "$APP_APK" \
+              --test "$TEST_APK" \
+              --device "model=${MODEL},version=${VERSION},locale=en,orientation=portrait" \
+              --timeout 15m
+          fi
+        working-directory: ./flutter
+
+      - name: Fail on Missing GCP Credentials
+        if: ${{ secrets.GCP_SA_KEY == '' }}
+        run: |
+          echo "::error::GCP_SA_KEY secret is not configured in this repository."
+          echo "Firebase Test Lab requires GCP_SA_KEY (Service Account JSON with roles/testmanager.editor + roles/storage.admin)."
+          echo "Failing job to prevent false-green test status when tests did not run."
+          exit 1

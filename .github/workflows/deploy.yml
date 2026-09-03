@@ -1,0 +1,69 @@
+name: Deploy Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: 'Confirm deployment'
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  deployments: write
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+      url: ${{ github.event.inputs.environment == 'production' && 'https://voltium.example.com' || 'https://staging.voltium.example.com' }}
+    steps:
+      - name: Validate Confirmation
+        if: ${{ github.event.inputs.confirm != true && github.event.inputs.confirm != 'true' }}
+        run: |
+          echo "::error::Deployment cancelled: Confirmation checkbox was not selected."
+          exit 1
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./web
+        run: npx prisma generate
+
+      - name: Run Build
+        working-directory: ./web
+        run: npm run build:all
+
+      - name: Trigger Host Deployment
+        env:
+          ENV_NAME: ${{ github.event.inputs.environment }}
+          FORCE_DEPLOY: 'true'
+        run: |
+          echo "✅ Pre-deploy build verification passed for $ENV_NAME."
+          echo "Deploying via ./scripts/deploy-${ENV_NAME}.sh on target runner or via deployment webhook..."

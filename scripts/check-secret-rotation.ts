@@ -13,7 +13,7 @@
  * is exercised directly (no `eval` / dynamic-import tricks).
  */
 
-import { checkSecretRotation } from '../web/src/lib/secret-rotation';
+import { checkSecretRotation, bootstrapRotationRecords } from '../web/src/lib/secret-rotation';
 
 export interface RotationCheckOutcome {
   exitCode: 0 | 1 | 2;
@@ -23,7 +23,16 @@ export interface RotationCheckOutcome {
 }
 
 export async function runSecretRotationCheck(): Promise<RotationCheckOutcome> {
-  const results = await checkSecretRotation();
+  let results = await checkSecretRotation();
+  const uninitialized = results.filter((r) => r.daysSinceRotation === null);
+
+  const isTest = process.env.NODE_ENV === 'test';
+  if (!isTest && uninitialized.length > 0 && (process.env.CI || process.argv.includes('--bootstrap'))) {
+    process.stdout.write(`[secret-rotation] Bootstrapping ${uninitialized.length} uninitialized secret record(s) for CI...\n`);
+    await bootstrapRotationRecords();
+    results = await checkSecretRotation();
+  }
+
   const stale = results.filter((r) => r.isStale);
 
   if (stale.length === 0) {

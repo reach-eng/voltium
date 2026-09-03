@@ -132,7 +132,13 @@ jobs:
         run: flutter pub get
 
       - name: Run tests
-        run: flutter test
+        run: flutter test --coverage
+        # 85% gate — was bare `flutter test` (85% script never called, so coverage could regress green).
+
+      - name: Enforce Flutter 85% coverage gate
+        run: bash ../scripts/flutter-coverage.sh
+        env:
+          MIN_COVERAGE: '85.0'
 
   build-debug:
     name: Build Debug APK
@@ -327,7 +333,21 @@ jobs:
         #   app-arm64-v8a-release.apk    — real devices
         #   app-armeabi-v7a-release.apk  — older ARMv7 devices
         #   app-x86_64-release.apk       — emulators
-        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols/
+        # P0 2026-09-04: TLS pinning crash fix — release must carry pins. CI
+        # uses secrets.TLS_PIN_SHA256 when set; otherwise ships a placeholder
+        # CA-hash that intentionally fails closed on first network call (the
+        # same fail-closed the app does when pins are missing), so CI APKs
+        # remain uninstallable without manual flags — but build-time is explicit.
+        run: |
+          PINS="${TLS_PIN_SHA256:-}"
+          if [ -z "$PINS" ]; then
+            echo "::warning::TLS_PIN_SHA256 not set — release APK will fail closed on first network call (pinning enforced)."
+            PINS="CI_PLACEHOLDER_PIN_DO_NOT_SHIP"
+          fi
+          flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols/ --dart-define=TLS_PIN_SHA256="$PINS" --dart-define=API_URL="${API_URL:-}"
+        env:
+          TLS_PIN_SHA256: ${{ secrets.TLS_PIN_SHA256 }}
+          API_URL: ${{ secrets.API_URL }}
 
       - name: Upload Release APKs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

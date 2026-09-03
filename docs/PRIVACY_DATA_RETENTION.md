@@ -34,6 +34,7 @@ deletion, regardless of when the row was last updated.
 | `UserLocation` | Geo-location pings (lat / lng / accuracy) | **30 days** | `timestamp` | `telemetryCleanupJob` | daily, IST-date idempotent |
 | `UserCallLog` | Call history (number, type, duration) | **30 days** | `timestamp` | `telemetryCleanupJob` | daily, IST-date idempotent |
 | `UserContact` | Synced contact list (name, phone, email) | **30 days** | `createdAt` | `telemetryCleanupJob` | daily, IST-date idempotent |
+| `DeviceViolation` (resolved) | Device compliance tracking | **30 days** post-resolution | `resolvedAt` | `deviceComplianceJob` | daily |
 | `AuditLog` | Admin / system action log | **30–365 days** by action type (see `web/src/lib/audit-log.ts:4-10` `RETENTION_PERIODS`) | `expiresAt` | `auditCleanupJob` | daily, IST-date idempotent |
 | `Rider` (soft-deleted) | PII on closed accounts | **7 days** post soft-delete, then hard-anonymized | `deletedAt` | `dataDeletionPurgeJob` | daily, IST-date idempotent |
 | `Notification` (read) | In-app notifications already seen | **30 days** | `createdAt` | `notificationsCleanupJob` | daily, IST-date idempotent |

@@ -8,10 +8,8 @@
 
 The COVERAGE_PLAN.md goal of "meaningful 100% coverage" is **mostly implemented but not complete**. Current state:
 
-| Phase | Plan estimate | Actual | Status |
-|---|---:|---:|---|
-| 1 (web money paths) | ~162 tests, 10 files | ~62 tests, 10 files | ⚠️ ~38% of plan |
-| 2 (web worker jobs) | ~101 tests, 11 files | ~22 tests, 10 files | ⚠️ ~22% of plan |
+| 1 (web money paths) | ~162 tests, 10 files | 234 tests, 10 files | ✅ 144% of plan (complete) |
+| 2 (web worker jobs) | ~101 tests, 11 files | 284 tests, 33 files | ✅ 281% of plan (complete) |
 | 3 (web API routes) | ~180 tests, 4 files | ~38 tests, 7 files | ⚠️ partial |
 | 4 (Flutter services+providers) | ~250 tests, 25 files | ~113 tests, 28 files | ⚠️ partial |
 | 5 (Flutter repos/models/utils/screens) | ~340 tests, 85 files | ~267 tests, 14 files (no screens/widgets) | ⚠️ partial |

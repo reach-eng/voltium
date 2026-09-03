@@ -7,9 +7,6 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   serverExternalPackages: ['pino', 'pino-pretty'],
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns', 'recharts', 'framer-motion'],

@@ -27,7 +27,7 @@ const TOKEN_MAP: Record<string, string[]> = {
   '--color-vf-primary': ['tokens', 'colors', 'primitive', 'blue500'],
   '--color-vf-success': ['tokens', 'colors', 'primitive', 'emerald500'],
   '--color-vf-warning': ['tokens', 'colors', 'primitive', 'amber500'],
-  '--color-vf-info': ['tokens', 'colors', 'primitive', 'blue500'],
+  '--color-vf-info': ['tokens', 'colors', 'semantic', 'light', 'statusInfo'],
   '--color-vf-error': ['tokens', 'colors', 'primitive', 'rose500'],
 };
 

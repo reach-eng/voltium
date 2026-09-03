@@ -120,6 +120,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Run ESLint
         run: npm run lint
 
@@ -172,8 +175,18 @@ jobs:
       - name: Check migration safety
         run: bash ../scripts/check-migration-safety.sh
 
-      - name: Check secret rotation & PII security
-        run: bash ../scripts/check-secret-rotation.sh
+      - name: Verify required env secrets present (P0 gate)
+        run: npx tsx scripts/verify-env.ts
+        env:
+          # Fallback to the 32-char dev placeholder (blocklisted in prod by env.ts) so the gate checks *shape* in PRs without real secrets;
+          # real deploys inject real secrets via env and the length check passes.
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-placeholder-jwt-secret-32-chars-minimum!!' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET || 'ci-placeholder-cron-secret-32-chars-min!' }}
+          WORKER_SECRET: ${{ secrets.WORKER_SECRET || 'ci-placeholder-worker-secret-32-chars!' }}
+          FILE_UPLOAD_SECRET: ${{ secrets.FILE_UPLOAD_SECRET || 'ci-placeholder-file-upload-32-chars!!' }}
+          VERIFY_RECEIPT_SECRET: ${{ secrets.VERIFY_RECEIPT_SECRET || 'ci-placeholder-verify-receipt-32-ch!' }}
+          DEBUG_SECRET: ${{ secrets.DEBUG_SECRET || 'ci-placeholder-debug-secret-32-chars!!' }}
+          DATABASE_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
 
   # ─── OpenAPI Staleness Check ──────────────────────────────────────────────
   openapi-check:
@@ -192,6 +205,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Audit OpenAPI route coverage
+        run: npm run audit:openapi
 
       - name: Regenerate OpenAPI spec
         run: npm run generate:openapi
@@ -300,9 +316,19 @@ jobs:
 
       - name: Seed database
         run: npm run db:seed
+        env:
+          SEED_ADMIN_PASSWORD: ${{ secrets.CI_SEED_ADMIN_PASSWORD || 'ci-test-admin-password-32-chars!' }}
+          # Integration script self-manages the dev server lifecycle
+          # (spawns on 8081, wait-on, runs, kills — see
+          # web/scripts/coverage/run-integration-with-coverage.mjs).
+
+      - name: Check secret rotation & PII security
+        run: bash ../scripts/check-secret-rotation.sh
 
       - name: Run integration tests with coverage
         run: npm run test:coverage:integration
+        env:
+          SEED_ADMIN_PASSWORD: ${{ secrets.CI_SEED_ADMIN_PASSWORD || 'ci-test-admin-password-32-chars!' }}
 
       - name: Check API coverage gap
         run: npm run test:coverage-gap
@@ -322,6 +348,7 @@ jobs:
   workflow-gates:
     name: Workflow Coverage Gates
     runs-on: ubuntu-latest
+    needs: [build]
     permissions:
       contents: read
     defaults:
@@ -336,17 +363,6 @@ jobs:
       - name: Run screen workflow coverage gate
         run: bash scripts/check-screen-workflow-coverage.sh
 
-  # ─── Deploy Staging (DISABLED — see note) ─────────────────────────────────
-  # NOTE: This job previously ran on ubuntu-latest (fresh VM each run) which
-  # meant PM2 had no persistent state and the deploy was a no-op. Staging
-  # deploys are run manually via `./scripts/deploy-staging.sh` on the staging
-  # server. To re-enable automated deploys, use a self-hosted runner with
-  # PM2 state or SSH to the staging server via appleboy/ssh-action@v1.
-  # deploy-staging:
-  #   name: Deploy Staging
-  #   runs-on: [self-hosted, staging-runner]
-  #   ...
-
   flutter-test:
     name: Flutter Tests
     runs-on: ubuntu-latest
@@ -359,6 +375,10 @@ jobs:
       # upstream tag updates as PRs so the SHAs can be rotated.
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.41.4'
+          channel: 'stable'
+          cache: true
       - run: cd flutter && flutter pub get
       - name: Run i18n localization tests
         run: cd flutter && flutter test test/core/i18n_test.dart
@@ -378,3 +398,34 @@ jobs:
       - name: Cleanup keystore artifacts
         if: always()
         run: rm -f flutter/android/app/key.jks flutter/android/key.properties
+
+  # ─── Final CI Gate ────────────────────────────────────────────────────────
+  ci-gate:
+    name: CI Gate Passed
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs:
+      - secret-scan
+      - sast
+      - no-docker-check
+      - regression-gates-check
+      - lint-and-typecheck
+      - prisma-check
+      - openapi-check
+      - build
+      - test
+      - workflow-gates
+      - flutter-test
+    if: always()
+    steps:
+      - name: Evaluate CI Pipeline Result
+        run: |
+          echo "Evaluating upstream results..."
+          RESULTS="${{ join(needs.*.result, ' ') }}"
+          echo "Job results: $RESULTS"
+          if echo "$RESULTS" | grep -qE "failure|cancelled"; then
+            echo "::error::One or more upstream CI jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "✅ All CI jobs completed successfully."

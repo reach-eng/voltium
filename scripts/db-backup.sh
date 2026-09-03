@@ -209,3 +209,28 @@ echo "   Size: $(du -h "$OUTPUT_PATH" | cut -f1)"
 # Print connection info (safe — masks password)
 SAFE_URL=$(echo "$DATABASE_URL" | sed -E 's|://([^:]+):([^@]+)@|://\1:****@|')
 echo "   Database: $SAFE_URL"
+
+# Retention policy pruning: retain last RETENTION_DAYS (default: 14)
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
+echo ""
+echo "🧹 Pruning backups older than $RETENTION_DAYS days in $OUTPUT_DIR..."
+PRUNED_COUNT=0
+if [ -d "$OUTPUT_DIR" ]; then
+  while IFS= read -r old_file; do
+    if [ -n "$old_file" ]; then
+      rm -f "$old_file"
+      PRUNED_COUNT=$((PRUNED_COUNT + 1))
+    fi
+  done < <(find "$OUTPUT_DIR" -maxdepth 1 \( -name "voltium_*.sql" -o -name "voltium_*.sql.enc" \) -mtime +"$RETENTION_DAYS" -type f 2>/dev/null || true)
+fi
+echo "   Pruned $PRUNED_COUNT old backup file(s)."
+
+# Point-In-Time Recovery (PITR) WAL Archive Location
+WAL_ARCHIVE_DIR="${VOLTIUM_WAL_ARCHIVE_DIR:-$OUTPUT_DIR/wal_archive}"
+mkdir -p "$WAL_ARCHIVE_DIR"
+echo "   PITR WAL archive directory ready: $WAL_ARCHIVE_DIR"
+echo "   To enable continuous WAL archiving in postgresql.conf:"
+echo "     wal_level = replica"
+echo "     archive_mode = on"
+echo "     archive_command = 'cp \"%p\" \"$WAL_ARCHIVE_DIR/%f\"'  # On Linux/macOS"
+echo "     archive_command = 'copy \"%p\" \"$WAL_ARCHIVE_DIR\\%f\"' # On Windows"

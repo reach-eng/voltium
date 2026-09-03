@@ -1,8 +1,9 @@
 # Voltium 100% Integration Test Coverage Plan
 
 > **Created**: 2026-07-01
-> **Status**: Plan ready, awaiting execution approval
+> **Status**: Approved Roadmap / Deferred (Tracked as TEST-019 in `AUDIT_HYGIENE.md §Batch 14`)
 > **Goal**: Every OpenAPI operation (182 across 119 paths) has at least one integration test covering the happy path. Every operation also has a 4xx-error test (auth, validation, not-found).
+> **Note**: This is a multi-sprint strategic roadmap (10 work days, ~15,000+ lines of test code across 40-60 new files) staged for post-launch execution beyond the existing baseline of 76 integration test files (451 tests) and 3,000+ unit/integration tests.
 
 ---
 

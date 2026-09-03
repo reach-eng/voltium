@@ -14,7 +14,12 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="/">
+  <!-- P0 2026-09-04: must be /rider-app/ (served from /rider-app/). The
+       previous "/" 404'd all subpath assets when copy-flutter-web.sh placed
+       the build under public/rider-app. Builds must use
+       `flutter build web --base-href="/rider-app/"` (enforced by the copy
+       script's base-href guard). -->
+  <base href="/rider-app/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">

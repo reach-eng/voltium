@@ -42,17 +42,21 @@ fi
 
 echo ""
 
-# -- Check for Docker commands in source files --------------------------------
-# .github/ is excluded because workflow files sometimes reference Docker
-# in conditional / commented-out blocks (e.g. the workflow files that
-# would need to be rewritten if we ever moved to a containerized CI).
-# We keep those references around for context but they never run.
-EXCLUDE_DIRS="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=build --exclude-dir=.dart_tool --exclude-dir=.codex-review --exclude-dir=.github"
+# -- Check for Docker commands in source files and CI workflows --------------
+# Scans all project files including .github/ workflows.
+# GitHub Actions service containers (e.g. `image: postgres:16` under `services:`)
+# are allowed for CI database testing, but all Docker CLI commands
+# (docker run, docker build, docker compose, etc.) are strictly forbidden everywhere.
+EXCLUDE_DIRS="--exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=build --exclude-dir=.dart_tool --exclude-dir=.codex-review --exclude-dir=.qoder --exclude-dir=docs"
 
 DOCKER_REFS=$(grep -RIn \
   $EXCLUDE_DIRS \
   --exclude="check-no-docker.sh" \
-  -E "docker build|docker compose|docker-compose up|docker-compose down|docker-compose build|docker run |docker ps|docker logs|docker pull|image:[[:space:]]*postgres" \
+  --exclude="static-gates.mjs" \
+  --exclude="export.sh" \
+  --exclude="package-lock.json" \
+  --exclude="*.md" \
+  -E "docker build|docker compose|docker-compose|docker run |docker ps|docker logs|docker pull|docker exec" \
   "$PROJECT_DIR" 2>/dev/null || true)
 
 if [ -n "$DOCKER_REFS" ]; then

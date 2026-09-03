@@ -157,7 +157,11 @@ export async function withRateLimit(
       );
     }
 
-    return handler(req);
+    const response = await handler(req);
+    response.headers.set('X-RateLimit-Limit', String(maxRequests));
+    response.headers.set('X-RateLimit-Remaining', String(rl.remaining));
+    response.headers.set('X-RateLimit-Reset', String(rl.resetAt));
+    return response;
   };
 
   return withErrorHandler(wrappedHandler);

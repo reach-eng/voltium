@@ -16,22 +16,32 @@ This file contains context for AI assistants working on this codebase.
 | `npm run test:coverage:merge` | Merge unit + integration coverage (85% gate) |
 | `npm run test:coverage:combined` | Run full combined coverage pipeline |
 | `bash scripts/flutter-coverage.sh` | Flutter coverage with 85% threshold gate |
-| `flutter build apk --release --obfuscate --split-debug-info=build/symbols/ --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning & Obfuscation |
+| `flutter build apk --release --obfuscate --split-debug-info=build/symbols/ --dart-define=API_URL="https://api.voltium.example.com" --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning & Obfuscation |
 | `npm run lint`      | ESLint                        |
 | `npm run db:deploy` | Apply database migrations     |
 
 ## Important Libraries
 
 - **Database**: Prisma with PostgreSQL
-- **Validation**: Zod (`src/lib/validators.ts`)
-- **Error Handling**: `src/lib/api-error.ts`
-- **Response Format**: `src/lib/api-response.ts`
-- **Caching**: `src/lib/cache.ts`
+- **Validation**: Zod (`web/src/lib/validators.ts`)
+- **Error Handling**: `web/src/lib/api-error.ts`
+- **Response Format**: `web/src/lib/api-response.ts`
+- **Caching**: `web/src/lib/cache.ts` (single-host in-memory; see P1 note below)
+
+> P1 note — caching topology: `queryCache` and `maintenance-cache` are
+> per-process memory. `voltium-web` runs PM2 cluster (`instances: max`), so
+> `invalidateCache()` clears only the local worker; siblings serve TTL-stale
+> reads (admin lists ≤60s, `support_faqs` 1h with explicit invalidation on
+> mutation). Never gate money/lifecycle/idempotency on this cache. A second
+> host requires Redis or `postgres-cache-bus` first.
 
 ## Key Constants
 
-- Config in `src/lib/config.ts`
-- Screen registry in `src/app/page.tsx`
+- Config in `web/src/lib/config.ts`
+- Screen registry in `web/src/components/admin/AdminLayout.tsx` (NOT `web/src/app/page.tsx`, which is a CSR wrapper)
+- DB client: `web/src/lib/db.ts`
+- Schema: `web/prisma/schema.prisma`
+- Edge middleware: `web/src/middleware.ts` must stay Edge-safe (no `lib/db`, `lib/auth`, `lib/validators`, `lib/logger` imports — see `web/src/lib/maintenance-edge.ts`)
 
 ## Common Issues
 
@@ -42,8 +52,8 @@ This file contains context for AI assistants working on this codebase.
 
 ## Database
 
-- Schema: `prisma/schema.prisma`
-- Client: `src/lib/db.ts`
+- Schema: `web/prisma/schema.prisma`
+- Client: `web/src/lib/db.ts`
 - Indexes added for: Rider, Transaction, Vehicle
 
 ## Testing
@@ -61,21 +71,17 @@ This file contains context for AI assistants working on this codebase.
 - Wait-for-server: `npx wait-on tcp:8081`
 - CI pipeline: seed DB → start dev → wait → integration tests → API tests → stop dev
 
-### Flutter E2E Tests (49/49 PASSING)
+### Flutter E2E Tests (50/50 PASSING)
 
-> TEST-STRATEGY-AUDIT (2026-08-08, T-P0-3): the prior claim of "33/33 PASSING"
-> was stale — the canonical suite at `flutter/integration_test/e2e_individual/`
-> actually contains 49 unique-numbered tests (00–48). The previous count of
-> 33 omitted the 16 tests added in subsequent PRs (PR-8 pickup, PR-9 emergency
-> SOS, and others). The deprecated `e2e/` directory holds 9 additional
-> full-journey tests that overlap with `e2e_individual/` and are not run
-> by the canonical script — see `e2e/DEPRECATED.md`.
+> TEST-STRATEGY-AUDIT: the canonical suite at `flutter/integration_test/e2e_individual/`
+> contains 50 unique-numbered tests (00–49) across 51 dart files (including `test_helpers.dart`).
+> The canonical runner executes all 50 tests via `run_phased_tests.sh`.
 
 - Location: `flutter/integration_test/e2e_individual/`
 - Run all: `bash flutter/integration_test/e2e_individual/run_phased_tests.sh emulator-5554`
 - Run single: `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_individual/XX_test_name.dart -d emulator-5554 --dart-define=API_URL=http://localhost:8081 --dart-define=TEST_MODE=true`
 
-#### Test Inventory (33 files)
+#### Test Inventory (50 tests)
 
 | #   | File                                      | Category       |
 | --- | ----------------------------------------- | -------------- |
@@ -128,6 +134,7 @@ This file contains context for AI assistants working on this codebase.
 | 46  | `46_pickup_screen_test.dart`              | Pickup          |
 | 47  | `47_admin_approval_wait_test.dart`        | Admin Approval  |
 | 48  | `48_emergency_sos_test.dart`              | Emergency SOS   |
+| 49  | `49_language_dialog_test.dart`            | Language Dialog |
 
 #### Key Test Helpers (`flutter/integration_test/helpers/test_helpers.dart`)
 
@@ -150,18 +157,27 @@ This file contains context for AI assistants working on this codebase.
 
 ## Build & Dev Scripts
 
-### `.zscripts/` — Full-stack orchestration (CI/production)
+### `scripts/` — Host orchestration (actual, Windows-native)
 
 | Script | Purpose |
 |--------|---------|
-| `dev.sh` | Start dev server + mini-services with health checks (uses `bun`) |
-| `build.sh` | Full production build: Next.js standalone + mini-services + DB migration + tarball |
-| `mini-services-install.sh` | Install dependencies for all `mini-services/` sub-projects |
-| `mini-services-build.sh` | Build each mini-service into a standalone Bun bundle |
-| `mini-services-start.sh` | Start all built mini-services in production |
-| `start.sh` | Production entry point: Next.js standalone + mini-services + Caddy reverse proxy |
+| `scripts/laptop-service.ps1` | Start/stop/status/health for Next.js standalone + worker + local Postgres + PM2 (`ServerRoot D:/VoltiumServer`; no Docker/cloud-DB) |
+| `scripts/deploy-staging.sh` / `deploy-prod.sh` | Staging/prod deploys |
+| `scripts/service.sh` | Service helper |
+| `scripts/db-backup.sh` / `db-restore.sh` | Postgres backup/restore |
+| `scripts/check-migration-safety.sh` | Migration safety gate (uses `find ... -name migration.sql`; fails on DROP/TRUNCATE) |
 
-### `scripts/` — Utilities
+### `web/scripts/` — App-level gates
+
+| Script | Purpose |
+|--------|---------|
+| `verify-env.ts` | Env validation |
+| `seed-dev-admin.ts` | Dev admin seed |
+| `check-openapi-drift.ts` | OpenAPI drift gate |
+
+> P0 note (2026-09-03): there is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repo. Background work runs in-process via `web/src/server/workers/` (Postgres `OutboxEvent` + `lib/job-queue.ts`). `infra/` holds only `grafana/`. Do not follow any docs that reference the old mini-services/Caddy topology.
+
+### `scripts/` (legacy alias) — Utilities
 
 | Script | Purpose |
 |--------|---------|
@@ -202,4 +218,4 @@ Rules:
 - `flutter test --coverage` — Flutter with coverage
 
 ## Business Logic Rules
-- **Rental Plans (Recurring Subscriptions)**: A plan's durationDays is strictly determined by its 	ype (DAILY = 1, WEEKLY = 7, MONTHLY = 30). This ensures recurring billing cycles are mathematically consistent. The backend automatically calculates this on create/update, overriding any manual input.
+- **Rental Plans (Recurring Subscriptions)**: A plan's durationDays is strictly determined by its type (DAILY = 1, WEEKLY = 7, MONTHLY = 30). This ensures recurring billing cycles are mathematically consistent. The backend automatically calculates this on create/update, overriding any manual input.

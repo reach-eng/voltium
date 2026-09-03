@@ -68,14 +68,14 @@ echo "==> Installing pm2-logrotate..."
 pm2 install pm2-logrotate
 
 echo "==> Applying Voltium log-rotation policy (max_size=50M, retain=14, compress=true)..."
-pm2 set pm2-logrotate-max_size 50M
-pm2 set pm2-logrotate-retain 14
-pm2 set pm2-logrotate-compress true
+pm2 set pm2-logrotate:max_size 50M
+pm2 set pm2-logrotate:retain 14
+pm2 set pm2-logrotate:compress true
 # Belt-and-braces: also enable the worker interval (default 30s) and disable
 # the global no-rotate flag. These are pm2-logrotate defaults but we set
 # them explicitly so the policy is self-documenting on `pm2 conf`.
-pm2 set pm2-logrotate-workerInterval 30
-pm2 set pm2-logrotate-rotateInterval '0 0 * * *'  # daily at midnight
+pm2 set pm2-logrotate:workerInterval 30
+pm2 set pm2-logrotate:rotateInterval '0 0 * * *'  # daily at midnight
 
 pm2 save >/dev/null 2>&1 || true
 

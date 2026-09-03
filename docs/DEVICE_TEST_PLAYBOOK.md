@@ -615,3 +615,41 @@ Some bugs might be in the "Known Issues" list (`docs/KNOWN_ISSUES.md`). Check th
 You have everything you need. Take the playbook, your phone, and ~90 minutes. Come back with a list of bugs sorted by severity. The dev team will take it from there.
 
 If anything in this playbook is unclear or you find a flow that's not covered, ping me and I'll update it.
+
+---
+
+## Automated Device Testing: Firebase Test Lab Integration (`TEST-022`)
+
+While the sections above guide physical manual testing, automated device testing on physical Android devices in Google Cloud is fully supported via **Firebase Test Lab**.
+
+### 1. Automation Capabilities
+- **Robo Testing**: Zero-script automated crawler that explores the app hierarchy, identifies broken navigation, uncaught Dart/Java exceptions, ANRs (Application Not Responding), and layout rendering defects across Android 10–14.
+- **Instrumentation Testing**: Executes Flutter integration test targets packaged via `androidTest` (`MainActivityTest.java` with `FlutterTestRunner`) on real cloud hardware.
+
+### 2. Required Firebase & GCP Configuration
+To run automated cloud tests, the following cloud resources must be configured:
+1. **Google Cloud / Firebase Project**:
+   - Create or use project `voltium-mobile-prod` (or dev equivalent) with **Cloud Testing API** and **Cloud Tool Results API** enabled.
+2. **GCP Service Account**:
+   - Create a service account (e.g. `github-test-lab@voltium-mobile-prod.iam.gserviceaccount.com`).
+   - Grant IAM roles:
+     - `roles/testmanager.editor` (Cloud Test Service Admin)
+     - `roles/storage.admin` (Cloud Storage Admin to store logs, videos, and trace artifacts)
+   - Export service account JSON key and configure GitHub repository secret `GCP_SA_KEY`.
+3. **Repository Secret**:
+   - Set secret `FIREBASE_PROJECT_ID` to your GCP project ID.
+
+### 3. Local CLI Execution
+Run the automated test runner script from the repository root:
+```bash
+# Automated Robo test on Pixel 6 (API 33) & Redfin (API 30):
+./flutter/scripts/run_firebase_test_lab.sh robo dev
+
+# Full instrumentation test suite on cloud devices:
+./flutter/scripts/run_firebase_test_lab.sh instrumentation dev
+```
+
+### 4. CI/CD Pipeline
+- **Workflow**: [`.github/workflows/firebase-test-lab.yml`](file:///d:/voltium/.github/workflows/firebase-test-lab.yml)
+- Supports manual dispatch (`workflow_dispatch`) with custom device models/API levels, as well as scheduled weekly runs across real cloud devices.
+

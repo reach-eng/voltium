@@ -2,7 +2,7 @@
 
 ## Schedule
 
-- Quarterly: `JWT_SECRET`, `SESSION_SECRET`, `CRON_SECRET`, `WORKER_SECRET`, `CI_JWT_SECRET`
+- Quarterly: `JWT_SECRET`, `SESSION_SECRET`, `CRON_SECRET`, `WORKER_SECRET`, `CI_JWT_SECRET`, `FILE_UPLOAD_SECRET`, `VERIFY_RECEIPT_SECRET`, `DEBUG_SECRET`
 - Annual: Firebase service-account key, FCM server key if legacy APIs are used, Cloudflare Tunnel credentials, database password
 - On personnel change: admin passwords, Android signing keystore access, GitHub Actions secrets access
 - On suspected leak: rotate affected secret immediately, review audit logs, and invalidate sessions where relevant
@@ -15,6 +15,9 @@
 | `SESSION_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
 | `CRON_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
 | `WORKER_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
+| `FILE_UPLOAD_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
+| `VERIFY_RECEIPT_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
+| `DEBUG_SECRET` | Tech Lead | Quarterly | Suspected leak | `web/.env.production.local` |
 | `CI_JWT_SECRET` | Tech Lead | Quarterly | Suspected leak | GitHub Actions secrets |
 | `DATABASE_URL` password | Tech Lead | Annual | Suspected leak | PostgreSQL role plus `web/.env.production.local` |
 | `DIRECT_URL` password | Tech Lead | Annual | Suspected leak | PostgreSQL role plus `web/.env.production.local` |
@@ -36,6 +39,15 @@
 3. Restart services: `pm2 restart ecosystem.config.js`.
 4. Expect all existing rider and admin sessions to require login again.
 5. Watch logs and audit entries for unexpected `500` errors.
+
+## Service Secrets (`FILE_UPLOAD_SECRET`, `VERIFY_RECEIPT_SECRET`, `DEBUG_SECRET`) Rotation
+
+1. Generate a new 32-byte secret: `openssl rand -hex 32`.
+2. Update the corresponding variable in `web/.env.production.local`.
+3. Restart services: `pm2 restart ecosystem.config.js`.
+4. For `FILE_UPLOAD_SECRET`: any pending upload URLs generated with the old HMAC will expire (5-minute TTL); riders retry upload seamlessly.
+5. For `VERIFY_RECEIPT_SECRET`: in-flight OTP receipts expire; riders verify phone again on next step.
+6. For `DEBUG_SECRET`: update CLI / monitoring tools with the new Bearer token.
 
 ## Verification After Any Rotation
 

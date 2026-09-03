@@ -16,7 +16,7 @@
 
 param(
   [Parameter(Position = 0)]
-  [ValidateSet('preflight','init-folders','build','start','stop','restart','status','logs','install-startup','uninstall-startup','health','backup-now')]
+  [ValidateSet('preflight','init-folders','build','start','stop','restart','status','logs','install-startup','uninstall-startup','health','backup-now','test-restore')]
   [string]$Action = 'status',
 
   [string]$ProjectRoot = '',
@@ -120,14 +120,26 @@ function Run-Preflight {
   $ok = (Require-Command node 'Install Node.js 20 LTS and add it to PATH.') -and $ok
   $ok = (Require-Command npm 'Install Node.js 20 LTS and add npm to PATH.') -and $ok
   $ok = (Require-Command pm2 'Run: npm install -g pm2') -and $ok
-  if ($env:DATABASE_OFFLINE -eq 'true') {
-    Write-Warn 'DATABASE_OFFLINE is true. Bypassing PostgreSQL binary and connection checks.'
-  } else {
-    $ok = (Require-Command psql 'Install PostgreSQL client tools and add bin folder to PATH.') -and $ok
-    $ok = (Require-Command pg_dump 'Install PostgreSQL client tools and add bin folder to PATH.') -and $ok
-    $ok = (Test-Postgres) -and $ok
-  }
+  $ok = (Require-Command psql 'Install PostgreSQL client tools and add bin folder to PATH.') -and $ok
+  $ok = (Require-Command pg_dump 'Install PostgreSQL client tools and add bin folder to PATH.') -and $ok
+  $ok = (Test-Postgres) -and $ok
   $ok = (Test-EnvFile) -and $ok
+
+  # Verify and configure pm2-logrotate to prevent unbounded log growth
+  try {
+    $lr = pm2 list 2>&1 | Out-String
+    if ($lr -notmatch 'pm2-logrotate') {
+      Write-Step 'Installing pm2-logrotate module...'
+      pm2 install pm2-logrotate | Out-Null
+      pm2 set pm2-logrotate:max_size 50M | Out-Null
+      pm2 set pm2-logrotate:retain 14 | Out-Null
+      pm2 set pm2-logrotate:compress true | Out-Null
+      Write-Ok 'pm2-logrotate installed and configured (max_size=50M, retain=14, compress=true)'
+    }
+  } catch {
+    Write-Warn "Unable to verify/configure pm2-logrotate: $($_.Exception.Message)"
+  }
+
   if ($ok) { Write-Ok 'Laptop service preflight passed' } else { Write-Fail 'Laptop service preflight failed' }
   if (-not $ok) { exit 1 }
 }
@@ -140,11 +152,7 @@ function Build-App {
     npm ci
     npx prisma validate
     npx prisma generate
-    if ($env:DATABASE_OFFLINE -eq 'true') {
-      Write-Warn 'DATABASE_OFFLINE is true. Skipping prisma migrate deploy.'
-    } else {
-      npx prisma migrate deploy
-    }
+    npx prisma migrate deploy
     npm run build
     npm run worker:build
   } finally {
@@ -182,11 +190,7 @@ function Restart-Services {
 
 function Show-Status {
   Write-Step 'Laptop service status'
-  if ($env:DATABASE_OFFLINE -eq 'true') {
-    Write-Warn 'DATABASE_OFFLINE is true. Bypassing PostgreSQL service check.'
-  } else {
-    Test-Postgres | Out-Null
-  }
+  Test-Postgres | Out-Null
   pm2 status
   Write-Host "`nService folders:" -ForegroundColor Cyan
   foreach ($path in @($UploadsRoot, $BackupsRoot, $LogsRoot, $RestoreTempRoot)) {
@@ -248,4 +252,5 @@ switch ($Action) {
   'uninstall-startup' { Uninstall-Startup }
   'health' { Check-HealthUrl }
   'backup-now' { Run-BackupNow }
+  'test-restore' { & "$PSScriptRoot/db-restore-test.ps1" }
 }
