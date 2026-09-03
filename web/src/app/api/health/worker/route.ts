@@ -11,12 +11,12 @@ function errorMessage(err: unknown): string {
 
 // P0: queue depth + failure counts are operational internals — admin or cron
 // only (was public, and leaked raw DB error text).
-export async function GET(request?: NextRequest) {
+export async function GET(request: NextRequest) {
   const start = Date.now();
 
   const admin = await requireAdmin();
   if (!admin) {
-    const cronRejection = request ? requireCronAuth(request) : null;
+    const cronRejection = requireCronAuth(request);
     if (cronRejection) return cronRejection;
   }
 

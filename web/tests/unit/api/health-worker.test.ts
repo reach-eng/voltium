@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
 const mockDb = vi.hoisted(() => ({
   $queryRawUnsafe: vi.fn(),
@@ -10,6 +11,8 @@ vi.mock('@/lib/rbac', () => ({
 }));
 
 const { GET } = await import('@/app/api/health/worker/route');
+
+const makeReq = () => new NextRequest('http://localhost/api/health/worker');
 
 describe('GET /api/health/worker — Dedicated Worker Health Endpoint', () => {
   beforeEach(() => {
@@ -23,7 +26,7 @@ describe('GET /api/health/worker — Dedicated Worker Health Endpoint', () => {
       .mockResolvedValueOnce([{ age_seconds: 12 }]) // oldestPendingAge
       .mockResolvedValueOnce([{ count: 0 }]); // stuckCount
 
-    const res = await GET();
+    const res = await GET(makeReq());
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -43,7 +46,7 @@ describe('GET /api/health/worker — Dedicated Worker Health Endpoint', () => {
       .mockResolvedValueOnce([{ age_seconds: 1200 }])
       .mockResolvedValueOnce([{ count: 3 }]); // 3 stuck events!
 
-    const res = await GET();
+    const res = await GET(makeReq());
     expect(res.status).toBe(503);
     const body = await res.json();
 
@@ -54,7 +57,7 @@ describe('GET /api/health/worker — Dedicated Worker Health Endpoint', () => {
   it('returns 503 unhealthy when database query throws fatal error', async () => {
     mockDb.$queryRawUnsafe.mockRejectedValueOnce(new Error('Connection lost'));
 
-    const res = await GET();
+    const res = await GET(makeReq());
     expect(res.status).toBe(503);
     const body = await res.json();
 
