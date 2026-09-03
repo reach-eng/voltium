@@ -102,6 +102,7 @@ describe('prod fail-closed guard for REQUIRE_EMERGENCY_CONTACT_RECEIPT', () => {
     ALLOW_DEV_PII_KEY: 'false',
     ENABLE_TEST_OTP: 'false',
     ENABLE_DEV_ADMIN_LOGIN: 'false',
+    TEST_MODE: 'false',
   };
 
   function spawnEnvCheck(

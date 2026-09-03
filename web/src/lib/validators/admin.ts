@@ -240,7 +240,9 @@ export const updateFaqAdminSchema = z
 export const LEGAL_DOCUMENT_TYPES = [
   { key: 'terms', label: 'Terms of Service' },
   { key: 'privacy', label: 'Privacy Policy' },
+  { key: 'rental_safety', label: 'Rental & Safety Policy' },
   { key: 'refund', label: 'Refund Policy' },
+  { key: 'guarantor', label: 'Guarantor Agreement' },
   { key: 'lease', label: 'Lease Agreement' },
 ] as const;
 
@@ -250,7 +252,8 @@ export const updateLegalAdminSchema = z
   .object({
     type: z.enum(LEGAL_DOCUMENT_KEYS as [string, ...string[]]),
     title: z.string().max(200).optional(),
-    content: z.string().min(1, 'content is required').max(100000),
+    content: z.string().max(100000).optional(),
+    isActive: z.boolean().optional(),
   })
   .strict();
 
