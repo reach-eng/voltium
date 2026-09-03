@@ -51,7 +51,8 @@ void main() {
         ? 'lib/${relativePath.split('lib/').last}'
         : relativePath;
 
-    if (excludedPaths.any((e) => libRelative.endsWith(e.replaceAll('lib/', '')))) {
+    if (excludedPaths
+        .any((e) => libRelative.endsWith(e.replaceAll('lib/', '')))) {
       continue;
     }
 

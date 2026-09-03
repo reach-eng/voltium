@@ -95,14 +95,32 @@ void main() {
     expect(result.first['body']['foo'], 'bar');
   });
 
-  test('clearAll deletes tables', () async {
+  test('clearAll deletes tables and clears memory cache', () async {
     when(() => mockDb.delete(any())).thenAnswer((_) async => 1);
+    when(() => mockDb.insert(any(), any(),
+            conflictAlgorithm: any(named: 'conflictAlgorithm')))
+        .thenAnswer((_) async => 1);
 
+    await service.cacheData('mem_key', {'foo': 'bar'});
     await service.clearAll();
 
     verify(() => mockDb.delete('cached_data')).called(1);
     verify(() => mockDb.delete('cached_transactions')).called(1);
     verify(() => mockDb.delete('cached_plans')).called(1);
+    verify(() => mockDb.delete('pending_operations')).called(1);
+
+    // Verify in-memory cache was cleared
+    when(() => mockDb.query(any(),
+        where: any(named: 'where'),
+        whereArgs: any(named: 'whereArgs'))).thenAnswer((_) async => []);
+    expect(await service.getCachedData('mem_key'), isNull);
+  });
+
+  test('clearPendingOperations deletes pending_operations table', () async {
+    when(() => mockDb.delete(any())).thenAnswer((_) async => 1);
+
+    await service.clearPendingOperations();
+
     verify(() => mockDb.delete('pending_operations')).called(1);
   });
 

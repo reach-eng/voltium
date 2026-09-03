@@ -7,7 +7,8 @@ import '../helpers/test_helpers.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Settings – theme dialog opens and toggles theme', (tester) async {
+  testWidgets('Settings – theme dialog opens and toggles theme',
+      (tester) async {
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'profileTab');
 

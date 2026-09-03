@@ -17,7 +17,8 @@ void main() {
 
   int violations = 0;
   // Look for SizedBox/Container wrapping GestureDetector/InkWell/IconButton with height/width < 44
-  final wrapperRegex = RegExp(r'(SizedBox|Container)\s*\(\s*(width|height):\s*([1-3]?[0-9]|\b4[0-3])(\.0)?\b');
+  final wrapperRegex = RegExp(
+      r'(SizedBox|Container)\s*\(\s*(width|height):\s*([1-3]?[0-9]|\b4[0-3])(\.0)?\b');
 
   final files = libDir
       .listSync(recursive: true)
@@ -29,7 +30,7 @@ void main() {
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
       if (line.contains('//')) continue;
-      
+
       if (wrapperRegex.hasMatch(line)) {
         // Check if next 5 lines contain an interactive widget as child
         final window = lines.skip(i).take(6).join(' ');
@@ -45,11 +46,14 @@ void main() {
 
   stdout.writeln('Touch Target Accessibility Audit (RA-F-7):');
   stdout.writeln('  Current sub-44px dimension hints : $violations');
-  stdout.writeln('  Ratchet Ceiling                  : $kTouchTargetViolationCeiling');
+  stdout.writeln(
+      '  Ratchet Ceiling                  : $kTouchTargetViolationCeiling');
 
   if (violations > kTouchTargetViolationCeiling) {
-    stderr.writeln('\nFAILED: Sub-44px touch target count ($violations) exceeds ceiling ($kTouchTargetViolationCeiling).');
-    stderr.writeln('Use a11yTouchTarget() wrapper or increase dimensions to at least 44.0 dp.');
+    stderr.writeln(
+        '\nFAILED: Sub-44px touch target count ($violations) exceeds ceiling ($kTouchTargetViolationCeiling).');
+    stderr.writeln(
+        'Use a11yTouchTarget() wrapper or increase dimensions to at least 44.0 dp.');
     exit(1);
   } else {
     stdout.writeln('\nPASSED: Touch target accessibility compliant.');

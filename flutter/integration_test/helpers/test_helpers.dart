@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/main.dart' as app;
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'mock_api_client.dart';
@@ -36,13 +37,18 @@ Future<void> safeAppMain({bool simulateError = false}) async {
   FlutterError.onError = originalErrorHandler;
 }
 
-/// Clear all app state (SharedPreferences, cache) to ensure clean test isolation.
+/// Clear all app state (SharedPreferences, cache, secure storage) to ensure clean test isolation.
 Future<void> resetAppState() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.clear();
   // Re-initialize CacheService singleton with fresh prefs
   await CacheService().init();
   await CacheService().clearAll();
+  try {
+    await SecureStorageService().clearAll();
+  } catch (_) {
+    // Graceful fallback if platform secure storage is uninitialized in test runner
+  }
 }
 
 /// Set up app state to simulate a returning user (skips onboarding/legal loops).

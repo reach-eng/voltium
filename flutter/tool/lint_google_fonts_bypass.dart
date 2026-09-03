@@ -91,7 +91,8 @@ void main() {
 
   stdout.writeln('GoogleFonts widget-bypass audit (PR-114):');
   stdout.writeln('  Total widget-bypass references : $bypassCount');
-  stdout.writeln('  Ratchet Ceiling                : $kGoogleFontsBypassCeiling');
+  stdout
+      .writeln('  Ratchet Ceiling                : $kGoogleFontsBypassCeiling');
   stdout.writeln('');
   stdout.writeln('  Per-file breakdown:');
 
@@ -101,12 +102,16 @@ void main() {
 
   if (bypassCount > kGoogleFontsBypassCeiling) {
     stderr.writeln('');
-    stderr.writeln('FAILED: GoogleFonts widget-bypass count ($bypassCount) exceeds ceiling ($kGoogleFontsBypassCeiling).');
-    stderr.writeln('Replace widget-side GoogleFonts.plusJakartaSans(...) calls with AppTypography.<style>.copyWith(...).');
-    stderr.writeln('See flutter/lib/theme/app_typography.dart for the canonical 19-style tier system.');
+    stderr.writeln(
+        'FAILED: GoogleFonts widget-bypass count ($bypassCount) exceeds ceiling ($kGoogleFontsBypassCeiling).');
+    stderr.writeln(
+        'Replace widget-side GoogleFonts.plusJakartaSans(...) calls with AppTypography.<style>.copyWith(...).');
+    stderr.writeln(
+        'See flutter/lib/theme/app_typography.dart for the canonical 19-style tier system.');
     exit(1);
   } else {
     stdout.writeln('');
-    stdout.writeln('PASSED: GoogleFonts widget-bypass count within ratchet ceiling.');
+    stdout.writeln(
+        'PASSED: GoogleFonts widget-bypass count within ratchet ceiling.');
   }
 }

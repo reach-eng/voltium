@@ -20,11 +20,8 @@ void main() {
     // Test filter chips
     final filters = ['All', 'Approved', 'Pending'];
     for (final f in filters) {
-      final chip = app.shared.filter${f}Chip;
-      if (chip.evaluate().isNotEmpty) {
-        await tester.tap(chip);
-        await settle(tester);
-      }
+      await app.wallet.tapFilter(f);
+      await settle(tester);
     }
 
     // Wallet should still be visible

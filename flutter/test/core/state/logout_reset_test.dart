@@ -207,6 +207,10 @@ void main() {
             TicketFilter.assigned,
           );
 
+      // Seed rider cache to test that logout purges persisted credentials (F-08).
+      await CacheService().cacheRider({'id': '1', 'name': 'Test Rider'});
+      expect(CacheService().getCachedRider(), isNotNull);
+
       // Rider A logs out. Awaited so the resets are guaranteed complete
       // before we assert rider B's pristine view (the method awaits the
       // server logout call before resetting local notifiers).
@@ -227,6 +231,9 @@ void main() {
       expect(riderState.rider, isNull);
       expect(riderState.riderId, isNull);
       expect(riderState.phone, isNull);
+
+      // And the rider cache is fully cleared (F-08).
+      expect(CacheService().getCachedRider(), isNull);
     });
   });
 }

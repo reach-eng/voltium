@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/create_ticket_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
+import 'package:voltium_rider/features/support/domain/repository.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,40 @@ import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+
+class _DoubleTapMockSupportRepo implements SupportRepository {
+  int createTicketCalls = 0;
+  final Completer<void> createCompleter = Completer<void>();
+
+  @override
+  Future<Map<String, dynamic>> createTicket(
+    String category,
+    String subject,
+    String message, {
+    String? priority,
+    String? riderId,
+    String? attachments,
+  }) async {
+    createTicketCalls++;
+    await createCompleter.future;
+    return {
+      'success': true,
+      'data': {'ticketId': 'TCK-1001'}
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchFaqs() async => {
+        'success': true,
+        'data': {'faqs': []}
+      };
+
+  @override
+  Future<Map<String, dynamic>> fetchTickets() async => {
+        'success': true,
+        'data': {'tickets': []}
+      };
+}
 
 class _SeededRiderNotifier extends RiderNotifier {
   final RiderModel _seed;
@@ -33,6 +69,7 @@ void main() {
     required Widget child,
     ThemeMode themeMode = ThemeMode.light,
     RiderModel? mockRider,
+    SupportRepository? mockSupportRepo,
   }) {
     return ProviderScope(
       overrides: [
@@ -40,6 +77,8 @@ void main() {
         themeProviderRef.overrideWith(() => ThemeProvider()),
         if (mockRider != null)
           riderProvider.overrideWith(() => _SeededRiderNotifier(mockRider)),
+        if (mockSupportRepo != null)
+          supportRepositoryProvider.overrideWithValue(mockSupportRepo),
       ],
       child: MaterialApp(
         themeMode: themeMode,
@@ -165,6 +204,50 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(CreateTicketScreen), findsAtLeastNWidgets(1));
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'F-16: double-tap on submit is guarded by _isLoading and only creates one ticket',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final mockRepo = _DoubleTapMockSupportRepo();
+
+      await tester.pumpWidget(buildTestApp(
+        child: Navigator(
+          onGenerateRoute: (_) => MaterialPageRoute(
+            builder: (_) => const CreateTicketScreen(),
+          ),
+        ),
+        mockSupportRepo: mockRepo,
+      ));
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextFormField);
+      await tester.enterText(textFields.at(0), 'Battery drainage');
+      await tester.enterText(
+          textFields.at(1), 'The battery runs down unexpectedly while parked.');
+      await tester.pump();
+
+      // Submit once
+      final submitFinder = find.byKey(const Key('submitTicketButton'));
+      await tester.tap(submitFinder);
+      await tester.pump(const Duration(milliseconds: 10));
+
+      // Attempt second tap while in-flight
+      await tester.tap(submitFinder, warnIfMissed: false);
+      await tester.pump(const Duration(milliseconds: 10));
+
+      // Resolve the async submission
+      mockRepo.createCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(mockRepo.createTicketCalls, equals(1));
     });
   });
 

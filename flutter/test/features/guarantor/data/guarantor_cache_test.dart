@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 
 void main() {
   group('GuarantorCache', () {
@@ -11,10 +13,13 @@ void main() {
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
       await CacheService().init();
     });
 
-    test('saveFormCache saves data correctly under riderId key', () async {
+    test(
+        'saveFormCache saves data in encrypted storage and clears plaintext cache',
+        () async {
       final data = {
         'name': 'John Doe',
         'isPhoneVerified': true,
@@ -23,49 +28,83 @@ void main() {
 
       await GuarantorCache.saveFormCache(testRiderId, data);
 
-      final storedJson = CacheService().getString(expectedKey);
-      expect(storedJson, isNotNull);
+      // F-39: Plaintext SharedPreferences must NOT have the sensitive guarantor PII
+      final plaintext = CacheService().getString(expectedKey);
+      expect(plaintext, isNull,
+          reason:
+              'Plaintext SharedPreferences must not contain guarantor draft PII');
 
-      final decoded = jsonDecode(storedJson!) as Map<String, dynamic>;
-      expect(decoded['name'], 'John Doe');
-      expect(decoded['isPhoneVerified'], true);
-      expect(decoded.containsKey('nullField'), isFalse,
+      // Encrypted storage must have the data
+      final encrypted = await EncryptedCacheService().read(expectedKey);
+      expect(encrypted, isNotNull);
+      expect(encrypted!['name'], 'John Doe');
+      expect(encrypted['isPhoneVerified'], true);
+      expect(encrypted.containsKey('nullField'), isFalse,
           reason: 'null fields should be filtered out');
     });
 
-    test('loadFormCache retrieves previously saved data', () async {
+    test('loadFormCache retrieves previously saved data from encrypted storage',
+        () async {
       final data = {
         'name': 'Jane Doe',
         'address': '456 Street',
       };
 
-      CacheService().setString(expectedKey, jsonEncode(data));
+      await EncryptedCacheService().write(expectedKey, data);
 
-      final loadedData = GuarantorCache.loadFormCache(testRiderId);
+      final loadedData = await GuarantorCache.loadFormCache(testRiderId);
       expect(loadedData, isNotNull);
       expect(loadedData!['name'], 'Jane Doe');
       expect(loadedData['address'], '456 Street');
     });
 
-    test('loadFormCache returns null if no data exists', () {
-      final loadedData = GuarantorCache.loadFormCache(testRiderId);
-      expect(loadedData, isNull);
-    });
+    test(
+        'loadFormCache migrates legacy plaintext SharedPreferences to encrypted storage',
+        () async {
+      final data = {
+        'name': 'Migrated User',
+        'address': '789 Legacy Blvd',
+      };
 
-    test('loadFormCache returns null if json is malformed', () {
-      CacheService().setString(expectedKey, '{ invalid json }');
-      final loadedData = GuarantorCache.loadFormCache(testRiderId);
-      expect(loadedData, isNull);
-    });
-
-    test('clearFormCache removes the specific key', () async {
-      final data = {'name': 'John Doe'};
       CacheService().setString(expectedKey, jsonEncode(data));
 
+      final loadedData = await GuarantorCache.loadFormCache(testRiderId);
+      expect(loadedData, isNotNull);
+      expect(loadedData!['name'], 'Migrated User');
+
+      // Plaintext must be purged upon migration
+      expect(CacheService().getString(expectedKey), isNull);
+
+      // Encrypted storage must now have the data
+      final encrypted = await EncryptedCacheService().read(expectedKey);
+      expect(encrypted, isNotNull);
+      expect(encrypted!['name'], 'Migrated User');
+    });
+
+    test('loadFormCache returns null if no data exists', () async {
+      final loadedData = await GuarantorCache.loadFormCache(testRiderId);
+      expect(loadedData, isNull);
+    });
+
+    test('loadFormCache returns null if json is malformed', () async {
+      CacheService().setString(expectedKey, '{ invalid json }');
+      final loadedData = await GuarantorCache.loadFormCache(testRiderId);
+      expect(loadedData, isNull);
+    });
+
+    test(
+        'clearFormCache removes from both encrypted storage and plaintext cache',
+        () async {
+      final data = {'name': 'John Doe'};
+      await EncryptedCacheService().write(expectedKey, data);
+      CacheService().setString(expectedKey, jsonEncode(data));
+
+      expect(await EncryptedCacheService().read(expectedKey), isNotNull);
       expect(CacheService().getString(expectedKey), isNotNull);
 
       await GuarantorCache.clearFormCache(testRiderId);
 
+      expect(await EncryptedCacheService().read(expectedKey), isNull);
       expect(CacheService().getString(expectedKey), isNull);
     });
 
@@ -81,7 +120,7 @@ void main() {
         'verifiedAt': verifiedAt,
       });
 
-      final loaded = GuarantorCache.loadFormCache(testRiderId);
+      final loaded = await GuarantorCache.loadFormCache(testRiderId);
       expect(loaded, isNotNull);
       expect(loaded!['verifiedAt'], verifiedAt,
           reason: 'epoch-ms receipt timestamp must persist as an int');
@@ -98,7 +137,7 @@ void main() {
         'verifiedAt': null,
       });
 
-      final loaded = GuarantorCache.loadFormCache(testRiderId);
+      final loaded = await GuarantorCache.loadFormCache(testRiderId);
       expect(loaded, isNotNull);
       expect(loaded!.containsKey('verifiedAt'), isFalse);
     });

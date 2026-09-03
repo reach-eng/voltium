@@ -100,8 +100,7 @@ void main() {
     if (agreement.evaluate().isNotEmpty) {
       await tester.tap(agreement);
       await settle(tester);
-      await scrollAndTap(
-          tester, find.byKey(const Key('completePickupButton')));
+      await scrollAndTap(tester, find.byKey(const Key('completePickupButton')));
       await settle(tester);
     }
 

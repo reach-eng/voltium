@@ -1,6 +1,6 @@
 # Voltium Individual E2E Tests
 
-This directory contains **33 standalone E2E test files**, each runnable independently with `flutter drive`. Each test launches a fresh app instance, ensuring complete isolation.
+This directory contains **50 standalone E2E test files (00–49)** across 51 `.dart` files (including `test_helpers.dart`), each runnable independently with `flutter drive`. Each test launches a fresh app instance, ensuring complete isolation.
 
 ## Quick Start
 
@@ -88,12 +88,13 @@ done
 | 22 | `22_support_chat_test.dart` | Chat input and send |
 | 23 | `23_support_ticket_test.dart` | Raise ticket dialog |
 
-### Settings (3 tests)
+### Settings (4 tests)
 | # | File | Description |
 |---|------|-------------|
 | 24 | `24_settings_screen_test.dart` | All toggles and options |
 | 25 | `25_settings_theme_toggle_test.dart` | Light/dark theme switch |
 | 26 | `26_settings_biometric_toggle_test.dart` | Biometric auth toggle |
+| 49 | `49_language_dialog_test.dart` | Language selection modal and persistence |
 
 ### Full Journeys & Edge Cases (7 tests)
 | # | File | Description |

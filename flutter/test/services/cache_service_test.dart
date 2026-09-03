@@ -20,16 +20,19 @@ void main() {
       expect(retrieved?['name'], 'Test Rider');
     });
 
-    test('should detect expired cache', () async {
+    test('should detect expired cache and return null from getCachedRider',
+        () async {
       final riderData = {'id': '123'};
-      // Cache with 1 second TTL
+      // Cache with expired TTL (-1s)
       await CacheService().cacheRider(riderData, ttlSeconds: -1);
 
       expect(CacheService().isRiderCacheExpired(), isTrue);
       expect(CacheService().isRiderCacheValid(), isFalse);
+      expect(CacheService().getCachedRider(), isNull);
     });
 
-    test('should detect version mismatch', () async {
+    test('should detect version mismatch and return null from getCachedRider',
+        () async {
       final riderData = {'id': '123'};
       await CacheService().cacheRider(riderData);
 
@@ -39,6 +42,7 @@ void main() {
 
       expect(CacheService().isCacheVersionMismatched(), isTrue);
       expect(CacheService().isRiderCacheValid(), isFalse);
+      expect(CacheService().getCachedRider(), isNull);
     });
 
     test('should clear rider cache', () async {

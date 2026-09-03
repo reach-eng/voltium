@@ -5,11 +5,10 @@ import 'package:voltium_rider/features/wallet/presentation/providers/wallet_prov
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/core/network/files_repository.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_client.dart';
 
 class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
+  int getTransactionHistoryCalls = 0;
   Map<int, List<entity.TransactionEntity>> pagedResponses = {};
 
   @override
@@ -21,6 +20,7 @@ class MockWalletRepository implements WalletRepository {
   @override
   Future<List<entity.TransactionEntity>> getTransactionHistory(String riderId,
       {int page = 1, int limit = 20}) async {
+    getTransactionHistoryCalls++;
     if (pagedResponses.containsKey(page)) {
       return pagedResponses[page]!;
     }
@@ -45,17 +45,6 @@ class MockFilesRepository implements FilesRepository {
   Future<String> uploadFile(File file, dynamic type) async {
     uploadCalled = true;
     return 'http://example.com/proof.jpg';
-  }
-
-  @override
-  ApiClient get apiClient => throw UnimplementedError();
-
-  @override
-  VoltiumApiClient get voltiumApiClient => throw UnimplementedError();
-
-  @override
-  Future<String> uploadProfileImage(File file) {
-    throw UnimplementedError();
   }
 }
 
@@ -154,6 +143,106 @@ void main() {
 
     expect(creditTotal, equals(100 * 50.0)); // 5000
     expect(debitTotal, equals(50 * 20.0)); // 1000
+  });
+
+  test(
+      'refreshTransactions throttles rapid successive calls for the same rider',
+      () async {
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+
+    // Immediate second call should be throttled (no second repo call)
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+  });
+
+  test('refreshTransactions bypasses throttle when force is true', () async {
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+
+    // Second call with force: true bypasses the throttle
+    await notifier.refreshTransactions(riderId: '1', force: true);
+    expect(mockRepo.getTransactionHistoryCalls, equals(2));
+  });
+
+  test(
+      'refreshTransactions bounds pagination to maxPages preventing runaway loops (F-14)',
+      () async {
+    // Seed 5 pages of 100 items each
+    mockRepo.pagedResponses = {
+      for (int page = 1; page <= 5; page++)
+        page: List.generate(
+          100,
+          (i) => entity.TransactionEntity(
+            id: 'p${page}_$i',
+            amountInRupees: 10.0,
+            type: 'CREDIT',
+            status: 'SUCCESS',
+            createdAt: DateTime.now().subtract(Duration(minutes: i)),
+          ),
+        ),
+    };
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    // Default maxPages is 3, so only pages 1, 2, 3 should be fetched
+    await notifier.refreshTransactions(riderId: '1', force: true);
+    expect(mockRepo.getTransactionHistoryCalls, equals(3));
+    expect(readState().transactions.length, equals(300));
+  });
+
+  test('refreshTransactions respects custom maxPages parameter', () async {
+    mockRepo.pagedResponses = {
+      for (int page = 1; page <= 5; page++)
+        page: List.generate(
+          100,
+          (i) => entity.TransactionEntity(
+            id: 'p${page}_$i',
+            amountInRupees: 10.0,
+            type: 'CREDIT',
+            status: 'SUCCESS',
+            createdAt: DateTime.now().subtract(Duration(minutes: i)),
+          ),
+        ),
+    };
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    // Pass maxPages: 1 explicitly
+    await notifier.refreshTransactions(riderId: '1', force: true, maxPages: 1);
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+    expect(readState().transactions.length, equals(100));
+  });
+
+  test('refreshTransactions breaks early when page is empty', () async {
+    mockRepo.pagedResponses = {
+      1: [],
+    };
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    await notifier.refreshTransactions(riderId: '1', force: true);
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+    expect(readState().transactions, isEmpty);
+  });
+
+  test(
+      'logout resets throttle timestamp allowing immediate refresh for next user',
+      () async {
+    mockRepo.getTransactionHistoryCalls = 0;
+
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+
+    // Throttled if called again
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(1));
+
+    // After logout, calling refreshTransactions for rider '1' succeeds immediately
+    notifier.logout();
+    await notifier.refreshTransactions(riderId: '1');
+    expect(mockRepo.getTransactionHistoryCalls, equals(2));
   });
 
   test('topUpWallet sets isToppingUp and uploads image', () async {

@@ -91,8 +91,8 @@ void main() {
         : relativePath;
 
     // Skip excluded canonical files
-    if (excludedPaths
-        .any((e) => libRelative == e || libRelative.endsWith('/${e.split('/').last}'))) {
+    if (excludedPaths.any((e) =>
+        libRelative == e || libRelative.endsWith('/${e.split('/').last}'))) {
       continue;
     }
 
@@ -110,14 +110,16 @@ void main() {
 
       for (final match in forbiddenRe.allMatches(line)) {
         violationCount++;
-        violations.add('${entity.path}:${i + 1}  $trimmed  ← AppColors.${match.group(1)}');
+        violations.add(
+            '${entity.path}:${i + 1}  $trimmed  ← AppColors.${match.group(1)}');
       }
     }
   }
 
   final passed = violationCount == 0;
 
-  stdout.writeln('── Static Palette Token Ratchet (DARK-MODE-AUDIT 2026-08-14 PR2) ──');
+  stdout.writeln(
+      '── Static Palette Token Ratchet (DARK-MODE-AUDIT 2026-08-14 PR2) ──');
   stdout.writeln(
       'Forbidden AppColors.* references outside app_theme.dart: $violationCount  ${passed ? "✓" : "✗ REGRESSION"}');
 
@@ -129,7 +131,8 @@ void main() {
     stderr.writeln(
         '  AppColors.of(context).<token>   (or `final colors = AppColors.of(context);` then `colors.<token>`)');
     stderr.writeln('');
-    stderr.writeln('Allowed static exceptions: ${kAllowedStaticTokens.join(', ')}');
+    stderr.writeln(
+        'Allowed static exceptions: ${kAllowedStaticTokens.join(', ')}');
     stderr.writeln('Forbidden tokens:');
     stderr.writeln('  ${kForbiddenStaticTokens.toList().join(', ')}');
     stderr.writeln('');

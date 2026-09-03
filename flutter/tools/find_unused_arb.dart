@@ -37,10 +37,31 @@ List<String> _loadKeys() {
   final content = file.readAsStringSync();
   final regex = RegExp(r'^\s+"([a-zA-Z]+)":\s*"', multiLine: true);
   final skip = <String>{
-    'description', 'type', 'count', 'amount', 'km', 'kwh', 'status', 'days',
-    'shortfall', 'code', 'view', 'intent', 'hub', 'percent', 'rent',
-    'balance', 'current', 'total', 'date', 'error', 'name', 'number',
-    'fee', 'seconds', 'placeholders',
+    'description',
+    'type',
+    'count',
+    'amount',
+    'km',
+    'kwh',
+    'status',
+    'days',
+    'shortfall',
+    'code',
+    'view',
+    'intent',
+    'hub',
+    'percent',
+    'rent',
+    'balance',
+    'current',
+    'total',
+    'date',
+    'error',
+    'name',
+    'number',
+    'fee',
+    'seconds',
+    'placeholders',
   };
   return regex
       .allMatches(content)

@@ -1,8 +1,35 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:voltium_rider/services/fcm_service.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:io';
+
+class _MockSupportNotifier extends SupportNotifier {
+  bool refreshTicketsCalled = false;
+
+  @override
+  SupportState build() => const SupportState();
+
+  @override
+  Future<void> refreshTickets({String? riderId}) async {
+    refreshTicketsCalled = true;
+  }
+}
+
+class _MockSupportTicketsNotifier extends SupportTicketsNotifier {
+  bool fetchTicketsCalled = false;
+
+  @override
+  TicketState build() => TicketState();
+
+  @override
+  Future<void> fetchTickets() async {
+    fetchTicketsCalled = true;
+  }
+}
 
 void main() {
   const secret = 'super_secret_key';
@@ -230,7 +257,8 @@ void main() {
       // a false positive on its own source: 'fg'/'bg' literals.
       final applyIdx = src!.indexOf('static Future<void> applySecurityAction');
       final fgHandlerEnd = applyIdx;
-      final fgHandlerStart = src.lastIndexOf('static Future<void> handleSecurityCommand(', fgHandlerEnd);
+      final fgHandlerStart = src.lastIndexOf(
+          'static Future<void> handleSecurityCommand(', fgHandlerEnd);
       final fgHandler = src.substring(fgHandlerStart, fgHandlerEnd);
       expect(fgHandler, contains("applySecurityAction(action, source: 'fg')"),
           reason: 'fg handler must delegate to applySecurityAction');
@@ -304,16 +332,21 @@ void main() {
       int depth = 0;
       int end = -1;
       for (int i = openBrace; i < src.length; i++) {
-        if (src[i] == '{') depth++;
+        if (src[i] == '{')
+          depth++;
         else if (src[i] == '}') {
           depth--;
-          if (depth == 0) { end = i; break; }
+          if (depth == 0) {
+            end = i;
+            break;
+          }
         }
       }
       expect(end, greaterThan(-1));
       final listener = src.substring(openBrace, end + 1);
       expect(listener, contains('NotificationService.showKycPushFromFcm'),
-          reason: 'foreground FCM listener must call showKycPushFromFcm for KYC pushes');
+          reason:
+              'foreground FCM listener must call showKycPushFromFcm for KYC pushes');
     });
 
     test('background handler calls showKycPushFromFcm for KYC data', () {
@@ -330,16 +363,100 @@ void main() {
       int depth = 0;
       int end = -1;
       for (int i = openBrace; i < src.length; i++) {
-        if (src[i] == '{') depth++;
+        if (src[i] == '{')
+          depth++;
         else if (src[i] == '}') {
           depth--;
-          if (depth == 0) { end = i; break; }
+          if (depth == 0) {
+            end = i;
+            break;
+          }
         }
       }
       expect(end, greaterThan(-1));
       final handler = src.substring(openBrace, end + 1);
       expect(handler, contains('NotificationService.showKycPushFromFcm'),
-          reason: 'background FCM handler must call showKycPushFromFcm for KYC pushes');
+          reason:
+              'background FCM handler must call showKycPushFromFcm for KYC pushes');
+    });
+  });
+
+  group('F-17: SUPPORT_REPLY overlay trigger refreshes supportTicketsProvider',
+      () {
+    test(
+        'handleOverlayTrigger calls both support.refreshTickets and supportTickets.fetchTickets',
+        () {
+      final mockSupport = _MockSupportNotifier();
+      final mockSupportTickets = _MockSupportTicketsNotifier();
+
+      FCMService.setSupportForTesting(mockSupport);
+      FCMService.setSupportTicketsForTesting(mockSupportTickets);
+      addTearDown(() => FCMService.dispose());
+
+      expect(FCMService.supportTickets, isNotNull);
+
+      const message = RemoteMessage(data: {'action': 'SUPPORT_REPLY'});
+      FCMService.handleOverlayTrigger(message);
+
+      expect(mockSupport.refreshTicketsCalled, isTrue);
+      expect(mockSupportTickets.fetchTicketsCalled, isTrue);
+    });
+
+    test('FCMService.dispose resets supportTickets to null', () async {
+      final mockSupportTickets = _MockSupportTicketsNotifier();
+      FCMService.setSupportTicketsForTesting(mockSupportTickets);
+      expect(FCMService.supportTickets, isNotNull);
+
+      await FCMService.dispose();
+      expect(FCMService.supportTickets, isNull);
+    });
+  });
+
+  group('F-27: onMessageOpenedApp and handleMessageOpenedApp', () {
+    test('handleMessageOpenedApp invokes onMessageOpenedAppCallback and stream',
+        () async {
+      RemoteMessage? callbackMessage;
+      FCMService.onMessageOpenedAppCallback = (msg) {
+        callbackMessage = msg;
+      };
+
+      final message = const RemoteMessage(
+        data: {
+          'type': 'OVERLAY_TRIGGER',
+          'action': 'SUPPORT_REPLY',
+        },
+      );
+
+      expectLater(
+        FCMService.onMessageOpenedAppStream,
+        emits(predicate<RemoteMessage>(
+            (msg) => msg.data['action'] == 'SUPPORT_REPLY')),
+      );
+
+      await FCMService.handleMessageOpenedApp(message);
+
+      expect(callbackMessage, isNotNull);
+      expect(callbackMessage!.data['action'], equals('SUPPORT_REPLY'));
+    });
+
+    test('handleMessageOpenedApp refreshes support tickets on SUPPORT_REPLY',
+        () async {
+      final mockSupport = _MockSupportNotifier();
+      final mockSupportTickets = _MockSupportTicketsNotifier();
+      FCMService.setSupportForTesting(mockSupport);
+      FCMService.setSupportTicketsForTesting(mockSupportTickets);
+
+      final message = const RemoteMessage(
+        data: {
+          'type': 'OVERLAY_TRIGGER',
+          'action': 'SUPPORT_REPLY',
+        },
+      );
+
+      await FCMService.handleMessageOpenedApp(message);
+
+      expect(mockSupport.refreshTicketsCalled, isTrue);
+      expect(mockSupportTickets.fetchTicketsCalled, isTrue);
     });
   });
 }

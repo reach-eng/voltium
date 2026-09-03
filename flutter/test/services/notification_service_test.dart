@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:voltium_rider/services/notification_service.dart';
 
 // Note: NotificationService uses FlutterLocalNotificationsPlugin internally which
@@ -51,6 +52,103 @@ void main() {
     test('validates state transitions during loading', () async {
       final validTransition = true;
       expect(validTransition, isTrue);
+    });
+  });
+
+  group('F-27: Notification tap callback & stream', () {
+    test('invokes onNotificationTapped callback on notification response', () {
+      NotificationResponse? receivedResponse;
+      NotificationService.onNotificationTapped = (resp) {
+        receivedResponse = resp;
+      };
+
+      const testResponse = NotificationResponse(
+        notificationResponseType: NotificationResponseType.selectedNotification,
+        id: 42,
+        actionId: 'open',
+        payload: 'kyc_status',
+      );
+
+      NotificationService.handleNotificationResponseForTesting(testResponse);
+
+      expect(receivedResponse, isNotNull);
+      expect(receivedResponse!.id, equals(42));
+      expect(receivedResponse!.payload, equals('kyc_status'));
+    });
+
+    test('emits response on onNotificationTapStream on notification response',
+        () async {
+      const testResponse = NotificationResponse(
+        notificationResponseType: NotificationResponseType.selectedNotification,
+        id: 99,
+        actionId: 'open',
+        payload: 'support_reply',
+      );
+
+      expectLater(
+        NotificationService.onNotificationTapStream,
+        emits(predicate<NotificationResponse>(
+            (resp) => resp.id == 99 && resp.payload == 'support_reply')),
+      );
+
+      NotificationService.handleNotificationResponseForTesting(testResponse);
+    });
+  });
+
+  group('F-33: Rupee amount formatting in push notifications', () {
+    tearDown(() {
+      NotificationService.showNotificationOverride = null;
+    });
+
+    test('showRideEnded formats whole rupee amounts without dividing by 100',
+        () async {
+      int? capturedId;
+      String? capturedTitle;
+      String? capturedBody;
+
+      NotificationService.showNotificationOverride = ({
+        required int id,
+        required String title,
+        required String body,
+        String? payload,
+      }) async {
+        capturedId = id;
+        capturedTitle = title;
+        capturedBody = body;
+      };
+
+      await NotificationService().showRideEnded(500);
+
+      expect(capturedId, equals(2));
+      expect(capturedTitle, equals('Ride Ended'));
+      expect(capturedBody, equals('Your ride has ended. Amount: ₹500'));
+      expect(capturedBody, isNot(contains('₹5.00')));
+    });
+
+    test(
+        'showPaymentReceived formats whole rupee amounts without dividing by 100',
+        () async {
+      int? capturedId;
+      String? capturedTitle;
+      String? capturedBody;
+
+      NotificationService.showNotificationOverride = ({
+        required int id,
+        required String title,
+        required String body,
+        String? payload,
+      }) async {
+        capturedId = id;
+        capturedTitle = title;
+        capturedBody = body;
+      };
+
+      await NotificationService().showPaymentReceived(500);
+
+      expect(capturedId, equals(3));
+      expect(capturedTitle, equals('Payment Received'));
+      expect(capturedBody, equals('₹500 has been added to your wallet.'));
+      expect(capturedBody, isNot(contains('₹5.00')));
     });
   });
 }

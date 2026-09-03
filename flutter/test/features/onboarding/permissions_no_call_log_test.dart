@@ -65,7 +65,8 @@ void main() {
     );
   }
 
-  testWidgets('Call Log permission is shown (user rule: all permissions necessary)',
+  testWidgets(
+      'Call Log permission is shown (user rule: all permissions necessary)',
       (tester) async {
     await tester.pumpWidget(buildScreen());
     await tester.pump(const Duration(milliseconds: 600));
@@ -77,8 +78,7 @@ void main() {
         reason: 'Call Log is a required onboarding permission per rider');
   });
 
-  testWidgets(
-      'phone tile is honest: call-state copy, not call history',
+  testWidgets('phone tile is honest: call-state copy, not call history',
       (tester) async {
     // PR-VER-2026-08-06 (ONBOARDING P0-2 residual): the phone permission
     // maps to Android READ_PHONE_STATE. The tile must say "call state" /

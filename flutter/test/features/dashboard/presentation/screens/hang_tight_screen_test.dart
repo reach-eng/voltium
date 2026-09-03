@@ -34,13 +34,16 @@ import 'package:voltium_rider/models/rider_model.dart';
 /// Minimal stub notifier — `refreshFromApi` is a no-op so widget tests
 /// stay hermetic. The test harness sets up the rider state directly via
 /// [riderProvider.overrideWith] below.
+/// Minimal stub notifier — `refreshFromApi` records invocation count.
 class _StubRiderNotifier extends RiderNotifier {
+  int refreshCallCount = 0;
+
   @override
   RiderState build() => const RiderState();
 
   @override
   Future<void> refreshFromApi() async {
-    // No-op: widget tests don't drive the network.
+    refreshCallCount++;
   }
 }
 
@@ -73,10 +76,17 @@ RiderModel _rider({
   );
 }
 
-Widget _buildHarness({required RiderModel rider}) {
+Widget _buildHarness({
+  required RiderModel rider,
+  _StubRiderNotifier? notifier,
+  VoidCallback? onActivated,
+  VoidCallback? onSessionExpired,
+  VoidCallback? onFixKyc,
+}) {
+  final activeNotifier = notifier ?? _StubRiderNotifier();
   return ProviderScope(
     overrides: [
-      riderProvider.overrideWith(_StubRiderNotifier.new),
+      riderProvider.overrideWith(() => activeNotifier),
     ],
     child: MaterialApp(
       // PR-D: the screen reads every visible string via
@@ -89,7 +99,12 @@ Widget _buildHarness({required RiderModel rider}) {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en'), Locale('hi')],
-      home: _Harness(rider: rider),
+      home: _Harness(
+        rider: rider,
+        onActivated: onActivated,
+        onSessionExpired: onSessionExpired,
+        onFixKyc: onFixKyc,
+      ),
     ),
   );
 }
@@ -100,7 +115,16 @@ Widget _buildHarness({required RiderModel rider}) {
 /// whole test runner.
 class _Harness extends ConsumerStatefulWidget {
   final RiderModel rider;
-  const _Harness({required this.rider});
+  final VoidCallback? onActivated;
+  final VoidCallback? onSessionExpired;
+  final VoidCallback? onFixKyc;
+
+  const _Harness({
+    required this.rider,
+    this.onActivated,
+    this.onSessionExpired,
+    this.onFixKyc,
+  });
 
   @override
   ConsumerState<_Harness> createState() => _HarnessState();
@@ -121,11 +145,9 @@ class _HarnessState extends ConsumerState<_Harness> {
   @override
   Widget build(BuildContext context) {
     return HangTightScreen(
-      onActivated: () {
-        // No-op in tests: a successful activation would normally trigger
-        // a router-level navigation. The test exercises the screen in
-        // isolation — the redirect to /dashboard is the router's job.
-      },
+      onActivated: widget.onActivated,
+      onSessionExpired: widget.onSessionExpired,
+      onFixKyc: widget.onFixKyc,
     );
   }
 }
@@ -256,6 +278,72 @@ void main() {
       expect(r1 == r4, isFalse,
           reason: 'planStatus change must break equality');
       expect(r1 == _rider(), isTrue, reason: 'identical models must be equal');
+    });
+
+    testWidgets(
+        'F-13: HangTightScreen does not run duplicate unmanaged 15s Timer.periodic',
+        (tester) async {
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+      ));
+      await tester.pump();
+
+      // Advancing past 15s and 30s should NOT invoke refreshFromApi from the screen.
+      // (Centralized onboarding polling in RiderNotifier handles periodic checks).
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pump(const Duration(seconds: 16));
+
+      expect(notifier.refreshCallCount, 0,
+          reason:
+              'HangTightScreen must not fire unmanaged internal Timer.periodic');
+    });
+
+    testWidgets(
+        'F-13: manual refresh button triggers refreshFromApi via riderProvider',
+        (tester) async {
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+      ));
+      await tester.pump();
+
+      final refreshFinder = find.byKey(const Key('hangTightRefreshButton'));
+      expect(refreshFinder, findsOneWidget);
+      await tester.tap(refreshFinder);
+      await tester.pump();
+
+      expect(notifier.refreshCallCount, 1,
+          reason:
+              'Manual refresh button must call refreshFromApi() on riderProvider');
+    });
+
+    testWidgets(
+        'F-13: auto-redirect triggers onActivated when rider becomes active via state change',
+        (tester) async {
+      var activated = false;
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+        onActivated: () => activated = true,
+      ));
+      await tester.pump();
+      expect(activated, isFalse);
+
+      // Simulate rider receiving pickupDone flip from API/sync
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(pickupDone: true),
+      );
+      await tester.pump();
+      // Allow addPostFrameCallback to execute
+      await tester.pump();
+
+      expect(activated, isTrue,
+          reason:
+              'onActivated must be invoked immediately upon pickupDone flip without needing screen timer');
     });
   });
 }

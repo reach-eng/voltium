@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
 
@@ -51,6 +52,39 @@ void main() {
     test('prepends Status: prefix', () {
       expect(a11yStatus('Active'), 'Status: Active');
       expect(a11yStatus('Pending'), 'Status: Pending');
+    });
+  });
+
+  group('CMP-021: IconButton accessibility audit', () {
+    test('all IconButtons in lib/ have tooltip specified for screen readers',
+        () {
+      final libDir = Directory('lib');
+      expect(libDir.existsSync(), isTrue);
+
+      final files = libDir
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'));
+      final missing = <String>[];
+
+      for (final file in files) {
+        final lines = file.readAsLinesSync();
+        for (var i = 0; i < lines.length; i++) {
+          final line = lines[i];
+          if ((line.contains('IconButton(') ||
+                  line.contains('IconButton.filled(')) &&
+              !line.contains('class ') &&
+              !line.contains('const LoadingIconButton(')) {
+            final block =
+                lines.sublist(i, (i + 15).clamp(0, lines.length)).join(' ');
+            if (!block.contains('tooltip:')) {
+              missing.add('${file.path}:${i + 1} -> ${line.trim()}');
+            }
+          }
+        }
+      }
+
+      expect(missing, isEmpty, reason: 'IconButtons missing tooltip: $missing');
     });
   });
 }

@@ -4,7 +4,8 @@ import 'package:voltium_rider/features/pickup/presentation/screens/pickup_hub_sc
 import 'package:voltium_rider/features/pickup/presentation/screens/pickup_verification_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart' as gen;
-import 'package:voltium_rider/core/network/generated/api_models.dart' as gen_models;
+import 'package:voltium_rider/core/network/generated/api_models.dart'
+    as gen_models;
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
@@ -80,11 +81,12 @@ class _FakeVoltiumApiClient implements gen.VoltiumApiClient {
 
 /// Pickup Screen Widget Tests
 void main() {
-  Widget buildTestApp({required Widget child, gen.VoltiumApiClient? apiClient}) {
+  Widget buildTestApp(
+      {required Widget child, gen.VoltiumApiClient? apiClient}) {
     return ProviderScope(
       overrides: [
-        voltiumApiClientProvider.overrideWithValue(
-            apiClient ?? _FakeVoltiumApiClient()),
+        voltiumApiClientProvider
+            .overrideWithValue(apiClient ?? _FakeVoltiumApiClient()),
         localeProviderRef.overrideWith(() => LocaleProvider()),
         themeProviderRef.overrideWith(() => ThemeProvider()),
       ],

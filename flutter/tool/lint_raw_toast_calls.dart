@@ -41,11 +41,14 @@ void main() {
       final trimmed = line.trim();
 
       // Skip comments
-      if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+      if (trimmed.startsWith('//') ||
+          trimmed.startsWith('/*') ||
+          trimmed.startsWith('*')) {
         continue;
       }
 
-      if (rawSnackBarPattern.hasMatch(line) && !allowCommentPattern.hasMatch(line)) {
+      if (rawSnackBarPattern.hasMatch(line) &&
+          !allowCommentPattern.hasMatch(line)) {
         violations++;
         report.add('$libRelative:${i + 1}: $trimmed');
       }
@@ -53,14 +56,17 @@ void main() {
   }
 
   if (violations > 0) {
-    stderr.writeln('❌ Found $violations raw SnackBar / showSnackBar call(s) outside lib/utils/toast.dart:');
+    stderr.writeln(
+        '❌ Found $violations raw SnackBar / showSnackBar call(s) outside lib/utils/toast.dart:');
     for (final issue in report) {
       stderr.writeln('  $issue');
     }
-    stderr.writeln('\nPlease migrate to Toast.success / .error / .info / .warning or add "// toast-allow: <reason>" if intentional.');
+    stderr.writeln(
+        '\nPlease migrate to Toast.success / .error / .info / .warning or add "// toast-allow: <reason>" if intentional.');
     exit(1);
   }
 
-  stdout.writeln('✅ Toast call lint passed: 0 raw SnackBar calls outside lib/utils/toast.dart.');
+  stdout.writeln(
+      '✅ Toast call lint passed: 0 raw SnackBar calls outside lib/utils/toast.dart.');
   exit(0);
 }

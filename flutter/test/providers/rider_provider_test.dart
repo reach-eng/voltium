@@ -7,12 +7,11 @@ import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
     show filesRepositoryProvider;
+import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/network/generated/api_client.dart';
-import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
 class MockRiderRepository implements RiderRepository {
@@ -69,23 +68,17 @@ class MockRentalRepository implements RentalRepository {
 
   @override
   Future<Map<String, dynamic>> subscribePlan({
-    required String planId,
-    required String paymentMethod,
-    required String riderId,
     required String hubId,
+    required String planId,
     required double securityDeposit,
-    String? promoCode,
-    String? upiRef,
   }) async =>
       {};
 
   @override
   Future<Map<String, dynamic>> syncPickup({
-    required String rentalId,
     required String vehicleId,
-    required String bookingId,
     required String hubId,
-    required List<String> photos,
+    required String bookingId,
   }) async =>
       {};
 }
@@ -94,17 +87,6 @@ class MockFilesRepository implements FilesRepository {
   @override
   Future<String> uploadFile(File file, dynamic category) async {
     return 'url';
-  }
-
-  @override
-  ApiClient get apiClient => throw UnimplementedError();
-
-  @override
-  VoltiumApiClient get voltiumApiClient => throw UnimplementedError();
-
-  @override
-  Future<String> uploadProfileImage(File file) {
-    throw UnimplementedError();
   }
 }
 
@@ -350,6 +332,55 @@ void main() {
       await notifier.logout();
 
       expect(container.read(riderProvider).lastSessionExpiredAt, isNull);
+    });
+  });
+
+  group('F-15: PollingManager connectivity wiring', () {
+    test(
+        'initializes onboarding and postPickup pollers with current connectivity state',
+        () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      final isOnline = container.read(connectivityProvider).isOnline;
+
+      expect(notifier.onboardingPoller.connectivity, equals(isOnline));
+      expect(notifier.postPickupPoller.connectivity, equals(isOnline));
+    });
+
+    test('updates pollers connectivity when connectivityProvider state changes',
+        () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      final connNotifier = container.read(connectivityProvider.notifier);
+
+      // Simulate offline transition
+      connNotifier.setOnline(false);
+      expect(notifier.onboardingPoller.connectivity, isFalse);
+      expect(notifier.postPickupPoller.connectivity, isFalse);
+
+      // Simulate back online transition
+      connNotifier.setOnline(true);
+      expect(notifier.onboardingPoller.connectivity, isTrue);
+      expect(notifier.postPickupPoller.connectivity, isTrue);
+    });
+
+    test('setPollingConnectivity directly updates both pollers', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+
+      notifier.setPollingConnectivity(false);
+      expect(notifier.onboardingPoller.connectivity, isFalse);
+      expect(notifier.postPickupPoller.connectivity, isFalse);
+
+      notifier.setPollingConnectivity(true);
+      expect(notifier.onboardingPoller.connectivity, isTrue);
+      expect(notifier.postPickupPoller.connectivity, isTrue);
     });
   });
 }

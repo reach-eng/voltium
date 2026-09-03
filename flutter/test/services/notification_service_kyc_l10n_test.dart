@@ -17,7 +17,10 @@ void main() {
   group('P2-12: renderKycPushFromData', () {
     test('returns null for non-KYC data', () async {
       final l10n = await _l10nFor(const Locale('en'));
-      expect(NotificationService.renderKycPushFromData({'type': 'PAYMENT_DUE'}, l10n), isNull);
+      expect(
+          NotificationService.renderKycPushFromData(
+              {'type': 'PAYMENT_DUE'}, l10n),
+          isNull);
       expect(NotificationService.renderKycPushFromData({}, l10n), isNull);
     });
 

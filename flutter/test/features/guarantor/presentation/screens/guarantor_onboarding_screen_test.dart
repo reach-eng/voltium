@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -31,6 +32,10 @@ class _SeededRiderNotifier extends RiderNotifier {
 }
 
 void main() {
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   group('Widget and Cache Tests', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
@@ -107,13 +112,10 @@ void main() {
       await tester.enterText(nameField, 'New Name');
       await tester.pump(const Duration(seconds: 1));
 
-      // Read cache
-      final cachedStr = CacheService()
-          .getString('guarantor_onboarding_form_cache_test_rider_123');
-      expect(cachedStr, isNotNull);
-
-      final cacheData = jsonDecode(cachedStr!);
-      expect(cacheData['name'], 'New Name');
+      // Read cache from encrypted storage via GuarantorCache
+      final cacheData = await GuarantorCache.loadFormCache('test_rider_123');
+      expect(cacheData, isNotNull);
+      expect(cacheData!['name'], 'New Name');
     });
   });
 
@@ -259,8 +261,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        'Confirming the skip sets higher-deposit flag and calls onNext',
+    testWidgets('Confirming the skip sets higher-deposit flag and calls onNext',
         (WidgetTester tester) async {
       var onNextCalled = false;
       await tester.pumpWidget(createTestWidget(onNext: () {
@@ -286,8 +287,6 @@ void main() {
 
   // ── PR-GUARANTOR-OTP: short-lived phone-verification receipt ──────────
   group('Phone-verification receipt (PR-GUARANTOR-OTP)', () {
-    const cacheKey = 'guarantor_onboarding_form_cache_test_rider_123';
-
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       await CacheService().init();
@@ -317,15 +316,13 @@ void main() {
       required String verifiedPhone,
       required int? verifiedAt,
     }) async {
-      await CacheService().setString(
-          cacheKey,
-          jsonEncode({
-            'name': 'Cached Name',
-            'dob': '01-01-2000',
-            'phone': phone,
-            'verifiedPhone': verifiedPhone,
-            if (verifiedAt != null) 'verifiedAt': verifiedAt,
-          }));
+      await GuarantorCache.saveFormCache('test_rider_123', {
+        'name': 'Cached Name',
+        'dob': '01-01-2000',
+        'phone': phone,
+        'verifiedPhone': verifiedPhone,
+        if (verifiedAt != null) 'verifiedAt': verifiedAt,
+      });
     }
 
     testWidgets(

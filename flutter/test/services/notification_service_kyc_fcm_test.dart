@@ -39,7 +39,8 @@ void main() {
       expect(result, isFalse);
     });
 
-    test('returns true for KYC_APPROVED (English fallback when no saved locale)',
+    test(
+        'returns true for KYC_APPROVED (English fallback when no saved locale)',
         () async {
       // No saved locale in CacheService → defaults to 'en'.
       final result = await NotificationService.showKycPushFromFcm(
