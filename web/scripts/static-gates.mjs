@@ -21,6 +21,10 @@ const skipDirs = new Set([
   '.idea',
   '.codex-review',
   'rider-app',
+  'docs',
+  'graphify-out',
+  '.cosy',
+  '.gemini',
 ]);
 
 function rel(file) {
