@@ -105,20 +105,25 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
   return promise;
 }
 
+function isDevOrTestEnv(): boolean {
+  return (
+    process.env.APP_ENV === 'development' ||
+    process.env.APP_ENV === 'test' ||
+    process.env.NODE_ENV === 'test'
+  );
+}
+
 /**
  * Get the authenticated rider's database ID.
  *
  * Priority:
- * 1. `x-rider-id` header (set by middleware from verified cookie — dev only)
+ * 1. `x-rider-id` header (set by middleware from verified cookie — dev/test only)
  * 2. Direct cookie read (fallback when called outside middleware context)
  */
 export async function getRiderId(request?: Request): Promise<string | null> {
-  // Only trust headers in non-production envs (set by middleware from
-  // verified cookie). Use APP_ENV (the canonical "where am I" env var)
-  // rather than NODE_ENV (the Next.js optimization flag) — a staging
-  // deploy with NODE_ENV=development for hot-reload would otherwise
-  // trust the impersonation header in prod-like traffic.
-  if (process.env.APP_ENV !== 'production' && request) {
+  // Only trust headers in dev/test envs. Never trust raw headers on staging
+  // or production to prevent authentication bypass attacks.
+  if (isDevOrTestEnv() && request) {
     const headerId = request.headers.get('x-rider-id');
     if (headerId) return headerId;
   }
@@ -132,7 +137,7 @@ export async function getRiderId(request?: Request): Promise<string | null> {
  * Get the authenticated rider's phone number.
  */
 export async function getRiderPhone(request?: Request): Promise<string | null> {
-  if (process.env.APP_ENV !== 'production' && request) {
+  if (isDevOrTestEnv() && request) {
     const headerPhone = request.headers.get('x-rider-phone');
     if (headerPhone) return headerPhone;
   }
@@ -145,7 +150,7 @@ export async function getRiderPhone(request?: Request): Promise<string | null> {
  * Get the authenticated admin's database ID.
  */
 export async function getAdminId(request?: Request): Promise<string | null> {
-  if (process.env.APP_ENV !== 'production' && request) {
+  if (isDevOrTestEnv() && request) {
     try {
       const url = new URL(request.url);
       // P2-20: EXACT path match only. The old `pathname.includes('/impersonate')`

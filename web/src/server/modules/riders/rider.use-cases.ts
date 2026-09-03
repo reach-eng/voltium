@@ -56,6 +56,11 @@ const SAFE_RIDER_FIELDS = new Set([
   // BCP-47 language tag (e.g. `en`, `hi`). Sanitized on the way in
   // (validator allows only lowercase letters + optional country code).
   'preferredLocale',
+  // P1: `requiresHigherDeposit` is intentionally NOT rider-writable. It is a
+  // server-owned surcharge flag (set by POST /api/rider/guarantor/skip or the
+  // subscribe-time `guarantorSkipped` declaration, cleared when a real
+  // guarantor is submitted). A rider clearing it via updateProfile would
+  // dodge the skip-guarantor surcharge.
 ]);
 
 const SAFE_KYC_FIELDS = new Set([
@@ -629,9 +634,18 @@ export const riderUseCases = {
       await db.rider.update({ where: { id: riderDbId }, data: riderData });
     }
 
-    // Handle vehicle returns
+    // Handle vehicle returns.
+    // P1: legacy chokepoint previously allowed ANY lifecycle state with any
+    // vehicleId to file a return. Match submitReturn invariants: ACTIVE only,
+    // ≥4 photos, then atomic create + RETURN_PENDING transition.
     if (input.returnPending === true && (input.returnPhotos as string[] | undefined)?.length) {
       const photos = input.returnPhotos as string[];
+      if (existing.lifecycleStatus !== 'ACTIVE') {
+        throw new Error('Vehicle return is only allowed while the rental is ACTIVE');
+      }
+      if (photos.length < 4) {
+        throw new Error('At least 4 return photos are required');
+      }
       let vehicleId = existing.vehicleId || null;
       if (!vehicleId && existing.assignedVehicle) {
         const vehicle = await db.vehicle.findFirst({
@@ -646,6 +660,17 @@ export const riderUseCases = {
         vehicleId = vehicle?.id || null;
       }
       if (!vehicleId) throw new Error('No vehicle assigned to this rider');
+
+      // P1: reject duplicate open returns (submitReturn race-guards this;
+      // the legacy path must too — otherwise two SUBMITTED rows per rider).
+      const openReturn = await db.vehicleReturn.findFirst({
+        where: {
+          riderId: riderDbId,
+          status: { in: ['SUBMITTED', 'INSPECTION_PENDING'] },
+        },
+        select: { id: true },
+      });
+      if (openReturn) throw new Error('A vehicle return is already pending inspection');
 
       await db.vehicleReturn.create({
         data: {
@@ -665,8 +690,19 @@ export const riderUseCases = {
       await transitionRiderStatus(riderDbId, 'RETURN_PENDING');
     }
 
-    // Update KYC profile
+    // Update KYC profile.
+    // P1: an APPROVED profile is locked server-side (editableFields = []).
+    // The old code upserted any KYC field past approval, letting a rider
+    // overwrite Aadhaar/PAN post-approval. Corrections require an admin
+    // REJECT/INFO_REQUIRED first (which sets the editable allowlist).
     if (Object.keys(kycData).length > 0) {
+      const kycExisting = await db.kycProfile.findUnique({
+        where: { riderId: riderDbId },
+        select: { status: true },
+      });
+      if (kycExisting?.status === 'APPROVED') {
+        throw new Error('KYC is approved and locked. Ask support to request changes first.');
+      }
       await db.kycProfile.upsert({
         where: { riderId: riderDbId },
         create: { riderId: riderDbId, ...(kycData as any), status: 'SUBMITTED' },
@@ -705,6 +741,15 @@ export const riderUseCases = {
         },
         update: { ...(guarantorData as any), status: 'SUBMITTED' },
       });
+      // P1: a real guarantor submission (with a phone — not a partial form
+      // save) lifts the skip-guarantor surcharge. The flag itself is never
+      // rider-writable (see SAFE_RIDER_FIELDS).
+      if (guarantorData.phone) {
+        await db.rider.update({
+          where: { id: riderDbId },
+          data: { requiresHigherDeposit: false },
+        });
+      }
     }
 
     // Advance lifecycle based on submissions

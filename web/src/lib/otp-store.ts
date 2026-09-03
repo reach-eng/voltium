@@ -59,21 +59,42 @@ function hashOtp(code: string, salt: string): string {
   return crypto.createHash('sha256').update(`${salt}:${code}`).digest('hex');
 }
 
+/** P1: constant-time hex comparison for both OTP store paths. */
+function timingSafeEqualHex(code: string, salt: string, expectedHash: string): boolean {
+  const actual = hashOtp(code, salt);
+  const aBuf = Buffer.from(actual, 'utf8');
+  const bBuf = Buffer.from(expectedHash, 'utf8');
+  return aBuf.length === bBuf.length && crypto.timingSafeEqual(aBuf, bBuf);
+}
+
+/**
+ * P1: the `111111` dev shortcut fires ONLY in non-production APP_ENV.
+ * The old gate (`APP_ENV=development || NODE_ENV=development ||
+ * ENABLE_TEST_OTP=true`) allowed APP_ENV=staging + ENABLE_TEST_OTP=true to
+ * leak the shortcut despite the comment claiming "staging always uses real
+ * OTP". APP_ENV is authoritative: production/staging never take the shortcut,
+ * regardless of flags. Local dev/E2E (APP_ENV unset → development) unaffected.
+ */
+function isDevOtpAllowed(): boolean {
+  const appEnv = process.env.APP_ENV;
+  if (appEnv === 'production' || appEnv === 'staging') return false;
+  return (
+    appEnv === undefined ||
+    appEnv === 'development' ||
+    appEnv === 'test' ||
+    process.env.NODE_ENV === 'development' ||
+    process.env.ENABLE_TEST_OTP === 'true'
+  ) && process.env.ENABLE_TEST_OTP !== 'false';
+}
+
 export function generateRandomOtp(): string {
   return String(crypto.randomInt(100000, 999999));
 }
 
 export async function canResendOtp(phone: string): Promise<{ allowed: boolean; error?: string }> {
-  // PR-112 (SEC PR-5): rate-limit resends in any production-adjacent env.
-  // APP_ENV=staging counts as production for this gate (staging ships real
-  // SMS in our test pipeline, so the rate limit is real cost protection).
-  const isProductionLike =
-    process.env.APP_ENV === 'production' ||
-    process.env.APP_ENV === 'staging' ||
-    process.env.NODE_ENV === 'production';
-  if (!isProductionLike) {
-    return { allowed: true };
-  }
+  // P1: cooldown + window caps apply in EVERY env (the old early
+  // `allowed:true` for non-prod disabled abuse protection locally and let
+  // dev phones spam the SMS gateway path unchecked).
   if (shouldUseDatabaseStore()) {
     const now = new Date();
     const record = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
@@ -95,6 +116,9 @@ export async function canResendOtp(phone: string): Promise<{ allowed: boolean; e
   const record = resendStore.get(phone);
   if (!record) return { allowed: true };
 
+  // P1: a record outside the window no longer counts (generateOtp resets it).
+  if (Date.now() - record.lastSentAt > RESEND_WINDOW_MS) return { allowed: true };
+
   if (Date.now() - record.lastSentAt < RESEND_COOLDOWN_MS) {
     const waitSeconds = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - record.lastSentAt)) / 1000);
     return { allowed: false, error: `Please wait ${waitSeconds}s before requesting a new OTP.` };
@@ -112,16 +136,10 @@ export async function generateOtp(rawPhone: string): Promise<string> {
   const resendCheck = await canResendOtp(phone);
   if (!resendCheck.allowed) throw new Error(resendCheck.error);
 
-  // PR-112 (SEC PR-5): the dev OTP shortcut (`'111111'`) only fires when the
-  // canonical APP_ENV is `development`. APP_ENV=staging always uses a real
-  // random OTP even if ENABLE_TEST_OTP is on, so a misconfigured prod with
-  // APP_ENV=staging + ENABLE_TEST_OTP=true cannot leak the dev shortcut.
-  const isDev =
-    (process.env.APP_ENV === 'development' ||
-      process.env.NODE_ENV === 'development' ||
-      process.env.ENABLE_TEST_OTP === 'true') &&
-    process.env.ENABLE_TEST_OTP !== 'false';
-  const code = isDev ? '111111' : generateRandomOtp();
+  // PR-112 (SEC PR-5): the dev OTP shortcut (`'111111'`) only fires when
+  // isDevOtpAllowed() (non-prod APP_ENV). APP_ENV=staging/production always
+  // use a real random OTP even if ENABLE_TEST_OTP is on.
+  const code = isDevOtpAllowed() ? '111111' : generateRandomOtp();
 
   if (shouldUseDatabaseStore()) {
     const now = new Date();
@@ -160,7 +178,11 @@ export async function generateOtp(rawPhone: string): Promise<string> {
   }
 
   const existing = resendStore.get(phone);
-  setBoundedMap(resendStore, phone, { count: (existing?.count ?? 0) + 1, lastSentAt: Date.now() });
+  // P1: reset the window counter when outside the window (the old code only
+  // swept stale entries periodically, capping dev phones at 3 lifetime
+  // resends until restart).
+  const outsideWindow = !existing || Date.now() - existing.lastSentAt > RESEND_WINDOW_MS;
+  setBoundedMap(resendStore, phone, { count: outsideWindow ? 1 : existing.count + 1, lastSentAt: Date.now() });
   for (const [key, val] of resendStore) {
     if (Date.now() - val.lastSentAt > RESEND_WINDOW_MS) resendStore.delete(key);
   }
@@ -181,11 +203,7 @@ export async function verifyOtp(
 ): Promise<{ valid: boolean; error?: string }> {
   const phone = rawPhone.replace(/\D/g, '').slice(-10) || rawPhone;
   // PR-112 (SEC PR-5): mirror the dev-OTP gate from generateOtp. APP_ENV wins.
-  const isDev =
-    (process.env.APP_ENV === 'development' ||
-      process.env.NODE_ENV === 'development' ||
-      process.env.ENABLE_TEST_OTP === 'true') &&
-    process.env.ENABLE_TEST_OTP !== 'false';
+  const isDev = isDevOtpAllowed();
 
   if (shouldUseDatabaseStore()) {
     const entry = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
@@ -210,7 +228,7 @@ export async function verifyOtp(
       return { valid: true };
     }
 
-    const valid = hashOtp(code, entry.salt) === entry.codeHash;
+    const valid = timingSafeEqualHex(code, entry.salt, entry.codeHash);
     if (!valid) {
       const updated = await db.otpCode.update({
         where: { phone },

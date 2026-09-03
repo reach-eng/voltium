@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { access, mkdir } from 'fs/promises';
 import { constants, existsSync } from 'fs';
 import { join } from 'path';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/rbac';
+import { requireCronAuth } from '@/lib/cron-auth';
 
 async function getSetting(key: string, fallback: string): Promise<string> {
   try {
@@ -27,7 +30,15 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // P0: absolute server paths + writability are operational internals —
+  // admin or cron only (was public).
+  const admin = await requireAdmin();
+  if (!admin) {
+    const cronRejection = requireCronAuth(request);
+    if (cronRejection) return cronRejection;
+  }
+
   const start = Date.now();
 
   try {
@@ -78,12 +89,14 @@ export async function GET() {
     );
   } catch (err: unknown) {
     const message = errorMessage(err);
+    logger.error('[Health/Storage] Storage check failed', { error: message });
+    // P0: generic — raw fs/DB text aids fingerprinting (logged above).
     return NextResponse.json(
       {
         status: 'unhealthy',
         provider: 'local',
         latencyMs: Date.now() - start,
-        error: message || 'Unknown error',
+        error: 'Storage health check unavailable',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

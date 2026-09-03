@@ -6,8 +6,10 @@ import { parseDDMMYYYY } from '@/lib/date-utils';
 import { logAdminAction } from '@/server/modules/admin/admin.policy';
 import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
-import { DepositStateError } from '@/lib/services/deposit-service';
+// P1: error class from the canonical module facade, not lib/ directly.
+import { DepositStateError } from '@/server/modules/deposits/deposit-ledger.service';
 import { toRupeesResponse } from '@/lib/api-money';
+import { adminDepositActionSchema } from '@/lib/validators/admin';
 
 import { invalidateCache } from '@/lib/cache';
 
@@ -54,8 +56,11 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { riderId, action, reason, refundAmount, bonusAmount } = body;
-    if (!riderId || !action) return errors.badRequest('riderId and action are required');
+    // P1: strict Zod validation (was manual presence checks + open-string
+    // action + unbounded refundAmount float on a financial mutation).
+    const validation = adminDepositActionSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
+    const { riderId, action, reason, refundAmount } = validation.data;
 
     const adminId = session.adminId || '';
 
@@ -132,5 +137,9 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// Compatibility for generated clients that submit deposit actions with POST.
+// POST is accepted as an alias for generated clients / the published contract
+// (`ReviewDepositRequest` documents POST /api/admin/deposits). Both verbs run
+// the same validated handler; the underlying state machine makes retries safe
+// (a repeated transition returns 409, not a double-apply). Do NOT add
+// verb-specific behavior here — keep them in lockstep.
 export const POST = PUT;

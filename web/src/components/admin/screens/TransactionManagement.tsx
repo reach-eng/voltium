@@ -133,6 +133,8 @@ export default function TransactionManagement() {
               setDeductAmount={txState.setDeductAmount}
               deductReason={txState.deductReason}
               setDeductReason={txState.setDeductReason}
+              deductCoAdminId={txState.deductCoAdminId}
+              setDeductCoAdminId={txState.setDeductCoAdminId}
               deductLoading={txState.deductLoading}
               onDeduct={txState.handleDeduct}
             />

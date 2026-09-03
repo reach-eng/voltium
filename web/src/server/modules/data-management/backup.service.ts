@@ -23,7 +23,7 @@ import {
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
 import { join } from 'path';
-import { createHash, createCipheriv, randomBytes } from 'crypto';
+import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import {
   dumpDatabase,
   createArchive,
@@ -38,7 +38,7 @@ import { env } from '@/lib/env';
  * The original file is replaced with the encrypted version.
  * Returns the new file path (unchanged; content is replaced in-place).
  */
-function encryptFile(filePath: string, keyHex: string): void {
+export function encryptFile(filePath: string, keyHex: string): void {
   const key = Buffer.from(keyHex, 'hex');
   if (key.length !== 32) {
     throw new Error('BACKUP_ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
@@ -50,6 +50,25 @@ function encryptFile(filePath: string, keyHex: string): void {
   const authTag = cipher.getAuthTag();
   // Write: IV (12) + auth tag (16) + ciphertext
   writeFileSync(filePath, Buffer.concat([iv, authTag, encrypted]));
+}
+
+export function decryptFile(filePath: string, keyHex: string, destinationPath?: string): void {
+  const key = Buffer.from(keyHex, 'hex');
+  if (key.length !== 32) {
+    throw new Error('BACKUP_ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+  }
+  const buffer = readFileSync(filePath);
+  if (buffer.length < 28) {
+    throw new Error('Encrypted file too short');
+  }
+  const iv = buffer.subarray(0, 12);
+  const authTag = buffer.subarray(12, 28);
+  const ciphertext = buffer.subarray(28);
+
+  const decipher = createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  writeFileSync(destinationPath || filePath, decrypted);
 }
 
 function getBackupRoot(): string {

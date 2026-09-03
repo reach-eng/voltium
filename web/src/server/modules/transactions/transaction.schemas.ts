@@ -15,6 +15,8 @@ export { approveTransactionSchema, bulkActionSchema, topUpSchema, transactionBul
 export const transactionQuerySchema = z.object({
   status: z.string().optional(),
   type: z.string().optional(),
+  purpose: z.string().optional(),
+  audience: z.string().optional(),
   search: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),

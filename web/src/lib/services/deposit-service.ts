@@ -102,6 +102,8 @@ export async function approveDeposit(params: {
       amountInPaise: record.amountInPaise,
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
+      // P1: ledger-leg idempotency (record-status CAS is the primary guard).
+      idempotencyKey: `deposit:approve:${record.id}`,
       note: 'Security deposit approved by admin',
     });
 
@@ -113,6 +115,8 @@ export async function approveDeposit(params: {
         amountInPaise: bonusAmountInPaise,
         category: 'ADMIN_ADJUSTMENT',
         txnId: record.transactionId ?? undefined,
+        // P1: ledger-leg idempotency for the bonus leg too.
+        idempotencyKey: `deposit:bonus:${record.id}`,
         actorId: adminId,
         note: 'Welcome bonus on deposit approval',
       });
@@ -247,6 +251,8 @@ export async function refundDeposit(params: {
       newDepositStatus: 'REFUNDED',
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
+      // P1: ledger-leg idempotency.
+      idempotencyKey: `deposit:refund:${record.id}`,
       note: note ?? 'Security deposit refunded',
     });
 
@@ -256,6 +262,8 @@ export async function refundDeposit(params: {
       walletId: wallet.id,
       amountInPaise: refundAmount,
       category: 'REFUND',
+      // P1: ledger-leg idempotency for the refund-credit leg too.
+      idempotencyKey: `deposit:refund-credit:${record.id}`,
       actorId: adminId,
       note: note ?? 'Refund from security deposit',
     });
@@ -307,6 +315,8 @@ export async function forfeitDeposit(params: {
       newDepositStatus: 'FORFEITED',
       txnId: record.transactionId ?? undefined,
       actorId: adminId,
+      // P1: ledger-leg idempotency.
+      idempotencyKey: `deposit:forfeit:${record.id}`,
       note: reason,
     });
 

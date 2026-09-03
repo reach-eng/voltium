@@ -35,20 +35,20 @@ const LEVEL_ORDER: Record<AlertLevel, number> = {
   critical: 3,
 };
 
-const minLevel: AlertLevel = (process.env.ALERT_MIN_LEVEL as AlertLevel) || 'error';
-const webhookUrl = process.env.ALERT_WEBHOOK_URL || '';
-const webhookChannel = (process.env.ALERT_WEBHOOK_CHANNEL || 'generic') as
-  | 'slack'
-  | 'discord'
-  | 'generic';
-
 function shouldAlert(level: AlertLevel): boolean {
+  const minLevel: AlertLevel = (process.env.ALERT_MIN_LEVEL as AlertLevel) || 'error';
   return LEVEL_ORDER[level] >= LEVEL_ORDER[minLevel];
 }
 
 export const alerter = {
   async send(payload: AlertPayload): Promise<void> {
     if (!shouldAlert(payload.level)) return;
+
+    const webhookUrl = process.env.ALERT_WEBHOOK_URL || '';
+    const webhookChannel = (process.env.ALERT_WEBHOOK_CHANNEL || 'generic') as
+      | 'slack'
+      | 'discord'
+      | 'generic';
 
     // Always log locally
     const logFn = payload.level === 'critical' || payload.level === 'error'
@@ -69,10 +69,40 @@ export const alerter = {
       await this.sendWebhook(payload).catch((err) => {
         logger.error('[Alerter] Webhook send failed', { error: (err instanceof Error ? err.message : String(err)) });
       });
+    } else {
+      // P1 audit finding: alerter silent without webhook.
+      // Emit prominent stderr warning and audit record so operators know alerts are unrouted.
+      console.error(
+        `🚨 [ALERT UNROUTED - NO WEBHOOK CONFIGURED] [${payload.level.toUpperCase()}] ${payload.title}: ${payload.message}`
+      );
+      if (payload.level === 'critical' || payload.level === 'error') {
+        try {
+          const { createAuditLog } = await import('@/lib/audit-log');
+          await createAuditLog({
+            actorId: 'system.alerter',
+            action: 'alert.unrouted',
+            entity: 'system',
+            entityId: payload.title,
+            details: {
+              level: payload.level,
+              message: payload.message,
+              source: payload.source || 'backend',
+              warning: 'ALERT_WEBHOOK_URL is not configured; alert was dropped to stderr without outbound delivery',
+            },
+          });
+        } catch {
+          // Swallow DB errors in logging path to prevent crashing callers
+        }
+      }
     }
   },
 
   async sendWebhook(payload: AlertPayload): Promise<void> {
+    const webhookUrl = process.env.ALERT_WEBHOOK_URL || '';
+    const webhookChannel = (process.env.ALERT_WEBHOOK_CHANNEL || 'generic') as
+      | 'slack'
+      | 'discord'
+      | 'generic';
     const body = formatWebhookBody(payload, webhookChannel);
 
     const controller = new AbortController();

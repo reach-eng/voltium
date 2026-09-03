@@ -68,7 +68,13 @@ export function useVehicleManagement() {
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/vehicles?page=${currentPage}&limit=20`);
+      // P0 fix: server-side filtering + pagination. The old client-side filter
+      // over the current page only (vehicles.filter over page 1) made search
+      // unable to find page-3 rows; pagination chrome was present but not wired.
+      const params = new URLSearchParams({ page: String(currentPage), limit: '20' });
+      if (search) params.set('search', search);
+      if (statusFilter !== 'ALL') params.set('status', statusFilter);
+      const res = await fetch(`/api/admin/vehicles?${params.toString()}`);
       if (res.ok) {
         const json = await res.json();
         const data = json.data || {};
@@ -81,7 +87,7 @@ export function useVehicleManagement() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage]);
+  }, [currentPage, search, statusFilter]);
 
   useEffect(() => {
     fetchVehicles();
@@ -244,17 +250,7 @@ export function useVehicleManagement() {
     }
   };
 
-  const filtered = vehicles.filter((v) => {
-    if (statusFilter !== 'ALL' && v.status !== statusFilter) return false;
-    if (
-      search &&
-      !v.vehicleNumber.toLowerCase().includes(search.toLowerCase()) &&
-      !v.model.toLowerCase().includes(search.toLowerCase()) &&
-      !v.vehicleId.toLowerCase().includes(search.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+  const filtered = vehicles;
 
   const handleToggleSelect = (id: string, checked: boolean) => {
     setSelectedIds((prev) => {

@@ -53,6 +53,11 @@ export const couponUseCases = {
   ) {
     const discountValueInPaise =
       data.discountType === 'FIXED' ? data.discountValue * 100 : data.discountValue;
+    // P1: PERCENTAGE is a percent, not money — cap at 100 (schema also caps
+    // when the type is explicit; this is the authoritative check).
+    if (data.discountType === 'PERCENTAGE' && data.discountValue > 100) {
+      throw new Error('PERCENTAGE discountValue cannot exceed 100');
+    }
 
     const coupon = await db.coupon.create({
       data: {
@@ -60,7 +65,9 @@ export const couponUseCases = {
         description: data.description,
         discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
         discountValueInPaise,
-        minAmount: data.minAmount ?? null,
+        // P1: minAmount arrives in rupees (admin form) and list() displays
+        // paise/100 — store paise (was stored raw, i.e. 100x off).
+        minAmount: data.minAmount != null ? Math.round(data.minAmount * 100) : null,
         maxUses: data.maxUses ?? null,
         validFrom: new Date(data.validFrom),
         validUntil: new Date(data.validUntil),
@@ -102,7 +109,16 @@ export const couponUseCases = {
         discountType === 'FIXED'
           ? Number(updateData.discountValue) * 100
           : Number(updateData.discountValue);
+      // P1: authoritative PERCENTAGE cap (update may carry value-only with
+      // the existing coupon's type resolved above).
+      if (discountType === 'PERCENTAGE' && Number(updateData.discountValue) > 100) {
+        throw new Error('PERCENTAGE discountValue cannot exceed 100');
+      }
       delete updateData.discountValue;
+    }
+    // P1: minAmount arrives in rupees — store paise (see create()).
+    if (updateData.minAmount !== undefined && updateData.minAmount !== null) {
+      updateData.minAmount = Math.round(Number(updateData.minAmount) * 100);
     }
     const coupon = await db.coupon.update({ where: { id }, data: updateData });
     invalidateCache('admin:coupons:*');

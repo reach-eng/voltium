@@ -28,12 +28,17 @@ export async function POST(req: NextRequest) {
       return errors.validation(validation.error!);
     }
 
-    const { planId, advanceRentPaid } = validation.data;
+    const { planId, advanceRentPaid, securityDeposit, guarantorSkipped } = validation.data;
     const isAdvanceRent = typeof advanceRentPaid === 'boolean' ? advanceRentPaid : (advanceRentPaid ? true : false);
 
-    const result = await planUseCases.subscribeToPlan(riderDbId, planId, isAdvanceRent);
+    const result = await planUseCases.subscribeToPlan(riderDbId, planId, isAdvanceRent, securityDeposit, {
+      guarantorSkipped,
+    });
     return success(result, `Subscribed to ${result.planName} plan`);
   } catch (err) {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INSUFFICIENT_SECURITY_DEPOSIT') {
+      return errors.badRequest('Insufficient security deposit. Higher deposit is required because guarantor was skipped.');
+    }
     if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INSUFFICIENT_BALANCE') {
       return errors.badRequest('Insufficient wallet balance');
     }
@@ -45,6 +50,9 @@ export async function POST(req: NextRequest) {
     }
     if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INVALID_STATE_FOR_PLAN_SELECTION') {
       return errors.badRequest('Invalid state for plan selection. Please complete previous steps.');
+    }
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'RIDER_LIFECYCLE_CONFLICT') {
+      return errors.conflict('Rider state changed concurrently. Please refresh and retry.');
     }
     if (
       err instanceof Error &&

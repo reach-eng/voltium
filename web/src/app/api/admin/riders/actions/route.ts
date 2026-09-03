@@ -11,6 +11,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { generateNumericPassword } from '@/lib/utils';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { RiderLifecycleError } from '@/server/modules/riders/rider-lifecycle.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -81,6 +82,9 @@ export async function POST(req: NextRequest) {
         return await handleSecurityAction(rider, action, validation.data, session);
     }
   } catch (error) {
+    if (error instanceof RiderLifecycleError) {
+      return errors.badRequest(error.message);
+    }
     logger.error('Admin rider action error:', error);
     return errors.internal('Failed to perform admin action');
   }

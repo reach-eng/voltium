@@ -78,6 +78,45 @@ export const adminWalletAdjustSchema = z
     reason: z.string().min(1).max(500).optional(),
     proofUrl: z.string().url().optional(),
     coAdminId: z.string().min(1).max(100).optional(),
+    idempotencyKey: z.string().min(1).max(128).optional(),
+  })
+  .strict();
+
+// ==================== DEPOSIT ACTION (wired) ====================
+// Used by `web/src/app/api/admin/deposits/route.ts` PUT.
+// P1 fix 2026-09-04: previously manual `if (!riderId || !action)` checks with
+// an open-string action switch and unbounded `refundAmount` float — a
+// financial mutation without a schema. Amounts are rupees (converted to paise
+// at the use-case boundary); capped at ₹10,00,000 per call as a sanity bound.
+export const adminDepositActionSchema = z
+  .object({
+    riderId: z.string().min(1, 'riderId is required').max(100),
+    action: z.enum(['APPROVE', 'REJECT', 'REFUND', 'FORFEIT']),
+    reason: z.string().min(1).max(500).optional(),
+    refundAmount: z.number().positive().max(1000000).optional(),
+    bonusAmount: z.number().positive().max(1000000).optional(),
+  })
+  .strict();
+
+// ==================== REFERRAL RECONCILE (wired) ====================
+// Used by `web/src/app/api/admin/referrals/route.ts` POST (manual
+// reconciliation fallback; the job is the default path).
+// P1 fix 2026-09-04: previously manual presence checks, no format check.
+export const adminReferralReconcileSchema = z
+  .object({
+    referrerId: z.string().min(1, 'referrerId is required').max(100),
+    refereeId: z.string().min(1, 'refereeId is required').max(100),
+  })
+  .strict();
+
+// ==================== RIDER PLAN ACTION (wired) ====================
+// Used by `web/src/app/api/admin/riders/[id]/plan/route.ts` PUT.
+// P1 fix 2026-09-04: previously read `action` with no schema and echoed
+// `error.message` on 500 (internal leak).
+export const adminRiderPlanActionSchema = z
+  .object({
+    action: z.enum(['REJECT']),
+    reason: z.string().min(1, 'reason is required').max(500),
   })
   .strict();
 

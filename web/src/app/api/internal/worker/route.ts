@@ -12,26 +12,18 @@ import { OutboxEventTypes } from '@/server/workers/outbox';
 import { sendSms } from '@/lib/sms-provider';
 import { logger } from '@/lib/logger';
 
-const WORKER_SECRET = process.env.WORKER_SECRET;
-
 export async function POST(request: NextRequest) {
-  if (!WORKER_SECRET) {
-    // PR-61: use APP_ENV (the deploy env) rather than NODE_ENV
-    // (the Next.js optimizer flag) — see fix(security) PR-60 for the
-    // same change in get-session.ts.
-    if (process.env.APP_ENV === 'production') {
+  const workerSecret = process.env.WORKER_SECRET;
+  if (!workerSecret) {
+    // PR-61: fail closed on production and staging
+    if (process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging') {
       return NextResponse.json({ error: 'Worker endpoint not configured' }, { status: 503 });
     }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const authHeader = request.headers.get('authorization') || '';
-  // PR-61: use constant-time compare via SHA-256 hashing. The previous
-  // plain string equality `authHeader !== \`Bearer ${WORKER_SECRET}\``
-  // leaked the secret length via timing differences and would have
-  // thrown on a 1-byte WORKER_SECRET (timingSafeEqual requires equal
-  // lengths). Hashing both inputs to fixed 32-byte buffers fixes both
-  // at once. The pattern is the same as `cron-auth.ts:33-35`.
+  // PR-61: use constant-time compare via SHA-256 hashing.
   const token = /^bearer\s+(.+)$/i.exec(authHeader)?.[1] ?? '';
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -40,7 +32,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const tokenHash = createHash('sha256').update(token).digest();
-  const secretHash = createHash('sha256').update(WORKER_SECRET).digest();
+  const secretHash = createHash('sha256').update(workerSecret).digest();
   if (!timingSafeEqual(tokenHash, secretHash)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

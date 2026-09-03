@@ -226,6 +226,8 @@ interface DeductWalletModalProps {
   setDeductAmount: (amount: string) => void;
   deductReason: string;
   setDeductReason: (reason: string) => void;
+  deductCoAdminId?: string;
+  setDeductCoAdminId?: (id: string) => void;
   deductLoading: boolean;
   onDeduct: () => void;
 }
@@ -239,6 +241,8 @@ export function DeductWalletModal({
   setDeductAmount,
   deductReason,
   setDeductReason,
+  deductCoAdminId = '',
+  setDeductCoAdminId,
   deductLoading,
   onDeduct,
 }: DeductWalletModalProps) {
@@ -247,7 +251,8 @@ export function DeductWalletModal({
     Boolean(deductRiderId) &&
     Boolean(deductAmount) &&
     Number(deductAmount) > 0 &&
-    deductReason.trim().length >= 10;
+    deductReason.trim().length >= 10 &&
+    (Number(deductAmount) <= 10000 || deductCoAdminId.trim().length > 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -277,6 +282,25 @@ export function DeductWalletModal({
               className="h-10 rounded-lg"
             />
           </div>
+
+          {Number(deductAmount) > 10000 && (
+            <div className="space-y-1.5 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <Label className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center justify-between">
+                <span>Co-Approving Admin ID <span className="text-red-500">*</span></span>
+                <span className="text-[10px] font-normal uppercase tracking-wider text-amber-600 bg-amber-500/20 px-1.5 py-0.5 rounded">Dual Approval</span>
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter second admin user ID..."
+                value={deductCoAdminId}
+                onChange={(e) => setDeductCoAdminId?.(e.target.value)}
+                className="h-10 rounded-lg bg-background"
+              />
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+                Voltium security policy requires second-admin co-approval for debits exceeding ₹10,000.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">

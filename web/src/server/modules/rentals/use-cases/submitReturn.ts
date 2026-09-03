@@ -29,7 +29,6 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { invalidateRiderCache } from '@/lib/server-cache';
-import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { RentalReturnError } from './errors';
 
 const MIN_PHOTOS = 4;
@@ -148,16 +147,7 @@ export async function submitReturn(
 
   invalidateRiderCache(riderDbId);
 
-  // ── Outbox Event & Audit log ──
-  await OutboxService.emit(OutboxEventTypes.RENT_PAID, {
-    riderId: riderDbId,
-    leaseId: result.returnId,
-    amountInPaise: 0,
-    periodNo: 1,
-  }).catch((err) => {
-    logger.warn('[submitReturn] RENT_PAID outbox emit failed (non-blocking)', { err });
-  });
-
+  // ── Audit log ──
   await createAuditLog({
     actorId: riderDbId,
     actorType: 'RIDER',

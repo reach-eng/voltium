@@ -84,7 +84,7 @@ export function hasPermission(
     return hasPermission(effectiveRole, permission);
   }
 
-  const role = roleOrSession;
+  const role = typeof roleOrSession === 'string' ? roleOrSession : '';
   if (role === 'SUPER_ADMIN') return permission in PERMISSIONS;
 
   const allowedRoles = PERMISSIONS[permission];

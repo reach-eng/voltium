@@ -60,23 +60,40 @@ export const announcementBroadcastJob = {
       ? (announcement.targetIds as string[])
       : [];
 
+    // P1: every fanout branch is bounded (cap + warn). A fleet-wide
+    // announcement over a 10k-rider table used to load all rows at once.
     let recipients: { id: string; fcmToken: string | null }[] = [];
     if (announcement.targetAudience === 'ALL') {
-      recipients = await db.rider.findMany({ select: { id: true, fcmToken: true } });
+      recipients = await db.rider.findMany({
+        select: { id: true, fcmToken: true },
+        orderBy: { id: 'asc' },
+        take: 5000,
+      });
     } else if (announcement.targetAudience === 'BY_HUB') {
       recipients = await db.rider.findMany({
         where: { pickupHub: { in: targetIds } },
         select: { id: true, fcmToken: true },
+        orderBy: { id: 'asc' },
+        take: 5000,
       });
     } else if (announcement.targetAudience === 'BY_STATUS') {
       recipients = await db.rider.findMany({
         where: { lifecycleStatus: { in: targetIds as RiderLifecycleStatus[] } },
         select: { id: true, fcmToken: true },
+        orderBy: { id: 'asc' },
+        take: 5000,
       });
     } else if (announcement.targetAudience === 'BY_PLAN') {
       recipients = await db.rider.findMany({
         where: { currentPlan: { in: targetIds } },
         select: { id: true, fcmToken: true },
+        orderBy: { id: 'asc' },
+        take: 5000,
+      });
+    }
+    if (recipients.length >= 5000) {
+      logger.warn('[AnnouncementBroadcastJob] Fanout hit the 5000-recipient cap — convert to cursor batching before the fleet grows further', {
+        announcementId: announcement.id,
       });
     }
 

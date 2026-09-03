@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { join, resolve } from 'path';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { getAdminSession, getSession } from '@/lib/get-session';
+import { errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { fileUseCases } from '@/server/modules/files/files.use-cases';
 import { fileRepository } from '@/server/modules/files/files.repository';
@@ -78,7 +79,9 @@ export async function GET(
     const adminSession = await getAdminSession(request);
 
     if (!session && !adminSession) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      // P1: envelope JSON (was plain-text 'Unauthorized' — normalizeApiResponse
+      // degrades it to 'Invalid response format', losing the real code).
+      return errors.unauthorized();
     }
 
     const { path } = await params;
@@ -90,7 +93,7 @@ export async function GET(
     const fullPath = resolve(baseDir, relativePath);
 
     if (!fullPath.startsWith(resolve(baseDir))) {
-      return new NextResponse('Bad Request', { status: 400 });
+      return errors.badRequest('Invalid file path');
     }
 
     const normalizedPath = relativePath.replace(/\\/g, '/');
@@ -99,13 +102,13 @@ export async function GET(
       normalizedPath.includes('~') ||
       normalizedPath.includes('//')
     ) {
-      return new NextResponse('Bad Request', { status: 400 });
+      return errors.badRequest('Invalid file path');
     }
 
     // Look up the FileRecord
     const record = await fileRepository.getFileRecordByKey(normalizedPath);
     if (!record) {
-      return new NextResponse('Not Found', { status: 404 });
+      return errors.notFound('File not found');
     }
 
     // Perform ownership/permission check
@@ -125,7 +128,7 @@ export async function GET(
     }
 
     if (!actor || !fileService.canViewFile(actor, record as any)) {
-      return new NextResponse('Forbidden', { status: 403 });
+      return errors.forbidden();
     }
 
     // Log admin view if actor is admin
@@ -153,11 +156,11 @@ export async function GET(
       });
     } catch (readError) {
       logger.error('File read error:', readError);
-      return new NextResponse('Not Found', { status: 404 });
+      return errors.notFound('File not found');
     }
   } catch (err) {
     logger.error('[FilesProxy] Error:', err);
-    return new NextResponse('Internal Error', { status: 500 });
+    return errors.internal('Failed to fetch file');
   }
 }
 

@@ -146,6 +146,8 @@ export const transactionUseCases = {
           amountInPaise: txn.amountInPaise,
           txnId: transactionId,
           actorId: adminId,
+          // P1: ledger-leg idempotency (duplicate-approval race guard).
+          idempotencyKey: `deposit:${transactionId}`,
           note: `Security deposit approved: ${finalPurpose}`,
         });
         // PR-AUDIT 2026-08-12 (H3): threshold bumped from `rank < 8`

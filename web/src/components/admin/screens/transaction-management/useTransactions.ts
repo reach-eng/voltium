@@ -34,6 +34,7 @@ export function useTransactions() {
   const [deductRiderId, setDeductRiderId] = useState('');
   const [deductAmount, setDeductAmount] = useState('');
   const [deductReason, setDeductReason] = useState('');
+  const [deductCoAdminId, setDeductCoAdminId] = useState('');
   const [deductLoading, setDeductLoading] = useState(false);
 
   const mountedRef = useRef(true);
@@ -113,6 +114,10 @@ export function useTransactions() {
       toast.error('Please provide a reason of at least 10 characters');
       return;
     }
+    if (Number(deductAmount) > 10000 && !deductCoAdminId.trim()) {
+      toast.error('Co-admin ID is required for debits exceeding ₹10,000');
+      return;
+    }
     setDeductLoading(true);
     try {
       const res = await fetch(
@@ -124,6 +129,7 @@ export function useTransactions() {
             type: 'DEBIT',
             amount: Number(deductAmount),
             reason: deductReason,
+            coAdminId: Number(deductAmount) > 10000 ? deductCoAdminId.trim() : undefined,
           }),
         },
       );
@@ -135,6 +141,7 @@ export function useTransactions() {
       setDeductRiderId('');
       setDeductAmount('');
       setDeductReason('');
+      setDeductCoAdminId('');
       fetchTransactions();
     } catch (err: any) {
       toast.error(err.message || 'An error occurred');
@@ -405,6 +412,8 @@ export function useTransactions() {
     setDeductAmount,
     deductReason,
     setDeductReason,
+    deductCoAdminId,
+    setDeductCoAdminId,
     deductLoading,
     fetchTransactions,
     handleDeduct,

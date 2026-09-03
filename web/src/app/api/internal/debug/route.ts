@@ -20,14 +20,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
+import { createHash, timingSafeEqual } from 'crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { getAllCircuitBreakers } from '@/lib/circuit-breaker';
 
 function authorize(req: NextRequest): boolean {
-  const auth = req.headers.get('authorization')?.replace('Bearer ', '');
-  return auth === env.DEBUG_SECRET;
+  if (!env.DEBUG_SECRET) return false;
+  const auth = req.headers.get('authorization') || '';
+  const token = /^bearer\s+(.+)$/i.exec(auth)?.[1] ?? '';
+  if (!token) return false;
+  if (token.length > 1024) return false;
+  const tokenHash = createHash('sha256').update(token).digest();
+  const secretHash = createHash('sha256').update(env.DEBUG_SECRET).digest();
+  return timingSafeEqual(tokenHash, secretHash);
 }
 
 export async function GET(req: NextRequest) {

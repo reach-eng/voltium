@@ -37,7 +37,15 @@ export const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
-  CRON_SECRET: z.string().optional(),
+  TEST_MODE: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  CRON_SECRET: z.string().min(16, 'CRON_SECRET must be at least 16 characters').optional(),
+  CRON_SECRET_RECONCILIATION: z.string().min(16).optional(),
+  CRON_SECRET_CLEANUP_TELEMETRY: z.string().min(16).optional(),
+  CRON_SECRET_NOTIFICATIONS: z.string().min(16).optional(),
+  CRON_SECRET_ANNOUNCEMENTS: z.string().min(16).optional(),
   WORKER_SECRET: z.string().optional(),
   // PR-152: dedicated secret for /api/internal/debug. Previously
   // the route used CRON_SECRET (same as /api/cron/*), so a leaked
@@ -232,7 +240,7 @@ if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 
     }
   }
 
-  if (parsedEnv.ENABLE_TEST_OTP || parsedEnv.ENABLE_DEV_ADMIN_LOGIN) {
+  if (parsedEnv.ENABLE_TEST_OTP || parsedEnv.ENABLE_DEV_ADMIN_LOGIN || parsedEnv.TEST_MODE) {
     throw new Error('Production architecture violation: dev OTP/admin bypass flags must be false.');
   }
 }
@@ -315,6 +323,11 @@ if (isServer) {
   if (parsedEnv.ENABLE_TEST_OTP && parsedEnv.APP_ENV !== 'development') {
     throw new Error(
       'Security violation: ENABLE_TEST_OTP must be false on non-development environments.'
+    );
+  }
+  if (parsedEnv.TEST_MODE && parsedEnv.APP_ENV !== 'development' && parsedEnv.NODE_ENV !== 'test') {
+    throw new Error(
+      'Security violation: TEST_MODE must be false on staging and production environments.'
     );
   }
 }

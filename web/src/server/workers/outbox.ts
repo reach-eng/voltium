@@ -34,8 +34,8 @@ export interface OutboxEventData {
 
 export const OutboxEventTypes = {
   // ── Wallet / Transactions ──────────────────────────────────────────────
-  WALLET_TOPUP_APPROVED: 'wallet.topup_approved',
-  WALLET_TOPUP_REJECTED: 'wallet.topup_rejected',
+  // P0 2026-09-04: WALLET_TOPUP_APPROVED/REJECTED removed — no consumer, piled
+  // PENDING forever; notifications now flow via NOTIFICATION_SEND (wallet.use-cases).
   WALLET_RECONCILIATION: 'wallet.reconciliation',
 
   // ── Notifications ──────────────────────────────────────────────────────
@@ -91,6 +91,8 @@ export const OutboxEventTypes = {
   ADMIN_JOB_TELEMETRY_CLEANUP: 'admin.job.telemetry_cleanup',
   ADMIN_JOB_DAILY_ENGAGEMENT: 'admin.job.daily_engagement',
   ADMIN_JOB_SCHEDULED_BACKUP: 'admin.job.scheduled_backup',
+  // P0: WALLET_TOPUP_APPROVED/REJECTED removed — had no consumer (orphan);
+  // notifications now flow via NOTIFICATION_SEND (see wallet.use-cases.ts).
 } as const;
 
 // DEEP-AUDIT D-P0-2 / D-P2-1 (2026-08-08): removed 9 deprecated outbox event
@@ -103,6 +105,8 @@ export const OutboxEventTypes = {
 // New code must not use these names.
 export const REMOVED_OUTBOX_EVENT_TYPES = {
   WALLET_TOPUP_REQUESTED: 'wallet.topup_requested',
+  WALLET_TOPUP_APPROVED: 'wallet.topup_approved',
+  WALLET_TOPUP_REJECTED: 'wallet.topup_rejected',
   DEPOSIT_APPROVED: 'deposit.approved',
   DEPOSIT_REJECTED: 'deposit.rejected',
   DEPOSIT_REFUNDED: 'deposit.refunded',
@@ -331,11 +335,13 @@ export const OutboxService = {
     tx?: TxClient,
     priority: OutboxPriority = 'background'
   ): Promise<string> {
-    // The rate limit is enforced only when the test opt-in flag is set.
-    // Production code is always rate-limited (the flag defaults to false
-    // but never gets set in production). Test code that wants to verify
-    // the limit sets the flag explicitly via `__forceEmitRateLimitOnForTests`.
-    if (RATE_LIMIT_FORCED_ON_FOR_TESTS && !checkEmitRateLimit(eventType)) {
+    // Rate limit check: always active in production/staging/development.
+    // In test environments (NODE_ENV === 'test'), only enforced when
+    // explicitly opted into via `__forceEmitRateLimitOnForTests()`.
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const isRateLimitActive = isTestEnv ? RATE_LIMIT_FORCED_ON_FOR_TESTS : true;
+
+    if (isRateLimitActive && !checkEmitRateLimit(eventType)) {
       logger.error('[Outbox] Producer-side rate limit hit', {
         eventType,
         limitPerMinute: EMIT_RATE_LIMIT_PER_MINUTE,

@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     const limit = parsePositiveInt(req.nextUrl.searchParams.get('limit'), 20, 100);
     const search = req.nextUrl.searchParams.get('search');
     const result = await planUseCases.list(page, limit, search);
-    return withCacheHeaders(success(result.plans, undefined, 200, result.pagination), 300);
+    // P1: 30s browser cache (was 300s with no invalidation on POST/PUT/DELETE
+    // — price edits stayed stale 5min in the admin UI). Matches coupons/faqs.
+    return withCacheHeaders(success(result.plans, undefined, 200, result.pagination), 30);
   } catch (error) {
     logger.error('Plans list error:', error);
     return errors.internal('Failed to fetch plans');

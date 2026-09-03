@@ -89,3 +89,34 @@ export function logRequestEnd(
     ...extra,
   });
 }
+
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+export interface RequestContext {
+  requestId?: string;
+  correlationId?: string;
+  userId?: string;
+  path?: string;
+  [key: string]: unknown;
+}
+
+const asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
+
+export function runWithRequestContext<T>(
+  context: RequestContext,
+  fn: () => T | Promise<T>
+): Promise<T> {
+  return Promise.resolve(asyncLocalStorage.run(context, fn));
+}
+
+export function getRequestContext(): RequestContext | undefined {
+  return asyncLocalStorage.getStore();
+}
+
+export function getCurrentRequestId(): string | undefined {
+  return asyncLocalStorage.getStore()?.requestId;
+}
+
+export function getCurrentCorrelationId(): string | undefined {
+  return asyncLocalStorage.getStore()?.correlationId;
+}

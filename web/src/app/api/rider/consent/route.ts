@@ -67,9 +67,11 @@ export async function GET(request: NextRequest) {
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
 
+    // P1: bound to the rider's own rows (small by construction, never unbounded).
     const consents = await db.consent.findMany({
       where: { riderId: auth.riderDbId },
       orderBy: { createdAt: 'desc' },
+      take: 100,
       select: {
         id: true,
         consentType: true,

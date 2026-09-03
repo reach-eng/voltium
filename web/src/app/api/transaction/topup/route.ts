@@ -55,9 +55,13 @@ export async function POST(request: NextRequest) {
       responseMessage = 'Instant payment declined by payment gateway';
     }
 
+    // P1: 201 — a new transaction resource is created (idempotent replay
+    // returns the existing one with the same status code; clients branch on
+    // `status` in the payload, not on 200-vs-201).
     return success(
       toRupeesResponse(transaction),
-      responseMessage
+      responseMessage,
+      201
     );
   } catch (err: unknown) {
     logger.error('[POST /api/transaction/topup]', err);

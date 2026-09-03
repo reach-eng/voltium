@@ -245,8 +245,10 @@ export const notificationUseCases = {
     // PR-VER-2026-08-06 (SHIFTS P0-4 Bug B): same push gap as send-to-all —
     // the admin "send to specific riders" flow created DB rows only. Fire
     // FCM multicasts (500/batch) for any valid tokens, best-effort.
+    // P1: bound the caller-controlled riderIds array (was unbounded).
+    const boundedIds = riderIds.slice(0, 1000);
     const riders = await db.rider.findMany({
-      where: { id: { in: riderIds } },
+      where: { id: { in: boundedIds } },
       select: { fcmToken: true },
     });
     const tokens = riders
@@ -284,6 +286,8 @@ export const notificationUseCases = {
     const birthdayRiders = await db.rider.findMany({
       where: { dob: { startsWith: birthdayString } },
       select: { id: true, fullName: true },
+      // P1: bound the daily sweep (batches of 50 below stream from this load).
+      take: 1000,
     });
 
     for (let i = 0; i < birthdayRiders.length; i += BATCH_SIZE) {
@@ -302,6 +306,8 @@ export const notificationUseCases = {
     const ridersToRemind = await db.rider.findMany({
       where: { lifecycleStatus: 'ACTIVE', wallet: { balanceInPaise: { lt: 0 } } },
       include: { wallet: true },
+      // P1: bound the daily sweep.
+      take: 1000,
     });
 
     for (let i = 0; i < ridersToRemind.length; i += BATCH_SIZE) {

@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const status = url.searchParams.get('status') || '';
     const hubId = url.searchParams.get('hubId') || '';
+    const search = url.searchParams.get('search') || '';
     // DEEP-AUDIT D-P1-1: parsePositiveInt clamps to a finite int ≥ 1, so
     // ?page=abc returns 1 instead of NaN (which previously crashed Prisma's
     // skip/take).
@@ -42,12 +43,13 @@ export async function GET(req: NextRequest) {
       session.adminId ?? session.riderDbId ?? 'anon',
       status,
       hubId,
+      search,
       page,
       limit,
     ].join(':');
 
     const result = await getOrSetResponse(cacheKey, () =>
-      vehicleUseCases.listAdminVehicles({ status, hubId, page, limit }),
+      vehicleUseCases.listAdminVehicles({ status, hubId, search, page, limit }),
       5
     );
 

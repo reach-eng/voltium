@@ -144,9 +144,9 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       }
       // syncPickup's vehicle-claim race throws a plain Error ("Vehicle is
       // currently ...") — map to 409 like the rider pickup route instead of
-      // leaking a generic 500.
+      // leaking a generic 500. P1: generic message, no raw echo.
       if (err instanceof Error && err.message.includes('currently')) {
-        return errors.conflict(err.message);
+        return errors.conflict('Vehicle is currently unavailable');
       }
       throw err;
     }

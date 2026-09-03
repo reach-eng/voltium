@@ -5,6 +5,7 @@ import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { createAuditLog } from '@/lib/audit-log';
 import { encryptCredential, decryptCredential } from '@/lib/credentials';
+import { publicApiEndpointSchema } from '@/lib/validators';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,16 @@ const updatePaymentGatewaySchema = z
     keySecret: z.string().nullable().optional(),
     merchantId: z.string().nullable().optional(),
     webhookSecret: z.string().nullable().optional(),
-    apiEndpoint: z.string().nullable().optional(),
+    apiEndpoint: publicApiEndpointSchema,
     environment: z.enum(['TEST', 'LIVE']).optional(),
   })
-  .strict();
+  .strict()
+  // P1: quantize to 2 decimals — see list-route schema note.
+  .transform((v) => ({
+    ...v,
+    extraFeePercent:
+      v.extraFeePercent === undefined ? undefined : Math.round(v.extraFeePercent * 100) / 100,
+  }));
 
 export async function PATCH(
   req: NextRequest,
@@ -76,9 +83,14 @@ export async function PATCH(
       data,
     });
 
-    // Decrypt the secrets for the response (matches the GET contract).
-    updated.keySecret = decryptCredential(updated.keySecret) ?? null;
-    updated.webhookSecret = decryptCredential(updated.webhookSecret) ?? null;
+    // P1: never ship plaintext secrets to the browser (see list GET).
+    // Presence flags preserve the UI contract without the leak.
+    const { keySecret: _ks, webhookSecret: _ws, ...safe } = updated;
+    const redacted = {
+      ...safe,
+      keySecretSet: !!decryptCredential(_ks ?? null),
+      webhookSecretSet: !!decryptCredential(_ws ?? null),
+    };
 
     createAuditLog({
       actorId: session.adminId ?? session.riderDbId ?? 'unknown',
@@ -89,7 +101,7 @@ export async function PATCH(
       details: JSON.stringify({ fields: Object.keys(parsed) }),
     }).catch(() => {});
 
-    return success(updated, 'Payment gateway updated successfully');
+    return success(redacted, 'Payment gateway updated successfully');
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
       return errors.validation('Validation failed', { details: err.issues });

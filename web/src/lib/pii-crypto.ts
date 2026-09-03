@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { logger } from './logger';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
@@ -143,11 +144,13 @@ export function decryptPii(cipherText: string | null | undefined): string | null
     // because it would break reads of pre-migration data. The right fix is to
     // run the `scripts/migrate-legacy-pii.ts` rotation helper (defer to v2) to
     // re-encrypt legacy fields, then remove this fallback.
-    console.warn(
-      `[pii-crypto] ⚠️ decryptPii received an unencrypted value. ` +
-      `This field is stored in plaintext. Run the legacy PII migration script. ` +
-      `Value length: ${cipherText.length}`
-    );
+    // P1: structured log (was console.warn — invisible to log aggregation,
+    // so plaintext-at-rest persisted silently). Never log the value itself.
+    // (logger.ts imports only pino — safe here; the env.ts lazy-import
+    // concern above does not apply.)
+    logger.warn('[pii-crypto] decryptPii received an unencrypted value — field stored in plaintext; run the legacy PII migration script', {
+      valueLength: cipherText.length,
+    });
     return cipherText;
   }
 

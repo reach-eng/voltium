@@ -36,6 +36,8 @@ export interface ApiResult<T = any> {
   pagination?: { totalPages: number; total: number; page: number; limit: number };
   error?: string;
   success: boolean;
+  message?: string;
+  statusCode?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -156,9 +158,11 @@ async function runRequest<T>(
   try {
     const { headers: callerHeaders, ...restFetchOptions } = fetchOptions;
     const res = await fetch(url, {
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...(callerHeaders as Record<string, string> | undefined),
+        'x-correlation-id': requestId,
         'x-request-id': requestId,
       },
       ...restFetchOptions,
@@ -185,22 +189,29 @@ async function runRequest<T>(
         });
       }
 
-      return { success: false, error: errorMessage };
+      return { success: false, error: errorMessage, statusCode: res.status };
     }
 
     if (json?.success === true) {
       return {
         success: true,
         data: json.data as T,
+        message: (json as any).message,
         pagination: json.pagination as any,
+        statusCode: res.status,
       };
     }
 
     if (json && 'success' in json === false) {
-      return { success: true, data: json as unknown as T };
+      return { success: true, data: json as unknown as T, statusCode: res.status };
     }
 
-    return { success: true, data: (json as any)?.data as T };
+    return {
+      success: true,
+      data: (json as any)?.data as T,
+      message: (json as any)?.message,
+      statusCode: res.status,
+    };
   } catch (err) {
     const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Network error';
     if (!quiet) {

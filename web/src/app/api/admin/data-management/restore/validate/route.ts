@@ -15,7 +15,10 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     return errors.forbidden('Forbidden');
   }
 
-  const body = restoreValidateSchema.parse(await request.json());
+  // P1: safeParse → 422 (was .parse() → 500 + raw Zod text on bad input).
+  const parsed = restoreValidateSchema.safeParse(await request.json());
+  if (!parsed.success) return errors.validation(parsed.error.message);
+  const body = parsed.data;
   const result = await dataManagementUseCases.validateRestore(
     body.backupId,
     session.adminId ?? '',

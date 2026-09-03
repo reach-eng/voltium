@@ -21,8 +21,12 @@ import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
-import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache } from '@/lib/server-cache';
+import { ensureActiveRentalLease } from '@/server/modules/rentals/rental.use-cases';
+import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache, invalidateVehicleCache } from '@/lib/server-cache';
+import { invalidateCache } from '@/lib/cache';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
+import { validateKycTransition, type KycStatus as KycMachineStatus } from '@/server/modules/kyc/kyc-state-machine';
+import { fleetUseCases } from '@/server/modules/riders/admin-rider-fleet.use-cases';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -511,6 +515,24 @@ export const adminRiderUseCases = {
         await tx.rider.update({ where: { id }, data: riderData });
       }
       if (Object.keys(kycData).length > 0) {
+        // P1: the old code upserted any KYC status (DRAFT→APPROVED without
+        // SUBMITTED) with no state-machine check. Admins follow the same
+        // machine — fix stale records via SUBMITTED first (kyc review
+        // endpoints), not by jumping states here.
+        if (kycData.status) {
+          const currentKyc = await tx.kycProfile.findUnique({
+            where: { riderId: id },
+            select: { status: true },
+          });
+          // PENDING is the DB default for "never submitted" — normalize to
+          // DRAFT for transition purposes (the machine starts at DRAFT).
+          const norm = (s: string): KycMachineStatus =>
+            (s === 'PENDING' ? 'DRAFT' : s) as KycMachineStatus;
+          validateKycTransition(
+            norm(currentKyc?.status || 'DRAFT'),
+            norm(kycData.status as string)
+          );
+        }
         await tx.kycProfile.upsert({
           where: { riderId: id },
           update: kycData,
@@ -532,6 +554,18 @@ export const adminRiderUseCases = {
           const targetBalance = walletData.balanceInPaise as number;
           const currentBalance = wallet.balanceInPaise;
           const diff = targetBalance - currentBalance;
+          // P1: cap the balance-set legs like the wallet-adjust API. The
+          // bulk-update path has no co-approve/daily-cap machinery, so any
+          // leg above the per-call admin debit cap must go through POST
+          // /api/admin/riders/[id]/wallet-adjust (proof + co-approval +
+          // daily aggregate cap) instead of silently applying here.
+          const { env } = await import('@/lib/env');
+          const maxLegPaise = env.MAX_ADMIN_DEBIT_INR * 100;
+          if (Math.abs(diff) > maxLegPaise) {
+            throw new Error(
+              `Balance change of ₹${(Math.abs(diff) / 100).toFixed(2)} exceeds the per-call admin limit of ₹${env.MAX_ADMIN_DEBIT_INR} — use the Wallet Adjust API`
+            );
+          }
           if (diff > 0) {
             await walletLedgerService.credit(
               {
@@ -636,20 +670,30 @@ export const adminRiderUseCases = {
     const plan = await db.rentalPlan.findUnique({ where: { id: planId, deletedAt: null } });
     if (!plan) throw new Error('Plan not found');
 
-    const now = new Date();
-    const endDate = new Date(now);
-    // P2.1: durationDays is strictly derived from type — the DB column is a
-    // sanity-check only, never the billing source of truth.
-    endDate.setDate(endDate.getDate() + getDurationForPlanType(plan.type));
+    const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
+    const isActive = rider?.lifecycleStatus === 'ACTIVE';
 
-    await transitionRiderStatus(riderId, 'PLAN_SELECTED');
+    // F-05: Plan window starts at activation, not selection.
+    // Pre-active riders have plan dates set to null until vehicle pickup.
+    const durationDays = getDurationForPlanType(plan.type);
+    let planStartDate: Date | null = null;
+    let planEndDate: Date | null = null;
+
+    if (isActive) {
+      planStartDate = new Date();
+      planEndDate = new Date(planStartDate.getTime() + durationDays * 86400000);
+    } else {
+      await transitionRiderStatus(riderId, 'PLAN_SELECTED');
+    }
+
     const result = await db.rider.update({
       where: { id: riderId },
       data: {
         currentPlan: plan.name,
+        currentPlanId: plan.id,
         currentPlanPrice: plan.priceInPaise,
-        planStartDate: now,
-        planEndDate: endDate,
+        planStartDate,
+        planEndDate,
         planDoneAt: new Date(),
       },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
@@ -676,7 +720,12 @@ export const adminRiderUseCases = {
     actorId: string,
     actorRole: string
   ) {
-    const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
+    const rider = await getCachedRider(riderId, () =>
+      db.rider.findUnique({
+        where: { id: riderId },
+        include: { currentPlanRef: true },
+      })
+    );
     if (!rider) throw new Error('Rider not found');
 
     let assignedTl = data.teamLeaderId || rider.teamLeaderId;
@@ -688,17 +737,60 @@ export const adminRiderUseCases = {
     let assignedVehicleString = 'VF-ASSIGNED-BY-ADMIN';
     if (data.vehicleId) {
       const v = await db.vehicle.findUnique({ where: { id: data.vehicleId } });
-      if (v) assignedVehicleString = v.vehicleNumber;
+      if (!v) throw new Error('Vehicle not found');
+      // P1: guard the claim — the old code flipped ANY vehicle (including
+      // MAINTENANCE/RETIRED) to ACTIVE_RENTAL with .catch(()=>{}), so a
+      // concurrent admin pickup could clobber fleet state. Only AVAILABLE or
+      // RESERVED vehicles can be claimed; the updateMany count check makes
+      // the claim atomic against concurrent pickups.
+      if (v.status !== 'AVAILABLE' && v.status !== 'RESERVED') {
+        throw new Error(`Vehicle ${v.vehicleNumber} is not available for pickup (status: ${v.status})`);
+      }
+      assignedVehicleString = v.vehicleNumber;
+      await ensureActiveRentalLease(db, rider, data.vehicleId);
+      const claimed = await db.vehicle.updateMany({
+        where: { id: data.vehicleId, status: { in: ['AVAILABLE', 'RESERVED'] } },
+        data: { status: 'ACTIVE_RENTAL', assignedAt: new Date() },
+      });
+      if (claimed.count === 0) {
+        throw new Error(`Vehicle ${v.vehicleNumber} was claimed by another pickup; please retry`);
+      }
     }
 
+    // F-05: Plan window starts at activation (vehicle pickup), not at selection.
+    // Derive durationDays strictly from plan type (DAILY=1, WEEKLY=7, MONTHLY=30)
+    let plan = rider.currentPlanRef;
+    if (!plan && rider.currentPlanId && db.rentalPlan?.findUnique) {
+      plan = await db.rentalPlan.findUnique({ where: { id: rider.currentPlanId } });
+    }
+    if (!plan && rider.currentPlan && db.rentalPlan?.findFirst) {
+      plan = await db.rentalPlan.findFirst({ where: { name: rider.currentPlan, deletedAt: null } });
+    }
+    const durationDays = plan ? getDurationForPlanType(plan.type) : 7;
+    const now = new Date();
+    const planEndDate = new Date(now.getTime() + durationDays * 86400000);
+
     await transitionRiderStatus(riderId, 'ACTIVE');
+    // P1: validate an explicit hubId instead of persisting garbage; fall back
+    // to 'Central Hub' only when no hub was given (legacy behavior). Accepts
+    // a hub id or a hub name (legacy callers pass names).
+    let pickupHub = 'Central Hub';
+    if (data.hubId) {
+      const hub =
+        (await db.hub.findUnique({ where: { id: data.hubId }, select: { id: true, name: true } })) ??
+        (await db.hub.findFirst({ where: { name: data.hubId }, select: { id: true, name: true } }));
+      if (!hub) throw new Error('Pickup hub not found');
+      pickupHub = hub.name || data.hubId;
+    }
     const result = await db.rider.update({
       where: { id: riderId },
       data: {
-        pickedUpAt: new Date(),
+        pickedUpAt: now,
         assignedVehicle: assignedVehicleString,
-        pickupHub: data.hubId || 'Central Hub',
+        pickupHub,
         teamLeaderId: assignedTl,
+        planStartDate: now,
+        planEndDate: planEndDate,
       },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
@@ -716,30 +808,129 @@ export const adminRiderUseCases = {
   },
 
   /**
-   * End rental for a rider — resets rental state.
+   * End rental for a rider — resets rental state and transitions to CLOSED.
    */
   async endRental(riderId: string, actorId: string) {
-    const rider = await getCachedRider(riderId, () =>
-      db.rider.findUnique({
-        where: { id: riderId },
-        select: { assignedVehicle: true },
-      })
-    );
+    const rider = await db.rider.findUnique({
+      where: { id: riderId },
+      select: {
+        id: true,
+        riderId: true,
+        assignedVehicle: true,
+        vehicleId: true,
+        lifecycleStatus: true,
+      },
+    });
+    if (!rider) throw new Error(`Rider not found: ${riderId}`);
+
+    const previousStatus = rider.lifecycleStatus;
+    const assignedVehicleString = rider.assignedVehicle;
+    let vehicleDbId = rider.vehicleId;
+
+    if (!vehicleDbId && assignedVehicleString) {
+      const vehicle = await db.vehicle.findFirst({
+        where: {
+          OR: [
+            { vehicleId: assignedVehicleString },
+            { vehicleNumber: assignedVehicleString },
+          ],
+        },
+        select: { id: true },
+      });
+      vehicleDbId = vehicle?.id ?? null;
+    }
+
+    // 1. Transition lifecycle status to CLOSED (supports RETURN_PENDING, ACTIVE, SUSPENDED; no-op if already CLOSED)
+    // P1: fleet/lease/return closures run FIRST and throw on failure, so a
+    // failed vehicle or lease write can never leave a CLOSED rider with an
+    // ACTIVE_RENTAL vehicle / ACTIVE lease behind (the old .catch(()=>{})
+    // steps hid exactly that fleet leak). The CLOSED transition runs last;
+    // a mid-flow failure leaves the rider non-CLOSED and retry-safe.
+    // 2. Mark assigned vehicle as AVAILABLE
+    if (vehicleDbId && db.vehicle?.updateMany) {
+      await db.vehicle.updateMany({
+        where: { id: vehicleDbId },
+        data: { status: 'AVAILABLE', assignedAt: null, currentRiderId: null },
+      }).catch((err) => {
+        logger.error('[endRental] Vehicle update to AVAILABLE failed (blocking)', { err, vehicleDbId });
+        throw new Error('Failed to release vehicle to AVAILABLE; endRental aborted before closing rider');
+      });
+    }
+
+    // 3. Close any active/return_pending rental leases
+    if (db.rentalLease?.updateMany) {
+      await db.rentalLease.updateMany({
+        where: {
+          riderId,
+          status: { in: ['ACTIVE', 'RETURN_PENDING', 'PICKUP_SCHEDULED', 'OVERDUE'] },
+        },
+        data: {
+          status: 'CLOSED',
+          endTime: new Date().toISOString().slice(11, 16),
+        },
+      }).catch((err) => {
+        logger.error('[endRental] Rental lease closure failed (blocking)', { err, riderId });
+        throw new Error('Failed to close rental leases; endRental aborted before closing rider');
+      });
+    }
+
+    // 4. Close any open vehicle return records for this rider
+    if (db.vehicleReturn?.updateMany) {
+      await db.vehicleReturn.updateMany({
+        where: {
+          riderId,
+          status: { in: ['SUBMITTED', 'INSPECTION_PENDING'] },
+        },
+        data: {
+          status: 'CLOSED',
+          inspectedBy: actorId,
+          inspectedAt: new Date(),
+        },
+      }).catch((err) => {
+        logger.error('[endRental] Vehicle return closure failed (blocking)', { err, riderId });
+        throw new Error('Failed to close vehicle returns; endRental aborted before closing rider');
+      });
+    }
+
+    if (rider.lifecycleStatus !== 'CLOSED') {
+      await transitionRiderStatus(riderId, 'CLOSED');
+    }
+
+    // 5. Clear assigned vehicle and rental plan window on rider
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { assignedVehicle: null, pickedUpAt: null },
+      data: {
+        assignedVehicle: null,
+        vehicleId: null,
+        pickedUpAt: null,
+        planStartDate: null,
+        planEndDate: null,
+      },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
+    // 6. Invalidate caches
     invalidateRiderCache(riderId);
+    if (vehicleDbId) {
+      invalidateVehicleCache(vehicleDbId);
+    }
+    invalidateCache('vehicles_list:*');
+    invalidateCache('admin:vehicles:*');
+    invalidateCache('admin:rentals:*');
 
+    // 7. Audit log
     await createAuditLog({
       actorId,
       action: 'rider.end_rental',
       entity: 'Rider',
       entityId: riderId,
-      details: { previousVehicle: rider?.assignedVehicle },
+      details: {
+        previousVehicle: assignedVehicleString,
+        previousStatus,
+        newStatus: 'CLOSED',
+      },
     }).catch(() => {});
+
     return result;
   },
 
@@ -770,9 +961,12 @@ export const adminRiderUseCases = {
     } = { rider };
 
     if (type === 'CONTACTS' || type === 'all') {
+      // P1: bound like the sibling call-log/location queries — device
+      // contact books can be large (PII dump vector).
       results.contacts = await db.userContact.findMany({
         where: { riderId },
         orderBy: { name: 'asc' },
+        take: 200,
       });
     }
     if (type === 'CALL_LOGS' || type === 'all') {
@@ -811,15 +1005,38 @@ export const adminRiderUseCases = {
   },
 
   /**
-   * Delete a rider with cascade clean-up of related records.
+   * Delete a rider — SOFT-DELETE ONLY (P0 fix 2026-09-03).
+   *
+   * The previous implementation hard-deleted children first
+   * (notification/rentalLease/guarantor/kycProfile/wallet via deleteMany)
+   * then soft-deleted the rider. That permanently wiped KYC/guarantor/lease
+   * history the soft-delete design was meant to preserve, destroyed Wallet /
+   * DepositRecord lineage that the schema marks onDelete: Restrict, and
+   * violated the append-only transaction/ledger triggers. Mid-transaction
+   * Restrict failures also left partial wipes.
+   *
+   * Now: refuse when financial rows exist (wallet, transactions, ledger,
+   * deposits), otherwise soft-delete the rider only (the db.ts extension
+   * converts rider.delete into a deletedAt update). Child rows are preserved
+   * for audit/forensics and stay hidden via the deletedAt filter. Use the
+   * GDPR data-deletion-purge job for lawful full purges, never this path.
    */
   async delete(id: string, actorId?: string) {
+    const financial = await db.$transaction(async (tx) => {
+      const [wallet, txn, ledger, deposit] = await Promise.all([
+        tx.wallet.findFirst({ where: { riderId: id }, select: { id: true } }),
+        tx.transaction.findFirst({ where: { riderId: id }, select: { id: true } }),
+        tx.walletLedger.findFirst({ where: { riderId: id }, select: { id: true } }),
+        tx.depositRecord.findFirst({ where: { riderId: id }, select: { id: true } }),
+      ]);
+      return { wallet, txn, ledger, deposit };
+    });
+    if (financial.wallet || financial.txn || financial.ledger || financial.deposit) {
+      throw new Error(
+        'Refusing to delete rider with financial records (wallet/transaction/ledger/deposit). Use lifecycle CLOSE + GDPR purge job instead.'
+      );
+    }
     await db.$transaction(async (tx) => {
-      await tx.notification.deleteMany({ where: { riderId: id } });
-      await tx.rentalLease.deleteMany({ where: { riderId: id } });
-      await tx.guarantor.deleteMany({ where: { riderId: id } });
-      await tx.kycProfile.deleteMany({ where: { riderId: id } });
-      await tx.wallet.deleteMany({ where: { riderId: id } });
       await tx.rider.delete({ where: { id } });
       await tx.auditLog.create({
         data: {
@@ -828,128 +1045,23 @@ export const adminRiderUseCases = {
           entityId: id,
           actorId: actorId ?? 'system',
           actorType: actorId ? 'ADMIN' : 'SYSTEM',
-          details: JSON.stringify({ riderId: id }),
+          details: JSON.stringify({ riderId: id, mode: 'soft-delete' }),
         },
       });
     });
     invalidateRiderCache(id);
   },
 
+  // P1: fleet listing lives in admin-rider-fleet.use-cases.ts (god-module
+  // decomposition, step 1). Delegation keeps existing callers working.
   async listFleet(filters: {
     hubId?: string;
     status?: string;
     search?: string;
     lowBattery?: boolean;
+    page?: number;
+    limit?: number;
   }) {
-    const { hubId, status, search, lowBattery } = filters;
-    const where: Prisma.RiderWhereInput = {};
-
-    if (status && status !== 'ALL') {
-      if (status === 'active') {
-        where.lifecycleStatus = 'ACTIVE';
-      } else if (status === 'idle') {
-        where.lifecycleStatus = 'PROFILE_SUBMITTED';
-      } else if (status === 'offline') {
-        where.OR = [
-          { lifecycleStatus: 'SUSPENDED' },
-          { lifecycleStatus: { notIn: ['ACTIVE', 'PROFILE_SUBMITTED'] } },
-        ];
-      }
-    }
-
-    if (search) {
-      where.OR = [
-        ...(where.OR || []),
-        { fullName: { contains: search } },
-        { phone: { contains: search } },
-        { riderId: { contains: search } },
-      ];
-    }
-
-    if (lowBattery) {
-      where.batteryLevel = { lt: 20 };
-    }
-
-    const riders = await db.rider.findMany({
-      where,
-      select: {
-        id: true,
-        riderId: true,
-        fullName: true,
-        phone: true,
-        lifecycleStatus: true,
-        createdAt: true,
-        pickupHub: true,
-        teamLeaderId: true,
-        currentPlan: true,
-        planStartDate: true,
-        planEndDate: true,
-        lastKnownLat: true,
-        lastKnownLng: true,
-        lastLocationAt: true,
-        batteryLevel: true,
-        leases: {
-          where: { status: 'ACTIVE' },
-          take: 1,
-          select: {
-            vehicle: {
-              select: {
-                id: true,
-                vehicleNumber: true,
-                model: true,
-                batteryLevel: true,
-                status: true,
-                hub: { select: { name: true, city: true } },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { lastLocationAt: 'desc' },
-    });
-
-    const formatted = riders.map((r) => {
-      const lease = r.leases[0];
-      return {
-        id: r.id,
-        riderId: r.riderId,
-        fullName: r.fullName,
-        phone: r.phone,
-        createdAt: r.createdAt,
-        lifecycleStatus: r.lifecycleStatus,
-        pickupHub: r.pickupHub,
-        teamLeaderId: r.teamLeaderId,
-        currentPlan: r.currentPlan,
-        planStartDate: r.planStartDate,
-        planEndDate: r.planEndDate,
-        lastKnownLat: r.lastKnownLat,
-        lastKnownLng: r.lastKnownLng,
-        lastLocationAt: r.lastLocationAt,
-        batteryLevel: r.batteryLevel,
-        vehicle: lease?.vehicle
-          ? {
-              id: lease.vehicle.id,
-              vehicleNumber: lease.vehicle.vehicleNumber,
-              model: lease.vehicle.model,
-              batteryLevel: lease.vehicle.batteryLevel,
-              status: lease.vehicle.status,
-              hubName: lease.vehicle.hub?.name,
-              hubCity: lease.vehicle.hub?.city,
-            }
-          : null,
-      };
-    });
-
-    let filtered = formatted;
-    if (hubId) {
-      filtered = filtered.filter((r) => r.pickupHub === hubId || r.vehicle?.hubName === hubId);
-    }
-
-    return {
-      riders: filtered,
-      total: filtered.length,
-      lowBatteryCount: filtered.filter((r) => r.batteryLevel < 20).length,
-      withLocationCount: filtered.filter((r) => r.lastKnownLat && r.lastKnownLng).length,
-    };
+    return fleetUseCases.listFleet(filters);
   },
 };

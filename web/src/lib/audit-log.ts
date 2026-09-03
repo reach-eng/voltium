@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { redactPii } from '@/lib/pii-redact';
+import { getRequestContext } from '@/lib/correlation-id';
 
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
@@ -58,12 +59,29 @@ export async function createAuditLog(params: {
       params.entityId != null
         ? (redactPii(params.entityId) as string)
         : null;
-    const redactedDetails =
-      params.details == null
-        ? null
-        : typeof params.details === 'string'
-          ? JSON.stringify(redactPii(parseIfJson(params.details)))
-          : (JSON.stringify(redactPii(params.details)) as string);
+    const reqCtx = getRequestContext();
+    let detailsObj: any = null;
+    if (params.details != null) {
+      if (typeof params.details === 'string') {
+        const parsed = parseIfJson(params.details);
+        detailsObj = typeof parsed === 'object' && parsed !== null ? { ...(parsed as object) } : { raw: params.details };
+      } else {
+        detailsObj = { ...params.details };
+      }
+    } else if (reqCtx?.correlationId || reqCtx?.requestId) {
+      detailsObj = {};
+    }
+
+    if (detailsObj && reqCtx) {
+      if (reqCtx.correlationId && !detailsObj.correlationId) {
+        detailsObj.correlationId = reqCtx.correlationId;
+      }
+      if (reqCtx.requestId && !detailsObj.requestId) {
+        detailsObj.requestId = reqCtx.requestId;
+      }
+    }
+
+    const redactedDetails = detailsObj ? JSON.stringify(redactPii(detailsObj)) : null;
 
     await db.auditLog.create({
       data: {

@@ -116,6 +116,10 @@ export const dataDeletionPurgeJob = {
           purgedAt: null,
         },
         select: { id: true, deletedAt: true },
+        // P1: bound (naturally tiny — CLOSED + 7-day appeal passed — but
+        // never unbounded).
+        orderBy: { deletedAt: 'asc' },
+        take: 500,
       });
 
       if (expired.length === 0) {
@@ -149,6 +153,71 @@ export const dataDeletionPurgeJob = {
             where: { riderId: rider.id },
             data: GUARANTOR_PII_FIELDS,
           });
+          // P1: device + sync + notification + file rows are PII too and had
+          // no retention TTL (indefinite history). Destroy them with the
+          // purge. NOTE: FileRecord *blobs on disk* (storageKey) are NOT
+          // removed here — a storage-GC sweep keyed off missing FileRecords
+          // is tracked as follow-up; the DB rows (owner/purpose/metadata)
+          // are gone so nothing references them.
+          // Defensive typeof-guards: unit-test tx doubles may not implement
+          // every delegate (prod Prisma always does).
+          const purgeModels = [
+            'userContact',
+            'userCallLog',
+            'userLocation',
+            'syncQueue',
+            'notificationDelivery',
+            'notification',
+          ] as const;
+          for (const model of purgeModels) {
+            const delegate = (tx as Record<string, { deleteMany?: (args: unknown) => Promise<unknown> }>)[model];
+            if (delegate && typeof delegate.deleteMany === 'function') {
+              await delegate.deleteMany({ where: { riderId: rider.id } });
+            }
+          }
+          let fileKeysToDelete: string[] = [];
+          const fileDelegate = (
+            tx as unknown as Record<
+              string,
+              {
+                findMany?: (args: unknown) => Promise<Array<{ storageKey: string }>>;
+                deleteMany?: (args: unknown) => Promise<unknown>;
+              }
+            >
+          ).fileRecord;
+          if (fileDelegate && typeof fileDelegate.findMany === 'function') {
+            try {
+              const files = await fileDelegate.findMany({
+                where: { ownerType: 'RIDER', ownerId: rider.id },
+                select: { storageKey: true },
+              });
+              if (Array.isArray(files)) {
+                fileKeysToDelete = files.map((f) => f.storageKey).filter(Boolean);
+              }
+            } catch (err) {
+              logger.warn('[DataDeletionPurge] Could not query fileRecords for blob deletion', { err });
+            }
+          }
+          if (fileDelegate && typeof fileDelegate.deleteMany === 'function') {
+            await fileDelegate.deleteMany({
+              where: { ownerType: 'RIDER', ownerId: rider.id },
+            });
+          }
+
+          // Delete physical file blobs on disk for purged rider files
+          if (fileKeysToDelete.length > 0) {
+            try {
+              const { getStorageProvider } = await import('@/lib/storage');
+              const storageProvider = await getStorageProvider();
+              for (const key of fileKeysToDelete) {
+                await storageProvider.delete(key).catch((err: Error) =>
+                  logger.warn('[DataDeletionPurge] Failed to delete blob from storage', { key, err })
+                );
+              }
+            } catch (err) {
+              logger.warn('[DataDeletionPurge] Storage provider error deleting blobs', { err });
+            }
+          }
           await tx.auditLog.create({
             data: {
               actorId: 'system',

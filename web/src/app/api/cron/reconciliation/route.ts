@@ -13,7 +13,7 @@ import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { Prisma } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
-  const authError = requireCronAuth(req);
+  const authError = requireCronAuth(req, 'CRON_SECRET_RECONCILIATION');
   if (authError) {
     return authError;
   }

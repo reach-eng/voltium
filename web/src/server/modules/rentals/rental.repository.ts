@@ -12,6 +12,7 @@ import { db } from '@/lib/db';
 import { validateRentalTransition, RentalStateError } from './rental-state-machine';
 import type { RentalStatus } from './rental.types';
 import { validateTransition as validateRiderTransition, type RiderLifecycleStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
 import { Prisma } from '@prisma/client';
 import { getCachedRider, getCachedRiderStatus, invalidateRiderCache, invalidateVehicleCache, CACHE_TTLS } from '@/lib/server-cache';
 import { invalidateCache } from '@/lib/cache';
@@ -94,7 +95,7 @@ export const rentalRepository = {
     const rider = await getCachedRiderStatus(riderDbId, () =>
       db.rider.findUnique({
         where: { id: riderDbId },
-        select: { lifecycleStatus: true },
+        select: { lifecycleStatus: true, currentPlan: true, currentPlanId: true },
       })
     );
 
@@ -109,6 +110,18 @@ export const rentalRepository = {
       ? (await db.hub.findUnique({ where: { id: hubId }, select: { name: true } }))?.name
       : undefined;
 
+    // F-05: Plan window starts at activation, not selection.
+    let durationDays = 7;
+    if (rider?.currentPlanId && db.rentalPlan?.findUnique) {
+      const plan = await db.rentalPlan.findUnique({ where: { id: rider.currentPlanId } });
+      if (plan) durationDays = getDurationForPlanType(plan.type);
+    } else if (rider?.currentPlan && db.rentalPlan?.findFirst) {
+      const plan = await db.rentalPlan.findFirst({ where: { name: rider.currentPlan, deletedAt: null } });
+      if (plan) durationDays = getDurationForPlanType(plan.type);
+    }
+    const now = new Date();
+    const planEndDate = new Date(now.getTime() + durationDays * 86400000);
+
     const result = await db.rider.updateMany({
       where: { id: riderDbId, lifecycleStatus: rider?.lifecycleStatus },
       data: {
@@ -116,7 +129,8 @@ export const rentalRepository = {
         vehicleId,
         pickupHub: hubName || hubId,
         teamLeaderId,
-        planStartDate: new Date(),
+        planStartDate: now,
+        planEndDate: planEndDate,
       },
     });
 

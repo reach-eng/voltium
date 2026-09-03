@@ -163,6 +163,18 @@ export async function debitWallet(
     );
   }
 
+  // P0 fix 2026-09-03: app-level overdraft floor mirroring the DB CHECK
+  // wallet_balance_nonnegative (>= -20000000 paise = -₹2L == daily admin cap).
+  // allowNegative:true (admin late fees, reversals) may overdraw, but never
+  // past the floor — catches runaway debits in tests without a live DB.
+  const OVERDRAFT_FLOOR_PAISE = -20000000;
+  if (allowNegative && wallet.balanceInPaise - amountInPaise < OVERDRAFT_FLOOR_PAISE) {
+    throw new WalletServiceError(
+      `Overdraft floor exceeded: balance ${wallet.balanceInPaise} paise - ${amountInPaise} paise < floor ${OVERDRAFT_FLOOR_PAISE} paise`,
+      'OVERDRAFT_FLOOR_EXCEEDED'
+    );
+  }
+
   // Decrement wallet balance
   const updatedWallet = await tx.wallet.update({
     where: { id: walletId },
@@ -216,12 +228,28 @@ export async function creditSecurityDeposit(
     txnId?: string;
     actorId?: string;
     note?: string;
+    // P1: idempotency key for the ledger leg. Without it, two code paths
+    // racing the same approval (e.g. approveTopup + requestTopup CAS) could
+    // double-increment securityDepositInPaise. When provided, a replay
+    // returns early via the WalletLedger UNIQUE guard.
+    idempotencyKey?: string;
   }
 ): Promise<void> {
-  const { riderId, walletId, amountInPaise, txnId, actorId, note } = params;
+  const { riderId, walletId, amountInPaise, txnId, actorId, note, idempotencyKey } = params;
 
   if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`creditSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
+  if (idempotencyKey) {
+    const existing = await tx.walletLedger.findUnique({
+      where: { idempotencyKey },
+      select: { id: true },
+    });
+    if (existing) {
+      logger.info('[WalletService] creditSecurityDeposit: idempotent replay', { idempotencyKey });
+      return;
+    }
   }
 
   await tx.wallet.update({
@@ -242,6 +270,7 @@ export async function creditSecurityDeposit(
       category: 'SECURITY_DEPOSIT',
       amountInPaise,
       balanceAfter: 0, // deposit is tracked separately, not in balanceInPaise
+      idempotencyKey: idempotencyKey ?? null,
       actorId: actorId ?? null,
       note: note ?? 'Security deposit approved',
     },
@@ -264,13 +293,26 @@ export async function debitSecurityDeposit(
     txnId?: string;
     actorId?: string;
     note?: string;
+    // P1: idempotency key for the ledger leg (see creditSecurityDeposit).
+    idempotencyKey?: string;
   }
 ): Promise<void> {
-  const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note } =
+  const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note, idempotencyKey } =
     params;
 
   if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`debitSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
+  if (idempotencyKey) {
+    const existing = await tx.walletLedger.findUnique({
+      where: { idempotencyKey },
+      select: { id: true },
+    });
+    if (existing) {
+      logger.info('[WalletService] debitSecurityDeposit: idempotent replay', { idempotencyKey });
+      return;
+    }
   }
 
   await tx.wallet.update({
@@ -291,6 +333,7 @@ export async function debitSecurityDeposit(
       category,
       amountInPaise,
       balanceAfter: 0,
+      idempotencyKey: idempotencyKey ?? null,
       actorId: actorId ?? null,
       note: note ?? `Security deposit ${category.toLowerCase()}`,
     },

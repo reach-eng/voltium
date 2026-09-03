@@ -12,6 +12,33 @@ import type { KycStatus } from './kyc.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { logKycDocumentView } from '@/lib/security-events';
+import { LIFECYCLE_RANK } from '@/lib/lifecycle-ranks';
+import type { RiderLifecycleStatus } from '@/server/modules/riders/rider-lifecycle.service';
+
+/**
+ * Lifecycle stages strictly lower in rank than KYC_APPROVED (ranks 0..3:
+ * NEW, PHONE_VERIFIED, PROFILE_SUBMITTED, KYC_SUBMITTED).
+ * F-06: Only riders currently at these earlier stages are promoted to
+ * KYC_APPROVED on approval. Higher-ranked riders (ranks 4..14) retain
+ * their current status without being demoted backward.
+ */
+export const LOWER_THAN_KYC_APPROVED: RiderLifecycleStatus[] = (
+  Object.keys(LIFECYCLE_RANK) as RiderLifecycleStatus[]
+).filter((status) => LIFECYCLE_RANK[status] < LIFECYCLE_RANK.KYC_APPROVED);
+
+/**
+ * Lifecycle stages strictly lower in rank than ACTIVE (ranks 0..10:
+ * NEW, PHONE_VERIFIED, PROFILE_SUBMITTED, KYC_SUBMITTED, KYC_APPROVED,
+ * GUARANTOR_SUBMITTED, GUARANTOR_APPROVED, DEPOSIT_PENDING, DEPOSIT_APPROVED,
+ * PLAN_SELECTED, PICKUP_SCHEDULED).
+ *
+ * F-12: Only riders currently in pre-active onboarding stages are suspended on KYC rejection.
+ * ACTIVE riders (rank 11), RETURN_PENDING (rank 13), and CLOSED (rank 14) riders
+ * must NEVER be unconditionally moved to SUSPENDED via KYC rejection.
+ */
+export const PRE_ACTIVE_STAGES: RiderLifecycleStatus[] = (
+  Object.keys(LIFECYCLE_RANK) as RiderLifecycleStatus[]
+).filter((status) => LIFECYCLE_RANK[status] < LIFECYCLE_RANK.ACTIVE);
 
 function encryptKycData(data: Record<string, unknown> | null) {
   if (!data) return data;
@@ -82,12 +109,35 @@ export const kycRepository = {
   async savePartialKyc(riderDbId: string, data: Record<string, unknown>) {
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
-      select: { status: true },
+      select: { status: true, editableFields: true },
     });
 
     // Preserve current status (don't transition to SUBMITTED)
     const currentStatus = existing?.status || 'DRAFT';
-    const encryptedData = encryptKycData(data);
+
+    // P1: an APPROVED profile is locked (editableFields = []). The old code
+    // let an approved rider overwrite Aadhaar/PAN via partial saves,
+    // defeating the approval lock. Rejected/info-required profiles honor
+    // the reviewer-supplied editableFields allowlist.
+    if (currentStatus === 'APPROVED') {
+      throw new KycStateError(
+        'KYC is approved and locked. Ask an admin to request changes first.',
+        'APPROVED',
+        'APPROVED'
+      );
+    }
+    let writable = { ...data };
+    const allowlist = existing?.editableFields;
+    if (
+      (currentStatus === 'REJECTED' || currentStatus === 'INFO_REQUIRED') &&
+      allowlist &&
+      allowlist.length > 0
+    ) {
+      const allowed = new Set(allowlist);
+      writable = Object.fromEntries(Object.entries(writable).filter(([k]) => allowed.has(k)));
+    }
+
+    const encryptedData = encryptKycData(writable);
 
     const kyc = await db.kycProfile.upsert({
       where: { riderId: riderDbId },
@@ -188,17 +238,14 @@ export const kycRepository = {
         where: { id: riderDbId },
         data: { kycDoneAt: new Date() },
       });
+      // F-06: Only advance the rider's lifecycleStatus to KYC_APPROVED if they are
+      // currently at an earlier stage (ranks 0..3: NEW, PHONE_VERIFIED, PROFILE_SUBMITTED, KYC_SUBMITTED).
+      // Higher-ranked riders (ranks 4..14: GUARANTOR_*, DEPOSIT_*, PLAN_SELECTED, PICKUP_SCHEDULED,
+      // ACTIVE, etc.) must NEVER be demoted backward to rank 4, preserving downstream onboarding progress.
       await tx.rider.updateMany({
         where: { 
           id: riderDbId, 
-          lifecycleStatus: { 
-            in: [
-              'NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED', 
-              'GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 
-              'PLAN_SELECTED', 'DEPOSIT_PENDING', 
-              'DEPOSIT_APPROVED', 'KYC_SUBMITTED'
-            ] 
-          } 
+          lifecycleStatus: { in: LOWER_THAN_KYC_APPROVED },
         },
         data: { lifecycleStatus: 'KYC_APPROVED' },
       });
@@ -233,8 +280,15 @@ export const kycRepository = {
         where: { riderId: riderDbId },
         data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
+      // F-12: Only riders currently in pre-active onboarding stages (ranks 0..10)
+      // are moved to SUSPENDED upon KYC rejection. ACTIVE riders (rank 11),
+      // RETURN_PENDING (rank 13), and CLOSED (rank 14) riders retain their
+      // lifecycleStatus, preventing abrupt fleet lockout or corrupting terminal/return flows.
       await tx.rider.updateMany({
-        where: { id: riderDbId },
+        where: {
+          id: riderDbId,
+          lifecycleStatus: { in: PRE_ACTIVE_STAGES },
+        },
         data: { lifecycleStatus: 'SUSPENDED' },
       });
 

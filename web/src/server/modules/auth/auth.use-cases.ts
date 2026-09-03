@@ -163,30 +163,22 @@ export const authUseCases = {
       });
 
       // Award referral rewards (PR-116: block self-referral)
+      // P0 fix 2026-09-03: signup NO LONGER mints any reward. The old code
+      // created Reward{points:500} here immediately on signup (no wallet
+      // credit, no idempotency, no ACTIVE gate), while referral.use-cases +
+      // referral-reward.job credit ₹200 (20000 paise) via ledger with shared
+      // key referral:{referrer}:{referee}. A referred signup therefore got
+      // BOTH (double-pay, two amounts) before the referee did anything,
+      // contradicting the FAQ. Single money path now: referredBy is stored
+      // above; payout happens exactly once via processReferralReward / the
+      // referral-reward job when the referee first reaches ACTIVE
+      // (rank >= 11), guarded by WalletLedger.idempotencyKey UNIQUE.
       if (incomingReferralCode && incomingReferralCode === rider.referralCode) {
         logger.warn('[AuthUseCases] Self-referral blocked', { riderId: rider.id });
         await db.rider.update({
           where: { id: rider.id },
           data: { referredBy: null },
         });
-      } else if (incomingReferralCode) {
-        try {
-          const referrer = await db.rider.findUnique({
-            where: { referralCode: incomingReferralCode },
-          });
-          if (referrer) {
-            await db.reward.create({
-              data: {
-                riderId: referrer.id,
-                title: 'Successful Referral',
-                points: 500,
-              },
-            });
-            invalidateRiderCache(referrer.id);
-          }
-        } catch (rewardErr) {
-          logger.error('[AuthUseCases] Failed to award referral points', { error: rewardErr });
-        }
       }
     }
 

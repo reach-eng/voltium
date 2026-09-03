@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validation = validateBody(topUpSchema, body);
     if (!validation.success) {
-      return errors.badRequest(`Validation failed: ${validation.error}`);
+      return errors.validation(`Validation failed: ${validation.error}`);
     }
 
     const { amount, purpose, method, upiRef, proofUrl } = validation.data;

@@ -7,6 +7,7 @@ import { OutboxService, OutboxEventTypes } from '../outbox';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
 import { clock } from '@/lib/clock';
+import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
 
 interface RentReminderResult {
   checkedRentals: number;
@@ -50,13 +51,17 @@ export const rentRemindersJob = {
 
     const activeLeases = await db.rentalLease.findMany({
       where: {
-        status: 'BOOKED',
+        status: { in: ['BOOKED', 'ACTIVE'] },
         nextRentDueAt: { lte: now },
         rider: {
           lifecycleStatus: 'ACTIVE',
           wallet: { balanceInPaise: { gte: 0 } },
         },
       },
+      // P1: bound the sweep (due-only filter keeps it small; the cap + warn
+      // makes future growth visible instead of a silent OOM).
+      orderBy: { nextRentDueAt: 'asc' },
+      take: 2000,
       select: {
         id: true,
         riderId: true,
@@ -68,7 +73,10 @@ export const rentRemindersJob = {
         rider: {
           select: {
             id: true,
-            currentPlanRef: { select: { durationDays: true } },
+            // P1: select `type` and DERIVE durationDays via
+            // getDurationForPlanType — never trust the stored column
+            // (pre-CHECK legacy rows can mismatch and bill the wrong period).
+            currentPlanRef: { select: { type: true } },
             wallet: { select: { balanceInPaise: true } },
           },
         },
@@ -76,13 +84,19 @@ export const rentRemindersJob = {
     });
 
     result.checkedRentals = activeLeases.length;
+    if (activeLeases.length >= 2000) {
+      logger.warn('[RentRemindersJob] Sweep hit the 2000-lease cap — convert to cursor batching before the fleet grows further');
+    }
 
     for (const lease of activeLeases) {
       const rider = lease.rider;
       const rentAmount = lease.finalPriceInPaise;
       const balance = rider.wallet?.balanceInPaise ?? 0;
-      // Default to 1 day if plan ref is missing (legacy data)
-      const durationDays = rider.currentPlanRef?.durationDays ?? 1;
+      // P1: derived from plan type (see select above); default 1 day when
+      // the plan ref is missing (legacy data).
+      const durationDays = rider.currentPlanRef?.type
+        ? getDurationForPlanType(rider.currentPlanRef.type)
+        : 1;
 
       if (balance >= rentAmount) {
         // Auto-debit: sufficient balance

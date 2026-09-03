@@ -44,4 +44,12 @@ BEGIN
 END $$;
 
 -- Drop the legacy column. Idempotent.
-ALTER TABLE "admins" DROP COLUMN IF EXISTS "permissions";
+-- P0 fix 2026-09-03: DROP DISABLED until every reader is verified on the new
+-- admin_has_permissions table AND schema.prisma removes `Admin.permissions`
+-- in the same deploy. Dropping while the Prisma schema still declares the
+-- field breaks all Admin reads with `Unknown column`. Pre-flight above still
+-- runs as a backfill signal.
+-- ALTER TABLE "admins" DROP COLUMN IF EXISTS "permissions";
+DO $$ BEGIN
+  RAISE NOTICE 'R6.1 SKIPPED: Admin.permissions retained — schema still declares it. No column dropped.';
+END $$;

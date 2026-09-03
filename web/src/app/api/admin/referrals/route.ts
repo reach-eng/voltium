@@ -5,6 +5,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { hasPermission } from '@/lib/auth';
 import { referralUseCases } from '@/server/modules/referrals/referral.use-cases';
+import { adminReferralReconcileSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -35,11 +36,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { referrerId, refereeId } = body;
-
-    if (!referrerId || !refereeId) {
-      return errors.badRequest('Referrer ID and Referee ID are required');
-    }
+    // P1: strict Zod validation (was manual presence checks, no format check).
+    const validation = adminReferralReconcileSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
+    const { referrerId, refereeId } = validation.data;
 
     const { db } = await import('@/lib/db');
     

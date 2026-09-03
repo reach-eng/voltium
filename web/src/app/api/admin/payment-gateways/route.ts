@@ -5,6 +5,7 @@ import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { createAuditLog } from '@/lib/audit-log';
 import { encryptCredential, decryptCredential } from '@/lib/credentials';
+import { publicApiEndpointSchema } from '@/lib/validators';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -20,10 +21,18 @@ const createPaymentGatewaySchema = z
     keySecret: z.string().nullable().optional(),
     merchantId: z.string().nullable().optional(),
     webhookSecret: z.string().nullable().optional(),
-    apiEndpoint: z.string().nullable().optional(),
+    apiEndpoint: publicApiEndpointSchema,
     environment: z.enum(['TEST', 'LIVE']).optional().default('TEST'),
   })
-  .strict();
+  .strict()
+  // P1: quantize to 2 decimals (basis-point precision). Float percents like
+  // 2.675 are not exactly representable — without this, stored fee config
+  // drifts and future fee math inherits the error. (Full basis-points-Int
+  // migration deferred: it changes the API contract + admin UI + Flutter.)
+  .transform((v) => ({
+    ...v,
+    extraFeePercent: Math.round(v.extraFeePercent * 100) / 100,
+  }));
 
 export async function GET() {
   const session = await requireAdmin();
@@ -38,18 +47,27 @@ export async function GET() {
   }
 
   try {
+    // P1: bound — config table, but never unbounded.
     const gateways = await db.paymentGateway.findMany({
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
     // PR-8 (7th audit P0): secrets are encrypted at rest — decrypt for the
     // admin read path. Legacy plaintext rows pass through untouched until
     // the next write migrates them to ciphertext.
-    const decrypted = gateways.map((gw: { keySecret?: string | null; webhookSecret?: string | null }) => ({
-      ...gw,
-      keySecret: decryptCredential(gw.keySecret ?? null),
-      webhookSecret: decryptCredential(gw.webhookSecret ?? null),
-    }));
-    return success(decrypted, 'Payment gateways fetched successfully');
+    // P1: NEVER ship plaintext secrets to the browser. The edit dialog
+    // intentionally never pre-populates them ("never pre-populated") and
+    // only sends non-empty values on save — so the list returns presence
+    // flags. (A reveal flow would need step-up auth + audit, not a GET.)
+    const redacted = gateways.map((gw: { keySecret?: string | null; webhookSecret?: string | null }) => {
+      const { keySecret: _ks, webhookSecret: _ws, ...rest } = gw;
+      return {
+        ...rest,
+        keySecretSet: !!decryptCredential(_ks ?? null),
+        webhookSecretSet: !!decryptCredential(_ws ?? null),
+      };
+    });
+    return success(redacted, 'Payment gateways fetched successfully');
   } catch (err: unknown) {
     return errors.internal('Failed to fetch payment gateways');
   }
@@ -106,7 +124,14 @@ export async function POST(req: NextRequest) {
       details: JSON.stringify({ name: gateway.name, provider: gateway.provider }),
     }).catch(() => {});
 
-    return success(gateway, 'Payment gateway created successfully', 201);
+    // P0: never ship plaintext/ciphertext secrets to the browser (see GET/PATCH redaction).
+    const { keySecret: _ks, webhookSecret: _ws, ...safe } = gateway as typeof gateway & { keySecret?: string | null; webhookSecret?: string | null };
+    const redacted = {
+      ...safe,
+      keySecretSet: !!decryptCredential(_ks ?? null),
+      webhookSecretSet: !!decryptCredential(_ws ?? null),
+    };
+    return success(redacted, 'Payment gateway created successfully', 201);
   } catch (err: unknown) {
     if (err instanceof z.ZodError) {
       return errors.validation('Validation failed', { details: err.issues });

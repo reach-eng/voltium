@@ -58,12 +58,14 @@ export function withApiHandler(
         if (code === ERROR_CODES.CONFLICT) return errors.conflict((err instanceof Error ? err.message : String(err)));
         if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests((err instanceof Error ? err.message : String(err)));
         if (code === ERROR_CODES.GONE) return errors.gone((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.METHOD_NOT_ALLOWED) return errors.methodNotAllowed((err instanceof Error ? err.message : String(err)));
         return errors.badRequest((err instanceof Error ? err.message : String(err)));
       }
 
-      // Prisma P2025 "record not found"
+      // Prisma P2025 "record not found". P1: generic message — the raw
+      // Prisma text can include model/operation details.
       if ((err as any)?.code === 'P2025') {
-        return errors.notFound(domainErr.message);
+        return errors.notFound('Record not found');
       }
 
       // Domain-specific exceptions. We use `instanceof` against the actual
@@ -87,7 +89,11 @@ export function withApiHandler(
         return errors.conflict(domainErr.message);
       }
 
-      return errors.internal(domainErr.message || 'Internal Server Error');
+      // P1: generic 500 — the raw message can echo Prisma table names,
+      // constraint IDs (P2002/P2025), or paths. Detail is already logged
+      // above with redactPii. (ApiError / domain state errors above carry
+      // intentionally client-safe messages and still pass through.)
+      return errors.internal('Internal Server Error');
     }
   };
 }

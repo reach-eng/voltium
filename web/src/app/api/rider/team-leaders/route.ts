@@ -15,6 +15,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -24,6 +25,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const hubId = searchParams.get('hubId');
+    // P1: bounded pagination (was unbounded findMany).
+    const limit = parsePositiveInt(searchParams.get('limit'), 50, 100);
 
     const teamLeaders = await db.teamLeader.findMany({
       where: {
@@ -38,6 +41,7 @@ export async function GET(request: NextRequest) {
         hubId: true,
       },
       orderBy: { name: 'asc' },
+      take: limit,
     });
 
     return success(teamLeaders);

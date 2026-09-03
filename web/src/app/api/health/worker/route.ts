@@ -1,14 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/rbac';
+import { requireCronAuth } from '@/lib/cron-auth';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function GET() {
+// P0: queue depth + failure counts are operational internals — admin or cron
+// only (was public, and leaked raw DB error text).
+export async function GET(request?: NextRequest) {
   const start = Date.now();
+
+  const admin = await requireAdmin();
+  if (!admin) {
+    const cronRejection = request ? requireCronAuth(request) : null;
+    if (cronRejection) return cronRejection;
+  }
 
   try {
     // Check if outbox table exists and has stuck events
@@ -35,7 +45,11 @@ export async function GET() {
          LIMIT 1`
       )) as any;
       oldestPendingAge = oldest[0]?.age_seconds ?? null;
-    } catch {
+    } catch (innerErr) {
+      const msg = errorMessage(innerErr).toLowerCase();
+      if (msg.includes('connection') || msg.includes('connect') || msg.includes('fatal') || msg.includes('timeout')) {
+        throw innerErr;
+      }
       // outbox_events table may not exist
     }
 
@@ -71,11 +85,12 @@ export async function GET() {
     const message = errorMessage(err);
     logger.error('[Health/Worker] Worker check failed', { error: message });
 
+    // P0: generic — raw pg text aids fingerprinting (logged above).
     return NextResponse.json(
       {
         status: 'unhealthy',
         latencyMs: Date.now() - start,
-        error: message || 'Unknown error',
+        error: 'Worker health check unavailable',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

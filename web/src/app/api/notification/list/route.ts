@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
+import { parsePositiveInt } from '@/lib/api-utils';
 import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
 
 export async function GET(request: NextRequest) {
@@ -10,7 +11,9 @@ export async function GET(request: NextRequest) {
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;
 
-    const notifications = await notificationUseCases.listNotifications(riderDbId, 20);
+    // P1: client-controllable bounded limit (was hardcoded 20, no control).
+    const limit = parsePositiveInt(new URL(request.url).searchParams.get('limit'), 20, 100);
+    const notifications = await notificationUseCases.listNotifications(riderDbId, limit);
 
     const result = notifications;
 

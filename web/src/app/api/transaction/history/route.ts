@@ -61,7 +61,9 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const auth = await requireRiderSession(request);
   if (auth instanceof Response) return auth;
-  return errors.forbidden('Transaction history is immutable and cannot be deleted', {
+  // P1: 405, not 403 — the collection is never deletable, so advertising
+  // DELETE-via-403 ("forbidden, but maybe with other creds") is misleading.
+  return errors.methodNotAllowed('Transaction history is immutable and cannot be deleted', {
     details: { code: 'HISTORY_IMMUTABLE' },
   });
 }

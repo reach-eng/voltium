@@ -16,8 +16,11 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || undefined;
     const search = url.searchParams.get('search') || undefined;
     const lowBattery = url.searchParams.get('lowBattery') === 'true';
+    // P0: bound the fleet export (use-case caps at 200/page).
+    const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '100', 10) || 100, 1), 200);
 
-    const result = await adminRiderUseCases.listFleet({ hubId, status, search, lowBattery });
+    const result = await adminRiderUseCases.listFleet({ hubId, status, search, lowBattery, page, limit });
 
     return withCacheHeaders(success(result), 5);
   } catch (error) {

@@ -7,7 +7,6 @@ import { db } from '@/lib/db';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
-import { randomUUID } from 'crypto';
 import { adminWalletAdjustSchema } from '@/lib/validators/admin';
 import { env } from '@/lib/env';
 import { toRupeesResponse } from '@/lib/api-money';
@@ -145,6 +144,33 @@ export async function POST(
       }
     }
 
+    // F-22: Deterministic idempotency key for retries.
+    // Client can provide an explicit key via header or body; fallback to a 5-minute bucketed key.
+    const clientKey = req.headers.get('x-idempotency-key') || validation.data.idempotencyKey;
+    const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
+    const idempotencyKey = clientKey
+      ? `admin-adjust:${riderDbId}:${coAdminId ?? session.adminId}:${clientKey}`
+      : `admin-adjust:${riderDbId}:${coAdminId ?? session.adminId}:${type}:${amountInPaise}:${bucket}`;
+
+    // Deduplicate retries with the same idempotency key
+    const existingTxn = await db.transaction.findUnique({
+      where: { idempotencyKey },
+    });
+    if (existingTxn) {
+      logger.info('[AdminWalletAdjust] Duplicate idempotencyKey detected, returning existing balance', {
+        idempotencyKey,
+        txnId: existingTxn.id,
+      });
+      const wallet = await db.wallet.findUnique({
+        where: { riderId: riderDbId },
+        select: { balanceInPaise: true },
+      });
+      const result = {
+        walletBalance: wallet?.balanceInPaise ? wallet.balanceInPaise / 100 : 0,
+      };
+      return success(toRupeesResponse(result));
+    }
+
     const result = await db.$transaction(async (tx) => {
       // Create a Transaction record for transparency
       const txn = await tx.transaction.create({
@@ -160,10 +186,9 @@ export async function POST(
           description: `Admin manual ${type.toLowerCase()} of ₹${amount}`,
           approvedBy: session.adminId,
           approvedAt: new Date(),
-          // PR-89 (API N6): include coAdminId in the idempotency key
-          // when present so a second co-approved debit doesn't
-          // dedupe-collide with the first admin's own previous call.
-          idempotencyKey: `admin-adjust:${riderDbId}:${coAdminId ?? session.adminId}:${randomUUID()}`,
+          // F-22: Store deterministic idempotencyKey without randomUUID()
+          // so retries properly deduplicate.
+          idempotencyKey,
         },
       });
 
@@ -216,6 +241,17 @@ export async function POST(
 
     return success(toRupeesResponse(result));
   } catch (error: any) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      logger.info('[AdminWalletAdjust] Caught P2002 duplicate idempotencyKey race, returning existing balance');
+      const wallet = await db.wallet.findUnique({
+        where: { riderId: riderDbId },
+        select: { balanceInPaise: true },
+      });
+      const result = {
+        walletBalance: wallet?.balanceInPaise ? wallet.balanceInPaise / 100 : 0,
+      };
+      return success(toRupeesResponse(result));
+    }
     logger.error('Wallet adjust error:', error);
     return errors.internal('Failed to adjust wallet');
   }

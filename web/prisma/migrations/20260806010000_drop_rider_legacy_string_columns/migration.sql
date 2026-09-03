@@ -50,6 +50,17 @@ BEGIN
 END $$;
 
 -- Drop the legacy columns. Idempotent.
-ALTER TABLE "riders" DROP COLUMN IF EXISTS "pickupHub";
-ALTER TABLE "riders" DROP COLUMN IF EXISTS "currentPlan";
-ALTER TABLE "riders" DROP COLUMN IF EXISTS "teamLeader";
+-- P0 fix 2026-09-03: DROPs DISABLED. Application code still reads the legacy
+-- strings (admin-riders.use-cases.ts:1010 pickupHub + :1048 currentPlan,
+-- listFleet hub filter, flatten-rider.ts, rent-reminders.job.ts) and
+-- schema.prisma still declares them, so dropping now breaks `db:deploy`
+-- consumers with `Unknown column` errors. The pre-flight above still runs
+-- (backfill health signal). Re-enable these three ALTERs only after the
+-- D-P2-4 code migration moves every reader to pickupHubId/currentPlanId/
+-- teamLeaderId AND schema.prisma drops the String fields in the same deploy.
+-- ALTER TABLE "riders" DROP COLUMN IF EXISTS "pickupHub";
+-- ALTER TABLE "riders" DROP COLUMN IF EXISTS "currentPlan";
+-- ALTER TABLE "riders" DROP COLUMN IF EXISTS "teamLeader";
+DO $$ BEGIN
+  RAISE NOTICE 'PR-J SKIPPED: legacy string columns retained — code still reads them (see D-P2-4). No columns dropped.';
+END $$;

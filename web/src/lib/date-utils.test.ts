@@ -92,4 +92,41 @@ describe('date-utils (DD-MM-YYYY)', () => {
       expect(isValidDDMMYYYY('')).toBe(false);
     });
   });
+
+  describe('F-23: Timezone support (Asia/Kolkata vs UTC)', () => {
+    it('defaults to Asia/Kolkata timezone formatting for ISO UTC timestamps', () => {
+      // 10:30:45 UTC is 16:00:45 IST (+05:30)
+      const iso = '2026-03-15T10:30:45.000Z';
+      expect(formatDateDDMMYYYY(iso)).toBe('15-03-2026');
+      expect(formatDateTimeDDMMYYYY(iso)).toBe('15-03-2026 16:00:45');
+      expect(formatDateTimeShortDDMMYYYY(iso)).toBe('15-03-2026 16:00');
+    });
+
+    it('correctly shifts date across UTC midnight in Asia/Kolkata (+05:30)', () => {
+      // 22:30:00 UTC on March 15 is 04:00:00 IST on March 16
+      const iso = '2026-03-15T22:30:00.000Z';
+      expect(formatDateDDMMYYYY(iso)).toBe('16-03-2026');
+      expect(formatDateTimeDDMMYYYY(iso)).toBe('16-03-2026 04:00:00');
+      expect(formatDateTimeShortDDMMYYYY(iso)).toBe('16-03-2026 04:00');
+    });
+
+    it('supports explicit UTC timezone override as string', () => {
+      const iso = '2026-03-15T22:30:00.000Z';
+      expect(formatDateDDMMYYYY(iso, 'UTC')).toBe('15-03-2026');
+      expect(formatDateTimeDDMMYYYY(iso, 'UTC')).toBe('15-03-2026 22:30:00');
+      expect(formatDateTimeShortDDMMYYYY(iso, 'UTC')).toBe('15-03-2026 22:30');
+    });
+
+    it('supports explicit timezone override via options object', () => {
+      const iso = '2026-03-15T22:30:00.000Z';
+      expect(formatDateDDMMYYYY(iso, { timeZone: 'UTC' })).toBe('15-03-2026');
+      expect(formatDateTimeDDMMYYYY(iso, { timeZone: 'UTC' })).toBe('15-03-2026 22:30:00');
+    });
+
+    it('gracefully falls back to default timezone on invalid timezone identifier', () => {
+      const iso = '2026-03-15T10:30:45.000Z';
+      expect(formatDateDDMMYYYY(iso, 'Invalid/Timezone_123')).toBe('15-03-2026');
+      expect(formatDateTimeDDMMYYYY(iso, 'Invalid/Timezone_123')).toBe('15-03-2026 16:00:45');
+    });
+  });
 });

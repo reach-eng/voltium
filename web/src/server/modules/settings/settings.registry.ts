@@ -67,6 +67,14 @@ export const SETTING_REGISTRY: SettingMetadata[] = [
     description: 'Referral bonus in paise',
   },
   {
+    key: 'skipGuarantorExtraDeposit',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '100000', // 1000 rupees in paise
+    isPublic: true,
+    description: 'Extra security deposit in paise required when guarantor is skipped',
+  },
+  {
     key: 'autoApproveKYC',
     category: 'POLICY',
     valueType: 'BOOLEAN',

@@ -52,4 +52,14 @@ BEGIN
 END $$;
 
 -- Drop the legacy column. Idempotent. Enum type intentionally retained.
-ALTER TABLE "riders" DROP COLUMN IF EXISTS "lifecycleStatus";
+-- P0 fix 2026-09-03: DROP DISABLED. ~30 server/worker sites still filter on
+-- lifecycleStatus (rent-reminders.job.ts:51-56, device-compliance.job.ts:24-25,
+-- daily-engagement.job.ts:87, dashboard.ts:25, monitoring.use-cases.ts:18) and
+-- schema.prisma:210 still declares it. Dropping now breaks readers. Pre-flight
+-- above still runs as a backfill signal. Re-enable only after the D-P2-5 code
+-- migration moves every reader/writer to lifecycleStage AND schema.prisma
+-- drops the column in the same deploy.
+-- ALTER TABLE "riders" DROP COLUMN IF EXISTS "lifecycleStatus";
+DO $$ BEGIN
+  RAISE NOTICE 'PR-K.3 SKIPPED: lifecycleStatus retained — code still reads it (see D-P2-5). No column dropped.';
+END $$;

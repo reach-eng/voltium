@@ -2,6 +2,7 @@ import { getAdminSession } from '@/lib/get-session';
 import { dataManagementUseCases } from '@/server/modules/data-management/data-management.use-cases';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 import { success, errors } from '@/lib/api-response';
+import { hasPermission } from '@/lib/permissions';
 import { logger } from '@/lib/logger';
 
 // PR-90 (API N12): envelope consistency. Was using raw
@@ -13,6 +14,10 @@ export async function GET() {
     const session = await getAdminSession();
     if (!session) {
       return errors.unauthorized('Unauthorized');
+    }
+
+    if (!hasPermission(session, 'data_management_view')) {
+      return errors.forbidden('Forbidden: insufficient permissions to view backup storage');
     }
 
     const storage = await dataManagementUseCases.getStorage(session.adminRole as AdminRole);

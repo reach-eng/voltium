@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/rbac';
+import { requireCronAuth } from '@/lib/cron-auth';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function GET() {
+// P0: migration/table counts are operational internals — admin or cron only.
+export async function GET(request: NextRequest) {
+  const admin = await requireAdmin();
+  if (!admin) {
+    const cronRejection = requireCronAuth(request);
+    if (cronRejection) return cronRejection;
+  }
+
   const start = Date.now();
 
   try {
@@ -49,11 +58,12 @@ export async function GET() {
     const message = errorMessage(err);
     logger.error('[Health/DB] Database check failed', { error: message });
 
+    // P1: generic — raw pg text aids fingerprinting (logged above).
     return NextResponse.json(
       {
         status: 'unhealthy',
         latencyMs: Date.now() - start,
-        error: message || 'Unknown error',
+        error: 'Database unavailable',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

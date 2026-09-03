@@ -11,7 +11,7 @@ import { Menu, Search, ChevronRight, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { hasPermission } from '@/lib/permissions';
+import { hasPermission, type Permission } from '@/lib/permissions';
 import { ALL_NAV_ITEMS } from '@/lib/role-config';
 import {
   getAdminRefreshToken,
@@ -21,6 +21,7 @@ import {
 import type { SessionPayload } from '@/lib/session-payload';
 import { AdminErrorBoundary } from './error-boundary';
 import { AdminLoginForm } from './AdminLoginForm';
+import SosAlertBanner from './SosAlertBanner';
 
 // Screen placeholder with shimmer animation
 function ScreenLoader() {
@@ -155,14 +156,20 @@ const EXTRA_SECTION_LABELS: Record<string, string> = {
 };
 Object.assign(sectionLabels, EXTRA_SECTION_LABELS);
 
+const EXTRA_SECTION_PERMISSIONS: Record<string, Permission> = {
+  'wallet-deposits': 'transactions_view',
+  'payment-gateways': 'transactions_manage',
+};
+
 // P3-3: number-key shortcuts (1-9) follow the canonical nav order from
 // ALL_NAV_ITEMS instead of a second hardcoded list.
 const numberToSection = ALL_NAV_ITEMS.slice(0, 9).map((item) => item.id);
 
 function AdminSectionRenderer({ section, session }: { section: string; session: any }) {
   const item = ALL_NAV_ITEMS.find((i) => i.id === section);
-  if (item && session) {
-    const hasPerm = hasPermission(session, item.permission);
+  const requiredPermission = item?.permission || EXTRA_SECTION_PERMISSIONS[section];
+  if (requiredPermission && session) {
+    const hasPerm = hasPermission(session, requiredPermission);
     if (!hasPerm) {
       return (
         <div className="flex flex-col items-center justify-center h-96 text-muted-foreground p-6 text-center">
@@ -171,8 +178,8 @@ function AdminSectionRenderer({ section, session }: { section: string; session: 
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Access Denied</h2>
           <p className="text-sm max-w-sm">
-            You do not have the required permissions ({item.permission}) to access the{' '}
-            {item.label || section} section.
+            You do not have the required permissions ({requiredPermission}) to access the{' '}
+            {item?.label || EXTRA_SECTION_LABELS[section] || section} section.
           </p>
         </div>
       );
@@ -233,6 +240,35 @@ export default function AdminLayout() {
       next.add(activeSection);
       return next;
     });
+  }, [activeSection]);
+
+  // P1: sync the in-memory section router with the URL so in-app navigation
+  // is deep-linkable/shareable and the back button works. `replaceState`
+  // (not Next navigation) preserves the keep-alive `visitedSections` mounts.
+  // On mount, honor a valid ?section= (deep link); thereafter, reflect the
+  // active section. Invalid values are ignored (fail-closed to current).
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('section');
+      if (fromUrl && fromUrl in sectionMap && fromUrl !== useAdminStore.getState().activeSection) {
+        setActiveSection(fromUrl);
+      }
+    } catch {
+      // non-browser / malformed URL — stay on the default section.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('section') === activeSection) return;
+      url.searchParams.set('section', activeSection);
+      window.history.replaceState(null, '', url.toString());
+    } catch {
+      // non-browser — nothing to sync.
+    }
   }, [activeSection]);
 
   const refreshTokens = useCallback(async (): Promise<boolean> => {
@@ -443,10 +479,10 @@ export default function AdminLayout() {
       </Sheet>
 
       {/* Command Palette */}
-      <CommandPalette />
+      <CommandPalette session={session} />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 h-dvh overflow-hidden">
+      <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col min-w-0 h-dvh overflow-hidden outline-none">
         {/* Top Bar */}
         <header className="h-16 border-b bg-card flex items-center px-6 gap-4 shrink-0 transition-colors duration-200">
           {/* Mobile menu button */}
@@ -471,7 +507,7 @@ export default function AdminLayout() {
           ))}
 
           {/* Search trigger + dark mode */}
-          <div className="ml-auto mr-[230px] flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
             {/* Command palette trigger */}
             <Button
               variant="outline"
@@ -494,7 +530,11 @@ export default function AdminLayout() {
               // P3-4: the rider app is served same-origin at /rider-app — a
               // production deploy that forgets NEXT_PUBLIC_FLUTTER_WEB_URL must
               // not point this button at the developer's localhost.
-              onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || '/rider-app', '_blank')}
+              onClick={() => {
+                const isLocal = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+                const targetUrl = isLocal ? (process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || '/rider-app') : '/rider-app';
+                window.open(targetUrl, '_blank');
+              }}
             >
               Rider App
             </Button>
@@ -503,7 +543,8 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <ScrollArea className="flex-1 h-full min-h-0" data-admin-scroll="true">
-          <div className="p-4 md:p-5">
+          <div className="p-4 md:p-5 space-y-4">
+            <SosAlertBanner />
             {Array.from(visitedSections).map((section) => (
               <div
                 key={section}

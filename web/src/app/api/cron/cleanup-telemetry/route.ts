@@ -5,7 +5,7 @@ import { requireCronAuth } from '@/lib/cron-auth';
 import { telemetryUseCases } from '@/server/modules/telemetry/telemetry.use-cases';
 
 export async function GET(req: NextRequest) {
-  const authError = requireCronAuth(req);
+  const authError = requireCronAuth(req, 'CRON_SECRET_CLEANUP_TELEMETRY');
   if (authError) {
     return authError;
   }

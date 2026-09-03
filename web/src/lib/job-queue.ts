@@ -22,11 +22,11 @@ import { Prisma } from '@prisma/client';
 
 export interface QueueJob {
   id: string;
-  type: string;
-  payload: Record<string, unknown>;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  attempts: number;
-  createdAt: number;
+  type?: string;
+  payload?: Record<string, unknown>;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
+  attempts?: number;
+  createdAt?: number;
   processedAt?: number;
   error?: string;
 }
@@ -123,6 +123,11 @@ export const JobQueue = {
             readyAt: null, // Reset backoff for any future re-runs
           },
         });
+
+        try {
+          const { outboxProcessedTotal } = await import('@/lib/prometheus');
+          outboxProcessedTotal.inc({ status: 'success', event_type: type });
+        } catch {}
       } catch (err) {
         const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error';
         const newAttempts = event.attempts + 1;
@@ -145,6 +150,11 @@ export const JobQueue = {
             readyAt: isMaxed ? null : nextReadyAt,
           },
         });
+
+        try {
+          const { outboxProcessedTotal } = await import('@/lib/prometheus');
+          outboxProcessedTotal.inc({ status: isMaxed ? 'failed' : 'retry', event_type: type });
+        } catch {}
 
         logger.error('[JobQueue] Failed to process job', {
           jobId: event.id,
@@ -169,9 +179,20 @@ export const JobQueue = {
     const now = clock.now();
     const result = await db.$executeRaw`
       UPDATE "outbox_events"
-      SET status = 'PENDING',
-          attempts = 0,
-          error = 'Reclaimed by reaper — stuck in PROCESSING'
+      SET status = CASE
+            WHEN attempts + 1 >= "maxAttempts" THEN 'FAILED'
+            ELSE 'PENDING'
+          END,
+          attempts = attempts + 1,
+          error = CASE
+            WHEN attempts + 1 >= "maxAttempts" THEN 'Reclaimed by reaper — exceeded maximum retry attempts'
+            ELSE 'Reclaimed by reaper — stuck in PROCESSING'
+          END,
+          "processedAt" = CASE
+            WHEN attempts + 1 >= "maxAttempts" THEN ${now}
+            ELSE "processedAt"
+          END,
+          "updatedAt" = ${now}
       WHERE status = 'PROCESSING'
         AND (
           ("eventType" = 'sms.send' AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})

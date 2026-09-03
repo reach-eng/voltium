@@ -147,10 +147,13 @@ export const supportRepository = {
     senderId: string,
     senderType: 'RIDER' | 'ADMIN',
     message: string,
-    attachments?: string
+    attachments?: string | string[]
   ) {
+    const serializedAttachments = Array.isArray(attachments)
+      ? JSON.stringify(attachments)
+      : attachments;
     return db.ticketMessage.create({
-      data: { ticketId, senderId, senderType, message, attachments },
+      data: { ticketId, senderId, senderType, message, attachments: serializedAttachments },
     });
   },
 
@@ -162,7 +165,8 @@ export const supportRepository = {
   },
 
   async getFaqs() {
-    return db.faq.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+    // P1: bound — FAQs are a small reference table, but never unbounded.
+    return db.faq.findMany({ where: { isActive: true }, orderBy: { order: 'asc' }, take: 200 });
   },
 
   async findByIdWithMessages(ticketId: string) {

@@ -8,6 +8,7 @@ interface DeviceComplianceResult {
   violationsFound: number;
   violationsResolved: number;
   ridersChecked: number;
+  violationsPurged?: number;
 }
 
 export const deviceComplianceJob = {
@@ -20,7 +21,8 @@ export const deviceComplianceJob = {
       ridersChecked: 0,
     };
 
-    // Check active riders for device compliance issues
+    // Check active riders for device compliance issues.
+    // P1: bound the sweep (cap + warn makes growth visible, not a silent OOM).
     const activeRiders = await db.rider.findMany({
       where: { lifecycleStatus: 'ACTIVE' },
       select: {
@@ -30,7 +32,12 @@ export const deviceComplianceJob = {
         isUninstallBlocked: true,
         deviceViolationCount: true,
       },
+      orderBy: { id: 'asc' },
+      take: 2000,
     });
+    if (activeRiders.length >= 2000) {
+      logger.warn('[DeviceComplianceJob] Sweep hit the 2000-rider cap — convert to cursor batching before the fleet grows further');
+    }
 
     result.ridersChecked = activeRiders.length;
 
@@ -98,6 +105,19 @@ export const deviceComplianceJob = {
         },
       });
       result.violationsResolved += oldViolations.count;
+    }
+
+    // Retention TTL: delete resolved violations older than 30 days
+    const thirtyDaysAgo = new Date(clock.now().getTime() - 30 * 24 * 60 * 60 * 1000);
+    const purged = await db.deviceViolation.deleteMany({
+      where: {
+        status: 'RESOLVED',
+        resolvedAt: { lt: thirtyDaysAgo },
+      },
+    });
+    if (purged.count > 0) {
+      result.violationsPurged = purged.count;
+      logger.info('[DeviceComplianceJob] Purged expired resolved violations', { count: purged.count });
     }
 
     logger.info('[DeviceComplianceJob] Complete', result);

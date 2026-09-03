@@ -212,6 +212,10 @@ export function useOffers() {
   };
 
   const saveCoupon = async () => {
+    if (couponForm.discountType === 'PERCENTAGE' && Number(couponForm.discountValue) > 100) {
+      toast.error('Percentage discount cannot exceed 100%');
+      return;
+    }
     try {
       setIsSaving(true);
       const payload = {

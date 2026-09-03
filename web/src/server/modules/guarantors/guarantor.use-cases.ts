@@ -41,10 +41,21 @@ export const guarantorUseCases = {
       await guarantorRepository.replaceGuarantor(riderDbId);
     }
 
-    return guarantorRepository.submitGuarantor(
+    const result = await guarantorRepository.submitGuarantor(
       riderDbId,
       input as unknown as Record<string, unknown>
     );
+    // P1: a real guarantor submission lifts the skip-guarantor surcharge
+    // (the flag is server-owned; riders cannot clear it themselves).
+    // Defensive typeof-check: unit-test db doubles may not implement it.
+    const { db } = await import('@/lib/db');
+    if (typeof db.rider?.updateMany === 'function') {
+      await db.rider.updateMany({
+        where: { id: riderDbId, requiresHigherDeposit: true },
+        data: { requiresHigherDeposit: false },
+      });
+    }
+    return result;
   },
 
   async reviewGuarantor(riderDbId: string, reviewerId: string, review: GuarantorReview) {

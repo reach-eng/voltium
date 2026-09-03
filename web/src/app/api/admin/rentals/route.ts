@@ -100,7 +100,7 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     adminRentalActionSchema,
     String(body.action).toUpperCase()
   );
-  if (!validation.success) return errors.badRequest('Invalid rental action');
+  if (!validation.success) return errors.validation('Invalid rental action');
   const action = validation.data;
 
   const ACTION_PERMISSION_MAP: Record<string, Permission> = {

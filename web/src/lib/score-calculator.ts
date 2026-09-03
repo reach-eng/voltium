@@ -62,7 +62,7 @@ export async function calculateRiderScore(riderId: string, forceRecalculate = fa
   return score;
 }
 
-function calculatePaymentScore(rider: any): number {
+export function calculatePaymentScore(rider: any): number {
   if (!rider.wallet) return 0;
 
   const streak = rider.wallet.paymentStreak || 0;
@@ -86,7 +86,7 @@ function calculatePaymentScore(rider: any): number {
   return Math.min(Math.round(score * 100) / 100, 100);
 }
 
-function calculateKycScore(rider: any): number {
+export function calculateKycScore(rider: any): number {
   if (!rider.kycProfile) return 0;
 
   const kyc = rider.kycProfile;
@@ -104,7 +104,7 @@ function calculateKycScore(rider: any): number {
   return Math.round(score * 100) / 100;
 }
 
-function calculateActivityScore(rider: any): number {
+export function calculateActivityScore(rider: any): number {
   let score = 0;
 
   const accountAge = Date.now() - new Date(rider.createdAt).getTime();
@@ -127,7 +127,7 @@ function calculateActivityScore(rider: any): number {
   return Math.min(Math.round(score * 100) / 100, 100);
 }
 
-function calculateSupportScore(rider: any): number {
+export function calculateSupportScore(rider: any): number {
   const totalTickets = rider.tickets?.length || 0;
   const openTickets = rider.tickets?.filter((t: any) => t.status === 'OPEN').length || 0;
 

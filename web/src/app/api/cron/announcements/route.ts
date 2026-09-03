@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
+import { requireCronAuth } from '@/lib/cron-auth';
 import { announcementUseCases } from '@/server/modules/announcements/announcement.use-cases';
 import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return errors.unauthorized('Invalid cron secret');
+  const authError = requireCronAuth(req, 'CRON_SECRET_ANNOUNCEMENTS');
+  if (authError) {
+    return authError;
   }
 
   try {

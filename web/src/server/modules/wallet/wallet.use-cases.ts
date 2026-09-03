@@ -126,15 +126,17 @@ export const walletUseCases = {
             },
           });
           await OutboxService.emit(
-            OutboxEventTypes.WALLET_TOPUP_REJECTED,
+            OutboxEventTypes.NOTIFICATION_SEND,
             {
+              type: 'WALLET_TOPUP_REJECTED' as const,
               riderId: riderDbId,
               transactionId: existingTxn.id,
               amountPaise: existingTxn.amountInPaise,
               reason: 'superseded_by_new_amount',
             },
             3,
-            tx
+            tx,
+            'interactive'
           );
         });
         logger.info('[WalletUseCases] Superseded stale pending transaction', {
@@ -163,21 +165,25 @@ export const walletUseCases = {
       }
     }
 
+    // P1: hardened — APP_ENV is authoritative. The old gate (NODE_ENV +
+    // flags + test phone) could mint ₹8,000 of real balance if a non-prod
+    // build with TEST_MODE=true ever pointed at a shared/staging DB. Staging
+    // and production can never auto-approve, regardless of flags.
+    const appEnv = process.env.APP_ENV || 'development';
     const isTestRider =
+      (appEnv === 'development' || appEnv === 'test') &&
       process.env.NODE_ENV === 'development' &&
       process.env.ENABLE_DEV_TOOLS === 'true' &&
       process.env.TEST_MODE === 'true' &&
       TEST_PHONES.includes(rider.phone);
 
-    const isInstantPayment = method === 'INSTANT';
-    const isInstantSuccess = isInstantPayment && (metadata?.gatewayStatus === 'SUCCESS' || metadata?.gatewayStatus === undefined);
-    const isInstantFailure = isInstantPayment && metadata?.gatewayStatus === 'FAILURE';
-
+    // F-01 FIX: Never auto-approve INSTANT payments based on client-attested
+    // gatewayStatus or missing gatewayStatus. All production top-ups enter as
+    // PENDING and require manual admin approval (or a future verified server-side gateway webhook).
+    // Only explicit dev test riders with TEST_MODE enabled are auto-approved for testing.
     let initialStatus: TransactionStatus = TransactionStatus.PENDING;
-    if (isTestRider || isInstantSuccess) {
+    if (isTestRider) {
       initialStatus = TransactionStatus.APPROVED;
-    } else if (isInstantFailure) {
-      initialStatus = TransactionStatus.REJECTED;
     }
 
     const transaction = await walletRepository.createTransaction({
@@ -193,7 +199,7 @@ export const walletUseCases = {
       description: `${finalPurpose === 'SECURITY_DEPOSIT' ? 'Security Deposit' : 'Wallet Top-up'} of ${formatRupeesFromPaise(amountPaise)}`,
     });
 
-    if (isTestRider || isInstantSuccess) {
+    if (isTestRider) {
       await this._autoApproveTestTopup(riderDbId, transaction.id, amountPaise, finalPurpose);
     }
 
@@ -272,6 +278,8 @@ export const walletUseCases = {
             riderId: riderDbId,
             amountInPaise: amountPaise,
             txnId: transactionId,
+            // P1: ledger-leg idempotency (test path has no CAS claim).
+            idempotencyKey: `deposit:${transactionId}`,
             note: 'Test mode: auto-approved security deposit',
           },
           tx
@@ -324,6 +332,9 @@ export const walletUseCases = {
             amountInPaise: txn.amountInPaise,
             txnId: txn.id,
             actorId: adminId,
+            // P1: ledger-leg idempotency (CAS claim on the txn is the primary
+            // guard; this is defense-in-depth for racing approvers).
+            idempotencyKey: `deposit:${txn.id}`,
             note: `Admin approved security deposit`,
           },
           tx
@@ -360,11 +371,14 @@ export const walletUseCases = {
         invalidateRiderCache(txn.riderId);
       }
 
-      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
+      await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
         riderId: txn.riderId,
-        transactionId,
+        type: 'WALLET_TOPUP_APPROVED',
         amountPaise: txn.amountInPaise,
-      }, 3, tx);
+        transactionId,
+        title: 'Top-up Approved ✅',
+        body: `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} has been approved.`,
+      }, 3, tx, 'interactive');
     });
 
     await createAuditLog({
@@ -374,14 +388,6 @@ export const walletUseCases = {
       entityId: transactionId,
       details: { riderId: txn.riderId, amountPaise: txn.amountInPaise },
     });
-
-    await notificationService.createAndSend(
-      txn.riderId,
-      'Top-up Approved ✅',
-      `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} has been approved.`,
-      'PAYMENT',
-      { screen: 'WALLET' }
-    );
 
     logger.info('[WalletUseCases] Topup approved', {
       transactionId,
@@ -399,12 +405,15 @@ export const walletUseCases = {
 
     await db.$transaction(async (tx) => {
       await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
-      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
+      await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
         riderId: txn.riderId,
-        transactionId,
+        type: 'WALLET_TOPUP_REJECTED',
         amountPaise: txn.amountInPaise,
+        transactionId,
         reason,
-      }, 3, tx);
+        title: 'Top-up Rejected ❌',
+        body: `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} was rejected: ${reason}`,
+      }, 3, tx, 'interactive');
     });
 
     await createAuditLog({
@@ -414,14 +423,6 @@ export const walletUseCases = {
       entityId: transactionId,
       details: { riderId: txn.riderId, amountPaise: txn.amountInPaise, reason },
     });
-
-    await notificationService.createAndSend(
-      txn.riderId,
-      'Top-up Rejected ❌',
-      `Your top-up of ${formatRupeesFromPaise(txn.amountInPaise)} was rejected: ${reason}`,
-      'PAYMENT',
-      { screen: 'WALLET' }
-    );
 
     logger.info('[WalletUseCases] Topup rejected', { transactionId, adminId, reason });
   },

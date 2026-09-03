@@ -5,6 +5,7 @@ import { dataManagementUseCases } from '@/server/modules/data-management/data-ma
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 import { withApiHandler } from '@/lib/api-handler';
 import { success, errors } from '@/lib/api-response';
+import { hasPermission } from '@/lib/permissions';
 
 function serializeBackupJob(job: any) {
   if (!job) return null;
@@ -21,6 +22,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await getAdminSession(request);
   if (!session) {
     return errors.unauthorized('Unauthorized');
+  }
+
+  if (!hasPermission(session, 'data_management_view')) {
+    return errors.forbidden('Forbidden: insufficient permissions to view data management overview');
   }
 
   const overview = await dataManagementUseCases.getOverview(session.adminRole as AdminRole);

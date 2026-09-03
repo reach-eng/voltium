@@ -159,9 +159,8 @@ export const orphanEventConsumerJob = {
     const result: OrphanEventResult = { handled: 0, failed: 0, byType: {} };
 
     // The outbox poller (lib/job-queue.ts processJobs) sets `job.type`
-    // to the event's `eventType`. We pull it from there, falling back
-    // to a payload field.
-    const eventType: string = job.type ?? job.payload?.eventType ?? '';
+    // to the event's `eventType`: job.type ?? job.payload?.eventType
+    const eventType: string = job.type ?? (job.payload as any)?.eventType ?? '';
 
     const handlers: Record<string, (payload: Record<string, unknown>) => Promise<void>> = {
       [OutboxEventTypes.RENT_PAID]: handleRentPaid,

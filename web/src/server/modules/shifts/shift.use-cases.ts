@@ -47,7 +47,7 @@ function computeShiftTimes(
 /**
  * Attach parsed parts to a shift object for the response.
  */
-function attachParts(shift: { parts: string | null }) {
+function attachParts<T extends { parts: string | null }>(shift: T) {
   return {
     ...shift,
     parts: parseParts(shift.parts),
@@ -121,7 +121,7 @@ export const shiftUseCases = {
     return shifts.map(attachParts);
   },
 
-  async createShift(data: Record<string, unknown>, actorId: string) {
+  async createShift(data: Record<string, unknown>, actorId: string = 'system') {
     const { parts: inputParts, ...rest } = data;
     const { partsJson, startTime, endTime } = computeShiftTimes(
       inputParts as ShiftPart[] | undefined | null,

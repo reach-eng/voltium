@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collectDefaultMetrics, Registry } from 'prom-client';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { getMetrics, getSlowQueries } from '@/lib/apm';
+import { metricsRegistry } from '@/lib/prometheus';
 
 export const dynamic = 'force-dynamic';
-
-const register = new Registry();
-
-// Collect default metrics (CPU, memory, event loop lag, etc.)
-collectDefaultMetrics({ register });
 
 async function isAuthorizedMetricsCaller(req: NextRequest): Promise<boolean> {
   const tokenHeader = req.headers.get('x-internal-metrics-token');
@@ -48,11 +43,11 @@ export async function GET(req: NextRequest) {
 
   // Default to Prometheus text format
   try {
-    const metrics = await register.metrics();
+    const metrics = await metricsRegistry.metrics();
     return new NextResponse(metrics, {
       status: 200,
       headers: {
-        'Content-Type': register.contentType,
+        'Content-Type': metricsRegistry.contentType,
       },
     });
   } catch (ex) {

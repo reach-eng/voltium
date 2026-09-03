@@ -11,11 +11,13 @@ export async function GET(req: NextRequest) {
   if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
 
   try {
+    // P1: GET is read-only. The old `?action=cleanup` branch let crawlers /
+    // prefetch (with an admin cookie) wipe the audit trail. Mutations live on
+    // POST only; ?action=cleanup now returns 410 with a pointer to POST.
     const action = req.nextUrl.searchParams.get('action');
 
     if (action === 'cleanup') {
-      const deletedCount = await deleteExpiredLogs();
-      return success({ deleted: deletedCount }, 'Expired audit logs cleaned up');
+      return errors.gone('Use POST /api/admin/audit/cleanup to run cleanup');
     }
 
     const stats = await getRetentionStats();

@@ -1,15 +1,30 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
+    const identifier = rateLimitIdentifierFromRequest(request);
+    const rl = await checkRateLimit(`public:chat-suggest:${identifier}`, {
+      windowMs: 60_000,
+      maxRequests: 30,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many requests. Please try again later.');
+    }
+
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q')?.trim() || '';
 
     if (!q) {
       return errors.badRequest('Search query `q` is required');
+    }
+
+    if (q.length > 200) {
+      return errors.badRequest('Search query `q` must not exceed 200 characters');
     }
 
     const faqs = await db.faq.findMany({

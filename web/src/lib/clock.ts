@@ -35,8 +35,14 @@ export const clock = {
   },
 
   // For testing purposes
-  set(newClock: Clock) {
-    currentClock = newClock;
+  set(newClock: Clock | Date | number) {
+    if (typeof newClock === 'number') {
+      currentClock = { now: () => new Date(newClock) };
+    } else if (newClock instanceof Date) {
+      currentClock = { now: () => newClock };
+    } else {
+      currentClock = newClock;
+    }
   },
 
   // PR-76: convenience helper for tests — set the clock to an

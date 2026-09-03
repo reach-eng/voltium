@@ -159,6 +159,8 @@ export const notificationDispatchJob = {
         // so the OutboxEvent was acked but the rider never saw
         // anything if the in-request `notificationService` call failed.
         const eventType = String(payload.type);
+        const title = (payload.title as string) ?? eventType.replace(/_/g, ' ');
+        const message = (payload.body as string) ?? eventType.replace(/_/g, ' ');
         try {
           await db.notification.create({
             data: {
@@ -166,10 +168,26 @@ export const notificationDispatchJob = {
               // PAYMENT is the canonical DB enum for wallet/deposit
               // events; the exact event rides in the payload JSON.
               type: 'PAYMENT',
-              title: (payload.title as string) ?? eventType.replace(/_/g, ' '),
-              message: (payload.body as string) ?? eventType.replace(/_/g, ' '),
+              title,
+              message,
             },
           });
+
+          // Also deliver FCM push notification if rider has a valid device token
+          const rider = await db.rider.findUnique({
+            where: { id: payload.riderId as string },
+            select: { fcmToken: true },
+          });
+          if (rider?.fcmToken) {
+            await fcmService.sendPushNotification(
+              rider.fcmToken,
+              title,
+              message,
+              { screen: 'WALLET' }
+            ).catch((err: Error) =>
+              logger.warn('[NotificationDispatch] FCM push failed for wallet/deposit event', { err })
+            );
+          }
         } catch (err) {
           logger.warn('[NotificationDispatch] Failed to persist in-app notification', {
             eventType: payload.type,

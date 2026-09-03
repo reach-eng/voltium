@@ -5,55 +5,125 @@ import { useAdminStore } from '@/store/admin';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  LayoutDashboard,
-  Users,
-  Shield,
+  Activity,
+  AlertOctagon,
+  ArrowLeftRight,
+  Award,
+  BarChart3,
+  Bell,
   Bike,
   CalendarDays,
-  ArrowLeftRight,  MessageSquare, Tag, Award, Bell, UserCog, HelpCircle,
+  ClipboardCheck,
+  Clock,
+  Database,
+  FileCheck,
   FileText,
+  HeartHandshake,
+  HelpCircle,
+  History,
+  Key,
+  LayoutDashboard,
+  ListChecks,
+  Map,
+  MapPin,
+  MessageSquare,
+  Octagon,
+  Radar,
+  Send,
   Settings,
+  Settings2,
+  Share2,
+  Shield,
   ShieldCheck,
+  Sparkles,
+  Tag,
+  Target,
+  ToggleLeft,
+  UserCog,
+  Users,
+  Users2,
+  Wallet,
+  Car,
+  User,
   Search,
   Loader2,
-  User,
-  Landmark,
-  Car,
 } from 'lucide-react';
+import { ALL_NAV_ITEMS, getVisibleNavItems } from '@/lib/role-config';
+import { hasPermission } from '@/lib/permissions';
+import type { SessionPayload } from '@/lib/session-payload';
 import { logger } from '@/lib/logger';
 
-const navItems = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: LayoutDashboard,
-    keywords: ['dashboard', 'home', 'stats'],
-  },
-  { id: 'riders', label: 'Riders', icon: Users, keywords: ['users', 'customers'] },
-  { id: 'kyc', label: 'KYC', icon: Shield, keywords: ['verification', 'identity'] },
-  { id: 'vehicles', label: 'Vehicles', icon: Bike, keywords: ['fleet', 'scooter'] },
-  { id: 'rentals', label: 'Rentals', icon: CalendarDays, keywords: ['plans', 'leases'] },
-  {
-    id: 'transactions',
-    label: 'Transactions',
-    icon: ArrowLeftRight,
-    keywords: ['payments', 'money'],
-  },
-  {
-    id: 'tickets',
-    label: 'Support Tickets',
-    icon: MessageSquare,
-    keywords: ['help', 'support', 'issues'],
-  },
-  { id: 'offers', label: 'Offers & Coupons', icon: Tag, keywords: ['promotions', 'discounts'] },
-  { id: 'rewards', label: 'Rewards', icon: Award, keywords: ['points', 'loyalty', 'referrals'] },
-  { id: 'notifications', label: 'Notifications', icon: Bell, keywords: ['alerts', 'messages'] },
-  { id: 'team-leaders', label: 'Team Leaders', icon: UserCog, keywords: ['managers', 'staff'] },
-  { id: 'faq', label: 'FAQ', icon: HelpCircle, keywords: ['questions', 'help', 'faqs'] },
-  { id: 'legal', label: 'Legal Documents', icon: FileText, keywords: ['terms', 'privacy'] },
-  { id: 'settings', label: 'Settings', icon: Settings, keywords: ['config', 'preferences'] },
-  { id: 'admin-users', label: 'Admin Users', icon: ShieldCheck, keywords: ['admins', 'access'] },
-];
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Activity,
+  AlertOctagon,
+  ArrowLeftRight,
+  Award,
+  BarChart3,
+  Bell,
+  Bike,
+  CalendarDays,
+  ClipboardCheck,
+  Clock,
+  Database,
+  FileCheck,
+  FileText,
+  HeartHandshake,
+  HelpCircle,
+  History,
+  Key,
+  LayoutDashboard,
+  ListChecks,
+  Map,
+  MapPin,
+  MessageSquare,
+  Octagon,
+  Radar,
+  Send,
+  Settings,
+  Settings2,
+  Share2,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  Tag,
+  Target,
+  ToggleLeft,
+  UserCog,
+  Users,
+  Users2,
+  Wallet,
+};
+
+const KEYWORDS: Record<string, string[]> = {
+  overview: ['dashboard', 'home', 'stats', 'analytics'],
+  riders: ['users', 'customers', 'profiles', 'accounts'],
+  kyc: ['verification', 'identity', 'aadhaar', 'pan', 'onboarding'],
+  rentals: ['plans', 'leases', 'subscriptions', 'returns'],
+  vehicles: ['fleet', 'scooter', 'ev', 'battery', 'chassis'],
+  hubs: ['stations', 'centers', 'locations'],
+  transactions: ['payments', 'money', 'finance', 'ledger', 'wallet', 'topup'],
+  tickets: ['help', 'support', 'issues', 'complaints'],
+  incidents: ['fines', 'accidents', 'violations', 'penalties'],
+  'team-leaders': ['managers', 'staff', 'tl'],
+  operations: ['board', 'active', 'monitoring'],
+  'fleet-map': ['map', 'gps', 'locations', 'tracking'],
+  shifts: ['roster', 'schedules', 'hours'],
+  'rider-scoring': ['score', 'credit', 'rating', 'trust'],
+  notifications: ['alerts', 'messages', 'sms', 'fcm', 'push'],
+  offers: ['promotions', 'discounts', 'coupons'],
+  rewards: ['points', 'loyalty', 'referrals'],
+  analytics: ['reports', 'charts', 'metrics'],
+  'admin-users': ['admins', 'access', 'rbac', 'roles'],
+  faq: ['questions', 'help', 'faqs'],
+  legal: ['terms', 'privacy', 'agreements'],
+  'device-tracking': ['imei', 'lock', 'telemetry'],
+  'workflow-coverage': ['workflows', 'testing', 'audit'],
+  'business-settings': ['config', 'preferences'],
+  settings: ['system', 'environment'],
+  'server-health': ['status', 'pm2', 'outbox', 'latency'],
+  'data-management': ['backups', 'restore', 'export'],
+  'background-jobs': ['workers', 'queue', 'cron'],
+};
 
 interface PaletteItem {
   id: string;
@@ -63,13 +133,28 @@ interface PaletteItem {
   keywords?: string[]; // Only for nav
 }
 
-export default function CommandPalette() {
+interface CommandPaletteProps {
+  session?: SessionPayload | null;
+}
+
+export default function CommandPalette({ session }: CommandPaletteProps) {
   const commandPaletteOpen = useAdminStore((s) => s.commandPaletteOpen);
   const setCommandPaletteOpen = useAdminStore((s) => s.setCommandPaletteOpen);
   const setActiveSection = useAdminStore((s) => s.setActiveSection);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PaletteItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Derive visible navigation items based on current session
+  const visibleNavItems = useMemo(() => {
+    const items = session ? getVisibleNavItems(session) : ALL_NAV_ITEMS;
+    return items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      icon: iconMap[item.icon] || LayoutDashboard,
+      keywords: KEYWORDS[item.id] || [],
+    }));
+  }, [session]);
 
   // Reset query when opening
   useEffect(() => {
@@ -79,7 +164,7 @@ export default function CommandPalette() {
     }
   }, [commandPaletteOpen]);
 
-  // Async Search for Entities
+  // Async Search for Entities with credentials
   useEffect(() => {
     const q = query.trim();
     if (q.length < 2) {
@@ -90,10 +175,23 @@ export default function CommandPalette() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        // Search Riders
-        const rRes = await fetch(`/api/admin/riders?search=${encodeURIComponent(q)}&limit=3`);
-        const rJson = await rRes.json();
-        const riderResults = Array.isArray(rJson.data) ? rJson.data : rJson.data?.riders || [];
+        const canSearchRiders = !session || hasPermission(session, 'riders_view');
+        const canSearchVehicles = !session || hasPermission(session, 'vehicles_view');
+
+        const [rJson, vJson] = await Promise.all([
+          canSearchRiders
+            ? fetch(`/api/admin/riders?search=${encodeURIComponent(q)}&limit=3`, {
+                credentials: 'include',
+              }).then((r) => (r.ok ? r.json() : null))
+            : null,
+          canSearchVehicles
+            ? fetch(`/api/admin/vehicles?search=${encodeURIComponent(q)}&limit=3`, {
+                credentials: 'include',
+              }).then((r) => (r.ok ? r.json() : null))
+            : null,
+        ]);
+
+        const riderResults = Array.isArray(rJson?.data) ? rJson.data : rJson?.data?.riders || [];
         const riders = riderResults.map((r: any) => ({
           id: `rider:${r.id}`,
           label: `${r.fullName || r.name} (${r.riderId})`,
@@ -101,10 +199,7 @@ export default function CommandPalette() {
           type: 'rider',
         }));
 
-        // Search Vehicles
-        const vRes = await fetch(`/api/admin/vehicles?search=${encodeURIComponent(q)}&limit=3`);
-        const vJson = await vRes.json();
-        const vehicleResults = Array.isArray(vJson.data) ? vJson.data : vJson.data?.vehicles || [];
+        const vehicleResults = Array.isArray(vJson?.data) ? vJson.data : vJson?.data?.vehicles || [];
         const vehicles = vehicleResults.map((v: any) => ({
           id: `vehicle:${v.id}`,
           label: `${v.model} (${v.vehicleId})`,
@@ -121,12 +216,12 @@ export default function CommandPalette() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, session]);
 
   const filteredNav = useMemo<PaletteItem[]>(() => {
-    if (!query.trim()) return navItems.map((i) => ({ ...i, type: 'nav' }));
+    if (!query.trim()) return visibleNavItems.map((i) => ({ ...i, type: 'nav' }));
     const q = query.toLowerCase();
-    return (navItems as any[])
+    return visibleNavItems
       .filter(
         (item) =>
           item.label.toLowerCase().includes(q) ||
@@ -134,7 +229,7 @@ export default function CommandPalette() {
           item.keywords.some((k: string) => k.includes(q))
       )
       .map((i) => ({ ...i, type: 'nav' }));
-  }, [query]);
+  }, [query, visibleNavItems]);
 
   const allItems = useMemo<PaletteItem[]>(() => {
     return [...filteredNav, ...results];

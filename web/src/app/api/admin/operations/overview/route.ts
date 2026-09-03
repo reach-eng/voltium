@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAdminSession, AdminAuthError, AdminForbiddenError } from '@/server/modules/admin/admin.policy';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
+import { logger } from '@/lib/logger';
 import { getOrSetResponse } from '@/lib/cache';
 import { db } from '@/lib/db';
 
@@ -41,6 +42,8 @@ export async function GET(req: NextRequest) {
     if (err instanceof AdminForbiddenError) {
       return errors.forbidden(err.message);
     }
-    return errors.internal(err instanceof Error ? err.message : 'Internal Server Error');
+    // P1: generic 500 (raw DB text must not reach the client; logged below).
+    logger.error('GET /api/admin/operations/overview error:', err);
+    return errors.internal('Failed to fetch operations overview');
   }
 }

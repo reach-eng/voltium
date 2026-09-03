@@ -71,7 +71,7 @@ import { checkOutboxQueueLag } from './jobs/outbox-queue-lag.job';
 // Event-driven workers — poll the OutboxEvent table for matching event types
 // ---------------------------------------------------------------------------
 
-type JobProcessor = (job: QueueJob) => Promise<unknown>;
+type JobProcessor = (job: any) => Promise<unknown>;
 type OutboxPriority = 'interactive' | 'background';
 
 interface WorkerDefinition {
@@ -218,6 +218,43 @@ export const WORKERS: WorkerDefinition[] = [
     priority: 'interactive',
   },
   {
+    // P0 2026-09-04: admin-triggered device compliance scan (was orphan — no consumer, piled PENDING forever).
+    jobType: OutboxEventTypes.ADMIN_JOB_DEVICE_COMPLIANCE,
+    processor: deviceComplianceJob.process,
+    concurrency: 1,
+    description: 'Device compliance — admin-triggered via Background Jobs screen',
+    priority: 'background',
+  },
+  {
+    // P0 2026-09-04: admin-triggered referral reward sweep (was orphan).
+    // Single-referral events are handled by REFERRAL_REWARD above;
+    // the admin button is a batch "re-drive" that acks (single events are the source of truth).
+    jobType: OutboxEventTypes.ADMIN_JOB_REFERRAL_REWARD,
+    processor: async (job: QueueJob) => {
+      logger.info('[ReferralRewardJob] admin-triggered sweep — noop (single referral.reward events are the source of truth)', {
+        jobId: job.id,
+        triggeredBy: job.payload?.triggeredBy,
+      });
+      return { handled: 0, skipped: true } as unknown as Record<string, unknown>;
+    },
+    concurrency: 1,
+    description: 'Referral reward — admin-triggered sweep (noop, single events are canonical)',
+    priority: 'background',
+  },
+  {
+    // P0 2026-09-04: admin-triggered scheduled backup (was orphan).
+    jobType: OutboxEventTypes.ADMIN_JOB_SCHEDULED_BACKUP,
+    processor: async (job: QueueJob) => {
+      logger.info('[ScheduledBackup] admin-triggered run', { jobId: job.id, triggeredBy: job.payload?.triggeredBy });
+      // Reuse the scheduled check — it already respects running-backup locks and disk checks;
+      // an admin run outside the schedule window will be a no-op (logged) until a forced-run API exists.
+      return scheduledBackupJob.checkAndRun();
+    },
+    concurrency: 1,
+    description: 'Scheduled backup — admin-triggered via Background Jobs screen',
+    priority: 'background',
+  },
+  {
     // SMS sends — processes sms.send events from auth use-cases
     jobType: OutboxEventTypes.SMS_SEND,
     processor: async (job: QueueJob) => {
@@ -286,14 +323,36 @@ export const WORKERS: WorkerDefinition[] = [
 // Scheduled (cron-driven) workers — run directly on a timer, not event-polled
 // ---------------------------------------------------------------------------
 
-// P0-1 fix: fire-once guard for the daily engagement emitter.
-// Stores the IST date (YYYY-MM-DD) of the last successful emit.
-// Prevents the 60-tick window between 05:59 and 06:00 IST from
-// emitting 60 outbox rows.
+// Fire-once guards for daily engagement and reconciliation emitters.
+// Uses in-memory cache plus database persistence (SystemSetting)
+// so that process restarts/deployments never cause double emissions.
 let lastEngagementFiredDate: string | null = null;
-// PR-VER-2026-08-06 (EVENT_BUS P0-3): fire-once guard for the daily wallet
-// reconciliation emitter (same pattern).
 let lastReconciliationFiredDate: string | null = null;
+
+async function hasFiredToday(key: string, todayIst: string): Promise<boolean> {
+  try {
+    const { db } = await import('@/lib/db');
+    const existing = await db.systemSetting.findUnique({
+      where: { key: `worker.fire_once.${key}` },
+    });
+    return existing?.value === todayIst;
+  } catch {
+    return false;
+  }
+}
+
+async function markFiredToday(key: string, todayIst: string): Promise<void> {
+  try {
+    const { db } = await import('@/lib/db');
+    await db.systemSetting.upsert({
+      where: { key: `worker.fire_once.${key}` },
+      create: { key: `worker.fire_once.${key}`, value: todayIst, category: 'SYSTEM', valueType: 'STRING' },
+      update: { value: todayIst },
+    });
+  } catch (err) {
+    logger.warn(`[Scheduler] Failed to persist fire-once marker for ${key}`, err);
+  }
+}
 
 const SCHEDULED_TASKS: Array<{
   name: string;
@@ -305,6 +364,14 @@ const SCHEDULED_TASKS: Array<{
     intervalMs: 60_000, // checked every minute; idempotency key guards execution
     processor: async () => {
       await auditCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    name: 'blob-storage-gc',
+    intervalMs: 60 * 60_000, // checked every hour; daily idempotency key guards execution
+    processor: async () => {
+      const { blobGcJob } = await import('./jobs/blob-gc.job');
+      await blobGcJob.process({ id: 'scheduled' });
     },
   },
   {
@@ -389,8 +456,9 @@ const SCHEDULED_TASKS: Array<{
       const todayIst = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kolkata',
       }).format(injectedClock.now());
-      if (lastReconciliationFiredDate === todayIst) return;
+      if (lastReconciliationFiredDate === todayIst || (await hasFiredToday('wallet_reconciliation', todayIst))) return;
       lastReconciliationFiredDate = todayIst;
+      await markFiredToday('wallet_reconciliation', todayIst);
 
       const { OutboxService } = await import('./outbox');
       await OutboxService.emit(
@@ -439,7 +507,7 @@ const SCHEDULED_TASKS: Array<{
   },
   {
     name: 'device-violation-emitter',
-    intervalMs: 60_000, // every minute
+    intervalMs: 15 * 60_000, // every 15 minutes (was per-minute, causing high DB load)
     processor: async (injectedClock) => {
       const { OutboxService } = await import('./outbox');
       // device compliance is background — the deviceComplianceJob
@@ -462,12 +530,13 @@ const SCHEDULED_TASKS: Array<{
       // If we're within 1 minute of the target, fire now.
       if (msUntil > 60_000) return;
 
-      // P0-1: fire-once per IST calendar day
+      // P0-1: fire-once per IST calendar day (persisted to prevent restart double-emissions)
       const todayIst = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'Asia/Kolkata',
       }).format(injectedClock.now());
-      if (lastEngagementFiredDate === todayIst) return;
+      if (lastEngagementFiredDate === todayIst || (await hasFiredToday('daily_engagement', todayIst))) return;
       lastEngagementFiredDate = todayIst;
+      await markFiredToday('daily_engagement', todayIst);
 
       const { OutboxService } = await import('./outbox');
       // PR-75: daily engagement is interactive (birthday wishes,
@@ -757,6 +826,15 @@ async function handleShutdown(signal: string) {
   } else {
     logger.info('[Workers] No in-flight jobs to wait for');
   }
+
+  try {
+    const { db } = await import('@/lib/db');
+    await db.$disconnect();
+    logger.info('[Workers] Prisma disconnected cleanly');
+  } catch (err) {
+    logger.error('[Workers] Error disconnecting Prisma on shutdown', err);
+  }
+
   process.exit(0);
 }
 

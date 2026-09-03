@@ -71,14 +71,36 @@ export const referralUseCases = {
       return;
     }
 
-    // Check if already rewarded (idempotency) — this is the
-    // pre-`WalletLedger.idempotencyKey` short-circuit. The database
-    // unique constraint is the authoritative guard, but checking
-    // up front avoids spinning up a $transaction just to P2002-roll.
-    const existingReward = await db.transaction.findFirst({
-      where: { riderId: referrer.id, purpose: 'REWARD', description: { contains: referee.id } },
+    // P0 fix 2026-09-03: pay ONLY once the referee first reaches ACTIVE
+    // (rank >= 11 — SUSPENDED/RETURN_PENDING/CLOSED all passed through
+    // ACTIVE). The old code paid on signup, contradicting the FAQ and
+    // stacking with the signup-time Reward{500} (now removed). Callers
+    // (admin reconcile, lifecycle hooks) may invoke early — that is a no-op
+    // until activation, and re-invokes after activation are idempotent.
+    if (lifecycleRankOf(referee.lifecycleStatus) < 11) {
+      logger.info('[Referral] Referee not yet ACTIVE, reward deferred', {
+        refereeId,
+        status: referee.lifecycleStatus,
+      });
+      return;
+    }
+
+    // PR-102: this key MUST match the key emitted by
+    // referral-reward.job.ts. The `WalletLedger.idempotencyKey` UNIQUE
+    // constraint is the only thing that prevents a double-pay if both
+    // paths race (e.g. admin clicks reconcile while the job is running).
+    const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
+
+    // P0 fix 2026-09-03: authoritative pre-check on the ledger key itself.
+    // The old check (transaction description CONTAINS referee.id) was a
+    // substring match — fragile and blind to the job path. The UNIQUE
+    // constraint remains the final arbiter; this just avoids spinning up a
+    // $transaction to P2002-roll.
+    const alreadyPaid = await db.walletLedger.findUnique({
+      where: { idempotencyKey },
+      select: { id: true },
     });
-    if (existingReward) {
+    if (alreadyPaid) {
       logger.info('[Referral] Reward already processed', { referrerId: referrer.id, refereeId });
       return;
     }
@@ -96,13 +118,10 @@ export const referralUseCases = {
     }
     const bonusPaise = parseInt(settingVal || '20000');
 
-    // PR-102: this key MUST match the key emitted by
-    // referral-reward.job.ts. The `WalletLedger.idempotencyKey` UNIQUE
-    // constraint is the only thing that prevents a double-pay if both
-    // paths race (e.g. admin clicks reconcile while the job is running).
-    const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
+    // (idempotencyKey declared + pre-checked above; UNIQUE is final arbiter.)
 
-    await db.$transaction(async (tx) => {
+    try {
+      await db.$transaction(async (tx) => {
       const wallet = await tx.wallet.findUnique({
         where: { riderId: referrer.id },
         select: { id: true },
@@ -141,7 +160,20 @@ export const referralUseCases = {
           points: bonusPaise,
         },
       });
-    });
+      });
+    } catch (err) {
+      // Race lost to the job path (or a concurrent reconcile): the UNIQUE on
+      // WalletLedger.idempotencyKey fired. That means the reward WAS paid —
+      // treat as success, not an error.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        logger.info('[Referral] Reward race lost (P2002), already paid', {
+          referrerId: referrer.id,
+          refereeId,
+        });
+        return;
+      }
+      throw err;
+    }
 
     invalidateRiderCache(referrer.id);
 
@@ -171,6 +203,8 @@ export const referralUseCases = {
 
     if (!rider || !rider.referralCode) return null;
 
+    // P1: bound — a viral referrer must not dump every referee row
+    // (sibling getReferralInfo already uses take:100).
     const referrals = await db.rider.findMany({
       where: { referredBy: rider.referralCode },
       select: {
@@ -183,6 +217,7 @@ export const referralUseCases = {
         kycProfile: { select: { profilePhoto: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
 
     const { maskPhone } = await import('@/lib/pii');

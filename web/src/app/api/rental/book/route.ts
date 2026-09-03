@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       startTime,
     });
 
-    return success(result, 'Vehicle booked successfully');
+    return success(result, 'Vehicle booked successfully', 201);
   } catch (err: unknown) {
     const message = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Failed to book rental';
 

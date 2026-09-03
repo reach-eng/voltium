@@ -11,6 +11,170 @@ import { flattenRider } from '@/lib/flatten-rider';
 import { signRiderUrls } from '@/lib/sign-rider';
 import { rentalRepository, utcNowHHMM } from './rental.repository';
 import { RentalBookError } from './use-cases/errors';
+import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
+
+/**
+ * Ensures that a RentalLease row exists with status 'ACTIVE' for the given rider and vehicle.
+ *
+ * 1. Attempts to update any pre-existing lease in BOOKED or PICKUP_SCHEDULED to ACTIVE.
+ * 2. If 0 rows updated, checks if an ACTIVE lease already exists for this rider and vehicle (idempotent re-pickup).
+ * 3. If no ACTIVE lease exists (active onboarding path where bookRental was bypassed),
+ *    creates a new RentalLease with status 'ACTIVE', resolved active shift, plan pricing,
+ *    and period tracking (nextRentDueAt computed based on plan duration and advanceRentPaid).
+ */
+export async function ensureActiveRentalLease(
+  tx: any,
+  rider: any,
+  vehicleId: string,
+  options?: { shiftId?: string; startTime?: string }
+): Promise<any> {
+  const riderDbId = rider.id;
+  const nowHHMM = options?.startTime ?? utcNowHHMM();
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // 1. Attempt to update pre-existing lease from bookRental
+  const leaseUpdateResult = await tx.rentalLease.updateMany({
+    where: {
+      riderId: riderDbId,
+      vehicleId,
+      status: { in: ['BOOKED', 'PICKUP_SCHEDULED'] as const },
+    },
+    data: { status: 'ACTIVE', startTime: nowHHMM },
+  });
+
+  if (leaseUpdateResult.count > 0) {
+    return leaseUpdateResult;
+  }
+
+  // 2. Check if an ACTIVE lease already exists (re-pickup / idempotent retry)
+  if (typeof tx.rentalLease.findFirst === 'function') {
+    const existingActiveLease = await tx.rentalLease.findFirst({
+      where: {
+        riderId: riderDbId,
+        vehicleId,
+        status: 'ACTIVE',
+      },
+    });
+    if (existingActiveLease) {
+      return existingActiveLease;
+    }
+  }
+
+  // 3. Active onboarding path: resolve shift without collision on (vehicleId, shiftId, leaseDate)
+  let shiftId = options?.shiftId;
+  if (!shiftId && tx.shift) {
+    const activeShifts = typeof tx.shift.findMany === 'function'
+      ? await tx.shift.findMany({
+          where: { isActive: true },
+          orderBy: { startTime: 'asc' },
+        })
+      : [];
+
+    const takenLeasesToday = typeof tx.rentalLease.findMany === 'function'
+      ? await tx.rentalLease.findMany({
+          where: { vehicleId, leaseDate: todayStr },
+          select: { shiftId: true },
+        })
+      : [];
+    const takenShiftIds = new Set(takenLeasesToday.map((l: { shiftId: string }) => l.shiftId));
+    const availableShifts = activeShifts.filter((s: { id: string }) => !takenShiftIds.has(s.id));
+
+    const matchingShift = availableShifts.find((s: { startTime: string; endTime: string }) => {
+      if (s.startTime <= s.endTime) {
+        return nowHHMM >= s.startTime && nowHHMM < s.endTime;
+      } else {
+        return nowHHMM >= s.startTime || nowHHMM < s.endTime;
+      }
+    });
+
+    if (matchingShift) {
+      shiftId = matchingShift.id;
+    } else if (availableShifts.length > 0) {
+      shiftId = availableShifts[0].id;
+    } else if (activeShifts.length > 0) {
+      shiftId = activeShifts[0].id;
+    } else if (typeof tx.shift.findFirst === 'function') {
+      const anyShift = await tx.shift.findFirst();
+      if (anyShift) {
+        shiftId = anyShift.id;
+      } else if (typeof tx.shift.create === 'function') {
+        const defaultShift = await tx.shift.create({
+          data: {
+            name: 'Default Shift',
+            startTime: '00:00',
+            endTime: '23:59',
+            isActive: true,
+          },
+        });
+        shiftId = defaultShift.id;
+      }
+    }
+  }
+
+  // Fetch plan reference if not loaded on rider
+  let planRef = rider.currentPlanRef;
+  if (!planRef && rider.currentPlanId && tx.rentalPlan && typeof tx.rentalPlan.findUnique === 'function') {
+    planRef = await tx.rentalPlan.findUnique({ where: { id: rider.currentPlanId } });
+  }
+
+  // Calculate pricing and period tracking.
+  // P1: ALWAYS derive from plan type (DAILY=1/WEEKLY=7/MONTHLY=30) — never
+  // trust the stored `durationDays` column (pre-CHECK legacy rows can hold a
+  // mismatched value and would bill the wrong period).
+  const planPrice = rider.currentPlanPrice ?? planRef?.priceInPaise ?? 50000;
+  const durationDays = planRef?.type ? getDurationForPlanType(planRef.type) : 1;
+
+  const now = new Date();
+  const isAdvancePaid = Boolean(rider.advanceRentPaid);
+  const nextDue = isAdvancePaid
+    ? new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000)
+    : now;
+
+  try {
+    return await tx.rentalLease.create({
+      data: {
+        vehicleId,
+        riderId: riderDbId,
+        shiftId: shiftId || 'default-shift',
+        leaseDate: todayStr,
+        startTime: nowHHMM,
+        status: 'ACTIVE',
+        basePriceInPaise: planPrice,
+        finalPriceInPaise: planPrice,
+        periodNo: isAdvancePaid ? 1 : 0,
+        lastPaidAt: isAdvancePaid ? now : null,
+        nextRentDueAt: nextDue,
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === 'P2002' && tx.shift && typeof tx.shift.create === 'function') {
+      const dynamicShift = await tx.shift.create({
+        data: {
+          name: `Shift-${Date.now()}`,
+          startTime: nowHHMM,
+          endTime: nowHHMM,
+          isActive: true,
+        },
+      });
+      return await tx.rentalLease.create({
+        data: {
+          vehicleId,
+          riderId: riderDbId,
+          shiftId: dynamicShift.id,
+          leaseDate: todayStr,
+          startTime: nowHHMM,
+          status: 'ACTIVE',
+          basePriceInPaise: planPrice,
+          finalPriceInPaise: planPrice,
+          periodNo: isAdvancePaid ? 1 : 0,
+          lastPaidAt: isAdvancePaid ? now : null,
+          nextRentDueAt: nextDue,
+        },
+      });
+    }
+    throw err;
+  }
+}
 
 export const rentalUseCases = {
   async getPlans() {
@@ -235,6 +399,7 @@ export const rentalUseCases = {
       pickupPhotoLeft?: string;
       pickupPhotoRight?: string;
       pickupPhotoWithVehicle?: string;
+      shiftId?: string;
     }
   ) {
     const {
@@ -251,7 +416,7 @@ export const rentalUseCases = {
 
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
+      include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true, currentPlanRef: true },
     });
     if (!rider) throw new Error('Rider not found');
 
@@ -298,49 +463,38 @@ export const rentalUseCases = {
         await tx.vehicle.update({ where: { id: rider.vehicleId }, data: { status: 'AVAILABLE' } });
       }
 
-      await tx.rentalLease.updateMany({
-        where: {
-          riderId: riderDbId,
-          vehicleId: vehicle.id,
-          status: { in: ['BOOKED', 'PICKUP_SCHEDULED'] as const },
-        },
-        // P1.3: startTime must be UTC (toISOString), not server-local time.
-        // PR-ONBOARDING-FLOW-2026-08-12: in the new active path no lease
-        // exists yet (the rider skipped the explicit bookRental step).
-        // count === 0 is expected and OK — the rider is being flipped to
-        // ACTIVE directly. The lease will be reconciled by background
-        // jobs or admin tools if needed for billing.
-        data: { status: 'ACTIVE', startTime: utcNowHHMM() },
-      });
+      // F-04: Ensure RentalLease exists in ACTIVE status for both legacy bookRental path
+      // and new active onboarding path (where bookRental was bypassed).
+      await ensureActiveRentalLease(tx, rider, vehicle.id, { shiftId: input.shiftId });
 
       // PR-ONBOARDING-FLOW-2026-08-12: the new active path skips the
       // explicit `bookRental` step (no shift/date selection — the rider
       // picks a vehicle + completes the form in one go). The rider is
       // still in PLAN_SELECTED when they hit `syncPickup`. Accept
       // PLAN_SELECTED here so the lifecycle guard doesn't reject them.
+      // F-20: Synchronized with completeVerification.ts allowed statuses.
+      // Accept PLAN_SELECTED, PICKUP_SCHEDULED, ACTIVE, DEPOSIT_APPROVED, and KYC_APPROVED.
       const riderClaim = await tx.rider.updateMany({
         where: {
           id: riderDbId,
-          // Only PICKUP_SCHEDULED, ACTIVE (re-pickup), or DEPOSIT_APPROVED
-          // riders are eligible. SUSPENDED / CLOSED are explicitly
-          // excluded so admin intervention is required to unstick.
-          // PR-ONBOARDING-FLOW-2026-08-12: PLAN_SELECTED added so the
-          // new active path (no explicit bookRental) can complete
-          // pickup in a single round-trip.
+          // Only PICKUP_SCHEDULED, ACTIVE (re-pickup), DEPOSIT_APPROVED,
+          // PLAN_SELECTED, or KYC_APPROVED riders are eligible.
+          // SUSPENDED / CLOSED are explicitly excluded so admin intervention is required to unstick.
           lifecycleStatus: {
-            in: ['PLAN_SELECTED', 'PICKUP_SCHEDULED', 'ACTIVE', 'DEPOSIT_APPROVED'],
+            in: ['PLAN_SELECTED', 'PICKUP_SCHEDULED', 'ACTIVE', 'DEPOSIT_APPROVED', 'KYC_APPROVED'],
           },
         },
         data: {
           pickedUpAt: new Date(),
-          // PR-ONBOARDING-FLOW-2026-08-12: do NOT flip the rider to
+          // PR-ONBOARDING-FLOW-2026-08-12: do NOT flip a pre-active rider to
           // ACTIVE here. The new active path requires TWO admin
           // approvals (KYC + security-deposit / wallet top-up) before
-          // the rider becomes active. syncPickup now stops at
+          // the rider becomes active. syncPickup stops at
           // PICKUP_SCHEDULED; a separate admin-side activation (or
           // both approvals landing) flips the rider to ACTIVE and
           // the HangTight screen auto-redirects to the dashboard.
-          lifecycleStatus: 'PICKUP_SCHEDULED',
+          // If the rider was already ACTIVE (re-pickup), preserve ACTIVE.
+          lifecycleStatus: rider.lifecycleStatus === 'ACTIVE' ? 'ACTIVE' : 'PICKUP_SCHEDULED',
           vehicleId: vehicle.id,
           assignedVehicle: vehicle.vehicleNumber,
           pickupHub: resolvedHubName,
@@ -355,12 +509,12 @@ export const rentalUseCases = {
       });
       if (riderClaim.count === 0) {
         throw new Error(
-          'Rider is not in a pickup-eligible state (must be PLAN_SELECTED, PICKUP_SCHEDULED, DEPOSIT_APPROVED, or ACTIVE).'
+          'Rider is not in a pickup-eligible state (must be PLAN_SELECTED, PICKUP_SCHEDULED, DEPOSIT_APPROVED, KYC_APPROVED, or ACTIVE).'
         );
       }
       return tx.rider.findUnique({
         where: { id: riderDbId },
-        include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
+        include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true, currentPlanRef: true },
       });
     });
 

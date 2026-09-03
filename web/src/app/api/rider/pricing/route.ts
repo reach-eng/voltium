@@ -3,6 +3,8 @@ import { success, errors } from '@/lib/api-response';
 import { calculateDynamicPrice } from '@/lib/dynamic-pricing';
 import { rupeesToPaise, paiseToRupees } from '@/lib/money';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { pricingUseCases } from '@/server/modules/pricing/pricing.use-cases';
 import { toRupeesResponse } from '@/lib/api-money';
 
@@ -14,6 +16,15 @@ const PLANS = [
 
 export async function GET(request: NextRequest) {
   try {
+    const identifier = rateLimitIdentifierFromRequest(request);
+    const rl = await checkRateLimit(`public:pricing:${identifier}`, {
+      windowMs: 60_000,
+      maxRequests: 60,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many requests. Please try again later.');
+    }
+
     const hubId = request.nextUrl.searchParams.get('hubId');
 
     if (!hubId) {

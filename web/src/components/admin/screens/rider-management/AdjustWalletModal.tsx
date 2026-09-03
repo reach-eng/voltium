@@ -21,6 +21,7 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [proofUrl, setProofUrl] = useState('');
+  const [coAdminId, setCoAdminId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -37,6 +38,9 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
       if (reason.trim().length < 10) {
         return toast.error('Reason must be at least 10 characters for a debit');
       }
+      if (Number(amount) > 10000 && !coAdminId.trim()) {
+        return toast.error('Co-admin ID is required for debits exceeding ₹10,000');
+      }
     }
 
     setIsSubmitting(true);
@@ -48,7 +52,8 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
           amount: Number(amount),
           type,
           reason,
-          proofUrl,
+          proofUrl: type === 'CREDIT' ? proofUrl : undefined,
+          coAdminId: (type === 'DEBIT' && Number(amount) > 10000) ? coAdminId.trim() : undefined,
         }),
       });
 
@@ -57,6 +62,7 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
 
       toast.success(type === 'CREDIT' ? 'Wallet topped up successfully' : 'Amount deducted successfully');
       onSuccess(data.data.walletBalance);
+      setCoAdminId('');
       onClose();
     } catch (err: any) {
       toast.error(err.message);
@@ -115,6 +121,25 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
               </p>
             )}
           </div>
+
+          {type === 'DEBIT' && Number(amount) > 10000 && (
+            <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <Label className="text-amber-700 dark:text-amber-400 font-semibold flex items-center justify-between text-xs">
+                <span>Co-Approving Admin ID <span className="text-red-500">*</span></span>
+                <span className="text-[10px] font-normal uppercase tracking-wider text-amber-600 bg-amber-500/20 px-1.5 py-0.5 rounded">Dual Approval</span>
+              </Label>
+              <Input
+                type="text"
+                placeholder="Enter second admin user ID..."
+                value={coAdminId}
+                onChange={(e) => setCoAdminId(e.target.value)}
+                className="bg-background"
+              />
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+                Voltium security policy requires second-admin co-approval for single debits exceeding ₹10,000.
+              </p>
+            </div>
+          )}
 
           {type === 'CREDIT' && (
             <div className="space-y-2">

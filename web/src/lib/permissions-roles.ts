@@ -97,12 +97,12 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   files_view_support_attachment: ['OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
 
   // Data Management
-  data_management_view: ['READ_ONLY'],
-  data_management_backup: [],
-  data_management_restore: [],
-  data_management_schedule: [],
-  data_management_download: [],
-  data_management_test: [],
+  data_management_view: ['SUPER_ADMIN', 'READ_ONLY'],
+  data_management_backup: ['SUPER_ADMIN'],
+  data_management_restore: ['SUPER_ADMIN'],
+  data_management_schedule: ['SUPER_ADMIN'],
+  data_management_download: ['SUPER_ADMIN'],
+  data_management_test: ['SUPER_ADMIN'],
 
   // Incidents & Shifts
   ops_read: ['OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER', 'SUPER_ADMIN'],

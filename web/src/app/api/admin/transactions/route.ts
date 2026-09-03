@@ -24,8 +24,9 @@ import {
 } from '@/server/modules/transactions/transaction.use-cases';
 import { toStateAction } from '@/server/modules/transactions/transaction.types';
 import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
-import { WalletServiceError } from '@/lib/services/wallet-service';
-import { DepositStateError } from '@/lib/services/deposit-service';
+// P1: error classes from the canonical module facades, not lib/ directly.
+import { WalletServiceError } from '@/server/modules/wallet/wallet-ledger.service';
+import { DepositStateError } from '@/server/modules/deposits/deposit-ledger.service';
 
 // GET /api/admin/transactions — list with filters, amounts in rupees
 export async function GET(req: NextRequest) {
@@ -154,11 +155,14 @@ async function putHandler(req: NextRequest) {
     if (error instanceof DepositStateError) {
       return errors.conflict(error.message);
     }
+    // P1: substring matching on ARBITRARY error text must not echo it —
+    // Prisma/DB messages would leak table/constraint details. Domain error
+    // classes above (with designed messages) still pass through.
     if (error instanceof Error && error.message.includes('not found')) {
-      return errors.notFound(error.message);
+      return errors.notFound('Transaction not found');
     }
     if (error instanceof Error && error.message.includes('deposit')) {
-      return errors.conflict(error.message);
+      return errors.conflict('Transaction conflicts with deposit state');
     }
     logger.error('Update transaction error:', error);
     return errors.internal('Failed to update transaction');

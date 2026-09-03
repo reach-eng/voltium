@@ -1,7 +1,19 @@
+import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/rbac';
+import { requireCronAuth } from '@/lib/cron-auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // P0: consistent posture with the other health sub-routes (admin or cron).
+  // Note: no Caddy exists in this topology — always Offline unless a tunnel
+  // sidecar answers :2019. Kept for the server-health screen's probe matrix.
+  const admin = await requireAdmin();
+  if (!admin) {
+    const cronRejection = requireCronAuth(request);
+    if (cronRejection) return cronRejection;
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1500);

@@ -4,6 +4,7 @@ import { dataManagementUseCases } from '@/server/modules/data-management/data-ma
 import { scheduleUpdateSchema } from '@/server/modules/data-management/backup.schemas';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 import { success, errors } from '@/lib/api-response';
+import { hasPermission } from '@/lib/permissions';
 import { logger } from '@/lib/logger';
 
 // PR-90 (API N12): envelope consistency. The three handlers in this
@@ -22,6 +23,10 @@ export async function GET() {
     const session = await getAdminSession();
     if (!session) return errors.unauthorized('Unauthorized');
 
+    if (!hasPermission(session, 'data_management_view')) {
+      return errors.forbidden('Forbidden: insufficient permissions to view schedule');
+    }
+
     const schedule = await dataManagementUseCases.getSchedule(session.adminRole as AdminRole);
     return success(schedule);
   } catch (err: unknown) {
@@ -37,6 +42,10 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getAdminSession();
     if (!session) return errors.unauthorized('Unauthorized');
+
+    if (!hasPermission(session, 'data_management_schedule')) {
+      return errors.forbidden('Forbidden: insufficient permissions to update schedule');
+    }
 
     const body = scheduleUpdateSchema.parse(await request.json());
     const schedule = await dataManagementUseCases.updateSchedule(
@@ -71,11 +80,17 @@ export async function POST(request: NextRequest) {
     const action = searchParams.get('action');
 
     if (action === 'test') {
+      if (!hasPermission(session, 'data_management_test')) {
+        return errors.forbidden('Forbidden: insufficient permissions to test schedule');
+      }
       const result = await dataManagementUseCases.testSchedule(session.adminRole as AdminRole);
       return success(result);
     }
 
     if (action === 'run-now') {
+      if (!hasPermission(session, 'data_management_backup')) {
+        return errors.forbidden('Forbidden: insufficient permissions to run backup');
+      }
       const result = await dataManagementUseCases.runScheduledBackupNow(
         session.adminId ?? '',
         session.adminRole as AdminRole

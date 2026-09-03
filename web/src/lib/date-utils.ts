@@ -26,50 +26,136 @@
  *   5. Update API response formatters
  */
 
+export const DEFAULT_TIMEZONE = 'Asia/Kolkata';
+
+export type TimeZoneInput = string | { timeZone?: string };
+
+const dtfCache = new Map<string, Intl.DateTimeFormat>();
+
+function getFormatter(timeZone: string): Intl.DateTimeFormat {
+  let formatter = dtfCache.get(timeZone);
+  if (!formatter) {
+    try {
+      formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+    } catch {
+      formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: DEFAULT_TIMEZONE,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+    }
+    dtfCache.set(timeZone, formatter);
+  }
+  return formatter;
+}
+
+function resolveTimeZone(timeZoneOrOptions?: TimeZoneInput): string {
+  if (!timeZoneOrOptions) return DEFAULT_TIMEZONE;
+  if (typeof timeZoneOrOptions === 'string') return timeZoneOrOptions;
+  return timeZoneOrOptions.timeZone || DEFAULT_TIMEZONE;
+}
+
+function getZonedParts(d: Date, timeZone: string) {
+  const formatter = getFormatter(timeZone);
+  const parts = formatter.formatToParts(d);
+  let day = '';
+  let month = '';
+  let year = '';
+  let hour = '';
+  let minute = '';
+  let second = '';
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    switch (part.type) {
+      case 'day':
+        day = part.value;
+        break;
+      case 'month':
+        month = part.value;
+        break;
+      case 'year':
+        year = part.value;
+        break;
+      case 'hour':
+        hour = part.value === '24' ? '00' : part.value;
+        break;
+      case 'minute':
+        minute = part.value;
+        break;
+      case 'second':
+        second = part.value;
+        break;
+    }
+  }
+
+  return { day, month, year, hour, minute, second };
+}
+
 /**
- * Format a Date as DD-MM-YYYY in the local timezone.
+ * Format a Date as DD-MM-YYYY in the specified timezone (defaults to Asia/Kolkata).
  *
- * @example formatDateDDMMYYYY(new Date('2026-03-15T10:00:00Z'))
- *   // → '15-03-2026' (in Asia/Calcutta) or '15-03-2026' (in UTC)
+ * @example formatDateDDMMYYYY(new Date('2026-03-15T10:00:00Z')) // → '15-03-2026'
+ * @example formatDateDDMMYYYY(new Date('2026-03-15T22:30:00Z'), 'Asia/Kolkata') // → '16-03-2026'
+ * @example formatDateDDMMYYYY(new Date('2026-03-15T22:30:00Z'), 'UTC') // → '15-03-2026'
  */
-export function formatDateDDMMYYYY(date: Date | string | null | undefined): string {
+export function formatDateDDMMYYYY(
+  date: Date | string | null | undefined,
+  timeZoneOrOptions?: TimeZoneInput
+): string {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return '';
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
+  const tz = resolveTimeZone(timeZoneOrOptions);
+  const { day, month, year } = getZonedParts(d, tz);
   return `${day}-${month}-${year}`;
 }
 
 /**
- * Format a Date as DD-MM-YYYY HH:mm:ss in the local timezone.
+ * Format a Date as DD-MM-YYYY HH:mm:ss in the specified timezone (defaults to Asia/Kolkata).
  *
- * @example formatDateTimeDDMMYYYY(new Date('2026-03-15T10:30:45Z'))
- *   // → '15-03-2026 16:00:45' (in Asia/Calcutta) or '15-03-2026 10:30:45' (in UTC)
+ * @example formatDateTimeDDMMYYYY(new Date('2026-03-15T10:30:45Z')) // → '15-03-2026 16:00:45' (in Asia/Kolkata)
+ * @example formatDateTimeDDMMYYYY(new Date('2026-03-15T10:30:45Z'), 'UTC') // → '15-03-2026 10:30:45'
  */
-export function formatDateTimeDDMMYYYY(date: Date | string | null | undefined): string {
+export function formatDateTimeDDMMYYYY(
+  date: Date | string | null | undefined,
+  timeZoneOrOptions?: TimeZoneInput
+): string {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return '';
-  const dateStr = formatDateDDMMYYYY(d);
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
-  return `${dateStr} ${hours}:${minutes}:${seconds}`;
+  const tz = resolveTimeZone(timeZoneOrOptions);
+  const { day, month, year, hour, minute, second } = getZonedParts(d, tz);
+  return `${day}-${month}-${year} ${hour}:${minute}:${second}`;
 }
 
 /**
- * Format a Date as DD-MM-YYYY HH:mm (no seconds) for compact display.
+ * Format a Date as DD-MM-YYYY HH:mm (no seconds) in the specified timezone (defaults to Asia/Kolkata).
  */
-export function formatDateTimeShortDDMMYYYY(date: Date | string | null | undefined): string {
+export function formatDateTimeShortDDMMYYYY(
+  date: Date | string | null | undefined,
+  timeZoneOrOptions?: TimeZoneInput
+): string {
   if (!date) return '';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return '';
-  const dateStr = formatDateDDMMYYYY(d);
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${dateStr} ${hours}:${minutes}`;
+  const tz = resolveTimeZone(timeZoneOrOptions);
+  const { day, month, year, hour, minute } = getZonedParts(d, tz);
+  return `${day}-${month}-${year} ${hour}:${minute}`;
 }
 
 /**

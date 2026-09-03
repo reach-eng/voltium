@@ -181,10 +181,17 @@ export function CouponDialog({
               <Label>Discount Value</Label>
               <Input
                 type="number"
+                min="1"
+                max={couponForm.discountType === 'PERCENTAGE' ? 100 : undefined}
                 value={couponForm.discountValue}
                 onChange={(e) => setCouponForm({ ...couponForm, discountValue: e.target.value })}
                 placeholder={couponForm.discountType === 'PERCENTAGE' ? '20' : '100'}
               />
+              {couponForm.discountType === 'PERCENTAGE' && Number(couponForm.discountValue) > 100 && (
+                <p className="text-xs text-destructive font-medium">
+                  Percentage discount cannot exceed 100%
+                </p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -232,7 +239,12 @@ export function CouponDialog({
           </Button>
           <Button
             onClick={onSave}
-            disabled={isSaving || !couponForm.code || !couponForm.discountValue}
+            disabled={
+              isSaving ||
+              !couponForm.code ||
+              !couponForm.discountValue ||
+              (couponForm.discountType === 'PERCENTAGE' && Number(couponForm.discountValue) > 100)
+            }
           >
             {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             {editCoupon ? 'Update' : 'Create'}

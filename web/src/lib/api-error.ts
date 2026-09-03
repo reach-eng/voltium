@@ -8,6 +8,7 @@ export const ERROR_CODES = {
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+  METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
   GONE: 'GONE',
 } as const;
 
@@ -51,14 +52,14 @@ export class NotFoundError extends ApiError {
 }
 
 export class ValidationError extends ApiError {
-  constructor(message: string = 'Invalid input') {
-    super(message, ERROR_CODES.VALIDATION_ERROR, 400);
+  constructor(message: string = 'Invalid input', public readonly details?: unknown, status: number = 400) {
+    super(message, ERROR_CODES.VALIDATION_ERROR, status);
     this.name = 'ValidationError';
   }
 }
 
 export class ConflictError extends ApiError {
-  constructor(message: string = 'Resource already exists') {
+  constructor(message: string = 'Resource already exists', public readonly details?: unknown) {
     super(message, ERROR_CODES.CONFLICT, 409);
     this.name = 'ConflictError';
   }
@@ -81,3 +82,62 @@ export const getErrorCode = (error: unknown): ErrorCode => {
   }
   return ERROR_CODES.SERVER_ERROR;
 };
+
+export class BadRequestError extends ApiError {
+  constructor(message: string = 'Bad request', public readonly details?: unknown) {
+    super(message, ERROR_CODES.BAD_REQUEST, 400);
+    this.name = 'BadRequestError';
+  }
+}
+
+export class RateLimitError extends ApiError {
+  constructor(message: string = 'Rate limit exceeded', public readonly details?: unknown) {
+    super(message, ERROR_CODES.RATE_LIMITED, 429);
+    this.name = 'RateLimitError';
+  }
+}
+
+export class GoneError extends ApiError {
+  constructor(message: string = 'Resource gone', public readonly details?: unknown) {
+    super(message, ERROR_CODES.GONE, 410);
+    this.name = 'GoneError';
+  }
+}
+
+export class ServiceUnavailableError extends ApiError {
+  constructor(message: string = 'Service unavailable', public readonly details?: unknown) {
+    super(message, ERROR_CODES.SERVICE_UNAVAILABLE, 503);
+    this.name = 'ServiceUnavailableError';
+  }
+}
+
+export interface NormalizedErrorPayload {
+  code: ErrorCode;
+  message: string;
+  status: number;
+  details?: unknown;
+}
+
+export function normalizeError(err: unknown): NormalizedErrorPayload {
+  if (isApiError(err)) {
+    return {
+      code: err.code,
+      message: err.message,
+      status: err.status,
+      details: (err as any).details,
+    };
+  }
+  if (err && typeof err === 'object' && (err as any).name === 'ZodError') {
+    return {
+      code: ERROR_CODES.VALIDATION_ERROR,
+      message: (err as any).message || 'Validation failed',
+      status: 422,
+      details: (err as any).issues,
+    };
+  }
+  return {
+    code: ERROR_CODES.SERVER_ERROR,
+    message: err instanceof Error ? err.message : 'Unknown error',
+    status: 500,
+  };
+}

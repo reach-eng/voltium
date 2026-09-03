@@ -23,6 +23,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { alerter } from '@/lib/alerter';
 import { env } from '@/lib/env';
+import { clock } from '@/lib/clock';
 
 const DEFAULT_LAG_THRESHOLD = 50;
 const DEFAULT_STUCK_PROCESSING_SEC = 300; // 5 min — a PROCESSING event older than this is "stuck"
@@ -42,7 +43,7 @@ export interface OutboxQueueLagResult {
  * endpoint (the /api/admin/server-health surface in a follow-up).
  */
 export async function getOutboxQueueLag(
-  now: Date = new Date()
+  now: Date = clock.now()
 ): Promise<Omit<OutboxQueueLagResult, 'alerted' | 'threshold'>> {
   const stuckCutoff = new Date(now.getTime() - DEFAULT_STUCK_PROCESSING_SEC * 1000);
 
@@ -69,7 +70,7 @@ export async function getOutboxQueueLag(
  * the snapshot for the caller's logs.
  */
 export async function checkOutboxQueueLag(
-  now: Date = new Date()
+  now: Date = clock.now()
 ): Promise<OutboxQueueLagResult> {
   const threshold = (env as any).OUTBOX_QUEUE_LAG_ALERT_THRESHOLD ?? DEFAULT_LAG_THRESHOLD;
 
@@ -110,3 +111,10 @@ export async function checkOutboxQueueLag(
     alerted: crossedThreshold || hasStuckEvents,
   };
 }
+
+export const outboxQueueLagJob = {
+  process: async (job?: any) => {
+    return checkOutboxQueueLag(clock.now());
+  },
+};
+

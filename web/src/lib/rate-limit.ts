@@ -195,3 +195,30 @@ export const SENSITIVE_ACTION_RATE_LIMIT: RateLimitConfig = {
     process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging' ? 10 : 1000,
   failClosed: true,
 };
+
+export function getRateLimitHeaders(
+  result: { allowed: boolean; remaining: number; resetAt: number },
+  limit: number
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    'X-RateLimit-Limit': String(limit),
+    'X-RateLimit-Remaining': String(result.remaining),
+    'X-RateLimit-Reset': String(Math.floor(result.resetAt / 1000)),
+  };
+  if (!result.allowed) {
+    const waitSeconds = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000));
+    headers['Retry-After'] = String(waitSeconds);
+  }
+  return headers;
+}
+
+export function attachRateLimitHeaders(
+  response: any,
+  result: { allowed: boolean; remaining: number; resetAt: number },
+  limit: number
+): void {
+  const headers = getRateLimitHeaders(result, limit);
+  for (const [key, value] of Object.entries(headers)) {
+    response.headers.set(key, value);
+  }
+}

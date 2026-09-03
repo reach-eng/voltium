@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { requireAdmin } from '@/lib/rbac';
 import { execFileSync } from 'child_process';
 import { existsSync, accessSync, constants } from 'fs';
 import { join, parse } from 'path';
@@ -94,10 +95,11 @@ async function checkDatabase(): Promise<{
   } catch (err: unknown) {
     const message = errorMessage(err);
     logger.error('[Health] Database check failed', { error: message });
+    // P1: generic — raw pg text aids fingerprinting (logged above).
     return {
       status: 'unhealthy',
       latencyMs: Date.now() - start,
-      error: message || 'Unknown error',
+      error: 'Database unavailable',
     };
   }
 }
@@ -172,7 +174,12 @@ function checkDisk(): {
 }
 
 export async function GET(request: NextRequest) {
-  const detailed = request.nextUrl.searchParams.get('detailed') === 'true';
+  const wantsDetailed = request.nextUrl.searchParams.get('detailed') === 'true';
+  // P1: detailed mode exposes CPU model, disk source, absolute paths, and DB
+  // error text — admin-only. Unauthenticated callers get the summary shape
+  // (load-balancer friendly) even when they ask for detailed.
+  const adminSession = wantsDetailed ? await requireAdmin() : null;
+  const detailed = wantsDetailed && !!adminSession;
 
   const database = await checkDatabase();
   const disk = checkDisk();
@@ -193,14 +200,15 @@ export async function GET(request: NextRequest) {
     uploadPath: {
       status:
         uploadPath.exists && uploadPath.writable ? ('healthy' as const) : ('degraded' as const),
-      path: uploadsRoot,
+      // P1: absolute server paths must not leak to unauthenticated callers.
+      ...(detailed ? { path: uploadsRoot } : {}),
       exists: uploadPath.exists,
       writable: uploadPath.writable,
     },
     backupPath: {
       status:
         backupPath.exists && backupPath.writable ? ('healthy' as const) : ('degraded' as const),
-      path: backupRoot,
+      ...(detailed ? { path: backupRoot } : {}),
       exists: backupPath.exists,
       writable: backupPath.writable,
     },

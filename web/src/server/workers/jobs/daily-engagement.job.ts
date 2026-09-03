@@ -153,14 +153,20 @@ export function msUntilNext0600IST(now: Date = clock.now()): number {
   const istMonth = get('month');
   const istDay = get('day');
 
-  // Compute next 06:00 IST in UTC ms. If we've already passed 06:00 today
-  // (IST), schedule for tomorrow.
+  // Compute next 06:00 IST in UTC ms. If we're inside the 06:00 IST minute
+  // window [06:00:00, 06:01:00), fire immediately (0 ms). If we've passed
+  // the window, schedule for tomorrow.
   const nowIstMs =
     Date.UTC(istYear, istMonth - 1, istDay, istHour, istMinute, istSecond);
   const today0600IstMs = Date.UTC(istYear, istMonth - 1, istDay, 6, 0, 0);
+
+  if (nowIstMs >= today0600IstMs && nowIstMs < today0600IstMs + 60_000) {
+    return 0;
+  }
+
   let target = today0600IstMs;
-  if (nowIstMs > today0600IstMs) {
-    // Already past 06:00 IST — schedule for tomorrow
+  if (nowIstMs >= today0600IstMs + 60_000) {
+    // Already past 06:00 IST window — schedule for tomorrow
     target = Date.UTC(istYear, istMonth - 1, istDay + 1, 6, 0, 0);
   }
   return target - nowIstMs;

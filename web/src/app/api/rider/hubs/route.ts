@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
 
 /**
@@ -9,8 +11,17 @@ import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
  * This is the rider-facing endpoint for fetching hub locations during pickup flow.
  * It returns only active hubs with basic info (no vehicle breakdowns).
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
+    const identifier = rateLimitIdentifierFromRequest(req);
+    const rl = await checkRateLimit(`public:hubs:${identifier}`, {
+      windowMs: 60_000,
+      maxRequests: 60,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many requests. Please try again later.');
+    }
+
     const hubs = await hubUseCases.listHubs();
     return success(hubs);
   } catch (error) {

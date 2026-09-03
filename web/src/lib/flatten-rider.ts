@@ -17,6 +17,27 @@
 import type { Prisma } from '@prisma/client';
 import { lifecycleRankOf } from './lifecycle-ranks';
 import { maskAadhaar, maskAccountNumber, maskPan, maskPhone } from './pii';
+import { getCachedResponse } from './cache';
+
+/**
+ * Fallback skip-guarantor surcharge (paise) when the admin-managed setting
+ * has never been read into this process's cache. Enforcement
+ * (`getSkipGuarantorExtraDepositPaise`) always resolves the live setting;
+ * this sync reader only feeds display fields. P1: single constant, shared.
+ */
+export const SKIP_GUARANTOR_FALLBACK_PAISE = 100000;
+export const SKIP_GUARANTOR_SETTING_KEY = 'setting:skipGuarantorExtraDeposit';
+
+/** Last-known surcharge for sync display paths (≤60s stale, else fallback). */
+export function lastKnownSkipGuarantorExtraDepositPaise(): number {
+  try {
+    const v = parseInt(getCachedResponse<string>(SKIP_GUARANTOR_SETTING_KEY) || '', 10);
+    if (Number.isFinite(v) && v > 0) return v;
+  } catch {
+    // Cache unavailable (tests, edge) — fall through to the fallback.
+  }
+  return SKIP_GUARANTOR_FALLBACK_PAISE;
+}
 
 type RiderWithRelations = Prisma.RiderGetPayload<{
   include: {
@@ -92,9 +113,25 @@ export function flattenRider(
     ...rest,
     lifecycleStatus,
     state: lifecycleStatus,
-    accountStatus: rank >= 11 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
-    rentalStatus: rank >= 11 ? 'ACTIVE' : 'NONE',
-    planStatus: rank >= 4 ? 'ACTIVE' : 'NONE',
+    accountStatus:
+      lifecycleStatus === 'CLOSED'
+        ? 'CLOSED'
+        : lifecycleStatus === 'SUSPENDED'
+        ? 'SUSPENDED'
+        : rank >= 11
+        ? 'ACTIVE'
+        : rank >= 2
+        ? 'PRE_ACTIVE'
+        : 'INACTIVE',
+    rentalStatus:
+      lifecycleStatus === 'CLOSED'
+        ? 'CLOSED'
+        : lifecycleStatus === 'RETURN_PENDING'
+        ? 'RETURN_PENDING'
+        : rank >= 11
+        ? 'ACTIVE'
+        : 'NONE',
+    planStatus: lifecycleStatus === 'CLOSED' ? 'NONE' : rank >= 4 ? 'ACTIVE' : 'NONE',
     registrationDone,
     kycDone,
     depositDone,
@@ -142,6 +179,7 @@ export function flattenRider(
     guarantorMotherName: guarantor?.motherName ?? null,
     guarantorAddress: guarantor?.address ?? null,
     guarantorPhoto: guarantor?.photo ?? null,
+    requiresHigherDeposit: Boolean((r as any).requiresHigherDeposit ?? false),
 
     // --- Plan & Status fields (computed from lifecycleStatus above) ---
     currentPlan: r.currentPlan ?? null,
@@ -153,7 +191,10 @@ export function flattenRider(
     // `currentPlanRef` set in the rider select. Replaces the
     // `AppConstants.planSecurityDepositRupees` hardcoded map.
     currentPlanSecurityDepositInPaise:
-      (rider as any).currentPlanRef?.securityDepositInPaise ?? null,
+      (rider as any).currentPlanRef?.securityDepositInPaise != null
+        ? (rider as any).currentPlanRef.securityDepositInPaise +
+          ((r as any).requiresHigherDeposit ? lastKnownSkipGuarantorExtraDepositPaise() : 0)
+        : null,
     assignedVehicle: r.assignedVehicle ?? null,
     activeVehicle: r.assignedVehicle ?? null,
     vehicleId: r.vehicleId ?? null,

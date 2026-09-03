@@ -34,9 +34,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     return errors.forbidden('Forbidden: settings_manage permission required');
   }
 
-  // Fetch editable settings from DB
+  // Fetch editable settings from DB (P1: bound — config table, never unbounded).
   const systemSettings = await db.systemSetting.findMany({
     orderBy: [{ category: 'asc' }, { key: 'asc' }],
+    take: 500,
   });
 
   // Build editable settings map

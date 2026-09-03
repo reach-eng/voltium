@@ -18,6 +18,18 @@ interface CacheEntry<T> {
  * - Stale-While-Revalidate (SWR) background revalidation
  * - Active TTL eviction / sliding sweeper for dead-key reclamation
  * - Rich telemetry (hit rate, evictions, expired purges, namespace counts)
+ *
+ * P1 TOPOLOGY CONSTRAINT (single-host, per-process): this cache lives in
+ * Node memory, so every PM2 cluster worker (`voltium-web` runs
+ * `instances: 'max'`) holds its OWN copy. Consequences, by design:
+ *   - `invalidateCache()` clears only the LOCAL worker. Other workers serve
+ *     TTL-stale data (admin lists: ≤60s; `support_faqs`: 1h — hence the
+ *     explicit invalidation on FAQ mutations).
+ *   - NEVER use this cache for correctness-critical gates (money, lifecycle
+ *     transitions, idempotency). The maintenance gate uses a 5s TTL +
+ *     fail-open read against Postgres (the source of truth).
+ * A second host/replica (Redis or postgres-cache-bus) is required before any
+ * multi-host topology. See AGENTS.md "P1 note" on caching.
  */
 export class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
@@ -334,6 +346,16 @@ export class MemoryCache<T> {
 }
 
 const queryCache = new MemoryCache<unknown>();
+
+// P1: one-time boot warning when running under a multi-process manager —
+// each worker diverges (see class doc above). Warn, don't crash: TTL
+// staleness is acceptable on the single-host topology.
+if (typeof process !== 'undefined' && process.env.NODE_APP_INSTANCE !== undefined && process.env.NODE_APP_INSTANCE !== '0') {
+  logger.warn(
+    '[Cache] PM2 cluster worker detected (NODE_APP_INSTANCE=%s): in-memory caches diverge per worker; see MemoryCache topology constraint',
+    process.env.NODE_APP_INSTANCE
+  );
+}
 
 export function cacheResponse<T>(key: string, data: T, ttlSeconds = 60): void {
   queryCache.set(key, data, ttlSeconds * 1000);

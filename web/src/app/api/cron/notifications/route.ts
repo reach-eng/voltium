@@ -12,7 +12,7 @@ import { requireCronAuth } from '@/lib/cron-auth';
 import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
 
 export async function GET(req: NextRequest) {
-  const authError = requireCronAuth(req);
+  const authError = requireCronAuth(req, 'CRON_SECRET_NOTIFICATIONS');
   if (authError) {
     return authError;
   }

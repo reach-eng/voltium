@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       attachments: attachments || undefined,
     });
 
-    return success(ticket, 'Ticket created successfully');
+    return success(ticket, 'Ticket created successfully', 201);
   } catch (err) {
     logger.error('[POST /api/support/tickets]', err);
     return errors.internal('Failed to create ticket');

@@ -10,6 +10,11 @@ import {
   ValidationError,
   ConflictError,
   ServerError,
+  BadRequestError,
+  RateLimitError,
+  GoneError,
+  ServiceUnavailableError,
+  normalizeError,
 } from './api-error';
 import type { ErrorCode } from './api-error';
 
@@ -24,6 +29,11 @@ export {
   ValidationError,
   ConflictError,
   ServerError,
+  BadRequestError,
+  RateLimitError,
+  GoneError,
+  ServiceUnavailableError,
+  normalizeError,
 };
 export type { ErrorCode };
 
@@ -292,8 +302,27 @@ export const errors = {
     options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
   ) => error(message, ERROR_CODES.GONE, 410, options),
 
+  methodNotAllowed: (
+    message = 'Method Not Allowed',
+    options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
+  ) => error(message, ERROR_CODES.METHOD_NOT_ALLOWED, 405, options),
+
   internal: (
     message = 'Internal Server Error',
     options?: { correlationId?: string; rateLimit?: RateLimitInfo; details?: unknown }
   ) => error(message, ERROR_CODES.SERVER_ERROR, 500, options),
 };
+
+export function handleApiError(
+  err: unknown,
+  options?: { correlationId?: string; rateLimit?: RateLimitInfo }
+): NextResponse<ApiResponseError> {
+  if (isApiError(err)) {
+    return error(err.message, err.code, err.status, {
+      correlationId: options?.correlationId,
+      rateLimit: options?.rateLimit,
+      details: (err as any).details,
+    });
+  }
+  return errors.internal(err instanceof Error ? err.message : 'Internal Server Error', options);
+}

@@ -75,14 +75,27 @@ export const vehicleUseCases = {
   async listAdminVehicles(params: {
     status?: string;
     hubId?: string;
+    search?: string;
     page: number;
     limit: number;
   }) {
-    const { status, hubId, page, limit } = params;
+    const { status, hubId, search, page, limit } = params;
     // P1.6: soft-deleted vehicles must not appear in the admin list.
     const where: Record<string, unknown> = { deletedAt: null };
     if (status) where.status = status;
     if (hubId) where.hubId = hubId;
+    // P0 fleet fix: server-side search so pagination is meaningful. The old
+    // client filtered only the current page (useVehicleManagement.filtered).
+    if (search) {
+      const s = search.trim();
+      if (s) {
+        (where as Record<string, unknown>).OR = [
+          { vehicleNumber: { contains: s, mode: 'insensitive' } },
+          { vehicleId: { contains: s, mode: 'insensitive' } },
+          { model: { contains: s, mode: 'insensitive' } },
+        ];
+      }
+    }
 
     const [vehicles, total, hubs] = await Promise.all([
       db.vehicle.findMany({

@@ -4,18 +4,19 @@ import { timingSafeEqual, createHash } from 'crypto';
 // ━ Phase 1 C5 fix: shared cron auth helper ━
 // Fails CLOSED if CRON_SECRET is unset or weak (returns 503, not open).
 // Uses SHA-256 hashing before timingSafeEqual to prevent secret-length timing leaks.
-export function requireCronAuth(request: NextRequest): NextResponse | null {
-  const secret = process.env.CRON_SECRET;
+export function requireCronAuth(request?: NextRequest, routeSecretKey?: string): NextResponse | null {
+  const secretKey = routeSecretKey && process.env[routeSecretKey] ? routeSecretKey : 'CRON_SECRET';
+  const secret = process.env[secretKey] || process.env.CRON_SECRET;
   if (!secret || secret.length < 16) {
     return NextResponse.json(
       {
         success: false,
-        error: 'Cron service is misconfigured: CRON_SECRET must be set and at least 16 characters.',
+        error: `Cron service is misconfigured: ${secretKey} must be set and at least 16 characters.`,
       },
       { status: 503 }
     );
   }
-  const auth = request.headers.get('authorization') || '';
+  const auth = request?.headers?.get('authorization') || '';
   // R10 polish #14 (Security 7.2) — Bearer scheme is case-insensitive per
   // RFC 6750 §2.1. Accept "bearer", "Bearer", "BEARER", etc. so deployments
   // behind proxies that normalize the header don't get locked out.

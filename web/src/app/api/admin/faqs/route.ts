@@ -5,6 +5,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminFaqUseCases } from '@/server/modules/support/admin-faq.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
+import { invalidateCache } from '@/lib/cache';
 import { createFaqAdminSchema, updateFaqAdminSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
@@ -41,6 +42,9 @@ export async function POST(req: NextRequest) {
       validation.data,
       session.adminId ?? session.riderDbId ?? 'system'
     );
+    // P1: the public GET /api/support/faqs caches `support_faqs` for 1h —
+    // without this, admin edits stayed invisible for up to an hour.
+    invalidateCache('support_faqs*');
     return success(faq, 'FAQ created', 201);
   } catch (error) {
     logger.error('POST /api/admin/faqs error:', error);
@@ -60,6 +64,7 @@ export async function PUT(req: NextRequest) {
 
     const { id, ...data } = validation.data;
     const faq = await adminFaqUseCases.update(id, data, session.adminId ?? session.riderDbId ?? 'system');
+    invalidateCache('support_faqs*');
     return success(faq);
   } catch (error) {
     logger.error('PUT /api/admin/faqs error:', error);
@@ -77,6 +82,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return errors.badRequest('id is required');
 
     await adminFaqUseCases.delete(id, session.adminId ?? session.riderDbId ?? 'system');
+    invalidateCache('support_faqs*');
     return success(null, 'FAQ deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/faqs error:', error);

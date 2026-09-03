@@ -31,7 +31,10 @@
 -- Scope (11 constraints):
 --   riders:     batteryLevel 0-100, phone format, email format
 --   kyc_profiles: aadhaar/pan/ifsc format (with encrypted-string fallback)
---   wallets:    balanceInPaise >= 0, securityDepositInPaise >= 0
+--   wallets:    balanceInPaise >= -20000000 (overdraft floor, NOT >= 0 —
+--               admin late-fee debits + reversals intentionally overdraw via
+--               allowNegative:true; see P0 fix 2026-09-03),
+--               securityDepositInPaise >= 0
 --   outbox_events: attempts <= maxAttempts
 --   rental_plans: durationDays matches type (DAILY=1, WEEKLY=7, MONTHLY=30)
 --   backup_schedules: timeOfDay HH:MM format
@@ -147,13 +150,20 @@ BEGIN
     END IF;
 
     -- ===========================================================
-    -- 7. wallets.balanceInPaise >= 0
+    -- 7. wallets.balanceInPaise >= -20000000 (overdraft floor)
+    --    P0 fix 2026-09-03: the old `>= 0` contradicted allowNegative:true
+    --    code paths (admin wallet-adjust DEBIT for late fees,
+    --    wallet-service reversal debits). With `>= 0` live those threw
+    --    23514 mid-$transaction (user-visible 500, stuck leases/reversals).
+    --    Floor -20000000 paise (-₹2,00,000) == MAX_ADMIN_DEBIT_PER_DAY_INR
+    --    default: any single day of capped admin debits can land, while a
+    --    runaway bug (e.g. -₹1Cr) still trips the constraint.
     -- ===========================================================
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'wallet_balance_nonnegative') THEN
         BEGIN
             ALTER TABLE "wallets" ADD CONSTRAINT wallet_balance_nonnegative
-              CHECK ("balanceInPaise" >= 0);
-            RAISE NOTICE '✓ Added wallet_balance_nonnegative';
+              CHECK ("balanceInPaise" >= -20000000);
+            RAISE NOTICE '✓ Added wallet_balance_nonnegative (floor -20000000 paise)';
         EXCEPTION WHEN OTHERS THEN
             _failed := TRUE;
             _errmsg := SQLERRM;
@@ -247,7 +257,15 @@ BEGIN
     END IF;
 
     IF _failed THEN
-        RAISE WARNING 'PR-97 migration completed with one or more failures (see above). Re-run is safe (idempotent).';
+        -- P0 fix 2026-09-03: fail LOUDLY. The old WARNING let `db:deploy`
+        -- succeed with zero constraints applied (e.g. rental_plan duration
+        -- CHECK missing while code assumed it). Re-run is safe (idempotent
+        -- guards); fix the violating rows or the DDL, then re-deploy.
+        -- Verify live state with:
+        --   SELECT conname FROM pg_constraint
+        --   WHERE conname IN ('wallet_balance_nonnegative','wallet_deposit_nonnegative',
+        --     'rental_plan_duration_matches_type','outbox_attempts_cap', ...);
+        RAISE EXCEPTION 'PR-97 migration completed with one or more failures (see warnings above). Fix the cause and re-run (idempotent). Deploy blocked to avoid running without constraints.';
     ELSE
         RAISE NOTICE 'PR-97 migration completed: all CHECK constraints applied or already present.';
     END IF;

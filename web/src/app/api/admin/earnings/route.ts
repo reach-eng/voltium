@@ -7,6 +7,23 @@ import { parseDDMMYYYY } from '@/lib/date-utils';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { earningUseCases } from '@/server/modules/earnings/earning.use-cases';
 import { toRupeesResponse } from '@/lib/api-money';
+import { z } from 'zod';
+import { createEarningSchema } from '@/lib/validators';
+
+// P1: strict admin schema reusing the canonical earning fields (was manual
+// checks + `new Date(date)` on unvalidated input → Invalid Date to DB).
+// riderId is required on the admin path; date must parse.
+const adminCreateEarningSchema = createEarningSchema
+  .extend({
+    riderId: z.string().min(1, 'riderId is required').max(100),
+    date: z
+      .string()
+      .min(1, 'date is required')
+      .refine((v) => !Number.isNaN(Date.parse(v)), 'date must be parseable'),
+    platform: z.string().max(100).optional().default('DIRECT'),
+    amount: z.number().positive('amount must be positive').max(10000000),
+  })
+  .strict();
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -51,24 +68,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { riderId, date, platform, amount, trips, distance, hoursOnline, notes } = body;
-
-    if (!riderId || typeof riderId !== 'string') {
-      return errors.badRequest('riderId is required');
-    }
-    if (!amount || typeof amount !== 'number' || amount <= 0) {
-      return errors.badRequest('amount must be a positive number');
-    }
+    const validation = adminCreateEarningSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
+    const { riderId, date, platform, amount, trips, distance, hoursOnline, notes } =
+      validation.data;
 
     const created = await earningUseCases.create({
       riderId,
-      date: date ? new Date(date) : new Date(),
+      date: new Date(date),
       platform: platform || 'DIRECT',
       amount,
-      trips: typeof trips === 'number' ? trips : undefined,
-      distance: typeof distance === 'number' ? distance : undefined,
-      hoursOnline: typeof hoursOnline === 'number' ? hoursOnline : undefined,
-      notes: typeof notes === 'string' ? notes : undefined,
+      trips,
+      distance,
+      hoursOnline,
+      notes,
     });
 
     return success(toRupeesResponse(created), 'Earning entry created successfully', 201);

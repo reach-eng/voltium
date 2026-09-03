@@ -14,6 +14,8 @@ export const hubRepository = {
     return db.hub.findMany({
       where: includeInactive ? { deletedAt: null } : { isActive: true, deletedAt: null },
       orderBy: { name: 'asc' },
+      // P1: bound — hubs are a small reference table, but never unbounded.
+      take: 200,
     });
   },
 

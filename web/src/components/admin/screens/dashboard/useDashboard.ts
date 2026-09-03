@@ -117,8 +117,18 @@ export function useDashboard() {
     const handleVisibility = () => {
       if (document.hidden) {
         if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
       } else {
         void fetchData(true);
+        // P0 fix: re-create the interval on foreground. The old handler
+        // cleared it on hidden but never re-created it, so polling died
+        // forever after one background/foreground cycle.
+        if (!intervalRef.current) {
+          intervalRef.current = setInterval(
+            () => void fetchData(true),
+            DASHBOARD_POLL_INTERVAL_MS
+          );
+        }
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);

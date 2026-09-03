@@ -26,7 +26,7 @@ export async function POST(
 
   const parsed = validateBody(dataDeletionRestoreSchema, body);
   if (!parsed.success) {
-    return errors.badRequest(parsed.error);
+    return errors.validation(parsed.error);
   }
 
   const rider = await db.rider.findUnique({

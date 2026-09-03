@@ -7,7 +7,7 @@ export default function RiderAppLinkPage() {
   useEffect(() => {
     // Attempt to open the custom URL scheme
     const appUrl = 'voltium://';
-    const storeUrl = 'https://play.google.com/store/apps/details?id=com.voltium.rider';
+    const storeUrl = 'https://play.google.com/store/apps/details?id=com.voltiumelectric.voltium';
     
     // Set a timeout to redirect to the store if the app doesn't open
     const timeout = setTimeout(() => {

@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminFaqUseCases } from '@/server/modules/support/admin-faq.use-cases';
+import { invalidateCache } from '@/lib/cache';
 import { z } from 'zod';
 
 const reorderFaqSchema = z.object({
@@ -25,11 +26,14 @@ export async function POST(req: NextRequest) {
 
     const actorId = session.adminId ?? session.riderDbId ?? 'system';
     const result = await adminFaqUseCases.reorder(validation.data.id, validation.data.direction, actorId);
+    // P1: keep the public 1h `support_faqs` cache consistent (see faqs/route).
+    invalidateCache('support_faqs*');
     return success(result, 'FAQ reordered successfully');
   } catch (error: unknown) {
     logger.error('POST /api/admin/faqs/reorder error:', error);
     const msg = error instanceof Error ? error.message : String(error);
-    if (msg.includes('not found')) return errors.notFound(msg);
+    // P1: generic — only match, never echo.
+    if (msg.includes('not found')) return errors.notFound('FAQ not found');
     return errors.internal('Failed to reorder FAQ');
   }
 }

@@ -65,6 +65,21 @@ export const supportUseCases = {
   },
 
   async updateTicket(ticketId: string, input: Record<string, unknown>) {
+    // P1: `assignedTo` was free text — typos/deleted admins produced dangling
+    // assignments. Resolve against live admins: set the FK pointer alongside
+    // the legacy string (UI compat). Unknown ids are rejected, not stored.
+    if (input.assignedTo !== undefined && input.assignedTo !== null) {
+      const { db } = await import('@/lib/db');
+      const admin = await db.admin.findUnique({
+        where: { id: String(input.assignedTo) },
+        select: { id: true, isActive: true },
+      });
+      if (!admin) throw new Error('Assigned admin not found');
+      if (!admin.isActive) throw new Error('Assigned admin is not active');
+      (input as Record<string, unknown>).assignedToId = admin.id;
+    } else if (input.assignedTo === null) {
+      (input as Record<string, unknown>).assignedToId = null;
+    }
     return supportRepository.update(ticketId, input);
   },
 

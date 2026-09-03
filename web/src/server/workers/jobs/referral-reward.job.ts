@@ -4,6 +4,7 @@ import { type QueueJob } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { OutboxService, OutboxEventTypes } from '../outbox';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
 
@@ -44,6 +45,26 @@ export const referralRewardJob = {
       return result;
     }
 
+    // P0 fix 2026-09-03: pay ONLY once the referee reaches ACTIVE
+    // (rank >= 11). Early invocations are a no-op (deferred, not an error —
+    // the lifecycle hook / admin reconcile retries after activation).
+    const referee = await db.rider.findUnique({
+      where: { id: referredRiderId },
+      select: { lifecycleStatus: true },
+    });
+    if (!referee) {
+      logger.warn('[ReferralRewardJob] Referee not found', { referredRiderId });
+      result.errors++;
+      return result;
+    }
+    if (lifecycleRankOf(referee.lifecycleStatus) < 11) {
+      logger.info('[ReferralRewardJob] Referee not yet ACTIVE, deferred', {
+        referredRiderId,
+        status: referee.lifecycleStatus,
+      });
+      return result;
+    }
+
     // PR-77: read reward amount from settings so the use-case path
     // and the job path pay the same amount. The previous hardcoded
     // ₹100 (10000 paise) was lower than the use-case's default
@@ -62,6 +83,23 @@ export const referralRewardJob = {
     // `WalletLedger.idempotencyKey` UNIQUE constraint in the DB is
     // the authoritative arbiter. Keep both paths in lockstep.
     const idempotencyKey = `referral:${referrer.id}:${referredRiderId}`;
+
+    // P0 fix 2026-09-03: authoritative pre-check on the ledger key (the old
+    // code had no pre-check and counted P2002 races as errors — noisy but
+    // safe; now races are clean no-ops).
+    const alreadyPaid = await db.walletLedger.findUnique({
+      where: { idempotencyKey },
+      select: { id: true },
+    });
+    if (alreadyPaid) {
+      logger.info('[ReferralRewardJob] Already paid, skipping', {
+        referrerId: referrer.id,
+        referredRiderId,
+      });
+      result.rewardsCredited++;
+      result.referredRiders = 1;
+      return result;
+    }
 
     try {
       await db.$transaction(async (tx) => {
@@ -111,6 +149,17 @@ export const referralRewardJob = {
         amountPaise: REWARD_AMOUNT_PAISE,
       });
     } catch (err) {
+      // P0 fix 2026-09-03: P2002 on the ledger key means the use-case path
+      // won the race — the reward WAS paid. Count as credited, not an error.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        logger.info('[ReferralRewardJob] Race lost (P2002), already paid', {
+          referrerId: referrer.id,
+          referredRiderId,
+        });
+        result.rewardsCredited++;
+        result.referredRiders = 1;
+        return result;
+      }
       logger.error('[ReferralRewardJob] Failed to credit reward', {
         referrerId: referrer.id,
         referredRiderId,
