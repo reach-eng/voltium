@@ -1,1 +1,0 @@
-const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { await prisma.rider.update({where: {id: 'cmr97vgtj00kjripo5c2q61p9'}, data: {currentPlan: null, lifecycleStatus: 'KYC_APPROVED'}}); console.log('Updated'); } main().finally(() => prisma.$disconnect());
