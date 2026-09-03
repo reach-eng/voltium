@@ -174,7 +174,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/DevicePermissionsRequest"
               }
             }
           }
@@ -308,42 +308,6 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "KYC"
-        ],
-        "summary": "Submit KYC documents",
-        "security": [
-          {
-            "riderSession": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubmitKycRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "KYC submitted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubmitKycResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Invalid KYC state transition"
-          }
-        }
       }
     },
     "/api/rider/guarantor": {
@@ -360,45 +324,6 @@
         "responses": {
           "200": {
             "description": "Guarantor status"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Guarantor"
-        ],
-        "summary": "Submit guarantor details",
-        "security": [
-          {
-            "riderSession": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "relation": {
-                    "type": "string"
-                  },
-                  "phone": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Guarantor submitted"
-          },
-          "409": {
-            "description": "Invalid guarantor state transition"
           }
         }
       }
@@ -699,7 +624,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateTicketRequest"
               }
             }
           }
@@ -839,6 +764,22 @@
         "responses": {
           "200": {
             "description": "KYC review processed"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Kyc",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -984,6 +925,22 @@
       }
     },
     "/api/rider/notifications": {
+      "delete": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Clear notifications",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Notifications"
@@ -1108,7 +1065,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateHubRequest"
               }
             }
           }
@@ -1329,6 +1286,32 @@
       }
     },
     "/api/admin/riders/bulk": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "POST /api/admin/riders/bulk",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -1519,7 +1502,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateRiderRequest"
               }
             }
           }
@@ -2050,6 +2033,22 @@
       }
     },
     "/api/transaction/request": {
+      "get": {
+        "tags": [
+          "General"
+        ],
+        "summary": "GET /api/transaction/request",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "post": {
         "tags": [
           "Wallet"
@@ -2129,7 +2128,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/BulkActionRequest"
               }
             }
           }
@@ -2217,7 +2216,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateAnnouncementRequest"
               }
             }
           }
@@ -2323,7 +2322,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateCouponRequest"
               }
             }
           }
@@ -2349,7 +2348,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateCouponRequest"
               }
             }
           }
@@ -2626,6 +2625,32 @@
       }
     },
     "/api/admin/earnings": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "POST /api/admin/earnings",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -2675,7 +2700,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateFaqRequest"
               }
             }
           }
@@ -2807,7 +2832,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/HubBulkActionRequest"
               }
             }
           }
@@ -2820,6 +2845,32 @@
       }
     },
     "/api/admin/incidents": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "PUT /api/admin/incidents",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -2851,7 +2902,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateIncidentRequest"
               }
             }
           }
@@ -2996,6 +3047,32 @@
       }
     },
     "/api/admin/maintenance-mode": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "PATCH /api/admin/maintenance-mode",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -3201,7 +3278,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreatePlanRequest"
               }
             }
           }
@@ -3227,7 +3304,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdatePlanRequest"
               }
             }
           }
@@ -3256,6 +3333,32 @@
       }
     },
     "/api/admin/referrals": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "POST /api/admin/referrals",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -3273,7 +3376,93 @@
         }
       }
     },
+    "/api/admin/rentals": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Rentals",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Rental",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRentalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/admin/rewards": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "DELETE /api/admin/rewards",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "PUT /api/admin/rewards",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -3305,7 +3494,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/AwardRewardRequest"
               }
             }
           }
@@ -3333,7 +3522,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/RecalculateScoreRequest"
               }
             }
           }
@@ -3421,7 +3610,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateRewardRequest"
               }
             }
           }
@@ -3465,7 +3654,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
               }
             }
           }
@@ -3535,7 +3724,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/TeamLeaderBulkActionRequest"
               }
             }
           }
@@ -3579,7 +3768,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateTeamLeaderRequest"
               }
             }
           }
@@ -3649,7 +3838,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/TicketBulkActionRequest"
               }
             }
           }
@@ -3662,6 +3851,32 @@
       }
     },
     "/api/admin/tickets": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "POST /api/admin/tickets",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -3721,7 +3936,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateTicketRequest"
               }
             }
           }
@@ -3752,6 +3967,32 @@
       }
     },
     "/api/admin/transactions/bulk": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "POST /api/admin/transactions/bulk",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Admin"
@@ -3785,7 +4026,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/TransactionBulkActionRequest"
               }
             }
           }
@@ -3829,7 +4070,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/CreateVehicleRequest"
               }
             }
           }
@@ -3855,7 +4096,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/UpdateVehicleRequest"
               }
             }
           }
@@ -4017,7 +4258,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/VehicleBulkActionRequest"
               }
             }
           }
@@ -4086,6 +4327,22 @@
       }
     },
     "/api/files/local-upload/{fileRecordId}": {
+      "get": {
+        "tags": [
+          "General"
+        ],
+        "summary": "GET /api/files/local-upload/{fileRecordId}",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "put": {
         "tags": [
           "Files"
@@ -4373,7 +4630,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "$ref": "#/components/schemas/SyncQueueRequest"
               }
             }
           }
@@ -4381,6 +4638,1139 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/admins/lookup": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Admins Lookup",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/config/skip-guarantor": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Config Skip-guarantor",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Admin Config Skip-guarantor",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/data-management/backups/verify-all": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Data-management Backups Verify-all",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/data-management/overview": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Data-management Overview",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/data-management/restore/validate": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Validate backup for restore",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/data-management/restore/start": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Data-management Restore Start",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/dr-drill": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Dr-drill",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/faqs/reorder": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Reorder FAQs",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/guarantors": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Guarantors",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Review Guarantor",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/operations/overview": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Operations Overview",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/payment-gateways/{id}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Partially update Payment Gateway",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Payment Gateway",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/payment-gateways": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Payment-gateways",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Payment-gateways",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/rentals/book-on-behalf": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Rentals Book-on-behalf",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/rewards/{id}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Admin Rewards",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Admin Reward",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}/data-deletion/approve": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Riders Data-deletion Approve",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}/data-deletion/restore": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Riders Data-deletion Restore",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}/data-deletion": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete Admin Riders Data-deletion",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}/plan": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Admin Riders Plan",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Riders",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/riders/{id}/wallet-adjust": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Adjust rider wallet balance (credit or debit)",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Rider ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminWalletAdjustRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wallet adjustment successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "walletBalance": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or limit exceeded"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden or coAdmin required"
+          },
+          "404": {
+            "description": "Rider not found"
+          }
+        }
+      }
+    },
+    "/api/admin/server-health": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin Server-health",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/system-settings": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get or list Admin System-settings",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update Admin System-settings",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/team-leaders/bulk/undo": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create or execute Admin Team-leaders Bulk Undo",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/admin/team-leaders/{id}/riders": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List Riders under Team Leader",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/cron/announcements": {
+      "get": {
+        "tags": [
+          "Cron"
+        ],
+        "summary": "Get or list Cron Announcements",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/emergency/sos": {
+      "post": {
+        "tags": [
+          "Emergency"
+        ],
+        "summary": "Create or execute Emergency Sos",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/health/caddy": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Get or list Health Caddy",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/account/delete-request": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Create or execute Rider Account Delete-request",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/config/skip-deposit": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Config Skip-deposit",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/consent": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Consent",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Create or execute Rider Consent",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/device/set-lock": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Create or execute Rider Device Set-lock",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/guarantor/skip": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Record that rider opts to skip guarantor and pay higher deposit",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guarantor skipped successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "requiresHigherDeposit": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "extraDepositRupees": {
+                          "type": "number",
+                          "example": 1000
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Guarantor already on file"
+          }
+        }
+      }
+    },
+    "/api/rider/legal": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Legal",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/maintenance-status": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Maintenance-status",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/payment-gateways/active": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Payment-gateways Active",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/rewards/{id}/redeem": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Create or execute Rider Rewards Redeem",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/search": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Search",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/rider/team-leaders": {
+      "get": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Get or list Rider Team-leaders",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/support/chat/suggest": {
+      "get": {
+        "tags": [
+          "Support"
+        ],
+        "summary": "Get or list Support Chat Suggest",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/support/feedback": {
+      "post": {
+        "tags": [
+          "Support"
+        ],
+        "summary": "Create or execute Support Feedback",
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
           }
         }
       }
@@ -4395,6 +5785,17 @@
           "phone": {
             "type": "string",
             "pattern": "^\\d{10}$"
+          },
+          "referralCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -4420,20 +5821,48 @@
         "type": "object",
         "properties": {
           "phone": {
-            "type": "string",
-            "pattern": "^\\d{10}$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{10}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "otp": {
-            "type": "string",
-            "minLength": 6,
-            "maxLength": 6
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 6,
+                "maxLength": 6
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "idToken": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "referralCode": {
-            "type": "string",
-            "maxLength": 20
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -4560,20 +5989,41 @@
         "type": "object",
         "properties": {
           "riderId": {
-            "type": "string",
-            "minLength": 1
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "fullName": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 100
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "email": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "email",
-                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4582,36 +6032,94 @@
             ]
           },
           "fatherName": {
-            "type": "string",
-            "maxLength": 100
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "motherName": {
-            "type": "string",
-            "maxLength": 100
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "currentAddress": {
-            "type": "string",
-            "maxLength": 500
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "emergencyContact": {
-            "type": "string",
-            "maxLength": 20
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "dob": {
-            "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{4}$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(\\d{4}-\\d{2}-\\d{2}|\\d{2}-\\d{2}-\\d{4})$"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "intent": {
-            "type": "string",
-            "enum": [
-              "deliver",
-              "personal"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preferredLocale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 8,
+                "pattern": "^[a-z]{2}(_[A-Z]{2})?$"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "profilePhoto": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4622,7 +6130,14 @@
           "riderPhoto": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4633,7 +6148,14 @@
           "signature": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4644,7 +6166,14 @@
           "aadhaarFront": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4655,7 +6184,14 @@
           "aadhaarBack": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4666,7 +6202,14 @@
           "panCard": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4677,7 +6220,14 @@
           "bankName": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4688,7 +6238,14 @@
           "bankAccount": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4699,7 +6256,14 @@
           "bankIfsc": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4710,7 +6274,14 @@
           "selfie": {
             "anyOf": [
               {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -4719,183 +6290,340 @@
             ]
           },
           "returnPending": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "returnPhotos": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uri"
-            }
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "returnReason": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "latitude": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "longitude": {
-            "type": "number"
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorPhone": {
-            "type": "string"
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(\\d{10})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              {
+                "type": "string",
+                "const": ""
+              }
+            ]
+          },
+          "guarantorPhoneReceipt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorRelation": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorDob": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorFatherName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorMotherName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorAddress": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorAadhaarFront": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorAadhaarBack": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorPan": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorVideo": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorSignature": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorPhoto": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "guarantorStatus": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "DRAFT",
+                  "SUBMITTED",
+                  "INFO_REQUIRED",
+                  "APPROVED",
+                  "REJECTED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "locationGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "batteryGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "contactsGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "callLogsGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "micGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "cameraGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "phoneGranted": {
-            "type": "boolean"
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false
       },
       "SubmitKycRequest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
-        "properties": {
-          "riderId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "aadhaarNumber": {
-            "type": "string",
-            "pattern": "^\\d{4}-\\d{4}-\\d{4}$"
-          },
-          "panNumber": {
-            "type": "string",
-            "pattern": "^[A-Z]{5}\\d{4}[A-Z]$"
-          },
-          "bankName": {
-            "type": "string",
-            "minLength": 1
-          },
-          "bankAccount": {
-            "type": "string",
-            "pattern": "^\\d{8,18}$"
-          },
-          "bankIfsc": {
-            "type": "string",
-            "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
-          },
-          "aadhaarFront": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "aadhaarBack": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "panCard": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "profilePhoto": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "signature": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          }
-        },
         "required": [
-          "riderId",
           "aadhaarNumber",
           "panNumber",
           "bankName",
           "bankAccount",
           "bankIfsc"
         ],
-        "additionalProperties": false
+        "properties": {
+          "aadhaarNumber": {
+            "type": "string"
+          },
+          "panNumber": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "bankAccount": {
+            "type": "string"
+          },
+          "bankIfsc": {
+            "type": "string"
+          },
+          "aadhaarFront": {
+            "type": "string"
+          },
+          "aadhaarBack": {
+            "type": "string"
+          },
+          "panCard": {
+            "type": "string"
+          },
+          "profilePhoto": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
       },
       "SubmitKycResponse": {
         "type": "object",
@@ -5093,7 +6821,8 @@
           },
           "walletCreditAmount": {
             "type": "number",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "maximum": 100000
           }
         },
         "required": [
@@ -5204,65 +6933,7 @@
           }
         }
       },
-      "CreateTicketRequest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "riderId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "TECHNICAL",
-              "PAYMENT",
-              "VEHICLE",
-              "GENERAL",
-              "TROUBLESHOOTER",
-              "BATTERY"
-            ]
-          },
-          "priority": {
-            "default": "MEDIUM",
-            "type": "string",
-            "enum": [
-              "LOW",
-              "MEDIUM",
-              "HIGH"
-            ]
-          },
-          "subject": {
-            "type": "string",
-            "minLength": 5,
-            "maxLength": 200
-          },
-          "message": {
-            "type": "string",
-            "minLength": 10,
-            "maxLength": 5000
-          },
-          "attachments": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          }
-        },
-        "required": [
-          "riderId",
-          "category",
-          "priority",
-          "subject",
-          "message"
-        ],
-        "additionalProperties": false
-      },
+      "CreateTicketRequest": {},
       "TicketResponse": {
         "type": "object",
         "properties": {
@@ -5557,8 +7228,9 @@
               "PARTIALLY_REFUNDED"
             ]
           },
-          "amountInPaise": {
-            "type": "number"
+          "amountInRupees": {
+            "type": "number",
+            "format": "double"
           }
         }
       },
@@ -5665,6 +7337,60 @@
           }
         }
       },
+      "AdminRentalActionRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "enum": [
+          "START",
+          "PICKUP_COMPLETE",
+          "MARK_OVERDUE",
+          "REQUEST_RETURN",
+          "APPROVE_RETURN",
+          "CLOSE",
+          "SUSPEND"
+        ]
+      },
+      "AdminWalletAdjustRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "CREDIT",
+              "DEBIT"
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "proofUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "coAdminId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "type",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
       "AdminWalletTopupRequest": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -5762,6 +7488,39 @@
         },
         "required": [
           "message"
+        ],
+        "additionalProperties": false
+      },
+      "ConsentRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "consentType": {
+            "type": "string",
+            "enum": [
+              "LOCATION",
+              "CONTACTS",
+              "CALL_LOGS",
+              "CAMERA",
+              "PHONE",
+              "MIC",
+              "BATTERY",
+              "NOTIFICATIONS",
+              "DEVICE_ADMIN"
+            ]
+          },
+          "granted": {
+            "type": "boolean"
+          },
+          "policyVersion": {
+            "default": "public-beta-v1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "consentType",
+          "granted",
+          "policyVersion"
         ],
         "additionalProperties": false
       },
@@ -6135,6 +7894,27 @@
             "type": "number",
             "exclusiveMinimum": 0
           },
+          "securityDeposit": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "isSecurityRefundable": {
+            "default": true,
+            "type": "boolean"
+          },
+          "refundableAfterDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "durationDays": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -6143,13 +7923,28 @@
           "description": {
             "type": "string",
             "maxLength": 500
+          },
+          "additionalInfo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
           }
         },
         "required": [
           "name",
           "type",
           "price",
-          "durationDays"
+          "securityDeposit",
+          "isSecurityRefundable"
         ],
         "additionalProperties": false
       },
@@ -6180,11 +7975,7 @@
             ]
           },
           "intent": {
-            "type": "string",
-            "enum": [
-              "deliver",
-              "personal"
-            ]
+            "type": "string"
           },
           "lifecycleStatus": {
             "type": "string",
@@ -6231,6 +8022,24 @@
                 "type": "string",
                 "format": "email",
                 "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              },
+              {
+                "type": "string",
+                "const": ""
+              }
+            ]
+          },
+          "hubId": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               {
                 "type": "string",
@@ -6362,6 +8171,17 @@
         ],
         "additionalProperties": false
       },
+      "PublicApiEndpointRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "RecalculateScoreRequest": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -6414,8 +8234,8 @@
               "ASSIGN_PLAN",
               "COMPLETE_PICKUP",
               "END_RENTAL",
-              "LOCK_DEVICE",
               "FACTORY_RESET",
+              "SYNC_DEVICE_DATA",
               "DISABLE_CAMERA",
               "ENABLE_CAMERA",
               "ENFORCE_PASSCODE",
@@ -6440,7 +8260,7 @@
           "hubId": {
             "type": "string"
           },
-          "teamLeader": {
+          "teamLeaderId": {
             "type": "string"
           },
           "password": {
@@ -6478,7 +8298,8 @@
               "ALERT",
               "PROMOTION",
               "PAYMENT",
-              "VEHICLE"
+              "VEHICLE",
+              "SYSTEM"
             ]
           },
           "riderIds": {
@@ -6486,6 +8307,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "riderId": {
+            "type": "string",
+            "minLength": 1
           },
           "sendToAll": {
             "default": false,
@@ -6500,117 +8325,35 @@
         ],
         "additionalProperties": false
       },
-      "SubmitGuarantorRequest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "riderId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 2
-          },
-          "relation": {
-            "type": "string",
-            "minLength": 2
-          },
-          "phone": {
-            "type": "string",
-            "pattern": "^\\d{10}$"
-          },
-          "dob": {
-            "type": "string",
-            "pattern": "^\\d{2}-\\d{2}-\\d{4}$"
-          },
-          "fatherName": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "motherName": {
-            "type": "string",
-            "maxLength": 100
-          },
-          "aadhaarFront": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "aadhaarBack": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "pan": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "video": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          },
-          "signature": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          }
-        },
-        "required": [
-          "riderId",
-          "name",
-          "relation",
-          "phone"
-        ],
-        "additionalProperties": false
-      },
       "SubscribePlanRequest": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
-          "riderId": {
-            "type": "string",
-            "minLength": 1
-          },
           "planId": {
             "type": "string",
             "minLength": 1
+          },
+          "hubId": {
+            "type": "string"
+          },
+          "securityDeposit": {
+            "type": "number"
+          },
+          "advanceRentPaid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "guarantorSkipped": {
+            "type": "boolean"
           }
         },
         "required": [
-          "riderId",
           "planId"
         ],
         "additionalProperties": false
@@ -6713,7 +8456,8 @@
               "assign",
               "changePriority",
               "closeResolved",
-              "revert"
+              "revert",
+              "escalate"
             ]
           },
           "value": {
@@ -6726,32 +8470,7 @@
         ],
         "additionalProperties": false
       },
-      "TicketReplyRequest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 5000
-          },
-          "attachments": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "string",
-                "const": ""
-              }
-            ]
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "additionalProperties": false
-      },
+      "TicketReplyRequest": {},
       "TopUpRequest": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -6777,7 +8496,8 @@
             "enum": [
               "UPI",
               "CASH",
-              "CARD"
+              "CARD",
+              "INSTANT"
             ]
           },
           "reason": {
@@ -6798,17 +8518,27 @@
           "proofUrl": {
             "anyOf": [
               {
-                "type": "string",
-                "minLength": 1
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ]
+          },
+          "gatewayStatus": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "FAILURE",
+              "PENDING"
+            ]
+          },
+          "mdrAmount": {
+            "type": "number",
+            "minimum": 0
           }
         },
         "required": [
-          "riderId",
           "amount",
           "purpose",
           "method"
@@ -6835,7 +8565,12 @@
             ]
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
+          },
+          "rejectionReason": {
+            "type": "string",
+            "maxLength": 200
           }
         },
         "required": [
@@ -6910,10 +8645,12 @@
           "status": {
             "type": "string",
             "enum": [
+              "REPORTED",
               "OPEN",
               "INVESTIGATING",
               "RESOLVED",
-              "CLOSED"
+              "CLOSED",
+              "DISMISSED"
             ]
           },
           "assignedTo": {
@@ -6929,38 +8666,6 @@
             "type": "string"
           }
         },
-        "required": [
-          "id"
-        ],
-        "additionalProperties": false
-      },
-      "UpdateLegalRequest": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "terms",
-              "privacy",
-              "refund",
-              "lease"
-            ]
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "content": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100000
-          }
-        },
-        "required": [
-          "type",
-          "content"
-        ],
         "additionalProperties": false
       },
       "UpdatePlanRequest": {
@@ -6984,6 +8689,27 @@
             "type": "number",
             "exclusiveMinimum": 0
           },
+          "securityDeposit": {
+            "default": 0,
+            "type": "number",
+            "minimum": 0
+          },
+          "isSecurityRefundable": {
+            "default": true,
+            "type": "boolean"
+          },
+          "refundableAfterDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "durationDays": {
             "type": "integer",
             "exclusiveMinimum": 0,
@@ -6993,9 +8719,47 @@
             "type": "string",
             "maxLength": 500
           },
+          "additionalInfo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
           "id": {
             "type": "string",
             "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateRewardRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
           }
         },
         "required": [
@@ -7034,17 +8798,23 @@
             "enum": [
               "OPEN",
               "IN_PROGRESS",
+              "WAITING_ON_RIDER",
               "RESOLVED",
               "CLOSED"
             ]
           },
           "assignedTo": {
             "type": "string"
+          },
+          "isEscalated": {
+            "type": "boolean"
+          },
+          "refundAmountInPaise": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           }
         },
-        "required": [
-          "id"
-        ],
         "additionalProperties": false
       },
       "UpdateVehicleRequest": {

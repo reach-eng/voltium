@@ -87,6 +87,8 @@ export const updateProfileSchema = z.object({
   guarantorSignature: z.string().nullish(),
   guarantorPhoto: z.string().nullish(),
   guarantorStatus: z.enum(['PENDING', 'DRAFT', 'SUBMITTED', 'INFO_REQUIRED', 'APPROVED', 'REJECTED']).nullish(),
+  // P1: `requiresHigherDeposit` removed — server-owned surcharge flag, never
+  // rider-writable (strict schema rejects it outright; see guarantor/skip).
   // Permissions
   locationGranted: z.boolean().nullish(),
   batteryGranted: z.boolean().nullish(),
@@ -266,30 +268,61 @@ export const createOfferSchema = z.object({
 });
 
 // ==================== ADMIN - COUPONS ====================
-export const createCouponSchema = z.object({
-  code: z.string().min(2, 'Code is required').max(50),
-  description: z.string().min(2, 'Description is required').max(500),
-  discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
-  discountValue: z.number().positive('discountValue must be positive'),
-  minAmount: z.number().min(0).optional(),
-  maxUses: z.number().int().positive().optional(),
-  validFrom: z.string().min(1, 'validFrom is required'),
-  validUntil: z.string().min(1, 'validUntil is required'),
-  isActive: z.boolean().optional().default(true),
-});
+// P1: PERCENTAGE discountValue is a percent (stored as-is), not money —
+// capped at 100 via superRefine (a 500% coupon used to persist).
+const couponPercentCap = (val: {
+  discountType?: 'PERCENTAGE' | 'FIXED';
+  discountValue?: number;
+}) => {
+  if (val.discountType === 'PERCENTAGE' && val.discountValue != null && val.discountValue > 100) {
+    return false;
+  }
+  return true;
+};
+export const createCouponSchema = z
+  .object({
+    code: z.string().min(2, 'Code is required').max(50),
+    description: z.string().min(2, 'Description is required').max(500),
+    discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
+    discountValue: z.number().positive('discountValue must be positive'),
+    minAmount: z.number().min(0).optional(),
+    maxUses: z.number().int().positive().optional(),
+    validFrom: z.string().min(1, 'validFrom is required'),
+    validUntil: z.string().min(1, 'validUntil is required'),
+    isActive: z.boolean().optional().default(true),
+  })
+  .superRefine((val, ctx) => {
+    if (!couponPercentCap(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'PERCENTAGE discountValue cannot exceed 100',
+      });
+    }
+  });
 
-export const updateCouponSchema = z.object({
-  id: z.string().min(1, 'id is required'),
-  code: z.string().min(2).max(50).optional(),
-  description: z.string().min(2).max(500).optional(),
-  discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
-  discountValue: z.number().positive().optional(),
-  minAmount: z.number().min(0).optional(),
-  maxUses: z.number().int().positive().optional(),
-  validFrom: z.string().min(1).optional(),
-  validUntil: z.string().min(1).optional(),
-  isActive: z.boolean().optional(),
-});
+export const updateCouponSchema = z
+  .object({
+    id: z.string().min(1, 'id is required'),
+    code: z.string().min(2).max(50).optional(),
+    description: z.string().min(2).max(500).optional(),
+    discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
+    discountValue: z.number().positive().optional(),
+    minAmount: z.number().min(0).optional(),
+    maxUses: z.number().int().positive().optional(),
+    validFrom: z.string().min(1).optional(),
+    validUntil: z.string().min(1).optional(),
+    isActive: z.boolean().optional(),
+  })
+  .superRefine((val, ctx) => {
+    if (!couponPercentCap(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'PERCENTAGE discountValue cannot exceed 100',
+      });
+    }
+  });
 
 // ==================== ADMIN - FAQS ====================
 export const createFaqSchema = z.object({
@@ -328,7 +361,7 @@ export const updateTicketSchema = z.object({
 
 export const ticketReplySchema = z.object({
   message: z.string().min(1, 'Message is required').max(5000),
-  attachments: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  attachments: z.union([z.string(), z.array(z.string()), z.null(), z.undefined()]).optional(),
 });
 
 // ==================== ADMIN - LEGAL (UPSERT) ====================
@@ -406,6 +439,10 @@ export const subscribePlanSchema = z.object({
   hubId: z.string().optional(),
   securityDeposit: z.number().optional(),
   advanceRentPaid: z.union([z.boolean(), z.number()]).optional(),
+  // P1: server-authoritative skip declaration (set-true-only). Lets app
+  // versions that never call POST /api/rider/guarantor/skip still record the
+  // surcharge flag at the enforcement point. Never clears the flag.
+  guarantorSkipped: z.boolean().optional(),
 });
 
 // ==================== SYNC QUEUE ====================
@@ -618,21 +655,145 @@ export const devicePermissionsSchema = z.object({
   permissions: z.record(z.string(), z.boolean()),
 });
 
+function formatFieldName(name: string): string {
+  return name
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
+export function formatZodIssueMessage(issue: z.ZodIssue): string {
+  const field = issue.path.length > 0 ? formatFieldName(String(issue.path[issue.path.length - 1])) : 'Field';
+
+  if (
+    issue.code === 'invalid_type' &&
+    ((issue as any).received === 'undefined' || (issue.message && issue.message.includes('received undefined')))
+  ) {
+    return `${field} is required`;
+  }
+  if ((issue.code as string) === 'invalid_enum_value' || (issue.code as string) === 'invalid_value') {
+    const options = (issue as any).values?.join(', ') || (issue as any).options?.join(', ') || '';
+    return `Invalid value for ${field}. Allowed values: ${options}`;
+  }
+  if (issue.code === 'too_small') {
+    const min = (issue as any).minimum;
+    const isString =
+      (issue as any).origin === 'string' ||
+      (issue as any).type === 'string' ||
+      (issue.message && issue.message.includes('expected string'));
+    if (isString) {
+      return `${field} must be at least ${min} characters`;
+    }
+    return `${field} must be at least ${min}`;
+  }
+  if (issue.code === 'too_big') {
+    const max = (issue as any).maximum;
+    const isString =
+      (issue as any).origin === 'string' ||
+      (issue as any).type === 'string' ||
+      (issue.message && issue.message.includes('expected string'));
+    if (isString) {
+      return `${field} cannot exceed ${max} characters`;
+    }
+    return `${field} cannot exceed ${max}`;
+  }
+  return issue.message;
+}
+
+export function formatZodError(error: z.ZodError): {
+  message: string;
+  fieldErrors: Record<string, string[]>;
+} {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.join('.') || '_global';
+    const msg = formatZodIssueMessage(issue);
+    if (!fieldErrors[key]) fieldErrors[key] = [];
+    fieldErrors[key].push(msg);
+  }
+  const firstKey = Object.keys(fieldErrors)[0];
+  const firstMsg = firstKey ? fieldErrors[firstKey][0] : 'Validation failed';
+  return { message: firstMsg, fieldErrors };
+}
+
+export type ValidationResult<T> =
+  | {
+      success: true;
+      data: T;
+      error: null;
+      details?: null;
+    }
+  | {
+      success: false;
+      data: null;
+      error: string;
+      details?: { fieldErrors: Record<string, string[]> };
+    };
+
 // Helper: validate request body and return parsed data or error response
-export function validateBody<T>(schema: z.ZodType<T>, body: unknown) {
+export function validateBody<T>(schema: z.ZodType<T>, body: unknown): ValidationResult<T> {
   const result = schema.safeParse(body);
   if (!result.success) {
     logger.debug('[Validation Error]', { errors: result.error.format() });
-    const firstError = result.error.issues[0];
-    const fieldPath = firstError?.path.join('.');
-    const errorMessage = fieldPath
-      ? `${fieldPath}: ${firstError.message}`
-      : firstError?.message || 'Validation failed';
+    const { message, fieldErrors } = formatZodError(result.error);
     return {
-      success: false as const,
-      error: errorMessage,
-      data: null as T | null,
+      success: false,
+      error: message,
+      data: null,
+      details: { fieldErrors },
     };
   }
-  return { success: true as const, error: null, data: result.data };
+  return { success: true, error: null, data: result.data, details: null };
 }
+
+/**
+ * Validate that an endpoint URL is a public HTTPS endpoint,
+ * preventing SSRF attacks against internal network, localhost, or cloud metadata services.
+ */
+export function isValidPublicApiEndpoint(endpoint: string): boolean {
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== 'https:') return false;
+    const host = url.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host === '0.0.0.0' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal')
+    ) {
+      return false;
+    }
+    // Check private RFC1918 and link-local ranges:
+    // 10.0.0.0/8
+    if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+    // 172.16.0.0/12
+    const match172 = /^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(host);
+    if (match172) {
+      const secondOctet = parseInt(match172[1], 10);
+      if (secondOctet >= 16 && secondOctet <= 31) return false;
+    }
+    // 192.168.0.0/16
+    if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+    // 169.254.0.0/16 (link-local / AWS metadata)
+    if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const publicApiEndpointSchema = z
+  .string()
+  .nullable()
+  .optional()
+  .refine((val) => !val || isValidPublicApiEndpoint(val), {
+    message:
+      'apiEndpoint must be a valid public HTTPS URL (internal, private, and loopback IPs are not allowed)',
+  });
+
+export { adminWalletAdjustSchema } from './validators/admin';
+
+
