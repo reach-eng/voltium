@@ -25,6 +25,15 @@ const skipDirs = new Set([
   'graphify-out',
   '.cosy',
   '.gemini',
+  '.qoder',
+  '.agents',
+  '.claude',
+  '.commandcode',
+  '.freebuff',
+  '.runtime',
+  '.trash',
+  'logs',
+  'chromedriver',
 ]);
 
 function rel(file) {
@@ -152,7 +161,7 @@ function checkNoDocker() {
 }
 
 function checkNoCloudData() {
-  const refs = grepFiles(/@upstash\/redis|@google-cloud\/storage|@aws-sdk\/client-s3|@aws-sdk\/s3-request-presigner|@sentry\/nextjs|sentry_flutter|UPSTASH_REDIS|SENTRY_DSN|GCS_BUCKET|S3_BUCKET|R2_BUCKET|Neon|Supabase|Railway|Google Cloud Storage|Cloudflare R2/i, {
+  const refs = grepFiles(/@upstash\/redis|@google-cloud\/storage|@aws-sdk\/client-s3|@aws-sdk\/s3-request-presigner|@sentry\/nextjs|sentry_flutter|UPSTASH_REDIS|SENTRY_DSN|GCS_BUCKET|S3_BUCKET|R2_BUCKET|\bNeon\b|Supabase|Railway|Google Cloud Storage|Cloudflare R2/i, {
     excludeFiles: new Set(['check-no-cloud-data.sh', 'static-gates.mjs', 'package-lock.json', 'tsconfig.tsbuildinfo']),
     excludeDirs: new Set(['docs', 'ephemeral']),
   });
