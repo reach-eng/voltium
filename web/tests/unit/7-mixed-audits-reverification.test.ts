@@ -7,7 +7,7 @@ describe('7 Mixed Audits Re-Verification Contracts', () => {
   });
 
   it('jobToOutboxMap: daily-engagement is configured with background priority', async () => {
-    const { JOB_TO_OUTBOX_CONFIG } = await import('@/app/api/admin/jobs/route');
+    const { JOB_TO_OUTBOX_CONFIG } = await import('@/server/workers/job-outbox-config');
     expect(JOB_TO_OUTBOX_CONFIG['daily-engagement'].priority).toBe('background');
   });
 });
