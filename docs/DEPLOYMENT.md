@@ -1,5 +1,14 @@
 # Voltium Deployment Guide
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This deployment guide references legacy procedures and infrastructure (Caddy, Bun bundles, mini-services, and `.zscripts/`) that have been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration on Windows, use `scripts/laptop-service.ps1` and refer to `AGENTS.md`.
+
 > Deployment instructions for the Voltium platform.
 > **Voltium runs entirely on a local workstation.** Database, files, and backups stay on local disk.
 > Public access is provided via Cloudflare Tunnel (routing only — no data storage).

@@ -1,5 +1,14 @@
 # Voltium Infrastructure / DevOps / Deployment — Deep-Dive Audit Findings
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This audit references a legacy infrastructure topology (Caddy, Bun bundles, mini-services, and `.zscripts/`) that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration, see `scripts/laptop-service.ps1` and `AGENTS.md`.
+
 **Date:** 2026-07-29
 **Scope:** `ecosystem.config.js` (PM2), `scripts/*.sh` + `scripts/*.ps1` (30 scripts), `.github/workflows/*.yml` (8 GitHub Actions workflows), `docs/DEPLOYMENT.md` + `docs/K8S_PROBES.md` + `docs/RUNBOOK.md` (deployment + ops), `.zscripts/` references, `infra/` (Grafana dashboard), `cloudflared-config.example.yml`, `renovate.json`, `dependabot.yml`, `CODEOWNERS`, `bootstrap.sh` (one-command bootstrap).
 

@@ -1,5 +1,14 @@
 # Voltium Infrastructure / DevOps / Deployment — Remediation Plan
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This remediation plan references a legacy infrastructure topology (Caddy, Bun bundles, mini-services, and `.zscripts/`) that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration, see `scripts/laptop-service.ps1` and `AGENTS.md`.
+
 **Date:** 2026-07-29
 **Source audit:** [`docs/AUDIT_INFRASTRUCTURE.md`](./AUDIT_INFRASTRUCTURE.md) (110+ findings, mostly P0)
 **Method:** Audit read top-to-bottom, every P0 in the audit's "Top 10" + the broader "Cross-cutting observations" verified against the current files (`ecosystem.config.js`, `db-backup.sh`, `db-restore.sh`, `deploy-prod.sh`, `deploy-staging.sh`, `ci-cd.yml`, `check-migration-safety.sh`, `check-secret-rotation.sh`).

@@ -1,5 +1,14 @@
 # Disaster Recovery Plan
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This recovery plan references a legacy topology (Caddy, Bun bundles, mini-services, and `.zscripts/`) that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For host orchestration, database backup/restore, and health procedures, see `scripts/laptop-service.ps1`, `scripts/db-backup.sh`, `scripts/db-restore.sh`, and `AGENTS.md`.
+
 Voltium's laptop-only architecture means **all data lives on a single machine**. A disaster recovery plan is essential.
 
 ## Risk Assessment

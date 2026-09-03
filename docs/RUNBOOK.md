@@ -1,5 +1,14 @@
 # Voltium Operations Runbook
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This runbook references legacy procedures and an outdated server topology (Caddy, Bun bundles, mini-services, and `.zscripts/`) that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration and service management, see `scripts/laptop-service.ps1` and `AGENTS.md`.
+
 This document provides operational guidelines, deployment procedures, and troubleshooting steps for the Voltium platform.
 
 ## Deployment Procedure

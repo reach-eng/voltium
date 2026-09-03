@@ -1,5 +1,14 @@
 # Voltium Architecture
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This document describes a legacy architecture (Caddy reverse proxy, Bun bundles, mini-services, and `.zscripts/`) that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration, see `scripts/laptop-service.ps1` and `AGENTS.md`.
+
 This document describes the architectural layout, data flow, and core design patterns of the Voltium platform.
 
 ## High-Level Architecture

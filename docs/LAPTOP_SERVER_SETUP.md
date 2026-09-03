@@ -1,5 +1,14 @@
 # Laptop Server Setup Guide
 
+> [!WARNING]
+> **DEPRECATED TOPOLOGY — DO NOT FOLLOW**
+> This setup guide references a legacy server topology that has been decommissioned.
+> As of 2026-09-03:
+> - There is NO `.zscripts/`, NO `mini-services/`, NO Bun bundles, and NO Caddy in this repository.
+> - Background work runs in-process via `web/src/server/workers/` (PostgreSQL `OutboxEvent` + `lib/job-queue.ts`).
+> - `infra/` holds only `grafana/`.
+> - For current host orchestration on Windows, use `scripts/laptop-service.ps1` and refer to `AGENTS.md`.
+
 How to set up a fresh Windows laptop to run Voltium in production.
 
 ## Prerequisites
