@@ -79,6 +79,7 @@ class _SearchBarState extends State<SearchBar> {
           ),
           if (_hasText)
             IconButton(
+              tooltip: 'Clear search',
               icon: Icon(Icons.clear, size: 20, color: colors.onSurfaceMuted),
               onPressed: () {
                 _controller.clear();

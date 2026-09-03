@@ -84,6 +84,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   }
 
   Future<void> _submitTicket() async {
+    // F-16: Immediate guard against double-taps before form validation
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -105,6 +107,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             riderId: ref.read(riderProvider).riderId,
             attachments: attachmentsCsv.isEmpty ? null : attachmentsCsv,
           );
+      // F-17: Also refresh supportTicketsProvider so the UI ticket list is up-to-date
+      ref.read(supportTicketsProvider.notifier).fetchTickets();
       PostHogService.capture('ticket_created', properties: {
         'category': _selectedCategory,
         'attachment_count': _attachmentFiles.length,
@@ -148,6 +152,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(Icons.arrow_back, color: colors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
@@ -400,6 +405,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                                         right: -6,
                                         child: IconButton(
                                           key: Key('removeTicketAttachment_$i'),
+                                          tooltip: 'Remove attachment',
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(
                                             minWidth: 24,
@@ -452,6 +458,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
+                    key: const Key('submitTicketButton'),
                     onPressed: _isLoading ? null : _submitTicket,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,

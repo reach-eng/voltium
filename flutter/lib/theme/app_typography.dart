@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Centralized typography system for Voltium.
 ///
@@ -223,4 +224,75 @@ class AppTypography {
     letterSpacing: 0.5,
     height: 1.4,
   );
+
+  // ── 8. Material 3 TextTheme Integration & Dynamic Type Scaling ────────
+
+  /// Generates a Material 3 [TextTheme] adhering to dynamic type scaling and
+  /// Plus Jakarta Sans typography. Maps Voltium semantic typography tiers to
+  /// standard Material 3 slots:
+  /// - displayLarge -> displayLarge (40)
+  /// - displayMedium -> displayMedium (32)
+  /// - headingLarge -> headlineLarge (28)
+  /// - headingMedium -> headlineMedium (24)
+  /// - headingSmall -> headlineSmall (20)
+  /// - titleLarge -> titleLarge (18)
+  /// - titleMedium -> titleMedium (16)
+  /// - titleSmall -> titleSmall (14)
+  /// - bodyLarge -> bodyLarge (16)
+  /// - bodyMedium -> bodyMedium (14)
+  /// - bodySmall -> bodySmall (12)
+  /// - labelLarge -> labelLarge (14)
+  /// - labelMedium -> labelMedium (12)
+  /// - labelSmall -> labelSmall (11)
+  static TextTheme material3TextTheme([Color? textColor]) {
+    final base = const TextTheme(
+      displayLarge: displayLarge,
+      displayMedium: displayMedium,
+      displaySmall: TextStyle(
+        fontFamily: fontFamily,
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.6,
+        height: 1.2,
+      ),
+      headlineLarge: headingLarge,
+      headlineMedium: headingMedium,
+      headlineSmall: headingSmall,
+      titleLarge: titleLarge,
+      titleMedium: titleMedium,
+      titleSmall: titleSmall,
+      bodyLarge: bodyLarge,
+      bodyMedium: bodyMedium,
+      bodySmall: bodySmall,
+      labelLarge: labelLarge,
+      labelMedium: labelMedium,
+      labelSmall: labelSmall,
+    );
+    final themed = GoogleFonts.plusJakartaSansTextTheme(base);
+    if (textColor != null) {
+      return themed.apply(bodyColor: textColor, displayColor: textColor);
+    }
+    return themed;
+  }
+
+  /// Dynamic type scaler helper: scales [baseStyle] against the ambient
+  /// [MediaQuery.textScalerOf] with safety clamps (default 0.8x to 2.0x)
+  /// to ensure accessible dynamic type sizing without breaking dense card layouts.
+  static TextStyle scaled(BuildContext context, TextStyle baseStyle,
+      {double minScale = 0.8, double maxScale = 2.0}) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final clamped =
+        scaler.clamp(minScaleFactor: minScale, maxScaleFactor: maxScale);
+    final size = baseStyle.fontSize ?? 14.0;
+    return baseStyle.copyWith(fontSize: clamped.scale(size));
+  }
+}
+
+/// Extension for ergonomic dynamic type scaling on any [TextStyle].
+extension ScalableTextStyle on TextStyle {
+  /// Scales this [TextStyle] with ambient [MediaQuery.textScalerOf] within safety bounds.
+  TextStyle scaled(BuildContext context,
+          {double minScale = 0.8, double maxScale = 2.0}) =>
+      AppTypography.scaled(context, this,
+          minScale: minScale, maxScale: maxScale);
 }

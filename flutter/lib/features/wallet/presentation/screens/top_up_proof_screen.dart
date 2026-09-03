@@ -361,7 +361,19 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         : null;
 
     final fileToSubmit = _imageFile ??
-        File('${Directory.systemTemp.path}/instant_payment_receipt.png');
+        (AppConstants.isTestMode
+            ? File('${Directory.systemTemp.path}/mock_top_up_proof.png')
+            : null);
+
+    if (fileToSubmit == null) {
+      if (mounted) setState(() => _isUploading = false);
+      Toast.error(
+        context,
+        AppLocalizations.of(context)?.txttapToUploadPhoto ??
+            'Please upload a photo proof of payment',
+      );
+      return;
+    }
 
     try {
       await widget.onSubmit?.call(fileToSubmit, methodStr, refVal);
@@ -870,6 +882,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     right: 12,
                     child: IconButton.filled(
                       key: const Key('removeProofButton'),
+                      tooltip: 'Remove proof',
                       onPressed: () => setState(() => _imageFile = null),
                       icon: const Icon(Icons.close, size: 20),
                       style: IconButton.styleFrom(
@@ -1029,7 +1042,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
 
   Widget _buildSubmitButton() {
     final isInstant = _selectedPaymentMode == PaymentMode.instant;
-    final canSubmit = (isInstant || _imageFile != null) && !_isUploading;
+    final canSubmit =
+        (_imageFile != null || AppConstants.isTestMode) && !_isUploading;
     final isRiderBearer = _mdrBearer == 'RIDER';
     final fee =
         isRiderBearer ? (widget.amount * (_extraFeePercent / 100)).round() : 0;

@@ -140,6 +140,7 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
+                        tooltip: 'Clear search',
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();

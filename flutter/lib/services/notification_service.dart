@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 import '../gen/app_localizations.dart';
@@ -18,8 +20,50 @@ class NotificationService {
   /// toggles the setting in app_settings or notification_preferences.
   bool _notificationsEnabled = true;
 
-  Future<void> init() async {
+  /// Global tap callback invoked when any local notification is tapped.
+  static void Function(NotificationResponse response)? onNotificationTapped;
+
+  /// Stream controller broadcasting notification response taps.
+  static final StreamController<NotificationResponse>
+      _notificationTapStreamController =
+      StreamController<NotificationResponse>.broadcast();
+
+  /// Broadcast stream of notification taps.
+  static Stream<NotificationResponse> get onNotificationTapStream =>
+      _notificationTapStreamController.stream;
+
+  @pragma('vm:entry-point')
+  static void _onNotificationTapped(NotificationResponse response) {
+    appDebug(
+      'NotificationService: Local notification tapped id=${response.id}, payload=${response.payload}',
+    );
+    onNotificationTapped?.call(response);
+    _notificationTapStreamController.add(response);
+  }
+
+  @visibleForTesting
+  static void handleNotificationResponseForTesting(
+      NotificationResponse response) {
+    _onNotificationTapped(response);
+  }
+
+  /// Hook for unit tests to intercept showNotification calls.
+  @visibleForTesting
+  static Future<void> Function({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  })? showNotificationOverride;
+
+  Future<void> init({
+    void Function(NotificationResponse response)? onNotificationTap,
+  }) async {
     if (_initialized) return;
+
+    if (onNotificationTap != null) {
+      onNotificationTapped = onNotificationTap;
+    }
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -31,7 +75,10 @@ class NotificationService {
 
     const initSettings =
         InitializationSettings(android: androidSettings, iOS: iosSettings);
-    await _notifications.initialize(initSettings);
+    await _notifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
+    );
     _initialized = true;
     await refreshNotificationPreference();
   }
@@ -63,6 +110,16 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
+    if (showNotificationOverride != null) {
+      await showNotificationOverride!(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+      );
+      return;
+    }
+
     if (!_notificationsEnabled) {
       appDebug('NotificationService: notifications disabled, skipping');
       return;
@@ -101,8 +158,7 @@ class NotificationService {
     await showNotification(
       id: 2,
       title: 'Ride Ended',
-      body:
-          'Your ride has ended. Amount: ₹${(amount / 100).toStringAsFixed(2)}',
+      body: 'Your ride has ended. Amount: ₹$amount',
     );
   }
 
@@ -110,8 +166,7 @@ class NotificationService {
     await showNotification(
       id: 3,
       title: 'Payment Received',
-      body:
-          '₹${(amount / 100).toStringAsFixed(2)} has been added to your wallet.',
+      body: '₹$amount has been added to your wallet.',
     );
   }
 

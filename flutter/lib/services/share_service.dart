@@ -8,7 +8,7 @@ class ShareService {
     final shareText = message ??
         'Download Voltium - EV Rental App\n\n'
             'Rent electric vehicles easily. Join the green revolution!\n\n'
-            'Download now: https://play.google.com/store/apps/details?id=com.voltium.rider';
+            'Download now: https://play.google.com/store/apps/details?id=com.voltiumelectric.voltium';
 
     await SharePlus.instance.share(
       ShareParams(

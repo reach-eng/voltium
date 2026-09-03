@@ -309,6 +309,7 @@ class UpdateProfileRequest {
   final bool? micGranted;
   final bool? cameraGranted;
   final bool? phoneGranted;
+  final bool? requiresHigherDeposit;
 
   UpdateProfileRequest({
     this.riderId,
@@ -357,6 +358,7 @@ class UpdateProfileRequest {
     this.micGranted,
     this.cameraGranted,
     this.phoneGranted,
+    this.requiresHigherDeposit,
   });
 
   factory UpdateProfileRequest.fromJson(Map<String, dynamic> json) {
@@ -413,6 +415,7 @@ class UpdateProfileRequest {
       micGranted: json['micGranted'] as bool?,
       cameraGranted: json['cameraGranted'] as bool?,
       phoneGranted: json['phoneGranted'] as bool?,
+      requiresHigherDeposit: json['requiresHigherDeposit'] as bool?,
     );
   }
 
@@ -464,6 +467,7 @@ class UpdateProfileRequest {
       'micGranted': micGranted,
       'cameraGranted': cameraGranted,
       'phoneGranted': phoneGranted,
+      'requiresHigherDeposit': requiresHigherDeposit,
     };
   }
 }

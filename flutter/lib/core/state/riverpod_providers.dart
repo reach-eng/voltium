@@ -25,6 +25,8 @@ export 'package:voltium_rider/features/wallet/presentation/providers/top_up_flow
     show topUpFlowProvider;
 export 'package:voltium_rider/features/support/presentation/providers/support_provider.dart'
     show supportProvider, supportRepositoryProvider;
+export 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart'
+    show supportTicketsProvider, SupportTicketsNotifier;
 export 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart'
     show engagementProvider, engagementApiProvider;
 export 'package:voltium_rider/core/network/connectivity_provider.dart'

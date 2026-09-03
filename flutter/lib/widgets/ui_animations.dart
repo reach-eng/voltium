@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -27,6 +28,7 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -51,15 +53,21 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
       ),
     );
 
-    Future.delayed(widget.delayMultiplier * widget.index, () {
-      if (mounted) {
-        _controller.forward();
-      }
-    });
+    if (widget.delayMultiplier == Duration.zero || widget.index == 0) {
+      _controller.forward();
+    } else {
+      _delayTimer = Timer(widget.delayMultiplier * widget.index, () {
+        if (mounted) {
+          _controller.forward();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
+    _delayTimer = null;
     _controller.dispose();
     super.dispose();
   }

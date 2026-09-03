@@ -284,6 +284,10 @@ class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
 
+  /// Maximum allowed size for guarantor consent video (25MB).
+  /// F-18: Mirrors backend `FILE_UPLOAD_RULES.kyc_document.maxSizeBytes`.
+  static const int maxVideoSizeBytes = 25 * 1024 * 1024;
+
   const GuarantorOnboardingScreen({super.key, this.onNext, this.onBack});
 
   @override
@@ -348,7 +352,7 @@ class _GuarantorOnboardingScreenState
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
 
-    final cacheData = GuarantorCache.loadFormCache(riderId);
+    final cacheData = await GuarantorCache.loadFormCache(riderId);
     if (!mounted) return;
     if (cacheData != null) {
       try {
@@ -506,8 +510,8 @@ class _GuarantorOnboardingScreenState
       if (video != null && mounted) {
         final file = File(video.path);
         final size = await file.length();
-        if (size > 50 * 1024 * 1024) {
-          _showError('Video exceeds maximum size limit of 50MB');
+        if (size > GuarantorOnboardingScreen.maxVideoSizeBytes) {
+          _showError('Video exceeds maximum size limit of 25MB');
           return;
         }
         ref
@@ -853,6 +857,7 @@ class _GuarantorOnboardingScreenState
         ),
       );
       await GuarantorCache.clearFormCache(riderId);
+      await CacheService().remove('voltium_requires_higher_deposit:$riderId');
       // AUDIT FIX (1d): submit succeeded — drop the uploaded-URL ledger so
       // a future re-submission starts clean.
       _uploadedUrls.clear();
@@ -975,8 +980,8 @@ class _GuarantorOnboardingScreenState
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: config.source == SkipDepositSource.admin
                       ? colors.primarySurface
@@ -1020,8 +1025,8 @@ class _GuarantorOnboardingScreenState
 
     // 1. Persist the higher-deposit flag (per-rider) so plan screens
     //    can read it without re-asking the rider.
-    final riderId = ref.read(riderProvider).riderId ??
-        ref.read(riderProvider).rider?.id;
+    final riderId =
+        ref.read(riderProvider).riderId ?? ref.read(riderProvider).rider?.id;
     if (riderId != null && riderId.isNotEmpty) {
       await CacheService()
           .setString('voltium_requires_higher_deposit:$riderId', 'true');
@@ -1033,7 +1038,16 @@ class _GuarantorOnboardingScreenState
       await GuarantorCache.clearFormCache(riderId);
     }
 
-    // 3. Advance to the next step. The downstream plan screen is
+    // 3. Sync to backend so requiresHigherDeposit is stored on server.
+    try {
+      await ref.read(apiClientProvider).post('/api/rider/guarantor/skip');
+      final riderNotifier = ref.read(riderProvider.notifier);
+      await riderNotifier.refresh();
+    } catch (_) {
+      // Best-effort network sync; local cache guarantees client enforcement
+    }
+
+    // 4. Advance to the next step. The downstream plan screen is
     //    responsible for adding the higher-deposit amount to the
     //    rider's existing security deposit.
     PostHogService.capture('guarantor_skipped_for_higher_deposit');

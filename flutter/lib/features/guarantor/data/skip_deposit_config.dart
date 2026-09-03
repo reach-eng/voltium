@@ -36,14 +36,12 @@ class SkipDepositConfig {
   static const double fallbackRupees = 1000;
 }
 
-/// Reads the admin-configured skip-guarantor deposit amount. The screen
-/// awaits this provider before showing the skip dialog so the dialog
-/// copy always carries the current admin value (or a clearly-labelled
-/// fallback).
-final skipDepositConfigProvider = FutureProvider<SkipDepositConfig>((ref) async {
+/// Reads the admin-configured skip-guarantor deposit amount via rider config endpoint.
+final skipDepositConfigProvider =
+    FutureProvider<SkipDepositConfig>((ref) async {
   try {
     final client = ref.read(apiClientProvider);
-    final response = await client.get('/api/admin/config/skip-guarantor');
+    final response = await client.get('/api/rider/config/skip-deposit');
     final data = response['data'] ?? response;
     final amount = data is Map && data['extraDepositRupees'] is num
         ? (data['extraDepositRupees'] as num).toDouble()

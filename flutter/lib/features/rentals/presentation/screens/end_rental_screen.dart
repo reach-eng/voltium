@@ -4,9 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/network/files_repository.dart';
-import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -66,7 +63,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
       // network will still fail (TEST_MODE is a developer's escape
       // hatch) but the file will at least resolve on disk.
       final tmpDir = Directory.systemTemp.createTempSync('voltium_test_');
-      final placeholder = File('${tmpDir.path}/mock_photo.png');
+      final placeholder = File('${tmpDir.path}/mock_photo_$key.png');
       placeholder.writeAsBytesSync(<int>[0]);
       if (mounted) {
         setState(() {
@@ -213,28 +210,23 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
     });
 
     try {
-      // PR-13: VoltiumApiService is gone. Construct the generated client
-      // + transport once for this submit pass, and use FilesRepository
-      // for photo uploads (matches the pattern used by edit_profile_screen).
-      final apiClient = ApiClient();
-      final genClient = VoltiumApiClient(apiClient);
-      final filesRepo = FilesRepository(apiClient, genClient);
+      final genClient = ref.read(voltiumApiClientProvider);
+      final filesRepo = ref.read(filesRepositoryProvider);
 
       // PR-66: parallel upload with progress. Each upload reports
       // completion via a Completer; we settle them with
       // Future.wait + a shared counter. The counter drives the
       // progress UI. Cancelled uploads are skipped, not awaited.
       //
-      // AUDIT FIX (MEDIUM): per-photo try/catch. Previously ANY single
-      // upload failure threw out of Future.wait before results were
-      // consumed, so submitVehicleReturn never ran even when 3/4 photos
-      // had uploaded — and a retry re-uploaded everything. Failures are
-      // now counted toward progress while the successful subset
-      // proceeds to submission; already-uploaded slots are skipped.
+      // F-19: Track upload failures. Backend requires at least 4 photos
+      // (submitReturn.ts MIN_PHOTOS = 4). Successful uploads are preserved
+      // in _uploadedUrls so a retry only uploads missing photos. If any photo
+      // fails to upload, submission must NOT proceed with < 4 photos.
       final pendingEntries = _photos.entries
           .where((e) => e.value != null && !_uploadedUrls.containsKey(e.key))
           .toList(growable: false);
 
+      bool hasUploadError = false;
       await Future.wait(
         pendingEntries.map((entry) async {
           if (_cancelled) return;
@@ -245,11 +237,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
             );
             if (!mounted) return;
             _uploadedUrls[entry.key] = url;
-            setState(() => _uploadedCount += 1);
+            setState(() => _uploadedCount = _uploadedUrls.length);
           } catch (_) {
-            // Count failures toward progress too; the missing slot is
-            // simply absent from the submitted subset below.
-            if (mounted) setState(() => _uploadedCount += 1);
+            hasUploadError = true;
           }
         }),
         eagerError: false,
@@ -262,8 +252,15 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen> {
 
       final photoUrls = _uploadedUrls.values.toList(growable: false);
       if (!mounted) return;
-      if (photoUrls.isEmpty) {
-        setState(() => _submitting = false);
+
+      // F-19: If any photo failed to upload or total uploaded photos < 4,
+      // abort submission and prompt the user to retry so the backend
+      // doesn't throw PHOTOS_REQUIRED.
+      if (hasUploadError || photoUrls.length < _photos.length) {
+        setState(() {
+          _submitting = false;
+          _uploadedCount = _uploadedUrls.length;
+        });
         Toast.error(
           context,
           AppLocalizations.of(context)!.txterrorSubmittingReturnPleaseTryAgain,

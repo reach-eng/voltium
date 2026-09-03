@@ -94,7 +94,12 @@ class WalletState {
 /// Riverpod v3 Notifier. Dependencies are looked up from
 /// Riverpod providers so the notifier is test-friendly.
 class WalletNotifier extends Notifier<WalletState> {
+  static const int defaultMaxPages = 3;
+  static const Duration refreshCooldown = Duration(seconds: 15);
+
   Future<void>? _refreshInFlight;
+  DateTime? _lastRefreshTime;
+  String? _lastRefreshedRiderId;
 
   @override
   WalletState build() => const WalletState();
@@ -137,7 +142,7 @@ class WalletNotifier extends Notifier<WalletState> {
         purpose: purpose,
       );
       await _repo.submitTopup(req);
-      await refreshTransactions(riderId: riderId);
+      await refreshTransactions(riderId: riderId, force: true);
     } catch (e) {
       rethrow;
     } finally {
@@ -145,39 +150,60 @@ class WalletNotifier extends Notifier<WalletState> {
     }
   }
 
-  Future<void> refreshTransactions({required String riderId}) async {
+  Future<void> refreshTransactions({
+    required String riderId,
+    bool force = false,
+    int maxPages = defaultMaxPages,
+  }) async {
+    final now = DateTime.now();
+    if (!force &&
+        _lastRefreshedRiderId == riderId &&
+        _lastRefreshTime != null &&
+        now.difference(_lastRefreshTime!) < refreshCooldown) {
+      return;
+    }
+
     // Coalesce concurrent callers onto the in-flight refresh so they
     // see the same error / outcome (F-024).
     final pending = _refreshInFlight;
     if (pending != null) return pending;
 
     state = state.copyWith(isRefreshingTransactions: true);
-    final future = _doRefreshTransactions(riderId: riderId);
+    final future = _doRefreshTransactions(riderId: riderId, maxPages: maxPages);
     _refreshInFlight = future;
     try {
       await future;
+      _lastRefreshTime = DateTime.now();
+      _lastRefreshedRiderId = riderId;
     } finally {
       _refreshInFlight = null;
       state = state.copyWith(isRefreshingTransactions: false);
     }
   }
 
-  Future<void> _doRefreshTransactions({required String riderId}) async {
+  Future<void> _doRefreshTransactions({
+    required String riderId,
+    int maxPages = defaultMaxPages,
+  }) async {
     try {
-      // PR-N4 (N-4): paginate across all pages so history totals (Credits,
-      // Debits, Net) reflect the complete transaction history rather than
-      // being truncated to the first 20 records.
+      // PR-N4 (N-4) / F-14: paginate up to defaultMaxPages so history totals
+      // reflect recent history while strictly bounding network requests to
+      // prevent runaway/infinite loops on tab switches or balance refreshes.
       final List<entity.TransactionEntity> allTxs = [];
       int currentPage = 1;
       const int pageSize = 100;
       bool hasMore = true;
 
-      while (hasMore) {
+      while (hasMore && currentPage <= maxPages) {
         final pageTxs = await _repo.getTransactionHistory(
           riderId,
           page: currentPage,
           limit: pageSize,
         );
+        if (pageTxs.isEmpty) {
+          hasMore = false;
+          break;
+        }
         allTxs.addAll(pageTxs);
         if (pageTxs.length < pageSize) {
           hasMore = false;
@@ -225,6 +251,8 @@ class WalletNotifier extends Notifier<WalletState> {
   void logout() {
     state = const WalletState();
     _refreshInFlight = null;
+    _lastRefreshTime = null;
+    _lastRefreshedRiderId = null;
   }
 }
 

@@ -209,7 +209,14 @@ class EncryptedCacheService {
   factory EncryptedCacheService() => _instance;
   EncryptedCacheService._internal();
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
 
   Future<void> write(String key, Map<String, dynamic> data) async {
     final jsonString = jsonEncode(data);
@@ -217,9 +224,19 @@ class EncryptedCacheService {
   }
 
   Future<Map<String, dynamic>?> read(String key) async {
-    final jsonString = await _storage.read(key: key);
-    if (jsonString == null) return null;
-    return jsonDecode(jsonString) as Map<String, dynamic>;
+    try {
+      final jsonString = await _storage.read(key: key);
+      if (jsonString == null || jsonString.isEmpty) return null;
+      final decoded = jsonDecode(jsonString);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      } else if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> delete(String key) async {

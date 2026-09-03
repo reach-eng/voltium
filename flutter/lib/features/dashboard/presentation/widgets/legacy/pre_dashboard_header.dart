@@ -55,6 +55,7 @@ class PreDashboardHeader extends ConsumerWidget {
               children: [
                 IconButton(
                   key: const Key('preDashboardLogoutButton'),
+                  tooltip: 'Logout',
                   icon: const Icon(
                     Icons.logout,
                     color: AppColors.error,
@@ -68,6 +69,7 @@ class PreDashboardHeader extends ConsumerWidget {
                   },
                 ),
                 IconButton(
+                  tooltip: 'Notifications',
                   icon: Icon(
                     Icons.notifications_outlined,
                     color: colors.onSurfaceVariant,

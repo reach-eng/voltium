@@ -145,6 +145,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                       const Icon(Icons.search, color: _primary, size: 20),
                   suffixIcon: _searchCtrl.text.isNotEmpty
                       ? IconButton(
+                          tooltip: 'Clear search',
                           icon: Icon(
                             Icons.close,
                             size: 18,

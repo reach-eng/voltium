@@ -232,7 +232,14 @@ class OfflineStorageService {
     await _db!.delete('pending_operations', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> clearPendingOperations() async {
+    if (_db == null) return;
+    MonitoringService.logInfo('Offline: Cleared all pending operations');
+    await _db!.delete('pending_operations');
+  }
+
   Future<void> clearAll() async {
+    _memCache.clear();
     if (_db == null) return;
     await _db!.delete('cached_data');
     await _db!.delete('cached_transactions');

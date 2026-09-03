@@ -129,7 +129,9 @@ class ApiClient {
     if (kReleaseMode) {
       throw Exception('API_URL must be provided for release builds');
     }
-    return 'http://127.0.0.1:8081';
+    return PlatformInfo.isAndroid
+        ? 'http://10.0.2.2:8081'
+        : 'http://127.0.0.1:8081';
   }
 
   /// Get auth headers with session token

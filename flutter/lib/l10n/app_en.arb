@@ -974,7 +974,7 @@
   "@txtguarantorSkipSourceAdmin": {
     "description": "Sub-label on the skip dialog when the deposit amount came from the admin panel"
   },
-  "txtguarantorSkipSourceFallback": "Default Ã¢â‚¬â€ admin has not set a value yet",
+  "txtguarantorSkipSourceFallback": "Default — admin has not set a value yet",
   "@txtguarantorSkipSourceFallback": {
     "description": "Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used"
   },
@@ -1945,12 +1945,12 @@
   "@hangTightNotificationHint": { "description": "HangTight hint that the rider will be notified when the account is active" },
   "hangTightGuarantorApproved": "Guarantor approved",
   "hangTightGuarantorNeedsAttention": "Guarantor needs attention",
-  "hangTightGuarantorReplacedPendingReview": "Guarantor replaced Ã¢â‚¬â€ pending review",
+  "hangTightGuarantorReplacedPendingReview": "Guarantor replaced — pending review",
   "hangTightGuarantorUnderReview": "Guarantor under review",
   "hangTightPlanSelection": "Plan selection",
   "hangTightPlanNeedsAttention": "Plan needs attention",
   "hangTightKycApproved": "KYC approved",
-  "hangTightKycRejectedResubmit": "KYC rejected Ã¢â‚¬â€ please resubmit",
+  "hangTightKycRejectedResubmit": "KYC rejected — please resubmit",
   "hangTightKycExpired": "KYC expired",
   "hangTightKycNeedsMoreInfo": "KYC needs more info",
   "hangTightKycUnderReview": "KYC under review",

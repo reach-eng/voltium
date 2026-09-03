@@ -12,6 +12,8 @@ import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 import '../../../../utils/app_logger.dart';
 
 class ChoosePlanScreen extends ConsumerStatefulWidget {
@@ -169,7 +171,19 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         }
         return;
       }
-      final securityDeposit = selectedPlan.securityDeposit;
+      final isHigherDeposit = riderState.rider?.requiresHigherDeposit == true ||
+          (CacheService()
+                  .getString('voltium_requires_higher_deposit:$riderId') ==
+              'true');
+      final extraDeposit = isHigherDeposit
+          ? (ref
+                  .read(skipDepositConfigProvider)
+                  .asData
+                  ?.value
+                  .extraDepositRupees ??
+              SkipDepositConfig.fallbackRupees)
+          : 0.0;
+      final securityDeposit = selectedPlan.securityDeposit + extraDeposit;
       // PR-13: was a wrapper call to
       // `VoltiumApiService.subscribePlan`, a 1-line pass-through
       // to `postRiderPlans({...})` with the same body shape.
@@ -187,6 +201,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         'plan_id': selectedPlan.id,
         'plan_name': selectedPlan.name,
         'security_deposit': securityDeposit.toString(),
+        'requires_higher_deposit': isHigherDeposit,
       });
       widget.onNext();
     } catch (e) {
@@ -280,6 +295,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     // current plan changes. select() scopes the rebuild to this value.
     final currentPlanName =
         ref.watch(riderProvider.select((s) => s.rider?.currentPlan));
+    final riderState = ref.watch(riderProvider);
+    final riderId = riderState.riderId;
+    final isHigherDeposit = riderState.rider?.requiresHigherDeposit == true ||
+        (riderId != null &&
+            CacheService()
+                    .getString('voltium_requires_higher_deposit:$riderId') ==
+                'true');
+    final extraDepositConfig =
+        ref.watch(skipDepositConfigProvider).asData?.value;
+    final extraDepositRupees = extraDepositConfig?.extraDepositRupees ??
+        SkipDepositConfig.fallbackRupees;
 
     return Scaffold(
       backgroundColor: colors.surface,
@@ -770,6 +796,25 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                     ],
                                                   ),
                                                 ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  isHigherDeposit
+                                                      ? 'Security Deposit: ₹${(plan.securityDeposit + extraDepositRupees).toInt()} (incl. ₹${extraDepositRupees.toInt()} skip-guarantor deposit)'
+                                                      : 'Security Deposit: ₹${plan.securityDeposit.toInt()}',
+                                                  style: GoogleFonts
+                                                      .plusJakartaSans(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.8)
+                                                        : (isHigherDeposit
+                                                            ? Colors.amber[800]
+                                                            : colors
+                                                                .onSurfaceVariant),
+                                                  ),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -801,6 +846,38 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (isHigherDeposit) ...[
+                              Container(
+                                key: const Key('skipGuarantorDepositBanner'),
+                                margin: const EdgeInsets.only(bottom: 12.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withValues(alpha: 0.12),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.md),
+                                  border: Border.all(
+                                      color:
+                                          Colors.amber.withValues(alpha: 0.4)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.info_outline,
+                                        size: 20, color: Colors.amber),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Higher security deposit (+₹${extraDepositRupees.toInt()}) applied because guarantor onboarding was skipped.',
+                                        style: AppTypography.bodySmall.copyWith(
+                                          color: colors.onSurface,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                             InkWell(
                               key: const Key('advanceRentCheckbox'),
                               onTap: () => setState(

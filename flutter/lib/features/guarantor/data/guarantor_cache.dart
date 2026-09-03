@@ -1,6 +1,13 @@
 import 'dart:convert';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 
+/// Persisted cache for the guarantor onboarding draft.
+///
+/// F-39: The guarantor form contains sensitive PII (Aadhaar, PAN, phone,
+/// personal relationships, address, and consent artifacts). It is stored
+/// in hardware-backed encrypted storage via [EncryptedCacheService] /
+/// [FlutterSecureStorage] rather than plaintext SharedPreferences.
 class GuarantorCache {
   static const _baseKey = 'guarantor_onboarding_form_cache';
 
@@ -15,23 +22,47 @@ class GuarantorCache {
         cleanData[key] = value;
       }
     });
-    await CacheService().setString(_getKey(riderId), jsonEncode(cleanData));
+
+    // Write to encrypted secure storage
+    await EncryptedCacheService().write(_getKey(riderId), cleanData);
+
+    // Clean up any legacy plaintext SharedPreferences cache
+    await CacheService().remove(_getKey(riderId));
   }
 
-  static Map<String, dynamic>? loadFormCache(String riderId) {
-    final cachedStr = CacheService().getString(_getKey(riderId));
-    if (cachedStr != null && cachedStr.isNotEmpty) {
-      try {
-        return jsonDecode(cachedStr) as Map<String, dynamic>;
-      } catch (_) {
-        return null;
+  static Future<Map<String, dynamic>?> loadFormCache(String riderId) async {
+    final key = _getKey(riderId);
+    try {
+      // 1. Primary: load from encrypted storage
+      final secureData = await EncryptedCacheService().read(key);
+      if (secureData != null && secureData.isNotEmpty) {
+        return secureData;
       }
+
+      // 2. Migration fallback: load from legacy plaintext cache
+      final cachedStr = CacheService().getString(key);
+      if (cachedStr != null && cachedStr.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(cachedStr);
+          if (decoded is Map) {
+            final mapped = Map<String, dynamic>.from(decoded);
+            // Migrate to encrypted storage and clean up plaintext
+            await EncryptedCacheService().write(key, mapped);
+            await CacheService().remove(key);
+            return mapped;
+          }
+        } catch (_) {}
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
-    return null;
   }
 
   static Future<void> clearFormCache(String riderId) async {
-    await CacheService().remove(_getKey(riderId));
+    final key = _getKey(riderId);
+    await EncryptedCacheService().delete(key);
+    await CacheService().remove(key);
   }
 
   static Future<void> clearCurrentDraft([String? riderId]) async {
@@ -39,6 +70,12 @@ class GuarantorCache {
       await clearFormCache(riderId);
     } else {
       await CacheService().invalidatePattern(_baseKey);
+      try {
+        final currentRiderId = await SecureStorageService().getRiderId();
+        if (currentRiderId != null && currentRiderId.isNotEmpty) {
+          await clearFormCache(currentRiderId);
+        }
+      } catch (_) {}
     }
   }
 }

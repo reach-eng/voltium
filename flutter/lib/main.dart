@@ -173,6 +173,8 @@ Future<void> main() async {
             wallet: preAppContainer.read(walletProvider.notifier),
             support: preAppContainer.read(supportProvider.notifier),
             rider: preAppContainer.read(riderProvider.notifier),
+            supportTickets:
+                preAppContainer.read(supportTicketsProvider.notifier),
           );
         } catch (e) {
           appDebug('Failed to initialize Firebase: $e');

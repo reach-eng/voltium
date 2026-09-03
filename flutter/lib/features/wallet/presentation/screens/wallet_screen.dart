@@ -88,9 +88,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       await Future.wait<dynamic>([
                         ref.read(riderProvider.notifier).refreshFromApi(),
                         if (riderId != null)
-                          ref
-                              .read(walletProvider.notifier)
-                              .refreshTransactions(riderId: riderId),
+                          ref.read(walletProvider.notifier).refreshTransactions(
+                                riderId: riderId,
+                                force: true,
+                              ),
                       ]);
                     },
                     child: ListView(

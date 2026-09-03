@@ -1,10 +1,9 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
-import 'package:crypto/crypto.dart';
 import '../../utils/app_logger.dart';
+import 'pinned_http_client_io.dart'
+    if (dart.library.html) 'pinned_http_client_web.dart' as platform;
 
 /// TLS Certificate Pinning Interceptor.
 ///
@@ -50,6 +49,10 @@ class PinnedHttpInterceptor {
 
   /// Creates an [http.Client] with certificate pinning awareness.
   static http.Client createClient() {
+    // Flutter web has no `dart:io` HttpClient — the `/rider-app` release-web
+    // embed would otherwise crash on import. Web TLS is terminated by the
+    // browser (same-origin `/rider-app`); pinning is a no-op there.
+    if (kIsWeb) return http.Client();
     if (kDebugMode) {
       return http.Client();
     }
@@ -71,23 +74,6 @@ class PinnedHttpInterceptor {
       );
     }
 
-    final httpClient = HttpClient(
-        context: SecurityContext(withTrustedRoots: true))
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) {
-        // Calculate the SHA-256 hash of the DER-encoded certificate
-        final digest = sha256.convert(cert.der);
-        final extractedFingerprint = base64.encode(digest.bytes);
-
-        final isValid = activeFingerprints.contains(extractedFingerprint);
-        if (!isValid) {
-          appDebug(
-            '[PinnedHttpClient] Certificate pinning validation failed for $host. '
-            'Expected one of $activeFingerprints but got $extractedFingerprint',
-          );
-        }
-        return isValid;
-      };
-
-    return IOClient(httpClient);
+    return platform.createPinnedClient(activeFingerprints);
   }
 }

@@ -69,6 +69,7 @@ class _MyDocumentsScreenState extends ConsumerState<MyDocumentsScreen> {
                       ),
                     ),
                     IconButton(
+                      tooltip: 'Close',
                       icon: const Icon(Icons.close, size: 20),
                       onPressed: () {
                         HapticService.light();

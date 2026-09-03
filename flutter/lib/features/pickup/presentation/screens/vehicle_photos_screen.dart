@@ -68,6 +68,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
               top: 40,
               left: 20,
               child: IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close, color: Colors.white, size: 30),
                 onPressed: () => Navigator.pop(ctx),
               ),

@@ -22,7 +22,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -36,14 +35,12 @@ import 'package:voltium_rider/features/support/presentation/screens/support_cent
 /// is false; the rider is moved to the dashboard when admin activates
 /// them (rank >= 11 or pickupDone = true).
 ///
-/// Auto-redirect: the screen polls the rider provider on a periodic
-/// tick, and calls [onActivated] the moment the rider's `pickupDone`
-/// boolean flips to true. Polling cadence is conservative (15s) — admin
-/// approval is a human-in-the-loop step and a real-time websocket would
-/// be premature optimization. The lifecycle gate is the primary mover;
-/// this auto-redirect is a safety net for the case where the gate fails
-/// to fire (e.g., the rider data is already up-to-date but the router
-/// hasn't been rebuilt).
+/// Auto-redirect: the screen watches the rider provider (which is
+/// polled centrally by [RiderNotifier._onboardingPoller]), and calls
+/// [onActivated] the moment the rider's `pickupDone` boolean flips to true.
+/// The lifecycle gate is the primary mover; this auto-redirect is a
+/// safety net for the case where the gate fails to fire (e.g., the
+/// rider data is already up-to-date but the router hasn't been rebuilt).
 class HangTightScreen extends ConsumerStatefulWidget {
   /// Invoked when the rider becomes active (pickupDone = true). The
   /// router wires this to its own navigation. The screen does not
@@ -78,27 +75,13 @@ class HangTightScreen extends ConsumerStatefulWidget {
 
 class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   bool _redirected = false;
-  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     PostHogService.capture('hang_tight_viewed');
-    // PR-ONBOARDING-FLOW-2026-08-11: poll for activation so a rider who
-    // is approved in another tab (admin web console) is moved to the
-    // dashboard without manual refresh. 15s is the same cadence the
-    // pre-dashboard uses for the KYC-pending case.
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 15),
-      (_) => _safeRefresh(),
-    );
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    _refreshTimer = null;
-    super.dispose();
+    // Polling is managed centrally by RiderNotifier._onboardingPoller when
+    // in AppState HangTight. Manual refresh is available via the refresh button.
   }
 
   Future<void> _safeRefresh() async {
@@ -110,13 +93,13 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
       // the rider is sent to the login screen instead of being
       // stranded on a forever-polling HangTight. Every other Api
       // exception (network drop, 500, etc.) is swallowed — the next
-      // 15s tick will retry.
+      // onboarding poller tick will retry.
       if (e.statusCode == 401) {
         if (mounted) widget.onSessionExpired?.call();
         return;
       }
     } catch (_) {
-      // Offline / transient — the next tick will retry.
+      // Offline / transient — the next poller tick will retry.
     }
   }
 
@@ -141,8 +124,6 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _redirected) return;
         _redirected = true;
-        _refreshTimer?.cancel();
-        _refreshTimer = null;
         widget.onActivated?.call();
       });
     } else if (rider != null && !rider.pickupDone && _redirected) {

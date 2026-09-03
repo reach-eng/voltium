@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// A widget that implements a staggered 'fade up' entrance animation.
@@ -26,6 +27,7 @@ class _FadeUpWidgetState extends State<FadeUpWidget>
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<Offset> _slide;
+  Timer? _delayTimer;
 
   @override
   void initState() {
@@ -53,17 +55,23 @@ class _FadeUpWidgetState extends State<FadeUpWidget>
     _startAnimation();
   }
 
-  Future<void> _startAnimation() async {
-    final startDelay =
-        Duration(milliseconds: (widget.index * widget.delay * 1000).toInt());
-    await Future.delayed(startDelay);
-    if (mounted) {
-      _controller.forward();
+  void _startAnimation() {
+    final delayMs = (widget.index * widget.delay * 1000).toInt();
+    if (delayMs <= 0) {
+      if (mounted) _controller.forward();
+      return;
     }
+    _delayTimer = Timer(Duration(milliseconds: delayMs), () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
+    _delayTimer = null;
     _controller.dispose();
     super.dispose();
   }

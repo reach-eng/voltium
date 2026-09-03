@@ -987,7 +987,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtguarantorSkipSourceFallback =>
-      'Default Ã¢â‚¬â€ admin has not set a value yet';
+      'Default — admin has not set a value yet';
 
   @override
   String get txtguarantorSkipConfirm => 'SKIP & PAY EXTRA';
@@ -2654,7 +2654,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hangTightGuarantorReplacedPendingReview =>
-      'Guarantor replaced Ã¢â‚¬â€ pending review';
+      'Guarantor replaced — pending review';
 
   @override
   String get hangTightGuarantorUnderReview => 'Guarantor under review';
@@ -2669,8 +2669,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hangTightKycApproved => 'KYC approved';
 
   @override
-  String get hangTightKycRejectedResubmit =>
-      'KYC rejected Ã¢â‚¬â€ please resubmit';
+  String get hangTightKycRejectedResubmit => 'KYC rejected — please resubmit';
 
   @override
   String get hangTightKycExpired => 'KYC expired';

@@ -102,6 +102,7 @@ class LoadingIconButton extends StatelessWidget {
   final bool isLoading;
   final Color? color;
   final double size;
+  final String? tooltip;
 
   const LoadingIconButton({
     super.key,
@@ -110,11 +111,13 @@ class LoadingIconButton extends StatelessWidget {
     this.isLoading = false,
     this.color,
     this.size = 24,
+    this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
+      tooltip: tooltip,
       onPressed: isLoading ? null : onPressed,
       icon: isLoading
           ? SizedBox(

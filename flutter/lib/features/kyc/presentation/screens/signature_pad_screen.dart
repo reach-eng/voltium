@@ -72,6 +72,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Close',
           icon: Icon(Icons.close, color: colors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),

@@ -84,6 +84,7 @@ class PhotoUploadSheet extends ConsumerWidget {
                 ],
               ),
               IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close_rounded, color: Colors.white70),
                 onPressed: () => Navigator.pop(context),
               ),

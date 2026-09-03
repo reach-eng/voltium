@@ -183,6 +183,7 @@ class _DepositWorkflowScreenState extends ConsumerState<DepositWorkflowScreen> {
         // the existing `wallet_securityDeposit` ARB key.
         title: Text(AppLocalizations.of(context)!.wallet_securityDeposit),
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             if (widget.onBack != null) {

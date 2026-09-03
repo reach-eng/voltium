@@ -5,6 +5,7 @@ import 'deposit_record.dart';
 import 'rider_lifecycle_stage.dart';
 import 'upcoming_rent_prompt.dart';
 import '../utils/lifecycle_rank.dart';
+import '../services/cache_service.dart';
 
 part 'rider_model.g.dart';
 
@@ -143,6 +144,7 @@ class RiderModel {
   final DateTime? planStartDate;
   final DateTime? planEndDate;
   final bool advanceRentPaid;
+  final bool requiresHigherDeposit;
 
   // ── Rental ──────────────────────────────────────────────────────────────
   final String rentalStatus;
@@ -250,6 +252,7 @@ class RiderModel {
     this.planStartDate,
     this.planEndDate,
     this.advanceRentPaid = false,
+    this.requiresHigherDeposit = false,
     this.rentalStatus = 'NONE',
     this.assignedVehicle,
     this.vehicleModel,
@@ -338,7 +341,8 @@ class RiderModel {
         other.depositStatus == depositStatus &&
         other.assignedVehicle == assignedVehicle &&
         other.guarantorStatus == guarantorStatus &&
-        other.planStatus == planStatus;
+        other.planStatus == planStatus &&
+        other.requiresHigherDeposit == requiresHigherDeposit;
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -354,6 +358,7 @@ class RiderModel {
           assignedVehicle,
           guarantorStatus,
           planStatus,
+          requiresHigherDeposit,
         ],
       );
 
@@ -424,6 +429,7 @@ class RiderModel {
     String? intent,
     DateTime? submissionDate,
     bool? returnPending,
+    bool? requiresHigherDeposit,
     String? preferredLocale,
     String? bankPassbook,
     String? guarantorPhoto,
@@ -497,6 +503,8 @@ class RiderModel {
       intent: intent ?? this.intent,
       submissionDate: submissionDate ?? this.submissionDate,
       returnPending: returnPending ?? this.returnPending,
+      requiresHigherDeposit:
+          requiresHigherDeposit ?? this.requiresHigherDeposit,
       preferredLocale: preferredLocale ?? this.preferredLocale,
       pickupPhotoFront: pickupPhotoFront,
       pickupPhotoBack: pickupPhotoBack,
@@ -746,6 +754,11 @@ class RiderModel {
       returnPending: json['returnPending'] as bool? ?? false,
       preferredLocale: json['preferredLocale'] as String?,
       advanceRentPaid: json['advanceRentPaid'] as bool? ?? false,
+      requiresHigherDeposit: json['requiresHigherDeposit'] == true ||
+          (json['riderId'] != null &&
+              CacheService().getString(
+                      'voltium_requires_higher_deposit:${json['riderId']}') ==
+                  'true'),
       pickupPhotoFront: json['pickupPhotoFront'] as String?,
       pickupPhotoBack: json['pickupPhotoBack'] as String?,
       pickupPhotoLeft: json['pickupPhotoLeft'] as String?,
@@ -800,6 +813,7 @@ class RiderModel {
       'planStartDate': planStartDate?.toIso8601String(),
       'planEndDate': planEndDate?.toIso8601String(),
       'paymentStreak': paymentStreak,
+      'requiresHigherDeposit': requiresHigherDeposit,
     };
   }
 
@@ -869,6 +883,11 @@ class RiderModel {
       kycDone: _toBool(cache['kycDone']) ?? false,
       planDone: _toBool(cache['planDone']) ?? false,
       pickupDone: _toBool(cache['pickupDone']) ?? false,
+      requiresHigherDeposit: cache['requiresHigherDeposit'] == true ||
+          (cache['riderId'] != null &&
+              CacheService().getString(
+                      'voltium_requires_higher_deposit:${cache['riderId']}') ==
+                  'true'),
     );
   }
 

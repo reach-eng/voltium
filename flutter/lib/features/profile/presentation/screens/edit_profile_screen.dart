@@ -265,7 +265,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           AppLocalizations.of(context)!.txtotpSentToGuarantorPhone,
         );
         // Dev / test mode only: autofill echoed OTP
-        if (kDebugMode && const String.fromEnvironment('TEST_MODE') == 'true') {
+        if (!kReleaseMode &&
+            const String.fromEnvironment('TEST_MODE') == 'true') {
           final devOtp = result['data']?['otp']?.toString();
           if (devOtp != null && devOtp.length == 6) {
             _gOtpController.text = devOtp;
@@ -496,6 +497,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
+            tooltip: 'Back',
             icon: Icon(Icons.arrow_back, color: colors.onSurface),
             onPressed: () async {
               if (!_isDirty || _isSaved) {

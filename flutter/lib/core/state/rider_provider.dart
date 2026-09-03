@@ -38,6 +38,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
     show filesRepositoryProvider;
+import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/core/polling/polling_manager.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -155,12 +156,14 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
 
   @override
   RiderState build() {
+    final initialOnline = ref.read(connectivityProvider).isOnline;
     _onboardingPoller = PollingManager(
       onTick: _onOnboardingTick,
       strategy: const PollingStrategy(
         active: Duration(seconds: 30),
         inactive: Duration(seconds: 60),
       ),
+      connectivity: initialOnline,
     );
     _postPickupPoller = PollingManager(
       onTick: _onPostPickupTick,
@@ -168,6 +171,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
         active: Duration(seconds: 60),
         inactive: Duration(seconds: 120),
       ),
+      connectivity: initialOnline,
     );
 
     // R11.2 — register as a WidgetsBindingObserver so the provider
@@ -178,6 +182,13 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     // R4.5 — Scope polling & background timers strictly to active AppState screen lifecycles
     ref.listen<AppState>(appStateProvider, (previous, next) {
       _applyAppStatePollingPolicy(next);
+    });
+
+    // F-15: Wire connectivity state changes directly into PollingManager instances
+    ref.listen<ConnectivityState>(connectivityProvider, (previous, next) {
+      if (previous?.isOnline != next.isOnline) {
+        setPollingConnectivity(next.isOnline);
+      }
     });
 
     ref.onDispose(() {
@@ -225,8 +236,12 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
       state = state.copyWith(clearLastSessionExpiredAt: true);
     }
 
-    // Attempt cache read.
-    final cached = CacheService().getCachedRider();
+    // Attempt cache read (validating TTL & version).
+    final cacheService = CacheService();
+    if (!cacheService.isRiderCacheValid()) {
+      await cacheService.clearRiderCache();
+    }
+    final cached = cacheService.getCachedRider();
     if (cached != null) {
       final rider = RiderModel.fromCacheMap(cached);
       state = state.copyWith(
@@ -417,7 +432,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
         _postPickupPoller.stop();
         _stopDeviceDataSync();
         final r = state.rider;
-        if (r != null && !r.pickupDone && _onboardingPollCount <= 240) {
+        if ((r == null || !r.pickupDone) && _onboardingPollCount <= 240) {
           startOnboardingPoll();
         }
         break;
@@ -443,7 +458,9 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   void startOnboardingPoll() {
     if (!ref.mounted) return;
     final appState = ref.read(appStateProvider);
-    if (appState is! Onboarding && appState is! PreDashboard) return;
+    if (appState is! Onboarding &&
+        appState is! PreDashboard &&
+        appState is! HangTight) return;
     if (_onboardingPoller.isRunning) return;
     _onboardingPollCount = 0;
     state = state.copyWith(isPollingTimedOut: false);
@@ -453,6 +470,7 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   void stopPolling() {
     _onboardingPoller.stop();
     _postPickupPoller.stop();
+    _stopDeviceDataSync();
   }
 
   void startPostPickupPoll() {
@@ -473,10 +491,24 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     _postPickupPoller.inactive();
   }
 
+  void setPollingConnectivity(bool isOnline) {
+    _onboardingPoller.setConnectivity(isOnline);
+    _postPickupPoller.setConnectivity(isOnline);
+  }
+
+  @visibleForTesting
+  PollingManager get onboardingPoller => _onboardingPoller;
+
+  @visibleForTesting
+  PollingManager get postPickupPoller => _postPickupPoller;
+
   Future<void> _onOnboardingTick() async {
     const maxPolls = 240;
     final rider = state.rider;
-    if (rider == null) return;
+    if (rider == null) {
+      await refreshFromApi();
+      return;
+    }
 
     if (rider.pickupDone) {
       _onboardingPoller.stop();

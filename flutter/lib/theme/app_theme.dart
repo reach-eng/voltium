@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// R2.2 (2026-07-31) — removed 5 dead colors that had **zero** call-sites in
 /// `flutter/lib/`:
@@ -472,7 +473,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
+      textTheme: AppTypography.material3TextTheme(AppColors.onSurface),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
@@ -630,8 +631,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      textTheme:
-          GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
+      textTheme: AppTypography.material3TextTheme(darkColors.onSurface),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,

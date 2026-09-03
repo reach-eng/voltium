@@ -24,6 +24,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
+          tooltip: 'Back',
           icon: Icon(
             Icons.arrow_back,
             color: colors.onSurface,
@@ -257,6 +258,7 @@ class _ContactCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              tooltip: 'Call contact',
               icon: const Icon(Icons.phone, color: AppColors.success),
               onPressed: onCall,
             ),

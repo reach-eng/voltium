@@ -66,7 +66,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     if (riderId != null) {
       await ref
           .read(walletProvider.notifier)
-          .refreshTransactions(riderId: riderId);
+          .refreshTransactions(riderId: riderId, force: true);
     }
   }
 

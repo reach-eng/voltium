@@ -56,7 +56,13 @@ class CacheService {
   /// **Synchronous** – returns the cached rider map or `null`.
   ///
   /// Returns only the lightweight fields cached by [cacheRider].
+  /// Enforces TTL and version validity — if expired or mismatched,
+  /// the stale cache is evicted and null is returned.
   Map<String, dynamic>? getCachedRider() {
+    if (!isRiderCacheValid()) {
+      clearRiderCache();
+      return null;
+    }
     final raw = _prefs?.getString(_keyRiderCache);
     if (raw == null || raw.isEmpty) return null;
     try {

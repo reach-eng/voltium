@@ -74,9 +74,12 @@ import '../features/dashboard/presentation/screens/hang_tight_screen.dart';
 // dedicated deposit workflow screen is archived in `legacy/`
 // in case the older flow needs to be brought back.
 
+import 'package:flutter/scheduler.dart';
 import '../features/support/presentation/screens/faq_screen.dart';
 import '../features/referrals/presentation/screens/referral_screen.dart';
 
+import '../core/navigation/app_state.dart';
+import '../core/navigation/app_state_notifier.dart';
 import 'app_state.dart';
 import 'auth_state_group.dart';
 
@@ -367,7 +370,9 @@ class _AppRouterState extends ConsumerState<AppRouter>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    final cachedRider = CacheService().getCachedRider();
+    final cacheService = CacheService();
+    final cachedRider =
+        cacheService.isRiderCacheValid() ? cacheService.getCachedRider() : null;
     _isSignUpFlow = cachedRider == null || cachedRider['id'] == null;
     _startupState = AuthState.splash;
     _currentState = _startupState;
@@ -383,6 +388,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
+        _syncAppState(_currentState);
         ref.read(riderProvider.notifier).init();
         ref.read(supportProvider.notifier).initSupportData();
         ref.read(engagementProvider.notifier).initEngagementData();
@@ -416,6 +422,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
       _currentState = AuthState.login;
       _isOnboarding = false;
     });
+    _syncAppState(AuthState.login);
     CacheService().setString('voltium_saved_auth_state', AuthState.login.name);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -538,6 +545,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
               // handles that edge case.
               _isOnboarding = _computeIsOnboarding(correctState);
             });
+            _syncAppState(correctState);
             CacheService()
                 .setString('voltium_saved_auth_state', correctState.name);
           }
@@ -554,10 +562,38 @@ class _AppRouterState extends ConsumerState<AppRouter>
           setState(() {
             _currentState = AuthState.login;
           });
+          _syncAppState(AuthState.login);
           CacheService()
               .setString('voltium_saved_auth_state', AuthState.login.name);
         }
       });
+    }
+  }
+
+  /// F-02 fix: Synchronizes the Riverpod [appStateProvider] state machine
+  /// with the local router's [AuthState]. Ensures restored sessions, deep
+  /// links, and state transitions advance [appStateProvider] from its initial
+  /// Splash state so that downstream polling and background sync loops
+  /// (e.g. RiderProvider's post-pickup poll and device data sync) start
+  /// as expected.
+  void _syncAppState(AuthState authState) {
+    void doSync() {
+      if (!mounted) return;
+      try {
+        final targetAppState = appStateFromAuthState(authState);
+        if (ref.read(appStateProvider) != targetAppState) {
+          ref.read(appStateProvider.notifier).replaceState(targetAppState);
+        }
+      } catch (e) {
+        appDebug('[AppRouter] Failed to sync appState: $e');
+      }
+    }
+
+    if (WidgetsBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => doSync());
+    } else {
+      doSync();
     }
   }
 
@@ -574,6 +610,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
       // sub-screen the rider is currently on.
       _isOnboarding = _computeIsOnboarding(nextState);
     });
+    _syncAppState(nextState);
 
     if (nextState != AuthState.splash) {
       CacheService().setString('voltium_saved_auth_state', nextState.name);

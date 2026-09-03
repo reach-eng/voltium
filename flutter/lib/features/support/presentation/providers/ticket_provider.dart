@@ -2,7 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
+import 'package:voltium_rider/features/support/domain/repository.dart';
 import 'package:voltium_rider/features/support/data/repository_impl.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart'
+    show supportRepositoryProvider;
 
 enum TicketFilter { all, open, assigned, inProgress, resolved, closed }
 
@@ -45,11 +48,18 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
     return TicketState(isLoading: true);
   }
 
+  SupportRepository get _repo {
+    try {
+      return ref.read(supportRepositoryProvider);
+    } catch (_) {
+      return SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
+    }
+  }
+
   Future<void> fetchTickets() async {
     state = state.copyWith(isLoading: true);
     try {
-      final repository = SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
-      final response = await repository.fetchTickets();
+      final response = await _repo.fetchTickets();
       final data = response['tickets'] as List<dynamic>?;
       if (data != null) {
         final parsed = data

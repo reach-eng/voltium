@@ -25,8 +25,8 @@ import 'dart:io';
 
 void main(List<String> args) {
   if (args.isEmpty) {
-    stderr.writeln(
-        'Usage: dart run scripts/scaffold_locale.dart <locale-code>');
+    stderr
+        .writeln('Usage: dart run scripts/scaffold_locale.dart <locale-code>');
     stderr.writeln('Example: dart run scripts/scaffold_locale.dart ta');
     exit(64);
   }
@@ -87,7 +87,8 @@ void main(List<String> args) {
   stdout.writeln('  1. Translate the values in ${outPath.path}');
   stdout.writeln(
       '  2. Uncomment the "$code" entry in lib/core/localization/locale_provider.dart');
-  stdout.writeln('  3. Add "$code" to preferred-supported-locales in l10n.yaml');
+  stdout
+      .writeln('  3. Add "$code" to preferred-supported-locales in l10n.yaml');
   stdout.writeln('  4. Run: flutter gen-l10n');
   stdout.writeln('  5. Run: flutter test test/core/i18n_test.dart');
 }

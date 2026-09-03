@@ -9,6 +9,8 @@ import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 
 class TopUpAmountScreen extends ConsumerStatefulWidget {
   final Function(int)? onProceed;
@@ -43,9 +45,27 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   @override
   void initState() {
     super.initState();
-    final isAdvanceRentPaid =
-        ref.read(riderProvider).rider?.advanceRentPaid ?? false;
-    final secDeposit = widget.securityDeposit ?? 0;
+    final rider = ref.read(riderProvider).rider;
+    final riderId = rider?.riderId;
+    final isHigherDeposit = rider?.requiresHigherDeposit == true ||
+        (riderId != null &&
+            CacheService()
+                    .getString('voltium_requires_higher_deposit:$riderId') ==
+                'true');
+    final int extraDeposit = isHigherDeposit
+        ? (ref
+                .read(skipDepositConfigProvider)
+                .asData
+                ?.value
+                .extraDepositRupees
+                .toInt() ??
+            SkipDepositConfig.fallbackRupees.toInt())
+        : 0;
+
+    final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
+    final baseDeposit = widget.securityDeposit ?? 0;
+    final secDeposit =
+        isHigherDeposit ? (baseDeposit + extraDeposit) : baseDeposit;
     final rentPrice = widget.rentalPrice ?? 0;
 
     // Auto-fill required top-up amount:
@@ -108,11 +128,29 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   /// each rebuild via _planTotal() called from _buildTopUpBreakdownCard.
   int get _requiredMinAmount {
     final rider = ref.read(riderProvider).rider;
+    final riderId = rider?.riderId;
+    final isHigherDeposit = rider?.requiresHigherDeposit == true ||
+        (riderId != null &&
+            CacheService()
+                    .getString('voltium_requires_higher_deposit:$riderId') ==
+                'true');
+    final int extraDeposit = isHigherDeposit
+        ? (ref
+                .read(skipDepositConfigProvider)
+                .asData
+                ?.value
+                .extraDepositRupees
+                .toInt() ??
+            SkipDepositConfig.fallbackRupees.toInt())
+        : 0;
+
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
-    final secDeposit =
+    final baseSecDeposit =
         (widget.securityDeposit != null && widget.securityDeposit! > 0)
             ? widget.securityDeposit!
             : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
+    final secDeposit =
+        isHigherDeposit ? (baseSecDeposit + extraDeposit) : baseSecDeposit;
     final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
         ? widget.rentalPrice!
         : (rider?.activeRentalPlanPrice.toInt() ?? 0);
@@ -156,11 +194,29 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   Widget _buildTopUpBreakdownCard() {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final riderId = rider?.riderId;
+    final isHigherDeposit = rider?.requiresHigherDeposit == true ||
+        (riderId != null &&
+            CacheService()
+                    .getString('voltium_requires_higher_deposit:$riderId') ==
+                'true');
+    final int extraDeposit = isHigherDeposit
+        ? (ref
+                .watch(skipDepositConfigProvider)
+                .asData
+                ?.value
+                .extraDepositRupees
+                .toInt() ??
+            SkipDepositConfig.fallbackRupees.toInt())
+        : 0;
+
     final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
-    final secDeposit =
+    final baseDeposit =
         (widget.securityDeposit != null && widget.securityDeposit! > 0)
             ? widget.securityDeposit!
             : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
+    final secDeposit =
+        isHigherDeposit ? (baseDeposit + extraDeposit) : baseDeposit;
     final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
         ? widget.rentalPrice!
         : (rider?.activeRentalPlanPrice.toInt() ?? 0);
@@ -174,6 +230,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     );
 
     final colors = AppColors.of(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
@@ -204,7 +261,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             ],
           ),
           const SizedBox(height: 12),
-          if (secDeposit > 0)
+          if (baseDeposit > 0)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -216,11 +273,28 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   Text(AppLocalizations.of(context)!.wallet_securityDeposit,
                       style: TextStyle(
                           fontSize: 13, color: colors.onSurfaceMuted)),
-                  Text('₹$secDeposit',
+                  Text('₹$baseDeposit',
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: colors.onSurface)),
+                ],
+              ),
+            ),
+          if (isHigherDeposit)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                key: const Key('skipGuarantorExtraDepositRow'),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Extra Deposit (Skipped Guarantor)',
+                      style: TextStyle(fontSize: 13, color: Colors.amber[800])),
+                  Text('₹$extraDeposit',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.amber[800])),
                 ],
               ),
             ),

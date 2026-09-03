@@ -8,6 +8,7 @@ import '../utils/app_logger.dart' show appDebug;
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import 'notification_service.dart';
@@ -15,6 +16,7 @@ import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/services/cache_service.dart';
 
 class FCMService {
   static const _channel =
@@ -22,8 +24,26 @@ class FCMService {
   static DevicePolicyProvider? _devicePolicy;
   static WalletProvider? _wallet;
   static SupportProvider? _support;
+  static SupportTicketsNotifier? _supportTickets;
   static RiderProvider? _rider;
   static StreamSubscription<RemoteMessage>? _foregroundSubscription;
+  static StreamSubscription<RemoteMessage>? _onMessageOpenedAppSubscription;
+  static Timer? _retryTimer;
+  static const String _kSyncedFcmTokenKey = 'synced_fcm_token';
+  static const String _kPendingFcmTokenKey = 'pending_fcm_token';
+
+  /// Global callback invoked when the app is opened via a notification tap.
+  static void Function(RemoteMessage message)? onMessageOpenedAppCallback;
+
+  /// Broadcast stream of RemoteMessages that opened the app.
+  static final StreamController<RemoteMessage>
+      _messageOpenedAppStreamController =
+      StreamController<RemoteMessage>.broadcast();
+
+  /// Stream of RemoteMessages that opened the app.
+  static Stream<RemoteMessage> get onMessageOpenedAppStream =>
+      _messageOpenedAppStreamController.stream;
+
   static final Map<String, int> _seenSecurityChallenges = <String, int>{};
   static const _securityReplayWindow = Duration(minutes: 5);
 
@@ -193,11 +213,13 @@ class FCMService {
     required WalletProvider wallet,
     required SupportProvider support,
     required RiderProvider rider,
+    SupportTicketsNotifier? supportTickets,
   }) {
     _devicePolicy = devicePolicy;
     _wallet = wallet;
     _support = support;
     _rider = rider;
+    _supportTickets = supportTickets;
   }
 
   @visibleForTesting
@@ -215,16 +237,31 @@ class FCMService {
     return _seenSecurityChallenges.containsKey(key);
   }
 
+  @visibleForTesting
+  static SupportTicketsNotifier? get supportTickets => _supportTickets;
+
+  @visibleForTesting
+  static void setSupportTicketsForTesting(SupportTicketsNotifier? notifier) {
+    _supportTickets = notifier;
+  }
+
+  @visibleForTesting
+  static void setSupportForTesting(SupportProvider? notifier) {
+    _support = notifier;
+  }
+
   static Future<void> initialize({
     required DevicePolicyProvider devicePolicy,
     required WalletProvider wallet,
     required SupportProvider support,
     required RiderProvider rider,
+    SupportTicketsNotifier? supportTickets,
   }) async {
     _devicePolicy = devicePolicy;
     _wallet = wallet;
     _support = support;
     _rider = rider;
+    _supportTickets = supportTickets;
 
     if (PlatformInfo.isWeb) {
       appDebug('FCM: Initialization skipped on web');
@@ -266,6 +303,28 @@ class FCMService {
       }
     });
 
+    // F-27: Handle notification tap when app is opened from background
+    await _onMessageOpenedAppSubscription?.cancel();
+    _onMessageOpenedAppSubscription = FirebaseMessaging.onMessageOpenedApp
+        .listen((RemoteMessage message) async {
+      appDebug('FCM: onMessageOpenedApp received: ${message.data}');
+      await handleMessageOpenedApp(message);
+    });
+
+    // F-27: Check if app was opened from terminated state by tapping a notification
+    try {
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        appDebug('FCM: getInitialMessage received: ${initialMessage.data}');
+        await handleMessageOpenedApp(initialMessage);
+      }
+    } catch (e) {
+      appDebug('FCM: getInitialMessage failed: $e');
+    }
+
+    // Attempt to retry any previously pending token sync from an offline state
+    unawaited(retryPendingTokenSync());
+
     // Register FCM token with backend
     try {
       final token = await messaging.getToken();
@@ -281,22 +340,59 @@ class FCMService {
   }
 
   static Future<void> _syncTokenToBackend(String token) async {
+    final cache = CacheService();
+    final synced = cache.getString(_kSyncedFcmTokenKey);
+    if (synced == token) {
+      appDebug('FCM: Token already synced to backend');
+      return;
+    }
+
     try {
       await VoltiumApiClient(ApiClient())
           .postRidersRegisterToken({'fcmToken': token});
+      await cache.setString(_kSyncedFcmTokenKey, token);
+      await cache.remove(_kPendingFcmTokenKey);
+      _retryTimer?.cancel();
+      _retryTimer = null;
       appDebug('FCM: Token synced to backend successfully');
     } catch (e) {
-      appDebug('FCM: Failed to sync token to backend: $e');
+      appDebug(
+          'FCM: Failed to sync token to backend: $e. Queuing for offline retry.');
+      await cache.setString(_kPendingFcmTokenKey, token);
+      _scheduleRetry();
     }
   }
 
+  /// Retries syncing any pending FCM token that failed during offline startup
+  static Future<void> retryPendingTokenSync() async {
+    final cache = CacheService();
+    final pending = cache.getString(_kPendingFcmTokenKey);
+    if (pending != null && pending.isNotEmpty) {
+      appDebug('FCM: Retrying sync of pending token...');
+      await _syncTokenToBackend(pending);
+    }
+  }
+
+  static void _scheduleRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = Timer(const Duration(seconds: 30), () {
+      retryPendingTokenSync();
+    });
+  }
+
   static Future<void> dispose() async {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     await _foregroundSubscription?.cancel();
     _foregroundSubscription = null;
+    await _onMessageOpenedAppSubscription?.cancel();
+    _onMessageOpenedAppSubscription = null;
+    onMessageOpenedAppCallback = null;
     _devicePolicy = null;
     _wallet = null;
     _support = null;
     _rider = null;
+    _supportTickets = null;
     _seenSecurityChallenges.clear();
   }
 
@@ -322,7 +418,8 @@ class FCMService {
   ];
 
   @visibleForTesting
-  static List<String> get debugBackendTopics => List.unmodifiable(_backendTopics);
+  static List<String> get debugBackendTopics =>
+      List.unmodifiable(_backendTopics);
 
   /// Subscribe to (or unsubscribe from) the backend topics the rider
   /// is opted into. Called by the notification-preferences screen
@@ -357,7 +454,8 @@ class FCMService {
         appDebug('FCM: setPushMuted topic=$topic muted=$muted failed: $e');
       }
     }
-    appDebug('FCM: setPushMuted($muted) — ${_backendTopics.length} topics processed');
+    appDebug(
+        'FCM: setPushMuted($muted) — ${_backendTopics.length} topics processed');
   }
 
   @visibleForTesting
@@ -467,14 +565,34 @@ class FCMService {
       _rider?.refresh();
     } else if (action == 'SUPPORT_REPLY') {
       _support?.refreshTickets();
+      _supportTickets?.fetchTickets();
     } else if (action == 'DEPOSIT_APPROVED') {
       // Refresh both rider profile (updated lifecycle status) and wallet (security deposit + bonus)
       _rider?.refresh();
       final riderId = _rider?.rider?.id;
       if (riderId != null) {
-        _wallet?.refreshTransactions(riderId: riderId);
+        _wallet?.refreshTransactions(riderId: riderId, force: true);
       }
     }
+  }
+
+  /// F-27: Handles a notification that was tapped by the user causing the app
+  /// to open from background or terminated state.
+  @visibleForTesting
+  static Future<void> handleMessageOpenedApp(RemoteMessage message) async {
+    final data = message.data;
+    appDebug('FCM: handleMessageOpenedApp with data: $data');
+
+    final action = data['action'] as String?;
+    if (data['type'] == 'OVERLAY_TRIGGER' ||
+        (action != null && _allowedOverlayActions.contains(action))) {
+      handleOverlayTrigger(message);
+    } else if (isKycPushType(data['type'] as String?)) {
+      _rider?.refresh();
+    }
+
+    onMessageOpenedAppCallback?.call(message);
+    _messageOpenedAppStreamController.add(message);
   }
 
   static Future<String?> getToken() async {

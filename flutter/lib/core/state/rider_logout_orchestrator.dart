@@ -13,6 +13,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
 // D-P2-11: the pickup-draft cache key constant lives in rider_provider.dart
@@ -161,6 +162,22 @@ class RiderLogoutOrchestrator {
       DocumentLocalCache.clearAll();
     } catch (e) {
       appDebug('[logout-orchestrator] document cache clear failed: $e');
+    }
+
+    // AUDIT FIX (F-08): Wipe SQLite offline storage (including pending_operations)
+    // to prevent cross-account leaks of queued mutations on shared devices.
+    try {
+      await OfflineStorageService().clearAll();
+    } catch (e) {
+      appDebug('[logout-orchestrator] offline storage clear failed: $e');
+    }
+
+    // AUDIT FIX (F-08): Wipe cached rider credentials so the next user is never
+    // hydrated with the previous rider's session state.
+    try {
+      await CacheService().clearRiderCache();
+    } catch (e) {
+      appDebug('[logout-orchestrator] rider cache clear failed: $e');
     }
   }
 }

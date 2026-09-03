@@ -1892,7 +1892,7 @@ abstract class AppLocalizations {
   /// Sub-label on the skip dialog when the admin endpoint is unreachable and a default amount is being used
   ///
   /// In en, this message translates to:
-  /// **'Default Ã¢â‚¬â€ admin has not set a value yet'**
+  /// **'Default — admin has not set a value yet'**
   String get txtguarantorSkipSourceFallback;
 
   /// Confirm-button label on the skip-guarantor dialog
@@ -4981,7 +4981,7 @@ abstract class AppLocalizations {
   /// No description provided for @hangTightGuarantorReplacedPendingReview.
   ///
   /// In en, this message translates to:
-  /// **'Guarantor replaced Ã¢â‚¬â€ pending review'**
+  /// **'Guarantor replaced — pending review'**
   String get hangTightGuarantorReplacedPendingReview;
 
   /// No description provided for @hangTightGuarantorUnderReview.
@@ -5011,7 +5011,7 @@ abstract class AppLocalizations {
   /// No description provided for @hangTightKycRejectedResubmit.
   ///
   /// In en, this message translates to:
-  /// **'KYC rejected Ã¢â‚¬â€ please resubmit'**
+  /// **'KYC rejected — please resubmit'**
   String get hangTightKycRejectedResubmit;
 
   /// No description provided for @hangTightKycExpired.

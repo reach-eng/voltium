@@ -540,6 +540,14 @@ class VoltiumApiClient {
     return response;
   }
 
+  /// Set Lock Password
+  Future<Map<String, dynamic>> postRiderDeviceSetLock(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/rider/device/set-lock', body: request);
+    return response;
+  }
+
   /// List Hubs
   Future<Map<String, dynamic>> getRiderHubs() async {
     final response = await _client.get('/api/rider/hubs');

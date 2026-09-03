@@ -161,6 +161,7 @@ class _PickupVerificationScreenState
         title: Text(AppLocalizations.of(context)?.txtfinalVerification ??
             'Final Verification'),
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
           onPressed: () => widget.onBack?.call(),
         ),

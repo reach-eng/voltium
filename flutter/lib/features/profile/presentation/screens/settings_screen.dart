@@ -79,6 +79,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         centerTitle: false,
         leading: IconButton(
           key: const Key('backButton'),
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             HapticService.light();
@@ -296,7 +297,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 title: l10n?.settings_rateUs ?? 'Rate us',
                 onTap: () async {
                   final url = Uri.parse(
-                      'https://play.google.com/store/apps/details?id=com.voltium.rider');
+                      'https://play.google.com/store/apps/details?id=com.voltiumelectric.voltium');
                   try {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   } catch (e) {

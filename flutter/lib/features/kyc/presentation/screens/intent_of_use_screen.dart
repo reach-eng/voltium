@@ -45,6 +45,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => widget.onBack?.call(),
         ),

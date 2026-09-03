@@ -100,6 +100,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                   const Spacer(),
                   IconButton(
                     key: const Key('callTeamLeaderButton'),
+                    tooltip: 'Call team leader',
                     onPressed: () async {
                       HapticService.light();
                       // PR-AUDIT-FIX 2026-08-17 (AD-P0-1): dial the assigned Team Leader's phone

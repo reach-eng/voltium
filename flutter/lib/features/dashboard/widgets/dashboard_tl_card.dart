@@ -110,6 +110,7 @@ class TeamLeaderCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: IconButton(
+                      tooltip: 'Call team leader',
                       icon: Icon(
                         Icons.phone,
                         color: colors.onSurfaceVariant,
