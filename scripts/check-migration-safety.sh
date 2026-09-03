@@ -68,16 +68,18 @@ GRANDFATHERED=("20260729150000_float_to_paise" "20260730131814_convert_json_colu
 WARN_PATTERNS=("ALTER TABLE.*ADD COLUMN.*NOT NULL[^,)]*\)")
 FAILED=0
 
-for pattern in "${UNSAFE_PATTERNS[@]}"; do
-  for file in "${SQL_FILES[@]}"; do
-    # Skip grandfathered history (see GRANDFATHERED above).
-    skip=0
-    for g in "${GRANDFATHERED[@]}"; do
-      if [[ "$file" == *"/$g/"* ]]; then skip=1; break; fi
-    done
-    if [ "$skip" -eq 1 ]; then continue; fi
-    # Strip SQL single-line (-- ...) and block (/* ... */) comments before matching
-    cleaned_sql=$(sed -E 's/--.*$//g' "$file" | tr '\n' '\r' | sed -E 's/\/\*.*?\*\///g' | tr '\r' '\n')
+for file in "${SQL_FILES[@]}"; do
+  # Skip grandfathered history (see GRANDFATHERED above).
+  skip=0
+  for g in "${GRANDFATHERED[@]}"; do
+    if [[ "$file" == *"/$g/"* ]]; then skip=1; break; fi
+  done
+  if [ "$skip" -eq 1 ]; then continue; fi
+
+  # Strip SQL single-line (-- ...) and block (/* ... */) comments before matching
+  cleaned_sql=$(sed -E 's/--.*$//g' "$file" | tr '\n' '\r' | sed -E 's/\/\*.*?\*\///g' | tr '\r' '\n')
+
+  for pattern in "${UNSAFE_PATTERNS[@]}"; do
     matches=$(echo "$cleaned_sql" | grep -inE "$pattern" || true)
     if [ -n "$matches" ]; then
       echo "In $file matching '$pattern':"
@@ -86,12 +88,9 @@ for pattern in "${UNSAFE_PATTERNS[@]}"; do
       FAILED=1
     fi
   done
-done
 
-# Warning patterns — printed but don't fail the check.
-for pattern in "${WARN_PATTERNS[@]}"; do
-  for file in "${SQL_FILES[@]}"; do
-    cleaned_sql=$(sed -E 's/--.*$//g' "$file" | tr '\n' '\r' | sed -E 's/\/\*.*?\*\///g' | tr '\r' '\n')
+  # Warning patterns — printed but don't fail the check.
+  for pattern in "${WARN_PATTERNS[@]}"; do
     matches=$(echo "$cleaned_sql" | grep -inE "$pattern" || true)
     if [ -n "$matches" ]; then
       echo "In $file matching '$pattern':"
