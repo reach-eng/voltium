@@ -192,7 +192,7 @@ if (!_env.success) {
 
 const parsedEnv = _env.data;
 
-if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 'production')) {
+if (isServer && (parsedEnv.APP_ENV === 'production' || (process.env.NODE_ENV === 'production' && parsedEnv.APP_ENV !== 'development'))) {
   if (!process.env.CRON_SECRET) {
     throw new Error(
       'Production architecture violation: CRON_SECRET environment variable is required.'
