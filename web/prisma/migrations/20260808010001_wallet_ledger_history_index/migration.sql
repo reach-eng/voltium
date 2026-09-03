@@ -25,5 +25,7 @@
 -- `prisma db push` that skipped the @@index migration).
 
 -- CreateIndex (no-op on the current dev DB; the index already exists)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "wallet_ledgers_riderId_createdAt_idx"
+-- P0 fix 2026-09-03: plain CREATE INDEX (no CONCURRENTLY) — Prisma migrate
+-- deploy runs inside a transaction where CONCURRENTLY is forbidden.
+CREATE INDEX IF NOT EXISTS "wallet_ledgers_riderId_createdAt_idx"
   ON "wallet_ledgers"("riderId", "createdAt");

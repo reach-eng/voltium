@@ -12,13 +12,15 @@
  *   `@@index([riderId, createdAt])` and applied to the dev DB by a prior
  *   migration). The new migration
  *   20260808000001_wallet_ledger_history_index is a no-op on the current
- *   DB (CONCURRENTLY IF NOT EXISTS) but guarantees the index exists on
+ *   DB (plain IF NOT EXISTS) but guarantees the index exists on
  *   any environment where the schema-declared index didn't apply
  *   (e.g. a DB created via `prisma db push`).
+ *   P0 fix 2026-09-03: plain CREATE INDEX, no CONCURRENTLY (forbidden
+ *   inside Prisma migrate deploy transactions).
  *
  * What this test asserts (pure file inspection — no DB required):
  *   1. The migration file exists at the expected path
- *   2. The migration uses CREATE INDEX CONCURRENTLY IF NOT EXISTS
+ *   2. The migration uses plain CREATE INDEX IF NOT EXISTS (no CONCURRENTLY)
  *   3. The migration targets the correct (riderId, createdAt) columns
  *   4. schema.prisma declares the same index (single source of truth)
  *   5. The hot-path query (getLedgerEntries) actually filters on
@@ -32,7 +34,7 @@ import { resolve } from 'path';
 
 const MIGRATION_PATH = resolve(
   __dirname,
-  '../../prisma/migrations/20260808000001_wallet_ledger_history_index/migration.sql'
+  '../../prisma/migrations/20260808010001_wallet_ledger_history_index/migration.sql'
 );
 const SCHEMA_PATH = resolve(__dirname, '../../prisma/schema.prisma');
 const REPOSITORY_PATH = resolve(
@@ -60,10 +62,11 @@ describe('PR-121: wallet_ledgers(riderId, createdAt) covering index', () => {
     expect(existsSync(MIGRATION_PATH)).toBe(true);
   });
 
-  it('migration declares CREATE INDEX CONCURRENTLY IF NOT EXISTS', () => {
+  it('migration declares plain CREATE INDEX IF NOT EXISTS (no CONCURRENTLY)', () => {
     expect(migration).toMatch(
-      /CREATE INDEX CONCURRENTLY IF NOT EXISTS "wallet_ledgers_riderId_createdAt_idx"/
+      /CREATE INDEX IF NOT EXISTS "wallet_ledgers_riderId_createdAt_idx"/
     );
+    expect(migrationNoComments).not.toMatch(/CONCURRENTLY/);
   });
 
   it('migration targets the correct (riderId, createdAt) columns', () => {

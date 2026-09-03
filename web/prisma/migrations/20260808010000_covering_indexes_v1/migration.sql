@@ -28,9 +28,10 @@
 --     - MISSING: (riderId, status, createdAt) — used by the rider-side "my
 --       leases" timeline (rider.repository.ts:36)
 --
--- All CREATE INDEX statements are CONCURRENTLY IF NOT EXISTS so the migration
--- is safe to run on a non-empty table and is fully idempotent. The IF NOT
--- EXISTS also makes the migration re-runnable.
+-- All CREATE INDEX statements are plain IF NOT EXISTS (transactional,
+-- idempotent, re-runnable). CONCURRENTLY is intentionally NOT used: Prisma
+-- migrate deploy wraps each migration in a transaction where CONCURRENTLY
+-- is forbidden.
 --
 -- We deliberately do NOT add a `prisma` declaration in schema.prisma for
 -- these indexes because they are not in the Prisma schema's @@index list
@@ -38,26 +39,28 @@
 -- raw-SQL CREATE INDEX pattern is the same one used in
 -- 20260802000000_cache_indexes_v2 and 20260630000000_perf_indexes.
 --
--- Order matters: each CREATE INDEX is independent. CONCURRENTLY cannot
--- run inside a transaction block, so this file is intentionally a series
--- of standalone statements (no BEGIN/COMMIT).
+-- P0 fix 2026-09-03: Prisma `migrate deploy` wraps each migration in a
+-- transaction block, and Postgres forbids CONCURRENTLY inside a transaction.
+-- The previous CONCURRENTLY version failed every fresh/staging deploy.
+-- Use plain IF NOT EXISTS here (transactional, idempotent); run concurrent
+-- backfills out-of-band if a table is too hot to lock briefly.
 
 -- CreateIndex (outbox_events)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "outbox_events_status_readyAt_idx"
+CREATE INDEX IF NOT EXISTS "outbox_events_status_readyAt_idx"
   ON "outbox_events"("status", "readyAt");
 
 -- CreateIndex (audit_logs)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "audit_logs_action_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "audit_logs_action_createdAt_idx"
   ON "audit_logs"("action", "createdAt");
 
 -- CreateIndex (support_tickets)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "support_tickets_status_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "support_tickets_status_createdAt_idx"
   ON "support_tickets"("status", "createdAt");
 
 -- CreateIndex (backup_jobs)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "backup_jobs_status_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "backup_jobs_status_createdAt_idx"
   ON "backup_jobs"("status", "createdAt");
 
 -- CreateIndex (rental_leases) — composite for rider-side "my leases" timeline
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "rental_leases_riderId_status_createdAt_idx"
+CREATE INDEX IF NOT EXISTS "rental_leases_riderId_status_createdAt_idx"
   ON "rental_leases"("riderId", "status", "createdAt");

@@ -10,16 +10,18 @@
  *   These were confirmed missing on 2026-08-04 via
  *   web/scripts/inspect-indexes.ts. The new migration
  *   20260808000000_covering_indexes_v1 creates all 5 with
- *   CREATE INDEX CONCURRENTLY IF NOT EXISTS.
+ *   plain CREATE INDEX IF NOT EXISTS.
  *
  * What this test asserts (pure file inspection — no DB required):
  *   1. The migration file exists at the expected path
  *   2. The migration contains all 5 expected CREATE INDEX statements
  *   3. Each CREATE INDEX uses the snake_case table name
- *   4. Each CREATE INDEX uses CONCURRENTLY IF NOT EXISTS (safe on a
- *      non-empty table, idempotent on re-run)
- *   5. The migration does NOT declare these indexes in a BEGIN/COMMIT
- *      block (CONCURRENTLY cannot run inside a transaction)
+ *   4. Each CREATE INDEX is plain IF NOT EXISTS WITHOUT CONCURRENTLY
+ *      (P0 fix 2026-09-03: Prisma migrate deploy wraps each migration in a
+ *      transaction, where CONCURRENTLY is forbidden — the old version failed
+ *      every fresh/staging deploy)
+ *   5. The migration is transactional (no BEGIN/COMMIT needed — plain
+ *      statements run inside Prisma's migration transaction)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -28,7 +30,7 @@ import { resolve } from 'path';
 
 const MIGRATION_PATH = resolve(
   __dirname,
-  '../../prisma/migrations/20260808000000_covering_indexes_v1/migration.sql'
+  '../../prisma/migrations/20260808010000_covering_indexes_v1/migration.sql'
 );
 
 const EXPECTED_INDEXES = [
@@ -59,7 +61,7 @@ describe('PR-120: covering indexes for hot query paths', () => {
 
   it('migration declares all 5 expected covering indexes', () => {
     for (const idx of EXPECTED_INDEXES) {
-      const re = new RegExp(`CREATE INDEX CONCURRENTLY IF NOT EXISTS "${idx.name}"`);
+      const re = new RegExp(`CREATE INDEX IF NOT EXISTS "${idx.name}"`);
       expect(migration).toMatch(re);
     }
   });
@@ -72,24 +74,26 @@ describe('PR-120: covering indexes for hot query paths', () => {
     }
   });
 
-  it('every CREATE INDEX uses CONCURRENTLY (safe on non-empty table)', () => {
+  it('no CREATE INDEX uses CONCURRENTLY (forbidden inside migrate deploy transactions)', () => {
     // Find all CREATE INDEX statements (with or without CONCURRENTLY).
-    // Then assert every one is followed by CONCURRENTLY.
+    // Then assert NONE uses CONCURRENTLY — Prisma wraps each migration in a
+    // transaction where CONCURRENTLY errors out (P0 fix 2026-09-03).
     const createIdxStatements = migrationNoComments.match(/CREATE INDEX[^"]*"[^"]*"/g) || [];
     expect(createIdxStatements.length).toBe(EXPECTED_INDEXES.length);
     for (const stmt of createIdxStatements) {
-      expect(stmt).toMatch(/^CREATE INDEX CONCURRENTLY /);
+      expect(stmt).not.toMatch(/CONCURRENTLY/);
+      expect(stmt).toMatch(/^CREATE INDEX IF NOT EXISTS /);
     }
   });
 
   it('every CREATE INDEX uses IF NOT EXISTS (idempotent on re-run)', () => {
     for (const idx of EXPECTED_INDEXES) {
-      const lineRe = new RegExp(`CREATE INDEX CONCURRENTLY IF NOT EXISTS "${idx.name}"`);
+      const lineRe = new RegExp(`CREATE INDEX IF NOT EXISTS "${idx.name}"`);
       expect(migration).toMatch(lineRe);
     }
   });
 
-  it('migration does NOT wrap statements in a BEGIN/COMMIT (CONCURRENTLY incompatible)', () => {
+  it('migration has no explicit BEGIN/COMMIT (runs inside Prisma migration transaction)', () => {
     expect(migrationNoComments).not.toMatch(/^\s*BEGIN\s*;/m);
     expect(migrationNoComments).not.toMatch(/^\s*COMMIT\s*;/m);
   });
