@@ -282,11 +282,51 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
               );
             }
             await openAppSettings();
+          } else {
+            final bgGranted = await Permission.locationAlways.isGranted;
+            if (bgGranted && mounted) {
+              final bgItem = _permissions.firstWhere(
+                (p) => p.id == 'background_location',
+                orElse: () => _PermissionItem(id: '', icon: Icons.error),
+              );
+              if (bgItem.id.isNotEmpty) {
+                setState(() => bgItem.isEnabled = true);
+              }
+            }
           }
         }
         break;
       case 'background_location':
+        // Android 11+ requires foreground location to be granted before requesting background location.
+        final fgStatus = await Permission.locationWhenInUse.status;
+        if (!fgStatus.isGranted) {
+          final requestedFg = await Permission.locationWhenInUse.request();
+          if (!requestedFg.isGranted) {
+            status = requestedFg;
+            break;
+          }
+          final locItem = _permissions.firstWhere(
+            (p) => p.id == 'location',
+            orElse: () => _PermissionItem(id: '', icon: Icons.error),
+          );
+          if (locItem.id.isNotEmpty && mounted) {
+            setState(() => locItem.isEnabled = true);
+            final consent = _consentTypeFor(locItem.id);
+            if (consent != null) {
+              await ConsentService().setConsent(consent, granted: true);
+            }
+          }
+        }
         status = await Permission.locationAlways.request();
+        if (!status.isGranted) {
+          if (mounted) {
+            Toast.info(
+              context,
+              AppLocalizations.of(context)!.txtallowAllTheTimeRequired,
+            );
+          }
+          await openAppSettings();
+        }
         break;
       case 'camera':
         status = await Permission.camera.request();
@@ -330,7 +370,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       await ConsentService().setConsent(consent, granted: status.isGranted);
     }
 
-    if (status.isPermanentlyDenied) {
+    if (status.isPermanentlyDenied && item.id != 'background_location') {
       openAppSettings();
     }
   }

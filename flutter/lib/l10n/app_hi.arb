@@ -638,6 +638,7 @@
   "txtcallLogPermName": "कॉल लॉग",
   "txtcallLogPermDesc": "राइड सुरक्षा सत्यापन और आपातकालीन संपर्क पुष्टि के लिए उपयोग किया जाता है।",
   "txtpreciseLocationRequired": "सटीक स्थान आवश्यक है। कृपया सेटिंग्स में इसे सक्षम करें।",
+  "txtallowAllTheTimeRequired": "कृपया स्थान सेटिंग्स में 'हर समय अनुमति दें' चुनें।",
   "txtbeforeYouBegin": "शुरू करने से पहले",
   "txtquickKycSubtitle": "त्वरित केवाईसी सत्यापन (~3 मिनट)",
   "txtpleaseHaveReady": "कृपया इन्हें तैयार रखें:",

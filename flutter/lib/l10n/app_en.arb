@@ -1546,6 +1546,8 @@
   "@txtcallLogPermDesc": { "description": "Call log permission tile description" },
   "txtpreciseLocationRequired": "Precise location is required. Please enable it in Settings.",
   "@txtpreciseLocationRequired": { "description": "Precise location warning snackbar" },
+  "txtallowAllTheTimeRequired": "Please select 'Allow all the time' in Location settings.",
+  "@txtallowAllTheTimeRequired": { "description": "Background location setting instruction snackbar" },
   "txtbeforeYouBegin": "Before You Begin",
   "@txtbeforeYouBegin": { "description": "KYC preflight header title" },
   "txtquickKycSubtitle": "Quick KYC verification (~3 mins)",

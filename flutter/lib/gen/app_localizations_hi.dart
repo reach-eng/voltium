@@ -2094,6 +2094,10 @@ class AppLocalizationsHi extends AppLocalizations {
       'सटीक स्थान आवश्यक है। कृपया सेटिंग्स में इसे सक्षम करें।';
 
   @override
+  String get txtallowAllTheTimeRequired =>
+      'कृपया स्थान सेटिंग्स में \'हर समय अनुमति दें\' चुनें।';
+
+  @override
   String get txtbeforeYouBegin => 'शुरू करने से पहले';
 
   @override

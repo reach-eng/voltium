@@ -3969,6 +3969,12 @@ abstract class AppLocalizations {
   /// **'Precise location is required. Please enable it in Settings.'**
   String get txtpreciseLocationRequired;
 
+  /// Background location setting instruction snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Please select \'Allow all the time\' in Location settings.'**
+  String get txtallowAllTheTimeRequired;
+
   /// KYC preflight header title
   ///
   /// In en, this message translates to:

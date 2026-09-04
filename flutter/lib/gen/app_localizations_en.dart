@@ -2089,6 +2089,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Precise location is required. Please enable it in Settings.';
 
   @override
+  String get txtallowAllTheTimeRequired =>
+      'Please select \'Allow all the time\' in Location settings.';
+
+  @override
   String get txtbeforeYouBegin => 'Before You Begin';
 
   @override
