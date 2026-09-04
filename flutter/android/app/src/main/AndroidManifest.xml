@@ -75,7 +75,23 @@
                mServedView stays as DecorView and
                mInputShown stays false, and `input text` over adb is dropped.
              Re-enable Impeller, keep the dev server hot to avoid the
-             cold-restart race. -->
+             cold-restart race.
+
+             ONBOARDING-AUDIT 2026-09-05 (A063 platform gap): even with
+             Impeller ON, the OS keyboard does not appear on the A063
+             test device (Android 15, API 35). The Flutter side correctly
+             requests focus and invokes `TextInput.show`, but
+             `dumpsys input_method` reports `mServedView` resolving to
+             the activity's `DecorView` rather than the `FlutterEditText`,
+             and `mInputShown` stays `false`. The same symptom on
+             stock-Skia was the original motivation for re-enabling
+             Impeller, so the Impeller flag is not the cause of the
+             current A063 gap. The fix is at the Flutter Engine +
+             Android IME service layer (likely needs a platform-channel
+             workaround in `MainActivity.kt` or an Engine version bump),
+             not in the application code. Application code follows the
+             canonical Flutter focus pattern (no manual `TextInput.show`
+             outside the post-frame auto-focus on the phone field). -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="true" />

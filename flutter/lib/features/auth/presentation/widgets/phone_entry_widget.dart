@@ -175,11 +175,14 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
               ),
               child: Row(
                 children: [
+                  // The +91 prefix is a visual marker, not an interactive
+                  // element. The phone field itself handles its own focus
+                  // on tap. The previous `TextInput.show` nudge here
+                  // bypassed the Flutter focus chain and was redundant
+                  // with the post-frame `TextInput.show` in initState.
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      SystemChannels.textInput.invokeMethod('TextInput.show');
-                    },
+                    onTap: () {},
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -210,12 +213,15 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                       // (the field now owns its own focusNode). The
                       // custom node was suppressing the EditableText's
                       // internal IME connection on this device.
+                      //
+                      // The previous `onTap: TextInput.show` nudge was
+                      // redundant with `autofocus: true` + the
+                      // post-frame callback in initState; tapping the
+                      // field already focuses it via the standard
+                      // Flutter tap-to-focus path.
                       autofocus: true,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
-                      onTap: () {
-                        SystemChannels.textInput.invokeMethod('TextInput.show');
-                      },
                       autofillHints: const [AutofillHints.telephoneNumber],
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -290,10 +296,13 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
             boxShadow: AppShadows.glass,
           ),
           child: GestureDetector(
+            // Taps on the icon/leading area delegate to the field's
+            // focus node. The previous `TextInput.show` nudge here
+            // bypassed the Flutter focus chain; `requestFocus` is the
+            // canonical mechanism for explicit focus.
             behavior: HitTestBehavior.opaque,
             onTap: () {
               _referralFocusNode.requestFocus();
-              SystemChannels.textInput.invokeMethod('TextInput.show');
             },
             child: Row(
               children: [
@@ -317,7 +326,6 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     ],
                     onTap: () {
                       _referralFocusNode.requestFocus();
-                      SystemChannels.textInput.invokeMethod('TextInput.show');
                     },
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
