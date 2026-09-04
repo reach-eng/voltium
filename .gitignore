@@ -233,3 +233,5 @@ test_ids.txt
 # golden mismatch and must not be tracked.
 **/test/**/failures/
 **/test/**/failures/**
+
+.zcode/
