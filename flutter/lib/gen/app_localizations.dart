@@ -1877,7 +1877,7 @@ abstract class AppLocalizations {
   /// **'Skip guarantor?'**
   String get txtguarantorSkipTitle;
 
-  /// Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. 'Ã¢â€šÂ¹1,000'.
+  /// Body of the skip-guarantor confirmation dialog. {amount} is the admin-configured extra deposit, e.g. '₹1,000'.
   ///
   /// In en, this message translates to:
   /// **'Skipping the guarantor requires a higher security deposit of {amount} on top of your plan deposit. The amount is set by Voltium and may change. You\'ll be charged the difference when you start your rental.'**
@@ -2833,7 +2833,7 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofTopUpWillBeInstant.
   ///
   /// In en, this message translates to:
-  /// **'Top up will be instant. Up to 2.5% extra (Ã¢â€šÂ¹{fee}) gateway fee will be added to your top up amount.'**
+  /// **'Top up will be instant. Up to 2.5% extra (₹{fee}) gateway fee will be added to your top up amount.'**
   String txtproofTopUpWillBeInstant(String fee);
 
   /// No description provided for @txtproofTopUpNoExtraFee.
@@ -2851,13 +2851,13 @@ abstract class AppLocalizations {
   /// No description provided for @txtproofZeroGatewayFee.
   ///
   /// In en, this message translates to:
-  /// **'Ã¢â€šÂ¹0 (Paid by Voltium)'**
+  /// **'₹0 (Paid by Voltium)'**
   String get txtproofZeroGatewayFee;
 
   /// No description provided for @txtproofTopUpWillBeInstantCovered.
   ///
   /// In en, this message translates to:
-  /// **'Top up will be instant. Gateway fee is 100% covered by Voltium (Ã¢â€šÂ¹0 extra fee for rider).'**
+  /// **'Top up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).'**
   String get txtproofTopUpWillBeInstantCovered;
 
   /// No description provided for @txtchangePhoto.
@@ -4080,7 +4080,7 @@ abstract class AppLocalizations {
   /// OTP verify button loading state label
   ///
   /// In en, this message translates to:
-  /// **'VerifyingÃ¢â‚¬Â¦'**
+  /// **'Verifying…'**
   String get txtverifying;
 
   /// OTP verify button active label
@@ -4212,13 +4212,13 @@ abstract class AppLocalizations {
   /// Minimum recharge disclaimer
   ///
   /// In en, this message translates to:
-  /// **'A minimum recharge of Ã¢â€šÂ¹{amount} is required to proceed further.'**
+  /// **'A minimum recharge of ₹{amount} is required to proceed further.'**
   String txtminRechargeNotice(String amount);
 
   /// Low balance warning notice
   ///
   /// In en, this message translates to:
-  /// **'Top Up Now to Ride. Your balance is insufficient. Min top up: Ã¢â€šÂ¹{amount}.'**
+  /// **'Top Up Now to Ride. Your balance is insufficient. Min top up: ₹{amount}.'**
   String txtlowBalanceWarningNotice(int amount);
 
   /// Top up wallet button label
@@ -4344,20 +4344,20 @@ abstract class AppLocalizations {
   /// Rent debit notice with shortfall
   ///
   /// In en, this message translates to:
-  /// **'Rent of Ã¢â€šÂ¹{rent} will be debited automatically. Your current wallet balance is Ã¢â€šÂ¹{balance} (shortfall: Ã¢â€šÂ¹{shortfall}).'**
+  /// **'Rent of ₹{rent} will be debited automatically. Your current wallet balance is ₹{balance} (shortfall: ₹{shortfall}).'**
   String txtrentDebitNoticeShortfall(
       String rent, String balance, String shortfall);
 
   /// Rent debit notice with sufficient balance
   ///
   /// In en, this message translates to:
-  /// **'Rent of Ã¢â€šÂ¹{rent} will be debited tomorrow 6 AM. Wallet balance Ã¢â€šÂ¹{balance} is sufficient.'**
+  /// **'Rent of ₹{rent} will be debited tomorrow 6 AM. Wallet balance ₹{balance} is sufficient.'**
   String txtrentDebitNoticeSufficient(String rent, String balance);
 
   /// Top up button label with amount
   ///
   /// In en, this message translates to:
-  /// **'Top up Ã¢â€šÂ¹{amount}'**
+  /// **'Top up ₹{amount}'**
   String txttopUpAmountAction(String amount);
 
   /// Assigned team leader sheet title

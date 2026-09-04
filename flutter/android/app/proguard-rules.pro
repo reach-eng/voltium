@@ -35,3 +35,7 @@
 # local_auth
 -keep class androidx.biometric.** { *; }
 -keep class io.flutter.plugins.localauth.** { *; }
+
+# Play Store split install / deferred components (suppress R8 missing class warnings)
+-dontwarn com.google.android.play.core.**
+
