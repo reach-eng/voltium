@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/config/app_config.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/api_error_messages.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -128,12 +129,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           error: e, stackTrace: stack);
       PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
-        String errorMsg = AppLocalizations.of(context)?.txtloginNetworkError ??
-            'Unable to send OTP. Please check your network connection.';
-        if (e is ApiException) {
-          errorMsg = e.message;
-        } else if (!kReleaseMode || AppConfig.flavor != Flavor.production) {
-          errorMsg = '$e';
+        // ONBOARDING-AUDIT (2026-09-04) #m2: use the canonical safeErrorMessage
+        // translator so the rider sees the right error category
+        // (timeout / offline / 401 / 500 / etc.) instead of the raw
+        // exception. In dev builds, append the exception type so the
+        // tester can still tell *which* exception fired (TimeoutException
+        // vs SocketException), which is the difference between
+        // "wrong API URL" and "Wi-Fi can't reach the laptop".
+        String errorMsg = safeErrorMessage(e, 'OTP request');
+        if (!kReleaseMode || AppConfig.flavor != Flavor.production) {
+          errorMsg = '$errorMsg\n(${e.runtimeType})';
         }
         Toast.error(context, errorMsg);
       }
