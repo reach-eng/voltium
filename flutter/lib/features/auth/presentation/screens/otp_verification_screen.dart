@@ -278,8 +278,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         ref.read(appStateProvider.notifier).replaceState(nextAppState);
         widget.onNext?.call(isNewRider);
       }
-    } catch (e) {
-      appDebug('[OtpScreen] Error in verifyOtp: $e');
+    } catch (e, stack) {
+      logError('[OtpScreen] Error in verifyOtp: $e',
+          error: e, stackTrace: stack);
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
         // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
@@ -290,6 +291,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
             'Failed to verify OTP';
         if (e is ApiException) {
           errorMsg = e.message;
+        } else if (!kReleaseMode) {
+          errorMsg = '$e';
         }
         _setOtpError(errorMsg);
         Toast.error(context, errorMsg);

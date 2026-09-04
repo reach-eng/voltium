@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/config/app_config.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -121,14 +123,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         widget.onNext
             ?.call(digits, referralCode.isNotEmpty ? referralCode : null);
       }
-    } catch (e) {
-      appDebug('[LoginScreen] Error in sendOtp: $e');
+    } catch (e, stack) {
+      logError('[LoginScreen] Error in sendOtp: $e',
+          error: e, stackTrace: stack);
       PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
         String errorMsg = AppLocalizations.of(context)?.txtloginNetworkError ??
             'Unable to send OTP. Please check your network connection.';
         if (e is ApiException) {
           errorMsg = e.message;
+        } else if (!kReleaseMode || AppConfig.flavor != Flavor.production) {
+          errorMsg = '$e';
         }
         Toast.error(context, errorMsg);
       }

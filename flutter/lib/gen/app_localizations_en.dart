@@ -1032,7 +1032,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtloginEnterButton => 'Enter';
 
   @override
-  String get txtloginSendingButton => 'SendingÃ¢â‚¬Â¦';
+  String get txtloginSendingButton => 'Sending…';
 
   @override
   String get txtloginNetworkError => 'Network error. Please try again.';
@@ -1994,7 +1994,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtofflineDraftBanner =>
-      'You\'re offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.';
+      'You\'re offline ’ your draft is saved locally. Connect to internet to submit.';
 
   @override
   String get txtdocumentPreview => 'Document Preview';
@@ -2048,7 +2048,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtphonePermTooltip =>
-      'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.';
+      'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls ’ it never reads call history or contacts.';
 
   @override
   String get txtcontactsPermName => 'Contacts';
@@ -2123,7 +2123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtillDoThisLater => 'I\'ll do this later';
 
   @override
-  String get txtsyncingLatestDocs => 'Syncing latest documentsÃ¢â‚¬Â¦';
+  String get txtsyncingLatestDocs => 'Syncing latest documents…';
 
   @override
   String get txtlegalAgreeCheckboxPrefix => 'I have read and agree to the ';
@@ -2595,7 +2595,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtsecurityDepositProofSubmitted =>
-      'Security deposit proof submitted Ã¢â‚¬â€ we\'ll review it shortly.';
+      'Security deposit proof submitted ’ we\'ll review it shortly.';
 
   @override
   String get txttopUpProofSubmitted => 'Top up receipt submitted successfully!';

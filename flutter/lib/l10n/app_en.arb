@@ -395,15 +395,15 @@
   },
   "wallet_filterRent": "Rent",
   "@wallet_filterRent": {
-    "description": "Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is RENTAL"
+    "description": "Transaction-history filter chip ’ debits whose purpose is RENTAL"
   },
   "wallet_filterSecurity": "Security",
   "@wallet_filterSecurity": {
-    "description": "Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is SECURITY_DEPOSIT"
+    "description": "Transaction-history filter chip ’ debits whose purpose is SECURITY_DEPOSIT"
   },
   "wallet_filterDeduction": "Deduction",
   "@wallet_filterDeduction": {
-    "description": "Transaction-history filter chip Ã¢â‚¬â€ non-rental, non-deposit debits"
+    "description": "Transaction-history filter chip ’ non-rental, non-deposit debits"
   },
   "wallet_statusRefundable": "Refundable",
   "@wallet_statusRefundable": {
@@ -856,11 +856,11 @@
   },
   "txttopUpAmountAddedToWallet": "Top Up Amount (Added to Wallet)",
   "@txttopUpAmountAddedToWallet": {
-    "description": "Receipt line label Ã¢â‚¬â€ the top-up amount that gets added to the rider's wallet balance"
+    "description": "Receipt line label ’ the top-up amount that gets added to the rider's wallet balance"
   },
   "txttotalPayable": "Total Payable",
   "@txttotalPayable": {
-    "description": "Receipt line label Ã¢â‚¬â€ the final total the rider pays (top-up + plan fee + deposit)"
+    "description": "Receipt line label ’ the final total the rider pays (top-up + plan fee + deposit)"
   },
   "txtchangeLockPassword": "Change Lock Password",
   "@txtchangeLockPassword": {
@@ -1012,7 +1012,7 @@
   "@txtloginEnterButton": {
     "description": "Login screen primary submit button (sends OTP)"
   },
-  "txtloginSendingButton": "SendingÃ¢â‚¬Â¦",
+  "txtloginSendingButton": "Sending…",
   "@txtloginSendingButton": {
     "description": "Login screen submit-button label while the OTP request is in flight"
   },
@@ -1488,7 +1488,7 @@
   "@txtensureAllDetailsAccurate": { "description": "KYC confirmation disclaimer" },
   "txtselfieLiveCameraHint": "Live camera capture required for KYC verification",
   "@txtselfieLiveCameraHint": { "description": "Live camera hint for rider selfie" },
-  "txtofflineDraftBanner": "You're offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.",
+  "txtofflineDraftBanner": "You're offline ’ your draft is saved locally. Connect to internet to submit.",
   "@txtofflineDraftBanner": { "description": "Offline mode draft indicator banner" },
   "txtdocumentPreview": "Document Preview",
   "@txtdocumentPreview": { "description": "Document preview modal title" },
@@ -1522,7 +1522,7 @@
   "@txtphonePermName": { "description": "Phone state permission tile name" },
   "txtphonePermDesc": "Phone state (for safety call detection)",
   "@txtphonePermDesc": { "description": "Phone state permission tile description" },
-  "txtphonePermTooltip": "Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.",
+  "txtphonePermTooltip": "Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls ’ it never reads call history or contacts.",
   "@txtphonePermTooltip": { "description": "Phone state permission tooltip" },
   "txtcontactsPermName": "Contacts",
   "@txtcontactsPermName": { "description": "Contacts permission tile name" },
@@ -1568,7 +1568,7 @@
   "@txtimReady": { "description": "KYC preflight ready button" },
   "txtillDoThisLater": "I'll do this later",
   "@txtillDoThisLater": { "description": "KYC preflight skip button" },
-  "txtsyncingLatestDocs": "Syncing latest documentsÃ¢â‚¬Â¦",
+  "txtsyncingLatestDocs": "Syncing latest documents…",
   "@txtsyncingLatestDocs": { "description": "Legal docs syncing indicator" },
   "txtlegalAgreeCheckboxPrefix": "I have read and agree to the ",
   "@txtlegalAgreeCheckboxPrefix": { "description": "Legal agreement checkbox prefix text" },
@@ -1913,7 +1913,7 @@
   "@txtriderSessionNotReady": { "description": "Toast when a top-up / submission is attempted before the rider is fully initialized" },
   "txtsessionExpiredPleaseLogIn": "Your session expired. Please log in again to continue.",
   "@txtsessionExpiredPleaseLogIn": { "description": "Toast shown when the API returns 401 mid-session" },
-  "txtsecurityDepositProofSubmitted": "Security deposit proof submitted Ã¢â‚¬â€ we'll review it shortly.",
+  "txtsecurityDepositProofSubmitted": "Security deposit proof submitted ’ we'll review it shortly.",
   "@txtsecurityDepositProofSubmitted": { "description": "Toast shown after security-deposit proof upload succeeds" },
   "txttopUpProofSubmitted": "Top up receipt submitted successfully!",
   "@txttopUpProofSubmitted": { "description": "Toast shown after a regular top-up proof upload succeeds" },
@@ -1942,7 +1942,7 @@
   "hangTightTitle": "Hang tight",
   "@hangTightTitle": { "description": "HangTight hero title" },
   "hangTightSettingUpBody": "We're setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.",
-  "@hangTightSettingUpBody": { "description": "HangTight hero body Ã¢â‚¬â€ 'your account is being set up'" },
+  "@hangTightSettingUpBody": { "description": "HangTight hero body ’ 'your account is being set up'" },
   "hangTightNotificationHint": "We'll send a notification when your account is active. You don't need to keep this open.",
   "@hangTightNotificationHint": { "description": "HangTight hint that the rider will be notified when the account is active" },
   "hangTightGuarantorApproved": "Guarantor approved",

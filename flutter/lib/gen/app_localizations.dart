@@ -620,19 +620,19 @@ abstract class AppLocalizations {
   /// **'REJECTED'**
   String get wallet_statusRejected;
 
-  /// Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is RENTAL
+  /// Transaction-history filter chip ’ debits whose purpose is RENTAL
   ///
   /// In en, this message translates to:
   /// **'Rent'**
   String get wallet_filterRent;
 
-  /// Transaction-history filter chip Ã¢â‚¬â€ debits whose purpose is SECURITY_DEPOSIT
+  /// Transaction-history filter chip ’ debits whose purpose is SECURITY_DEPOSIT
   ///
   /// In en, this message translates to:
   /// **'Security'**
   String get wallet_filterSecurity;
 
-  /// Transaction-history filter chip Ã¢â‚¬â€ non-rental, non-deposit debits
+  /// Transaction-history filter chip ’ non-rental, non-deposit debits
   ///
   /// In en, this message translates to:
   /// **'Deduction'**
@@ -1455,13 +1455,13 @@ abstract class AppLocalizations {
   /// **'UPI ID copied to clipboard'**
   String get txtupiIdCopiedToClipboard;
 
-  /// Receipt line label Ã¢â‚¬â€ the top-up amount that gets added to the rider's wallet balance
+  /// Receipt line label ’ the top-up amount that gets added to the rider's wallet balance
   ///
   /// In en, this message translates to:
   /// **'Top Up Amount (Added to Wallet)'**
   String get txttopUpAmountAddedToWallet;
 
-  /// Receipt line label Ã¢â‚¬â€ the final total the rider pays (top-up + plan fee + deposit)
+  /// Receipt line label ’ the final total the rider pays (top-up + plan fee + deposit)
   ///
   /// In en, this message translates to:
   /// **'Total Payable'**
@@ -1978,7 +1978,7 @@ abstract class AppLocalizations {
   /// Login screen submit-button label while the OTP request is in flight
   ///
   /// In en, this message translates to:
-  /// **'SendingÃ¢â‚¬Â¦'**
+  /// **'Sending…'**
   String get txtloginSendingButton;
 
   /// Login screen SnackBar when the OTP send request fails on a non-API error (e.g. socket)
@@ -3798,7 +3798,7 @@ abstract class AppLocalizations {
   /// Offline mode draft indicator banner
   ///
   /// In en, this message translates to:
-  /// **'You\'re offline Ã¢â‚¬â€ your draft is saved locally. Connect to internet to submit.'**
+  /// **'You\'re offline ’ your draft is saved locally. Connect to internet to submit.'**
   String get txtofflineDraftBanner;
 
   /// Document preview modal title
@@ -3900,7 +3900,7 @@ abstract class AppLocalizations {
   /// Phone state permission tooltip
   ///
   /// In en, this message translates to:
-  /// **'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls Ã¢â‚¬â€ it never reads call history or contacts.'**
+  /// **'Reads call state (incoming/outgoing) so ride-safety features can detect emergency calls ’ it never reads call history or contacts.'**
   String get txtphonePermTooltip;
 
   /// Contacts permission tile name
@@ -4038,7 +4038,7 @@ abstract class AppLocalizations {
   /// Legal docs syncing indicator
   ///
   /// In en, this message translates to:
-  /// **'Syncing latest documentsÃ¢â‚¬Â¦'**
+  /// **'Syncing latest documents…'**
   String get txtsyncingLatestDocs;
 
   /// Legal agreement checkbox prefix text
@@ -4879,7 +4879,7 @@ abstract class AppLocalizations {
   /// Toast shown after security-deposit proof upload succeeds
   ///
   /// In en, this message translates to:
-  /// **'Security deposit proof submitted Ã¢â‚¬â€ we\'ll review it shortly.'**
+  /// **'Security deposit proof submitted ’ we\'ll review it shortly.'**
   String get txtsecurityDepositProofSubmitted;
 
   /// Toast shown after a regular top-up proof upload succeeds
@@ -4960,7 +4960,7 @@ abstract class AppLocalizations {
   /// **'Hang tight'**
   String get hangTightTitle;
 
-  /// HangTight hero body Ã¢â‚¬â€ 'your account is being set up'
+  /// HangTight hero body ’ 'your account is being set up'
   ///
   /// In en, this message translates to:
   /// **'We\'re setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.'**
