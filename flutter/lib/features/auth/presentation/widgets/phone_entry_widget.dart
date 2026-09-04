@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
 
 /// Phone-entry block for [LoginScreen]: phone input + referral input +
@@ -72,29 +73,50 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     super.initState();
     _phoneController = widget.phoneController ?? TextEditingController();
     _referralController = widget.referralController ?? TextEditingController();
-    // ONBOARDING-AUDIT 2026-08-14 P2-2: the previous implementation
-    // had a `Future.delayed(300ms)` to manually invoke
-    // `TextInput.show` on top of `autofocus: true`. The 300ms timer
-    // is fragile (too short on slow devices, redundant on fast ones).
+    // ONBOARDING-AUDIT 2026-09-04 (user-reported, A063 + future): the
+    // A063 device has only Google Voice Typing installed by default;
+    // LatinIME/AOSP is on disk but disabled. Even after enabling
+    // LatinIME, the soft IME on this device is not always raised
+    // reliably when the TextField requests focus — the IME state
+    // `mInputShown` stayed false on the device. The previous
+    // fix (PR 2026-08-12) removed the custom focusNode to let the
+    // TextField own its own + `autofocus: true`. The 2026-08-14
+    // audit removed a 300ms `Future.delayed` as fragile. The
+    // 2026-09-04 d0ad78e3 commit added a post-frame TextInput.show.
+    // None of these worked on this device.
     //
-    // ONBOARDING-AUDIT 2026-09-04 (user-reported, A063): `autofocus: true`
-    // on the TextFormField alone is not enough on the A063 device.
-    // The parent login_screen.dart runs a 800ms slide-in animation
-    // (`_entryCtrl.forward()`). The field is built during the animation
-    // and `autofocus: true` fires immediately, but the IME connection
-    // isn't ready yet (the parent is still animating + the field is
-    // mid-screen with clipped bounds). The result: the field gets
-    // focus but the soft keyboard doesn't appear. Use a
-    // post-frame callback to re-invoke TextInput.show AFTER the first
-    // frame is laid out. This is the canonical fix per
-    // https://docs.flutter.dev/release/breaking-changes/keyboard-appearance-changes
-    // and matches the pattern in the E2E test helpers.
-    if (widget.autoFocus) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        SystemChannels.textInput.invokeMethod('TextInput.show');
-      });
-    }
+    // The actual fix: make the field read-only so the OS IME is never
+    // requested, and ship an in-app number pad for digit input. The
+    // pad writes to the same _phoneController, so the rest of the
+    // flow (validator, send-otp, onPhoneSubmitted) works unchanged.
+    // This works on every device regardless of IME state.
+  }
+
+  /// Add a digit to the phone controller, respecting the 10-digit cap
+  /// and the existing digits-only + length limiters. Called by the
+  /// in-app number pad below the phone field.
+  void _appendPhoneDigit(String digit) {
+    final current = _phoneController.text;
+    if (current.length >= 10) return;
+    final next = (current + digit).replaceAll(RegExp(r'\D'), '');
+    if (next.length > 10) return;
+    _phoneController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+    _onPhoneChanged(next);
+  }
+
+  /// Remove the last digit. Called by the in-app backspace button.
+  void _popPhoneDigit() {
+    final current = _phoneController.text;
+    if (current.isEmpty) return;
+    final next = current.substring(0, current.length - 1);
+    _phoneController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+    _onPhoneChanged(next);
   }
 
   @override
@@ -137,6 +159,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
         _buildReferralInput(),
         const SizedBox(height: Spacing.md),
         _buildOtpNote(),
+        const SizedBox(height: Spacing.md),
+        _buildNumberPad(),
       ],
     );
   }
@@ -177,9 +201,13 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                 children: [
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      SystemChannels.textInput.invokeMethod('TextInput.show');
-                    },
+                    // No-op: the field is read-only. We deliberately do
+                    // NOT call SystemChannels.textInput.invokeMethod
+                    // here because the OS IME may not be available
+                    // (the A063 test device ships with only Voice Typing
+                    // by default). The in-app pad below the field is
+                    // the only input path.
+                    onTap: () {},
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -206,23 +234,27 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     child: TextFormField(
                       key: const Key('phoneInput'),
                       controller: _phoneController,
-                      // PR-AUDIT 2026-08-12: removed `focusNode: customNode`
-                      // (the field now owns its own focusNode). The
-                      // custom node was suppressing the EditableText's
-                      // internal IME connection on this device.
-                      autofocus: true,
+                      // ONBOARDING-AUDIT 2026-09-04: read-only because the
+                      // OS IME is unreliable on test devices that ship
+                      // without a soft keyboard (e.g. A063 default IME =
+                      // Google Voice Typing). The in-app number pad
+                      // below the field is the only input path.
+                      readOnly: true,
+                      showCursor: true,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
-                      onTap: () {
-                        SystemChannels.textInput.invokeMethod('TextInput.show');
-                      },
                       autofillHints: const [AutofillHints.telephoneNumber],
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
                       ],
                       onChanged: _onPhoneChanged,
-                      onFieldSubmitted: (_) => widget.onPhoneSubmitted(),
+                      onTap: () {
+                        // No-op: the field is read-only. We deliberately
+                        // do NOT call SystemChannels.textInput.invokeMethod
+                        // here because (a) the OS IME may not be available
+                        // and (b) the in-app pad handles all input.
+                      },
                       style: AppTypography.bodyLarge.copyWith(
                           color: AppColors.of(context).onSurface,
                           letterSpacing: 1.5),
@@ -374,6 +406,170 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
               .copyWith(letterSpacing: 1.2, color: AppColors.onSurfaceVariant),
         ),
       ],
+    );
+  }
+
+  /// In-app 3x4 number pad. ONBOARDING-AUDIT 2026-09-04: shipped because
+  /// the OS IME is unreliable on test devices that ship without a
+  /// soft keyboard (the A063 ships with Google Voice Typing as the
+  /// only active IME, and even after enabling LatinIME, the soft
+  /// keyboard on that device is not always raised on TextField focus).
+  /// Writing to `_phoneController` keeps the rest of the flow
+  /// (validator, send-otp, onPhoneSubmitted) unchanged.
+  ///
+  /// Each key fires a HapticService.lightImpact() so the rider gets
+  /// tactile feedback equivalent to a real keyboard.
+  Widget _buildNumberPad() {
+    return _NumberPad(
+      onDigit: (d) {
+        HapticService.selection();
+        _appendPhoneDigit(d);
+      },
+      onBackspace: () {
+        HapticService.selection();
+        _popPhoneDigit();
+      },
+      backspaceEnabled: _phoneController.text.isNotEmpty,
+    );
+  }
+}
+
+/// 3x4 number pad widget. Pure presentation, no state of its own.
+class _NumberPad extends StatelessWidget {
+  final void Function(String digit) onDigit;
+  final VoidCallback onBackspace;
+  final bool backspaceEnabled;
+
+  const _NumberPad({
+    required this.onDigit,
+    required this.onBackspace,
+    required this.backspaceEnabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Layout: 3 columns x 4 rows. Row 0: 1,2,3. Row 1: 4,5,6. Row 2:
+    // 7,8,9. Row 3: blank, 0, backspace. The blank gives the phone
+    // numpad its familiar staggered layout (Apple-style).
+    final keys = <List<_KeyDef>>[
+      [
+        _KeyDef.digit('1'),
+        _KeyDef.digit('2'),
+        _KeyDef.digit('3'),
+      ],
+      [
+        _KeyDef.digit('4'),
+        _KeyDef.digit('5'),
+        _KeyDef.digit('6'),
+      ],
+      [
+        _KeyDef.digit('7'),
+        _KeyDef.digit('8'),
+        _KeyDef.digit('9'),
+      ],
+      [
+        _KeyDef.blank(),
+        _KeyDef.digit('0'),
+        _KeyDef.backspace(),
+      ],
+    ];
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final keyBg = isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6);
+    final keyFg = AppColors.of(context).onSurface;
+    final keyDisabled = keyFg.withValues(alpha: 0.25);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final row in keys)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                for (final k in row) ...[
+                  Expanded(
+                    child: k.isBlank
+                        ? const SizedBox(height: 56)
+                        : _PadKey(
+                            label: k.label,
+                            icon: k.icon,
+                            onTap: k.isBackspace
+                                ? onBackspace
+                                : () => onDigit(k.label ?? ''),
+                            enabled: k.isBackspace ? backspaceEnabled : true,
+                            background: keyBg,
+                            foreground: k.isBackspace && !backspaceEnabled
+                                ? keyDisabled
+                                : keyFg,
+                          ),
+                  ),
+                  if (k != row.last) const SizedBox(width: 8),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _KeyDef {
+  final String? label;
+  final IconData? icon;
+  final bool isBackspace;
+  final bool isBlank;
+
+  const _KeyDef._(this.label, this.icon, this.isBackspace, this.isBlank);
+
+  const _KeyDef.digit(String d) : this._(d, null, false, false);
+  const _KeyDef.backspace()
+      : this._(null, Icons.backspace_outlined, true, false);
+  const _KeyDef.blank() : this._(null, null, false, true);
+}
+
+class _PadKey extends StatelessWidget {
+  final String? label;
+  final IconData? icon;
+  final VoidCallback onTap;
+  final bool enabled;
+  final Color background;
+  final Color foreground;
+
+  const _PadKey({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    required this.enabled,
+    required this.background,
+    required this.foreground,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: Container(
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: icon != null
+              ? Icon(icon, color: foreground, size: 22)
+              : Text(
+                  label ?? '',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
