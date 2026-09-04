@@ -57,14 +57,22 @@ class PhoneEntryWidget extends StatefulWidget {
 class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
   late final TextEditingController _phoneController;
   late final TextEditingController _referralController;
-  // NOTE: we intentionally let the TextFormField own its own focus node
-  // instead of providing one explicitly. On this device, supplying
-  // `focusNode: customNode` to the field left the EditableText's internal
-  // IME connection un-initialised — the system engaged the IME with an
-  // empty `EditorInfo{inputType=0, inputTypeString=NULL, …}` and hid it
-  // immediately (`HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR`). Letting the
-  // field manage its own focus + `autofocus: true` is the canonical fix.
-  final FocusNode _referralFocusNode = FocusNode();
+  // The phone field has its own explicit focus node so the +91 prefix
+  // (which lives in a sibling GestureDetector) can route a tap into
+  // the same focus target without having to reach into the field's
+  // internal node. The post-frame `requestFocus` in initState fires
+  // AFTER the field's `EditorInfo` is fully wired (keyboardType,
+  // textInputAction, autofillHints, inputFormatters are all in scope
+  // by then) — that's the key thing the older d0ad78e3 comment was
+  // warning about. A pre-frame `requestFocus` would land on an
+  // empty EditorInfo and the platform would hide the keyboard
+  // immediately via `HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR`. The
+  // post-frame timing avoids that race; the parent login screen's
+  // 800ms entry animation is irrelevant to this — by the time the
+  // first post-frame fires, the EditableText is mounted and its
+  // IME connection is set up.
+  final FocusNode _phoneFocusNode = FocusNode(debugLabel: 'phone');
+  final FocusNode _referralFocusNode = FocusNode(debugLabel: 'referral');
   String? _phoneError;
 
   @override
@@ -72,27 +80,15 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     super.initState();
     _phoneController = widget.phoneController ?? TextEditingController();
     _referralController = widget.referralController ?? TextEditingController();
-    // ONBOARDING-AUDIT 2026-08-14 P2-2: the previous implementation
-    // had a `Future.delayed(300ms)` to manually invoke
-    // `TextInput.show` on top of `autofocus: true`. The 300ms timer
-    // is fragile (too short on slow devices, redundant on fast ones).
-    //
-    // ONBOARDING-AUDIT 2026-09-04 (user-reported, A063): `autofocus: true`
-    // on the TextFormField alone is not enough on the A063 device.
-    // The parent login_screen.dart runs a 800ms slide-in animation
-    // (`_entryCtrl.forward()`). The field is built during the animation
-    // and `autofocus: true` fires immediately, but the IME connection
-    // isn't ready yet (the parent is still animating + the field is
-    // mid-screen with clipped bounds). The result: the field gets
-    // focus but the soft keyboard doesn't appear. Use a
-    // post-frame callback to re-invoke TextInput.show AFTER the first
-    // frame is laid out. This is the canonical fix per
-    // https://docs.flutter.dev/release/breaking-changes/keyboard-appearance-changes
-    // and matches the pattern in the E2E test helpers.
+    // Respect the `autoFocus` contract. When true, focus the phone
+    // field after the first frame so the EditableText's IME
+    // connection is fully wired. When false, the parent has decided
+    // not to auto-focus (e.g. user is mid-flow on another screen)
+    // and the field must not steal focus.
     if (widget.autoFocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        SystemChannels.textInput.invokeMethod('TextInput.show');
+        _phoneFocusNode.requestFocus();
       });
     }
   }
@@ -102,6 +98,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     // Only dispose controllers we own.
     if (widget.phoneController == null) _phoneController.dispose();
     if (widget.referralController == null) _referralController.dispose();
+    _phoneFocusNode.dispose();
     _referralFocusNode.dispose();
     super.dispose();
   }
@@ -175,14 +172,18 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
               ),
               child: Row(
                 children: [
-                  // The +91 prefix is a visual marker, not an interactive
-                  // element. The phone field itself handles its own focus
-                  // on tap. The previous `TextInput.show` nudge here
-                  // bypassed the Flutter focus chain and was redundant
-                  // with the post-frame `TextInput.show` in initState.
+                  // The +91 prefix is a visual marker, but a tap on
+                  // it should still focus the phone field — riders
+                  // intuitively tap the country code first. The focus
+                  // request goes through the Flutter focus chain
+                  // (`_phoneFocusNode.requestFocus()`), not the
+                  // platform IME channel; the platform's IME service
+                  // follows the focus change naturally.
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
-                    onTap: () {},
+                    onTap: () {
+                      _phoneFocusNode.requestFocus();
+                    },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -209,17 +210,14 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     child: TextFormField(
                       key: const Key('phoneInput'),
                       controller: _phoneController,
-                      // PR-AUDIT 2026-08-12: removed `focusNode: customNode`
-                      // (the field now owns its own focusNode). The
-                      // custom node was suppressing the EditableText's
-                      // internal IME connection on this device.
-                      //
-                      // The previous `onTap: TextInput.show` nudge was
-                      // redundant with `autofocus: true` + the
-                      // post-frame callback in initState; tapping the
-                      // field already focuses it via the standard
-                      // Flutter tap-to-focus path.
-                      autofocus: true,
+                      focusNode: _phoneFocusNode,
+                      // `autofocus: false` so the field does not
+                      // request focus on the first build — that race
+                      // can land before the EditorInfo is wired. The
+                      // post-frame `_phoneFocusNode.requestFocus()`
+                      // in initState is the canonical timing and is
+                      // gated on `widget.autoFocus`.
+                      autofocus: false,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.telephoneNumber],
