@@ -8,6 +8,7 @@ import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/support/presentation/screens/support_center_screen.dart';
 import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../services/monitoring_service.dart';
+import 'ambient_status_pill.dart';
 import 'animated_bottom_nav.dart';
 import 'error_boundary.dart';
 import 'shell_banners.dart';
@@ -109,15 +110,25 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            const SyncBanner(),
-            const SuspensionBanner(),
-            Expanded(
-              child: IndexedStack(
-                index: _currentIndex,
-                children: _buildScreens(),
-              ),
+            Column(
+              children: [
+                const SyncBanner(),
+                const SuspensionBanner(),
+                Expanded(
+                  child: IndexedStack(
+                    index: _currentIndex,
+                    children: _buildScreens(),
+                  ),
+                ),
+              ],
+            ),
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: AmbientStatusPill(),
             ),
           ],
         ),

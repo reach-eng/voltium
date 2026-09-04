@@ -13,6 +13,8 @@ import 'package:voltium_rider/utils/toast.dart';
 
 import 'package:voltium_rider/core/network/file_category.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/services/connectivity_service.dart';
+import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class CreateTicketScreen extends ConsumerStatefulWidget {
@@ -131,6 +133,35 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final isOffline = !ConnectivityService().isConnected ||
+            e.toString().contains('SocketException') ||
+            e.toString().contains('Failed host lookup') ||
+            e.toString().contains('ClientException');
+
+        if (isOffline) {
+          try {
+            await OfflineStorageService().addPendingOperation(
+              '/support/tickets',
+              'POST',
+              {
+                'category': _selectedCategory,
+                'subject': _subjectController.text.trim(),
+                'message': _messageController.text.trim(),
+                'riderId': ref.read(riderProvider).riderId,
+              },
+            );
+          } catch (_) {}
+
+          final nav = Navigator.of(context);
+          nav.pop();
+          Toast.info(
+            context,
+            AppLocalizations.of(context)?.common_savedOffline ??
+                'Saved offline — will submit when connected',
+          );
+          return;
+        }
+
         Toast.error(
           context,
           AppLocalizations.of(context)!.txtfailedToCreateTicket(e.toString()),

@@ -26,7 +26,12 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 @immutable
 class ThemeState {
   final ThemeMode themeMode;
-  const ThemeState({this.themeMode = ThemeMode.system});
+  final bool isAmoled;
+
+  const ThemeState({
+    this.themeMode = ThemeMode.system,
+    this.isAmoled = false,
+  });
 
   /// Effective dark state — resolves [ThemeMode.system] against the
   /// platform brightness so call sites that only care about the rendered
@@ -41,8 +46,10 @@ class ThemeState {
   bool get isLightMode => !isDarkMode;
   bool get isFollowingSystem => themeMode == ThemeMode.system;
 
-  ThemeState copyWith({ThemeMode? themeMode}) =>
-      ThemeState(themeMode: themeMode ?? this.themeMode);
+  ThemeState copyWith({ThemeMode? themeMode, bool? isAmoled}) => ThemeState(
+        themeMode: themeMode ?? this.themeMode,
+        isAmoled: isAmoled ?? this.isAmoled,
+      );
 }
 
 /// Riverpod v3 Notifier. Initial value is loaded synchronously from
@@ -84,6 +91,16 @@ class ThemeNotifier extends Notifier<ThemeState> {
   /// Toggle between dark and light (pinning the result; a system-following
   /// app toggles to the opposite of the current effective brightness).
   Future<void> toggleTheme() async => setDarkMode(!state.isDarkMode);
+
+  /// Enable or disable True AMOLED Black dark theme.
+  void setAmoled(bool value) {
+    if (state.isAmoled != value) {
+      state = state.copyWith(isAmoled: value);
+    }
+  }
+
+  /// Toggle True AMOLED Black dark theme.
+  void toggleAmoled() => setAmoled(!state.isAmoled);
 
   static String _themeModeCode(ThemeMode mode) {
     switch (mode) {

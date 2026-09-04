@@ -626,8 +626,12 @@ class AppTheme {
     );
   }
 
-  static ThemeData get darkTheme {
-    const darkColors = ThemeColors.dark;
+  static ThemeData get darkTheme => _buildDarkTheme(ThemeColors.dark);
+
+  /// True AMOLED Black theme variant for OLED/AMOLED mobile displays.
+  static ThemeData get amoledTheme => _buildDarkTheme(ThemeColors.amoled);
+
+  static ThemeData _buildDarkTheme(ThemeColors darkColors) {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -762,7 +766,7 @@ class AppTheme {
         color: darkColors.divider,
         thickness: 1,
       ),
-      extensions: const [ThemeColors.dark],
+      extensions: [darkColors],
     );
   }
 
@@ -851,6 +855,41 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     surfaceSubtle: Color(0xFF1E293B), // dark card surface (was light #F3F4F6)
     borderSubtle: Color(0xFF334155), // dark slate-700 (was light #E5E7EB)
     primarySurface: Color(0xFF1E293B),
+  );
+
+  /// True AMOLED Black theme variant for OLED/AMOLED mobile displays (saves up to 25% battery).
+  static const ThemeColors amoled = ThemeColors._(
+    surface: Color(
+        0xFF000000), // True AMOLED Black for maximum battery savings and outdoor contrast
+    card: Color(0xFF0D121F), // Deep slate-midnight surface container
+    onSurface: Color(0xFFF1F5F9),
+    onSurfaceVariant: Color(0xFF94A3B8),
+    onSurfaceMuted: Color(0xFF64748B),
+    divider: Color(0xFF1F2937),
+    outline: Color(0xFF374151),
+    outlineVariant: Color(0xFF1F2937),
+    inputFill: Color(0xFF141B2D),
+    iconBackground: Color(0xFF141B2D),
+    success: Color(0xFF34D399),
+    successSurface: Color(0xFF064E3B),
+    successLight: Color(0xFF064E3B),
+    successLightForeground: Color(0xFF6EE7B7),
+    error: Color(0xFFFCA5A5),
+    errorSurface: Color(0xFF7F1D1D),
+    errorLight: Color(0xFF7F1D1D),
+    errorLightForeground: Color(0xFFFCA5A5),
+    errorRose: Color(0xFF4C0519),
+    warning: Color(0xFFFBBF24),
+    warningSurface: Color(0xFF78350F),
+    warningForeground: Color(0xFFFCD34D),
+    warningLight: Color(0xFF78350F),
+    warningLightForeground: Color(0xFFFCD34D),
+    infoLight: Color(0xFF1E3A8A),
+    infoLightForeground: Color(0xFF93C5FD),
+    surfaceBright: Color(0xFF0D121F),
+    surfaceSubtle: Color(0xFF0D121F),
+    borderSubtle: Color(0xFF1F2937),
+    primarySurface: Color(0xFF141B2D),
   );
 
   final Color surface;

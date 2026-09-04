@@ -252,12 +252,23 @@ class VoltiumApp extends ConsumerWidget {
 
       // ── Theme ─────────────────────────────────────────────────────────────
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      darkTheme:
+          themeState.isAmoled ? AppTheme.amoledTheme : AppTheme.darkTheme,
       themeMode: themeMode,
 
-      // ── Responsive Web Wrapper ────────────────────────────────────────────
+      // ── Responsive & Dynamic Type Scaling Wrapper ─────────────────────────
       builder: (context, child) {
         Widget content = child ?? const SizedBox.shrink();
+        final mediaQuery = MediaQuery.of(context);
+        // Dynamic Type Scaling Protection (Material 3 accessibility clamp)
+        final clampedTextScaler = mediaQuery.textScaler.clamp(
+          minScaleFactor: 0.85,
+          maxScaleFactor: 1.30,
+        );
+        content = MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedTextScaler),
+          child: content,
+        );
         if (kIsWeb) {
           content = Center(
             child: ConstrainedBox(
