@@ -20,7 +20,6 @@ import 'package:voltium_rider/features/workflows/presentation/screens/rider_work
 import 'package:voltium_rider/features/profile/presentation/screens/settings_screen.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
@@ -86,39 +85,41 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _SectionLabel(l10n?.menu_account ?? 'ACCOUNT'),
                   const SizedBox(height: 12),
 
-                  // Profile (opens full detail screen)
                   FadeUpWidget(
                     delay: 100,
-                    child: QuickLinkItem(
-                      key: const Key('profileMenuLink'),
-                      icon: Icons.person_outline,
-                      activeIcon: Icons.person,
-                      iconColor: AppColors.primary,
-                      iconBgColor: colors.primarySurface,
-                      title: l10n?.menu_profile ?? 'Profile',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'profile'});
-                        AppNavigator.push(context, const ProfileDetailScreen());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  FadeUpWidget(
-                    delay: 150,
-                    child: QuickLinkItem(
-                      key: const Key('myDocumentsLink'),
-                      icon: Icons.contact_page_outlined,
-                      activeIcon: Icons.contact_page,
-                      iconColor: AppColors.success,
-                      iconBgColor: colors.successSurface,
-                      title: l10n?.menu_myDocuments ?? 'My Documents',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'documents'});
-                        AppNavigator.push(context, const MyDocumentsScreen());
-                      },
+                    child: _MenuGroupCard(
+                      children: [
+                        QuickLinkItem(
+                          key: const Key('profileMenuLink'),
+                          icon: Icons.person_outline,
+                          activeIcon: Icons.person,
+                          iconColor: AppColors.primary,
+                          iconBgColor: colors.primarySurface,
+                          title: l10n?.menu_profile ?? 'Profile',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'profile'});
+                            AppNavigator.push(
+                                context, const ProfileDetailScreen());
+                          },
+                        ),
+                        QuickLinkItem(
+                          key: const Key('myDocumentsLink'),
+                          icon: Icons.contact_page_outlined,
+                          activeIcon: Icons.contact_page,
+                          iconColor: AppColors.success,
+                          iconBgColor: colors.successSurface,
+                          title: l10n?.menu_myDocuments ?? 'My Documents',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'documents'});
+                            AppNavigator.push(
+                                context, const MyDocumentsScreen());
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -128,36 +129,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   FadeUpWidget(
                     delay: 200,
-                    child: QuickLinkItem(
-                      key: const Key('rewardsLink'),
-                      icon: Icons.card_giftcard_outlined,
-                      activeIcon: Icons.card_giftcard,
-                      iconColor: AppColors.accentPurple,
-                      iconBgColor: colors.primarySurface,
-                      title: l10n?.menu_rewards ?? 'Rewards',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'rewards'});
-                        AppNavigator.push(context, const RewardsScreen());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  FadeUpWidget(
-                    delay: 250,
-                    child: QuickLinkItem(
-                      key: const Key('referralLink'),
-                      icon: Icons.people_outline,
-                      activeIcon: Icons.people,
-                      iconColor: AppColors.warning,
-                      iconBgColor: colors.warningSurface,
-                      title: l10n?.menu_referralProgram ?? 'Referral Program',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'referral'});
-                        AppNavigator.push(context, const ReferralScreen());
-                      },
+                    child: _MenuGroupCard(
+                      children: [
+                        QuickLinkItem(
+                          key: const Key('rewardsLink'),
+                          icon: Icons.card_giftcard_outlined,
+                          activeIcon: Icons.card_giftcard,
+                          iconColor: AppColors.accentPurple,
+                          iconBgColor: colors.primarySurface,
+                          title: l10n?.menu_rewards ?? 'Rewards',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'rewards'});
+                            AppNavigator.push(context, const RewardsScreen());
+                          },
+                        ),
+                        QuickLinkItem(
+                          key: const Key('referralLink'),
+                          icon: Icons.people_outline,
+                          activeIcon: Icons.people,
+                          iconColor: AppColors.warning,
+                          iconBgColor: colors.warningSurface,
+                          title:
+                              l10n?.menu_referralProgram ?? 'Referral Program',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'referral'});
+                            AppNavigator.push(context, const ReferralScreen());
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -167,81 +170,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                   FadeUpWidget(
                     delay: 300,
-                    child: QuickLinkItem(
-                      key: const Key('workflowHubLink'),
-                      icon: Icons.route_outlined,
-                      activeIcon: Icons.route,
-                      iconColor: AppColors.primary,
-                      iconBgColor: colors.primarySurface,
-                      title:
-                          l10n?.menu_workflowServices ?? 'Workflow & Services',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'workflows'});
-                        AppNavigator.push(
-                            context, const RiderWorkflowHubScreen());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  FadeUpWidget(
-                    delay: 340,
-                    child: QuickLinkItem(
-                      key: const Key('appSettingsLink'),
-                      icon: Icons.tune_outlined,
-                      activeIcon: Icons.tune,
-                      iconColor: colors.onSurfaceVariant,
-                      iconBgColor: colors.iconBackground,
-                      title: l10n?.menu_appSettings ?? 'App Settings',
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'settings'});
-                        AppNavigator.push(context, const SettingsScreen());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  FadeUpWidget(
-                    delay: 350,
-                    child: QuickLinkItem(
-                      key: const Key('languageLink'),
-                      icon: Icons.language,
-                      iconColor: AppColors.success,
-                      iconBgColor: colors.successSurface,
-                      title: l10n?.menu_language ?? 'Language',
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            localeProv.isFollowingSystem
-                                ? (l10n?.settings_followSystem ??
-                                    'Follow system')
-                                : (l10n != null
-                                    ? LocaleNotifier.displayNameFor(
-                                        localeProv.locale, l10n)
-                                    : (currentLocale == 'hi'
-                                        ? 'हिंदी'
-                                        : 'English')),
-                            style: GoogleFonts.plusJakartaSans(
-                              color: colors.onSurfaceMuted,
-                              fontSize: 14,
-                            ),
+                    child: _MenuGroupCard(
+                      children: [
+                        QuickLinkItem(
+                          key: const Key('workflowHubLink'),
+                          icon: Icons.route_outlined,
+                          activeIcon: Icons.route,
+                          iconColor: AppColors.primary,
+                          iconBgColor: colors.primarySurface,
+                          title: l10n?.menu_workflowServices ??
+                              'Workflow & Services',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'workflows'});
+                            AppNavigator.push(
+                                context, const RiderWorkflowHubScreen());
+                          },
+                        ),
+                        QuickLinkItem(
+                          key: const Key('appSettingsLink'),
+                          icon: Icons.tune_outlined,
+                          activeIcon: Icons.tune,
+                          iconColor: colors.onSurfaceVariant,
+                          iconBgColor: colors.iconBackground,
+                          title: l10n?.menu_appSettings ?? 'App Settings',
+                          showContainer: false,
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'settings'});
+                            AppNavigator.push(context, const SettingsScreen());
+                          },
+                        ),
+                        QuickLinkItem(
+                          key: const Key('languageLink'),
+                          icon: Icons.language,
+                          iconColor: AppColors.success,
+                          iconBgColor: colors.successSurface,
+                          title: l10n?.menu_language ?? 'Language',
+                          showContainer: false,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                localeProv.isFollowingSystem
+                                    ? (l10n?.settings_followSystem ??
+                                        'Follow system')
+                                    : (l10n != null
+                                        ? LocaleNotifier.displayNameFor(
+                                            localeProv.locale, l10n)
+                                        : (currentLocale == 'hi'
+                                            ? 'हिंदी'
+                                            : 'English')),
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: colors.onSurfaceMuted,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(Icons.chevron_right,
+                                  color: colors.outline, size: 20),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Icon(Icons.chevron_right,
-                              color: colors.outline, size: 20),
-                        ],
-                      ),
-                      onTap: () {
-                        PostHogService.capture('profile_menu_item_clicked',
-                            properties: {'item': 'language'});
-                        _showLanguageDialog(context, ref);
-                      },
+                          onTap: () {
+                            PostHogService.capture('profile_menu_item_clicked',
+                                properties: {'item': 'language'});
+                            _showLanguageDialog(context, ref);
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   FadeUpWidget(
                     delay: 360,
@@ -465,7 +464,7 @@ class _CompactRiderHeader extends StatelessWidget {
                 ),
                 child: Text(
                   rider?.phone ?? '',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppTypography.labelSmall.copyWith(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: colors.onSurfaceMuted,
@@ -481,5 +480,54 @@ class _CompactRiderHeader extends StatelessWidget {
   String _capitalize(String text) {
     if (text.isEmpty) return text;
     return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
+  }
+}
+
+class _MenuGroupCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _MenuGroupCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final dividedChildren = <Widget>[];
+    for (int i = 0; i < children.length; i++) {
+      dividedChildren.add(children[i]);
+      if (i < children.length - 1) {
+        dividedChildren.add(
+          Divider(
+            height: 1,
+            thickness: 1,
+            indent: 68,
+            endIndent: 16,
+            color: colors.outlineVariant.withValues(alpha: 0.35),
+          ),
+        );
+      }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        child: Column(
+          children: dividedChildren,
+        ),
+      ),
+    );
   }
 }

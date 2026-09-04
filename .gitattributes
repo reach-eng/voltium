@@ -57,3 +57,11 @@ Cargo.lock text eol=lf
 
 # Makefile
 Makefile text eol=lf
+
+# Export-ignore for review archives
+flutter/chromedriver/** export-ignore
+web/public/rider-app/canvaskit/** export-ignore
+web/public/rider-app/*.wasm export-ignore
+web/public/rider-app/*.symbols export-ignore
+web/public/rider-app/*.js export-ignore
+web/public/rider-app/*.js.map export-ignore

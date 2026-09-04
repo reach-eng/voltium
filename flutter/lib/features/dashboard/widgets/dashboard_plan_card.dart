@@ -90,12 +90,26 @@ class PlanCard extends StatelessWidget {
                 style: AppTypography.headingSmall
                     .copyWith(color: Colors.white, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 24),
+              if (planEndDate != null) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                  child: LinearProgressIndicator(
+                    value: _computeRemainingRatio(planEndDate),
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Colors.white),
+                    minHeight: 4,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: Container(
-                      padding: Spacing.paddingMd,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -112,8 +126,9 @@ class PlanCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             DateHelpers.computeTimeRemaining(planEndDate),
-                            style: AppTypography.headingSmall
-                                .copyWith(color: Colors.white),
+                            style: AppTypography.titleMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -122,7 +137,8 @@ class PlanCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      padding: Spacing.paddingMd,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -139,8 +155,9 @@ class PlanCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             DateHelpers.computeNextRecharge(planEndDate),
-                            style: AppTypography.headingSmall
-                                .copyWith(color: Colors.white),
+                            style: AppTypography.titleMedium.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -151,5 +168,15 @@ class PlanCard extends StatelessWidget {
             ],
           ),
         ));
+  }
+
+  double _computeRemainingRatio(DateTime? endDate) {
+    if (endDate == null) return 1.0;
+    final now = DateTime.now();
+    final remainingHours = endDate.difference(now).inHours;
+    if (remainingHours <= 0) return 0.05;
+    // Assume typical weekly (168h) or monthly window clamped between 0.05 and 1.0
+    final ratio = remainingHours / 168.0;
+    return ratio.clamp(0.05, 1.0);
   }
 }
