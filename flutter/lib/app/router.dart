@@ -52,11 +52,6 @@ import '../features/rentals/presentation/screens/rental_details_screen.dart';
 
 import '../features/pickup/presentation/screens/pickup_hub_screen.dart';
 import '../features/pickup/presentation/screens/pickup_verification_screen.dart';
-// PR-ONBOARDING-FLOW-2026-08-13: pickup_success_screen import
-// removed — the active path no longer routes there. The file is
-// preserved in lib/features/pickup/ for any admin / older-flow
-// tool that still needs it.
-// import '../features/pickup/presentation/screens/pickup_success_screen.dart';
 import '../features/pickup/presentation/screens/tl_details_screen.dart';
 import '../features/pickup/presentation/screens/vehicle_photos_screen.dart';
 

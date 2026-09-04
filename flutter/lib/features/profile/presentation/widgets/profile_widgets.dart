@@ -84,6 +84,7 @@ class QuickLinkItem extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
   final Widget? trailing;
+  final bool showContainer;
 
   const QuickLinkItem({
     super.key,
@@ -94,11 +95,60 @@ class QuickLinkItem extends StatelessWidget {
     required this.title,
     this.onTap,
     this.trailing,
+    this.showContainer = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final content = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        onTap: onTap != null
+            ? () {
+                HapticService.light();
+                onTap!();
+              }
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(color: colors.onSurface),
+                ),
+              ),
+              trailing ??
+                  Icon(
+                    Icons.chevron_right,
+                    color: colors.outlineVariant,
+                    size: 20,
+                  ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!showContainer) {
+      return content;
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
@@ -114,49 +164,7 @@ class QuickLinkItem extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          onTap: onTap != null
-              ? () {
-                  HapticService.light();
-                  onTap!();
-                }
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: iconBgColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTypography.labelLarge
-                        .copyWith(fontWeight: FontWeight.w700)
-                        .copyWith(color: colors.onSurface),
-                  ),
-                ),
-                trailing ??
-                    Icon(
-                      Icons.chevron_right,
-                      color: colors.outlineVariant,
-                      size: 20,
-                    ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      child: content,
     );
   }
 }
@@ -396,7 +404,17 @@ class ProfileEmergencySosTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.errorSurface,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: 0.45),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.error.withValues(alpha: 0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -414,21 +432,35 @@ class ProfileEmergencySosTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: colors.iconBackground,
+                    color: AppColors.error.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.emergency_outlined,
+                    Icons.emergency,
                     color: AppColors.error,
-                    size: 22,
+                    size: 24,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    l10n?.txtemergencySos ?? 'Emergency SOS',
-                    style: AppTypography.titleSmall
-                        .copyWith(color: AppColors.error),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n?.txtemergencySos ?? 'Emergency SOS',
+                        style: AppTypography.titleSmall.copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '24/7 Roadside Assistance & Support',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: colors.onSurfaceMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const Icon(Icons.chevron_right, color: AppColors.error),

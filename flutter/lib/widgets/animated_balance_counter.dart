@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
@@ -109,7 +110,11 @@ class _AnimatedBalanceCounterState extends State<AnimatedBalanceCounter>
       _previousValue = oldWidget.value;
       _isIncrease = widget.value > oldWidget.value;
       _hasAnimated = true;
-      _controller.forward(from: 0);
+      _controller.forward(from: 0).then((_) {
+        try {
+          HapticFeedback.lightImpact();
+        } catch (_) {}
+      });
     }
   }
 

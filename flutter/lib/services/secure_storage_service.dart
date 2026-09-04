@@ -243,7 +243,8 @@ class EncryptedCacheService {
     await _storage.delete(key: key);
   }
 
-  Future<void> clear() async {
-    await _storage.deleteAll();
-  }
+  // AUDIT-2026-09-04: no `clear()`/`deleteAll()` method here. A blanket
+  // wipe would destroy device-bound keys (`fcm_command_secret`,
+  // `device_locked_by_admin`) the same way `SecureStorageService.clearAll`
+  // would — see that method's audit note before considering adding one.
 }

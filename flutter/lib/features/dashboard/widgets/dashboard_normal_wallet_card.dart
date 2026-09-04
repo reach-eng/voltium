@@ -98,6 +98,30 @@ class DashboardNormalWalletCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         balanceCounter,
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _QuickAmountChip(
+                              label: '+₹200',
+                              onTap: onTopUp != null
+                                  ? () {
+                                      HapticService.light();
+                                      onTopUp!();
+                                    }
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            _QuickAmountChip(
+                              label: '+₹500',
+                              onTap: onTopUp != null
+                                  ? () {
+                                      HapticService.light();
+                                      onTopUp!();
+                                    }
+                                  : null,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                     Material(
@@ -122,13 +146,13 @@ class DashboardNormalWalletCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       l10n?.txtrentalRecoveryStreak ?? 'Rental Recovery Streak',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppTypography.titleSmall.copyWith(
                         fontSize: compact ? 12 : 14,
                         fontWeight: FontWeight.w600,
                         color: compact
@@ -155,7 +179,7 @@ class DashboardNormalWalletCard extends StatelessWidget {
                 Text(
                   l10n?.txtminRechargeNotice(minAmountStr) ??
                       'A minimum recharge of ₹$minAmountStr is required to proceed further.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: AppTypography.bodySmall.copyWith(
                     fontSize: compact ? 10 : 12,
                     fontWeight: FontWeight.w500,
                     color: colors.onSurfaceMuted,
@@ -163,6 +187,43 @@ class DashboardNormalWalletCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickAmountChip extends StatelessWidget {
+  final String label;
+  final VoidCallback? onTap;
+
+  const _QuickAmountChip({required this.label, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: colors.primarySurface,
+            borderRadius: BorderRadius.circular(AppRadius.full),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ),

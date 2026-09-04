@@ -35,7 +35,7 @@ class DashboardProfileCard extends StatelessWidget {
               onTap!();
             }
           : null,
-      padding: Spacing.paddingMd,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           _buildAvatar(colors),
@@ -99,8 +99,8 @@ class DashboardProfileCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: colors.iconBackground,
@@ -110,15 +110,15 @@ class DashboardProfileCard extends StatelessWidget {
             child: avatarUrl != null
                 ? CachedNetworkImage(
                     imageUrl: avatarUrl,
-                    width: 72,
-                    height: 72,
+                    width: 56,
+                    height: 56,
                     fit: BoxFit.cover,
-                    memCacheWidth: 144,
-                    memCacheHeight: 144,
+                    memCacheWidth: 112,
+                    memCacheHeight: 112,
                     placeholder: (_, __) => const Center(
                       child: SizedBox(
-                        width: 20,
-                        height: 20,
+                        width: 18,
+                        height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
@@ -127,7 +127,7 @@ class DashboardProfileCard extends StatelessWidget {
                         rider.name.isNotEmpty
                             ? rider.name[0].toUpperCase()
                             : 'A',
-                        style: AppTypography.headingMedium
+                        style: AppTypography.headingSmall
                             .copyWith(color: colors.onSurface),
                       ),
                     ),
@@ -135,7 +135,7 @@ class DashboardProfileCard extends StatelessWidget {
                 : Center(
                     child: Text(
                       rider.name.isNotEmpty ? rider.name[0].toUpperCase() : 'A',
-                      style: AppTypography.headingMedium
+                      style: AppTypography.headingSmall
                           .copyWith(color: colors.onSurface),
                     ),
                   ),

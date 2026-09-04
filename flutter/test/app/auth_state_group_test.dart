@@ -30,7 +30,6 @@ void main() {
       expect(AuthState.planSuccess.isPreDashboardOrSub, isTrue);
       expect(AuthState.pickupHub.isPreDashboardOrSub, isTrue);
       expect(AuthState.pickupVerification.isPreDashboardOrSub, isTrue);
-      expect(AuthState.pickupSuccess.isPreDashboardOrSub, isTrue);
     });
 
     test(

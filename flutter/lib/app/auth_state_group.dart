@@ -33,7 +33,6 @@ extension AuthStateGroup on AuthState {
       case AuthState.planSuccess:
       case AuthState.pickupHub:
       case AuthState.pickupVerification:
-      case AuthState.pickupSuccess:
       case AuthState.topUpAmount:
       case AuthState.topUpUpi:
       case AuthState.topUpProof:

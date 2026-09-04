@@ -15,7 +15,9 @@ enum AuthState {
   planSuccess,
   pickupHub,
   pickupVerification,
-  pickupSuccess,
+  // AUDIT-2026-09-04: `pickupSuccess` removed. It was dead code from the
+  // old synchronous flow (pickupVerification now advances to hangTight)
+  // and no admin-side tool ever routed a rider to it.
   // PR-ONBOARDING-FLOW-2026-08-11: async wait state in the new active
   // onboarding path. Replaces the synchronous pre-dashboard wait at the
   // end of guarantor → plan → pickup. The rider lands here after submitting

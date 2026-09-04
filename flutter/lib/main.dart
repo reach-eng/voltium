@@ -98,6 +98,10 @@ Future<void> main() async {
     ErrorWidget.builder = (FlutterErrorDetails details) {
       AnalyticsService()
           .trackError('ErrorWidget', details.exception.toString());
+      // AUDIT-2026-09-04: never render the raw exception in a release
+      // build — it can carry tokens, phone numbers or internal paths.
+      // Full details already went to MonitoringService/PostHog via
+      // FlutterError.onError; the rider sees a generic message only.
       return Material(
         color: Colors.white,
         child: Center(
@@ -118,17 +122,10 @@ Future<void> main() async {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  details.exception.toString(),
-                  style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12, color: Colors.grey),
+                  'Please restart the app. If the problem persists, '
+                  'contact support.',
+                  style: AppTypography.bodyMedium,
                   textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () {
-                    FlutterError.onError?.call(details);
-                  },
-                  child: const Text('Reload'),
                 ),
               ],
             ),

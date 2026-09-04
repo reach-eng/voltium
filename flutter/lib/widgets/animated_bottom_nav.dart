@@ -103,12 +103,12 @@ class _AppBottomNavState extends State<AppBottomNav>
           opacity: _fadeAnim,
           child: ClipRect(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
               child: Container(
                 height: 80 + MediaQuery.of(context).padding.bottom,
                 decoration: BoxDecoration(
-                  // glass: card 95% opacity
-                  color: colors.card.withValues(alpha: 0.95),
+                  // glass: card 97% opacity
+                  color: colors.card.withValues(alpha: 0.97),
                   border: Border(
                     top: BorderSide(color: colors.outlineVariant, width: 1),
                   ),
@@ -311,8 +311,8 @@ class _NavButtonState extends State<_NavButton>
                     child: Container(
                       width: 4,
                       height: 4,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
+                      decoration: BoxDecoration(
+                        color: activeColor,
                         shape: BoxShape.circle,
                       ),
                     ),

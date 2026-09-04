@@ -36,7 +36,7 @@ class TeamLeaderCard extends StatelessWidget {
           padding: Spacing.paddingMd,
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
             boxShadow: AppShadows.glass,
           ),
           child: Column(

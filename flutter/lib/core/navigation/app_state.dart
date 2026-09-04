@@ -243,7 +243,6 @@ AppState appStateFromAuthState(AuthState authState) {
       return const Onboarding(OnboardingStep.planSelect);
     case AuthState.pickupHub:
     case AuthState.pickupVerification:
-    case AuthState.pickupSuccess:
       return const Onboarding(OnboardingStep.deposit);
     case AuthState.dashboard:
       return const ActiveDashboard();

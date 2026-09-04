@@ -224,9 +224,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
   void _onOtpChanged(String value) {
     _setOtpError('');
+    final isComplete = value.length == 6;
     setState(() {
-      _isOtpComplete = value.length == 6;
+      _isOtpComplete = isComplete;
     });
+    if (isComplete && !_isLoading) {
+      _handleVerify();
+    }
   }
 
   Future<void> _handleVerify() async {

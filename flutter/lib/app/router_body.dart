@@ -494,11 +494,10 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     // longer reachable from the active path (pickupVerification
     // advances to hangTight). The case is removed so the dead code
     // does not drift (the "Rate Us" snackbar it triggered was a
-    // known hijack pattern from prior audits). The AuthState enum
-    // value is preserved for any admin-side / older-flow tool that
-    // still routes a rider there, and `PickupSuccessScreen` is
-    // preserved in lib/features/pickup/ for the same reason — but
-    // no Flutter navigation lands on it from the rider-facing flow.
+    // known hijack pattern from prior audits).
+    // AUDIT-2026-09-04: the `pickupSuccess` enum value itself is now
+    // removed too — it was never routed to by any admin-side or
+    // older-flow tool, and `PickupSuccessScreen` has been deleted.
 
     // PR-ONBOARDING-FLOW-2026-08-11: async wait state in the new active
     // onboarding path. The screen polls the rider provider and calls
@@ -721,12 +720,8 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       // never offered onboarding CTAs.
       currentScreen = _buildAccountClosedScreen(context, state);
       break;
-    // PR-ONBOARDING-FLOW-2026-08-13: `AuthState.pickupSuccess` is
-    // preserved in the enum for back-compat with admin-side
-    // navigation, but is unreachable from the active path. The
-    // default branch routes any future stray navigation to the
-    // dashboard — semantically equivalent to the old "You're live"
-    // surface (the rider has been approved and is now active).
+    // AUDIT-2026-09-04: the `case AuthState.pickupSuccess:` that used to
+    // fall through here is gone — the enum value was deleted as dead code.
     //
     // The `default` is intentional: it's insurance against a future
     // `AuthState` enum addition landing in this build before a
@@ -734,7 +729,6 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     // would silently leave `currentScreen` uninitialised and the
     // router would throw. The current lint sees it as unreachable
     // because every existing enum value has an explicit case above.
-    case AuthState.pickupSuccess:
     // ignore: unreachable_switch_default
     default:
       currentScreen = const AppShell(key: ValueKey('dashboard'));

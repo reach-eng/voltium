@@ -81,12 +81,12 @@ class PostHogService {
     try {
       await Posthog().capture(
         eventName: 'fatal_error',
-        properties: <String, Object>{
+        properties: _scrubProperties(<String, Object>{
           'error_type': error.runtimeType.toString(),
-          'error_message': error.toString(),
+          'error_message': _redactPiiInText(error.toString()),
           if (reason != null) 'reason': reason,
-          if (stack != null) 'stack': stack.toString(),
-        },
+          if (stack != null) 'stack': _truncateStack(stack),
+        }),
       );
     } catch (e) {
       appDebug('[PostHog.captureError] failed: $e');
@@ -108,5 +108,24 @@ class PostHogService {
     }
 
     return scrubbed;
+  }
+
+  /// AUDIT-2026-09-04: `captureError` previously shipped the raw
+  /// `error.toString()` and full stack trace. Exceptions often embed the
+  /// values that caused them — phone numbers, OTPs, token fragments,
+  /// document IDs — so free-text error fields get the same treatment as
+  /// scrubbed keys: mask digit runs that look like identifiers (≥6 digits,
+  /// covers phone fragments and OTPs; Aadhaar/PAN are longer) before they
+  /// leave the device.
+  static String _redactPiiInText(String text) {
+    return text.replaceAllMapped(RegExp(r'\d{6,}'), (_) => '[REDACTED]');
+  }
+
+  /// Keep only the throw-site frames. Later frames carry local variable
+  /// dumps in some formatters and add noise, not signal.
+  static String _truncateStack(StackTrace stack, {int maxFrames = 15}) {
+    final lines = stack.toString().split('\n');
+    final kept = lines.take(maxFrames * 2).join('\n');
+    return _redactPiiInText(kept);
   }
 }

@@ -255,7 +255,7 @@ class SecurityDepositCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      borderRadius: BorderRadius.circular(AppRadius.radiusModal),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
@@ -264,7 +264,7 @@ class SecurityDepositCard extends StatelessWidget {
           padding: const EdgeInsets.all(Spacing.md),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
             border: Border.all(
                 color: colors.outlineVariant.withValues(alpha: 0.5), width: 1),
             boxShadow: AppShadows.glass,
@@ -317,20 +317,19 @@ class SecurityDepositCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text(
                     '\u20B9',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                    style: AppTypography.titleMedium.copyWith(
                       fontWeight: FontWeight.w400,
                       color: colors.onSurface,
                     ),
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     deposit.toInt().toString(),
                     style: AppTypography.headingMedium
@@ -338,13 +337,12 @@ class SecurityDepositCard extends StatelessWidget {
                   ),
                 ],
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 isRefundable
                     ? 'Your first top-up of ₹\u2060${deposit.toInt()} is refundable after 180 days of active service.'
                     : 'Amounts less than ₹\u2060${AppConstants.depositRefundThreshold.toInt()} are treated as account activation fees and are non-refundable.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
+                style: AppTypography.bodySmall.copyWith(
                   color: colors.onSurfaceVariant,
                   height: 1.4,
                 ),
@@ -859,8 +857,7 @@ class TransactionHistorySection extends StatelessWidget {
                       ? AppLocalizations.of(context)!.wallet_noTransactions
                       : AppLocalizations.of(context)!
                           .walletNoTransactionsForFilter,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                  style: AppTypography.bodySmall.copyWith(
                     color: colors.onSurfaceMuted,
                     fontStyle: FontStyle.italic,
                   ),
@@ -868,16 +865,61 @@ class TransactionHistorySection extends StatelessWidget {
               ),
             )
           else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filtered.length > 10 ? 10 : filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 0),
-              itemBuilder: (context, index) {
-                return TransactionListTile(tx: filtered[index]);
-              },
-            ),
+            _buildGroupedList(filtered),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGroupedList(List<TransactionModel> items) {
+    final displayItems = items.length > 10 ? items.sublist(0, 10) : items;
+    final List<Widget> widgets = [];
+    String? currentGroup;
+
+    for (final tx in displayItems) {
+      final group = _dateGroupFor(tx.createdAt);
+      if (group != currentGroup) {
+        currentGroup = group;
+        widgets.add(_DateGroupHeader(title: group));
+      }
+      widgets.add(TransactionListTile(tx: tx));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
+    );
+  }
+
+  String _dateGroupFor(DateTime? dt) {
+    if (dt == null) return 'Earlier';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final txDay = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(txDay).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return 'Earlier';
+  }
+}
+
+class _DateGroupHeader extends StatelessWidget {
+  final String title;
+
+  const _DateGroupHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4, left: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          color: colors.onSurfaceMuted,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+        ),
       ),
     );
   }

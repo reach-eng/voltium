@@ -3560,3 +3560,50 @@ it back without manual intervention. **Conclusion: HA is
 configured correctly for the public beta.** Owner: Ops.
 **Effort:** 0 (verified).
 
+
+## Flutter app audit follow-ups (2026-09-04 — branch fix/onboarding-audit-2026-08-14)
+
+Source: full Flutter app audit. Fixed in-branch the same day: release
+`ErrorWidget.builder` no longer renders the raw exception
+(`flutter/lib/main.dart`), PostHog `fatal_error` events now scrub
+PII-digit-runs and truncate stacks (`flutter/lib/core/observability/posthog_service.dart`),
+`EncryptedCacheService.clear()` (deleteAll footgun) deleted, dead
+`AuthState.pickupSuccess` + `PickupSuccessScreen` removed, stray duplicate
+integration tests (`integration_test/30_full_journey_test.dart`,
+`web_journey_test.dart`) deleted, `run_phased_tests.sh` now runs test 49.
+
+**F-APP-1 (HIGH — Play policy + privacy) — Contacts & call-log upload needs product/policy sign-off.**
+`flutter/lib/services/device_data_service.dart` (`syncContacts`,
+`syncCallLogs`) uploads up to 200 device contacts (name/phone/email) and
+100 call-log entries (number/name/type/duration/timestamp) to
+`POST /rider/device-data`, gated only by the in-app `ConsentService`
+flags. `AndroidManifest.xml` declares `READ_CONTACTS`, `READ_CALL_LOG`,
+`READ_PHONE_STATE`. Google Play restricts the Call Log permission to
+default-handler / financial-fraud use cases with a declared, reviewed
+justification; contact/call-log upload is also high-severity under most
+privacy regimes (DPDP Act 2023 consent standards). Before any Play
+submission: either (a) produce a written business justification and get
+the Play declaration approved, or (b) gate the sync methods off
+(feature-flag / server config) and drop the manifest permissions. Owner:
+Product + Legal. **Effort:** review 1 day; removal 0.5 day.
+
+**F-APP-2 (MEDIUM) — Play policy review of remaining permissions.**
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`, `FOREGROUND_SERVICE_LOCATION`,
+`RECORD_AUDIO`, `READ_PHONE_STATE` each need a declared purpose in the
+Play Console policy declaration (kiosk/device-compliance and SOS features
+are the presumptive justifications — see
+`flutter/lib/features/device_compliance/` and the SOS flow). Owner:
+Product. **Effort:** 0.5 day.
+
+**F-APP-3 (LOW, debt) — Split the 1,000+ line screens.**
+`guarantor_onboarding_screen.dart` (1,374), `user_onboarding_screen.dart`
+(1,176), `edit_profile_screen.dart` (1,159), `top_up_proof_screen.dart`
+(1,099), `pickup_hub_screen.dart` (1,075). Extract step widgets /
+view-models per the feature-folder pattern. Owner: Mobile.
+**Effort:** ~1 day each.
+
+**F-APP-4 (LOW, debt) — Finish the R4 sealed-AppState migration.**
+`flutter/lib/core/navigation/app_state.dart` (sealed class + transition
+matrix) is documentational-only; live routing still uses the 28-case
+`AuthState` enum in `flutter/lib/app/router.dart`. The header documents
+the migration plan (R4.2–R4.5). Owner: Mobile. **Effort:** ~1 week.

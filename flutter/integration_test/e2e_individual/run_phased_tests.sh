@@ -104,6 +104,7 @@ ALL_TESTS=(
   "$TEST_DIR/46_pickup_screen_test.dart"
   "$TEST_DIR/47_admin_approval_wait_test.dart"
   "$TEST_DIR/48_emergency_sos_test.dart"
+  "$TEST_DIR/49_language_dialog_test.dart"
 )
 
 run_test() {

@@ -73,7 +73,7 @@ class ReferralCard extends StatelessWidget {
                           l10n?.txtshareCodeWithFriends ??
                               'Share your code with friends',
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.of(context).successLight,
+                            color: Colors.white.withValues(alpha: 0.85),
                           ),
                         ),
                       ],
