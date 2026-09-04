@@ -75,12 +75,26 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     // ONBOARDING-AUDIT 2026-08-14 P2-2: the previous implementation
     // had a `Future.delayed(300ms)` to manually invoke
     // `TextInput.show` on top of `autofocus: true`. The 300ms timer
-    // is fragile (too short on slow devices, redundant on fast ones)
-    // and the manual nudge is no longer needed: the C2 IME fix (PR
-    // 2026-08-12) made the field own its own focus node + use
-    // `autofocus: true`, which is sufficient. If a future device
-    // regression appears, re-add a one-line `WidgetsBinding.instance
-    // .addPostFrameCallback` here, not a delayed timer.
+    // is fragile (too short on slow devices, redundant on fast ones).
+    //
+    // ONBOARDING-AUDIT 2026-09-04 (user-reported, A063): `autofocus: true`
+    // on the TextFormField alone is not enough on the A063 device.
+    // The parent login_screen.dart runs a 800ms slide-in animation
+    // (`_entryCtrl.forward()`). The field is built during the animation
+    // and `autofocus: true` fires immediately, but the IME connection
+    // isn't ready yet (the parent is still animating + the field is
+    // mid-screen with clipped bounds). The result: the field gets
+    // focus but the soft keyboard doesn't appear. Use a
+    // post-frame callback to re-invoke TextInput.show AFTER the first
+    // frame is laid out. This is the canonical fix per
+    // https://docs.flutter.dev/release/breaking-changes/keyboard-appearance-changes
+    // and matches the pattern in the E2E test helpers.
+    if (widget.autoFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        SystemChannels.textInput.invokeMethod('TextInput.show');
+      });
+    }
   }
 
   @override
