@@ -70,7 +70,10 @@ void main() {
   group('RiderLifecycleGate.redirect', () {
     RiderModel createRider(String status,
         {AccountStatus accountStatus = AccountStatus.active,
-        bool pickupDone = false}) {
+        bool pickupDone = false,
+        KycStatus kycStatus = KycStatus.pending,
+        DepositStatus depositStatus = DepositStatus.pending,
+        double securityDeposit = 0.0}) {
       return RiderModel(
         riderId: '1',
         name: 'Test',
@@ -78,6 +81,9 @@ void main() {
         lifecycleStatus: status,
         accountStatus: accountStatus,
         pickupDone: pickupDone,
+        kycStatus: kycStatus,
+        depositStatus: depositStatus,
+        securityDeposit: securityDeposit,
       );
     }
 
@@ -113,9 +119,15 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
-    test('returns dashboard if pickupDone is true', () {
+    test(
+        'PR-HANGTIGHT-2026-09-06: pickupDone alone does NOT grant dashboard',
+        () {
+      // The server computes pickupDone = isActivated || pickedUpAt, so
+      // every picked-up rider has pickupDone=true while their KYC /
+      // deposit approvals may still be pending. The gate must key on
+      // the strict approval getters (or rank >= 11), not pickupDone.
       final rider = createRider('KYC_APPROVED', pickupDone: true);
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
     test(
@@ -242,14 +254,61 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
     });
 
-    test('returns dashboard (not hangTight) when rank 10 + pickupDone', () {
-      // Race protection: if the server flips pickupDone=true while the
-      // rider is still in PICKUP_SCHEDULED status (sync completed but
-      // status not yet bumped), the dashboard branch must win — the
-      // rider is functionally active, regardless of the stale status
-      // string.
+    test(
+        'PR-HANGTIGHT-2026-09-06: rank 10 + pickupDone but approvals pending → hangTight',
+        () {
+      // The old behavior routed rank-10 riders with pickupDone=true
+      // straight to the dashboard, skipping the admin-approval wait.
+      // pickupDone is true for every picked-up rider (server ORs
+      // pickedUpAt), so it must not gate the dashboard.
       final rider = createRider('PICKUP_SCHEDULED', pickupDone: true);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
+    });
+
+    test(
+        'PR-HANGTIGHT-2026-09-06: rank 10 + both approvals approved → dashboard',
+        () {
+      final rider = createRider(
+        'PICKUP_SCHEDULED',
+        pickupDone: true,
+        kycStatus: KycStatus.approved,
+        depositStatus: DepositStatus.approved,
+      );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
+    });
+
+    test(
+        'PR-HANGTIGHT-2026-09-06: rank 10 + credited deposit (securityDeposit > 0) + kyc approved → dashboard',
+        () {
+      // Mirrors the server's isDepositApproved:
+      // depositStatus === 'APPROVED' || securityDepositInPaise > 0.
+      final rider = createRider(
+        'PICKUP_SCHEDULED',
+        kycStatus: KycStatus.approved,
+        securityDeposit: 2000,
+      );
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
+    });
+
+    test(
+        'PR-HANGTIGHT-2026-09-06: rank 10 + only KYC approved → hangTight',
+        () {
+      final rider = createRider(
+        'PICKUP_SCHEDULED',
+        kycStatus: KycStatus.approved,
+        depositStatus: DepositStatus.pendingVerification,
+      );
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
+    });
+
+    test(
+        'PR-HANGTIGHT-2026-09-06: rank 10 + only deposit approved → hangTight',
+        () {
+      final rider = createRider(
+        'PICKUP_SCHEDULED',
+        depositStatus: DepositStatus.approved,
+      );
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
     });
   });
 

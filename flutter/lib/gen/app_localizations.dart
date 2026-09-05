@@ -4963,7 +4963,7 @@ abstract class AppLocalizations {
   /// HangTight hero body ’ 'your account is being set up'
   ///
   /// In en, this message translates to:
-  /// **'We\'re setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.'**
+  /// **'We\'re setting up your account.\nThis usually takes 5–10 minutes.'**
   String get hangTightSettingUpBody;
 
   /// HangTight hint that the rider will be notified when the account is active
@@ -5049,6 +5049,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Action needed'**
   String get hangTightStatusActionNeeded;
+
+  /// HangTight row: security deposit (wallet top-up) approved by admin
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet top-up approved'**
+  String get hangTightDepositApproved;
+
+  /// HangTight row: security deposit submitted, awaiting admin approval
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet top-up under review'**
+  String get hangTightDepositUnderReview;
+
+  /// HangTight row: admin rejected the security-deposit payment
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet top-up rejected'**
+  String get hangTightDepositRejected;
+
+  /// HangTight rejected-deposit row action: re-enter the top-up flow
+  ///
+  /// In en, this message translates to:
+  /// **'Retry payment'**
+  String get hangTightRetryPayment;
+
+  /// PR-KYC-CORRECTION HangTight correction card CTA: take the rider to the first flagged field
+  ///
+  /// In en, this message translates to:
+  /// **'Correct the details'**
+  String get hangTightCorrectDetails;
+
+  /// PR-KYC-CORRECTION HangTight correction card: heading above the flagged-field chips
+  ///
+  /// In en, this message translates to:
+  /// **'Correction needed on:'**
+  String get hangTightCorrectionNeeded;
 
   /// Empty state when a non-All filter is active and no transactions match
   ///

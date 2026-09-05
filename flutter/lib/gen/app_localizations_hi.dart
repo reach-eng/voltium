@@ -2701,6 +2701,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hangTightStatusActionNeeded => 'कार्रवाई आवश्यक';
 
   @override
+  String get hangTightDepositApproved => 'वॉलेट टॉप-अप स्वीकृत';
+
+  @override
+  String get hangTightDepositUnderReview => 'वॉलेट टॉप-अप समीक्षाधीन';
+
+  @override
+  String get hangTightDepositRejected => 'वॉलेट टॉप-अप अस्वीकृत';
+
+  @override
+  String get hangTightRetryPayment => 'भुगतान फिर से करें';
+
+  @override
+  String get hangTightCorrectDetails => 'विवरण ठीक करें';
+
+  @override
+  String get hangTightCorrectionNeeded => 'इनमें सुधार की आवश्यकता है:';
+
+  @override
   String get walletNoTransactionsForFilter =>
       'इस फ़िल्टर से मेल खाता कोई लेनदेन नहीं';
 

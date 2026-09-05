@@ -1,5 +1,6 @@
 // Enum definitions for RiderModel field types
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:json_annotation/json_annotation.dart';
 import 'deposit_record.dart';
 import 'rider_lifecycle_stage.dart';
@@ -342,7 +343,11 @@ class RiderModel {
         other.assignedVehicle == assignedVehicle &&
         other.guarantorStatus == guarantorStatus &&
         other.planStatus == planStatus &&
-        other.requiresHigherDeposit == requiresHigherDeposit;
+        other.requiresHigherDeposit == requiresHigherDeposit &&
+        // PR-KYC-CORRECTION (2026-09-06): the HangTight correction chips
+        // and the "Correct the details" step routing re-render when the
+        // admin updates the flagged-field list without an updatedAt bump.
+        listEquals(other.kycEditableFields, kycEditableFields);
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -359,6 +364,13 @@ class RiderModel {
           guarantorStatus,
           planStatus,
           requiresHigherDeposit,
+          // Match the == contract; the list itself is folded into a
+          // count+first-element hash (null-safe) so equality and hashCode
+          // stay consistent without importing foundation here.
+          kycEditableFields == null
+              ? null
+              : Object.hash(kycEditableFields!.length,
+                  kycEditableFields!.isEmpty ? null : kycEditableFields!.first),
         ],
       );
 
@@ -595,6 +607,30 @@ class RiderModel {
       accountStatus == AccountStatus.active ||
       (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 11);
 
+  // ── Strict approval getters (admin-approval signal only) ───────────────
+  //
+  // PR-HANGTIGHT-2026-09-06: the coarse getters above are polluted for
+  // activation purposes — the server ORs `kycDone`/`depositDone` to true
+  // for any rider at rank >= 10 (flatten-rider.ts:109-110), so they read
+  // "done" for a PICKUP_SCHEDULED rider whose admin approvals are still
+  // pending. These strict getters mirror the server's activation inputs
+  // exactly (flatten-rider.ts:107-108): raw `kycProfile.status` and raw
+  // `wallet.depositStatus` / credited deposit amount. The lifecycle gate
+  // and HangTightScreen key on these so a rank-10 rider actually waits
+  // for both approvals.
+
+  /// True only when an admin has explicitly approved KYC
+  /// (KycProfile.status === 'APPROVED' server-side).
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycApprovedByAdmin => kycStatus == KycStatus.approved;
+
+  /// True only when the security deposit has been approved by an admin
+  /// (wallet.depositStatus === 'APPROVED') or the deposit amount has been
+  /// credited (securityDepositInPaise > 0 server-side).
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositApprovedByAdmin =>
+      depositStatus == DepositStatus.approved || securityDeposit > 0;
+
   // ── Compound State Getters (used by PreDashboardScreen) ────────────────
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -667,6 +703,13 @@ class RiderModel {
       kycRejectionReason: json['kycProfile'] is Map
           ? (json['kycProfile'] as Map)['rejectionReason'] as String?
           : null,
+      // PR-KYC-CORRECTION (2026-09-06): canonical keys the admin flagged
+      // for correction (flatten-rider.ts exposes `kycEditableFields`
+      // top-level). Drives the HangTight correction chips, the
+      // "Correct the details" deep-link step, and the orange borders.
+      kycEditableFields: (json['kycEditableFields'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
       bankAccount: json['bankAccount'] as String?,
       bankIfsc: json['bankIfsc'] as String?,
       bankName: json['bankName'] as String?,
@@ -814,6 +857,9 @@ class RiderModel {
       'planEndDate': planEndDate?.toIso8601String(),
       'paymentStreak': paymentStreak,
       'requiresHigherDeposit': requiresHigherDeposit,
+      // PR-KYC-CORRECTION: keep the admin-flagged fields across cold start
+      // so HangTight still shows the correction chips before first refresh.
+      'kycEditableFields': kycEditableFields,
     };
   }
 
@@ -872,6 +918,9 @@ class RiderModel {
       lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',
       isNewRider: _toBool(cache['isNewRider']) ?? false,
       kycStatus: _parseKycStatus(cache['kycStatus']),
+      kycEditableFields: (cache['kycEditableFields'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
       rentalStatus: cache['rentalStatus'] as String? ?? 'NONE',
       returnPending: _toBool(cache['returnPending']) ?? false,
       intent: cache['intent'] as String?,

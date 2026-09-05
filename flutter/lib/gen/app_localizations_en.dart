@@ -2644,7 +2644,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hangTightSettingUpBody =>
-      'We\'re setting up your account.\nThis usually takes 5Ã¢â‚¬â€œ10 minutes.';
+      'We\'re setting up your account.\nThis usually takes 5–10 minutes.';
 
   @override
   String get hangTightNotificationHint =>
@@ -2689,6 +2689,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hangTightStatusActionNeeded => 'Action needed';
+
+  @override
+  String get hangTightDepositApproved => 'Wallet top-up approved';
+
+  @override
+  String get hangTightDepositUnderReview => 'Wallet top-up under review';
+
+  @override
+  String get hangTightDepositRejected => 'Wallet top-up rejected';
+
+  @override
+  String get hangTightRetryPayment => 'Retry payment';
+
+  @override
+  String get hangTightCorrectDetails => 'Correct the details';
+
+  @override
+  String get hangTightCorrectionNeeded => 'Correction needed on:';
 
   @override
   String get walletNoTransactionsForFilter => 'No transactions matching filter';

@@ -1,18 +1,16 @@
 // PR-ONBOARDING-FLOW-2026-08-11: tests for the new hangTight wait
 // surface in the active onboarding path. Covers:
 //   - Basic render (title, status list, support button, refresh button)
-//   - Status-row state mapping per KYC status
-//   - No-redirect for PICKUP_SCHEDULED with !pickupDone
-//   - Auto-redirect to dashboard when rider becomes active
+//   - Status-row state mapping per KYC / deposit status
+//   - No-redirect for PICKUP_SCHEDULED with pending approvals
+//   - Auto-redirect when BOTH approvals land (or lifecycleStatus ACTIVE)
+//   - pickupDone alone must NOT trigger the redirect
 //   - Notification hint card present
 //
-// ONBOARDING-AUDIT 2026-08-14 (fix #2): the previous version of these
-// tests asserted the hardcoded "everything is done" labels. The
-// status list now reads from the rider model (guarantorStatus,
-// currentPlan, pickupDone, kycStatus, assignedVehicle). The test
-// rider is now constructed with a realistic state (all five rows
-// either done or in-progress) so the labels match what production
-// renders.
+// PR-HANGTIGHT-2026-09-06: the status list shows exactly TWO rows —
+// KYC approval and Wallet top-up (security deposit) approval. Plan
+// selection, guarantor submission, and pickup/vehicle assignment need
+// no admin approval and are no longer shown.
 //
 // Widget tests use a stubbed RiderState via ProviderScope.override — the
 // screen reads rider via ref.watch(riderProvider.select((p) => p.rider))
@@ -48,31 +46,26 @@ class _StubRiderNotifier extends RiderNotifier {
 }
 
 /// Build a rider in the "landed on HangTight, mid-flight" state:
-/// guarantor submitted (not yet approved), plan selected, pickup
-/// confirmed by syncPickup, KYC still under review, no vehicle
-/// assigned yet. Matches the realistic production case the screen
-/// must render. Override individual fields via [kyc] / [pickupDone].
+/// KYC under review, deposit under review. Matches the realistic
+/// production case the screen must render. Override individual fields
+/// via the named params.
 RiderModel _rider({
   KycStatus kyc = KycStatus.submitted,
+  DepositStatus deposit = DepositStatus.pending,
+  double securityDeposit = 0.0,
   bool pickupDone = false,
   String lifecycleStatus = 'PICKUP_SCHEDULED',
-  GuarantorStatus guarantor = GuarantorStatus.submitted,
-  String currentPlan = 'Weekly',
-  String? assignedVehicle,
-  String planStatus = 'ACTIVE',
 }) {
   return RiderModel(
     riderId: 'VF-RD-TEST',
     phone: '9876543210',
     name: 'Test Rider',
     kycStatus: kyc,
+    depositStatus: deposit,
+    securityDeposit: securityDeposit,
     pickupDone: pickupDone,
     lifecycleStatus: lifecycleStatus,
     accountStatus: AccountStatus.preActive,
-    guarantorStatus: guarantor,
-    currentPlan: currentPlan,
-    planStatus: planStatus,
-    assignedVehicle: assignedVehicle,
   );
 }
 
@@ -82,6 +75,7 @@ Widget _buildHarness({
   VoidCallback? onActivated,
   VoidCallback? onSessionExpired,
   VoidCallback? onFixKyc,
+  VoidCallback? onRetryDeposit,
 }) {
   final activeNotifier = notifier ?? _StubRiderNotifier();
   return ProviderScope(
@@ -104,6 +98,7 @@ Widget _buildHarness({
         onActivated: onActivated,
         onSessionExpired: onSessionExpired,
         onFixKyc: onFixKyc,
+        onRetryDeposit: onRetryDeposit,
       ),
     ),
   );
@@ -118,12 +113,14 @@ class _Harness extends ConsumerStatefulWidget {
   final VoidCallback? onActivated;
   final VoidCallback? onSessionExpired;
   final VoidCallback? onFixKyc;
+  final VoidCallback? onRetryDeposit;
 
   const _Harness({
     required this.rider,
     this.onActivated,
     this.onSessionExpired,
     this.onFixKyc,
+    this.onRetryDeposit,
   });
 
   @override
@@ -148,6 +145,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       onActivated: widget.onActivated,
       onSessionExpired: widget.onSessionExpired,
       onFixKyc: widget.onFixKyc,
+      onRetryDeposit: widget.onRetryDeposit,
     );
   }
 }
@@ -170,30 +168,27 @@ void main() {
       );
     });
 
-    testWidgets('renders 5-row status list with correct labels',
+    testWidgets(
+        'PR-HANGTIGHT-2026-09-06: renders exactly the KYC + deposit rows',
         (tester) async {
-      // ONBOARDING-AUDIT 2026-08-14 (fix #2): drive a fully-resolved
-      // rider state so every row renders its "done" label. The
-      // previous version of this test asserted on hardcoded labels
-      // that no longer exist — the screen now derives every label
-      // from the rider model.
+      // The screen shows ONLY the two admin approvals. Guarantor, plan,
+      // pickup, and vehicle rows were removed — those steps are completed
+      // by the rider during onboarding and need no admin sign-off.
       await tester.pumpWidget(_buildHarness(
         rider: _rider(
           kyc: KycStatus.approved,
-          guarantor: GuarantorStatus.approved,
-          assignedVehicle: 'TEST-VEH-001',
+          deposit: DepositStatus.approved,
+          pickupDone: true,
         ),
       ));
       await tester.pump();
-      expect(find.text(l10n.hangTightGuarantorApproved), findsOneWidget);
-      expect(find.text(l10n.hangTightPlanSelected), findsOneWidget);
-      // pickupDone is false in this state — the row says
-      // "Pickup confirmation" (waiting), not "Pickup confirmed" (done).
-      // The auto-redirect in the real screen handles that case before
-      // the user can see it.
-      expect(find.text(l10n.hangTightPickupConfirmation), findsOneWidget);
       expect(find.text(l10n.hangTightKycApproved), findsOneWidget);
-      expect(find.text(l10n.hangTightVehicleAssignment), findsOneWidget);
+      expect(find.text(l10n.hangTightDepositApproved), findsOneWidget);
+      // Removed rows must not render.
+      expect(find.text(l10n.hangTightGuarantorApproved), findsNothing);
+      expect(find.text(l10n.hangTightPlanSelected), findsNothing);
+      expect(find.text(l10n.hangTightPickupConfirmation), findsNothing);
+      expect(find.text(l10n.hangTightVehicleAssignment), findsNothing);
     });
 
     testWidgets('shows Contact support + Refresh buttons', (tester) async {
@@ -235,6 +230,60 @@ void main() {
       },
     );
 
+    testWidgets(
+        'deposit pending shows under-review row (default state)',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(deposit: DepositStatus.pending),
+      ));
+      await tester.pump();
+      expect(find.text(l10n.hangTightDepositUnderReview), findsOneWidget);
+    });
+
+    testWidgets(
+        'deposit pendingVerification still shows under-review row',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(deposit: DepositStatus.pendingVerification),
+      ));
+      await tester.pump();
+      expect(find.text(l10n.hangTightDepositUnderReview), findsOneWidget);
+    });
+
+    testWidgets(
+        'credited deposit (securityDeposit > 0) shows approved row',
+        (tester) async {
+      // Mirrors the server's isDepositApproved OR — a credited amount
+      // counts as approved even if the status string hasn't flipped yet.
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(
+          deposit: DepositStatus.pending,
+          securityDeposit: 2000,
+        ),
+      ));
+      await tester.pump();
+      expect(find.text(l10n.hangTightDepositApproved), findsOneWidget);
+    });
+
+    testWidgets(
+        'rejected deposit shows Retry payment action that fires onRetryDeposit',
+        (tester) async {
+      var retried = false;
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(deposit: DepositStatus.rejected),
+        onRetryDeposit: () => retried = true,
+      ));
+      await tester.pump();
+      expect(find.text(l10n.hangTightDepositRejected), findsOneWidget);
+      expect(find.text(l10n.hangTightRetryPayment), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsWidgets);
+
+      await tester.tap(find.text(l10n.hangTightRetryPayment));
+      await tester.pump();
+      expect(retried, isTrue,
+          reason: 'Retry payment must invoke onRetryDeposit');
+    });
+
     testWidgets('KYC approved flips the KYC label and removes the spinner',
         (tester) async {
       await tester.pumpWidget(_buildHarness(
@@ -263,13 +312,24 @@ void main() {
     testWidgets(
         'RiderModel equality includes assignedVehicle, guarantorStatus, and planStatus',
         (tester) async {
-      final r1 =
-          _rider(assignedVehicle: null, guarantor: GuarantorStatus.submitted);
-      final r2 = _rider(
-          assignedVehicle: 'VEH-001', guarantor: GuarantorStatus.submitted);
-      final r3 =
-          _rider(assignedVehicle: null, guarantor: GuarantorStatus.approved);
-      final r4 = _rider(assignedVehicle: null, planStatus: 'REJECTED');
+      RiderModel rider(
+              {String? assignedVehicle,
+              GuarantorStatus guarantor = GuarantorStatus.submitted,
+              String planStatus = 'ACTIVE'}) =>
+          RiderModel(
+            riderId: 'VF-RD-TEST',
+            phone: '9876543210',
+            name: 'Test Rider',
+            lifecycleStatus: 'PICKUP_SCHEDULED',
+            accountStatus: AccountStatus.preActive,
+            assignedVehicle: assignedVehicle,
+            guarantorStatus: guarantor,
+            planStatus: planStatus,
+          );
+      final r1 = rider();
+      final r2 = rider(assignedVehicle: 'VEH-001');
+      final r3 = rider(guarantor: GuarantorStatus.approved);
+      final r4 = rider(planStatus: 'REJECTED');
 
       expect(r1 == r2, isFalse,
           reason: 'assignedVehicle change must break equality');
@@ -277,7 +337,7 @@ void main() {
           reason: 'guarantorStatus change must break equality');
       expect(r1 == r4, isFalse,
           reason: 'planStatus change must break equality');
-      expect(r1 == _rider(), isTrue, reason: 'identical models must be equal');
+      expect(r1 == rider(), isTrue, reason: 'identical models must be equal');
     });
 
     testWidgets(
@@ -321,7 +381,34 @@ void main() {
     });
 
     testWidgets(
-        'F-13: auto-redirect triggers onActivated when rider becomes active via state change',
+        'F-13: auto-redirect does NOT fire on pickupDone alone (approvals pending)',
+        (tester) async {
+      // PR-HANGTIGHT-2026-09-06: the server sets pickedUpAt (hence
+      // pickupDone=true) at pickup time regardless of approvals. The
+      // redirect must key on the two approvals, not pickupDone.
+      var activated = false;
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+        onActivated: () => activated = true,
+      ));
+      await tester.pump();
+      expect(activated, isFalse);
+
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(pickupDone: true),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(activated, isFalse,
+          reason:
+              'pickupDone=true with pending approvals must NOT trigger onActivated');
+    });
+
+    testWidgets(
+        'F-13: auto-redirect fires when BOTH approvals land (KYC + deposit)',
         (tester) async {
       var activated = false;
       final notifier = _StubRiderNotifier();
@@ -333,17 +420,54 @@ void main() {
       await tester.pump();
       expect(activated, isFalse);
 
-      // Simulate rider receiving pickupDone flip from API/sync
+      // Admin approves KYC first — still waiting on the deposit.
       notifier.state = notifier.state.copyWith(
-        rider: _rider(pickupDone: true),
+        rider: _rider(pickupDone: true, kyc: KycStatus.approved),
       );
       await tester.pump();
-      // Allow addPostFrameCallback to execute
+      await tester.pump();
+      expect(activated, isFalse,
+          reason: 'One approval landing is not enough');
+
+      // Deposit approval completes the set → redirect.
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(
+          pickupDone: true,
+          kyc: KycStatus.approved,
+          deposit: DepositStatus.approved,
+        ),
+      );
+      await tester.pump();
       await tester.pump();
 
       expect(activated, isTrue,
           reason:
-              'onActivated must be invoked immediately upon pickupDone flip without needing screen timer');
+              'onActivated must fire the moment both approvals are complete');
+    });
+
+    testWidgets(
+        'F-13: auto-redirect fires when lifecycleStatus flips to ACTIVE',
+        (tester) async {
+      var activated = false;
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+        onActivated: () => activated = true,
+      ));
+      await tester.pump();
+      expect(activated, isFalse);
+
+      // Server self-heal flips lifecycleStatus to ACTIVE (e.g. approvals
+      // landed while the app was backgrounded and the poller picks it up).
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(lifecycleStatus: 'ACTIVE', pickupDone: true),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(activated, isTrue,
+          reason: 'lifecycleStatus ACTIVE must trigger onActivated');
     });
   });
 }

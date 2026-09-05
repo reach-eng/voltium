@@ -273,9 +273,10 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         key: const ValueKey('intent'),
         // PR-ONBOARDING-FLOW-2026-08-12: the intent screen is the
         // first step of the active path — there is no previous
-        // active-path step to go back to. The back button is a no-op
-        // and the screen is non-popable in the router (see _canPop).
-        onBack: () {},
+        // active-path step to go back to, so the screen renders no
+        // back affordance and is non-popable in the router (see _canPop).
+        // BUTTON-AUDIT 2026-09-06: the old no-op onBack rendered a dead
+        // tappable back arrow; dropping it lets the AppBar omit leading.
         onNext: () {
           state._navigateToLocal(AuthState.userForm);
         },
@@ -509,10 +510,27 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = HangTightScreen(
         key: const ValueKey('hangTight'),
         onActivated: () => state._navigateToLocal(AuthState.dashboard),
-        // PR-K.1: route the rider back to the intent screen so they can
-        // re-do the KYC flow. AuthState.intent renders
-        // Onboarding(OnboardingStep.intent) -> IntentOfUseScreen.
-        onFixKyc: () => state._navigateToLocal(AuthState.intent),
+        // PR-K.1 / PR-KYC-CORRECTION (2026-09-06): route the rider
+        // straight into the KYC form, deep-linked to the onboarding step
+        // that owns the FIRST field the admin flagged for correction
+        // (orange-bordered). Skips the redundant intent screen — the
+        // direct userForm navigation has precedent in the legacy
+        // preDashboard rejection card. Without flags, defaults to step 1.
+        onFixKyc: () {
+          final container = ProviderScope.containerOf(context);
+          final flaggedFields =
+              container.read(riderProvider).rider?.kycEditableFields;
+          container
+              .read(userOnboardingNotifierProvider.notifier)
+              .setStep(firstFlaggedKycStep(flaggedFields));
+          state._navigateToLocal(AuthState.userForm);
+        },
+        // PR-HANGTIGHT-2026-09-06: rejected security deposit — re-enter
+        // the top-up flow. Safe at rank 10: the server keeps the rider
+        // at PICKUP_SCHEDULED on resubmission (the lifecycle bump list
+        // excludes it), and admin approval of the new transaction
+        // credits the deposit and self-heals them to ACTIVE.
+        onRetryDeposit: () => state._navigateToLocal(AuthState.topUpAmount),
         // PR-ONBOARDING-FLOW-2026-08-13: a polling 401 means the rider's
         // JWT has expired (admin takes >1 hour to approve). Send them
         // to the login screen instead of leaving them stuck on a screen
@@ -616,10 +634,9 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           final riderId = rider.riderId;
           // Capture every notifier + messenger BEFORE any await so we
           // never touch BuildContext across the gap (analyzer guard).
-          final wProvider =
-              ProviderScope.containerOf(context).read(walletProvider.notifier);
-          final riderNotifier =
-              ProviderScope.containerOf(context).read(riderProvider.notifier);
+          final topUpContainer = ProviderScope.containerOf(context);
+          final wProvider = topUpContainer.read(walletProvider.notifier);
+          final riderNotifier = topUpContainer.read(riderProvider.notifier);
           if (riderId == null) {
             Toast.info(
               context,
@@ -657,9 +674,19 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
                         'Top-up receipt submitted successfully!'),
               );
             }
+            // PR-HANGTIGHT-2026-09-06: a rank-10 rider retrying a
+            // rejected security deposit must return to hangTight, not
+            // pickupHub — the pickup form is already submitted and
+            // re-opening it would loop the rider. The refreshed rider's
+            // rank decides; the hangTight screen's own auto-redirect
+            // takes over if both approvals have already landed.
+            final freshLifecycle =
+                topUpContainer.read(riderProvider).rider?.lifecycleStatus ?? '';
             state._navigateToLocal(
               state._isOnboarding
-                  ? AuthState.pickupHub
+                  ? (_lifecycleRankFromString(freshLifecycle) >= 10
+                      ? AuthState.hangTight
+                      : AuthState.pickupHub)
                   : AuthState.topUpReceipt,
             );
           } catch (e) {

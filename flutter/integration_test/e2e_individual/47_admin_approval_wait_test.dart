@@ -16,7 +16,14 @@
 //
 // Test: Walk through the active path to the HangTight wait state,
 // then verify the rider is auto-redirected to the active dashboard
-// once admin approves KYC + flips pickupDone.
+// once BOTH admin approvals (KYC + security deposit) land.
+//
+// PR-HANGTIGHT-2026-09-06: the redirect no longer fires on
+// `pickupDone` alone (the server sets pickedUpAt at pickup time) nor
+// on `KycStatus.verified` — it mirrors the server's activation inputs
+// exactly: kycStatus == APPROVED && (depositStatus == APPROVED ||
+// securityDeposit > 0). The test now asserts the rider stays on
+// HangTight after the first approval and transitions after the second.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -112,15 +119,13 @@ void main() {
     );
 
     // =============================
-    // PHASE 3: Simulate admin approval → dashboard
+    // PHASE 3: Simulate admin approvals → dashboard
     // =============================
-    // The HangTight status list (ONBOARDING-AUDIT 2026-08-14
-    // fix #2) now reads from the rider's actual state. We flip
-    // the rider to "ready for activation" via the provider and
-    // verify the screen updates — KYC approved, deposit
-    // approved, plan selected, pickup confirmed, vehicle
-    // assigned. The auto-redirect to the dashboard fires the
-    // moment `pickupDone` is set.
+    // PR-HANGTIGHT-2026-09-06: the HangTight screen shows exactly two
+    // approval rows (KYC + wallet top-up) and the redirect fires only
+    // when BOTH are approved (or the server flips lifecycleStatus to
+    // ACTIVE). Simulate the approvals one at a time and assert the
+    // rider is still waiting after the first.
     final riderProvider = getRiderProvider(tester);
     final currentRider = riderProvider.rider;
     expect(
@@ -129,17 +134,35 @@ void main() {
       reason: 'Rider must be available on HangTight',
     );
 
+    // 3a. First approval only (KYC) — deposit still pending. The rider
+    // must remain on HangTight (raw pickupDone=true must NOT redirect).
     riderProvider.updateRider(
       currentRider!.copyWith(
-        kycStatus: KycStatus.verified,
+        kycStatus: KycStatus.approved,
         kycDone: true,
-        depositStatus: DepositStatus.approved,
-        depositDone: true,
         planDone: true,
         currentPlan: 'Weekly',
         planStatus: 'ACTIVE',
         assignedVehicle: 'TEST-VEH-001',
         pickupDone: true,
+      ),
+    );
+    await settle(tester);
+    await tester.pump(const Duration(seconds: 2));
+    await settle(tester);
+    expect(
+      app.dashboard.dashboardTab,
+      findsNothing,
+      reason:
+          'KYC approval alone must NOT transition — deposit approval still pending',
+    );
+
+    // 3b. Second approval (security deposit) completes the set → the
+    // HangTight auto-redirect fires to the active dashboard.
+    riderProvider.updateRider(
+      riderProvider.rider!.copyWith(
+        depositStatus: DepositStatus.approved,
+        depositDone: true,
       ),
     );
     await settle(tester);

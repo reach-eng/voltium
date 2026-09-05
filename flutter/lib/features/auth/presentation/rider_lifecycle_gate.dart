@@ -115,16 +115,37 @@ class RiderLifecycleGate {
 
     final rank = lifecycleRank(rider);
 
-    // Fully onboarded — go to dashboard
-    if (rider.pickupDone || (rider.lifecycleStatus.isNotEmpty && rank >= 11)) {
+    // PR-HANGTIGHT-2026-09-06: fully onboarded — go to dashboard when the
+    // server has flipped the rider to ACTIVE (rank >= 11), or when the
+    // rider is at pickup rank (>= 10) and BOTH admin approvals have
+    // landed. The strict getters mirror the server's activation inputs
+    // (flatten-rider.ts isKycApproved / isDepositApproved) — the coarse
+    // `pickupDone` flag is NOT used here because the server computes it
+    // as `isActivated || pickedUpAt`, which is true for every picked-up
+    // rider regardless of approvals (syncPickup sets pickedUpAt at rank
+    // 10). Keying on pickupDone let riders skip the approval wait.
+    //
+    // The server self-heals PICKUP_SCHEDULED → ACTIVE on the next
+    // profile GET once both approvals land (rider.use-cases.ts), so the
+    // rank>=10 branch makes the transition immediate on the same poll
+    // that carries the approval — polling, manual refresh, and app
+    // launch all converge here.
+    if (rider.lifecycleStatus.isNotEmpty &&
+        (rank >= 11 ||
+            (rank >= 10 &&
+                rider.isKycApprovedByAdmin &&
+                rider.isDepositApprovedByAdmin))) {
       return LifecycleTarget.dashboard;
     }
 
-    // PR-ONBOARDING-FLOW-2026-08-11: post-pickup, pre-activation wait.
-    // Rank 10 (PICKUP_SCHEDULED) with !pickupDone means the rider has
-    // submitted the pickup form (active path: pickupVerification onNext
-    // → hangTight) and is waiting for admin to assign a vehicle and
-    // flip them to ACTIVE. The new flow's tail state.
+    // PR-ONBOARDING-FLOW-2026-08-11 / PR-HANGTIGHT-2026-09-06: post-pickup,
+    // pre-activation wait. Rank 10 (PICKUP_SCHEDULED) with pending admin
+    // approvals means the rider has submitted the pickup form (active
+    // path: pickupVerification onNext → hangTight) and is waiting for
+    // admin to approve KYC and the security-deposit top-up. Plan
+    // selection, guarantor submission, and pickup/vehicle assignment do
+    // not require admin approval — only these two approvals gate the
+    // dashboard. The new flow's tail state.
     if (rider.lifecycleStatus.isNotEmpty && rank >= 10) {
       return LifecycleTarget.hangTight;
     }

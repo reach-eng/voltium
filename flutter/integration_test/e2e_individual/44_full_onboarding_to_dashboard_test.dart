@@ -216,6 +216,12 @@ void main() {
     // CTA on a pre-dashboard, we wait for admin to flip
     // `pickupDone` to true (simulated here via the provider) and
     // assert that the rider has been moved to the active dashboard.
+    // PR-HANGTIGHT-2026-09-06: the redirect keys on the two admin
+    // approvals (kycStatus == APPROVED && deposit approved), not the
+    // coarse pickupDone flag — the server sets pickedUpAt (hence
+    // pickupDone=true) at pickup time while approvals are still
+    // pending. KycStatus.verified also no longer counts: the server's
+    // activation input is exactly APPROVED.
     final riderProvider = getRiderProvider(tester);
     final currentRider = riderProvider.rider;
     expect(
@@ -226,7 +232,7 @@ void main() {
 
     riderProvider.updateRider(
       currentRider!.copyWith(
-        kycStatus: KycStatus.verified,
+        kycStatus: KycStatus.approved,
         kycDone: true,
         depositStatus: DepositStatus.approved,
         depositDone: true,

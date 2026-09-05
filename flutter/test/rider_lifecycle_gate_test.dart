@@ -79,8 +79,22 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
-    test('rider with pickup done → dashboard', () {
+    test(
+        'PR-HANGTIGHT-2026-09-06: pickupDone alone does NOT grant dashboard',
+        () {
+      // pickupDone is true for every picked-up rider (server ORs
+      // pickedUpAt) regardless of admin approvals, so it can no longer
+      // gate the dashboard. A rank-0 rider with only pickupDone stays in
+      // onboarding.
       final rider = makeRider(pickupDone: true);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
+    });
+
+    test('PR-HANGTIGHT-2026-09-06: ACTIVE rider → dashboard', () {
+      final rider = makeRider(
+        pickupDone: true,
+        lifecycleStatus: 'ACTIVE',
+      );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
     });
 
@@ -110,8 +124,11 @@ void main() {
   });
 
   group('RiderLifecycleGate.canAccessDashboard', () {
-    test('returns true for active rider with pickup done', () {
-      final rider = makeRider(pickupDone: true);
+    test('returns true for ACTIVE rider', () {
+      final rider = makeRider(
+        pickupDone: true,
+        lifecycleStatus: 'ACTIVE',
+      );
       expect(RiderLifecycleGate.canAccessDashboard(rider), isTrue);
     });
 
@@ -136,7 +153,10 @@ void main() {
     });
 
     test('returns false for fully onboarded rider', () {
-      final rider = makeRider(pickupDone: true);
+      final rider = makeRider(
+        pickupDone: true,
+        lifecycleStatus: 'ACTIVE',
+      );
       expect(RiderLifecycleGate.isOnboarding(rider), isFalse);
     });
   });
