@@ -191,7 +191,10 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
             // Document accordion cards
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                // AUDIT-2026-09-07: themed card surface — the legal
+                // document accordion card was a literal white card in
+                // dark mode.
+                color: AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: AppShadows.card,
               ),

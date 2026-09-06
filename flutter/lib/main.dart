@@ -102,35 +102,48 @@ Future<void> main() async {
       // build — it can carry tokens, phone numbers or internal paths.
       // Full details already went to MonitoringService/PostHog via
       // FlutterError.onError; the rider sees a generic message only.
-      return Material(
-        color: Colors.white,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
+      return Builder(
+        builder: (context) {
+          // AUDIT-2026-09-07: ErrorWidget.builder runs at module level so
+          // there is no inherited BuildContext. Wrap with a Builder so the
+          // themed surface color is used — `Colors.white` would flash a
+          // white card on dark mode during a release-build crash.
+          final colors = AppColors.of(context);
+          return Material(
+            color: colors.surface,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Something went wrong',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Please restart the app. If the problem persists, '
+                      'contact support.',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16),
-                Text(
-                  'Something went wrong',
-                  style: AppTypography.titleMedium,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Please restart the app. If the problem persists, '
-                  'contact support.',
-                  style: AppTypography.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       );
     };
   }

@@ -333,7 +333,9 @@ class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
       child: Container(
         padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
+          // AUDIT-2026-09-07: themed card surface so the emergency contact
+          // card stays on-theme in dark mode (was a literal white card).
+          color: AppColors.of(context).card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
