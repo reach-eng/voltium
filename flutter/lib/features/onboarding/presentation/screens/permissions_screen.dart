@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/widgets/buttons/primary_cta.dart';
 
 import '../../../../core/platform/platform_info.dart';
 
@@ -28,7 +28,14 @@ class _PermissionItem {
 class PermissionsScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
 
-  const PermissionsScreen({super.key, this.onNext});
+  /// PR-PERMISSIONS-P2: visible back affordance. When non-null, an
+  /// arrow-back IconButton is rendered in the AppBar; the router body
+  /// wires this to `AuthState.legal`. The system back remains
+  /// suppressed (`_canPop` returns false for this state) so the visible
+  /// button is the only back path.
+  final VoidCallback? onBack;
+
+  const PermissionsScreen({super.key, this.onNext, this.onBack});
 
   @override
   ConsumerState<PermissionsScreen> createState() => _PermissionsScreenState();
@@ -388,6 +395,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
     return Scaffold(
       backgroundColor: colors.surface,
+      appBar: _buildAppBar(),
       body: SafeArea(
         child: Column(
           children: [
@@ -406,12 +414,12 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
+                    // PR-PERMISSIONS-P3: typography tokens instead of
+                    // inline GoogleFonts.
                     Text(
                       l10n.txtpermissionsSubtitle,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: colors.onSurfaceVariant),
                     ),
                     const SizedBox(height: 32),
                     ..._permissions.asMap().entries.map((entry) {
@@ -443,6 +451,29 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             _buildFooter(),
           ],
         ),
+      ),
+    );
+  }
+
+  // PR-PERMISSIONS-P2: visible back affordance matching the
+  // LegalPageScreen:640-661 pattern.
+  PreferredSizeWidget _buildAppBar() {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    return AppBar(
+      backgroundColor: colors.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: colors.onSurface, size: 20),
+        tooltip: l10n.txtback,
+        onPressed: () {
+          if (widget.onBack != null) {
+            widget.onBack!();
+          } else if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          }
+        },
       ),
     );
   }
@@ -506,12 +537,12 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                   ],
                 ),
                 const SizedBox(height: 4),
+                // PR-PERMISSIONS-P3: typography tokens instead of
+                // inline GoogleFonts.
                 Text(
                   description,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: colors.onSurfaceVariant,
-                  ),
+                  style: AppTypography.bodySmall
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
               ],
             ),
@@ -525,8 +556,23 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
   Widget _buildToggle(_PermissionItem perm) {
     final colors = AppColors.of(context);
-    return GestureDetector(
-        key: Key('allow${perm.id.capitalize()}Button'),
+    final name = _getPermName(context, perm.id);
+
+    // PR-PERMISSIONS-P1: TalkBack must announce the toggle by its
+    // localized permission name and read out the on/off state. Without
+    // the `Semantics` wrapper, the bare GestureDetector is invisible to
+    // assistive tech. Pattern matches end_rental_screen.dart:760.
+    //
+    // The `Key('allow${perm.id.capitalize()}Button')` moves to the
+    // outer `Semantics` so `find.byKey(...)` (which traverses the
+    // widget tree, not the hit-test layer) continues to resolve on
+    // existing call-sites in test_helpers.dart and onboarding_page.dart.
+    return Semantics(
+      key: Key('allow${perm.id.capitalize()}Button'),
+      button: true,
+      checked: perm.isEnabled,
+      label: name,
+      child: GestureDetector(
         onTap: () => _togglePermission(perm),
         child: Container(
           color: Colors.transparent,
@@ -568,17 +614,22 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
               ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildFooter() {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    // Every permission on this screen is now compulsory (PR-6
-    // 2026-08-21). The Continue button stays disabled until all tiles
-    // are green; the router's `_areAllRequiredPermissionsGranted`
-    // enforces the same set on the way out.
+    // PR-PERMISSIONS-P1: every permission on this screen is now
+    // compulsory (PR-6 2026-08-21). The Continue button stays
+    // disabled until all tiles are green; the router's
+    // `_areAllRequiredPermissionsGranted` enforces the same set on
+    // the way out. The hand-rolled GestureDetector+AnimatedContainer
+    // is replaced with the shared PrimaryCta so the disabled look
+    // matches the rest of the app (`outlineVariant` + `onSurfaceMuted`).
     final allRequiredGranted = _permissions.every((p) => p.isEnabled);
     final isTestMode = AppConstants.isTestMode;
     final canProceed = allRequiredGranted || isTestMode;
@@ -595,41 +646,12 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           ),
         ],
       ),
-      child: GestureDetector(
+      child: PrimaryCta(
         key: const Key('continuePermissionsButton'),
-        behavior: HitTestBehavior.opaque,
-        onTap: canProceed
-            ? () {
-                if (widget.onNext != null) widget.onNext!();
-              }
-            : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 56,
-          decoration: BoxDecoration(
-            color: canProceed
-                ? AppColors.primary
-                : colors.outline.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            boxShadow: canProceed ? AppShadows.primaryButton : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                l10n.txtcontinue,
-                style: AppTypography.titleSmall.copyWith(
-                    color: canProceed ? Colors.white : colors.onSurfaceMuted),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward,
-                color: canProceed ? Colors.white : colors.onSurfaceMuted,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
+        label: l10n.txtcontinue,
+        icon: Icons.arrow_forward,
+        enabled: canProceed,
+        onPressed: canProceed ? widget.onNext : null,
       ),
     );
   }

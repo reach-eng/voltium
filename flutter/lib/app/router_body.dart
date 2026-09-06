@@ -197,6 +197,14 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     case AuthState.permissions:
       currentScreen = PermissionsScreen(
         key: const ValueKey('permissions'),
+        // PR-PERMISSIONS-P2: visible back affordance. Matches the
+        // LegalScreen's onBack wiring pattern (line 188) — the user
+        // can return to the legal screen via the back arrow in the
+        // AppBar. The system back remains suppressed because
+        // `_canPop` still returns false for `AuthState.permissions`
+        // in router.dart:772, so the visible button is the only
+        // back path.
+        onBack: () => state._navigateToLocal(AuthState.legal),
         onNext: () {
           if (state._postOtpTargetState != null) {
             final target = state._postOtpTargetState!;
