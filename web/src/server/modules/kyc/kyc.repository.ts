@@ -205,6 +205,10 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx) => {
+      // PR-KYC-CORRECTION: promote the rider's held correction values into
+      // the real Rider/KycProfile columns and clear the blob + allowlist
+      // atomically with the APPROVED status landing.
+      await applyPendingCorrections(tx, riderDbId);
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
         // AUDIT-RECON 2026-09-02 batch 6 P0-3: lock the profile post-
@@ -232,6 +236,7 @@ export const kycRepository = {
           status: 'APPROVED',
           editableFields: [],
           expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          pendingCorrections: Prisma.DbNull,
         },
       });
       await tx.rider.update({
@@ -322,3 +327,95 @@ export const kycRepository = {
     });
   },
 };
+
+// PR-KYC-CORRECTION: keys that live on the Rider table (vs the KycProfile
+// table) and that may be held as a pending correction. The KYC
+// repository.applyPendingCorrections helper uses these sets to decide
+// which table to write each held value into.
+//
+// Kept in sync with the editableFields allowlist in
+// prisma/migrations/20260906000000_kyc_editable_fields_full_taxonomy/
+// migration.sql (the 16-key taxonomy). The taxonomy change was a
+// separate audit-driven work; the routing here is what the WIP
+// PR-KYC-CORRECTION added on 2026-09-06.
+const RIDER_LEVEL_CORRECTION_KEYS = new Set<string>([
+  'fullName',
+  'fatherName',
+  'motherName',
+  'dob',
+  'currentAddress',
+  'emergencyContact',
+]);
+const KYC_LEVEL_CORRECTION_KEYS = new Set<string>([
+  'aadhaarFront',
+  'aadhaarBack',
+  'panCard',
+  'bankName',
+  'accountNumber',
+  'ifscCode',
+  'profilePhoto',
+  'signature',
+  'name',
+  'email',
+]);
+
+// The app's Prisma client is extended at runtime, so `$transaction` hands
+// its callback a DynamicClientExtensionThis whose findUnique wraps the
+// select parameter in Prisma's `Exact<...>` strict-type helper. A
+// structural type with `unknown` for the select argument is not
+// assignable to `Exact<KycProfileSelect<...> | null | undefined>`. Use
+// `any` for the args that the helper does not statically inspect; the
+// body only reads `pendingCorrections` and does the
+// `data: Record<string, unknown>` write, both of which are
+// `any`-compatible at the call site.
+type KycCorrectionTx = {
+  kycProfile: {
+    findUnique: (args: any) => Promise<{ pendingCorrections?: unknown } | null>;
+    update: (args: any) => Promise<unknown>;
+  };
+  rider: {
+    update: (args: any) => Promise<unknown>;
+  };
+};
+
+export async function applyPendingCorrections(
+  tx: KycCorrectionTx,
+  riderDbId: string,
+): Promise<void> {
+  const profile = await tx.kycProfile.findUnique({
+    where: { riderId: riderDbId },
+    select: { pendingCorrections: true },
+  });
+  const pending = profile?.pendingCorrections as
+    | { values?: Record<string, string> }
+    | null;
+  const values = pending?.values ?? {};
+
+  const riderUpdate: Record<string, string> = {};
+  const kycUpdate: Record<string, string> = {};
+  for (const [key, value] of Object.entries(values)) {
+    // Unknown/garbage keys are ignored rather than failing the approval —
+    // the allowlist CHECK already bounds what could have been stored.
+    if (typeof value !== 'string') continue;
+    if (RIDER_LEVEL_CORRECTION_KEYS.has(key)) riderUpdate[key] = value;
+    else if (KYC_LEVEL_CORRECTION_KEYS.has(key)) kycUpdate[key] = value;
+  }
+
+  if (Object.keys(riderUpdate).length > 0) {
+    await tx.rider.update({ where: { id: riderDbId }, data: riderUpdate });
+  }
+  if (Object.keys(kycUpdate).length > 0) {
+    await tx.kycProfile.update({ where: { riderId: riderDbId }, data: kycUpdate });
+  }
+
+  // Promoted (or nothing held) — clear the blob and lock the allowlist so
+  // a post-approval resubmit requires a fresh REJECT/INFO_REQUIRED first.
+  await tx.kycProfile.update({
+    where: { riderId: riderDbId },
+    data: {
+      pendingCorrections: Prisma.DbNull,
+      editableFields: [],
+    },
+  });
+  invalidateRiderCache(riderDbId);
+}
