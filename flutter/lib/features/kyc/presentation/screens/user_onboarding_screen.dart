@@ -242,9 +242,14 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     } catch (e, st) {
       appDebug('KYC form cache load failed: $e\n$st');
       if (!mounted) return;
+      // T-2 (design audit, 2026-09-07): R4 — l10n the hardcoded English
+      // toast. The key 	oastKycCacheRestoreFailed was added in this PR
+      // to both pp_en.arb and pp_hi.arb (Hindi side is a
+      // translator-review placeholder).
       Toast.error(
         context,
-        'Could not restore your previous draft. Please start fresh.',
+        AppLocalizations.of(context)?.toastKycCacheRestoreFailed ??
+            'Could not restore your previous draft. Please start fresh.',
       );
     }
   }

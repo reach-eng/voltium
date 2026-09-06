@@ -2784,4 +2784,124 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get kycPushBodyInfoRequired =>
       'आपके खाते को सत्यापित करने के लिए हमें थोड़ी और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से सबमिट करें।';
+
+  @override
+  String intentHeaderQuestion(Object brand) {
+    return 'आप $brand का उपयोग कैसे करेंगे?';
+  }
+
+  @override
+  String get intentAppBarTitle => 'उपयोग का उद्देश्य';
+
+  @override
+  String get intentSubtitle =>
+      'अपने अनुभव और सहायता को अनुकूलित करने में हमारी मदद के लिए अपना मुख्य उपयोग चुनें।';
+
+  @override
+  String get intentDeliveryTitle => 'हमारे साथ डिलीवरी करें';
+
+  @override
+  String get intentDeliveryDesc =>
+      'लॉजिस्टिक्स, डिलीवरी या व्यावसायिक ज़रूरतों के लिए EV किराए पर लें। हब सपोर्ट शामिल है।';
+
+  @override
+  String get intentPersonalTitle => 'निजी उपयोग';
+
+  @override
+  String get intentPersonalDesc =>
+      'रोज़ाना आवाजाही, सप्ताहांत की यात्राएँ, या शहर में सामान्य सवारी।';
+
+  @override
+  String get intentSwitchInfo =>
+      'प्रकारों के बीच बाद में अकाउंट सेटिंग्स से बदला जा सकता है, हालांकि व्यावसायिक पहुंच के लिए अतिरिक्त सत्यापन की आवश्यकता हो सकती है।';
+
+  @override
+  String get intentToastSessionNotReady =>
+      'राइडर सेशन तैयार नहीं है। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get intentToastSaveFailed =>
+      'आपका चयन सहेजा नहीं जा सका। कृपया पुनः प्रयास करें।';
+
+  @override
+  String kycPleaseComplete(Object fields) {
+    return 'कृपया पूरा करें: $fields';
+  }
+
+  @override
+  String get kycValidationSummaryTitle => 'आगे बढ़ने से पहले पूरा करें:';
+
+  @override
+  String get kycItemValidEmail => 'मान्य ईमेल';
+
+  @override
+  String get kycItemAadhaarFront => 'आधार अगला भाग';
+
+  @override
+  String get kycItemAadhaarBack => 'आधार पिछला भाग';
+
+  @override
+  String get kycItemSelfie => 'सेल्फ़ी';
+
+  @override
+  String get kycItemSignature => 'हस्ताक्षर';
+
+  @override
+  String get kycSessionInvalid => 'सेशन अमान्य है। कृपया फिर से लॉग इन करें।';
+
+  @override
+  String get kycProfileRefreshFailed =>
+      'प्रोफ़ाइल सेव हो गई, लेकिन हम आपका सेशन रिफ़्रेश नहीं कर सके। दोबारा कोशिश करने के लिए नीचे खींचें, या ऐप पुनः शुरू करें।';
+
+  @override
+  String get pickupReviewAgreement =>
+      'वाहन लेने से पहले कृपया डिजिटल किराया अनुबंध देख लें।';
+
+  @override
+  String get pickupPhotosCaptured => 'वाहन के फ़ोटो कैप्चर हो गए';
+
+  @override
+  String pickupPhotosMissing(Object count) {
+    return '5 में से $count वाहन फ़ोटो अनुपस्थित — सवारी से पहले वापस जाकर कैप्चर करें।';
+  }
+
+  @override
+  String get pickupSlotNotCaptured => 'अभी कैप्चर नहीं हुआ';
+
+  @override
+  String get pickupSlotTapToCapture => 'वापस जाकर कैप्चर करने के लिए टैप करें';
+
+  @override
+  String get pickupSectionPhotos => 'पिकअप फ़ोटो';
+
+  @override
+  String get pickupSlotFront => 'सामने का दृश्य';
+
+  @override
+  String get pickupSlotBack => 'पीछे का दृश्य';
+
+  @override
+  String get pickupSlotLeft => 'बायाँ भाग';
+
+  @override
+  String get pickupSlotRight => 'दायाँ भाग';
+
+  @override
+  String get pickupSlotWithVehicle => 'वाहन के साथ फ़ोटो';
+
+  @override
+  String get toastKycCacheRestoreFailed =>
+      'पिछला ड्राफ़्ट पुनर्स्थापित नहीं हो सका। कृपया फिर से शुरू करें।';
+
+  @override
+  String get toastPickupSubmitFailed =>
+      'पिकअप सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get toastTlChangeFailed =>
+      'टीम लीडर बदलने का अनुरोध सबमिट नहीं हो सका। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get toastHubLoadFailed =>
+      'पिकअप हब सूची लोड नहीं हो सकी। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
 }

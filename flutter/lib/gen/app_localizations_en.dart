@@ -2773,4 +2773,124 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get kycPushBodyInfoRequired =>
       'We need a bit more information to verify your account. Please re-submit your documents to continue.';
+
+  @override
+  String intentHeaderQuestion(Object brand) {
+    return 'How will you use $brand?';
+  }
+
+  @override
+  String get intentAppBarTitle => 'Intent of Use';
+
+  @override
+  String get intentSubtitle =>
+      'Select your primary usage to help us customize your experience and support.';
+
+  @override
+  String get intentDeliveryTitle => 'Deliver with Us';
+
+  @override
+  String get intentDeliveryDesc =>
+      'Rent an EV for logistics, delivery, or commercial needs. Includes hub support.';
+
+  @override
+  String get intentPersonalTitle => 'Personal Usage';
+
+  @override
+  String get intentPersonalDesc =>
+      'Daily commutes, weekend trips, or general city riding.';
+
+  @override
+  String get intentSwitchInfo =>
+      'Switching between types is possible later through account settings, though commercial access may require additional verification.';
+
+  @override
+  String get intentToastSessionNotReady =>
+      'Rider session not ready. Please try again.';
+
+  @override
+  String get intentToastSaveFailed =>
+      'Couldn\'t save your selection. Please try again.';
+
+  @override
+  String kycPleaseComplete(Object fields) {
+    return 'Please complete: $fields';
+  }
+
+  @override
+  String get kycValidationSummaryTitle => 'Complete before continuing:';
+
+  @override
+  String get kycItemValidEmail => 'Valid Email';
+
+  @override
+  String get kycItemAadhaarFront => 'Aadhaar Front';
+
+  @override
+  String get kycItemAadhaarBack => 'Aadhaar Back';
+
+  @override
+  String get kycItemSelfie => 'Selfie';
+
+  @override
+  String get kycItemSignature => 'Signature';
+
+  @override
+  String get kycSessionInvalid => 'Session invalid. Please log in again.';
+
+  @override
+  String get kycProfileRefreshFailed =>
+      'Profile saved, but we couldn\'t refresh your session. Pull to retry, or restart the app.';
+
+  @override
+  String get pickupReviewAgreement =>
+      'Please review the digital rental agreement before collecting your vehicle.';
+
+  @override
+  String get pickupPhotosCaptured => 'Vehicle photos captured';
+
+  @override
+  String pickupPhotosMissing(Object count) {
+    return '$count of 5 vehicle photos missing — go back and capture them before your ride.';
+  }
+
+  @override
+  String get pickupSlotNotCaptured => 'Not captured yet';
+
+  @override
+  String get pickupSlotTapToCapture => 'Tap to go back & capture';
+
+  @override
+  String get pickupSectionPhotos => 'Pickup photos';
+
+  @override
+  String get pickupSlotFront => 'Front View';
+
+  @override
+  String get pickupSlotBack => 'Back View';
+
+  @override
+  String get pickupSlotLeft => 'Left Side';
+
+  @override
+  String get pickupSlotRight => 'Right Side';
+
+  @override
+  String get pickupSlotWithVehicle => 'Photo with Vehicle';
+
+  @override
+  String get toastKycCacheRestoreFailed =>
+      'Could not restore your previous draft. Please start fresh.';
+
+  @override
+  String get toastPickupSubmitFailed =>
+      'Could not submit your pickup. Please try again.';
+
+  @override
+  String get toastTlChangeFailed =>
+      'Could not submit your Team Leader change request. Please try again.';
+
+  @override
+  String get toastHubLoadFailed =>
+      'Could not load the pickup hub list. Please check your connection and try again.';
 }

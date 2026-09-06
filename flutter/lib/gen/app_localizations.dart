@@ -5205,6 +5205,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We need a bit more information to verify your account. Please re-submit your documents to continue.'**
   String get kycPushBodyInfoRequired;
+
+  /// Intent-of-use screen header. {brand} is the app name.
+  ///
+  /// In en, this message translates to:
+  /// **'How will you use {brand}?'**
+  String intentHeaderQuestion(Object brand);
+
+  /// AppBar title for the intent-of-use screen
+  ///
+  /// In en, this message translates to:
+  /// **'Intent of Use'**
+  String get intentAppBarTitle;
+
+  /// Subtitle below the intent header
+  ///
+  /// In en, this message translates to:
+  /// **'Select your primary usage to help us customize your experience and support.'**
+  String get intentSubtitle;
+
+  /// No description provided for @intentDeliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver with Us'**
+  String get intentDeliveryTitle;
+
+  /// No description provided for @intentDeliveryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent an EV for logistics, delivery, or commercial needs. Includes hub support.'**
+  String get intentDeliveryDesc;
+
+  /// No description provided for @intentPersonalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Usage'**
+  String get intentPersonalTitle;
+
+  /// No description provided for @intentPersonalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily commutes, weekend trips, or general city riding.'**
+  String get intentPersonalDesc;
+
+  /// Info banner on the intent screen about switching types
+  ///
+  /// In en, this message translates to:
+  /// **'Switching between types is possible later through account settings, though commercial access may require additional verification.'**
+  String get intentSwitchInfo;
+
+  /// Toast when riderId is null on intent submit
+  ///
+  /// In en, this message translates to:
+  /// **'Rider session not ready. Please try again.'**
+  String get intentToastSessionNotReady;
+
+  /// Toast when PUT /api/rider/profile fails on intent submit
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your selection. Please try again.'**
+  String get intentToastSaveFailed;
+
+  /// KYC validation summary prefix. {fields} is a comma-separated list.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete: {fields}'**
+  String kycPleaseComplete(Object fields);
+
+  /// No description provided for @kycValidationSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete before continuing:'**
+  String get kycValidationSummaryTitle;
+
+  /// No description provided for @kycItemValidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid Email'**
+  String get kycItemValidEmail;
+
+  /// No description provided for @kycItemAadhaarFront.
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Front'**
+  String get kycItemAadhaarFront;
+
+  /// No description provided for @kycItemAadhaarBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Aadhaar Back'**
+  String get kycItemAadhaarBack;
+
+  /// No description provided for @kycItemSelfie.
+  ///
+  /// In en, this message translates to:
+  /// **'Selfie'**
+  String get kycItemSelfie;
+
+  /// No description provided for @kycItemSignature.
+  ///
+  /// In en, this message translates to:
+  /// **'Signature'**
+  String get kycItemSignature;
+
+  /// No description provided for @kycSessionInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Session invalid. Please log in again.'**
+  String get kycSessionInvalid;
+
+  /// No description provided for @kycProfileRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile saved, but we couldn\'t refresh your session. Pull to retry, or restart the app.'**
+  String get kycProfileRefreshFailed;
+
+  /// No description provided for @pickupReviewAgreement.
+  ///
+  /// In en, this message translates to:
+  /// **'Please review the digital rental agreement before collecting your vehicle.'**
+  String get pickupReviewAgreement;
+
+  /// No description provided for @pickupPhotosCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle photos captured'**
+  String get pickupPhotosCaptured;
+
+  /// Warning shown on pickup verification when condition photos are absent. {count} is the number missing.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of 5 vehicle photos missing — go back and capture them before your ride.'**
+  String pickupPhotosMissing(Object count);
+
+  /// No description provided for @pickupSlotNotCaptured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not captured yet'**
+  String get pickupSlotNotCaptured;
+
+  /// No description provided for @pickupSlotTapToCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to go back & capture'**
+  String get pickupSlotTapToCapture;
+
+  /// No description provided for @pickupSectionPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup photos'**
+  String get pickupSectionPhotos;
+
+  /// No description provided for @pickupSlotFront.
+  ///
+  /// In en, this message translates to:
+  /// **'Front View'**
+  String get pickupSlotFront;
+
+  /// No description provided for @pickupSlotBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back View'**
+  String get pickupSlotBack;
+
+  /// No description provided for @pickupSlotLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left Side'**
+  String get pickupSlotLeft;
+
+  /// No description provided for @pickupSlotRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right Side'**
+  String get pickupSlotRight;
+
+  /// No description provided for @pickupSlotWithVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo with Vehicle'**
+  String get pickupSlotWithVehicle;
+
+  /// Toast shown when the KYC form cache cannot be read on screen open. Replaces a hardcoded English string in user_onboarding_screen.dart (T-2 audit, 2026-09-07).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore your previous draft. Please start fresh.'**
+  String get toastKycCacheRestoreFailed;
+
+  /// Toast shown when the pickup-hub POST fails. Reserved for the pickup_hub_screen follow-up (out of scope for the first PR-3 ship).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit your pickup. Please try again.'**
+  String get toastPickupSubmitFailed;
+
+  /// Toast shown when the TL-change reason submission fails. Reserved for the tl_details_screen follow-up (out of scope for the first PR-3 ship).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit your Team Leader change request. Please try again.'**
+  String get toastTlChangeFailed;
+
+  /// Toast shown when the pickup-hub GET fails. Reserved for the pickup_hub_screen follow-up (out of scope for the first PR-3 ship).
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the pickup hub list. Please check your connection and try again.'**
+  String get toastHubLoadFailed;
 }
 
 class _AppLocalizationsDelegate

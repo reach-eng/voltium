@@ -1992,5 +1992,59 @@
   },
   "kycPushBodyFallback": "Please re-upload your documents.",
   "kycPushTitleInfoRequired": "More information needed",
-  "kycPushBodyInfoRequired": "We need a bit more information to verify your account. Please re-submit your documents to continue."
+  "kycPushBodyInfoRequired": "We need a bit more information to verify your account. Please re-submit your documents to continue.",
+  "intentHeaderQuestion": "How will you use {brand}?",
+  "@intentHeaderQuestion": {"description": "Intent-of-use screen header. {brand} is the app name."},
+  "intentAppBarTitle": "Intent of Use",
+  "@intentAppBarTitle": {"description": "AppBar title for the intent-of-use screen"},
+  "intentSubtitle": "Select your primary usage to help us customize your experience and support.",
+  "@intentSubtitle": {"description": "Subtitle below the intent header"},
+  "intentDeliveryTitle": "Deliver with Us",
+  "intentDeliveryDesc": "Rent an EV for logistics, delivery, or commercial needs. Includes hub support.",
+  "intentPersonalTitle": "Personal Usage",
+  "intentPersonalDesc": "Daily commutes, weekend trips, or general city riding.",
+  "intentSwitchInfo": "Switching between types is possible later through account settings, though commercial access may require additional verification.",
+  "@intentSwitchInfo": {"description": "Info banner on the intent screen about switching types"},
+  "intentToastSessionNotReady": "Rider session not ready. Please try again.",
+  "@intentToastSessionNotReady": {"description": "Toast when riderId is null on intent submit"},
+  "intentToastSaveFailed": "Couldn't save your selection. Please try again.",
+  "@intentToastSaveFailed": {"description": "Toast when PUT /api/rider/profile fails on intent submit"},
+  "kycPleaseComplete": "Please complete: {fields}",
+  "@kycPleaseComplete": {"description": "KYC validation summary prefix. {fields} is a comma-separated list."},
+  "kycValidationSummaryTitle": "Complete before continuing:",
+  "kycItemValidEmail": "Valid Email",
+  "kycItemAadhaarFront": "Aadhaar Front",
+  "kycItemAadhaarBack": "Aadhaar Back",
+  "kycItemSelfie": "Selfie",
+  "kycItemSignature": "Signature",
+  "kycSessionInvalid": "Session invalid. Please log in again.",
+  "kycProfileRefreshFailed": "Profile saved, but we couldn't refresh your session. Pull to retry, or restart the app.",
+  "pickupReviewAgreement": "Please review the digital rental agreement before collecting your vehicle.",
+  "pickupPhotosCaptured": "Vehicle photos captured",
+  "pickupPhotosMissing": "{count} of 5 vehicle photos missing — go back and capture them before your ride.",
+  "@pickupPhotosMissing": {"description": "Warning shown on pickup verification when condition photos are absent. {count} is the number missing."},
+  "pickupSlotNotCaptured": "Not captured yet",
+  "pickupSlotTapToCapture": "Tap to go back & capture",
+  "pickupSectionPhotos": "Pickup photos",
+  "pickupSlotFront": "Front View",
+  "pickupSlotBack": "Back View",
+  "pickupSlotLeft": "Left Side",
+  "pickupSlotRight": "Right Side",
+  "pickupSlotWithVehicle": "Photo with Vehicle",
+  "toastKycCacheRestoreFailed": "Could not restore your previous draft. Please start fresh.",
+  "@toastKycCacheRestoreFailed": {
+    "description": "Toast shown when the KYC form cache cannot be read on screen open. Replaces a hardcoded English string in user_onboarding_screen.dart (T-2 audit, 2026-09-07)."
+  },
+  "toastPickupSubmitFailed": "Could not submit your pickup. Please try again.",
+  "@toastPickupSubmitFailed": {
+    "description": "Toast shown when the pickup-hub POST fails. Reserved for the pickup_hub_screen follow-up (out of scope for the first PR-3 ship)."
+  },
+  "toastTlChangeFailed": "Could not submit your Team Leader change request. Please try again.",
+  "@toastTlChangeFailed": {
+    "description": "Toast shown when the TL-change reason submission fails. Reserved for the tl_details_screen follow-up (out of scope for the first PR-3 ship)."
+  },
+  "toastHubLoadFailed": "Could not load the pickup hub list. Please check your connection and try again.",
+  "@toastHubLoadFailed": {
+    "description": "Toast shown when the pickup-hub GET fails. Reserved for the pickup_hub_screen follow-up (out of scope for the first PR-3 ship)."
+  }
 }
