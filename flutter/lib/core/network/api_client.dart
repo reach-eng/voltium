@@ -51,6 +51,18 @@ class ApiClient {
     _isTestOverrideActive = client != null;
   }
 
+  /// Cross-suite pollution fix (2026-09-07, T-1 from design audit):
+  /// drops both the shared instance and the test-override flag so a
+  /// `setUp(() { ApiClient.resetForTest(); })` makes the next `ApiClient()`
+  /// factory call return a fresh instance instead of a leaked mock.
+  /// Production code MUST NOT call this — `@visibleForTesting` enforces
+  /// that boundary.
+  @visibleForTesting
+  static void resetForTest() {
+    _sharedInstance = null;
+    _isTestOverrideActive = false;
+  }
+
   /// DEEP-AUDIT D-P1-3: tracks whether the test seam is currently in use,
   /// so the factory's StateError on custom-after-singleton can be skipped
   /// for legit test scenarios while still firing in production code.

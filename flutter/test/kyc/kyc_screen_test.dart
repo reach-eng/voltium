@@ -10,6 +10,8 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 
 class _SeededRiderNotifier extends RiderNotifier {
   final RiderModel _seed;
@@ -27,6 +29,16 @@ class _SeededRiderNotifier extends RiderNotifier {
 
 /// KYC Screen Widget Tests
 void main() {
+  // T-1 (design audit, 2026-09-07): drop any cached singletons from a
+  // prior test before each test runs. The KYC repository reads
+  // SecureStorageService; if a previous test wrote a stale value, this
+  // test would see it.
+  setUp(() {
+    ApiClient.resetForTest();
+    SecureStorageService.resetForTest();
+    EncryptedCacheService.resetForTest();
+  });
+
   Widget buildTestApp({
     required Widget child,
     RiderModel? rider,
@@ -51,12 +63,18 @@ void main() {
         themeMode: themeMode,
         theme: ThemeData.light(),
         darkTheme: ThemeData.dark(),
+        // T-1 (design audit, 2026-09-07): pin the test locale to English
+        // so the English-text assertions are stable. The localeProvider
+        // override above also defaults to en, but the MaterialApp-level
+        // pin is the explicit guarantee.
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        supportedLocales: AppLocalizations.supportedLocales,
         home: child,
       ),
     );

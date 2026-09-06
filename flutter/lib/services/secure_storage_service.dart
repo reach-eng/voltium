@@ -1,11 +1,23 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SecureStorageService {
-  static final SecureStorageService _instance =
-      SecureStorageService._internal();
+  // Mutable so [resetForTest] can swap the singleton between tests; the
+  // production factory always reads the current value. The cross-suite
+  // pollution fix (T-1, 2026-09-07) needs to drop in-memory state that
+  // a previous test cached here.
+  static SecureStorageService _instance = SecureStorageService._internal();
   factory SecureStorageService() => _instance;
   SecureStorageService._internal();
+
+  /// Cross-suite pollution fix (T-1, 2026-09-07): drops the cached
+  /// in-memory state so the next test starts fresh. Production code MUST
+  /// NOT call this — `@visibleForTesting` enforces that boundary.
+  @visibleForTesting
+  static void resetForTest() {
+    _instance = SecureStorageService._internal();
+  }
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
@@ -204,10 +216,19 @@ class SecureStorageService {
 }
 
 class EncryptedCacheService {
-  static final EncryptedCacheService _instance =
-      EncryptedCacheService._internal();
+  // Mutable so [resetForTest] can swap the singleton between tests.
+  // See the T-1 design-audit fix (2026-09-07) for context.
+  static EncryptedCacheService _instance = EncryptedCacheService._internal();
   factory EncryptedCacheService() => _instance;
   EncryptedCacheService._internal();
+
+  /// Cross-suite pollution fix (T-1, 2026-09-07): drops the cached
+  /// in-memory state so the next test starts fresh. Production code MUST
+  /// NOT call this.
+  @visibleForTesting
+  static void resetForTest() {
+    _instance = EncryptedCacheService._internal();
+  }
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(

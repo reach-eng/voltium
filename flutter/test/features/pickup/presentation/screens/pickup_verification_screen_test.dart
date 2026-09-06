@@ -11,6 +11,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 
 class _MockVoltiumApiClient extends VoltiumApiClient {
   _MockVoltiumApiClient() : super(ApiClient());
@@ -45,6 +46,17 @@ class _SeededRiderNotifier extends RiderNotifier {
 }
 
 void main() {
+  // T-1 (design audit, 2026-09-07): drop any cached singletons from a
+  // prior test (the `ApiClient.instanceForTest` mock in particular leaks
+  // into the next test if not reset). The `locale: Locale('en')` set
+  // on the test's MaterialApp below keeps the English-text assertions
+  // stable regardless of the host machine's default locale.
+  setUp(() {
+    ApiClient.resetForTest();
+    SecureStorageService.resetForTest();
+    EncryptedCacheService.resetForTest();
+  });
+
   Widget buildTestHost({
     required VoidCallback onNext,
     VoidCallback? onBack,
@@ -52,6 +64,9 @@ void main() {
     String vehicleId = 'VH-101',
     String emergencyContact = '9876543210',
     String? pickupPhotoFront,
+    String? pickupPhotoBack,
+    String? pickupPhotoLeft,
+    String? pickupPhotoRight,
     RiderModel? rider,
     _MockVoltiumApiClient? mockApi,
     _SeededRiderNotifier? riderNotifier,
@@ -74,6 +89,12 @@ void main() {
             )),
       ],
       child: MaterialApp(
+        // T-1 (design audit, 2026-09-07): pin the test locale to English
+        // so the assertion `expect(find.text('Final Verification'), ...)`
+        // is stable regardless of the host machine's default. Without
+        // this, AppLocalizations resolves to `hi` on some setups and
+        // the text find fails with "Found 0 widgets".
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -89,6 +110,9 @@ void main() {
           vehicleId: vehicleId,
           emergencyContact: emergencyContact,
           pickupPhotoFront: pickupPhotoFront,
+          pickupPhotoBack: pickupPhotoBack,
+          pickupPhotoLeft: pickupPhotoLeft,
+          pickupPhotoRight: pickupPhotoRight,
         ),
       ),
     );
@@ -96,11 +120,20 @@ void main() {
 
   group('PickupVerificationScreen Tests', () {
     testWidgets(
-        'renders heading, agreement text, and photos status when present',
+        'renders heading, agreement text, and photos status when all 4 photos are present',
         (tester) async {
+      // T-1 (design audit, 2026-09-07): the "Vehicle photos captured"
+      // green row only renders when ALL 4 photo slots are filled
+      // (see pickup_verification_screen.dart:194-201). The previous
+      // version of this test only set 1 photo, so the row never
+      // appeared regardless of locale — a test logic bug, not a
+      // l10n issue. Provide all 4 URLs so the row renders.
       await tester.pumpWidget(buildTestHost(
         onNext: () {},
-        pickupPhotoFront: 'https://example.com/photo.jpg',
+        pickupPhotoFront: 'https://example.com/photo-front.jpg',
+        pickupPhotoBack: 'https://example.com/photo-back.jpg',
+        pickupPhotoLeft: 'https://example.com/photo-left.jpg',
+        pickupPhotoRight: 'https://example.com/photo-right.jpg',
       ));
       await tester.pumpAndSettle();
 

@@ -13,6 +13,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 
 class _FakeVoltiumApiClient extends VoltiumApiClient {
   _FakeVoltiumApiClient() : super(ApiClient());
@@ -56,6 +57,13 @@ class _SeededRiderNotifier extends RiderNotifier {
 
 void main() {
   setUp(() async {
+    // T-1 (design audit, 2026-09-07): drop any cached singletons from a
+    // prior test, then re-prime the prefs mock. The `locale: Locale('en')`
+    // set on the test's MaterialApp below keeps the English-text
+    // assertions stable regardless of the host machine's default locale.
+    ApiClient.resetForTest();
+    SecureStorageService.resetForTest();
+    EncryptedCacheService.resetForTest();
     SharedPreferences.setMockInitialValues({});
     await CacheService().init();
   });
@@ -92,6 +100,11 @@ void main() {
             )),
       ],
       child: MaterialApp(
+        // T-1 (design audit, 2026-09-07): pin the test locale to English
+        // so the English-text assertions below are stable. Without this,
+        // AppLocalizations resolves to `hi` on some setups and the test
+        // finds 0 widgets for English strings.
+        locale: const Locale('en'),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
