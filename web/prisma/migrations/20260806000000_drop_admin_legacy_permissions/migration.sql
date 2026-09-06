@@ -22,12 +22,26 @@ DECLARE
   legacy_count INTEGER;
   new_count INTEGER;
 BEGIN
-  -- Count distinct permissions in the legacy column
-  SELECT COALESCE(SUM(CASE WHEN "permissions" IS NOT NULL
-                            THEN array_length("permissions", 1)
-                          ELSE 0 END), 0)
-    INTO legacy_count
-    FROM "admins";
+  -- W5: idempotency guard. If admins.permissions no longer exists
+  -- (e.g. it was hand-dropped between the prior failed run and a
+  -- future re-run), the pre-flight can't query the column. Skip
+  -- the safety-net pre-flight and let the no-op DROP block run.
+  -- The drop is intentionally a no-op today; this only affects
+  -- whether the file aborts on re-apply.
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'admins' AND column_name = 'permissions'
+  ) THEN
+    RAISE NOTICE 'R6.1: admins.permissions no longer present; pre-flight skipped. The actual DROP is a no-op (see lines 47-52).';
+    legacy_count := 0;
+  ELSE
+    -- Count distinct permissions in the legacy column
+    SELECT COALESCE(SUM(CASE WHEN "permissions" IS NOT NULL
+                              THEN array_length("permissions", 1)
+                            ELSE 0 END), 0)
+      INTO legacy_count
+      FROM "admins";
+  END IF;
 
   -- Count rows in the new table
   SELECT COUNT(*)::INTEGER
