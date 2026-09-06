@@ -349,7 +349,7 @@ class ProfileGuarantorCard extends StatelessWidget {
                   border: Border.all(
                     color: isApproved
                         ? AppColors.success.withValues(alpha: 0.2)
-                        : AppColors.warningBorder,
+                        : AppColors.of(context).warningBorder,
                   ),
                 ),
                 child: Text(
@@ -487,7 +487,7 @@ class ProfileLogoutButton extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.error,
         elevation: 0,
-        side: const BorderSide(color: AppColors.errorBorder, width: 1.5),
+        side: BorderSide(color: AppColors.of(context).errorBorder, width: 1.5),
         minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.full),

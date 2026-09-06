@@ -60,7 +60,7 @@ class PreDashboardBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.warningBorder),
+        border: Border.all(color: AppColors.of(context).warningBorder),
       ),
       child: Row(
         children: [
@@ -325,7 +325,7 @@ class PreDashboardProfileCard extends StatelessWidget {
         kycVerified ? AppColors.success : AppColors.warning;
     final Color badgeBorder = kycVerified
         ? AppColors.of(context).successLight
-        : AppColors.warningBorder;
+        : AppColors.of(context).warningBorder;
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
@@ -448,7 +448,8 @@ class RejectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.of(context).errorRose,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: AppColors.errorBorder, width: 1.5),
+        border:
+            Border.all(color: AppColors.of(context).errorBorder, width: 1.5),
       ),
       child: Padding(
         padding: Spacing.paddingLg,

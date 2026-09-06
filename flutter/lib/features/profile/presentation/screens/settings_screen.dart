@@ -659,7 +659,7 @@ class _RiderIdentityCard extends StatelessWidget {
               border: Border.all(
                 color: verified
                     ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.warningBorder,
+                    : AppColors.of(context).warningBorder,
               ),
             ),
             child: Text(

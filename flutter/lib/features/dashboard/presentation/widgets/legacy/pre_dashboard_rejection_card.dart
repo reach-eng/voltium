@@ -38,7 +38,8 @@ class PreDashboardKycRejectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.of(context).errorRose,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: AppColors.errorBorder, width: 1.5),
+        border:
+            Border.all(color: AppColors.of(context).errorBorder, width: 1.5),
       ),
       child: Padding(
         padding: Spacing.paddingLg,

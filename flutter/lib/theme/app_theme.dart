@@ -821,6 +821,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     surfaceBright: Color(0xFFF8FAFC), // slate-50
     surfaceSubtle: Color(0xFFF3F4F6), // gray-100
     borderSubtle: Color(0xFFE5E7EB), // gray-200
+    warningBorder: Color(0xFFFDE68A),
+    errorBorder: Color(0xFFFECACA),
   );
 
   static const ThemeColors dark = ThemeColors._(
@@ -854,6 +856,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     surfaceBright: Color(0xFF1E293B), // dark card surface (was light #F8FAFC)
     surfaceSubtle: Color(0xFF1E293B), // dark card surface (was light #F3F4F6)
     borderSubtle: Color(0xFF334155), // dark slate-700 (was light #E5E7EB)
+    warningBorder: Color(0xFF92400E),
+    errorBorder: Color(0xFF991B1B),
     primarySurface: Color(0xFF1E293B),
   );
 
@@ -889,6 +893,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     surfaceBright: Color(0xFF0D121F),
     surfaceSubtle: Color(0xFF0D121F),
     borderSubtle: Color(0xFF1F2937),
+    warningBorder: Color(0xFF92400E),
+    errorBorder: Color(0xFF991B1B),
     primarySurface: Color(0xFF141B2D),
   );
 
@@ -931,6 +937,13 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   final Color surfaceBright;
   final Color surfaceSubtle;
   final Color borderSubtle;
+  // Phase-1/T5a: border variants of warning/error that are
+  // light-mode pastels by default. The dark/amoled themes override
+  // these to saturated 800-weight hues for adequate contrast on
+  // dark surfaces. Use these for `Border.all(color: colors.warningBorder)`
+  // instead of the static `AppColors.warningBorder` (light-only pastel).
+  final Color warningBorder;
+  final Color errorBorder;
 
   const ThemeColors._({
     required this.surface,
@@ -963,6 +976,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     required this.surfaceBright,
     required this.surfaceSubtle,
     required this.borderSubtle,
+    required this.warningBorder,
+    required this.errorBorder,
   });
 
   @override
@@ -997,6 +1012,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     Color? surfaceBright,
     Color? surfaceSubtle,
     Color? borderSubtle,
+    Color? warningBorder,
+    Color? errorBorder,
   }) {
     return ThemeColors._(
       surface: surface ?? this.surface,
@@ -1031,6 +1048,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       surfaceBright: surfaceBright ?? this.surfaceBright,
       surfaceSubtle: surfaceSubtle ?? this.surfaceSubtle,
       borderSubtle: borderSubtle ?? this.borderSubtle,
+      warningBorder: warningBorder ?? this.warningBorder,
+      errorBorder: errorBorder ?? this.errorBorder,
     );
   }
 
@@ -1074,6 +1093,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
       surfaceSubtle: Color.lerp(surfaceSubtle, other.surfaceSubtle, t)!,
       borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
+      warningBorder: Color.lerp(warningBorder, other.warningBorder, t)!,
+      errorBorder: Color.lerp(errorBorder, other.errorBorder, t)!,
     );
   }
 }

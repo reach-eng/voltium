@@ -233,7 +233,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
               border: Border.all(
                 color: isVerified
                     ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.warningBorder,
+                    : AppColors.of(context).warningBorder,
               ),
             ),
             child: Row(

@@ -465,7 +465,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
       decoration: BoxDecoration(
         color: colors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.warningBorder),
+        border: Border.all(color: AppColors.of(context).warningBorder),
       ),
       child: Row(
         children: [

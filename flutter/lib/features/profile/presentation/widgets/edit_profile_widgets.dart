@@ -33,7 +33,7 @@ class EditProfileAdminNote extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        border: Border.all(color: AppColors.warningBorder),
+        border: Border.all(color: AppColors.of(context).warningBorder),
       ),
       child: Row(
         children: [

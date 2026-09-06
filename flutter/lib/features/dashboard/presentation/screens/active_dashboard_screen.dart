@@ -166,7 +166,7 @@ class _DashboardContentWidget extends ConsumerWidget {
       decoration: BoxDecoration(
         color: colors.warningLight,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: AppColors.warningBorder),
+        border: Border.all(color: AppColors.of(context).warningBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

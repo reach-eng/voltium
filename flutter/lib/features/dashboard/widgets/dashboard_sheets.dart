@@ -478,7 +478,7 @@ void showSubscriptionSheet(
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: colors.error,
-                side: const BorderSide(color: AppColors.errorBorder),
+                side: BorderSide(color: AppColors.of(context).errorBorder),
                 minimumSize: const Size(double.infinity, 54),
                 shape: const StadiumBorder(),
               ),
