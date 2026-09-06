@@ -5,7 +5,9 @@ import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/widgets/error_state_widget.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
@@ -223,125 +225,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     _buildHeader(context, engagementState, unreadCount),
                     _buildTabBar(),
                     Expanded(
-                      child: filtered.isEmpty
-                          ? _buildEmptyState()
-                          : RefreshIndicator(
-                              color: AppColors.primary,
-                              onRefresh: () async => ref
-                                  .read(engagementProvider.notifier)
-                                  .initEngagementData(),
-                              child: ListView.builder(
-                                addRepaintBoundaries: true,
-                                addAutomaticKeepAlives: false,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 12,
-                                ),
-                                itemCount: filtered.length,
-                                itemBuilder: (context, index) {
-                                  return FluidStaggeredItem(
-                                    index: index,
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 12),
-                                      child: Dismissible(
-                                        key: Key('notif_${filtered[index].id}'),
-                                        direction: DismissDirection.endToStart,
-                                        background: Container(
-                                          alignment: Alignment.centerRight,
-                                          padding:
-                                              const EdgeInsets.only(right: 20),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.error,
-                                            borderRadius: BorderRadius.circular(
-                                                AppRadius.lg),
-                                          ),
-                                          child: const Icon(
-                                            Icons.delete_outline,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        confirmDismiss: (direction) async {
-                                          final confirmed =
-                                              await showDialog<bool>(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              backgroundColor: colors.surface,
-                                              title: const Text(
-                                                'Delete Notification',
-                                              ),
-                                              content: const Text(
-                                                'Are you sure you want to delete this notification?',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(false),
-                                                  // LANGUAGE-AUDIT (2026-08-16)
-                                                  // #5: hardcoded English
-                                                  // button labels. Localised via
-                                                  // existing `txtcancel` /
-                                                  // `txtdelete` ARB keys.
-                                                  child: Text(
-                                                      AppLocalizations.of(
-                                                              context)!
-                                                          .txtcancel),
-                                                ),
-                                                FilledButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(true),
-                                                  child: Text(
-                                                      AppLocalizations.of(
-                                                              context)!
-                                                          .txtdelete),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                          if (confirmed != true) return false;
-                                          // PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS
-                                          // P0-5): the delete used to be
-                                          // local-only (setState + removeWhere) —
-                                          // the row came back on the next
-                                          // refresh. Delete server-side and only
-                                          // dismiss on success.
-                                          final ok = await ref
-                                              .read(engagementProvider.notifier)
-                                              .deleteNotification(
-                                                  filtered[index].id);
-                                          if (!ok && context.mounted) {
-                                            Toast.error(
-                                              context,
-                                              AppLocalizations.of(context)
-                                                      ?.txtfailedToDeleteNotification ??
-                                                  'Failed to delete notification',
-                                            );
-                                          }
-                                          return ok;
-                                        },
-                                        onDismissed: (direction) {
-                                          Toast.info(
-                                            context,
-                                            AppLocalizations.of(context)!
-                                                .txtnotificationDeleted,
-                                          );
-                                        },
-                                        child: RepaintBoundary(
-                                          child: _buildNotificationCard(
-                                            context,
-                                            filtered[index],
-                                            engagementState,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
+                      child: _buildBody(engagementState, filtered, unreadCount),
                     ),
                   ],
                 ),
@@ -583,41 +467,128 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   Widget _buildEmptyState() {
+    // AUDIT-2026-09-07 (Phase 5): replaced the custom card+icon
+    // empty-state with the shared `IllustratedEmptyState` so all four
+    // target screens (history, support, notifications, referrals) ship
+    // the same branded empty illustration. The icon mirrors the
+    // currently-selected tab so the rider still sees which bucket
+    // they're looking at.
+    return IllustratedEmptyState(
+      icon: _getTabIcon(_selectedTab),
+      title: 'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
+      subtitle: "You're all caught up!",
+    );
+  }
+
+  // AUDIT-2026-09-07 (Phase 6): extracted the body branch into a
+  // method so the error / empty / list paths each get a proper
+  // `return` without inlining an IIFE in the parent's `child:` slot.
+  // The error path only fires when the provider recorded a fetch
+  // failure AND we have no cached notifications to fall back on.
+  Widget _buildBody(
+    EngagementState engagementState,
+    List<AppNotification> filtered,
+    int unreadCount,
+  ) {
     final colors = AppColors.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 80,
-            width: 80,
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 20),
-              ],
+    final notificationsError = engagementState.notificationsError;
+    if (notificationsError != null && filtered.isEmpty) {
+      return ErrorStateWidget(
+        title: "Couldn't load your notifications",
+        message: notificationsError,
+        onRetry: () => ref
+            .read(engagementProvider.notifier)
+            .refreshNotifications(),
+      );
+    }
+    if (filtered.isEmpty) return _buildEmptyState();
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () async => ref
+          .read(engagementProvider.notifier)
+          .initEngagementData(),
+      child: ListView.builder(
+        addRepaintBoundaries: true,
+        addAutomaticKeepAlives: false,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          return FluidStaggeredItem(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Dismissible(
+                key: Key('notif_${filtered[index].id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                confirmDismiss: (direction) async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: colors.surface,
+                      title: const Text('Delete Notification'),
+                      content: const Text(
+                        'Are you sure you want to delete this notification?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: Text(
+                            AppLocalizations.of(context)!.txtcancel,
+                          ),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          child: Text(
+                            AppLocalizations.of(context)!.txtdelete,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed != true) return false;
+                  final ok = await ref
+                      .read(engagementProvider.notifier)
+                      .deleteNotification(filtered[index].id);
+                  if (!ok && context.mounted) {
+                    Toast.error(
+                      context,
+                      AppLocalizations.of(context)
+                              ?.txtfailedToDeleteNotification ??
+                          'Failed to delete notification',
+                    );
+                  }
+                  return ok;
+                },
+                onDismissed: (direction) {
+                  Toast.info(
+                    context,
+                    AppLocalizations.of(context)!.txtnotificationDeleted,
+                  );
+                },
+                child: RepaintBoundary(
+                  child: _buildNotificationCard(
+                    context,
+                    filtered[index],
+                    engagementState,
+                  ),
+                ),
+              ),
             ),
-            child: Icon(
-              _getTabIcon(_selectedTab),
-              size: 40,
-              color: AppColors.primary.withValues(alpha: 0.15),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
-            style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "You're all caught up!",
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 14, color: colors.onSurfaceVariant),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

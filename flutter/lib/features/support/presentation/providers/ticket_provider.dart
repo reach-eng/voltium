@@ -13,11 +13,16 @@ class TicketState {
   final bool isLoading;
   final List<TicketEntity> tickets;
   final TicketFilter filter;
+  // AUDIT-2026-09-07 (Phase 6): set by `fetchTickets` on failure;
+  // cleared on the next successful fetch. Read by `RecentTicketsContainer`
+  // to drive ErrorStateWidget with a retry button.
+  final String? error;
 
   TicketState({
     this.isLoading = false,
     this.tickets = const [],
     this.filter = TicketFilter.all,
+    this.error,
   });
 
   List<TicketEntity> get filteredTickets {
@@ -32,11 +37,14 @@ class TicketState {
     bool? isLoading,
     List<TicketEntity>? tickets,
     TicketFilter? filter,
+    String? error,
+    bool clearError = false,
   }) {
     return TicketState(
       isLoading: isLoading ?? this.isLoading,
       tickets: tickets ?? this.tickets,
       filter: filter ?? this.filter,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -57,7 +65,7 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   }
 
   Future<void> fetchTickets() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await _repo.fetchTickets();
       final data = response['tickets'] as List<dynamic>?;
@@ -70,7 +78,13 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
         state = state.copyWith(isLoading: false);
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false);
+      // AUDIT-2026-09-07 (Phase 6): surface the failure to the UI so
+      // ErrorStateWidget can render a retry button instead of
+      // silently leaving the tickets list empty.
+      state = state.copyWith(
+        isLoading: false,
+        error: "Couldn't load your tickets.",
+      );
     }
   }
 

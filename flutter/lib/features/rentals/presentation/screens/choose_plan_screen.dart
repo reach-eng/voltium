@@ -14,6 +14,7 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
+import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import '../../../../utils/app_logger.dart';
 
 class ChoosePlanScreen extends ConsumerStatefulWidget {
@@ -310,7 +311,10 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
     return Scaffold(
       backgroundColor: colors.surface,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          // AUDIT-2026-09-07 (Phase 4): replaced raw spinner with
+          // PlansSkeleton (3 plan-card placeholders) so the screen
+          // mirrors the loaded layout during the initial fetch.
+          ? const PlansSkeleton()
           : _error != null
               ? Center(
                   child: Column(

@@ -16,6 +16,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/error_state_widget.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
 class SupportCenterScreen extends ConsumerStatefulWidget {
@@ -456,6 +457,22 @@ class RecentTicketsContainer extends ConsumerWidget {
             // PR #6: replaced raw spinner with a layout-matched skeleton
             // (4 list tiles) so the tickets area doesn't jump on load.
             const TicketListSkeleton()
+          else if (ticketState.error != null && ticketState.tickets.isEmpty)
+            // AUDIT-2026-09-07 (Phase 6): surface a ticket-load failure
+            // via ErrorStateWidget with a retry that re-hits
+            // supportTicketsProvider. Only fires on the initial failure
+            // — once cached tickets are present the list stays visible
+            // and the RefreshIndicator handles subsequent retries.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: ErrorStateWidget(
+                title: "Couldn't load your tickets",
+                message: ticketState.error,
+                onRetry: () => ref
+                    .read(supportTicketsProvider.notifier)
+                    .fetchTickets(),
+              ),
+            )
           else if (ticketState.filteredTickets.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),

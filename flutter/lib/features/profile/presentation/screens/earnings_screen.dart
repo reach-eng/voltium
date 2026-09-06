@@ -12,6 +12,7 @@ import 'package:voltium_rider/models/earnings_entry_model.dart';
 import 'package:voltium_rider/features/wallet/widgets/earnings_chart.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/wallet/widgets/earnings_add_sheet.dart';
+import 'package:voltium_rider/widgets/shimmer_loading.dart';
 import '../widgets/earnings_widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -323,8 +324,20 @@ class _EarningsScreenState extends State<EarningsScreen> {
             // AUDIT FIX (2026-08-22): the full-screen spinner now only shows
             // on the initial load (nothing to show yet). Pull-to-refresh
             // keeps the list mounted so it doesn't flash a blank screen.
+            // AUDIT-2026-09-07 (Phase 4): replaced raw spinner with
+            // ShimmerTransactionCard × 5 so the layout doesn't jump when
+            // earnings arrive.
             child: (_isLoading && _entries.isEmpty)
-                ? const Center(child: CircularProgressIndicator())
+                ? ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    children: const [
+                      ShimmerTransactionCard(),
+                      ShimmerTransactionCard(),
+                      ShimmerTransactionCard(),
+                      ShimmerTransactionCard(),
+                      ShimmerTransactionCard(),
+                    ],
+                  )
                 : Column(
                     children: [
                       _buildHeader(),

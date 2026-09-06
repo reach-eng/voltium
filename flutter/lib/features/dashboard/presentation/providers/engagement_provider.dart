@@ -61,6 +61,10 @@ class EngagementState {
   final Map<String, dynamic>? referralData;
   final List<AppNotification> notifications;
   final int unreadCount;
+  // AUDIT-2026-09-07 (Phase 6): set by `refreshNotifications` on a
+  // failed fetch; cleared on the next successful refresh. Read by the
+  // notifications screen to drive ErrorStateWidget.
+  final String? notificationsError;
 
   const EngagementState({
     this.rewardPoints = 0,
@@ -69,6 +73,7 @@ class EngagementState {
     this.referralData,
     this.notifications = const [],
     this.unreadCount = 0,
+    this.notificationsError,
   });
 
   EngagementState copyWith({
@@ -78,7 +83,9 @@ class EngagementState {
     Map<String, dynamic>? referralData,
     List<AppNotification>? notifications,
     int? unreadCount,
+    String? notificationsError,
     bool clearReferralData = false,
+    bool clearNotificationsError = false,
   }) =>
       EngagementState(
         rewardPoints: rewardPoints ?? this.rewardPoints,
@@ -88,6 +95,9 @@ class EngagementState {
             clearReferralData ? null : (referralData ?? this.referralData),
         notifications: notifications ?? this.notifications,
         unreadCount: unreadCount ?? this.unreadCount,
+        notificationsError: clearNotificationsError
+            ? null
+            : (notificationsError ?? this.notificationsError),
       );
 }
 
@@ -199,10 +209,17 @@ class EngagementProvider extends Notifier<EngagementState> {
           notifications: (list ?? const [])
               .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
               .toList(),
+          clearNotificationsError: true,
         );
       }
     } catch (e) {
       appDebug('Failed to fetch notifications: $e');
+      // AUDIT-2026-09-07 (Phase 6): surface the failure to the UI so
+      // ErrorStateWidget can render a retry button instead of
+      // silently keeping the rider on a stale/empty list.
+      state = state.copyWith(
+        notificationsError: "Couldn't load your notifications.",
+      );
     }
   }
 

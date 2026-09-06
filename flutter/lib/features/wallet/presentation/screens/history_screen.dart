@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/error_state_widget.dart';
 import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
@@ -119,9 +120,25 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           children: [
             _buildHeader(),
             Expanded(
-              child: isRefreshing && transactions.isEmpty
-                  ? _buildLoading()
-                  : _buildContent(filtered, credits, debits),
+              // AUDIT-2026-09-07 (Phase 6): surface a wallet-load failure
+              // via ErrorStateWidget with a retry callback. The
+              // walletProvider's `lastError` is cleared on the next
+              // successful refresh, so this branch only fires when the
+              // fetch genuinely failed.
+              child: () {
+                final lastError =
+                    ref.watch(walletProvider.select((p) => p.lastError));
+                if (lastError != null && transactions.isEmpty) {
+                  return ErrorStateWidget(
+                    title: "Couldn't load your transactions",
+                    message: lastError,
+                    onRetry: _fetchTransactions,
+                  );
+                }
+                return isRefreshing && transactions.isEmpty
+                    ? _buildLoading()
+                    : _buildContent(filtered, credits, debits);
+              }(),
             ),
           ],
         ),
