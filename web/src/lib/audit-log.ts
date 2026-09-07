@@ -3,11 +3,26 @@ import { logger } from '@/lib/logger';
 import { redactPii } from '@/lib/pii-redact';
 import { getRequestContext } from '@/lib/correlation-id';
 
+// Audit-log retention table. The keys here are the action-string
+// PREFIXES (the part before the first `.` in an action like
+// `rider.delete` or `kyc.approved`).
+//
+// NET-005 follow-up-4 (2026-09-08): the previous keys
+// `rider_update` and `bulk_action` (underscore) were
+// inconsistent with the dot-separated action-string
+// convention used everywhere else in the codebase. The
+// `getRetentionDays` lookup splits on `.` and reads the
+// first segment as the prefix; a `rider.delete` action
+// splits to `prefix='rider'`, which did NOT match the
+// `rider_update` key and fell through to the 90-day
+// default. After this rename, every `rider.*` action
+// hits the documented 180-day retention and every
+// `bulk.*` action hits the 365-day retention.
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
   kyc: 365,
-  rider_update: 180,
-  bulk_action: 365,
+  rider: 180,
+  bulk: 365,
   system: 30,
   transaction: 2555,
   financial: 2555,

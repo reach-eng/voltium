@@ -138,6 +138,105 @@ describe('Admin Panel Phase 3 Fixes Verification', () => {
       expect(buggyUnderscoreMs).toBeLessThan(defaultDay + tolerance);
       expect(buggyUppercaseMs).toBeLessThan(defaultDay + tolerance);
     });
+
+    // NET-005 follow-up-4 (2026-09-08): the previous
+    // RETENTION_PERIODS keys were `rider_update` (180d) and
+    // `bulk_action` (365d) — both underscore-separated,
+    // inconsistent with the dot-separated action-string
+    // convention used everywhere else in the codebase. The
+    // `getRetentionDays` lookup splits on `.` and reads the
+    // first segment as the prefix; a `rider.delete` action
+    // splits to `prefix='rider'`, which did NOT match the
+    // `rider_update` key and fell through to the 90-day
+    // default. The rename to `rider: 180` and `bulk: 365`
+    // makes every `rider.*` and `bulk.*` action hit the
+    // documented retention.
+    it('every RETENTION_PERIODS key matches a representative prefix.suffix action', () => {
+      // Walk through every key in the retention table and
+      // assert that the prefix.suffix lookup returns the
+      // table value. The new keys (`rider`, `bulk`) are the
+      // single-word prefixes that match the dot-separated
+      // action-string convention.
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      const tolerance = 2 * day; // 2 days of clock drift
+      for (const [key, days] of Object.entries(RETENTION_PERIODS)) {
+        // The `transaction` and `financial` keys are
+        // special-cased via prefix `transaction` / `financial`
+        // / `wallet` — test all three.
+        if (key === 'transaction' || key === 'financial') {
+          const txDays = (getExpiresAt('transaction.approve').getTime() - now) / day;
+          const finDays = (getExpiresAt('financial.transfer').getTime() - now) / day;
+          const walletDays = (getExpiresAt('wallet.adjust').getTime() - now) / day;
+          expect(txDays).toBeGreaterThan(days - 2);
+          expect(txDays).toBeLessThan(days + 2);
+          expect(finDays).toBeGreaterThan(days - 2);
+          expect(finDays).toBeLessThan(days + 2);
+          expect(walletDays).toBeGreaterThan(days - 2);
+          expect(walletDays).toBeLessThan(days + 2);
+          continue;
+        }
+        const actionMs = getExpiresAt(`${key}.example`).getTime() - now;
+        const actionDays = actionMs / day;
+        expect(actionDays).toBeGreaterThan(days - 2);
+        expect(actionDays).toBeLessThan(days + 2);
+      }
+    });
+
+    it('rider.* actions hit the 180-day retention (regression)', () => {
+      // After the rename of `rider_update` → `rider`, every
+      // `rider.*` action the live admin path writes now
+      // hits the documented 180-day retention. Before the
+      // fix, all of these fell through to the 90-day
+      // default.
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      const tolerance = 2 * day;
+      const riderActions = [
+        'rider.assign_plan',
+        'rider.complete_pickup',
+        'rider.end_rental',
+        'rider.delete',
+        'rider.logout',
+        'rider.deactivation',
+      ];
+      for (const action of riderActions) {
+        const days = (getExpiresAt(action).getTime() - now) / day;
+        expect(days, `action=${action}`).toBeGreaterThan(180 - 2);
+        expect(days, `action=${action}`).toBeLessThan(180 + 2);
+      }
+    });
+
+    it('bulk.* actions hit the 365-day retention (regression)', () => {
+      // After the rename of `bulk_action` → `bulk`, every
+      // `bulk.*` action hits the 365-day retention. Before
+      // the fix, all of these fell through to the 90-day
+      // default.
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      const tolerance = 2 * day;
+      const bulkActions = [
+        'bulk.approve',
+        'bulk.suspend',
+        'bulk.delete',
+      ];
+      for (const action of bulkActions) {
+        const days = (getExpiresAt(action).getTime() - now) / day;
+        expect(days, `action=${action}`).toBeGreaterThan(365 - 2);
+        expect(days, `action=${action}`).toBeLessThan(365 + 2);
+      }
+    });
+
+    it('RETENTION_PERIODS no longer contains the legacy underscore keys', () => {
+      // After the rename, the legacy `rider_update` and
+      // `bulk_action` keys must not be present. This guards
+      // against a future regression that re-adds the
+      // underscore keys.
+      expect(RETENTION_PERIODS).not.toHaveProperty('rider_update');
+      expect(RETENTION_PERIODS).not.toHaveProperty('bulk_action');
+      expect(RETENTION_PERIODS).toHaveProperty('rider');
+      expect(RETENTION_PERIODS).toHaveProperty('bulk');
+    });
   });
 
   describe('CSV Export Formatting & RFC 4180 Escaping (P2-06)', () => {
