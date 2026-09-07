@@ -24,12 +24,13 @@ import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.d
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/auth/widgets/pre_dashboard_widgets.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import 'package:voltium_rider/widgets/error_state_widget.dart';
 import 'package:voltium_rider/features/wallet/widgets/top_up_request_sent_card.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/widgets/legacy/pre_dashboard_header.dart';
 import 'package:voltium_rider/features/dashboard/presentation/widgets/legacy/pre_dashboard_pickup_button.dart';
-import 'package:voltium_rider/features/dashboard/presentation/widgets/legacy/pre_dashboard_polling_banner.dart';
 import 'package:voltium_rider/features/dashboard/presentation/widgets/legacy/pre_dashboard_rejection_card.dart';
+import 'package:voltium_rider/core/widgets/wait_state_polling_banner.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 
 class PreDashboardScreen extends ConsumerStatefulWidget {
@@ -50,12 +51,34 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     final walletMinTopup =
         ref.watch(walletProvider.select((p) => p.walletMinTopup));
     final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final dataState = ref.watch(riderProvider.select((p) => p.dataState));
+    final isRefreshing = ref.watch(riderProvider.select((p) => p.isRefreshing));
+    final errorMessage = ref.watch(riderProvider.select((p) => p.errorMessage));
     final isPollingTimedOut =
         ref.watch(riderProvider.select((p) => p.isPollingTimedOut));
     appDebug(
         'PreDashboardScreen: currentPlan = ${rider?.currentPlan}, isKycApproved = ${rider?.isKycApproved}, kycStatus = ${rider?.kycStatus}, isPlanDone = ${rider?.isPlanDone}, needsPlanSelection = ${rider?.needsPlanSelection}, isRegistrationDone = ${rider?.isRegistrationDone}');
 
+    // P0 fix: previously a null rider (offline cold start, no cache)
+    // hung on the skeleton forever with no retry — unlike the active
+    // dashboard, this screen never read the error state.
     if (rider == null) {
+      if (dataState == DataState.error) {
+        return Scaffold(
+          backgroundColor: colors.surface,
+          body: Center(
+            child: ErrorStateWidget.network(
+              message: errorMessage != null
+                  ? 'Unable to connect: $errorMessage'
+                  : 'Unable to connect to command center.',
+              onRetry: () => ref.read(riderProvider.notifier).refresh(),
+            ),
+          ),
+        );
+      }
+      if (isRefreshing || dataState == DataState.initial) {
+        return const PreDashboardSkeleton();
+      }
       return const PreDashboardSkeleton();
     }
 
@@ -83,9 +106,15 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
         children: [
           PreDashboardHeader(onLogoutConfirmed: _onLogoutConfirmed),
           if (isPollingTimedOut)
-            PreDashboardPollingBanner(
+            WaitStatePollingBanner(
+              // HANG-TIGHT-AUDIT P0-3 (2026-09-08): the prior
+              // `refreshFromApi()` left the poller stopped, so a
+              // stuck rider could manually refresh forever and
+              // never re-arm. `startOnboardingPoll()` resets the
+              // counter, clears the timeout flag, and restarts the
+              // poller.
               onRefresh: () =>
-                  ref.read(riderProvider.notifier).refreshFromApi(),
+                  ref.read(riderProvider.notifier).startOnboardingPoll(),
             ),
           Expanded(
             child: RefreshIndicator(
@@ -301,9 +330,11 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   }
 
   Widget _buildReferralCard(RiderModel rider) {
-    final code = (rider.referralCode?.isNotEmpty ?? false)
-        ? rider.referralCode!
-        : (rider.riderId.isNotEmpty ? rider.riderId : 'VOLT-RD-88');
+    // P0 fix: never fabricate a shareable code — riderId is not a referral
+    // code and 'VOLT-RD-88' is a hardcoded fake. Empty disables copy/share
+    // in ReferralCard (shows '—'), matching the active dashboard.
+    final code =
+        (rider.referralCode?.isNotEmpty ?? false) ? rider.referralCode! : '';
     return FadeUpWidget(
       delay: 350,
       child: ReferralCard(referralCode: code),

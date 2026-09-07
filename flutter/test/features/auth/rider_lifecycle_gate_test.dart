@@ -125,6 +125,21 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
     });
 
+    // HANG-TIGHT-AUDIT P0-2 (2026-09-08): post-submit production shape.
+    // `syncPickup` (rental.use-cases.ts:487-499) sets
+    // `lifecycleStatus: PICKUP_SCHEDULED` AND `pickedUpAt: <now>` in the
+    // same write. The server's `flattenRider` used to OR `pickedUpAt`
+    // into `pickupDone`, which made `pickupDone: true` at rank 10 and
+    // the gate's first branch (`rider.pickupDone || rank >= 11`)
+    // routed the rider to dashboard — the hangTight wait never ran.
+    // After the P0-1 fix, `pickupDone` is rank-only; this test pins
+    // the post-fix behavior so a regression in the server or the
+    // gate would be caught immediately.
+    test('HANG-TIGHT-AUDIT P0-2: PICKUP_SCHEDULED with pickupDone=false routes to hangTight', () {
+      final rider = createRider('PICKUP_SCHEDULED', pickupDone: false);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
+    });
+
     test('returns intent for rank < 2', () {
       final intentStatuses = [
         'NEW', // 0

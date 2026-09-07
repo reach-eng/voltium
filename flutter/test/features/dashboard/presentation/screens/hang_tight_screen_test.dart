@@ -25,7 +25,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/hang_tight_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations_en.dart';
@@ -37,6 +36,14 @@ import 'package:voltium_rider/models/rider_model.dart';
 /// Minimal stub notifier — `refreshFromApi` records invocation count.
 class _StubRiderNotifier extends RiderNotifier {
   int refreshCallCount = 0;
+  // HANG-TIGHT-AUDIT P0-3 (2026-09-08): the polling-timeout banner's
+  // refresh button calls `startOnboardingPoll()` (resets the counter
+  // and restarts the poller — NOT a one-shot `refreshFromApi`). The
+  // parent `RiderNotifier.build()` is bypassed, so the real
+  // `startOnboardingPoll` would NPE on the never-initialized
+  // `_onboardingPoller`. Override it here to record the call and
+  // simulate the real behavior (clear the timeout flag).
+  int startOnboardingPollCallCount = 0;
 
   @override
   RiderState build() => const RiderState();
@@ -44,6 +51,12 @@ class _StubRiderNotifier extends RiderNotifier {
   @override
   Future<void> refreshFromApi() async {
     refreshCallCount++;
+  }
+
+  @override
+  void startOnboardingPoll() {
+    startOnboardingPollCallCount++;
+    state = state.copyWith(isPollingTimedOut: false);
   }
 }
 
@@ -82,6 +95,10 @@ Widget _buildHarness({
   VoidCallback? onActivated,
   VoidCallback? onSessionExpired,
   VoidCallback? onFixKyc,
+  // HANG-TIGHT-AUDIT P0-3 (2026-09-08): optional flag so the
+  // polling-timeout banner tests can seed `isPollingTimedOut: true`
+  // in the rider state.
+  bool isPollingTimedOut = false,
 }) {
   final activeNotifier = notifier ?? _StubRiderNotifier();
   return ProviderScope(
@@ -104,6 +121,7 @@ Widget _buildHarness({
         onActivated: onActivated,
         onSessionExpired: onSessionExpired,
         onFixKyc: onFixKyc,
+        isPollingTimedOut: isPollingTimedOut,
       ),
     ),
   );
@@ -118,12 +136,14 @@ class _Harness extends ConsumerStatefulWidget {
   final VoidCallback? onActivated;
   final VoidCallback? onSessionExpired;
   final VoidCallback? onFixKyc;
+  final bool isPollingTimedOut;
 
   const _Harness({
     required this.rider,
     this.onActivated,
     this.onSessionExpired,
     this.onFixKyc,
+    this.isPollingTimedOut = false,
   });
 
   @override
@@ -138,7 +158,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(riderProvider.notifier).state =
-          ref.read(riderProvider).copyWith(rider: widget.rider);
+          ref.read(riderProvider).copyWith(
+            rider: widget.rider,
+            isPollingTimedOut: widget.isPollingTimedOut,
+          );
     });
   }
 
@@ -344,6 +367,75 @@ void main() {
       expect(activated, isTrue,
           reason:
               'onActivated must be invoked immediately upon pickupDone flip without needing screen timer');
+    });
+
+    // HANG-TIGHT-AUDIT P0-3 (2026-09-08): after 240 polls (≈ 2h) the
+    // onboarding poller stops and `isPollingTimedOut: true` is set on
+    // the rider state. The hangTight screen must surface a recovery
+    // affordance so the rider is not stranded silently. The shared
+    // `WaitStatePollingBanner` is the source of truth (also used by
+    // pre-dashboard); the test pins the visibility + the refresh
+    // callback so a regression that drops the watcher or wires the
+    // banner to a one-shot `refreshFromApi` instead of
+    // `startOnboardingPoll` would fail CI.
+    testWidgets(
+        'P0-3: shows the polling-timeout banner when isPollingTimedOut is true',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        isPollingTimedOut: true,
+      ));
+      await tester.pump();
+      await tester.pump();
+
+      // The banner has a fixed key (shared with pre-dashboard) and a
+      // hardcoded "Status taking longer than expected" message. Assert
+      // both so the lift-to-shared-widget refactor is pinned.
+      expect(
+        find.byKey(const Key('waitStatePollingTimeoutRefresh')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Status taking longer than expected'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'P0-3: tapping the banner refresh button calls startOnboardingPoll and clears the flag',
+        (tester) async {
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+        isPollingTimedOut: true,
+      ));
+      await tester.pump();
+      await tester.pump();
+
+      // Sanity: the flag is seeded true and the banner is showing.
+      expect(notifier.state.isPollingTimedOut, isTrue);
+      expect(
+        find.byKey(const Key('waitStatePollingTimeoutRefresh')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('waitStatePollingTimeoutRefresh')),
+      );
+      await tester.pump();
+
+      // The banner's refresh must call `startOnboardingPoll` (which
+      // both restarts the poller AND clears the timeout flag), NOT a
+      // one-shot `refreshFromApi` (which would leave the poller
+      // stopped and the rider permanently stuck). The stub
+      // simulates the real behavior on the flag.
+      expect(notifier.startOnboardingPollCallCount, 1,
+          reason: 'Refresh must call startOnboardingPoll, not refreshFromApi');
+      expect(notifier.refreshCallCount, 0,
+          reason: 'Refresh must not also fire a one-shot fetch');
+      expect(notifier.state.isPollingTimedOut, isFalse,
+          reason: 'startOnboardingPoll clears the timeout flag');
     });
   });
 }

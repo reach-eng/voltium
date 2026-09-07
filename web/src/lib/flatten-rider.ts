@@ -57,6 +57,33 @@ type RiderPartial = Prisma.RiderGetPayload<{
   };
 }>;
 
+/**
+ * P1 fix: rider-facing payload hygiene. `flattenRider` spreads `...rest`
+ * (every current and future Rider column reaches the client by default, and
+ * the same serializer feeds admin paths). These columns must never go to a
+ * rider session: precise location telemetry (dedicated sync endpoints own
+ * it), the deletion-request free text (the pending flag below stays), the
+ * internal serial number, and compliance counters. Pass every rider-facing
+ * flatten result through this before responding; admin serializers keep the
+ * full shape.
+ */
+const RIDER_STRIPPED_FIELDS = [
+  'lastKnownLat',
+  'lastKnownLng',
+  'lastLocationAt',
+  'deletionRequestReason',
+  'deviceViolationCount',
+  'serialNumber',
+] as const;
+
+export function stripRiderSecretsForRider<T extends Record<string, unknown>>(
+  flat: T
+): T {
+  const copy: Record<string, unknown> = { ...flat };
+  for (const k of RIDER_STRIPPED_FIELDS) delete copy[k];
+  return copy as T;
+}
+
 export function flattenRider(
   rider: RiderWithRelations | RiderPartial | Record<string, unknown>
 ) {
@@ -85,8 +112,12 @@ export function flattenRider(
   //   - registrationDone: was rank >= 3 (GUARANTOR_*), now rank >= 2
   //     (PROFILE_SUBMITTED). "Registration done" now means the
   //     profile is in, not that guarantor is approved.
-  //   - kycDone: was rank >= 8, now rank >= 4 (KYC_APPROVED — same
-  //     status, just different numeric rank).
+  //   - kycDone: APPROVED status, plus a rank >= 10 backstop. The rank
+  //     backstop is intentionally conservative (KYC_APPROVED itself is rank
+  //     4): only riders deep past deposit (rank 10+) count as KYC-done
+  //     without an APPROVED row, so an admin-skipped lifecycle cannot
+  //     silently mark KYC complete. Do NOT lower this to rank >= 4 without
+  //     reviewing every `kycDone`/`isKycApproved` gate.
   //   - depositDone: was rank >= 6, now rank >= 8 (DEPOSIT_APPROVED).
   //   - planDone: was rank >= 4 (PLAN_SELECTED), now rank >= 9
   //     (PLAN_SELECTED — same status, different rank).
@@ -107,7 +138,19 @@ export function flattenRider(
   const kycDone = kycProfile?.status === 'APPROVED' || rank >= 10;
   const depositDone = wallet?.depositStatus === 'APPROVED' || (wallet?.securityDepositInPaise ?? 0) > 0 || rank >= 10;
   const planDone = !!r.currentPlan || rank >= 9;
-  const pickupDone = rank >= 11 || !!r.pickedUpAt;
+  // HANG-TIGHT-AUDIT P0-1 (2026-09-08): the prior `|| !!r.pickedUpAt`
+  // OR bypassed the rank guard at PICKUP_SCHEDULED (rank 10) because
+  // `syncPickup` writes `pickedUpAt: new Date()` in the same
+  // transaction that sets `PICKUP_SCHEDULED`. Result: a rider who
+  // had just submitted the pickup form returned from the next
+  // profile fetch with `pickupDone: true`, the lifecycle gate
+  // routed them to the dashboard on rank >= 11's first branch
+  // (gate.dart:119), and the hangTight wait state never ran —
+  // riders landed on the dashboard pre-activation. `pickedUpAt`
+  // is the submit receipt and stays on the rider row for the
+  // admin audit log, but it does NOT feed the activation gate.
+  // `pickupDone` is now rank-only.
+  const pickupDone = rank >= 11;
 
   return {
     ...rest,
@@ -184,7 +227,13 @@ export function flattenRider(
     // --- Plan & Status fields (computed from lifecycleStatus above) ---
     currentPlan: r.currentPlan ?? null,
     currentPlanId: r.currentPlanId ?? null,
+    // P1: currentPlanPrice is PAISE in the DB (see schema comment). Emit
+    // explicit aliases so clients converge on single-unit reads (bare
+    // paise key kept for backward compat).
     currentPlanPrice: r.currentPlanPrice ?? null,
+    currentPlanPriceInPaise: r.currentPlanPrice ?? null,
+    currentPlanPriceInRupees:
+      r.currentPlanPrice != null ? paiseToRupees(r.currentPlanPrice) : null,
     advanceRentPaid: r.advanceRentPaid ?? false,
     // PR-47 (WALLET P1-1): the rider's current plan's security deposit
     // (in paise, server-side; client converts). Joined via the FK

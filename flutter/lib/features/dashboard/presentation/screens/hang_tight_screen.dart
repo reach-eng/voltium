@@ -22,6 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/core/widgets/wait_state_polling_banner.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -107,6 +108,15 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final rider = ref.watch(riderProvider.select((p) => p.rider));
+    // HANG-TIGHT-AUDIT P0-3 (2026-09-08): watch `isPollingTimedOut` so
+    // the rider sees a recovery affordance once the 240-tick cap
+    // (~2h) is hit. Before this, the spinner kept spinning silently
+    // for hours with no signal that polling died. The banner's
+    // `Refresh` calls `startOnboardingPoll` (resets the counter,
+    // clears the flag, restarts the poller) — see the class doc on
+    // `WaitStatePollingBanner`.
+    final isPollingTimedOut =
+        ref.watch(riderProvider.select((p) => p.isPollingTimedOut));
 
     // Auto-redirect to the dashboard the moment the rider becomes active
     // (admin flipped them, pickupDone landed via sync, or they re-entered
@@ -138,6 +148,11 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
         child: Column(
           children: [
             _buildHero(context),
+            if (isPollingTimedOut)
+              WaitStatePollingBanner(
+                onRefresh: () =>
+                    ref.read(riderProvider.notifier).startOnboardingPoll(),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

@@ -146,4 +146,27 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
     const flatReturnPending = flattenRider(returnPendingRider as any);
     expect(flatReturnPending.rentalStatus).toBe('RETURN_PENDING');
   });
+
+  // HANG-TIGHT-AUDIT P0-1 (2026-09-08): the bypass where `pickedUpAt`
+  // flipped `pickupDone` to true at rank 10 (PICKUP_SCHEDULED) caused
+  // the hangTight wait state to never run in production. The fix is
+  // rank-only; `pickedUpAt` stays on the row for the audit trail.
+  test('P0-1: pickupDone is false at PICKUP_SCHEDULED (rank 10) even with pickedUpAt set', () => {
+    const rider = {
+      ...mockRider,
+      lifecycleStatus: 'PICKUP_SCHEDULED',
+      pickedUpAt: new Date('2026-09-08T10:00:00Z'),
+    };
+    const flat = flattenRider(rider as any);
+    expect(flat.pickupDone).toBe(false);
+  });
+
+  test('P0-1: pickupDone is true at ACTIVE (rank 11)', () => {
+    const rider = {
+      ...mockRider,
+      lifecycleStatus: 'ACTIVE',
+    };
+    const flat = flattenRider(rider as any);
+    expect(flat.pickupDone).toBe(true);
+  });
 });
