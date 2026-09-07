@@ -278,6 +278,33 @@ export async function PUT(req: NextRequest) {
     const { id, ...data } = parsed.data;
     if (!id) return errors.badRequest('Rider ID is required');
 
+    // NET-005 follow-up-6 (2026-09-08): the rider-update
+    // route was gated only by `riders_update` = [OPERATIONS_ADMIN,
+    // FLEET_MANAGER]. The route body carries `kycStatus`
+    // (plus `rejectionReason` / `editableFields`), so a
+    // FLEET_MANAGER could approve, reject, or info-request
+    // KYC through the same endpoint. The dead
+    // `/api/admin/kyc/route.ts:110` already requires
+    // `kyc_approve` = [OPERATIONS_ADMIN, KYC_REVIEWER] for
+    // the same operation. Enforce the same gate here:
+    // any KYC decision (APPROVED / REJECTED / INFO_REQUIRED)
+    // additionally requires `kyc_approve`. Fleet managers
+    // keep `riders_update` (their non-KYC fields still work
+    // — emergency contact, address, plan dates, etc.) but
+    // the KYC decision is a different gate.
+    const kycStatus = (data as Record<string, unknown>).kycStatus;
+    if (
+      kycStatus === 'APPROVED' ||
+      kycStatus === 'REJECTED' ||
+      kycStatus === 'INFO_REQUIRED'
+    ) {
+      if (!hasPermission(session, 'kyc_approve')) {
+        return errors.forbidden(
+          'Insufficient permissions to change KYC status; kyc_approve required'
+        );
+      }
+    }
+
     const adminActorId = session.adminId ?? session.riderDbId ?? 'unknown';
     const result = await adminRiderUseCases.update(id, data as Record<string, unknown>, {
       actorId: adminActorId,
