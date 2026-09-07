@@ -1022,11 +1022,79 @@ export const riderUseCases = {
         ? 'SUBMITTED'
         : (kycExisting?.status ?? 'SUBMITTED');
 
-      await tx.kycProfile.upsert({
-        where: { riderId: riderDbId },
-        create: { riderId: riderDbId, ...(kycData as any), status: targetKycStatus },
-        update: { ...(kycData as any), status: targetKycStatus },
-      });
+      // KYC-PENDING-CORRECTIONS-2026-09-08 (PR-KYC-CORRECTION): on a
+      // resubmit after REJECT/INFO_REQUIRED, the rider-supplied
+      // values must NOT land in the real columns yet. They're parked
+      // in pendingCorrections until an admin APPROVES, at which
+      // point kyc.repository.applyPendingCorrections promotes them
+      // to the Rider / KycProfile tables. This is the two-phase
+      // commit the audit's P0-1 fix assumed.
+      //
+      // On first submit (no kycExisting, or status DRAFT/PENDING/
+      // SUBMITTED) we keep the original write-direct-to-columns
+      // behavior. The blob stays null until a future REJECT cycle.
+      const isCorrectionResubmit =
+        kycExisting?.status === 'REJECTED' ||
+        kycExisting?.status === 'INFO_REQUIRED';
+      if (isCorrectionResubmit) {
+        // Restrict the blob to the admin-supplied editableFields
+        // allowlist (already validated above by the blocked-fields
+        // check). Aliased keys are normalized to their canonical
+        // form so the apply path (kyc.repository.applyPendingCorrections
+        // RIDER_LEVEL_CORRECTION_KEYS / KYC_LEVEL_CORRECTION_KEYS)
+        // matches the DB columns.
+        const allowed = new Set(
+          Array.isArray(kycExisting.editableFields)
+            ? kycExisting.editableFields
+            : []
+        );
+        const aliasOf: Record<string, string> = {
+          bankAccount: 'accountNumber',
+          bankIfsc: 'ifscCode',
+          selfie: 'profilePhoto',
+          name: 'fullName',
+          address: 'currentAddress',
+          email: 'email',
+        };
+        const pendingValues: Record<string, string> = {};
+        for (const [k, v] of Object.entries(kycData as Record<string, unknown>)) {
+          if (typeof v !== 'string') continue;
+          if (COSMETIC_KYC_FIELDS.includes(k)) continue;
+          const canon = aliasOf[k] ?? k;
+          if (!allowed.has(canon)) continue;
+          // Skip empty values — the rider might leave a field blank
+          // (e.g. "I'm not changing my address on this resubmit"). An
+          // empty string written to the blob would overwrite a held
+          // value on the apply step.
+          if (v.trim() === '') continue;
+          pendingValues[canon] = v;
+        }
+        // Only set the blob if there's at least one value; otherwise
+        // preserve whatever was there (or null on a fresh row).
+        const pendingUpdate =
+          Object.keys(pendingValues).length > 0
+            ? { values: pendingValues, submittedAt: new Date().toISOString() }
+            : null;
+        const createPayload: Record<string, unknown> = {
+          riderId: riderDbId,
+          status: targetKycStatus,
+        };
+        if (pendingUpdate) createPayload.pendingCorrections = pendingUpdate;
+        await tx.kycProfile.upsert({
+          where: { riderId: riderDbId },
+          create: createPayload as any,
+          update: {
+            status: targetKycStatus,
+            ...(pendingUpdate ? { pendingCorrections: pendingUpdate } : {}),
+          },
+        });
+      } else {
+        await tx.kycProfile.upsert({
+          where: { riderId: riderDbId },
+          create: { riderId: riderDbId, ...(kycData as any), status: targetKycStatus },
+          update: { ...(kycData as any), status: targetKycStatus },
+        });
+      }
     }
 
     // Update Guarantor
