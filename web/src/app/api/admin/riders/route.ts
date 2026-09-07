@@ -18,6 +18,7 @@ import { parseDDMMYYYY } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { createAuditLog } from '@/lib/audit-log';
+import { logKycDocumentView } from '@/lib/security-events';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { toRupeesResponse } from '@/lib/api-money';
@@ -227,6 +228,47 @@ export async function GET(req: NextRequest) {
       }),
       5
     );
+
+    // NET-005 follow-up-9 (2026-09-08): the live admin riders
+    // list returns KYC document URLs (profilePhoto, aadhaarFront,
+    // aadhaarBack, panCard, etc.) for every rider that has a
+    // non-PENDING kycProfile. SOC2 requires that every admin
+    // access to a rider's KYC data be recorded in the audit log.
+    // The dead `kycRepository.findByRiderIdForAdmin` was added in
+    // PR-99 to satisfy this but never wired up. Fire the
+    // per-rider log at the route level so it covers every GET,
+    // not just cache misses — admins viewing the cached list
+    // are still viewing the data. The 5s `getOrSetResponse` TTL
+    // bounds the volume (one write per admin per filter combo
+    // per 5s). Fire-and-forget via `void`; never blocks the
+    // response. documentType=`riders_list` distinguishes this
+    // from the KYC queue and single-rider-detail views in the
+    // security-event stream.
+    if (result && Array.isArray((result as { riders?: unknown[] }).riders)) {
+      const adminId = session.adminId ?? session.riderDbId ?? 'unknown';
+      for (const rider of (result as { riders: Array<{ id: string; kycStatus?: string; profilePhoto?: string | null; aadhaarFront?: string | null; aadhaarBack?: string | null; panCard?: string | null; riderPhoto?: string | null; signature?: string | null }> }).riders) {
+        // Skip riders with no KYC data (PENDING with no doc URLs).
+        // A kycProfile row with `status: PENDING` is the DB default
+        // and indistinguishable in the flat shape from "no row" —
+        // both mean "nothing to view yet" unless the rider has
+        // started a partial upload.
+        if (
+          rider.kycStatus !== 'PENDING' ||
+          rider.profilePhoto ||
+          rider.aadhaarFront ||
+          rider.aadhaarBack ||
+          rider.panCard ||
+          rider.riderPhoto ||
+          rider.signature
+        ) {
+          void logKycDocumentView({
+            adminId,
+            riderId: rider.id,
+            documentType: 'riders_list',
+          });
+        }
+      }
+    }
 
     return withCacheHeaders(success(toRupeesResponse(result)), 5);
   } catch (error) {

@@ -35,10 +35,22 @@ const WIRING = [
     helperFn: 'adminForbiddenWithLog',
   },
   {
+    // NET-005 follow-up-9 (2026-09-08): the original
+    // wiring asserted logKycDocumentView was imported and
+    // called in `kyc.repository.ts` via the dead
+    // `findByRiderIdForAdmin` method. That method had
+    // zero callers, so the test was passing for a no-op.
+    // The live admin KYC document access paths are the 3
+    // route handlers below; assert the call exists in
+    // each. The repo method was removed in the same commit.
     name: 'logKycDocumentView',
     file: 'lib/security-events.ts',
-    importedIn: 'server/modules/kyc/kyc.repository.ts',
-    calledIn: 'server/modules/kyc/kyc.repository.ts',
+    importedIn: 'app/api/admin/riders/route.ts',
+    calledIn: 'app/api/admin/riders/route.ts',
+    extraCallSites: [
+      'app/api/admin/riders/[id]/route.ts',
+      'app/api/admin/kyc/route.ts',
+    ],
   },
   {
     name: 'logAccountSuspension',
@@ -73,6 +85,22 @@ describe('PR-99: security-event loggers are wired', () => {
       const pattern = new RegExp(`(?:void|await)?\\s*${w.name}\\s*\\(`);
       expect(content, `${w.name} should be called`).toMatch(pattern);
     });
+
+    // NET-005 follow-up-9 (2026-09-08): for loggers that
+    // have multiple call sites, also assert the call
+    // exists in each additional file.
+    const extras = (w as { extraCallSites?: string[] }).extraCallSites;
+    if (extras) {
+      extras.forEach((site) => {
+        it(`${w.name} is called in ${site}`, () => {
+          const f = SRC(site);
+          expect(existsSync(f), `expected file ${site}`).toBe(true);
+          const content = readFileSync(f, 'utf-8');
+          const pattern = new RegExp(`(?:void|await)?\\s*${w.name}\\s*\\(`);
+          expect(content, `${w.name} should be called in ${site}`).toMatch(pattern);
+        });
+      });
+    }
   });
 
   it('adminForbiddenWithLog helper exists in lib/rbac.ts with the expected signature', () => {

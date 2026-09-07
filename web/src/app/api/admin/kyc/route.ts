@@ -11,6 +11,7 @@ import { approveKyc } from '@/server/modules/kyc/use-cases/approveKyc';
 import { KycApproveError } from '@/server/modules/kyc/use-cases/errors';
 import { withApiHandler } from '@/lib/api-handler';
 import { signRiderUrls } from '@/lib/sign-rider';
+import { logKycDocumentView } from '@/lib/security-events';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
@@ -100,6 +101,30 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     },
     5
   );
+
+  // NET-005 follow-up-9 (2026-09-08): the KYC review queue
+  // returns each rider's full kycProfile (all doc URLs,
+  // signed). SOC2 requires per-admin-view logging. The dead
+  // `findByRiderIdForAdmin` was never wired up; we fire
+  // the per-record log here, after the cache resolves,
+  // so it covers every GET (not just cache misses). The
+  // 5s `getOrSetResponse` TTL bounds the volume. The kyc
+  // include is preserved through `signRiderUrls` (it only
+  // rewrites URL fields), so `record.rider?.id` is intact.
+  // documentType=`kyc_queue` distinguishes this from the
+  // list and detail views.
+  if (result && Array.isArray((result as { records?: unknown[] }).records)) {
+    const adminId = session.adminId ?? 'unknown';
+    for (const record of (result as { records: Array<{ rider?: { id: string } | null }> }).records) {
+      if (record.rider?.id) {
+        void logKycDocumentView({
+          adminId,
+          riderId: record.rider.id,
+          documentType: 'kyc_queue',
+        });
+      }
+    }
+  }
 
   return withCacheHeaders(success(result), 5);
 });
