@@ -2,6 +2,7 @@ import { db } from './db';
 import { fcmService } from './fcm';
 import { logger } from './logger';
 import { posthog } from './posthog-client';
+import { formatInr } from './api-money';
 
 /**
  * Centralized Notification Service
@@ -117,7 +118,21 @@ export const notificationService = {
 
   async notifyKycStatusChange(
     riderId: string,
-    status: 'APPROVED' | 'REJECTED' | 'INFO_REQUESTED',
+    // KYC-P0-BATCH2-2026-09-08 (P0-2): accept BOTH the canonical DB
+    // enum name `INFO_REQUIRED` (matches the KycStatus enum + the
+    // state machine + the audit log action `kyc_info_required`)
+    // AND the legacy Flutter discriminator name `INFO_REQUESTED`
+    // (used by the outbox dispatcher in
+    // `notification-dispatch.job.ts:147`). The previous signature
+    // only accepted `INFO_REQUESTED`, which forced callers to
+    // translate — and the admin path was forgetting, so the wire
+    // type became `KYC_INFO_REQUIRED` (Flutter doesn't recognize
+    // it; fcm_service.dart:205-207 + notification_service.dart
+    // :209-211 only know `KYC_INFO_REQUESTED`). Translation lives
+    // here, at the FCM boundary, so all callers see the name
+    // they're used to and the wire format stays the one Flutter
+    // understands.
+    status: 'APPROVED' | 'REJECTED' | 'INFO_REQUESTED' | 'INFO_REQUIRED',
     reason?: string,
   ) {
     // P2-12 (PR-G, 2026-08-28 workflows deferred): don't pre-format
@@ -132,9 +147,11 @@ export const notificationService = {
     // `notification` block is empty; the Flutter side reads the
     // FCM `data` block (which carries the discriminator) and
     // renders the LOCAL notification with the localized strings.
+    const flutterType =
+      status === 'INFO_REQUIRED' ? 'INFO_REQUESTED' : status;
     return this.createAndSend(riderId, '', '', 'KYC_UPDATE', {
       screen: 'KYC_STATUS',
-      type: `KYC_${status}`, // KYC_APPROVED | KYC_REJECTED | KYC_INFO_REQUESTED
+      type: `KYC_${flutterType}`, // KYC_APPROVED | KYC_REJECTED | KYC_INFO_REQUESTED
       ...(reason ? { reason } : {}),
     });
   },
@@ -142,25 +159,32 @@ export const notificationService = {
   async notifySupportReply(riderId: string, ticketId: string, subject: string) {
     return this.createAndSend(
       riderId,
-      'Support Ticket Update 💬',
-      `New message regarding: ${subject}`,
+      '',
+      '',
       'SUPPORT_REPLY',
       {
         screen: 'SUPPORT_TICKET',
         ticketId,
+        subject,
+        type: 'SUPPORT_REPLY',
         triggerOverlay: 'SUPPORT_REPLY',
       }
     );
   },
 
   async notifyPaymentReminder(riderId: string, amount: number, dueDate: string) {
+    const formattedAmount = formatInr(amount);
     return this.createAndSend(
       riderId,
-      'Payment Reminder 💳',
-      `Your rental payment of ₹${amount.toFixed(2)} is due.`,
+      '',
+      '',
       'PAYMENT_DUE',
       {
         screen: 'WALLET',
+        amount: formattedAmount,
+        rawAmount: amount.toString(),
+        dueDate,
+        type: 'PAYMENT_REMINDER',
       }
     );
   },

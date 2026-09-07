@@ -475,6 +475,14 @@ export const adminRiderUseCases = {
     // rank 5+ (GUARANTOR_SUBMITTED or beyond), the KYC approval is
     // recorded (kycDoneAt + guarantorData.status) but the lifecycle
     // stays where it is.
+    //
+    // KYC-P0-BATCH2-2026-09-08 (P0-1): also fetch the existing
+    // guarantor once, up front, so both the approve and reject
+    // branches can guard the guarantor write with the same
+    // `if SUBMITTED` rule. The reject branch used to set the
+    // guarantor status unconditionally — a late KYC rejection on an
+    // ACTIVE rider silently clobbered their APPROVED guarantor.
+    const existingGuarantor = await db.guarantor.findUnique({ where: { riderId: id } });
     if (kycData.status === 'APPROVED') {
       const currentRank = lifecycleRankOf(existing.lifecycleStatus);
       if (currentRank <= 4) {
@@ -489,7 +497,6 @@ export const adminRiderUseCases = {
       // admin should explicitly approve the guarantor, not piggyback
       // on KYC approval. If the guarantor is still in PENDING/DRAFT
       // (rider hasn't submitted it yet), leave it alone.
-      const existingGuarantor = await db.guarantor.findUnique({ where: { riderId: id } });
       if (existingGuarantor?.status === 'SUBMITTED') {
         guarantorData.status = 'APPROVED';
       }
@@ -503,7 +510,15 @@ export const adminRiderUseCases = {
       if (currentRank <= 4) {
         riderData.lifecycleStatus = wasSuspended ? 'SUSPENDED' : 'KYC_SUBMITTED';
       }
-      guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
+      // KYC-P0-BATCH2-2026-09-08 (P0-1): mirror the approve branch.
+      // Only downgrade the guarantor if it was in SUBMITTED state
+      // (admin is reviewing the rider's KYC and the guarantor was
+      // already in flight for review). An ACTIVE rider's APPROVED
+      // guarantor is not touched — KYC rejection on a launched rider
+      // does not silently revoke their guarantor.
+      if (existingGuarantor?.status === 'SUBMITTED') {
+        guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
+      }
 
       // PR-99: fire the security-event logger when a rider is suspended
       // (KYC rejection). Fire-and-forget so the update tx is not slowed
