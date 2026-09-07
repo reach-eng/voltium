@@ -44,9 +44,14 @@ export function useTransactions() {
     try {
       const params = new URLSearchParams();
       if (tab === 'TOP_UP') {
-        params.set('type', 'TOP_UP');
+        // DEPOSIT-FINANCE-P1-2026-09-07: TOP_UP is a TransactionPurpose,
+        // not a TransactionType. The schema enum is CREDIT|DEBIT, so
+        // sending `type=TOP_UP` was a 500 (Prisma enum validation).
+        params.set('purpose', 'TOP_UP');
       } else if (tab === 'DEBIT') {
         params.set('type', 'DEBIT');
+      } else if (tab === 'CREDIT') {
+        params.set('type', 'CREDIT');
       } else if (tab === 'SECURITY_DEPOSIT') {
         params.set('purpose', 'SECURITY_DEPOSIT');
       } else if (tab !== 'all') {

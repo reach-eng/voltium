@@ -122,12 +122,17 @@ export async function approveDeposit(params: {
       });
     }
 
-    // Mark rider deposit approved via lifecycleStatus if rank < 8
+    // Mark rider deposit approved via lifecycleStatus if rank < 10
+    // DEPOSIT-FINANCE-P1-2026-09-07: threshold bumped from < 8 to < 10
+    // to match transaction.use-cases.ts:126 and wallet.use-cases.ts:217
+    // (PR-AUDIT H3, 2026-08-12). Active-path riders are at PLAN_SELECTED
+    // (rank 9) when they submit the security deposit; the old < 8
+    // skipped the lifecycle bump and they stayed at rank 9 forever.
     const currentRider = await tx.rider.findUnique({
       where: { id: riderId },
       select: { lifecycleStatus: true },
     });
-    if (currentRider && lifecycleRankOf(currentRider.lifecycleStatus) < 8) {
+    if (currentRider && lifecycleRankOf(currentRider.lifecycleStatus) < 10) {
       await tx.rider.update({
         where: { id: riderId },
         data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
@@ -144,10 +149,18 @@ export async function approveDeposit(params: {
       },
     });
 
-    // Approve the linked Transaction
+    // Approve the linked Transaction.
+    // DEPOSIT-FINANCE-P1-2026-09-07 (P1-3): CAS via updateMany. The
+    // unconditional tx.transaction.update let a REJECTED transaction be
+    // silently re-approved through the deposits route, because the
+    // transactions-API REJECT path doesn't touch the DepositRecord.
+    // updateMany with `status: 'PENDING'` returns count=0 if the
+    // linked transaction was already approved, rejected, or otherwise
+    // mutated; we throw to roll the entire $transaction back. The
+    // route returns 409.
     if (record.transactionId) {
-      await tx.transaction.update({
-        where: { id: record.transactionId },
+      const result = await tx.transaction.updateMany({
+        where: { id: record.transactionId, status: 'PENDING' },
         data: {
           status: 'APPROVED',
           approvedAt: new Date(),
@@ -155,6 +168,12 @@ export async function approveDeposit(params: {
           purpose: 'SECURITY_DEPOSIT',
         },
       });
+      if (result.count === 0) {
+        throw new DepositStateError(
+          `Linked transaction ${record.transactionId} is not PENDING ` +
+            `(deposit approval cannot proceed)`,
+        );
+      }
     }
   });
 
@@ -199,14 +218,25 @@ export async function rejectDeposit(params: {
     });
 
     if (record.transactionId) {
-      await tx.transaction.update({
-        where: { id: record.transactionId },
+      // DEPOSIT-FINANCE-P1-2026-09-07 (P1-3): mirror of the approve CAS
+      // above. updateMany with `status: 'PENDING'` ensures a linked
+      // transaction that's already APPROVED or REJECTED cannot be
+      // silently re-touched through the deposits route. count=0 rolls
+      // the $transaction back; the route returns 409.
+      const result = await tx.transaction.updateMany({
+        where: { id: record.transactionId, status: 'PENDING' },
         data: {
           status: 'REJECTED',
           approvedAt: new Date(),
           rejectionReason: reason,
         },
       });
+      if (result.count === 0) {
+        throw new DepositStateError(
+          `Linked transaction ${record.transactionId} is not PENDING ` +
+            `(deposit rejection cannot proceed)`,
+        );
+      }
     }
   });
 
@@ -240,7 +270,19 @@ export async function refundDeposit(params: {
     const record = await _getAndValidate(tx, riderId, 'REFUND');
     const wallet = await _requireWallet(tx, riderId);
 
+    // DEPOSIT-FINANCE-P1-2026-09-07 (P1-2 part 2): refund-amount bounds.
+    // The Zod schema caps refundAmount at ₹10L but doesn't know what
+    // the rider actually held. Without this check, a typo'd ₹10L
+    // refund on a ₹500 deposit would silently drive
+    // securityDepositInPaise to -₹9.95L (caught at the wallet-service
+    // funds guard above) and credit the wallet ₹10L of free money.
+    // The error rolls the $transaction back; the route returns 409.
     const refundAmount = params.refundAmountInPaise ?? record.amountInPaise;
+    if (refundAmount > record.amountInPaise) {
+      throw new DepositStateError(
+        `refundAmount ${refundAmount} paise exceeds held deposit ${record.amountInPaise} paise`,
+      );
+    }
 
     // Debit securityDeposit ledger
     await debitSecurityDeposit(tx, {

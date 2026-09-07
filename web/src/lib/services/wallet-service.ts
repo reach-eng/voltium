@@ -315,6 +315,26 @@ export async function debitSecurityDeposit(
     }
   }
 
+  // DEPOSIT-FINANCE-P1-2026-09-07 (P1-2 part 1): funds pre-check.
+  // Unlike debitWallet, security deposit cannot go below zero — admin
+  // refund/forfeit cannot over-debit. The unconditional check matches
+  // the user's preference: silent warnings on money mutations are how
+  // bugs hide.
+  const walletForGuard = await tx.wallet.findUnique({
+    where: { id: walletId },
+    select: { securityDepositInPaise: true },
+  });
+  if (!walletForGuard) {
+    throw new WalletServiceError('Wallet not found');
+  }
+  if (amountInPaise > walletForGuard.securityDepositInPaise) {
+    throw new WalletServiceError(
+      `Insufficient security deposit: have ${walletForGuard.securityDepositInPaise} paise, ` +
+        `need ${amountInPaise} paise`,
+      'INSUFFICIENT_DEPOSIT',
+    );
+  }
+
   await tx.wallet.update({
     where: { id: walletId },
     data: {
@@ -427,12 +447,21 @@ export async function verifyLedgerIntegrity(
     return { ok: false, walletBalance: 0, ledgerSum: 0, drift: 0 };
   }
 
-  // Sum ledger entries that affect balanceInPaise (exclude SECURITY_DEPOSIT & FORFEITURE
-  // because those change securityDeposit, not balanceInPaise)
+  // Sum ledger entries that affect balanceInPaise.
+  // M7 fix: REFUND has TWO legs — a DEBIT deposit-tracking leg
+  // (balanceAfter 0, must be excluded) and a CREDIT wallet leg
+  // (increments balanceInPaise, must be INCLUDED). Excluding all REFUND
+  // undercounted every refunded rider. SECURITY_DEPOSIT/FORFEITURE never
+  // touch balanceInPaise and stay fully excluded.
   const ledgerEntries = await db.walletLedger.findMany({
     where: {
       riderId,
-      category: { notIn: ['SECURITY_DEPOSIT', 'FORFEITURE', 'REFUND'] },
+      NOT: {
+        OR: [
+          { category: { in: ['SECURITY_DEPOSIT', 'FORFEITURE'] } },
+          { category: 'REFUND', entryType: 'DEBIT' },
+        ],
+      },
     },
     select: { entryType: true, amountInPaise: true },
   });
