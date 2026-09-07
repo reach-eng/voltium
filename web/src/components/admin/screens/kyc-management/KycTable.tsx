@@ -27,6 +27,7 @@ import {
 import { getCompletion, getKycBadge } from './helpers';
 import { formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 import type { KycRider, KycConfirmAction } from './types';
+import { KYC_PAGE_SIZE } from './types';
 
 export interface KycTableProps {
   filteredRiders: KycRider[];
@@ -37,6 +38,14 @@ export interface KycTableProps {
   rowLoadingIds: Set<string>;
   setSelectedRider: (rider: KycRider) => void;
   setConfirmAction: (action: KycConfirmAction | null) => void;
+  // NET-005 follow-up-12 (2026-09-08): pagination
+  // props for the queue footer. `onPageChange` is the
+  // hook's `setPage`. `totalPages > 1` hides the
+  // footer when the queue fits on one page.
+  page: number;
+  totalPages: number;
+  total: number;
+  onPageChange: (page: number) => void;
 }
 
 export function KycTable({
@@ -48,6 +57,10 @@ export function KycTable({
   rowLoadingIds,
   setSelectedRider,
   setConfirmAction,
+  page,
+  totalPages,
+  total,
+  onPageChange,
 }: KycTableProps) {
   if (loading) {
     return (
@@ -264,6 +277,42 @@ export function KycTable({
           </TableBody>
         </Table>
       </CardContent>
+
+      {/* NET-005 follow-up-12 (2026-09-08): pagination
+          footer for the KYC queue. Mirrors the rider-
+          management table (`RiderTable.tsx:133-160`):
+          "Showing X-Y of Z" + Previous / page X of Y /
+          Next. Hidden when the queue fits on one page
+          (`totalPages <= 1`) so single-page tabs (e.g.
+          INFO_REQUIRED) don't show a redundant footer. */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between p-4 border-t">
+          <p className="text-sm text-muted-foreground">
+            Showing {(page - 1) * KYC_PAGE_SIZE + 1}–{Math.min(page * KYC_PAGE_SIZE, total)} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => onPageChange(page - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-sm font-medium px-2">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => onPageChange(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

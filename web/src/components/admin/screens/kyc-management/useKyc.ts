@@ -4,11 +4,59 @@ import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { KycRider, KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
+import { KYC_PAGE_SIZE } from './types';
+
+/**
+ * Build the KYC queue URL for a given filter set + page.
+ *
+ * NET-005 follow-up-12 (2026-09-08): the pre-fix hook
+ * hardcoded `limit=100` and never sent `page`, so the
+ * KYC review queue silently capped at 100 records with
+ * no way to navigate past the first page. The server
+ * (`riders/route.ts:189-190`) already supported page-
+ * based pagination and returned a
+ * `pagination: {page, limit, total, totalPages, nextCursor}`
+ * block. The hook now pages through the queue using
+ * this helper.
+ *
+ * Pure function so it can be unit-tested without a
+ * React renderer.
+ */
+export function buildKycQueueUrl(input: {
+  tab: string;
+  startDate: string;
+  endDate: string;
+  page: number;
+  pageSize: number;
+}): string {
+  const params = new URLSearchParams();
+  params.set('limit', String(input.pageSize));
+  params.set('page', String(input.page));
+  if (input.tab === 'info_required') {
+    params.set('kycStatus', 'INFO_REQUIRED');
+  } else if (input.tab === 'pending') {
+    params.set('kycStatus', 'PENDING');
+  } else if (input.tab === 'submitted') {
+    params.set('kycStatus', 'SUBMITTED');
+  } else if (input.tab !== 'all') {
+    params.set('kycStatus', input.tab.toUpperCase());
+  }
+  if (input.startDate) params.set('startDate', input.startDate);
+  if (input.endDate) params.set('endDate', input.endDate);
+  return `/api/admin/riders?${params.toString()}`;
+}
 
 export function useKyc() {
   const [riders, setRiders] = useState<KycRider[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('pending');
+  // NET-005 follow-up-12: page state for the queue.
+  // `page` is 1-indexed to match the server's
+  // `parsePositiveInt(... 'page', 1)` default in
+  // `riders/route.ts:189`.
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [selectedRider, setSelectedRider] = useState<KycRider | null>(null);
   const [confirmAction, setConfirmAction] = useState<KycConfirmAction | null>(null);
   const [bulkConfirmAction, setBulkConfirmAction] = useState<KycBulkConfirmAction | null>(null);
@@ -27,24 +75,22 @@ export function useKyc() {
   const fetchRiders = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.set('limit', '100');
-      if (tab === 'info_required') {
-        params.set('kycStatus', 'INFO_REQUIRED');
-      } else if (tab === 'pending') {
-        params.set('kycStatus', 'PENDING');
-      } else if (tab === 'submitted') {
-        params.set('kycStatus', 'SUBMITTED');
-      } else if (tab !== 'all') {
-        params.set('kycStatus', tab.toUpperCase());
-      }
-      if (startDate) params.set('startDate', startDate);
-      if (endDate) params.set('endDate', endDate);
-      const res = await fetch(`/api/admin/riders?${params.toString()}`);
+      const url = buildKycQueueUrl({
+        tab,
+        startDate,
+        endDate,
+        page,
+        pageSize: KYC_PAGE_SIZE,
+      });
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
         const data = json.data?.riders || json.data || [];
         setRiders(Array.isArray(data) ? data : []);
+        if (json.data?.pagination) {
+          setTotalPages(json.data.pagination.totalPages || 1);
+          setTotal(json.data.pagination.total || 0);
+        }
       } else {
         toast.error('Failed to fetch KYC queue.');
       }
@@ -54,11 +100,21 @@ export function useKyc() {
     } finally {
       setLoading(false);
     }
-  }, [tab, startDate, endDate]);
+  }, [tab, startDate, endDate, page]);
 
   useEffect(() => {
     fetchRiders();
   }, [fetchRiders]);
+
+  // NET-005 follow-up-12: when filters change, reset to
+  // page 1. Without this, switching tabs while on page 3
+  // could land the admin on an empty page (e.g. the
+  // INFO_REQUIRED tab has only 2 records, so page 3 is
+  // empty). Matches the rider-management reset pattern
+  // (`useRiders.ts:99-102`).
+  useEffect(() => {
+    setPage(1);
+  }, [tab, startDate, endDate]);
 
   const filteredRiders = Array.isArray(riders) ? riders : [];
 
@@ -276,6 +332,11 @@ export function useKyc() {
     loading,
     tab,
     setTab,
+    // NET-005 follow-up-12: pagination state for the queue.
+    page,
+    setPage,
+    totalPages,
+    total,
     selectedRider,
     setSelectedRider,
     confirmAction,

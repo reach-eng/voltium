@@ -44,6 +44,12 @@ function KycManagementTab() {
           rowLoadingIds={kyc.rowLoadingIds}
           setSelectedRider={kyc.setSelectedRider}
           setConfirmAction={kyc.setConfirmAction}
+          // NET-005 follow-up-12 (2026-09-08):
+          // pagination props for the queue footer.
+          page={kyc.page}
+          totalPages={kyc.totalPages}
+          total={kyc.total}
+          onPageChange={kyc.setPage}
         />
 
         <KycDetailDialog

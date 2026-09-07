@@ -67,3 +67,14 @@ export interface LastKycBulkAction {
 }
 
 export type KycBulkConfirmAction = 'approve' | 'reject' | 'info_required';
+
+// NET-005 follow-up-12 (2026-09-08): the KYC review
+// queue was hardcoded to limit=100 with no pagination
+// UI (useKyc.ts:31). The pre-fix screen showed the
+// first 100 records and silently dropped the rest.
+// Match the `RIDER_PAGE_SIZE` pattern from the rider-
+// management screen so the queue can be navigated
+// page-by-page. The server's max limit is 100, so 100
+// is the natural page size — no admin would set it
+// lower for a KYC review queue.
+export const KYC_PAGE_SIZE = 100;
