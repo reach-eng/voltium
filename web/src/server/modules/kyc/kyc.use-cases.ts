@@ -75,6 +75,20 @@ export const kycUseCases = {
       case 'REJECT': {
         const rejectionReason = review.rejectionReason || '';
         const editableFields = review.editableFields || [];
+        // NET-005 follow-up-8 (2026-09-08): the previous
+        // status must be read BEFORE the transaction. The
+        // old code read it after the transaction committed,
+        // so `previous.status` always equalled the new
+        // status (the transition had just written it). The
+        // audit log wrote `previousStatus: 'REJECTED',
+        // newStatus: 'REJECTED'` — a useless transition
+        // record. Reading the snapshot before the
+        // transaction captures the actual pre-transition
+        // status.
+        const previousSnapshot = await db.kycProfile.findUnique({
+          where: { riderId: riderDbId },
+          select: { id: true, status: true },
+        });
         const result = await db.$transaction(async (tx) => {
           const rejectResult = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason, editableFields);
           await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
@@ -94,20 +108,16 @@ export const kycUseCases = {
         // without grepping the outbox event log. Fire-and-forget
         // outside the transaction so the audit write cannot block the
         // state change.
-        const previous = await db.kycProfile.findUnique({
-          where: { riderId: riderDbId },
-          select: { id: true, status: true },
-        });
-        if (previous) {
+        if (previousSnapshot) {
           createAuditLog({
             actorId: reviewerId,
             actorType: 'ADMIN',
             action: 'kyc.rejected',
             entity: 'KycProfile',
-            entityId: previous.id,
+            entityId: previousSnapshot.id,
             details: {
               riderId: riderDbId,
-              previousStatus: previous.status,
+              previousStatus: previousSnapshot.status,
               newStatus: 'REJECTED',
               reason: rejectionReason,
               editableFields,
@@ -120,6 +130,16 @@ export const kycUseCases = {
       }
       case 'REQUEST_INFO': {
         const infoRequest = review.infoRequest || 'Additional information required';
+        // NET-005 follow-up-8 (2026-09-08): same fix as
+        // the REJECT case above — read the pre-transition
+        // status before the transition. The old code read
+        // it after `kycRepository.requestInfo` had already
+        // written `INFO_REQUIRED`, so `previous.status`
+        // always equalled the new status.
+        const previousSnapshot = await db.kycProfile.findUnique({
+          where: { riderId: riderDbId },
+          select: { id: true, status: true },
+        });
         const result = await kycRepository.requestInfo(riderDbId, reviewerId, infoRequest);
         // PR-ONBOARDING-2026-08-11 (audit 3.1 P2): REQUEST_INFO used
         // a direct `notificationService` call (fire-and-forget) while
@@ -136,20 +156,16 @@ export const kycUseCases = {
         // audit trail. Writes `kyc.requested_info` with reviewer id
         // and the info text. Fire-and-forget; failure does not block
         // the state change.
-        const previous = await db.kycProfile.findUnique({
-          where: { riderId: riderDbId },
-          select: { id: true, status: true },
-        });
-        if (previous) {
+        if (previousSnapshot) {
           createAuditLog({
             actorId: reviewerId,
             actorType: 'ADMIN',
             action: 'kyc.info_required',
             entity: 'KycProfile',
-            entityId: previous.id,
+            entityId: previousSnapshot.id,
             details: {
               riderId: riderDbId,
-              previousStatus: previous.status,
+              previousStatus: previousSnapshot.status,
               newStatus: 'INFO_REQUIRED',
               infoRequest,
             },

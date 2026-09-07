@@ -296,6 +296,78 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
       'Please provide clear photo'
     );
   });
+
+  // NET-005 follow-up-8 (2026-09-08): the dead path's
+  // audit log write captured the wrong previousStatus
+  // because the pre-transition snapshot was read AFTER
+  // the transaction committed — so the previous.status
+  // value always equalled the new status. The fix reads
+  // the snapshot BEFORE the transaction. The tests below
+  // mock the snapshot row with the pre-transition status
+  // and assert the audit log captures that value, not the
+  // post-transition status the repository just wrote.
+  it('REJECT audit log captures the pre-transition previousStatus (NET-005 follow-up-8)', async () => {
+    // Pre-transition snapshot: status SUBMITTED. The
+    // REJECT call below writes REJECTED to the row, but
+    // the audit log must record SUBMITTED → REJECTED.
+    mockDb.kycProfile.findUnique.mockResolvedValue({
+      id: 'kyc-1',
+      status: 'SUBMITTED',
+    });
+    mockKycRepository.rejectKyc.mockResolvedValue({ id: 'kyc-1', status: 'REJECTED' });
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
+    mockAuditLog.createAuditLog.mockResolvedValue(undefined);
+
+    await kycUseCases.reviewKyc('rider-123', 'admin-1', {
+      action: 'REJECT',
+      rejectionReason: 'Blurry document',
+      editableFields: ['profilePhoto'],
+    } as any);
+
+    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'kyc.rejected',
+        details: expect.objectContaining({
+          previousStatus: 'SUBMITTED',
+          newStatus: 'REJECTED',
+        }),
+      })
+    );
+    // Sanity: the snapshot is read exactly once, before
+    // the transaction. After the fix, the post-commit
+    // re-read is gone — the audit log uses the cached
+    // snapshot, not a fresh DB query.
+    expect(mockDb.kycProfile.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it('REQUEST_INFO audit log captures the pre-transition previousStatus (NET-005 follow-up-8)', async () => {
+    // Pre-transition snapshot: status SUBMITTED. The
+    // INFO_REQUIRED call below writes INFO_REQUIRED to
+    // the row, but the audit log must record SUBMITTED →
+    // INFO_REQUIRED.
+    mockDb.kycProfile.findUnique.mockResolvedValue({
+      id: 'kyc-1',
+      status: 'SUBMITTED',
+    });
+    mockKycRepository.requestInfo.mockResolvedValue({ id: 'kyc-1', status: 'INFO_REQUIRED' });
+    mockAuditLog.createAuditLog.mockResolvedValue(undefined);
+
+    await kycUseCases.reviewKyc('rider-123', 'admin-1', {
+      action: 'REQUEST_INFO',
+      infoRequest: 'Please provide clear photo',
+    } as any);
+
+    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'kyc.info_required',
+        details: expect.objectContaining({
+          previousStatus: 'SUBMITTED',
+          newStatus: 'INFO_REQUIRED',
+        }),
+      })
+    );
+    expect(mockDb.kycProfile.findUnique).toHaveBeenCalledTimes(1);
+  });
 });
 
 // ===========================================================================
