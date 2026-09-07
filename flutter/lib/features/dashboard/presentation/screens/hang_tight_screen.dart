@@ -79,7 +79,19 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   @override
   void initState() {
     super.initState();
-    PostHogService.capture('hang_tight_viewed');
+    // HANG-TIGHT-AUDIT P3-2 (2026-09-08): wrap the analytics call in
+    // `unawaited` + `.catchError` so a PostHog transport error can't
+    // take down the hangTight screen. The capture is fire-and-forget
+    // by design (analytics is a side effect, not a contract), and
+    // this matches the screen's otherwise careful error handling
+    // (see `_safeRefresh` for the same pattern on `refreshFromApi`).
+    unawaited(
+      PostHogService.capture('hang_tight_viewed').catchError((Object _) {
+        // Swallow transport errors silently; the analytics pipeline
+        // has its own retry + backoff, and a failure here must not
+        // break the rider's wait-state screen.
+      }),
+    );
     // Polling is managed centrally by RiderNotifier._onboardingPoller when
     // in AppState HangTight. Manual refresh is available via the refresh button.
   }

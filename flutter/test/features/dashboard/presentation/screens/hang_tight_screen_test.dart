@@ -520,5 +520,41 @@ void main() {
           reason:
               'Render must be exception-free under reduce motion');
     });
+
+    // HANG-TIGHT-AUDIT P3-3 (2026-09-08): the guarantor `replaced`
+    // state renders as `inProgress` with the `autorenew_rounded`
+    // icon data and the brand primary color
+    // (hang_tight_screen.dart:562-568). The sibling states
+    // (approved, submitted, rejected) are covered by other tests
+    // — pin `replaced` so a regression in the label/state can't
+    // slip through silently.
+    //
+    // Note: `_StatusRowTile` (hang_tight_screen.dart:778-792)
+    // overrides the row's icon with a `CircularProgressIndicator`
+    // for the inProgress state. The `autorenew_rounded` icon
+    // data is still set on the `_StatusRow` (the source of
+    // truth for the production state) but is not what the
+    // test should assert against — assert the visible spinner
+    // + the label instead.
+    testWidgets(
+        'P3-3: guarantor "replaced" renders inProgress with the pending-review label',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(guarantor: GuarantorStatus.replaced),
+      ));
+      await tester.pump();
+
+      // The row label is the "pending review" copy. (Pinning
+      // the label guards against i18n regressions on this
+      // niche state.)
+      expect(
+        find.text(l10n.hangTightGuarantorReplacedPendingReview),
+        findsOneWidget,
+      );
+      // The in-progress state is rendered as a spinner
+      // (CircularProgressIndicator) per the in-progress branch
+      // in `_StatusRowTile`.
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+    });
   });
 }
