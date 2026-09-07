@@ -167,7 +167,35 @@ export const adminRiderUseCases = {
     }
     if (state && state !== 'ALL') where.lifecycleStatus = state as RiderLifecycleStatus;
     if (kycStatus) {
-      where.kycProfile = { status: kycStatus as KycStatus };
+      // NET-005 follow-up-7 (2026-09-08): the queue's
+      // "PENDING" filter must include riders who haven't
+      // started KYC submission at all. The current
+      // `where.kycProfile = { status: 'PENDING' }` only
+      // matches riders whose `KycProfile` row exists and
+      // has status PENDING — self-signup riders have a
+      // `Rider` row but no `KycProfile` row (see
+      // `auth.use-cases.ts:154`), so they fall through
+      // the relation filter and are invisible to the
+      // queue. The "not yet reviewed" set has three
+      // representations: no `KycProfile` row (just
+      // signed up), `KycProfile` with status PENDING
+      // (DB default, never opened the KYC flow), and
+      // `KycProfile` with status DRAFT (the KYC state
+      // machine's starting state — see
+      // `kyc-state-machine.ts`). All three should land
+      // in the queue. For other status filters
+      // (SUBMITTED, APPROVED, REJECTED, INFO_REQUIRED),
+      // the rider has a row by definition, so the
+      // existing single-field filter is correct.
+      if (kycStatus === 'PENDING') {
+        where.OR = [
+          { kycProfile: null },
+          { kycProfile: { status: 'PENDING' } },
+          { kycProfile: { status: 'DRAFT' } },
+        ];
+      } else {
+        where.kycProfile = { status: kycStatus as KycStatus };
+      }
     }
     if (startDate || endDate) {
       where.createdAt = {
