@@ -243,23 +243,17 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'REJECTED');
 
     return db.$transaction(async (tx) => {
-      const kyc = await tx.kycProfile.update({
+      // REJECT symmetry (2026-09-08, follow-up to NET-005): the
+      // four "REJECT" writes (status, rejectionReason,
+      // editableFields, the F-12 lifecycleStatus promotion)
+      // are now in `promoteToRejected` so the dead repo path
+      // and the live admin-riders.use-cases.ts:update path
+      // share the same behavior. The helper is the
+      // `tx`-accepting companion to `promoteToApproved`.
+      await promoteToRejected(tx, riderDbId, reason, editableFields);
+      const kyc = await tx.kycProfile.findUnique({
         where: { riderId: riderDbId },
-        data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
-      // F-12: Only riders currently in pre-active onboarding stages (ranks 0..10)
-      // are moved to SUSPENDED upon KYC rejection. ACTIVE riders (rank 11),
-      // RETURN_PENDING (rank 13), and CLOSED (rank 14) riders retain their
-      // lifecycleStatus, preventing abrupt fleet lockout or corrupting terminal/return flows.
-      await tx.rider.updateMany({
-        where: {
-          id: riderDbId,
-          lifecycleStatus: { in: PRE_ACTIVE_STAGES },
-        },
-        data: { lifecycleStatus: 'SUSPENDED' },
-      });
-
-      invalidateRiderCache(riderDbId);
 
       // BLOCKER 2.7: notification is dispatched by the outbox worker.
       // See the comment on approveKyc above.
@@ -277,14 +271,22 @@ export const kycRepository = {
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
     validateKycTransition(currentStatus, 'INFO_REQUIRED');
 
-    return db.kycProfile.update({
-      where: { riderId: riderDbId },
-      data: {
-        status: 'INFO_REQUIRED',
-        rejectionReason: infoRequest,
-      },
-    }).then((kyc) => {
-      invalidateRiderCache(riderDbId);
+    return db.$transaction(async (tx) => {
+      // REJECT symmetry (2026-09-08): the dead repo's
+      // requestInfo body (status + rejectionReason +
+      // cache invalidation) is now in `promoteToInfoRequired`.
+      // Same as approve/reject, the helper is the
+      // `tx`-accepting companion. Wrapping the update in a
+      // transaction matches the other KYC decisions and lets
+      // the live admin path call this inside its own tx.
+      await promoteToInfoRequired(tx, riderDbId, infoRequest);
+      const kyc = await tx.kycProfile.findUnique({
+        where: { riderId: riderDbId },
+      });
+
+      // BLOCKER 2.7: notification is dispatched by the outbox
+      // worker (see approveKyc comment above).
+
       return kyc;
     });
   },
@@ -337,6 +339,13 @@ type KycCorrectionTx = {
   };
   rider: {
     update: (args: any) => Promise<unknown>;
+    // promoteToApproved / promoteToRejected use
+    // `rider.updateMany` for the F-06 / F-12 conditional
+    // lifecycleStatus promotion. `applyPendingCorrections`
+    // only uses `rider.update` (the held-correction apply
+    // path), but the type stays compatible because we
+    // accept `any` for args.
+    updateMany: (args: any) => Promise<{ count: number }>;
   };
 };
 
@@ -458,6 +467,75 @@ export async function promoteToApproved(
       lifecycleStatus: { in: LOWER_THAN_KYC_APPROVED },
     },
     data: { lifecycleStatus: 'KYC_APPROVED' },
+  });
+  invalidateRiderCache(riderDbId);
+}
+
+// REJECT symmetry (2026-09-08, follow-up to NET-005): the
+// REJECT writes were duplicated in two places —
+// kycRepository.rejectKyc (the dead path used by
+// kyc.use-cases.ts:reviewKyc) and admin-riders.use-cases.ts:update
+// (the live admin path). The live path used a stricter
+// `currentRank <= 4` guard for the lifecycleStatus
+// promotion, which the audit called out as a sub-set of
+// the documented F-12 standard.
+//
+// The helper writes the four fields and runs the F-12
+// `PRE_ACTIVE_STAGES` promotion (ranks 0..10: NEW through
+// PICKUP_SCHEDULED). ACTIVE / RETURN_PENDING / CLOSED riders
+// are NOT demoted to SUSPENDED — preventing abrupt fleet
+// lockout or corrupting terminal/return flows.
+//
+// The helper does NOT validate the state-machine transition
+// or call applyPendingCorrections — REJECT keeps held
+// corrections on the KycProfile so the rider can resubmit
+// fresh values for the editableFields allowlist on next
+// APPROVE. (If the dead-path's `rejectKyc` ever needs to
+// clear pendingCorrections, that's a separate change.)
+export async function promoteToRejected(
+  tx: KycCorrectionTx,
+  riderDbId: string,
+  reason: string,
+  editableFields: string[],
+): Promise<void> {
+  await tx.kycProfile.update({
+    where: { riderId: riderDbId },
+    data: {
+      status: 'REJECTED',
+      rejectionReason: reason,
+      editableFields,
+    },
+  });
+  // F-12: riders at ranks 0..10 (pre-active onboarding) get
+  // suspended. Higher-ranked riders (ACTIVE, RETURN_PENDING,
+  // CLOSED) keep their status.
+  await tx.rider.updateMany({
+    where: {
+      id: riderDbId,
+      lifecycleStatus: { in: PRE_ACTIVE_STAGES },
+    },
+    data: { lifecycleStatus: 'SUSPENDED' },
+  });
+  invalidateRiderCache(riderDbId);
+}
+
+// REJECT symmetry (2026-09-08): the INFO_REQUIRED writes
+// (status, rejectionReason-as-infoRequest) are now in this
+// helper. No lifecycleStatus change — INFO_REQUIRED means
+// "rider needs to update some fields, stays in KYC_SUBMITTED
+// for re-submit" and the dead repo's `requestInfo` does not
+// touch lifecycle.
+export async function promoteToInfoRequired(
+  tx: KycCorrectionTx,
+  riderDbId: string,
+  infoRequest: string,
+): Promise<void> {
+  await tx.kycProfile.update({
+    where: { riderId: riderDbId },
+    data: {
+      status: 'INFO_REQUIRED',
+      rejectionReason: infoRequest,
+    },
   });
   invalidateRiderCache(riderDbId);
 }

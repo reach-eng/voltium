@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Prisma } from '@prisma/client';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
-import { promoteToApproved } from '@/server/modules/kyc/kyc.repository';
+import {
+  promoteToApproved,
+  promoteToRejected,
+  promoteToInfoRequired,
+} from '@/server/modules/kyc/kyc.repository';
 
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -74,6 +78,18 @@ vi.mock('@/lib/feature-flags', () => ({
 
 vi.mock('@/lib/sign-rider', () => ({
   signRiderUrlsWithProvider: vi.fn((r) => r),
+}));
+
+const outboxMocks = vi.hoisted(() => ({
+  emit: vi.fn(),
+}));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: {
+    emit: outboxMocks.emit,
+  },
+  OutboxEventTypes: {
+    NOTIFICATION_SEND: 'NOTIFICATION_SEND',
+  },
 }));
 
 describe('NET-005 (2026-09-08): live admin KYC approval writes the full approval package', () => {
@@ -268,5 +284,279 @@ describe('NET-005 (2026-09-08): live admin KYC approval writes the full approval
     // emergencyContact through the rider bucket, not the
     // kyc bucket) is on the wire.
     expect(tx.kycProfile.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
+  // The audit's NET-005 commit message flagged that the
+  // REJECTED / INFO_REQUIRED branch in the live admin path
+  // had the same divergence pattern. This suite covers the
+  // extracted helpers + the F-12 PRE_ACTIVE_STAGES alignment
+  // + the outbox emit symmetry.
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('promoteToRejected writes status=REJECTED, rejectionReason, editableFields, and F-12 SUSPENDED', async () => {
+    const tx = {
+      kycProfile: {
+        update: vi.fn().mockResolvedValue({}),
+      },
+      rider: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+
+    await promoteToRejected(tx as any, 'r1', 'Photo is blurry', ['profilePhoto']);
+
+    expect(tx.kycProfile.update).toHaveBeenCalledWith({
+      where: { riderId: 'r1' },
+      data: {
+        status: 'REJECTED',
+        rejectionReason: 'Photo is blurry',
+        editableFields: ['profilePhoto'],
+      },
+    });
+
+    // F-12: PRE_ACTIVE_STAGES contains the ranks 0..10
+    // (NEW through PICKUP_SCHEDULED). It must NOT contain
+    // ACTIVE (rank 11), RETURN_PENDING (rank 13), or
+    // CLOSED (rank 14) — those riders keep their current
+    // status to avoid abrupt fleet lockout.
+    expect(tx.rider.updateMany).toHaveBeenCalledTimes(1);
+    const riderUpdate = tx.rider.updateMany.mock.calls[0][0];
+    expect(riderUpdate.data).toEqual({ lifecycleStatus: 'SUSPENDED' });
+    const stages = riderUpdate.where.lifecycleStatus.in;
+    expect(stages).toContain('KYC_SUBMITTED');
+    expect(stages).toContain('KYC_APPROVED');
+    expect(stages).toContain('GUARANTOR_SUBMITTED');
+    expect(stages).toContain('PICKUP_SCHEDULED');
+    expect(stages).not.toContain('ACTIVE');
+    expect(stages).not.toContain('CLOSED');
+  });
+
+  it('promoteToInfoRequired writes status=INFO_REQUIRED and rejectionReason-as-infoRequest (no lifecycle change)', async () => {
+    const tx = {
+      kycProfile: {
+        update: vi.fn().mockResolvedValue({}),
+      },
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+      },
+    };
+
+    await promoteToInfoRequired(
+      tx as any,
+      'r1',
+      'Please re-upload a clearer Aadhaar front'
+    );
+
+    expect(tx.kycProfile.update).toHaveBeenCalledWith({
+      where: { riderId: 'r1' },
+      data: {
+        status: 'INFO_REQUIRED',
+        rejectionReason: 'Please re-upload a clearer Aadhaar front',
+      },
+    });
+    // INFO_REQUIRED does not touch lifecycle.
+    expect(tx.rider.update).not.toHaveBeenCalled();
+    expect(tx.rider.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "REJECTED" }) calls promoteToRejected + emits KYC_REJECTED outbox event', async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      {
+        kycStatus: 'REJECTED',
+        rejectionReason: 'Photo is blurry',
+        editableFields: ['profilePhoto'],
+      },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    // kycProfile.update is called by the helper.
+    const kycUpdates = tx.kycProfile.update.mock.calls;
+    expect(kycUpdates.length).toBeGreaterThanOrEqual(1);
+    const mainWrite = kycUpdates[kycUpdates.length - 1][0];
+    expect(mainWrite.data).toMatchObject({
+      status: 'REJECTED',
+      rejectionReason: 'Photo is blurry',
+      editableFields: ['profilePhoto'],
+    });
+
+    // The F-12 PRE_ACTIVE_STAGES promotion runs.
+    expect(tx.rider.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { lifecycleStatus: 'SUSPENDED' },
+      })
+    );
+
+    // Outbox emit fires for KYC_REJECTED.
+    expect(outboxMocks.emit).toHaveBeenCalledWith(
+      'NOTIFICATION_SEND',
+      {
+        riderId: 'r1',
+        type: 'KYC_REJECTED',
+        reason: 'Photo is blurry',
+      },
+      3,
+      tx,
+      'interactive'
+    );
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "INFO_REQUIRED" }) calls promoteToInfoRequired + emits KYC_INFO_REQUESTED outbox event', async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      {
+        kycStatus: 'INFO_REQUIRED',
+        rejectionReason: 'Re-upload Aadhaar front',
+      },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    // kycProfile.update is called by the helper.
+    const kycUpdates = tx.kycProfile.update.mock.calls;
+    expect(kycUpdates.length).toBeGreaterThanOrEqual(1);
+    const mainWrite = kycUpdates[kycUpdates.length - 1][0];
+    expect(mainWrite.data).toMatchObject({
+      status: 'INFO_REQUIRED',
+      rejectionReason: 'Re-upload Aadhaar front',
+    });
+
+    // INFO_REQUIRED: NO rider.updateMany for lifecycle
+    // promotion (the dead path's `requestInfo` does not
+    // touch lifecycle).
+    expect(tx.rider.updateMany).not.toHaveBeenCalled();
+
+    // Outbox emit fires for KYC_INFO_REQUESTED.
+    expect(outboxMocks.emit).toHaveBeenCalledWith(
+      'NOTIFICATION_SEND',
+      {
+        riderId: 'r1',
+        type: 'KYC_INFO_REQUESTED',
+        infoRequest: 'Re-upload Aadhaar front',
+      },
+      3,
+      tx,
+      'interactive'
+    );
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "APPROVED" }) emits KYC_APPROVED outbox event (outbox symmetry)', async () => {
+    // The existing NET-005 test already covers the helper
+    // call. This one specifically checks the outbox emit
+    // (the audit's outbox-symmetry recommendation).
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      { kycStatus: 'APPROVED' },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    expect(outboxMocks.emit).toHaveBeenCalledWith(
+      'NOTIFICATION_SEND',
+      { riderId: 'r1', type: 'KYC_APPROVED' },
+      3,
+      tx,
+      'interactive'
+    );
   });
 });

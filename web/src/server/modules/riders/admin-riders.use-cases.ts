@@ -26,7 +26,12 @@ import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidate
 import { invalidateCache } from '@/lib/cache';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { validateKycTransition, type KycStatus as KycMachineStatus } from '@/server/modules/kyc/kyc-state-machine';
-import { promoteToApproved } from '@/server/modules/kyc/kyc.repository';
+import {
+  promoteToApproved,
+  promoteToRejected,
+  promoteToInfoRequired,
+} from '@/server/modules/kyc/kyc.repository';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { fleetUseCases } from '@/server/modules/riders/admin-rider-fleet.use-cases';
 
 // Field allowlists for mass-assignment protection
@@ -423,6 +428,14 @@ export const adminRiderUseCases = {
     // fields atomically with the rest of the transaction's
     // field updates.
     let promotingApproved = false;
+    // REJECT symmetry (2026-09-08): flag the reject and
+    // info-required branches so the transaction body calls
+    // the matching helper. The REJECT helper runs the F-12
+    // PRE_ACTIVE_STAGES guard; the INFO_REQUIRED helper
+    // does not touch lifecycle (the dead-path's `requestInfo`
+    // standard).
+    let promotingRejected = false;
+    let promotingInfoRequired = false;
 
     for (const [key, value] of Object.entries(data)) {
       if (key === 'walletBalance') {
@@ -508,13 +521,29 @@ export const adminRiderUseCases = {
       promotingApproved = true;
     }
     if (kycData.status === 'REJECTED' || kycData.status === 'INFO_REQUIRED') {
-      // Same guard for rejections: do not downgrade a rider who is
-      // already past KYC in the flow. A late rejection should not
-      // yank them back to KYC_SUBMITTED.
+      // REJECT symmetry (2026-09-08, follow-up to NET-005):
+      // the inline `lifecycleStatus` write is replaced by
+      // `promoteToRejected` / `promoteToInfoRequired` (called
+      // inside the transaction below). The previous inline
+      // guard `currentRank <= 4` was a strict sub-set of
+      // the documented F-12 `PRE_ACTIVE_STAGES` standard
+      // (ranks 0..10: NEW through PICKUP_SCHEDULED). After
+      // the refactor, riders at ranks 5..10 (GUARANTOR_*,
+      // DEPOSIT_*, PLAN_SELECTED, PICKUP_SCHEDULED) will be
+      // moved to SUSPENDED on KYC_REJECTED where they
+      // previously kept their rank. This matches the dead
+      // repo's `rejectKyc` behavior (F-12).
+      //
+      // INFO_REQUIRED: no lifecycle change — the dead path's
+      // `requestInfo` does not touch lifecycle, and the
+      // previous inline write's "promote to KYC_SUBMITTED
+      // for ranks 0..4" was an undocumented extra not in
+      // the F-12 / dead-path standard. The refactor drops it.
       const wasSuspended = kycData.status === 'REJECTED';
-      const currentRank = lifecycleRankOf(existing.lifecycleStatus);
-      if (currentRank <= 4) {
-        riderData.lifecycleStatus = wasSuspended ? 'SUSPENDED' : 'KYC_SUBMITTED';
+      if (wasSuspended) {
+        promotingRejected = true;
+      } else {
+        promotingInfoRequired = true;
       }
       guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
 
@@ -577,6 +606,60 @@ export const adminRiderUseCases = {
         // (aadhaarFront, profilePhoto, etc.) survive.
         if (promotingApproved) {
           await promoteToApproved(tx, id);
+        } else if (promotingRejected) {
+          // REJECT symmetry (2026-09-08): F-12-aligned
+          // PRE_ACTIVE_STAGES guard. The dead path's
+          // `rejectKyc` body is in the helper.
+          const reason = (kycData.rejectionReason as string) || '';
+          const editableFields = (kycData.editableFields as string[]) || [];
+          await promoteToRejected(tx, id, reason, editableFields);
+        } else if (promotingInfoRequired) {
+          // INFO_REQUIRED: status + rejectionReason-as-
+          // infoRequest. No lifecycle change (the dead
+          // path's `requestInfo` does not touch lifecycle).
+          const infoRequest =
+            (kycData.rejectionReason as string) || 'Additional information required';
+          await promoteToInfoRequired(tx, id, infoRequest);
+        }
+        // Outbox emit for the KYC decision. Mirrors what
+        // kyc.use-cases.ts:reviewKyc does (BLOCKER 2.7
+        // consolidation). Priority 3 (rider-visible KYC
+        // decision) and 'interactive' (PR-75). The existing
+        // direct `notificationService.notifyKycStatusChange`
+        // call (post-transaction, line 686) stays for now;
+        // a follow-up will consolidate fully on the outbox.
+        if (promotingApproved) {
+          await OutboxService.emit(
+            OutboxEventTypes.NOTIFICATION_SEND,
+            { riderId: id, type: 'KYC_APPROVED' },
+            3,
+            tx,
+            'interactive',
+          );
+        } else if (promotingRejected) {
+          await OutboxService.emit(
+            OutboxEventTypes.NOTIFICATION_SEND,
+            {
+              riderId: id,
+              type: 'KYC_REJECTED',
+              reason: kycData.rejectionReason || '',
+            },
+            3,
+            tx,
+            'interactive',
+          );
+        } else if (promotingInfoRequired) {
+          await OutboxService.emit(
+            OutboxEventTypes.NOTIFICATION_SEND,
+            {
+              riderId: id,
+              type: 'KYC_INFO_REQUESTED',
+              infoRequest: kycData.rejectionReason || '',
+            },
+            3,
+            tx,
+            'interactive',
+          );
         }
       } else if (promotingApproved) {
         // Edge case: the request body is `kycStatus: 'APPROVED'`
@@ -589,6 +672,48 @@ export const adminRiderUseCases = {
         // in that case the helper still runs and the approval
         // lands.
         await promoteToApproved(tx, id);
+        await OutboxService.emit(
+          OutboxEventTypes.NOTIFICATION_SEND,
+          { riderId: id, type: 'KYC_APPROVED' },
+          3,
+          tx,
+          'interactive',
+        );
+      } else if (promotingRejected) {
+        await promoteToRejected(
+          tx,
+          id,
+          (kycData as Record<string, unknown>).rejectionReason as string || '',
+          ((kycData as Record<string, unknown>).editableFields as string[]) || [],
+        );
+        await OutboxService.emit(
+          OutboxEventTypes.NOTIFICATION_SEND,
+          {
+            riderId: id,
+            type: 'KYC_REJECTED',
+            reason: ((kycData as Record<string, unknown>).rejectionReason as string) || '',
+          },
+          3,
+          tx,
+          'interactive',
+        );
+      } else if (promotingInfoRequired) {
+        await promoteToInfoRequired(
+          tx,
+          id,
+          ((kycData as Record<string, unknown>).rejectionReason as string) || 'Additional information required',
+        );
+        await OutboxService.emit(
+          OutboxEventTypes.NOTIFICATION_SEND,
+          {
+            riderId: id,
+            type: 'KYC_INFO_REQUESTED',
+            infoRequest: ((kycData as Record<string, unknown>).rejectionReason as string) || '',
+          },
+          3,
+          tx,
+          'interactive',
+        );
       }
       if (Object.keys(walletData).length > 0) {
         const wallet =
