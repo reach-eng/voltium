@@ -18,6 +18,13 @@ class NotificationPrefs {
     this.payments = true,
     this.kyc = true,
     this.maintenance = true,
+    // P2-4 (review, 2026-09-07): the six other channels default to
+    // `true` because they are operational (KYC status, payments,
+    // maintenance windows). `announcements` defaults to `false`
+    // because it's a marketing / promotional channel — opt-in keeps
+    // the app quiet for riders who don't want to hear about offers
+    // and feature launches. Audit finding P2-4 was "if intentional,
+    // comment it" — this comment is that fix.
     this.announcements = false,
   });
 

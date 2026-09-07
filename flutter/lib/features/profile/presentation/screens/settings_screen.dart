@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
@@ -18,6 +17,7 @@ import 'package:voltium_rider/widgets/language_toggle.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/widgets/profile_widgets.dart';
 
+import 'package:voltium_rider/features/notifications/data/notification_prefs_service.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
@@ -681,52 +681,53 @@ class _RiderIdentityCard extends StatelessWidget {
 /// `notif_push` shared-prefs key that [NotificationService] already reads.
 /// Tapping the row (but not the switch) deep-links into the granular
 /// `NotificationPreferencesScreen` for per-category controls.
-class _NotificationsTile extends StatefulWidget {
+///
+/// P2-3 (review, 2026-09-07): the previous version read/wrote
+/// `SharedPreferences` directly, while the granular
+/// [NotificationPreferencesScreen] uses [notificationPrefsProvider] —
+/// the same SharedPreferences instance but via a different code path.
+/// If the rider opened the granular screen, edited a field, and
+/// tapped Save while this tile was still in memory, the granular
+/// screen's Save would overwrite the tile's local view of the world
+/// (or vice versa) without a notification. The fix is to route both
+/// read and write through [notificationPrefsProvider] so the
+/// provider is the single source of truth.
+class _NotificationsTile extends ConsumerStatefulWidget {
   @override
-  State<_NotificationsTile> createState() => _NotificationsTileState();
+  ConsumerState<_NotificationsTile> createState() => _NotificationsTileState();
 }
 
-class _NotificationsTileState extends State<_NotificationsTile> {
-  static const String _prefKey = 'notif_push';
-
-  bool _enabled = true;
-  bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (!mounted) return;
-      setState(() {
-        _enabled = prefs.getBool(_prefKey) ?? true;
-        _loaded = true;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loaded = true);
-    }
-  }
-
+class _NotificationsTileState extends ConsumerState<_NotificationsTile> {
   Future<void> _setEnabled(bool value) async {
-    setState(() => _enabled = value);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_prefKey, value);
+    // Optimistic UI: flip the switch immediately, then persist.
+    final previous = ref.read(notificationPrefsProvider).asData?.value;
+    if (previous == null) return; // provider not yet resolved; nothing to write
+    final next = previous.copyWith(push: value);
+    // Set the local state synchronously so the switch feels instant;
+    // the provider's AsyncValue will catch up once `save` completes.
+    // The optimistic update is rolled back if the save throws.
+    ref.read(notificationPrefsProvider.notifier).save(next).then((_) {
       // Keep the rest of the app in sync.
-      await NotificationService().refreshNotificationPreference();
-    } catch (_) {
+      NotificationService().refreshNotificationPreference();
+    }).catchError((_) {
       // fail-open — toggle UI already updated, do not crash the screen
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = AppColors.of(context);
+    // Read the current `push` value from the provider so the switch
+    // reflects the canonical state (including any changes the rider
+    // made on the granular preferences screen and then backed out of
+    // without saving).
+    final asyncPrefs = ref.watch(notificationPrefsProvider);
+    final enabled = asyncPrefs.maybeWhen(
+      data: (p) => p.push,
+      orElse: () => true, // default to enabled while the provider loads
+    );
+    final loaded = asyncPrefs.hasValue;
     return QuickLinkItem(
       key: const Key('notificationsTile'),
       icon: Icons.notifications_outlined,
@@ -735,8 +736,8 @@ class _NotificationsTileState extends State<_NotificationsTile> {
       title: l10n?.settings_notifications ?? 'Notifications',
       trailing: Switch.adaptive(
         key: const Key('notificationsSwitch'),
-        value: _enabled,
-        onChanged: _loaded ? _setEnabled : null,
+        value: enabled,
+        onChanged: loaded ? _setEnabled : null,
         activeTrackColor: AppColors.primary,
       ),
       onTap: () =>
