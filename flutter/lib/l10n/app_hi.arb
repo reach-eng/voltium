@@ -927,5 +927,4 @@
   "@pickupHub_fetchVehiclesFailed": {
     "placeholders": { "error": { "type": "String" } }
   }
-  }
 }

@@ -20,6 +20,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/widgets/forms/forms.dart';
 
 class PickupHubScreen extends ConsumerStatefulWidget {
@@ -524,11 +525,15 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // (the dropdown falls back to a list with "Not assigned")
       // so we keep the surface minimal here.
       if (e is ApiException && e.statusCode < 500) {
-        _showError('Failed to fetch vehicles: $e');
+        _showError(
+            AppLocalizations.of(context)?.pickupHub_fetchVehiclesFailed('$e') ??
+                'Failed to fetch vehicles: $e');
         return;
       }
       if (_vehicleRetryAttempt >= _maxHubRetries) {
-        _showError('Failed to fetch vehicles: $e');
+        _showError(
+            AppLocalizations.of(context)?.pickupHub_fetchVehiclesFailed('$e') ??
+                'Failed to fetch vehicles: $e');
         return;
       }
       _vehicleRetryAttempt += 1;
@@ -610,7 +615,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     final digits = phone.replaceAll(RegExp(r'\D'), '');
 
     if (digits.length != 10) {
-      _showError('Enter a valid 10-digit number');
+      _showError(
+          AppLocalizations.of(context)?.pickupHub_enterValid10Digit ??
+              'Enter a valid 10-digit number');
       return;
     }
 
@@ -618,12 +625,15 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     final guarantorPhone = ref.watch(riderProvider).rider?.guarantorPhone ?? '';
 
     if (digits == riderPhone) {
-      _showError('Emergency contact cannot be the same as your phone number');
+      _showError(
+          AppLocalizations.of(context)?.pickupHub_emergencyContactSameAsPhone ??
+              'Emergency contact cannot be the same as your phone number');
       return;
     }
     if (digits == guarantorPhone) {
       _showError(
-        'Emergency contact cannot be the same as guarantor phone number',
+        AppLocalizations.of(context)?.pickupHub_emergencyContactSameAsGuarantor ??
+            'Emergency contact cannot be the same as guarantor phone number',
       );
       return;
     }
@@ -642,7 +652,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         _isOtpSent = true;
         _isOtpVerified = false;
       });
-      _showSuccess('OTP sent to emergency contact');
+      _showSuccess(
+          AppLocalizations.of(context)?.pickupHub_otpSent ??
+              'OTP sent to emergency contact');
       if (AppConstants.isTestMode) {
         final testOtp =
             response['data'] is Map ? (response['data'] as Map)['otp'] : null;
@@ -652,7 +664,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       }
     } catch (e) {
       if (!mounted) return;
-      _showError('Failed to send OTP. Please try again. $e');
+      _showError(
+          AppLocalizations.of(context)?.pickupHub_failedToSendOtp('$e') ??
+              'Failed to send OTP. Please try again. $e');
     } finally {
       if (mounted) setState(() => _isSendingOtp = false);
     }
@@ -664,7 +678,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     final otp = _otpController.text;
 
     if (otp.length != 6) {
-      _showError('Enter 6-digit OTP');
+      _showError(
+          AppLocalizations.of(context)?.pickupHub_enter6DigitOtp ??
+              'Enter 6-digit OTP');
       return;
     }
 
@@ -697,7 +713,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         _showError(
           serverMessage?.isNotEmpty == true
               ? serverMessage!
-              : 'Invalid OTP. Please try again.',
+              : (AppLocalizations.of(context)?.pickupHub_invalidOtp ??
+                  'Invalid OTP. Please try again.'),
         );
         return;
       }
@@ -721,10 +738,14 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // can never diverge (a fresh marker without a receipt would show
       // "verified" but 403 on submit in enforced mode).
       widget.onEmergencyContactVerified?.call(phone, receipt);
-      _showSuccess('Emergency contact verified successfully ✓');
+      _showSuccess(
+          AppLocalizations.of(context)?.pickupHub_verified ??
+              'Emergency contact verified successfully ✓');
     } catch (e) {
       if (!mounted) return;
-      _showError('OTP verification failed. Please try again.');
+      _showError(
+          AppLocalizations.of(context)?.pickupHub_otpVerifyFailed ??
+              'OTP verification failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isVerifyingOtp = false);
     }
@@ -761,7 +782,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         entry.isUploading = false;
       });
       DocumentLocalCache.save('pickup_$type', compressed.path);
-      _showSuccess('Photo uploaded successfully');
+      _showSuccess(
+          AppLocalizations.of(context)?.pickupHub_photoUploaded ??
+              'Photo uploaded successfully');
     } catch (e) {
       if (mounted) {
         final entry = _photos[type]!;
@@ -770,7 +793,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
           entry.isUploading = false;
         });
         _showError(
-          'Upload failed. Please check your connection and try again.',
+          AppLocalizations.of(context)?.pickupHub_photoUploadFailed ??
+              'Upload failed. Please check your connection and try again.',
         );
       }
     }

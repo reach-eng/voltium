@@ -2924,46 +2924,47 @@ class AppLocalizationsHi extends AppLocalizations {
       'पिकअप हब सूची लोड नहीं हो सकी। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
 
   @override
-  String get pickupHub_enterValid10Digit => 'Enter a valid 10-digit number';
+  String get pickupHub_enterValid10Digit =>
+      'कृपया मान्य 10-अंकीय नंबर दर्ज करें';
 
   @override
   String get pickupHub_emergencyContactSameAsPhone =>
-      'Emergency contact cannot be the same as your phone number';
+      'आपातकालीन संपर्क आपके फ़ोन नंबर के समान नहीं हो सकता';
 
   @override
   String get pickupHub_emergencyContactSameAsGuarantor =>
-      'Emergency contact cannot be the same as guarantor phone number';
+      'आपातकालीन संपर्क गारंटर के फ़ोन नंबर के समान नहीं हो सकता';
 
   @override
-  String get pickupHub_otpSent => 'OTP sent to emergency contact';
+  String get pickupHub_otpSent => 'आपातकालीन संपर्क पर OTP भेजा गया';
 
   @override
   String pickupHub_failedToSendOtp(String error) {
-    return 'Failed to send OTP. Please try again. $error';
+    return 'OTP भेजने में विफल। कृपया पुनः प्रयास करें। $error';
   }
 
   @override
-  String get pickupHub_enter6DigitOtp => 'Enter 6-digit OTP';
+  String get pickupHub_enter6DigitOtp => '6-अंकीय OTP दर्ज करें';
 
   @override
-  String get pickupHub_invalidOtp => 'Invalid OTP. Please try again.';
+  String get pickupHub_invalidOtp => 'अमान्य OTP। कृपया पुनः प्रयास करें।';
 
   @override
-  String get pickupHub_verified => 'Emergency contact verified successfully ✓';
+  String get pickupHub_verified => 'आपातकालीन संपर्क सफलतापूर्वक सत्यापित ✓';
 
   @override
   String get pickupHub_otpVerifyFailed =>
-      'OTP verification failed. Please try again.';
+      'OTP सत्यापन विफल। कृपया पुनः प्रयास करें।';
 
   @override
-  String get pickupHub_photoUploaded => 'Photo uploaded successfully';
+  String get pickupHub_photoUploaded => 'फ़ोटो सफलतापूर्वक अपलोड हो गई';
 
   @override
   String get pickupHub_photoUploadFailed =>
-      'Upload failed. Please check your connection and try again.';
+      'अपलोड विफल। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
 
   @override
   String pickupHub_fetchVehiclesFailed(String error) {
-    return 'Failed to fetch vehicles: $error';
+    return 'वाहन लोड करने में विफल: $error';
   }
 }
