@@ -754,7 +754,7 @@ class _NotificationsTile extends ConsumerStatefulWidget {
 class _NotificationsTileState extends ConsumerState<_NotificationsTile> {
   Future<void> _setEnabled(bool value) async {
     // Optimistic UI: flip the switch immediately, then persist.
-    final previous = ref.read(notificationPrefsProvider).valueOrNull;
+    final previous = ref.read(notificationPrefsProvider).asData?.value;
     if (previous == null) return; // provider not yet resolved; nothing to write
     final next = previous.copyWith(push: value);
     // Set the local state synchronously so the switch feels instant;
