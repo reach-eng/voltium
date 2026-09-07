@@ -19,7 +19,7 @@ async function postHandler(req: NextRequest) {
     if (!session) return adminUnauthorized();
 
     const body = await req.json();
-    const { ids, action, value } = body;
+    const { ids, action, value, rejectionReason, editableFields } = body;
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return errors.badRequest('ids must be a non-empty array');
@@ -76,7 +76,21 @@ async function postHandler(req: NextRequest) {
               id,
               {
                 kycStatus,
-                rejectionReason: kycStatus !== 'APPROVED' ? 'Bulk action' : undefined,
+                // KYC-CORRECTION-P0-2026-09-08 (P0-1): forward the
+                // admin-supplied reason (was hardcoded to "Bulk
+                // action" — useless for audit). Also forward the
+                // editableFields allowlist so the bulk action
+                // doesn't permanently lock out all selected riders.
+                rejectionReason:
+                  kycStatus !== 'APPROVED'
+                    ? typeof rejectionReason === 'string' && rejectionReason.trim()
+                      ? rejectionReason.trim()
+                      : 'Bulk action'
+                    : undefined,
+                editableFields:
+                  kycStatus !== 'APPROVED' && Array.isArray(editableFields)
+                    ? editableFields
+                    : undefined,
               },
               { actorId: adminId, actorRole: session.adminRole || '' }
             );

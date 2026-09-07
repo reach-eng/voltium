@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { KycRider, KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
+import type { KycCorrectionField } from '@/lib/kyc-fields';
 
 export function useKyc() {
   const [riders, setRiders] = useState<KycRider[]>([]);
@@ -13,6 +14,13 @@ export function useKyc() {
   const [confirmAction, setConfirmAction] = useState<KycConfirmAction | null>(null);
   const [bulkConfirmAction, setBulkConfirmAction] = useState<KycBulkConfirmAction | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  // KYC-CORRECTION-P0-2026-09-08 (P0-1): the admin must pick which
+  // fields the rider can resubmit. The server stores this on the
+  // KycProfile.editableFields allowlist (rider.use-cases.ts:992-1017
+  // fails closed when empty). Without this, every Reject /
+  // Request-Correction permanently locks the rider out.
+  const [editableFields, setEditableFields] = useState<KycCorrectionField[]>([]);
+  const [bulkEditableFields, setBulkEditableFields] = useState<KycCorrectionField[]>([]);
   const [bulkRejectionReason, setBulkRejectionReason] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState('');
@@ -104,6 +112,16 @@ export function useKyc() {
             action === 'reject' || action === 'info_required'
               ? rejectionReason.trim()
               : undefined,
+          // KYC-CORRECTION-P0-2026-09-08 (P0-1): forward the
+          // admin-selected editable fields so the server's
+          // editableFields allowlist gets populated. Without this,
+          // the rider is permanently locked out of resubmission
+          // (the default-deny check in rider.use-cases.ts:992-1017
+          // throws on the next resubmit attempt).
+          editableFields:
+            action === 'reject' || action === 'info_required'
+              ? editableFields
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -120,6 +138,7 @@ export function useKyc() {
       setTimeout(() => setShowUndoToast(false), 5000);
       setConfirmAction(null);
       setRejectionReason('');
+      setEditableFields([]);
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(rider.id);
@@ -198,6 +217,13 @@ export function useKyc() {
           action: 'bulkKyc',
           value: statusMap[action],
           rejectionReason: reason?.trim() || undefined,
+          // KYC-CORRECTION-P0-2026-09-08 (P0-1): forward the
+          // admin-selected editable fields. The bulk route will
+          // pass this through to the per-rider update.
+          editableFields:
+            action === 'reject' || action === 'info_required'
+              ? bulkEditableFields
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -214,6 +240,7 @@ export function useKyc() {
       setTimeout(() => setShowUndoToast(false), 5000);
       setBulkConfirmAction(null);
       setBulkRejectionReason('');
+      setBulkEditableFields([]);
       setSelectedIds(new Set());
       fetchRiders();
     } catch (err: any) {
@@ -245,6 +272,12 @@ export function useKyc() {
     setRejectionReason,
     bulkRejectionReason,
     setBulkRejectionReason,
+    // KYC-CORRECTION-P0-2026-09-08 (P0-1): expose the editable-fields
+    // state so the dialog component can render the field picker.
+    editableFields,
+    setEditableFields,
+    bulkEditableFields,
+    setBulkEditableFields,
     selectedIds,
     setSelectedIds,
     toggleSelect,

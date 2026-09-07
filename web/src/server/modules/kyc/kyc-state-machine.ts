@@ -17,7 +17,12 @@ export type KycStatus =
 type TransitionMap = Record<KycStatus, KycStatus[]>;
 
 const VALID_TRANSITIONS: TransitionMap = {
-  DRAFT: ['SUBMITTED'],
+  // KYC-CORRECTION-P0-2026-09-08 (P0-2): a never-submitted rider
+  // (PENDING normalizes to DRAFT in admin-riders.use-cases.ts:540-547)
+  // can be rejected or asked for info directly, without first
+  // forcing the admin to bump to SUBMITTED. Previously, the
+  // Pending tab's Reject button always 500ed with KycStateError.
+  DRAFT: ['SUBMITTED', 'REJECTED', 'INFO_REQUIRED'],
   SUBMITTED: ['APPROVED', 'REJECTED', 'INFO_REQUIRED'],
   INFO_REQUIRED: ['SUBMITTED'],
   APPROVED: ['EXPIRED'],

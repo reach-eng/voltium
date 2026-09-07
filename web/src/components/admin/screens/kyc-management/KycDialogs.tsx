@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Undo2, XCircle, Loader2 } from 'lucide-react';
 import type { KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
+import {
+  KYC_CORRECTION_FIELDS,
+  type KycCorrectionField,
+} from '@/lib/kyc-fields';
 
 export interface KycDialogsProps {
   confirmAction: KycConfirmAction | null;
@@ -31,12 +36,21 @@ export interface KycDialogsProps {
   handleKycAction: () => void;
   actionLoading: boolean;
 
+  // KYC-CORRECTION-P0-2026-09-08 (P0-1): the field picker. Without
+  // this, the server-side editableFields allowlist is empty and the
+  // rider is permanently locked out of resubmission (default-deny in
+  // rider.use-cases.ts:992-1017).
+  editableFields: KycCorrectionField[];
+  setEditableFields: (fields: KycCorrectionField[]) => void;
+
   // Bulk actions
   selectedCount: number;
   bulkConfirmAction: KycBulkConfirmAction | null;
   setBulkConfirmAction: (action: KycBulkConfirmAction | null) => void;
   bulkRejectionReason: string;
   setBulkRejectionReason: (reason: string) => void;
+  bulkEditableFields: KycCorrectionField[];
+  setBulkEditableFields: (fields: KycCorrectionField[]) => void;
   handleBulkAction: (action: KycBulkConfirmAction, reason?: string) => void;
   bulkLoading: boolean;
 
@@ -54,11 +68,15 @@ export function KycDialogs({
   setRejectionReason,
   handleKycAction,
   actionLoading,
+  editableFields,
+  setEditableFields,
   selectedCount,
   bulkConfirmAction,
   setBulkConfirmAction,
   bulkRejectionReason,
   setBulkRejectionReason,
+  bulkEditableFields,
+  setBulkEditableFields,
   handleBulkAction,
   bulkLoading,
   showUndoToast,
@@ -109,22 +127,62 @@ export function KycDialogs({
               </span>
               {(confirmAction?.action === 'reject' ||
                 confirmAction?.action === 'info_required') && (
-                <div className="pt-2">
-                  <Label className="text-xs font-semibold text-foreground mb-1 block">
-                    {confirmAction?.action === 'info_required'
-                      ? 'Correction Details (Min 5 chars)'
-                      : 'Rejection Reason (Min 5 chars)'}
-                  </Label>
-                  <Textarea
-                    placeholder={
-                      confirmAction?.action === 'info_required'
-                        ? 'What needs correction...'
-                        : 'Rejection reason...'
-                    }
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div className="pt-2">
+                    <Label className="text-xs font-semibold text-foreground mb-1 block">
+                      {confirmAction?.action === 'info_required'
+                        ? 'Correction Details (Min 5 chars)'
+                        : 'Rejection Reason (Min 5 chars)'}
+                    </Label>
+                    <Textarea
+                      placeholder={
+                        confirmAction?.action === 'info_required'
+                          ? 'What needs correction...'
+                          : 'Rejection reason...'
+                      }
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                    />
+                  </div>
+                  {/* KYC-CORRECTION-P0-2026-09-08 (P0-1): the field
+                      picker. Admin selects which fields the rider can
+                      resubmit. Without at least one field selected,
+                      the rider is permanently locked out. The server
+                      fails closed when editableFields is empty
+                      (rider.use-cases.ts:992-1017). */}
+                  <div className="pt-2">
+                    <Label className="text-xs font-semibold text-foreground mb-1 block">
+                      Fields the rider can resubmit (at least one)
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2 pt-1 max-h-48 overflow-y-auto rounded border border-border p-2">
+                      {KYC_CORRECTION_FIELDS.map((f) => {
+                        const checked = editableFields.includes(f.key);
+                        return (
+                          <label
+                            key={f.key}
+                            className="flex items-center gap-2 text-xs cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(next) => {
+                                const set = new Set(editableFields);
+                                if (next) set.add(f.key);
+                                else set.delete(f.key);
+                                setEditableFields(Array.from(set) as KycCorrectionField[]);
+                              }}
+                            />
+                            <span>{f.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground pt-1">
+                      Check the fields the rider must update. Unchecked
+                      fields are locked until the rider re-submits the
+                      whole KYC.
+                    </p>
+                  </div>
+                </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -135,7 +193,7 @@ export function KycDialogs({
               disabled={
                 actionLoading ||
                 ((confirmAction?.action === 'reject' || confirmAction?.action === 'info_required') &&
-                  rejectionReason.trim().length < 5)
+                  (rejectionReason.trim().length < 5 || editableFields.length === 0))
               }
               className={
                 confirmAction?.action === 'reject'
@@ -218,6 +276,38 @@ export function KycDialogs({
               onChange={(e) => setBulkRejectionReason(e.target.value)}
               rows={3}
             />
+            {/* KYC-CORRECTION-P0-2026-09-08 (P0-1): same field picker
+                as the single-rider dialog. Bulk-applied to all
+                selected riders. */}
+            <div>
+              <Label className="text-xs font-semibold mb-1 block">
+                Fields the riders can resubmit (at least one)
+              </Label>
+              <div className="grid grid-cols-2 gap-2 pt-1 max-h-48 overflow-y-auto rounded border border-border p-2">
+                {KYC_CORRECTION_FIELDS.map((f) => {
+                  const checked = bulkEditableFields.includes(f.key);
+                  return (
+                    <label
+                      key={f.key}
+                      className="flex items-center gap-2 text-xs cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(next) => {
+                          const set = new Set(bulkEditableFields);
+                          if (next) set.add(f.key);
+                          else set.delete(f.key);
+                          setBulkEditableFields(
+                            Array.from(set) as KycCorrectionField[],
+                          );
+                        }}
+                      />
+                      <span>{f.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -238,7 +328,13 @@ export function KycDialogs({
               disabled={
                 bulkLoading ||
                 (bulkConfirmAction === 'reject' && bulkRejectionReason.trim().length < 10) ||
-                (bulkConfirmAction === 'info_required' && bulkRejectionReason.trim().length < 5)
+                (bulkConfirmAction === 'info_required' && bulkRejectionReason.trim().length < 5) ||
+                // KYC-CORRECTION-P0-2026-09-08 (P0-1): require at
+                // least one editable field. The server fails closed
+                // on empty, so the bulk action would just bounce.
+                ((bulkConfirmAction === 'reject' ||
+                  bulkConfirmAction === 'info_required') &&
+                  bulkEditableFields.length === 0)
               }
             >
               {bulkLoading ? (

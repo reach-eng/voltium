@@ -58,11 +58,18 @@ function KycManagementTab() {
           setRejectionReason={kyc.setRejectionReason}
           handleKycAction={kyc.handleKycAction}
           actionLoading={kyc.actionLoading}
+          // KYC-CORRECTION-P0-2026-09-08 (P0-1): forward the field
+          // picker state. Without this, the dialog would have no
+          // checkbox state and the server allowlist would be empty.
+          editableFields={kyc.editableFields}
+          setEditableFields={kyc.setEditableFields}
           selectedCount={kyc.selectedIds.size}
           bulkConfirmAction={kyc.bulkConfirmAction}
           setBulkConfirmAction={kyc.setBulkConfirmAction}
           bulkRejectionReason={kyc.bulkRejectionReason}
           setBulkRejectionReason={kyc.setBulkRejectionReason}
+          bulkEditableFields={kyc.bulkEditableFields}
+          setBulkEditableFields={kyc.setBulkEditableFields}
           handleBulkAction={kyc.handleBulkAction}
           bulkLoading={kyc.bulkLoading}
           showUndoToast={kyc.showUndoToast}
