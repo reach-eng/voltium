@@ -437,5 +437,88 @@ void main() {
       expect(notifier.state.isPollingTimedOut, isFalse,
           reason: 'startOnboardingPoll clears the timeout flag');
     });
+
+    // HANG-TIGHT-AUDIT P2-4 (2026-09-08): the manual Refresh
+    // button used to stack parallel `refreshFromApi` calls on
+    // rapid taps. The fix watches `isRefreshing` from
+    // `riderProvider` and disables the button (onPressed: null)
+    // + swaps the icon for a spinner while the fetch is in
+    // flight.
+    testWidgets(
+        'P2-4: Refresh button disables and shows a spinner while isRefreshing is true',
+        (tester) async {
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+      ));
+      await tester.pump();
+      await tester.pump();
+
+      // Sanity: the refresh icon is present and the button is
+      // enabled (onPressed: non-null).
+      expect(find.byIcon(Icons.refresh_rounded), findsOneWidget);
+      final buttonFinder = find.byKey(const Key('hangTightRefreshButton'));
+      var button = tester.widget<OutlinedButton>(buttonFinder);
+      expect(button.onPressed, isNotNull);
+
+      // Set isRefreshing: true on the rider state. The screen
+      // watches this flag and re-renders.
+      notifier.state =
+          notifier.state.copyWith(isRefreshing: true);
+      await tester.pump();
+
+      // The refresh icon is gone, replaced by a spinner; the
+      // button is disabled.
+      expect(find.byIcon(Icons.refresh_rounded), findsNothing);
+      button = tester.widget<OutlinedButton>(buttonFinder);
+      expect(button.onPressed, isNull,
+          reason:
+              'Refresh button must be disabled while a fetch is in flight');
+    });
+
+    // HANG-TIGHT-AUDIT P2-6 (2026-09-08): when the OS "reduce
+    // motion" preference is on, the `_SpinningIcon` (used for
+    // the hero hourglass + the in-progress status row) renders
+    // the icon statically without the rotation animation. The
+    // screen should render without exception under that
+    // MediaQuery, and the controller should not be advancing.
+    testWidgets(
+        'P2-6: HangTightScreen renders without exception when MediaQuery.disableAnimations is true',
+        (tester) async {
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: ProviderScope(
+            overrides: [
+              riderProvider.overrideWith(() => notifier),
+            ],
+            child: MaterialApp(
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [Locale('en'), Locale('hi')],
+              home: _Harness(
+                rider: _rider(pickupDone: false),
+              ),
+            ),
+          ),
+        ),
+      );
+      // Advance past the 3s repeat that would normally fire if
+      // the rotation was running. No exception should escape
+      // even though the controller is still created (we render
+      // the icon statically under reduce motion).
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 5));
+
+      expect(tester.takeException(), isNull,
+          reason:
+              'Render must be exception-free under reduce motion');
+    });
   });
 }

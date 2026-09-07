@@ -130,6 +130,14 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
     // `WaitStatePollingBanner`.
     final isPollingTimedOut =
         ref.watch(riderProvider.select((p) => p.isPollingTimedOut));
+    // HANG-TIGHT-AUDIT P2-4 (2026-09-08): watch `isRefreshing` so
+    // the manual Refresh button can disable itself and show a
+    // spinner. The provider already stamps this flag at the start
+    // and end of every `refreshFromApi` call (rider_provider.dart:
+    // 286 + 370); the button just needs to read it. Without this
+    // guard, rapid taps stack parallel `refreshFromApi` calls.
+    final isRefreshing =
+        ref.watch(riderProvider.select((p) => p.isRefreshing));
 
     // Auto-redirect to the dashboard the moment the rider becomes active
     // (admin flipped them, pickupDone landed via sync, or they re-entered
@@ -193,7 +201,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
                 ),
               ),
             ),
-            _buildBottomBar(context),
+            _buildBottomBar(context, isRefreshing),
           ],
         ),
       ),
@@ -274,7 +282,14 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Review in progress · Usually 5–10 min',
+                  // HANG-TIGHT-AUDIT P2-2 (2026-09-08): the
+                  // prior text was a hardcoded English pill with
+                  // a "Usually 5–10 min" ETA claim that
+                  // contradicted the 2h poll timeout (P0-3). The
+                  // pill is just the always-on status indicator
+                  // now; the polling-timeout banner covers the
+                  // "this is taking longer than expected" case.
+                  l10n.hangTightReviewInProgress,
                   style: AppTypography.labelSmall.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -290,21 +305,31 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
     );
   }
 
-  /// 5-row status list. Rows are derived from the live rider model so
-  /// they reflect the actual server-side state, not a hard-coded
-  /// "everything's done" lie.
+  /// 5-row status list. Each row reads from the live rider model:
+  ///   - Guarantor: `guarantorStatus`
+  ///   - Plan: `currentPlan` + `planStatus`
+  ///   - Pickup (= "activation pending"): `pickupDone` — false
+  ///     while the rider is waiting on admin to flip them from
+  ///     rank 10 (PICKUP_SCHEDULED) to rank 11 (ACTIVE), true
+  ///     after activation. This is the "what's pending" row.
+  ///   - KYC: `kycStatus`
+  ///   - Vehicle: `assignedVehicle` — a confirmation row, always
+  ///     "done" on arrival. `syncPickup` writes `assignedVehicle` in
+  ///     the same transaction that sets PICKUP_SCHEDULED
+  ///     (rental.use-cases.ts:499), so this row is a "your vehicle
+  ///     has been assigned" confirmation, NOT a "what's pending"
+  ///     indicator. HANG-TIGHT-AUDIT P2-1 (2026-09-08): the prior
+  ///     docstring framed this row as "what's pending (vehicle
+  ///     assignment)" — that was the bug, not the row.
   ///
   /// ONBOARDING-AUDIT 2026-08-14 (fix #2): the previous version
   /// hardcoded Guarantor / Plan / Pickup as done regardless of the
   /// rider's actual state. A rider who reached rank 10 with
   /// guarantor still SUBMITTED (e.g., admin review in flight) was
   /// shown a green check for "Guarantor approved" and had no way to
-  /// tell something was still pending. Now every row reads from the
-  /// rider model: `guarantorStatus`, `currentPlan`, `pickupDone`,
-  /// `kycStatus`, `assignedVehicle`. The same logic also fixes
-  /// the prior inconsistency where the docstring claimed "KYC and
-  /// vehicle rows are actually derived from live rider state" but
-  /// the three hardcoded rows were not.
+  /// tell something was still pending. Now every row reads from
+  /// the rider model: `guarantorStatus`, `currentPlan`, `pickupDone`,
+  /// `kycStatus`, `assignedVehicle`.
   Widget _buildStatusList(RiderModel? rider) {
     final guarantorRow = _guarantorRow(context, rider?.guarantorStatus, () {
       AppNavigator.push(context, const SupportCenterScreen());
@@ -418,7 +443,7 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
   /// can't ride yet) and a secondary "Refresh" for the impatient.
   /// No "Logout" here — the pre-dashboard header owns that pattern,
   /// and the rider is mid-onboarding, not in a "leave" state.
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildBottomBar(BuildContext context, bool isRefreshing) {
     return Container(
       padding: EdgeInsets.fromLTRB(
         Spacing.lg,
@@ -435,8 +460,20 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
           Expanded(
             child: OutlinedButton.icon(
               key: const Key('hangTightRefreshButton'),
-              onPressed: _safeRefresh,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
+              // HANG-TIGHT-AUDIT P2-4 (2026-09-08): disable while
+              // a refresh is in flight and swap the icon for a
+              // spinner. The provider stamps `isRefreshing: true`
+              // at the start of `refreshFromApi` and clears it on
+              // completion; the button reads it via a `ref.watch`
+              // above.
+              onPressed: isRefreshing ? null : _safeRefresh,
+              icon: isRefreshing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded, size: 18),
               // T-66: hardcoded English "Refresh" button label.
               // Localised via the new `txtrefresh` ARB key.
               label:
@@ -828,6 +865,16 @@ class _SpinningIconState extends State<_SpinningIcon>
 
   @override
   Widget build(BuildContext context) {
+    // HANG-TIGHT-AUDIT P2-6 (2026-09-08): respect the OS "reduce
+    // motion" preference. When enabled, render the icon
+    // statically — the rotation adds no information for a rider
+    // who can't tolerate the visual movement. The controller is
+    // still created in initState (cheaper than managing start/
+    // stop based on accessibility settings — the wasted frame
+    // budget is negligible at 3s/rev).
+    if (MediaQuery.of(context).disableAnimations) {
+      return widget.icon;
+    }
     return RotationTransition(
       turns: _controller,
       child: widget.icon,
@@ -938,7 +985,17 @@ class _KycRejectionCard extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               key: const Key('hangTightFixKycButton'),
-              onPressed: onFixKyc,
+              // HANG-TIGHT-AUDIT P2-5 (2026-09-08): the card
+              // button previously disabled when `onFixKyc` was
+              // null, but the KYC row's `onTap` (hang_tight_screen
+              // .dart:332) fell back to Support. Two null
+              // contracts for the same case. The card now matches
+              // the row: fall back to Support so the rider still
+              // has a path to a human when the KYC flow isn't
+              // wired (e.g., test surface, pre-router state).
+              onPressed: onFixKyc ??
+                  () =>
+                      AppNavigator.push(context, const SupportCenterScreen()),
               icon: const Icon(Icons.edit_document, size: 18),
               label: Text(buttonLabel),
               style: FilledButton.styleFrom(

@@ -5176,6 +5176,12 @@ abstract class AppLocalizations {
   /// **'Your KYC has expired. Please re-submit your documents to continue.'**
   String get hangTightKycExpiredBody;
 
+  /// Status pill on the Hang Tight hero indicating the rider is in review
+  ///
+  /// In en, this message translates to:
+  /// **'Review in progress'**
+  String get hangTightReviewInProgress;
+
   /// No description provided for @txtresendOtp.
   ///
   /// In en, this message translates to:
@@ -5433,6 +5439,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load the pickup hub list. Please check your connection and try again.'**
   String get toastHubLoadFailed;
+
+  /// P2-B (review follow-up, 2026-09-07): Toast when the emergency-contact field doesn't pass the 10-digit validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid 10-digit number'**
+  String get pickupHub_enterValid10Digit;
+
+  /// P2-B (review follow-up, 2026-09-07): Toast when the rider enters their own phone as the emergency contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contact cannot be the same as your phone number'**
+  String get pickupHub_emergencyContactSameAsPhone;
+
+  /// P2-B (review follow-up, 2026-09-07): Toast when the rider enters their guarantor's phone as the emergency contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contact cannot be the same as guarantor phone number'**
+  String get pickupHub_emergencyContactSameAsGuarantor;
+
+  /// P2-B (review follow-up, 2026-09-07): Success toast when the OTP send succeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP sent to emergency contact'**
+  String get pickupHub_otpSent;
+
+  /// P2-B (review follow-up, 2026-09-07): Error toast when the OTP send fails; {error} interpolates the exception toString.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send OTP. Please try again. {error}'**
+  String pickupHub_failedToSendOtp(String error);
+
+  /// P2-B (review follow-up, 2026-09-07): Toast when the rider taps Verify with an OTP that isn't 6 digits.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 6-digit OTP'**
+  String get pickupHub_enter6DigitOtp;
+
+  /// P2-B (review follow-up, 2026-09-07): Fallback when the server's error message is empty/missing on a failed verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid OTP. Please try again.'**
+  String get pickupHub_invalidOtp;
+
+  /// P2-B (review follow-up, 2026-09-07): Success toast on verified OTP.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency contact verified successfully ✓'**
+  String get pickupHub_verified;
+
+  /// P2-B (review follow-up, 2026-09-07): Error toast on a caught exception during verify (network, unknown).
+  ///
+  /// In en, this message translates to:
+  /// **'OTP verification failed. Please try again.'**
+  String get pickupHub_otpVerifyFailed;
+
+  /// P2-B (review follow-up, 2026-09-07): Success toast after a pickup photo upload completes.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo uploaded successfully'**
+  String get pickupHub_photoUploaded;
+
+  /// P2-B (review follow-up, 2026-09-07): Error toast on a caught exception during photo upload.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed. Please check your connection and try again.'**
+  String get pickupHub_photoUploadFailed;
+
+  /// P2-B (review follow-up, 2026-09-07): Error toast when the vehicle fetch fails; {error} interpolates the exception.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch vehicles: {error}'**
+  String pickupHub_fetchVehiclesFailed(String error);
 }
 
 class _AppLocalizationsDelegate

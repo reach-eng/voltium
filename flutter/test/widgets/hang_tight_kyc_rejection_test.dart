@@ -217,6 +217,34 @@ void main() {
       expect(called, isTrue);
     });
 
+    // HANG-TIGHT-AUDIT P2-5 (2026-09-08): the card button
+    // previously disabled when `onFixKyc` was null, but the KYC
+    // row's `onTap` (hang_tight_screen.dart:332) fell back to
+    // Support. Two null contracts for the same case. The card
+    // now matches the row: fall back to Support so the rider
+    // still has a path when the KYC flow isn't wired.
+    testWidgets(
+        'P2-5: Fix KYC button stays enabled (falls back to Support) when onFixKyc is null',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _testRider(kyc: KycStatus.rejected),
+        // onFixKyc deliberately omitted (null) — the harness
+        // default.
+      ));
+      await tester.pump();
+
+      final buttonFinder = find.byKey(const Key('hangTightFixKycButton'));
+      expect(buttonFinder, findsOneWidget);
+
+      // The button widget must have a non-null `onPressed` (the
+      // Support fallback). Previously this would be null and the
+      // rider would see a disabled button with no recourse.
+      final button = tester.widget<FilledButton>(buttonFinder);
+      expect(button.onPressed, isNotNull,
+          reason:
+              'Fix KYC button must fall back to Support when onFixKyc is null');
+    });
+
     testWidgets('tapping KYC status row in attention state invokes onFixKyc',
         (tester) async {
       var called = false;

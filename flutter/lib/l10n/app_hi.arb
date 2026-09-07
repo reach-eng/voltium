@@ -847,6 +847,10 @@
   "@hangTightKycExpiredBody": {
     "description": "Body text for the KYC expired card on the Hang Tight screen"
   },
+  "hangTightReviewInProgress": "समीक्षा जारी है",
+  "@hangTightReviewInProgress": {
+    "description": "Status pill on the Hang Tight hero indicating the rider is in review"
+  },
   "txtkycRejectionOnHangTightBody": "कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।",
   "txtkycRejectionOnHangTightTitle": "KYC अस्वीकृत",
   "txtresendOtp": "फिर से भेजें",
@@ -904,5 +908,24 @@
   "toastHubLoadFailed": "पिकअप हब सूची लोड नहीं हो सकी। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।",
   "@toastHubLoadFailed": {
     "description": "hi-review: Toast shown when the pickup-hub GET fails. Hindi placeholder — translator to refine before merge."
+  },
+  "pickupHub_enterValid10Digit": "कृपया मान्य 10-अंकीय नंबर दर्ज करें",
+  "pickupHub_emergencyContactSameAsPhone": "आपातकालीन संपर्क आपके फ़ोन नंबर के समान नहीं हो सकता",
+  "pickupHub_emergencyContactSameAsGuarantor": "आपातकालीन संपर्क गारंटर के फ़ोन नंबर के समान नहीं हो सकता",
+  "pickupHub_otpSent": "आपातकालीन संपर्क पर OTP भेजा गया",
+  "pickupHub_failedToSendOtp": "OTP भेजने में विफल। कृपया पुनः प्रयास करें। {error}",
+  "@pickupHub_failedToSendOtp": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "pickupHub_enter6DigitOtp": "6-अंकीय OTP दर्ज करें",
+  "pickupHub_invalidOtp": "अमान्य OTP। कृपया पुनः प्रयास करें।",
+  "pickupHub_verified": "आपातकालीन संपर्क सफलतापूर्वक सत्यापित ✓",
+  "pickupHub_otpVerifyFailed": "OTP सत्यापन विफल। कृपया पुनः प्रयास करें।",
+  "pickupHub_photoUploaded": "फ़ोटो सफलतापूर्वक अपलोड हो गई",
+  "pickupHub_photoUploadFailed": "अपलोड विफल। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।",
+  "pickupHub_fetchVehiclesFailed": "वाहन लोड करने में विफल: {error}",
+  "@pickupHub_fetchVehiclesFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  }
   }
 }

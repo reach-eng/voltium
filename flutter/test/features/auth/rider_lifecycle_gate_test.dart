@@ -140,6 +140,28 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
     });
 
+    // HANG-TIGHT-AUDIT P2-3 (2026-09-08): the rider screen's
+    // `_redirected` reset (hang_tight_screen.dart:129-133) handles
+    // the in-screen state when admin reverses an approval, but the
+    // actual re-routing depends on this `redirect()` function —
+    // when `pickupDone` flips true→false on the same lifecycle
+    // status, the gate must re-route to hangTight. This pins both
+    // directions of the bounce.
+    test('HANG-TIGHT-AUDIT P2-3: reversal — pickupDone true→false re-routes to hangTight', () {
+      // Admin activated: PICKUP_SCHEDULED + pickupDone: true (the
+      // pre-fix bypass shape; the gate still routes to dashboard
+      // because the post-fix server can never emit this, but the
+      // gate's logic is the same regardless).
+      final activated = createRider('PICKUP_SCHEDULED', pickupDone: true);
+      expect(RiderLifecycleGate.redirect(activated), LifecycleTarget.dashboard);
+
+      // Admin reversed: same status, pickupDone: false. Gate
+      // re-routes to hangTight so the rider sees the wait screen
+      // again.
+      final reversed = createRider('PICKUP_SCHEDULED', pickupDone: false);
+      expect(RiderLifecycleGate.redirect(reversed), LifecycleTarget.hangTight);
+    });
+
     test('returns intent for rank < 2', () {
       final intentStatuses = [
         'NEW', // 0

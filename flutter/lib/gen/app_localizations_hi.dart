@@ -2770,6 +2770,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'आपकी KYC की समय सीमा समाप्त हो गई है। कृपया अपने दस्तावेज़ फिर से जमा करें।';
 
   @override
+  String get hangTightReviewInProgress => 'समीक्षा जारी है';
+
+  @override
   String get txtresendOtp => 'फिर से भेजें';
 
   @override
@@ -2919,4 +2922,48 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get toastHubLoadFailed =>
       'पिकअप हब सूची लोड नहीं हो सकी। कृपया अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get pickupHub_enterValid10Digit => 'Enter a valid 10-digit number';
+
+  @override
+  String get pickupHub_emergencyContactSameAsPhone =>
+      'Emergency contact cannot be the same as your phone number';
+
+  @override
+  String get pickupHub_emergencyContactSameAsGuarantor =>
+      'Emergency contact cannot be the same as guarantor phone number';
+
+  @override
+  String get pickupHub_otpSent => 'OTP sent to emergency contact';
+
+  @override
+  String pickupHub_failedToSendOtp(String error) {
+    return 'Failed to send OTP. Please try again. $error';
+  }
+
+  @override
+  String get pickupHub_enter6DigitOtp => 'Enter 6-digit OTP';
+
+  @override
+  String get pickupHub_invalidOtp => 'Invalid OTP. Please try again.';
+
+  @override
+  String get pickupHub_verified => 'Emergency contact verified successfully ✓';
+
+  @override
+  String get pickupHub_otpVerifyFailed =>
+      'OTP verification failed. Please try again.';
+
+  @override
+  String get pickupHub_photoUploaded => 'Photo uploaded successfully';
+
+  @override
+  String get pickupHub_photoUploadFailed =>
+      'Upload failed. Please check your connection and try again.';
+
+  @override
+  String pickupHub_fetchVehiclesFailed(String error) {
+    return 'Failed to fetch vehicles: $error';
+  }
 }
