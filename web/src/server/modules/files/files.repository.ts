@@ -63,6 +63,13 @@ export const fileRepository = {
     });
   },
 
+  // EDIT-PROFILE-AUDIT P0-1 (real) (2026-09-08): orphan cleanup.
+  // Best-effort hard delete; the storage layer's delete is
+  // called separately by fileService.deleteFile before this.
+  async deleteFileRecord(id: string) {
+    return db.fileRecord.delete({ where: { id } });
+  },
+
   async getFilesByOwner(ownerType: string, ownerId: string) {
     return db.fileRecord.findMany({
       where: { ownerType: ownerType as FileOwnerType, ownerId },

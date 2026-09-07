@@ -104,4 +104,32 @@ export const fileService = {
   ): boolean {
     return filePolicy.canViewFile(actor, fileRecord);
   },
+
+  // EDIT-PROFILE-AUDIT P0-1 (real) (2026-09-08): rider-initiated
+  // orphan cleanup. The PUT /api/rider/profile failure path
+  // (and any other save that completes the upload but fails
+  // before committing the URL into the rider row) calls this
+  // to delete the just-uploaded file. Verifies ownership
+  // before touching storage. Best-effort: if the storage
+  // delete fails, we still delete the DB row so the FileRecord
+  // doesn't point at a now-stale URL — the storage janitor
+  // (data-deletion-purge.job.ts) handles orphaned blobs.
+  async deleteFile(fileRecordId: string, ownerId: string): Promise<void> {
+    const record = await fileRepository.getFileRecordById(fileRecordId);
+    if (!record) return; // already gone
+    if (record.ownerId !== ownerId) {
+      throw new Error('Forbidden');
+    }
+    const storage = await getStorageProvider();
+    try {
+      await storage.delete(record.storageKey);
+    } catch (err) {
+      logger.error('[FileService] Storage delete failed; deleting DB row only', {
+        fileRecordId,
+        storageKey: record.storageKey,
+        err,
+      });
+    }
+    await fileRepository.deleteFileRecord(fileRecordId);
+  },
 };

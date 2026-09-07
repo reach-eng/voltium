@@ -19,6 +19,7 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -67,6 +68,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _isSaving = false;
   bool _isSaved = false;
   String? _originalGPhone;
+  // Signed OTP receipt for a newly-verified guarantor number. The server
+  // requires it whenever the submitted phone differs from the stored one.
+  String? _gPhoneReceipt;
 
   // OTP Resend Cooldown (P1-5)
   int _resendCooldown = 0;
@@ -169,6 +173,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // PR-AUDIT-2026-08-16 §4.1: register listener on all controllers so
     // that `_isDirty` recalculates immediately on any keystroke and the
     // top-app-bar Save action button enables / disables dynamically.
+    // P3 fix: the OTP box is not persisted form state — listening to it
+    // only caused pointless rebuilds (it never fed `_isDirty` anyway).
     final controllers = <TextEditingController>[
       _nameController,
       _emailController,
@@ -180,7 +186,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _gNameController,
       _gPhoneController,
       _gAddressController,
-      _gOtpController,
     ];
     for (final c in controllers) {
       c.addListener(_onFieldChanged);
@@ -231,6 +236,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _sendGuarantorOtp() async {
     if (_resendCooldown > 0) return;
+    // P2 fix: tie the OTP cost to a named person — an unnamed number is
+    // either a typo or an arbitrary third-party target for SMS.
+    if (_gNameController.text.trim().isEmpty) {
+      Toast.error(
+        context,
+        'Enter the guarantor name before sending an OTP.',
+      );
+      return;
+    }
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     if (phone.length < 10) {
       Toast.error(
@@ -323,11 +337,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         }
         return;
       }
+      // Capture the server-issued signed receipt — it is the only
+      // server-verifiable proof of OTP verification and must ride along
+      // with the profile save when the number is new/changed.
+      final receiptData = response['data'];
+      final receipt = (receiptData is Map ? receiptData['receipt'] : null) ??
+          response['receipt'];
       if (mounted) {
         setState(() {
           _isVerifyingGOtp = false;
           _isGPhoneVerified = true;
           _isGOtpSent = false;
+          _gPhoneReceipt =
+              (receipt is String && receipt.isNotEmpty) ? receipt : null;
         });
         Toast.success(
           context,
@@ -363,11 +385,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
       return;
     }
+    // P1: the server requires the signed OTP receipt for any new/changed
+    // guarantor number. A verified flag without a receipt (e.g. verified
+    // against an older server that issued none) would 400 on save —
+    // catch it here with a clear action instead.
+    final cleanGPhone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    final cleanGOrig = _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+    if (cleanGPhone.isNotEmpty &&
+        cleanGPhone != cleanGOrig &&
+        _gPhoneReceipt == null) {
+      Toast.error(
+        context,
+        'Please re-verify the guarantor phone number before saving.',
+      );
+      return;
+    }
 
     setState(() => _isSaving = true);
 
+    // EDIT-PROFILE-AUDIT P0-1 (real) (2026-09-08): declared
+    // outside the try so the catch block can see the URL for
+    // orphan cleanup. The variable is only assigned inside
+    // the try (when upload succeeds) and is read in the
+    // catch on PUT failure.
+    String? uploadedPhotoUrl;
     try {
-      String? uploadedPhotoUrl;
       if (_profileImage != null) {
         // PR-13: was a wrapper call to
         // `VoltiumApiService.uploadFile`, which is a 1-line
@@ -402,6 +444,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               emergencyContact: _emergencyContactController.text.trim(),
               guarantorName: _gNameController.text.trim(),
               guarantorPhone: _gPhoneController.text.trim(),
+              guarantorPhoneReceipt: _gPhoneReceipt,
               guarantorAddress: _gAddressController.text.trim(),
               // Backend alias: riderPhoto mirrors profilePhoto for legacy admin views (P1-4)
               profilePhoto: uploadedPhotoUrl,
@@ -421,6 +464,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
+      // EDIT-PROFILE-AUDIT P0-1 (real) (2026-09-08): if the
+      // upload succeeded but the PUT failed, the file is
+      // orphaned in storage (PII, billable, no rider row
+      // references it). Best-effort delete before the toast.
+      // Errors here are intentionally swallowed — the
+      // rider's primary feedback is the PUT failure, and the
+      // server-side PII-purge job handles any orphan that the
+      // client couldn't reach.
+      if (uploadedPhotoUrl != null) {
+        try {
+          await ApiClient().delete(
+            '/api/rider/files',
+            queryParams: {'url': uploadedPhotoUrl},
+          );
+        } catch (_) {
+          // Swallow; the user-visible error is the PUT failure.
+        }
+      }
       if (mounted) {
         setState(() => _isSaving = false);
         final rawMsg =
@@ -584,9 +645,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     keyboardType: TextInputType.emailAddress,
                                     textCapitalization: TextCapitalization.none,
                                     validator: (v) {
+                                      // P3 fix: aligned with the server
+                                      // `z.email()` gate — reject consecutive
+                                      // dots and require a 2+ letter TLD so
+                                      // typos fail here, not as a raw 400.
                                       if (v != null &&
                                           v.trim().isNotEmpty &&
-                                          !RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$')
+                                          !RegExp(r'^(?!.*\.\.)[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$')
                                               .hasMatch(v.trim())) {
                                         return 'Enter a valid email address';
                                       }
@@ -844,9 +909,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (photo == null || photo.isEmpty) {
         return null;
       }
-      if (photo.startsWith('http')) return photo;
-      final baseUrl = ApiClient().baseUrl;
-      return '$baseUrl/api/files/${photo.replaceFirst(RegExp(r'^/+'), '')}';
+      // P0 fix: shared file-URL scheme (see profile_screen.dart).
+      return AppConstants.resolveProofUrl(
+        photo,
+        isAndroid: Platform.isAndroid,
+      );
     }
 
     final avatarUrl = getAvatarUrl();
@@ -981,6 +1048,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       _isGPhoneVerified = curr == orig && (orig.isNotEmpty);
                       _isGOtpSent = false;
                       _gOtpController.clear();
+                      // A new number needs a fresh receipt — drop the old one
+                      // so a stale receipt can never authorize a new number.
+                      if (curr != orig) _gPhoneReceipt = null;
                     });
                   },
                   style: AppTypography.bodyLarge

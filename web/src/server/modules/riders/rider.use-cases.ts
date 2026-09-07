@@ -8,16 +8,41 @@
 
 import { db } from '@/lib/db';
 import { Prisma, RentalStatus } from '@prisma/client';
-import { flattenRider } from '@/lib/flatten-rider';
+import { flattenRider, stripRiderSecretsForRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { logger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { RiderValidationError } from '@/server/modules/riders/rider-lifecycle.service';
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
 import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 import { clock } from '@/lib/clock';
 import { verifyVerifyReceipt } from '@/lib/verify-receipt';
+import { env } from '@/lib/env';
+
+/** Test-mode placeholder URLs the Flutter app submits when TEST_MODE is on. */
+const MOCK_URL_PREFIXES = ['mock_url_', 'mock-storage', 'mock_top_up_proof', 'mock_photo_'];
+
+/** Reject test-mode document URLs outside dev/test — a leaked TEST_MODE
+ *  client build must never persist fake KYC/guarantor evidence. */
+function rejectMockDocumentUrls(
+  ...fieldMaps: Array<Record<string, unknown>>
+): void {
+  if (env.APP_ENV !== 'staging' && env.APP_ENV !== 'production' && process.env.NODE_ENV !== 'production') {
+    return;
+  }
+  for (const map of fieldMaps) {
+    for (const value of Object.values(map)) {
+      if (
+        typeof value === 'string' &&
+        MOCK_URL_PREFIXES.some((p) => value.startsWith(p))
+      ) {
+        throw new Error('Test-mode document URLs are not accepted in this environment');
+      }
+    }
+  }
+}
 
 const GUARANTOR_FIELD_TO_DB: Record<string, string> = {
   guarantorName: 'name',
@@ -123,10 +148,15 @@ async function computeUpcomingRentPrompt(
   requiresTopUp: boolean;
 } | null> {
   try {
+    // P1 fix: must match ACTIVE_LEASE_STATUSES in getState below —
+    // previously only BOOKED/ACTIVE, so OVERDUE leases (the ones that
+    // need the prompt most) never prompted.
     const activeLease = await db.rentalLease.findFirst({
       where: {
         riderId: riderDbId,
-        status: { in: ['BOOKED', 'ACTIVE'] },
+        status: {
+          in: ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING'],
+        },
       },
       select: {
         id: true,
@@ -145,17 +175,32 @@ async function computeUpcomingRentPrompt(
 
     if (msUntilDue > TWENTY_FOUR_HOURS_MS) return null;
 
-    const rentAmountInRupees = Math.ceil(activeLease.finalPriceInPaise / 100);
-    const walletBalanceInRupees = Math.floor(walletBalanceInPaise / 100);
+    // P2 fix: was ceil(rent)/floor(balance), inflating the shortfall by
+    // up to ~₹2 (₹499.01 rent + ₹299.99 balance reported 500/299/201).
+    // Symmetric rounding keeps the bias under ₹1 either way.
+    const rentAmountInRupees = Math.round(activeLease.finalPriceInPaise / 100);
+    const walletBalanceInRupees = Math.round(walletBalanceInPaise / 100);
     const shortfallInRupees = Math.max(0, rentAmountInRupees - walletBalanceInRupees);
     const recommendedTopUpRupees = shortfallInRupees > 0 ? shortfallInRupees : rentAmountInRupees;
     const isOverdue = msUntilDue < 0;
 
-    const hours = dueAt.getHours();
-    const minutes = dueAt.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHour = hours % 12 || 12;
-    const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+    // P2 fix: was server-local wall clock (UTC in prod → wrong time for
+    // riders). Format explicitly in Asia/Kolkata, the operating timezone.
+    const tzParts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(dueAt);
+    const tzHourRaw = Number(
+      tzParts.find((p) => p.type === 'hour')?.value ?? '0'
+    );
+    // en-GB hour12:false yields hour '24' at midnight — normalize to 0.
+    const tzHour = tzHourRaw === 24 ? 0 : tzHourRaw;
+    const tzMinutes = tzParts.find((p) => p.type === 'minute')?.value ?? '00';
+    const ampm = tzHour >= 12 ? 'PM' : 'AM';
+    const formattedHour = tzHour % 12 || 12;
+    const formattedTime = `${formattedHour}:${tzMinutes} ${ampm}`;
 
     return {
       showPrompt: true,
@@ -193,9 +238,26 @@ export const riderUseCases = {
     );
     if (!rider) return null;
 
-    const [unreadNotificationCount, rewardAggregates] = await Promise.all([
-      db.notification.count({ where: { riderId: rider.id, isRead: false } }),
-      db.reward.aggregate({ where: { riderId: rider.id }, _sum: { points: true } }),
+    // P0 fix: the rider app never calls GET /api/rider/dashboard — the
+    // profile endpoint is the live path, so the rent prompt must ride
+    // along here or the proactive top-up card never renders. Fail-safe:
+    // a rent-lookup failure degrades to null without failing the profile.
+    // P1 fix: the dashboard degrades notification/rent failures to 0/null
+    // — profile previously let any of them 500 the whole response.
+    const [unreadNotificationCount, rewardAggregates, upcomingRentPrompt] = await Promise.all([
+      db.notification
+        .count({ where: { riderId: rider.id, isRead: false } })
+        .catch((err: unknown) => {
+          logger.error('[getProfile] unreadNotifications count failed', err);
+          return 0;
+        }),
+      db.reward
+        .aggregate({ where: { riderId: rider.id }, _sum: { points: true } })
+        .catch((err: unknown) => {
+          logger.error('[getProfile] reward aggregate failed', err);
+          return { _sum: { points: 0 } };
+        }),
+      computeUpcomingRentPrompt(rider.id, rider.wallet?.balanceInPaise ?? 0),
     ]);
 
     const flatRider = flattenRider(rider);
@@ -213,13 +275,13 @@ export const riderUseCases = {
     }
     flatRider.assignedVehicle = assignedVehicleNumber;
 
-    return {
+    return stripRiderSecretsForRider({
       ...flatRider,
       vehicleModel,
       referralCode: rider.referralCode,
       unreadNotificationCount,
       totalRewardPoints: rewardAggregates._sum.points || 0,
-    };
+    });
   },
 
   /**
@@ -315,7 +377,21 @@ export const riderUseCases = {
             signature: true,
           },
         },
-        vehicleReturns: { select: { id: true, status: true } },
+        // P1 fix: flattenRider reads pendingReturn.photoFront…/
+        // createdAt for the submission banner — id+status alone left the
+        // banner date permanently empty on this shape.
+        vehicleReturns: {
+          select: {
+            id: true,
+            status: true,
+            photoFront: true,
+            photoBack: true,
+            photoLeft: true,
+            photoRight: true,
+            photoSpeedometer: true,
+            createdAt: true,
+          },
+        },
         depositRecord: true,
         vehicle: {
           select: {
@@ -381,16 +457,21 @@ export const riderUseCases = {
           return 0;
         }),
       (async () => {
+        // P1 fix: the catch previously returned a 3-field stub, dropping
+        // wallet/vehicle/plan the client requires. Fall back to the
+        // unsigned flat rider (raw storage keys — the app already renders
+        // those via its baseUrl prefix) so the shape stays intact.
+        // P1 fix: strip location/compliance internals (see flatten-rider).
+        const flatRider = stripRiderSecretsForRider(flattenRider(rider));
+        if (rider.vehicle?.vehicleNumber) {
+          flatRider.assignedVehicle = rider.vehicle.vehicleNumber;
+        }
         try {
-          const flatRider = flattenRider(rider);
-          if (rider.vehicle?.vehicleNumber) {
-            flatRider.assignedVehicle = rider.vehicle.vehicleNumber;
-          }
           const { signRiderUrls } = await import('@/lib/sign-rider');
           return await signRiderUrls(flatRider);
         } catch (err) {
           logger.error('[getDashboard] signRiderUrls failed', err);
-          return { id: rider.id, fullName: rider.fullName, riderId: rider.riderId };
+          return flatRider;
         }
       })(),
       computeUpcomingRentPrompt(riderDbId, rider.wallet?.balanceInPaise ?? 0),
@@ -595,6 +676,24 @@ export const riderUseCases = {
     for (const [key, value] of Object.entries(input)) {
       if (value === undefined || value === null) continue;
 
+      if (
+        !SAFE_RIDER_FIELDS.has(key) &&
+        !SAFE_KYC_FIELDS.has(key) &&
+        !SAFE_GUARANTOR_FIELDS.has(key) &&
+        key !== 'guarantorPhoneReceipt' &&
+        key !== 'riderId' &&
+        key !== 'returnPending' &&
+        key !== 'returnPhotos' &&
+        key !== 'returnReason' &&
+        key !== 'latitude' &&
+        key !== 'longitude'
+      ) {
+        // P2: unknown fields used to vanish silently (a typo'd client
+        // field = silent no-op). Log so client/server drift is visible.
+        logger.warn('[updateProfile] ignoring unknown field', { key });
+        continue;
+      }
+
       if (SAFE_RIDER_FIELDS.has(key)) {
         riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (SAFE_KYC_FIELDS.has(key)) {
@@ -624,6 +723,65 @@ export const riderUseCases = {
       }
     }
 
+    // P0: test-mode placeholder URLs must never persist outside dev/test.
+    rejectMockDocumentUrls(kycData, guarantorData, riderData);
+
+    // P1: riders must be 18+. The onboarding picker caps at today-18y;
+    // enforce server-side too (raw API + admin paths bypass the picker).
+    if (typeof riderData.dob === 'string' && riderData.dob.trim().length > 0) {
+      const dobRaw = (riderData.dob as string).trim();
+      const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dobRaw);
+      const dmy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dobRaw);
+      const parts = iso
+        ? { y: +iso[1], m: +iso[2], d: +iso[3] }
+        : dmy
+          ? { y: +dmy[3], m: +dmy[2], d: +dmy[1] }
+          : null;
+      if (parts) {
+        // P3 fix: reject impossible calendar dates (`new Date(2020, 1, 31)`
+        // silently rolls over to Mar 2) and absurd years — the client
+        // picker already floors at 1940.
+        const dobDate = new Date(parts.y, parts.m - 1, parts.d);
+        if (
+          isNaN(dobDate.getTime()) ||
+          dobDate.getFullYear() !== parts.y ||
+          dobDate.getMonth() !== parts.m - 1 ||
+          dobDate.getDate() !== parts.d
+        ) {
+          throw new RiderValidationError('Enter a valid date of birth');
+        }
+        if (parts.y < 1940) {
+          throw new RiderValidationError('Enter a valid date of birth');
+        }
+        const cutoff = new Date();
+        cutoff.setFullYear(cutoff.getFullYear() - 18);
+        if (dobDate > cutoff) {
+          throw new RiderValidationError('Rider must be at least 18 years old');
+        }
+      }
+    }
+
+    // P2 fix: emergency contact may not be the rider's own number. The edit
+    // screen validates this client-side; raw API calls bypassed it.
+    if (typeof riderData.emergencyContact === 'string') {
+      const cleanEmergency = (riderData.emergencyContact as string).replace(/\D/g, '');
+      const cleanPhone = existing.phone ? String(existing.phone).replace(/\D/g, '') : '';
+      if (cleanEmergency.length > 0 && cleanEmergency === cleanPhone) {
+        throw new RiderValidationError('Emergency contact cannot be your own number');
+      }
+      if (cleanEmergency.length > 0 && cleanEmergency.length !== 10) {
+        throw new RiderValidationError('Emergency contact must be 10 digits');
+      }
+    }
+
+    // P1 fix (atomicity): every write below commits in ONE Prisma
+    // $transaction. Previously rider/KYC/guarantor/return/lifecycle writes
+    // committed piecemeal, so a mid-save throw left a half-applied profile.
+    // All reads that gate writes are re-done on `tx` (never trusted from
+    // the pre-transaction cache snapshot) and lifecycle moves go through
+    // transitionRiderStatus(tx), whose CAS updateMany keeps concurrent
+    // saves single-winner.
+    const updated = await db.$transaction(async (tx: any) => {
     // Update core rider fields
     if (Object.keys(riderData).length > 0) {
       if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
@@ -631,7 +789,7 @@ export const riderUseCases = {
         const prefix = name.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
         riderData.riderId = `VEM${prefix}${String(existing.serialNumber).padStart(3, '0')}`;
       }
-      await db.rider.update({ where: { id: riderDbId }, data: riderData });
+      await tx.rider.update({ where: { id: riderDbId }, data: riderData });
     }
 
     // Handle vehicle returns.
@@ -640,19 +798,25 @@ export const riderUseCases = {
     // ≥4 photos, then atomic create + RETURN_PENDING transition.
     if (input.returnPending === true && (input.returnPhotos as string[] | undefined)?.length) {
       const photos = input.returnPhotos as string[];
-      if (existing.lifecycleStatus !== 'ACTIVE') {
+      // P1 fix: gate on a fresh in-tx status read, not the pre-transaction
+      // cache snapshot (`existing`), which can be stale under concurrency.
+      const freshForReturn = await tx.rider.findUnique({
+        where: { id: riderDbId },
+        select: { lifecycleStatus: true, vehicleId: true, assignedVehicle: true },
+      });
+      if (freshForReturn?.lifecycleStatus !== 'ACTIVE') {
         throw new Error('Vehicle return is only allowed while the rental is ACTIVE');
       }
       if (photos.length < 4) {
         throw new Error('At least 4 return photos are required');
       }
-      let vehicleId = existing.vehicleId || null;
-      if (!vehicleId && existing.assignedVehicle) {
-        const vehicle = await db.vehicle.findFirst({
+      let vehicleId = freshForReturn.vehicleId || null;
+      if (!vehicleId && freshForReturn.assignedVehicle) {
+        const vehicle = await tx.vehicle.findFirst({
           where: {
             OR: [
-              { vehicleId: existing.assignedVehicle },
-              { vehicleNumber: existing.assignedVehicle },
+              { vehicleId: freshForReturn.assignedVehicle },
+              { vehicleNumber: freshForReturn.assignedVehicle },
             ],
           },
           select: { id: true },
@@ -663,7 +827,7 @@ export const riderUseCases = {
 
       // P1: reject duplicate open returns (submitReturn race-guards this;
       // the legacy path must too — otherwise two SUBMITTED rows per rider).
-      const openReturn = await db.vehicleReturn.findFirst({
+      const openReturn = await tx.vehicleReturn.findFirst({
         where: {
           riderId: riderDbId,
           status: { in: ['SUBMITTED', 'INSPECTION_PENDING'] },
@@ -672,7 +836,7 @@ export const riderUseCases = {
       });
       if (openReturn) throw new Error('A vehicle return is already pending inspection');
 
-      await db.vehicleReturn.create({
+      await tx.vehicleReturn.create({
         data: {
           riderId: riderDbId,
           vehicleId,
@@ -687,7 +851,7 @@ export const riderUseCases = {
         },
       });
 
-      await transitionRiderStatus(riderDbId, 'RETURN_PENDING');
+      await transitionRiderStatus(riderDbId, 'RETURN_PENDING', tx);
     }
 
     // Update KYC profile.
@@ -695,15 +859,53 @@ export const riderUseCases = {
     // The old code upserted any KYC field past approval, letting a rider
     // overwrite Aadhaar/PAN post-approval. Corrections require an admin
     // REJECT/INFO_REQUIRED first (which sets the editable allowlist).
+    // Tracks whether a KYC row predates this save so the lifecycle block
+    // below can tell first submission (may advance) from correction
+    // (must never regress lifecycle backward).
+    let hadKycRow = false;
     if (Object.keys(kycData).length > 0) {
-      const kycExisting = await db.kycProfile.findUnique({
+      const kycExisting = await tx.kycProfile.findUnique({
         where: { riderId: riderDbId },
-        select: { status: true },
+        select: { status: true, editableFields: true },
       });
+      hadKycRow = !!kycExisting;
       if (kycExisting?.status === 'APPROVED') {
         throw new Error('KYC is approved and locked. Ask support to request changes first.');
       }
-      await db.kycProfile.upsert({
+      // P0: enforce the admin-set editableFields allowlist on correction
+      // resubmits. Previously any field could be overwritten past an
+      // INFO_REQUIRED/REJECTED scoping — the allowlist was UI-only.
+      // Aliases (bankAccount→accountNumber, bankIfsc→ifscCode,
+      // selfie→profilePhoto) are accepted in either form.
+      // P1 fix (default-deny): a REJECT/INFO_REQUIRED row with an empty or
+      // missing allowlist used to reopen the ENTIRE KYC surface — the
+      // scoping failed open on admin omission. Now it fails closed.
+      if (
+        kycExisting &&
+        (kycExisting.status === 'INFO_REQUIRED' ||
+          kycExisting.status === 'REJECTED')
+      ) {
+        const allowed = new Set(
+          Array.isArray(kycExisting.editableFields) ? kycExisting.editableFields : []
+        );
+        const aliasOf: Record<string, string> = {
+          bankAccount: 'accountNumber',
+          bankIfsc: 'ifscCode',
+          selfie: 'profilePhoto',
+          accountNumber: 'bankAccount',
+          ifscCode: 'bankIfsc',
+          profilePhoto: 'selfie',
+        };
+        const blocked = Object.keys(kycData).filter(
+          (k) => !allowed.has(k) && !allowed.has(aliasOf[k] ?? '')
+        );
+        if (blocked.length > 0) {
+          throw new Error(
+            `Only the requested corrections can be resubmitted right now (${blocked.join(', ')} is not editable). Ask support to request changes first.`
+          );
+        }
+      }
+      await tx.kycProfile.upsert({
         where: { riderId: riderDbId },
         create: { riderId: riderDbId, ...(kycData as any), status: 'SUBMITTED' },
         update: { ...(kycData as any), status: 'SUBMITTED' },
@@ -712,30 +914,127 @@ export const riderUseCases = {
 
     // Update Guarantor
     if (Object.keys(guarantorData).length > 0) {
+      // P2: an all-blank guarantor section (e.g. edit-profile with the
+      // guarantor fields untouched) is a no-op — it must not create a
+      // placeholder row nor throw.
+      const guarantorVisible = [
+        'name',
+        'phone',
+        'address',
+        'relation',
+        'dob',
+        'aadhaarFront',
+        'aadhaarBack',
+        'pan',
+        'video',
+        'signature',
+        'photo',
+        'fatherName',
+        'motherName',
+      ].some(
+        (k) =>
+          typeof guarantorData[k] === 'string'
+            ? (guarantorData[k] as string).trim().length > 0
+            : guarantorData[k] !== undefined
+      );
+      if (!guarantorVisible) {
+        // Drop the empty write entirely (stale keys already filtered above).
+        for (const k of Object.keys(guarantorData)) delete guarantorData[k];
+      }
+    }
+    if (Object.keys(guarantorData).length > 0) {
+      // P1 fix: unchanged guarantor payloads are a no-op. The edit screen
+      // resends every guarantor field on each save, and the old code
+      // unconditionally upserted (resetting status to SUBMITTED), cleared
+      // the skip-guarantor surcharge, and advanced lifecycle — a name-typo
+      // fix resubmitted the whole guarantor. Compare normalized values
+      // against the stored row first.
+      const storedFull = await tx.guarantor.findUnique({
+        where: { riderId: riderDbId },
+      });
+      const digitsOf = (v: unknown) => String(v ?? '').replace(/\D/g, '');
+      const textOf = (v: unknown) => String(v ?? '').trim();
+      const guarantorCompareKeys = [
+        'name',
+        'address',
+        'relation',
+        'dob',
+        'aadhaarFront',
+        'aadhaarBack',
+        'pan',
+        'video',
+        'signature',
+        'photo',
+        'fatherName',
+        'motherName',
+      ];
+      const guarantorMatchesStored = (): boolean => {
+        if (!storedFull) return false;
+        if (digitsOf(guarantorData.phone) !== digitsOf((storedFull as any).phone)) return false;
+        return guarantorCompareKeys.every((k) => {
+          const incoming = k === 'relation' && guarantorData[k] == null
+            ? 'Other'
+            : guarantorData[k];
+          if (incoming === undefined) return true;
+          return textOf(incoming) === textOf((storedFull as any)[k]);
+        });
+      };
+      if (guarantorMatchesStored()) {
+        for (const k of Object.keys(guarantorData)) delete guarantorData[k];
+      }
+    }
+    if (Object.keys(guarantorData).length > 0) {
       if (guarantorData.phone) {
         const cleanGuarantorPhone = String(guarantorData.phone).replace(/\D/g, '');
         const cleanRiderPhone = existing.phone ? String(existing.phone).replace(/\D/g, '') : '';
         if (cleanGuarantorPhone.length > 0 && cleanGuarantorPhone === cleanRiderPhone) {
-          throw new Error('Guarantor phone cannot be the same as rider phone');
+          throw new RiderValidationError('Guarantor phone cannot be the same as rider phone');
         }
 
+        // P0: a signed OTP receipt is mandatory when the submitted phone
+        // is new or changed. Previously the receipt was only validated
+        // when present, so omitting it accepted any number with no OTP
+        // proof. Unchanged numbers (equal to the stored guarantor phone)
+        // skip the receipt — they were verified when first stored.
+        const storedGuarantor = await tx.guarantor.findUnique({
+          where: { riderId: riderDbId },
+          select: { phone: true },
+        });
+        const cleanStored = storedGuarantor?.phone
+          ? String(storedGuarantor.phone).replace(/\D/g, '')
+          : '';
         const receipt = input.guarantorPhoneReceipt as string | undefined;
-        if (receipt) {
-          const receiptCheck = verifyVerifyReceipt(receipt, cleanGuarantorPhone);
+        if (cleanGuarantorPhone !== cleanStored) {
+          if (!receipt) {
+            throw new RiderValidationError('Guarantor phone verification is required. Please verify the new number with OTP first.');
+          }
+          // P1 fix: the receipt must be bound to THIS rider (verify-phone
+          // binds the live session when present). Legacy/unbound receipts
+          // are rejected here — re-verify from this account.
+          const receiptCheck = verifyVerifyReceipt(receipt, cleanGuarantorPhone, riderDbId);
           if (!receiptCheck.valid) {
-            throw new Error(`Guarantor phone verification receipt is invalid: ${receiptCheck.reason}`);
+            throw new RiderValidationError(`Guarantor phone verification receipt is invalid: ${receiptCheck.reason}`);
+          }
+        } else if (receipt) {
+          const receiptCheck = verifyVerifyReceipt(receipt, cleanGuarantorPhone, riderDbId);
+          if (!receiptCheck.valid) {
+            throw new RiderValidationError(`Guarantor phone verification receipt is invalid: ${receiptCheck.reason}`);
           }
         }
       }
 
       if (!guarantorData.relation) guarantorData.relation = 'Other';
-      await db.guarantor.upsert({
+      // P2: never persist placeholder PII — a guarantor row without a
+      // real name + phone is junk that poisons fraud checks. Partial
+      // saves must fail loudly instead.
+      if (!guarantorData.name || !guarantorData.phone) {
+        throw new RiderValidationError('Guarantor name and phone are required to save guarantor details');
+      }
+      await tx.guarantor.upsert({
         where: { riderId: riderDbId },
         create: {
           riderId: riderDbId,
-          name: (guarantorData.name as string) || 'N/A',
           relation: (guarantorData.relation as string) || 'Other',
-          phone: (guarantorData.phone as string) || '0000000000',
           ...(guarantorData as any),
           status: 'SUBMITTED',
         },
@@ -745,45 +1044,64 @@ export const riderUseCases = {
       // save) lifts the skip-guarantor surcharge. The flag itself is never
       // rider-writable (see SAFE_RIDER_FIELDS).
       if (guarantorData.phone) {
-        await db.rider.update({
+        await tx.rider.update({
           where: { id: riderDbId },
           data: { requiresHigherDeposit: false },
         });
       }
     }
 
-    // Advance lifecycle based on submissions
-    const currentRider = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
-    
-    if (currentRider) {
+    // Advance lifecycle based on submissions.
+    // P1 fix: single fresh in-tx status read (the old code read, wrote, and
+    // re-read across three separate queries — TOCTOU under concurrent
+    // saves), transitions via transitionRiderStatus(tx) so the CAS
+    // updateMany keeps racers single-winner, and the DEPOSIT_APPROVED →
+    // KYC_SUBMITTED move fires only on a FIRST KYC submission. A correction
+    // to an existing KYC row previously regressed lifecycle backward.
+    const lifecycleNow = await tx.rider.findUnique({
+      where: { id: riderDbId },
+      select: { lifecycleStatus: true },
+    });
+
+    if (lifecycleNow) {
       // 1. If Guarantor data is present, move from PROFILE_SUBMITTED to GUARANTOR_SUBMITTED (Guarantor Form completed)
       if (Object.keys(guarantorData).length > 0) {
-        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
-        if (freshStatus?.lifecycleStatus === 'PROFILE_SUBMITTED') {
-          await transitionRiderStatus(riderDbId, 'GUARANTOR_SUBMITTED');
+        if (lifecycleNow.lifecycleStatus === 'PROFILE_SUBMITTED') {
+          await transitionRiderStatus(riderDbId, 'GUARANTOR_SUBMITTED', tx);
         }
       }
 
-      // 2. If KYC data is present, move from DEPOSIT_APPROVED to KYC_SUBMITTED (KYC Form completed)
-      if (Object.keys(kycData).length > 0) {
-        if (currentRider.lifecycleStatus === 'NEW') {
-          await transitionRiderStatus(riderDbId, 'PHONE_VERIFIED');
+      // 2. If KYC data is present, move forward for first submissions only.
+      if (Object.keys(kycData).length > 0 && !hadKycRow) {
+        if (lifecycleNow.lifecycleStatus === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PHONE_VERIFIED', tx);
         }
-        
-        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
-        if (freshStatus?.lifecycleStatus === 'PHONE_VERIFIED' || freshStatus?.lifecycleStatus === 'NEW') {
-          await transitionRiderStatus(riderDbId, 'PROFILE_SUBMITTED');
+
+        const statusAfterFirst = (
+          await tx.rider.findUnique({
+            where: { id: riderDbId },
+            select: { lifecycleStatus: true },
+          })
+        )?.lifecycleStatus;
+        if (statusAfterFirst === 'PHONE_VERIFIED' || statusAfterFirst === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PROFILE_SUBMITTED', tx);
         }
-        
-        if (freshStatus?.lifecycleStatus === 'DEPOSIT_APPROVED') {
-          await transitionRiderStatus(riderDbId, 'KYC_SUBMITTED');
+
+        const statusAfterSecond = (
+          await tx.rider.findUnique({
+            where: { id: riderDbId },
+            select: { lifecycleStatus: true },
+          })
+        )?.lifecycleStatus;
+        if (statusAfterSecond === 'DEPOSIT_APPROVED') {
+          await transitionRiderStatus(riderDbId, 'KYC_SUBMITTED', tx);
         }
       }
     }
 
-    // Return updated profile
-    invalidateRiderCache(riderDbId);
-    const rider = await db.rider.findUnique({
+    // Return updated profile (read inside the tx so the response reflects
+    // exactly what committed).
+    const rider = await tx.rider.findUnique({
       where: { id: riderDbId },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
@@ -791,11 +1109,17 @@ export const riderUseCases = {
     const flatRider = flattenRider(rider);
     let assignedVehicleNumber = flatRider.assignedVehicle;
     if (flatRider.assignedVehicle) {
-      const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+      const v = await tx.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
       if (v) assignedVehicleNumber = v.vehicleNumber;
     }
     flatRider.assignedVehicle = assignedVehicleNumber;
     return flatRider;
+    }); // end db.$transaction
+
+    // Return updated profile (rider-facing: strip location/compliance
+    // internals that the ...rest spread would otherwise leak).
+    invalidateRiderCache(riderDbId);
+    return updated ? stripRiderSecretsForRider(updated) : null;
   },
 
   async getState(riderDbId: string): Promise<RiderState | null> {

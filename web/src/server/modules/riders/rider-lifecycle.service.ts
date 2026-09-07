@@ -66,6 +66,27 @@ export class RiderLifecycleError extends Error {
 }
 
 /**
+ * EDIT-PROFILE-AUDIT P0-4 (2026-09-08): distinguishes
+ * user-correctable validation errors (DOB format, age 18+,
+ * emergency contact = self, guarantor self-phone, receipt
+ * missing/invalid, guarantor required fields) from
+ * server-internal errors. The PUT /api/rider/profile route
+ * catches this and returns 409 with the message so the client
+ * can render the real reason instead of the generic
+ * "Failed to update profile" 500.
+ *
+ * The 409 status matches `RiderLifecycleError`'s status for
+ * consistency — the client doesn't differentiate, it renders
+ * the message verbatim.
+ */
+export class RiderValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RiderValidationError';
+  }
+}
+
+/**
  * Validates that a transition from `current` to `target` is legal.
  * Throws RiderLifecycleError if the transition is not allowed.
  */

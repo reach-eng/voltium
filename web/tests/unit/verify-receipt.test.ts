@@ -33,7 +33,27 @@ describe('issueVerifyReceipt / verifyVerifyReceipt', () => {
     const receipt = issueVerifyReceipt('9876543210');
     const check = verifyVerifyReceipt(receipt, '9999000000');
     expect(check.valid).toBe(false);
-    expect(check.reason).toContain('signature');
+    // P1 fix: wrong-number now fails with an explicit mismatch reason
+    // instead of an opaque signature error.
+    expect(check.reason).toContain('does not match');
+  });
+
+  it('binds receipts to the issuing rider when a session is present', () => {
+    const bound = issueVerifyReceipt('9876543210', 'rider_A');
+    // Same rider + same phone verifies.
+    expect(verifyVerifyReceipt(bound, '9876543210', 'rider_A').valid).toBe(true);
+    // Another rider replaying it for the same phone is rejected.
+    const replay = verifyVerifyReceipt(bound, '9876543210', 'rider_B');
+    expect(replay.valid).toBe(false);
+    expect(replay.reason).toContain('different account');
+  });
+
+  it('rejects legacy unbound receipts where a bound one is required', () => {
+    const futureExp = Date.now() + 60_000;
+    const legacy = `${futureExp}.${'a'.repeat(64)}`;
+    const check = verifyVerifyReceipt(legacy, '9876543210', 'rider_A');
+    expect(check.valid).toBe(false);
+    expect(check.reason).toContain('not bound');
   });
 
   it('rejects an expired receipt', () => {
@@ -76,6 +96,34 @@ describe('issueVerifyReceipt / verifyVerifyReceipt', () => {
     const check = verifyVerifyReceipt(bumped, '9876543210');
     expect(check.valid).toBe(false);
     expect(check.reason).toContain('signature');
+  });
+
+  // EDIT-PROFILE-AUDIT P0-2 (2026-09-08): contract test. The receipt
+  // is HMAC-signed over the phone string passed to issueVerifyReceipt.
+  // Issuance (`auth.use-cases.ts:26` in `sendOtp`) normalizes via
+  // `inputPhone.replace(/\D/g, '').slice(-10)` — i.e. 10-digit form
+  // only. A future caller that issues with `+91…` or spaced form
+  // would mint a receipt that the verification site rejects,
+  // brick-saving the rider. This test pins the current contract:
+  // the 10-digit form is the only canonical form.
+  //
+  // If a future change decides to accept `+91…` and spaced forms
+  // too, the test must be updated to assert that — that's the
+  // point of pinning.
+  it('P0-2 contract: receipts only validate against the 10-digit form of the same number', () => {
+    const receipt = issueVerifyReceipt('9876543210');
+
+    // 10-digit canonical form: passes (regression guard for the
+    // current production flow, which sends digit-stripped).
+    expect(verifyVerifyReceipt(receipt, '9876543210').valid).toBe(true);
+
+    // +91-prefixed form of the same number: rejected. The
+    // issuance site strips to digits-only, so the receipt is
+    // bound to '9876543210' — not '+919876543210'.
+    expect(verifyVerifyReceipt(receipt, '+919876543210').valid).toBe(false);
+
+    // Spaced form of the same number: rejected. Same reason.
+    expect(verifyVerifyReceipt(receipt, '98765 43210').valid).toBe(false);
   });
 });
 
