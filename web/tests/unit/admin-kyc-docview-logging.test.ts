@@ -44,6 +44,8 @@ const mocks = vi.hoisted(() => ({
   // Riders list
   getAdminSession: vi.fn(),
   listRiders: vi.fn(),
+  // Riders PUT
+  updateRider: vi.fn(),
   // Single rider
   requireAdmin: vi.fn(),
   riderFindFirst: vi.fn(),
@@ -106,6 +108,7 @@ vi.mock('@/lib/feature-flags', () => ({
 vi.mock('@/server/modules/riders/admin-riders.use-cases', () => ({
   adminRiderUseCases: {
     list: mocks.listRiders,
+    update: mocks.updateRider,
   },
 }));
 
@@ -118,9 +121,13 @@ vi.mock('@/server/modules/kyc/kyc.repository', () => ({
 
 // Imports must come AFTER all vi.mock declarations so the mocked
 // modules are wired up before the route modules evaluate.
-import { GET as listRiders } from '@/app/api/admin/riders/route';
+import { GET as listRiders, PUT as updateRider } from '@/app/api/admin/riders/route';
 import { GET as getSingleRider } from '@/app/api/admin/riders/[id]/route';
 import { GET as getKycQueue } from '@/app/api/admin/kyc/route';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -343,6 +350,112 @@ describe('NET-005 follow-up-9: admin KYC document-view logging', () => {
         | { documentType: string }
         | undefined;
       expect(call?.documentType).toBe('kyc_queue');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Route 4: PUT /api/admin/riders — state-machine error mapping
+  // -----------------------------------------------------------------------
+  describe('PUT /api/admin/riders — state-machine error mapping (NET-005 follow-up-10)', () => {
+    // The riders PUT route catches use-case errors and
+    // maps them to HTTP status codes. Before the fix,
+    // the only non-500 mapping was for "not found"
+    // (string-match, fragile). `KycStateError`,
+    // `GuarantorStateError`, `DepositStateMachineError`,
+    // and `RentalStateError` all fell through to 500.
+    // The canonical 409 mapping lives in
+    // `api-handler.ts:83-90`; the riders route now
+    // mirrors it. These tests assert the 409 mapping
+    // for each of the four state-machine error classes.
+    //
+    // The motivating bug was the KYC Undo button: after
+    // an admin approved a rider, the Undo toast
+    // appeared, the admin clicked it, and the API tried
+    // APPROVED → SUBMITTED, which throws
+    // `KycStateError('Invalid KYC transition: ...')`.
+    // Pre-fix: 500. Post-fix: 409 with the message.
+
+    const makePutReq = (body: Record<string, unknown>) =>
+      new NextRequest('http://localhost/api/admin/riders', {
+        method: 'PUT',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+    it('returns 409 (not 500) when the use case throws KycStateError', async () => {
+      mocks.updateRider.mockRejectedValue(
+        new KycStateError(
+          'Invalid KYC transition: "APPROVED" → "SUBMITTED". Allowed: EXPIRED.',
+          'APPROVED',
+          'SUBMITTED'
+        )
+      );
+
+      const req = makePutReq({ id: 'r1', kycStatus: 'SUBMITTED' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(409);
+      const json = await res.json();
+      // Body shape: { success: false, error: { code, message, details }, meta }
+      expect(json.success).toBe(false);
+      expect(json.error.message).toContain('Invalid KYC transition');
+    });
+
+    it('returns 409 when GuarantorStateError is thrown', async () => {
+      mocks.updateRider.mockRejectedValue(
+        new GuarantorStateError(
+          'Invalid guarantor transition: "APPROVED" → "PENDING".',
+          'APPROVED',
+          'PENDING'
+        )
+      );
+
+      const req = makePutReq({ id: 'r1', guarantorStatus: 'PENDING' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(409);
+    });
+
+    it('returns 409 when DepositStateMachineError is thrown', async () => {
+      mocks.updateRider.mockRejectedValue(
+        new DepositStateMachineError(
+          'Invalid deposit transition: "APPROVED" → "PENDING".',
+          'APPROVED' as never,
+          'PENDING' as never
+        )
+      );
+
+      const req = makePutReq({ id: 'r1' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(409);
+    });
+
+    it('returns 409 when RentalStateError is thrown', async () => {
+      mocks.updateRider.mockRejectedValue(
+        new RentalStateError(
+          'Invalid rental transition: "ACTIVE" → "PENDING".',
+          'ACTIVE' as never,
+          'PENDING' as never
+        )
+      );
+
+      const req = makePutReq({ id: 'r1' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(409);
+    });
+
+    it('returns 500 for unknown errors (regression lock)', async () => {
+      mocks.updateRider.mockRejectedValue(new Error('something unexpected'));
+
+      const req = makePutReq({ id: 'r1' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(500);
+    });
+
+    it('returns 404 for "not found" (regression lock — pre-existing path)', async () => {
+      mocks.updateRider.mockRejectedValue(new Error('Rider not found: r999'));
+
+      const req = makePutReq({ id: 'r999' });
+      const res = await updateRider(req);
+      expect(res.status).toBe(404);
     });
   });
 });

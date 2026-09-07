@@ -20,6 +20,10 @@ import { invalidateRiderCache } from '@/lib/server-cache';
 import { createAuditLog } from '@/lib/audit-log';
 import { logKycDocumentView } from '@/lib/security-events';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { toRupeesResponse } from '@/lib/api-money';
 
@@ -366,6 +370,26 @@ export async function PUT(req: NextRequest) {
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
       return errors.notFound((error instanceof Error ? error.message : String(error)));
+    }
+    // NET-005 follow-up-10 (2026-09-08): the riders PUT
+    // route used to map every non-'not found' error to
+    // 500, including state-machine violations (e.g. an
+    // admin trying to undo a KYC approval — APPROVED can
+    // only transition to EXPIRED, not back to SUBMITTED).
+    // `api-handler.ts:83-90` already does the canonical
+    // 409 mapping for these four error classes; mirror
+    // that here so the riders PUT route returns 409 with
+    // a useful state-machine message instead of 500. The
+    // `instanceof` check matches the api-handler pattern
+    // (the prior `.name === 'X'` string match was
+    // minifier-unsafe — see api-handler.ts:71-75).
+    if (
+      error instanceof KycStateError ||
+      error instanceof GuarantorStateError ||
+      error instanceof DepositStateMachineError ||
+      error instanceof RentalStateError
+    ) {
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Update rider error:', error);
     return errors.internal('Failed to update rider');

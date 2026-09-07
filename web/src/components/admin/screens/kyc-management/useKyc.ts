@@ -111,13 +111,27 @@ export function useKyc() {
         throw new Error(errJson.error || errJson.message || `Request failed: ${res.status}`);
       }
       toast.success(`Rider KYC ${statusMap[action].toLowerCase()}`);
-      setLastAction({
-        ids: [rider.id],
-        previousStatuses: { [rider.id]: previousStatus },
-        action: statusMap[action],
-      });
-      setShowUndoToast(true);
-      setTimeout(() => setShowUndoToast(false), 5000);
+      // NET-005 follow-up-10 (2026-09-08): only offer
+      // undo for reversible KYC transitions. The KYC
+      // state machine allows APPROVED → EXPIRED only,
+      // so "undoing" an approval by reverting to
+      // SUBMITTED/REJECTED/INFO_REQUIRED is always an
+      // illegal transition (the API returns 409).
+      // Recording `lastAction` for approves caused the
+      // Undo button to appear for ~5s after every
+      // approval and then always 409 when clicked.
+      // REJECT (REJECTED → SUBMITTED) and INFO_REQUIRED
+      // (INFO_REQUIRED → SUBMITTED) are reversible and
+      // keep the undo affordance.
+      if (action !== 'approve') {
+        setLastAction({
+          ids: [rider.id],
+          previousStatuses: { [rider.id]: previousStatus },
+          action: statusMap[action],
+        });
+        setShowUndoToast(true);
+        setTimeout(() => setShowUndoToast(false), 5000);
+      }
       setConfirmAction(null);
       setRejectionReason('');
       setSelectedIds((prev) => {
@@ -152,7 +166,25 @@ export function useKyc() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, kycStatus: status }),
         });
-        if (!res.ok) throw new Error(`Undo failed for ${id}`);
+        // NET-005 follow-up-10 (2026-09-08): the
+        // pre-fix code threw a generic "Undo failed
+        // for <id>" string, throwing away the API's
+        // actual error message. The riders route now
+        // returns 409 with the state-machine
+        // explanation for illegal transitions, e.g.
+        // `Invalid KYC transition: "APPROVED" →
+        // "SUBMITTED". Allowed: EXPIRED.`. Surface
+        // that message so the admin knows why the
+        // undo failed instead of seeing a generic
+        // "Undo failed. Please try again." toast.
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(
+            errJson.error ||
+              errJson.message ||
+              `Undo failed for ${id} (HTTP ${res.status})`
+          );
+        }
       });
       await Promise.all(promises);
       toast.success('Undo successful');
@@ -161,7 +193,7 @@ export function useKyc() {
       fetchRiders();
     } catch (err: any) {
       logger.error('Undo failed', { error: err });
-      toast.error('Undo failed. Please try again.');
+      toast.error(err?.message || 'Undo failed. Please try again.');
     } finally {
       setBulkLoading(false);
     }
@@ -205,13 +237,22 @@ export function useKyc() {
         throw new Error(errJson.error || errJson.message || `Bulk request failed: ${res.status}`);
       }
       toast.success(`Bulk KYC ${statusMap[action].toLowerCase()} applied to ${targetIds.length} rider(s)`);
-      setLastAction({
-        ids: targetIds,
-        previousStatuses,
-        action: statusMap[action],
-      });
-      setShowUndoToast(true);
-      setTimeout(() => setShowUndoToast(false), 5000);
+      // NET-005 follow-up-10 (2026-09-08): same
+      // reversal logic as `handleKycAction` above. A
+      // bulk-approve can never be undone (APPROVED has
+      // no forward transition back to SUBMITTED in the
+      // state machine), so don't offer undo after a
+      // bulk-approve. Bulk REJECT and INFO_REQUIRED
+      // keep the undo affordance.
+      if (action !== 'approve') {
+        setLastAction({
+          ids: targetIds,
+          previousStatuses,
+          action: statusMap[action],
+        });
+        setShowUndoToast(true);
+        setTimeout(() => setShowUndoToast(false), 5000);
+      }
       setBulkConfirmAction(null);
       setBulkRejectionReason('');
       setSelectedIds(new Set());
