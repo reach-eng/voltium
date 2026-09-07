@@ -126,4 +126,65 @@ void main() {
     expect(state.read(localeProvider).isFollowingSystem, isTrue);
     expect(state.read(localeProvider).locale.languageCode, 'en');
   });
+
+  // P3-3 (2026-09-07): the theme and language dialogs must reflect
+  // provider changes that happen while the dialog is open. Before
+  // the fix, the dialog body used `ref.read(themeProvider)` /
+  // `ref.read(localeProvider)` once at open time, so a later
+  // `setThemeMode` or `setLocale` left the radio group on the stale
+  // selection. The fix wraps the body in a `Consumer` that
+  // `ref.watch`es the provider; these tests assert that the radio
+  // updates without closing/reopening the dialog.
+  testWidgets('P3-3 theme dialog updates radio when theme changes while open',
+      (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.tap(find.byKey(const Key('themeOption')));
+    await tester.pumpAndSettle();
+
+    // Initially: Follow System selected (default).
+    final systemRadio0 =
+        tester.widget<Radio<ThemeMode>>(find.byKey(const Key('themeSystemRadio')));
+    expect(systemRadio0.groupValue, ThemeMode.system);
+
+    // Flip the theme to Dark via the provider (simulating another
+    // action changing it). Do NOT close the dialog.
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(SettingsScreen)));
+    container.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
+    await tester.pumpAndSettle();
+
+    // The dark radio should now be selected.
+    final darkRadio =
+        tester.widget<Radio<ThemeMode>>(find.byKey(const Key('themeDarkRadio')));
+    expect(darkRadio.groupValue, ThemeMode.dark);
+  });
+
+  testWidgets('P3-3 language dialog updates radio when locale changes while open',
+      (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final languageOption = find.byKey(const Key('languageOption'));
+    await tester.tap(languageOption);
+    await tester.pumpAndSettle();
+
+    // Default: Follow System selected.
+    final systemRadio0 =
+        tester.widget<Radio<String>>(find.byKey(const Key('systemRadio')));
+    expect(systemRadio0.groupValue, 'system');
+
+    // Flip the locale to Hindi via the provider without closing
+    // the dialog (simulating an automated test or a debug intent).
+    final container =
+        ProviderScope.containerOf(tester.element(find.byType(SettingsScreen)));
+    container.read(localeProvider.notifier).setLocale(const Locale('hi'));
+    await tester.pumpAndSettle();
+
+    // The Hindi radio should now be selected.
+    final hiRadio =
+        tester.widget<Radio<String>>(find.byKey(const Key('hiRadio')));
+    expect(hiRadio.groupValue, 'hi');
+  });
 }

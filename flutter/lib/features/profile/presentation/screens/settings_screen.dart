@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -27,6 +27,8 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/app_info.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/kyc_label.dart';
+import 'package:voltium_rider/utils/phone_formatter.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 
@@ -497,73 +499,93 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   /// Tri-state theme picker (Follow System / Light / Dark).
+  ///
+  /// PR-SETTINGS-2026-09-07 (P3-3): the dialog body is wrapped in a
+  /// `Consumer` that `ref.watch`es the `themeProvider`. Without this,
+  /// a theme change triggered while the dialog is open (e.g. via the
+  /// system theme change event, or another action that flips the
+  /// provider) would leave the radio group on the old selection. The
+  /// `Consumer` re-renders the dialog body when the provider changes,
+  /// matching the same pattern used by `showAppLanguageDialog`.
   void _showThemeDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final currentMode = ref.read(themeProvider).themeMode;
     final colors = AppColors.of(context);
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text(l10n?.settings_appearance ?? 'Appearance'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(l10n?.settings_followSystem ?? 'Follow system'),
-              leading: Radio<ThemeMode>(
-                key: const Key('themeSystemRadio'),
-                value: ThemeMode.system,
-                groupValue: currentMode,
-                onChanged: (v) {
-                  ref
-                      .read(themeProvider.notifier)
-                      .setThemeMode(ThemeMode.system);
-                  Navigator.pop(ctx);
-                },
-              ),
-              onTap: () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system);
-                Navigator.pop(ctx);
-              },
+      builder: (ctx) => Consumer(
+        builder: (consumerCtx, consumerRef, _) {
+          final currentMode = consumerRef.watch(themeProvider).themeMode;
+          return AlertDialog(
+            backgroundColor: colors.surface,
+            title: Text(l10n?.settings_appearance ?? 'Appearance'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(l10n?.settings_followSystem ?? 'Follow system'),
+                  leading: Radio<ThemeMode>(
+                    key: const Key('themeSystemRadio'),
+                    value: ThemeMode.system,
+                    groupValue: currentMode,
+                    onChanged: (v) {
+                      ref
+                          .read(themeProvider.notifier)
+                          .setThemeMode(ThemeMode.system);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  onTap: () {
+                    ref
+                        .read(themeProvider.notifier)
+                        .setThemeMode(ThemeMode.system);
+                    Navigator.pop(ctx);
+                  },
+                ),
+                ListTile(
+                  title: Text(l10n?.settings_themeLight ?? 'Light mode'),
+                  leading: Radio<ThemeMode>(
+                    key: const Key('themeLightRadio'),
+                    value: ThemeMode.light,
+                    groupValue: currentMode,
+                    onChanged: (v) {
+                      ref
+                          .read(themeProvider.notifier)
+                          .setThemeMode(ThemeMode.light);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  onTap: () {
+                    ref
+                        .read(themeProvider.notifier)
+                        .setThemeMode(ThemeMode.light);
+                    Navigator.pop(ctx);
+                  },
+                ),
+                ListTile(
+                  title: Text(l10n?.settings_themeDark ?? 'Dark mode'),
+                  leading: Radio<ThemeMode>(
+                    key: const Key('themeDarkRadio'),
+                    value: ThemeMode.dark,
+                    groupValue: currentMode,
+                    onChanged: (v) {
+                      ref
+                          .read(themeProvider.notifier)
+                          .setThemeMode(ThemeMode.dark);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                  onTap: () {
+                    ref
+                        .read(themeProvider.notifier)
+                        .setThemeMode(ThemeMode.dark);
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              title: Text(l10n?.settings_themeLight ?? 'Light mode'),
-              leading: Radio<ThemeMode>(
-                key: const Key('themeLightRadio'),
-                value: ThemeMode.light,
-                groupValue: currentMode,
-                onChanged: (v) {
-                  ref
-                      .read(themeProvider.notifier)
-                      .setThemeMode(ThemeMode.light);
-                  Navigator.pop(ctx);
-                },
-              ),
-              onTap: () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: Text(l10n?.settings_themeDark ?? 'Dark mode'),
-              leading: Radio<ThemeMode>(
-                key: const Key('themeDarkRadio'),
-                value: ThemeMode.dark,
-                groupValue: currentMode,
-                onChanged: (v) {
-                  ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
-                  Navigator.pop(ctx);
-                },
-              ),
-              onTap: () {
-                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -616,13 +638,6 @@ class _RiderIdentityCard extends StatelessWidget {
     return name.substring(0, 1).toUpperCase();
   }
 
-  String _kycLabel() {
-    final raw = rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
-    if (raw == 'SUBMITTED') return 'Under Review';
-    if (raw.isEmpty) return 'Pending';
-    return raw[0] + raw.substring(1).toLowerCase();
-  }
-
   bool get _isVerified {
     final raw = rider?.kycStatus.name.toUpperCase() ?? '';
     return raw == 'VERIFIED' || raw == 'APPROVED';
@@ -632,8 +647,11 @@ class _RiderIdentityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final name = rider?.name ?? (isLoading ? '…' : 'Rider');
-    final phone = rider?.phone ?? '';
-    final kyc = _kycLabel();
+    // RIDER-FORMAT-2026-09-07 (P3-4): use the shared helpers so this
+    // card and the personal-details card and any future surface show
+    // identical phone formatting and KYC pill wording.
+    final phone = formatRiderPhone(rider?.phone ?? '');
+    final kyc = formatKycLabel(rider?.kycStatus.name ?? '');
     final verified = _isVerified;
 
     return Container(
@@ -736,7 +754,7 @@ class _NotificationsTile extends ConsumerStatefulWidget {
 class _NotificationsTileState extends ConsumerState<_NotificationsTile> {
   Future<void> _setEnabled(bool value) async {
     // Optimistic UI: flip the switch immediately, then persist.
-    final previous = ref.read(notificationPrefsProvider).asData?.value;
+    final previous = ref.read(notificationPrefsProvider).valueOrNull;
     if (previous == null) return; // provider not yet resolved; nothing to write
     final next = previous.copyWith(push: value);
     // Set the local state synchronously so the switch feels instant;

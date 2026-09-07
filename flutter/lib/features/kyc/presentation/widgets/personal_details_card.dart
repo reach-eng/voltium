@@ -3,6 +3,7 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/form_validators.dart';
+import 'package:voltium_rider/utils/phone_formatter.dart';
 import 'package:voltium_rider/widgets/forms/forms.dart';
 
 class PersonalDetailsCard extends StatelessWidget {
@@ -21,6 +22,11 @@ class PersonalDetailsCard extends StatelessWidget {
   final bool motherNameEnabled;
   final bool addressEnabled;
 
+  /// R1: when true, every field validates immediately (`AutovalidateMode
+  /// .always`) so skipped required fields show their inline error even
+  /// though the user never interacted with them.
+  final bool showErrors;
+
   const PersonalDetailsCard({
     super.key,
     required this.nameController,
@@ -37,25 +43,20 @@ class PersonalDetailsCard extends StatelessWidget {
     this.fatherNameEnabled = true,
     this.motherNameEnabled = true,
     this.addressEnabled = true,
+    this.showErrors = false,
   });
-
-  static String _formatPhone(String rawPhone) {
-    final cleanDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
-    final tenDigits = cleanDigits.length >= 10
-        ? cleanDigits.substring(cleanDigits.length - 10)
-        : cleanDigits;
-    return tenDigits.length == 10
-        ? '+91 ${tenDigits.substring(0, 5)} ${tenDigits.substring(5)}'
-        : rawPhone;
-  }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
-    final formattedPhone = _formatPhone(phone);
+    // RIDER-FORMAT-2026-09-07 (P3-4): use the shared phone formatter
+    // so this card and the settings-screen identity card show the
+    // same `+91 XXXXX XXXXX` formatting.
+    final formattedPhone = formatRiderPhone(phone);
 
     return VoltiumFormCard(
+      autovalidateMode: showErrors ? AutovalidateMode.always : null,
       title: l10n?.txtpersonalDetails ?? 'Personal Details',
       contextLine: Text(
         l10n?.txtkycContextLine ??

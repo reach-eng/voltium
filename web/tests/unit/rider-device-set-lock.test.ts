@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 const mocks = vi.hoisted(() => ({
   requireRiderSession: vi.fn(),
   hashPassword: vi.fn(),
+  verifyPassword: vi.fn(),
   findUnique: vi.fn(),
   update: vi.fn(),
   checkRateLimit: vi.fn(),
@@ -20,6 +21,7 @@ vi.mock('@/lib/rider-auth', () => ({
 
 vi.mock('@/lib/password', () => ({
   hashPassword: mocks.hashPassword,
+  verifyPassword: mocks.verifyPassword,
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
@@ -180,5 +182,88 @@ describe('POST /api/rider/device/set-lock', () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(body.success).toBe(false);
+  });
+
+  // ── P1-5 step-up coverage (2026-09-07): the route already enforces
+  // currentPassword when a lock exists, but none of the tests above could
+  // execute that branch — the mocked rider had no lockPasswordHash and the
+  // @/lib/password mock had no verifyPassword. A regression deleting the
+  // gate would have passed CI silently. These tests pin the gate.
+  describe('P1-5: changing an existing lock requires the current PIN', () => {
+    beforeEach(() => {
+      // Rider already has a lock.
+      mocks.findUnique.mockResolvedValue({
+        id: 'rider_test_1',
+        lockPasswordHash: '$argon2id$existing_hash',
+      });
+    });
+
+    it('403s when currentPassword is missing even with a valid session', async () => {
+      const res = await POST(makeRequest({ password: '5678' }));
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(JSON.stringify(body)).toContain('Current lock password is required');
+      // Nothing written, nothing hashed.
+      expect(mocks.update).not.toHaveBeenCalled();
+      expect(mocks.hashPassword).not.toHaveBeenCalled();
+    });
+
+    it('403s + logs a warning security event when currentPassword is wrong', async () => {
+      mocks.verifyPassword.mockResolvedValueOnce({ valid: false });
+
+      const res = await POST(
+        makeRequest({ password: '5678', currentPassword: '1111' })
+      );
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(JSON.stringify(body)).toContain('Current lock password is incorrect');
+      expect(mocks.logSecurityEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'rider.set_lock_password_wrong_current',
+          severity: 'warning',
+          actorId: 'rider_test_1',
+          actorType: 'RIDER',
+        })
+      );
+      expect(mocks.update).not.toHaveBeenCalled();
+      expect(mocks.hashPassword).not.toHaveBeenCalled();
+    });
+
+    it('accepts a correct currentPassword and re-keys the lock', async () => {
+      mocks.verifyPassword.mockResolvedValueOnce({ valid: true });
+
+      const res = await POST(
+        makeRequest({ password: '5678', currentPassword: '1234' })
+      );
+
+      expect(res.status).toBe(200);
+      expect(mocks.verifyPassword).toHaveBeenCalledWith(
+        '1234',
+        '$argon2id$existing_hash'
+      );
+      expect(mocks.update).toHaveBeenCalledWith({
+        where: { id: 'rider_test_1' },
+        data: { lockPasswordHash: '$argon2id$mock_hashed_pin' },
+      });
+      expect(mocks.logSecurityEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'rider.set_lock_password' })
+      );
+    });
+
+    it('never reaches the currentPassword gate without a valid session', async () => {
+      mocks.requireRiderSession.mockResolvedValueOnce(
+        new Response('unauthorized', { status: 401 })
+      );
+
+      const res = await POST(
+        makeRequest({ password: '5678', currentPassword: '1234' })
+      );
+
+      expect(res.status).toBe(401);
+      expect(mocks.findUnique).not.toHaveBeenCalled();
+      expect(mocks.verifyPassword).not.toHaveBeenCalled();
+    });
   });
 });

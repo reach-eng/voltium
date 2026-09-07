@@ -292,12 +292,18 @@ class LocaleNotifier extends Notifier<LocaleState> {
 
 /// LANGUAGE-AUDIT (2026-08-16) #11: a single source of truth for
 /// supported languages. When product asks for a 3rd language the
-/// flow is: run `dart run scripts/scaffold_locale.dart <code>` to
-/// generate `app_<code>.arb`, add an entry to
-/// [supportedLanguages] below, and add the code to
-/// `preferred-supported-locales` in l10n.yaml. The dialog, the
-/// settings tile, and the system-resolution loop all iterate
-/// this list — no other code change is needed.
+/// flow is:
+///   1. `dart run scripts/scaffold_locale.dart <code>` to generate
+///      `app_<code>.arb`,
+///   2. add a `settings_<code>` ARB key (e.g. `settings_tamil`),
+///   3. add a `case '<code>': return l10n.settings_<code>;` line in
+///      [LocaleNotifier.displayNameFor] (one line, see the
+///      `displayNameFor` docstring),
+///   4. add an entry to [supportedLanguages] below,
+///   5. add the code to `preferred-supported-locales` in l10n.yaml.
+/// The dialog, the settings tile, and the system-resolution loop
+/// all iterate [supportedLanguages] — only `displayNameFor` needs
+/// the per-language case line.
 @immutable
 class SupportedLanguage {
   /// BCP-47 language code, e.g. `en`, `hi`, `ta`.

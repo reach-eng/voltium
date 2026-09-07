@@ -9,9 +9,15 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { logSecurityEvent } from '@/lib/security-events';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
+import { LOCK_PIN_SCHEMA } from '@/lib/validators/lock';
 
+// RIDER-LOCK-2026-09-07 (P3-5): the schema was `z.string().min(1)`,
+// which accepted any non-empty string. Tighten to the 4-digit PIN
+// shape used by `setLockSchema` (see `@/lib/validators/lock`).
+// The bcrypt comparison is still the real auth gate; this just
+// rejects malformed input (5 digits, alphabetic, etc.) earlier.
 const verifyLockSchema = z.object({
-  password: z.string().min(1),
+  password: LOCK_PIN_SCHEMA,
 });
 
 export async function POST(request: NextRequest) {
