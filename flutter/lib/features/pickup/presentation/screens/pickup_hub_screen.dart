@@ -20,6 +20,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/forms/forms.dart';
 
 class PickupHubScreen extends ConsumerStatefulWidget {
   final Function(
@@ -845,21 +846,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
               SizedBox(
                 width: 140,
                 height: 40,
-                child: ElevatedButton(
+                child: VoltiumButton(
                   onPressed: _fetchHubsWithManualReset,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                  ),
-                  child: Text(
-                    'Retry',
-                    style: AppTypography.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w800),
-                  ),
+                  labelText: 'Retry',
                 ),
               ),
             ],
@@ -900,22 +889,11 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
             ),
           ),
           const SizedBox(width: 8),
-          TextButton(
+          VoltiumButton(
             key: const Key('pickupHubInlineRetryButton'),
+            variant: VoltiumButtonVariant.destructive,
             onPressed: _fetchHubsWithManualReset,
-            style: TextButton.styleFrom(
-              foregroundColor: colors.error,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              'Retry',
-              style: AppTypography.labelMedium.copyWith(
-                color: colors.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            labelText: 'Retry',
           ),
         ],
       ),

@@ -26,6 +26,7 @@ import 'package:voltium_rider/core/network/file_category.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/widgets/forms/forms.dart';
 import '../../../../utils/app_logger.dart';
 
 /// State for UserOnboardingScreen managed via Riverpod Notifier.
@@ -242,7 +243,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     } catch (e, st) {
       appDebug('KYC form cache load failed: $e\n$st');
       if (!mounted) return;
-      // T-2 (design audit, 2026-09-07): R4 — l10n the hardcoded English
+      // T-2 (design audit, 2026-09-07): R4 ï¿½ l10n the hardcoded English
       // toast. The key 	oastKycCacheRestoreFailed was added in this PR
       // to both pp_en.arb and pp_hi.arb (Hindi side is a
       // translator-review placeholder).
@@ -581,15 +582,13 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          VoltiumButton(
+            variant: VoltiumButtonVariant.text,
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              l10n?.txtclose ?? 'Close',
-              style: AppTypography.labelLarge
-                  .copyWith(color: colors.onSurfaceVariant),
-            ),
+            labelText: l10n?.txtclose ?? 'Close',
           ),
-          TextButton(
+          VoltiumButton(
+            variant: VoltiumButtonVariant.text,
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 Navigator.pop(ctx);
@@ -599,13 +598,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                 if (mounted) setState(() {});
               }
             },
-            child: Text(
-              l10n?.txtsave ?? 'Save',
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            labelText: l10n?.txtsave ?? 'Save',
           ),
         ],
       ),
