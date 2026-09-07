@@ -18,6 +18,22 @@ describe('updateProfileSchema strictness (P0-4)', () => {
     expect(result.success).toBe(false);
   });
 
+  // EDIT-PROFILE-AUDIT P0-3 (2026-09-08): `guarantorStatus` was a
+  // dead field — the schema accepted it, the allowlist
+  // accepted it, the upsert overwrote it with `status:
+  // 'SUBMITTED'`. Removing from the schema (this file) +
+  // SAFE_GUARANTOR_FIELDS (rider.use-cases.ts:107) closes the
+  // confusion. A rider PUT carrying `guarantorStatus` now
+  // returns 400 with a clear "unrecognized key" error, since
+  // the schema runs in strict mode.
+  it('P0-3: rejects guarantorStatus (server-only status field)', () => {
+    const result = updateProfileSchema.safeParse({
+      fullName: 'Test Rider',
+      guarantorStatus: 'APPROVED', // server-only; rider cannot set
+    });
+    expect(result.success).toBe(false);
+  });
+
   it('accepts valid partial update', () => {
     const result = updateProfileSchema.safeParse({
       fullName: 'Valid Name',

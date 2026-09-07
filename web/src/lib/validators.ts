@@ -86,7 +86,16 @@ export const updateProfileSchema = z.object({
   guarantorVideo: z.string().nullish(),
   guarantorSignature: z.string().nullish(),
   guarantorPhoto: z.string().nullish(),
-  guarantorStatus: z.enum(['PENDING', 'DRAFT', 'SUBMITTED', 'INFO_REQUIRED', 'APPROVED', 'REJECTED']).nullish(),
+  // EDIT-PROFILE-AUDIT P0-3 (2026-09-08): `guarantorStatus` removed
+  // from the rider-writable schema. Status transitions are
+  // server-only — the upsert at rider.use-cases.ts:1032-1041
+  // overwrites any client value with `status: 'SUBMITTED'`, so
+  // the field was dead (client never sent it; the allowlist
+  // accepted it; the upsert ignored it). Removing the field
+  // closes the confusion: a rider PUT can no longer look
+  // like it sets status. The schema is in strict mode
+  // (`.strict()`), so a request carrying `guarantorStatus` now
+  // returns 400 with a clear "unrecognized key" error.
   // P1: `requiresHigherDeposit` removed — server-owned surcharge flag, never
   // rider-writable (strict schema rejects it outright; see guarantor/skip).
   // Permissions
@@ -125,24 +134,89 @@ export const consentSchema = z.object({
 // ==================== TRANSACTIONS ====================
 export const topUpSchema = z.object({
   riderId: z.string().min(1, 'Rider ID required').optional(),
-  amount: z.number().positive('Amount must be positive').max(50000, 'Max ₹50,000 per top-up'),
+  // M1/M6 fix: min ₹100 matches client fallback and prevents ₹1 spam
+  // flooding the admin approval queue. Max ₹50,000 unchanged.
+  amount: z
+    .number()
+    .min(100, 'Min ₹100 per top-up')
+    .max(50000, 'Max ₹50,000 per top-up'),
   purpose: z.enum(['TOP_UP', 'SECURITY_DEPOSIT']),
   method: z.enum(['UPI', 'CASH', 'CARD', 'INSTANT']),
   reason: z.string().max(200).optional(),
-  upiRef: z.string().max(50).optional().nullable(),
-  proofUrl: z.string().optional().nullable(),
+  // Backend hardening: UPI ref 6–50 alnum plus -/_ (covers 12-digit UTR
+  // and test markers like H6-DEFAULT-*). Client already limits to 22
+  // alnum; server allows a superset so legacy callers don't break.
+  upiRef: z
+    .string()
+    .regex(
+      /^[A-Za-z0-9\-_]{6,50}$/,
+      'Invalid UPI reference (6–50 alphanumeric, -/_ allowed)',
+    )
+    .optional()
+    .nullable(),
+  // proofUrl accepts either an https URL (signed) or a storage path.
+  // Caps length to prevent junk bloating the admin queue.
+  proofUrl: z
+    .string()
+    .max(500, 'Proof URL too long')
+    .refine(
+      (v) =>
+        v.startsWith('https://') ||
+        v.startsWith('http://') ||
+        /^[A-Za-z0-9._\-/]+$/.test(v),
+      'Invalid proof URL or storage path',
+    )
+    .optional()
+    .nullable(),
+  // P3 fix: accepted-but-ignored (no verified gateway webhook exists; prod
+  // top-ups always enter PENDING). Kept optional for backward compat —
+  // remove when a server-verified settlement path lands.
   gatewayStatus: z.enum(['SUCCESS', 'FAILURE', 'PENDING']).optional(),
   mdrAmount: z.number().nonnegative().optional(),
 });
 
 // ==================== TICKETS ====================
+// P1-6: riderId is session-authoritative — accepted optionally for
+// backward compat (older Flutter sends it) but never trusted.
+// NOTE: category must stay in sync with Prisma TicketCategory
+// (TECHNICAL, PAYMENT, VEHICLE, GENERAL, TROUBLESHOOTER, BATTERY).
+// Do NOT add values here without a matching migration.
+function isUrlListString(v: string): boolean {
+  const t = v.trim();
+  if (!t) return true;
+  const parts = t.startsWith('[')
+    ? (() => {
+        try {
+          const p: unknown = JSON.parse(t);
+          return Array.isArray(p) ? (p as unknown[]) : null;
+        } catch {
+          return null;
+        }
+      })()
+    : t.split(',');
+  if (!Array.isArray(parts) || parts.length > 5) return false;
+  return (parts as unknown[]).every(
+    (u) => typeof u === 'string' && /^https?:\/\/.+/.test(u.trim())
+  );
+}
+
 export const createTicketSchema = z.object({
-  riderId: z.string().min(1),
+  riderId: z.string().min(1).optional(),
   category: z.enum(['TECHNICAL', 'PAYMENT', 'VEHICLE', 'GENERAL', 'TROUBLESHOOTER', 'BATTERY']),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   subject: z.string().min(5, 'Subject must be at least 5 characters').max(200),
   message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
-  attachments: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  attachments: z
+    .union([
+      z.string().max(5000).refine(isUrlListString, {
+        message: 'Attachments must be URL(s): JSON array or comma-separated https URLs (max 5)',
+      }),
+      z.array(z.string().url().max(2000)).max(5),
+      z.null(),
+      z.undefined(),
+    ])
+    .optional(),
+  troubleshootPath: z.string().max(5000).optional(),
 });
 
 // ==================== ADMIN - RIDERS ====================
@@ -400,7 +474,18 @@ export const updateTicketSchema = z.object({
 
 export const ticketReplySchema = z.object({
   message: z.string().min(1, 'Message is required').max(5000),
-  attachments: z.union([z.string(), z.array(z.string()), z.null(), z.undefined()]).optional(),
+  // P1: attachments must be https URLs (max 5), matching createTicketSchema —
+  // previously any string/array passed, enabling javascript:/data: XSS stores.
+  attachments: z
+    .union([
+      z.string().max(5000).refine(isUrlListString, {
+        message: 'Attachments must be URL(s): JSON array or comma-separated https URLs (max 5)',
+      }),
+      z.array(z.string().url().max(2000)).max(5),
+      z.null(),
+      z.undefined(),
+    ])
+    .optional(),
 });
 
 // ==================== ADMIN - LEGAL (UPSERT) ====================

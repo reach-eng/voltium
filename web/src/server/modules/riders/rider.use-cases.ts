@@ -119,7 +119,10 @@ const SAFE_GUARANTOR_FIELDS = new Set([
   'guarantorVideo',
   'guarantorSignature',
   'guarantorPhoto',
-  'guarantorStatus',
+  // EDIT-PROFILE-AUDIT P0-3 (2026-09-08): `guarantorStatus`
+  // removed from the allowlist. Status transitions are
+  // server-only — the upsert at line ~1032 forces
+  // `status: 'SUBMITTED'`. Mirrors the validators.ts removal.
 ]);
 
 /**
