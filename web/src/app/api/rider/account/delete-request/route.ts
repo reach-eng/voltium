@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     await createAuditLog({
       actorId: auth.riderDbId,
       actorType: 'RIDER',
-      action: 'RIDER_DELETION_REQUESTED',
+      action: 'rider.deletion_requested',
       entity: 'Rider',
       entityId: auth.riderDbId,
       details: { reason: reason ?? 'No reason provided' },

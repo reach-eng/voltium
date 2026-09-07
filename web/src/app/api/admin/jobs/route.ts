@@ -306,7 +306,7 @@ export async function POST(req: NextRequest) {
     createAuditLog({
       actorId: admin.adminId ?? 'unknown',
       actorType: 'ADMIN',
-      action: 'admin_job_trigger',
+      action: 'system.job_trigger',
       entity: 'outbox_event',
       entityId: outboxId,
       details: JSON.stringify({ jobId, eventType: jobConfig.eventType }),

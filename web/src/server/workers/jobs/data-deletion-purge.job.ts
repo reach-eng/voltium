@@ -222,7 +222,7 @@ export const dataDeletionPurgeJob = {
             data: {
               actorId: 'system',
               actorType: 'SYSTEM',
-              action: 'RIDER_DATA_DELETION_PURGED',
+              action: 'rider.data_deletion.purged',
               entity: 'Rider',
               entityId: rider.id,
               details: JSON.stringify({

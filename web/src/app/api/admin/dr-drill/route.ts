@@ -287,7 +287,7 @@ export async function POST(req: Request) {
     await createAuditLog({
       actorId: adminId,
       actorType: 'ADMIN',
-      action: 'DR_DRILL_COMPLETED',
+      action: 'dr.drill_completed',
       entity: 'system',
       entityId: drillId,
       details: {

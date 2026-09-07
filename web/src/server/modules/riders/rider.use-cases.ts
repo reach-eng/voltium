@@ -422,7 +422,7 @@ export const riderUseCases = {
     await createAuditLog({
       actorId: adminId,
       actorType: 'ADMIN',
-      action: 'REJECT',
+      action: 'rider.plan_reject',
       entity: 'RiderPlan',
       entityId: riderDbId,
       details: { reason },

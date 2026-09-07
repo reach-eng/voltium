@@ -54,7 +54,7 @@ export async function PUT(req: NextRequest) {
     const actorId = session.adminId ?? session.riderDbId ?? 'system';
     createAuditLog({
       actorId,
-      action: 'feature_flag.update',
+      action: 'settings.update',
       entity: 'feature_flags',
       entityId: key,
       // P2-13: don't write the value into the audit trail — a future

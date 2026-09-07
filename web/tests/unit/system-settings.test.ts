@@ -140,7 +140,7 @@ describe('System Settings — audit action constants', () => {
     'restore.started',
     'restore.completed',
     'restore.failed',
-    'SYSTEM_CONFIG',
+    'system.config',
   ];
 
   for (const action of expectedAuditActions) {

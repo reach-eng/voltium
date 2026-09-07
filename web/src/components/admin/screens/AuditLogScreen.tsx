@@ -30,7 +30,7 @@ export default function AuditLogScreen() {
         {
           id: 'a-1',
           actorId: 'admin-1',
-          action: 'KYC_APPROVED',
+          action: 'kyc.approved',
           entity: 'Rider',
           entityId: 'rider-123',
           details: JSON.stringify({ reviewer: 'KycReviewer1' }),
@@ -39,7 +39,7 @@ export default function AuditLogScreen() {
         {
           id: 'a-2',
           actorId: 'admin-1',
-          action: 'SYSTEM_SETTING_UPDATED',
+          action: 'settings.update',
           entity: 'SystemSetting',
           entityId: 'maintenance_mode',
           details: JSON.stringify({ value: 'true' }),
@@ -48,7 +48,7 @@ export default function AuditLogScreen() {
         {
           id: 'a-3',
           actorId: 'admin-2',
-          action: 'BACKUP_CREATED',
+          action: 'backup.created',
           entity: 'BackupJob',
           entityId: 'backup-456',
           details: JSON.stringify({ sizeBytes: 1024345 }),

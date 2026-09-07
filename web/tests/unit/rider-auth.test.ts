@@ -256,7 +256,7 @@ describe('requireRiderSession', () => {
     expect(result).toEqual({ riderDbId: 'header-rider-id', phone: '0000000000' });
     expect(mockCreateAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'IMPERSONATE_RIDER',
+        action: 'auth.impersonate_rider',
         entityId: 'header-rider-id',
       })
     );

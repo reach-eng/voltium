@@ -227,7 +227,7 @@ export async function POST(
     createAuditLog({
       actorId: session.adminId!,
       actorType: 'ADMIN',
-      action: 'wallet_adjustment',
+      action: 'wallet.adjustment',
       entity: 'wallet',
       entityId: riderDbId,
       details: JSON.stringify({

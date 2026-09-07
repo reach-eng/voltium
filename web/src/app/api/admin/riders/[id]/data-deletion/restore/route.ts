@@ -69,7 +69,7 @@ export async function POST(
   await createAuditLog({
     actorId,
     actorType: 'ADMIN',
-    action: 'RIDER_DATA_DELETION_RESTORED',
+    action: 'rider.data_deletion.restored',
     entity: 'Rider',
     entityId: riderId,
     details: {

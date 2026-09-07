@@ -99,7 +99,7 @@ describe('POST /api/rider/account/delete-request', () => {
     expect(createAuditLog).toHaveBeenCalledWith({
       actorId: 'rider-db-1',
       actorType: 'RIDER',
-      action: 'RIDER_DELETION_REQUESTED',
+      action: 'rider.deletion_requested',
       entity: 'Rider',
       entityId: 'rider-db-1',
       details: { reason: 'I have another provider' },

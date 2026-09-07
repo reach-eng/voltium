@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       // Log a single audit entry
       await createAuditLog({
         actorId: session.adminId || '',
-        action: 'tl.bulk_undo',
+        action: 'teamleader.bulk_undo',
         entity: 'team_leader',
         entityId: 'multiple',
         details: { count: items.length, items: items.map(i => i.id) },

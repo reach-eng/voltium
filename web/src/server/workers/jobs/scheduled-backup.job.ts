@@ -101,7 +101,7 @@ export const scheduledBackupJob = {
       await createAuditLog({
         actorId: 'SYSTEM',
         actorType: 'SYSTEM',
-        action: 'SYSTEM_JOB',
+        action: 'system.job',
         entity: 'BackupSchedule',
         entityId: schedule.id,
         details: { event: 'backup.scheduled_started' },

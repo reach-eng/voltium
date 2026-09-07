@@ -191,7 +191,7 @@ describe('security-events — PII redaction in app logger and audit log (#45)', 
     const auditArgs = mockCreateAuditLog.mock.calls[0][0];
     // P3-10: audit action is the enum-valid SECURITY_EVENT; the specific kind
     // lives in details.eventType (the old dot-string could never be stored).
-    expect(auditArgs.action).toBe('SECURITY_EVENT');
+    expect(auditArgs.action).toBe('security.event');
     expect(auditArgs.entity).toBe('securityEvent');
     expect(JSON.parse(auditArgs.details).eventType).toBe('admin.login');
   });
@@ -205,7 +205,7 @@ describe('security-events — PII redaction in app logger and audit log (#45)', 
 
     expect(mockCreateAuditLog).toHaveBeenCalledTimes(1);
     const auditArgs = mockCreateAuditLog.mock.calls[0][0];
-    expect(auditArgs.action).toBe('SECURITY_EVENT');
+    expect(auditArgs.action).toBe('security.event');
     expect(JSON.parse(auditArgs.details).eventType).toBe('admin.permission_denied');
   });
 
@@ -218,7 +218,7 @@ describe('security-events — PII redaction in app logger and audit log (#45)', 
 
     expect(mockCreateAuditLog).toHaveBeenCalledTimes(1);
     const auditArgs = mockCreateAuditLog.mock.calls[0][0];
-    expect(auditArgs.action).toBe('SECURITY_EVENT');
+    expect(auditArgs.action).toBe('security.event');
     expect(JSON.parse(auditArgs.details).eventType).toBe('rider.suspended');
   });
 });

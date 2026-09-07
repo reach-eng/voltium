@@ -48,7 +48,7 @@ export async function requireRiderSession(
         await createAuditLog({
           actorId: adminId,
           actorType: 'ADMIN',
-          action: 'IMPERSONATE_RIDER',
+          action: 'auth.impersonate_rider',
           entity: 'rider',
           entityId: riderId,
           details: JSON.stringify({ adminRole: adminSession.adminRole }),

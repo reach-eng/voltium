@@ -153,7 +153,7 @@ export async function PATCH(request: NextRequest) {
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'unknown',
       actorType: 'ADMIN',
-      action: 'MAINTENANCE_MESSAGE_UPDATED',
+      action: 'maintenance.message_updated',
       entity: 'SystemSetting',
       entityId: 'MAINTENANCE_MESSAGE',
       details: { message },

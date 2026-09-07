@@ -163,7 +163,7 @@ export async function approveDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'APPROVE',
+    action: 'deposit.approve',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId },
@@ -212,7 +212,7 @@ export async function rejectDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'REJECT',
+    action: 'deposit.reject',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, reason },
@@ -281,7 +281,7 @@ export async function refundDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'REFUND',
+    action: 'deposit.refund',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, refundAmountInPaise: params.refundAmountInPaise },
@@ -333,7 +333,7 @@ export async function forfeitDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'UPDATE',
+    action: 'deposit.update',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, reason, subAction: 'forfeit' },

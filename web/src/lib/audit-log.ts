@@ -18,6 +18,17 @@ import { getRequestContext } from '@/lib/correlation-id';
 // default. After this rename, every `rider.*` action
 // hits the documented 180-day retention and every
 // `bulk.*` action hits the 365-day retention.
+//
+// NET-005 follow-up-5 (2026-09-08): every prefix used by
+// any `createAuditLog` call site now has a row here. The
+// previous table covered only the high-traffic prefixes
+// (kyc, rider, bulk, system, transaction, financial) and
+// left ~25 action strings (uppercase, no dot, no prefix
+// match) silently at the 90-day default. This expanded
+// table makes the retention contract explicit and
+// lockable: any new action-string prefix must add a row
+// here, or the test in `admin-panel-phase3-fixes.test.ts`
+// (sweep) flags the omission.
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
   kyc: 365,
@@ -26,6 +37,44 @@ export const RETENTION_PERIODS: Record<string, number> = {
   system: 30,
   transaction: 2555,
   financial: 2555,
+  // Admin CRUD and notification action groups. These all
+  // share a 90-day retention (the default) but are listed
+  // here so the lookup is explicit and the sweep test can
+  // catch any future action-string prefix that lands
+  // without a documented retention row.
+  vehicle: 90,
+  coupon: 90,
+  offer: 90,
+  hub: 90,
+  shift: 90,
+  plan: 90,
+  announcement: 90,
+  legal: 90,
+  incident: 90,
+  settings: 90,
+  score: 90,
+  faq: 90,
+  file: 90,
+  notification: 90,
+  reward: 90,
+  pickup: 90,
+  rental: 90,
+  backup: 90,
+  restore: 90,
+  reconciliation: 90,
+  telemetry: 90,
+  maintenance: 90,
+  security: 90,
+  feedback: 90,
+  ticket: 90,
+  dr: 90,
+  deposit: 90,
+  referral: 90,
+  rent: 90,
+  alert: 90,
+  emergency: 90,
+  device: 90,
+  teamleader: 90,
 };
 
 const DEFAULT_RETENTION_DAYS = 90;

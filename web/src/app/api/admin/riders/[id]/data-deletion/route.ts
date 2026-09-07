@@ -130,7 +130,7 @@ export async function DELETE(
     await createAuditLog({
       actorId,
       actorType: 'ADMIN',
-      action: 'RIDER_DATA_DELETION_INITIATED',
+      action: 'rider.data_deletion.initiated',
       entity: 'Rider',
       entityId: riderId,
       details: { approvalToken }
@@ -145,7 +145,7 @@ export async function DELETE(
     await createAuditLog({
       actorId,
       actorType: 'ADMIN',
-      action: 'RIDER_DATA_DELETION_FAILED',
+      action: 'rider.data_deletion.failed',
       entity: 'Rider',
       entityId: riderId,
       details: { error: error instanceof Error ? error.message : String(error) },

@@ -78,7 +78,7 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
     await createAuditLog({
       actorId: actorId || 'SYSTEM',
       actorType: actorType || 'SYSTEM',
-      action: 'SECURITY_EVENT',
+      action: 'security.event',
       entity: 'securityEvent',
       entityId: undefined,
       details: JSON.stringify({

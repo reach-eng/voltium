@@ -146,7 +146,7 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   await createAuditLog({
     actorId: session.adminId || session.riderDbId || 'unknown',
     actorType: 'ADMIN',
-    action: 'SYSTEM_CONFIG',
+    action: 'system.config',
     entity: 'SystemSetting',
     entityId: key,
     details: { key, isSecret: existing.isSecret },

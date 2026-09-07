@@ -47,7 +47,7 @@ export async function POST(
   await createAuditLog({
     actorId,
     actorType: 'ADMIN',
-    action: 'RIDER_DATA_DELETION_APPROVED',
+    action: 'rider.data_deletion.approved',
     entity: 'Rider',
     entityId: riderId,
     details: {

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     // Log feedback submission to audit log
     await createAuditLog({
-      action: 'FEEDBACK_SUBMITTED',
+      action: 'feedback.submitted',
       entity: 'RiderFeedback',
       entityId: riderDbId,
       actorId: riderDbId,

@@ -144,7 +144,7 @@ export const kycUseCases = {
           createAuditLog({
             actorId: reviewerId,
             actorType: 'ADMIN',
-            action: 'kyc.requested_info',
+            action: 'kyc.info_required',
             entity: 'KycProfile',
             entityId: previous.id,
             details: {

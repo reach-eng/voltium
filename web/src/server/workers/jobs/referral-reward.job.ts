@@ -138,7 +138,7 @@ export const referralRewardJob = {
       createAuditLog({
         actorId: 'system',
         actorType: 'SYSTEM',
-        action: 'CREATE',
+        action: 'referral.reward_created',
         entity: 'rider',
         entityId: referrer.id,
         details: JSON.stringify({ amountPaise: REWARD_AMOUNT_PAISE, referredRiderId }),

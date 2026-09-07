@@ -179,7 +179,7 @@ export const referralUseCases = {
 
     createAuditLog({
       actorId: 'system',
-      action: 'finance.referral_reward',
+      action: 'financial.referral_reward',
       entity: 'rider',
       entityId: referrer.id,
       details: { amountPaise: bonusPaise, refereeId },

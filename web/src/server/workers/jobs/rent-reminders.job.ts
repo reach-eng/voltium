@@ -179,7 +179,7 @@ export const rentRemindersJob = {
 
           createAuditLog({
             actorId: 'system',
-            action: 'CREATE',
+            action: 'rent.reminder_created',
             entity: 'rentalLease',
             entityId: lease.id,
             details: {

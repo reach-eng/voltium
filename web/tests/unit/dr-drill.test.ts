@@ -80,7 +80,7 @@ describe('DR Drill Runner API (POST /api/admin/dr-drill)', () => {
 
     expect(createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'DR_DRILL_COMPLETED',
+        action: 'dr.drill_completed',
         actorId: 'admin_123',
         details: expect.objectContaining({
           score: 6,
