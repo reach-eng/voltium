@@ -57,17 +57,21 @@ class ThemeState {
 class ThemeNotifier extends Notifier<ThemeState> {
   @override
   ThemeState build() {
+    // P2-1 (2026-09-07): read both the tri-state theme and the AMOLED
+    // sub-preference from CacheService so a restart preserves the
+    // exact visual state the rider left.
+    final isAmoled = CacheService().getAmoledPreference();
     switch (CacheService().getThemePreference()) {
       case CacheService.themePreferenceDark:
-        return const ThemeState(themeMode: ThemeMode.dark);
+        return ThemeState(themeMode: ThemeMode.dark, isAmoled: isAmoled);
       case CacheService.themePreferenceLight:
-        return const ThemeState(themeMode: ThemeMode.light);
+        return ThemeState(themeMode: ThemeMode.light, isAmoled: isAmoled);
       default:
         // Nothing persisted (or legacy value migrated to a known code
         // already handled above) → follow the OS brightness. This is
         // also the first-launch default: no stored choice means the app
         // mirrors the phone's theme until the rider picks one explicitly.
-        return const ThemeState(themeMode: ThemeMode.system);
+        return ThemeState(themeMode: ThemeMode.system, isAmoled: isAmoled);
     }
   }
 
@@ -88,19 +92,36 @@ class ThemeNotifier extends Notifier<ThemeState> {
   Future<void> setDarkMode(bool value) async =>
       setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
 
-  /// Toggle between dark and light (pinning the result; a system-following
-  /// app toggles to the opposite of the current effective brightness).
+  /// Toggle between dark and light.
+  ///
+  /// P2-2 (2026-09-07), accepted-by-audit: this is a **pinning** toggle.
+  /// From [ThemeMode.system] it flips to the opposite of the current
+  /// effective platform brightness and persists that concrete mode — the
+  /// "Follow System" choice is dropped, and there is no way back to
+  /// system-follow through this method. The only path back is the theme
+  /// dialog's "Follow system" option ([setThemeMode]
+  /// (ThemeMode.system)), so any quick-toggle UI built on this method
+  /// must either accept that UX or pair the toggle with an explicit
+  /// system-follow affordance.
+  ///
+  /// Currently has no call sites; kept for the documented call surface.
   Future<void> toggleTheme() async => setDarkMode(!state.isDarkMode);
 
   /// Enable or disable True AMOLED Black dark theme.
-  void setAmoled(bool value) {
-    if (state.isAmoled != value) {
-      state = state.copyWith(isAmoled: value);
-    }
+  ///
+  /// P2-1 (2026-09-07): the choice is now persisted via [CacheService]
+  /// under `volt_amoled`. A previous version held the flag in memory
+  /// only, so an app restart silently dropped the toggle. The write
+  /// is fire-and-forget; the in-memory state updates synchronously so
+  /// the UI doesn't wait for the prefs flush.
+  Future<void> setAmoled(bool value) async {
+    if (state.isAmoled == value) return;
+    state = state.copyWith(isAmoled: value);
+    await CacheService().setAmoledPreference(value);
   }
 
   /// Toggle True AMOLED Black dark theme.
-  void toggleAmoled() => setAmoled(!state.isAmoled);
+  Future<void> toggleAmoled() => setAmoled(!state.isAmoled);
 
   static String _themeModeCode(ThemeMode mode) {
     switch (mode) {

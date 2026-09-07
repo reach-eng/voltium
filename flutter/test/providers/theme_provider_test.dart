@@ -56,6 +56,29 @@ void main() {
     expect(container.read(themeProvider).themeMode, ThemeMode.light);
   });
 
+  test(
+      'P2-2: toggleTheme from system-follow pins a concrete mode and drops system-follow',
+      () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(themeProvider.notifier);
+
+    // Default start: Follow System (test env resolves to light).
+    expect(container.read(themeProvider).themeMode, ThemeMode.system);
+    expect(container.read(themeProvider).isDarkMode, isFalse);
+
+    // One toggle → pinned DARK, no longer following the system.
+    await notifier.toggleTheme();
+    expect(container.read(themeProvider).themeMode, ThemeMode.dark);
+    expect(container.read(themeProvider).isFollowingSystem, isFalse);
+    expect(
+        CacheService().getThemePreference(), CacheService.themePreferenceDark);
+
+    // There is no toggle path back to system-follow — only the dialog's
+    // explicit setThemeMode(ThemeMode.system) restores it (pinned in the
+    // setThemeMode(system) test above).
+  });
+
   test('setThemeMode(system) persists and re-derives on a fresh container',
       () async {
     final container = makeContainer();
@@ -87,6 +110,50 @@ void main() {
     addTearDown(fresh.dispose);
     expect(fresh.read(themeProvider).themeMode, ThemeMode.dark);
     expect(fresh.read(themeProvider).isDarkMode, isTrue);
+  });
+
+  test('P2-1: AMOLED choice persists across a cold start', () async {
+    final first = makeContainer();
+    addTearDown(first.dispose);
+    final notifier = first.read(themeProvider.notifier);
+    expect(first.read(themeProvider).isAmoled, isFalse);
+
+    await notifier.setAmoled(true);
+    expect(first.read(themeProvider).isAmoled, isTrue);
+    // CacheService also reflects the write.
+    expect(CacheService().getAmoledPreference(), isTrue);
+
+    // A fresh container (simulated cold start) restores the flag.
+    final fresh = makeContainer();
+    addTearDown(fresh.dispose);
+    expect(fresh.read(themeProvider).isAmoled, isTrue);
+  });
+
+  test('P2-1: AMOLED and tri-state theme are independent persistence keys',
+      () async {
+    // Setting the AMOLED flag must not clobber the theme choice, and
+    // vice versa — the two `_keyTheme` / `_keyAmoled` storage slots
+    // are intentionally separate.
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(themeProvider.notifier);
+
+    await notifier.setThemeMode(ThemeMode.dark);
+    await notifier.setAmoled(true);
+
+    expect(container.read(themeProvider).themeMode, ThemeMode.dark);
+    expect(container.read(themeProvider).isAmoled, isTrue);
+    expect(
+        CacheService().getThemePreference(), CacheService.themePreferenceDark);
+    expect(CacheService().getAmoledPreference(), isTrue);
+
+    // Toggle AMOLED off without touching the theme.
+    await notifier.setAmoled(false);
+    expect(container.read(themeProvider).themeMode, ThemeMode.dark);
+    expect(container.read(themeProvider).isAmoled, isFalse);
+    expect(
+        CacheService().getThemePreference(), CacheService.themePreferenceDark);
+    expect(CacheService().getAmoledPreference(), isFalse);
   });
 
   test('legacy boolean theme value migrates to the tri-state preference',

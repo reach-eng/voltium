@@ -22,6 +22,12 @@ class CacheService {
   static const _keyRiderCacheTTL = 'volt_rider_cache_ttl';
   static const _keyLocale = 'volt_locale';
   static const _keyTheme = 'volt_theme';
+  // P2-1 (2026-09-07): persistent key for the "True AMOLED Black" sub-
+  // preference. Distinct from `_keyTheme` so a tri-state theme change
+  // doesn't clobber the AMOLED toggle (and vice-versa). Stored as a
+  // boolean so a future "follows the theme" choice can sit alongside
+  // it without re-encoding.
+  static const _keyAmoled = 'volt_amoled';
   static const _cacheDurationHours = 24;
   static const _cacheVersion = 'v1';
 
@@ -168,6 +174,22 @@ class CacheService {
   /// transparently on read via [getThemePreference]).
   Future<void> setThemePreference(String mode) async {
     await _prefs?.setString(_keyTheme, mode);
+  }
+
+  /// P2-1 (2026-09-07): persist the AMOLED sub-preference so a restart
+  /// doesn't silently drop it. Async to match [setThemePreference]; the
+  /// underlying [SharedPreferences] write is the same fire-and-forget
+  /// pattern the rest of the class uses.
+  Future<void> setAmoledPreference(bool value) async {
+    await _prefs?.setBool(_keyAmoled, value);
+  }
+
+  /// P2-1 (2026-09-07): synchronous read of the persisted AMOLED
+  /// preference. Returns `false` (the existing default) when nothing
+  /// has been stored yet, so a first-launch rider sees the same state
+  /// they had before the persistence fix landed.
+  bool getAmoledPreference() {
+    return _prefs?.getBool(_keyAmoled) ?? false;
   }
 
   /// **Synchronous** – returns `'system'`, `'light'`, `'dark'`, or `null`
