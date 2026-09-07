@@ -3591,6 +3591,18 @@ abstract class AppLocalizations {
   /// **'Rate Us'**
   String get settings_rateUs;
 
+  /// P2-5 (review, 2026-09-07): Toast shown when the device has no app that can handle the Play Store URL (e.g. a kiosk build or a device with Play Services disabled).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the Play Store. Please try again from a device with the Play Store app.'**
+  String get rateUs_noHandler;
+
+  /// P2-5 (review, 2026-09-07): Toast shown when canLaunchUrl returns true but the actual launch fails (e.g. user backs out, OS rejects the external app, etc.).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the Play Store. Please try again.'**
+  String get rateUs_launchFailed;
+
   /// Account section header in settings
   ///
   /// In en, this message translates to:

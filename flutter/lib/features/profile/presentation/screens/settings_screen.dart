@@ -296,14 +296,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconBgColor: colors.warningSurface,
                 title: l10n?.settings_rateUs ?? 'Rate us',
                 onTap: () async {
+                  // P2-5 (review, 2026-09-07): the previous version
+                  // called `launchUrl` inside a try/catch and only
+                  // `appDebug`-logged the failure — a rider with no
+                  // browser handler (rare, but it happens) would
+                  // see the tap swallow silently. Now we check
+                  // `canLaunchUrl` first (catches the
+                  // missing-handler case before the platform call),
+                  // catch the launch failure, and surface a toast
+                  // so the rider knows the tap did something.
                   final url = Uri.parse(
                       'https://play.google.com/store/apps/details?id=com.voltiumelectric.voltium');
                   try {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                    final canLaunch = await canLaunchUrl(url);
+                    if (!canLaunch) {
+                      if (mounted) {
+                        Toast.error(
+                          context,
+                          l10n?.rateUs_noHandler ??
+                              'Couldn\'t open the Play Store. Please try again from a device with the Play Store app.',
+                        );
+                      }
+                      return;
+                    }
+                    final launched = await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    );
+                    if (!launched && mounted) {
+                      Toast.error(
+                        context,
+                        l10n?.rateUs_launchFailed ??
+                            'Couldn\'t open the Play Store. Please try again.',
+                      );
+                    }
                   } catch (e) {
-                    // AUDIT FIX (2026-08-22): was a silent `catch (_) {}`.
                     appDebug(
                         'SettingsScreen: failed to open store listing: $e');
+                    if (mounted) {
+                      Toast.error(
+                        context,
+                        l10n?.rateUs_launchFailed ??
+                            'Couldn\'t open the Play Store. Please try again.',
+                      );
+                    }
                   }
                 },
               ),

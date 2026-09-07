@@ -189,6 +189,8 @@
   "settings_about": "के बारे में",
   "settings_appVersion": "ऐप संस्करण",
   "settings_rateUs": "हमें रेट करें",
+  "rateUs_noHandler": "Play Store नहीं खोला जा सका। कृपया Play Store ऐप वाले डिवाइस से फिर से प्रयास करें।",
+  "rateUs_launchFailed": "Play Store नहीं खोला जा सका। कृपया पुनः प्रयास करें।",
   "settings_accountSection": "खाता",
   "settings_deleteConfirmTitle": "खाता हटाएं",
   "settings_deleteConfirmBody": "यह क्रिया अपरिवर्तनीय है। आपका सारा डेटा, जिसमें KYC दस्तावेज़, वॉलेट बैलेंस और किराया इतिहास शामिल है, स्थायी रूप से हटा दिया जाएगा। क्या आप निश्चित हैं?",

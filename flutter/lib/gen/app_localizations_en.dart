@@ -1886,6 +1886,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_rateUs => 'Rate Us';
 
   @override
+  String get rateUs_noHandler =>
+      'Couldn\'t open the Play Store. Please try again from a device with the Play Store app.';
+
+  @override
+  String get rateUs_launchFailed =>
+      'Couldn\'t open the Play Store. Please try again.';
+
+  @override
   String get settings_accountSection => 'ACCOUNT';
 
   @override

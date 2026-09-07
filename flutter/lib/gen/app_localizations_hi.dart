@@ -1891,6 +1891,14 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settings_rateUs => 'हमें रेट करें';
 
   @override
+  String get rateUs_noHandler =>
+      'Play Store नहीं खोला जा सका। कृपया Play Store ऐप वाले डिवाइस से फिर से प्रयास करें।';
+
+  @override
+  String get rateUs_launchFailed =>
+      'Play Store नहीं खोला जा सका। कृपया पुनः प्रयास करें।';
+
+  @override
   String get settings_accountSection => 'खाता';
 
   @override
