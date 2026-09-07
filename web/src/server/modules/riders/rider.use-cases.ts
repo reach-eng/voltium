@@ -19,6 +19,7 @@ import { riderRepository } from './rider.repository';
 import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 import { clock } from '@/lib/clock';
 import { verifyVerifyReceipt } from '@/lib/verify-receipt';
+import { isValidIndianMobile } from '@/lib/phone';
 import { env } from '@/lib/env';
 
 /** Test-mode placeholder URLs the Flutter app submits when TEST_MODE is on. */
@@ -41,6 +42,124 @@ function rejectMockDocumentUrls(
         throw new Error('Test-mode document URLs are not accepted in this environment');
       }
     }
+  }
+}
+
+/**
+ * Validate that uploaded photos/documents are safe relative storage paths or application file-service endpoints.
+ * Blocks SSRF, cloud metadata, and arbitrary external domain tracking outside dev/test.
+ */
+export function isValidFileServiceUrl(rawUrl: string): boolean {
+  if (!rawUrl || typeof rawUrl !== 'string') return true;
+  const trimmed = rawUrl.trim();
+  if (trimmed === '') return true;
+
+  // Relative storage path or app route
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    // Reject protocol-relative "//"
+    return !trimmed.startsWith('//');
+  }
+
+  // Allow localhost/custom hosts in local dev / test
+  if (
+    env.APP_ENV !== 'staging' &&
+    env.APP_ENV !== 'production' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!parsed.pathname.startsWith('/api/files/')) {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host === '0.0.0.0' ||
+      host === '169.254.169.254' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal')
+    ) {
+      return false;
+    }
+    if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+    if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+    if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(host)) return false;
+    const m172 = /^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/.exec(host);
+    if (m172) {
+      const second = parseInt(m172[1], 10);
+      if (second >= 16 && second <= 31) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function validateFileServiceUrls(...fieldMaps: Array<Record<string, unknown>>): void {
+  const URL_KEYS = new Set([
+    'profilePhoto',
+    'riderPhoto',
+    'selfie',
+    'aadhaarFront',
+    'aadhaarBack',
+    'panCard',
+    'signature',
+    'pan',
+    'video',
+    'photo',
+  ]);
+  for (const map of fieldMaps) {
+    for (const [key, value] of Object.entries(map)) {
+      if (URL_KEYS.has(key) && typeof value === 'string' && value.trim().length > 0) {
+        if (!isValidFileServiceUrl(value)) {
+          throw new RiderValidationError(
+            `${key} must be an uploaded file key or valid application file URL`
+          );
+        }
+      }
+    }
+  }
+}
+
+function validateDobString(dobValue: unknown, subject: 'Rider' | 'Guarantor' = 'Rider'): void {
+  if (typeof dobValue !== 'string' || dobValue.trim().length === 0) return;
+  const dobRaw = dobValue.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dobRaw);
+  const dmy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dobRaw);
+  const parts = iso
+    ? { y: +iso[1], m: +iso[2], d: +iso[3] }
+    : dmy
+      ? { y: +dmy[3], m: +dmy[2], d: +dmy[1] }
+      : null;
+  if (!parts) {
+    throw new RiderValidationError(`Enter a valid date of birth`);
+  }
+  const dobDate = new Date(parts.y, parts.m - 1, parts.d);
+  if (
+    isNaN(dobDate.getTime()) ||
+    dobDate.getFullYear() !== parts.y ||
+    dobDate.getMonth() !== parts.m - 1 ||
+    dobDate.getDate() !== parts.d
+  ) {
+    throw new RiderValidationError('Enter a valid date of birth');
+  }
+  if (parts.y < 1940) {
+    throw new RiderValidationError('Enter a valid date of birth');
+  }
+  const cutoff = new Date();
+  cutoff.setHours(23, 59, 59, 999);
+  cutoff.setFullYear(cutoff.getFullYear() - 18);
+  if (dobDate > cutoff) {
+    throw new RiderValidationError(
+      subject === 'Rider'
+        ? 'Rider must be at least 18 years old'
+        : 'Guarantor must be at least 18 years old'
+    );
   }
 }
 
@@ -70,13 +189,7 @@ const SAFE_RIDER_FIELDS = new Set([
   'currentAddress',
   'emergencyContact',
   'intent',
-  'locationGranted',
-  'batteryGranted',
-  'contactsGranted',
-  'callLogsGranted',
-  'micGranted',
-  'cameraGranted',
-  'phoneGranted',
+  // P3-3: permission flags removed — managed via device-compliance routes
   // LANGUAGE-AUDIT (2026-08-16) #6: the rider's chosen language as a
   // BCP-47 language tag (e.g. `en`, `hi`). Sanitized on the way in
   // (validator allows only lowercase letters + optional country code).
@@ -665,6 +778,13 @@ export const riderUseCases = {
   /**
    * Update rider profile with field-level security.
    * Handles safe rider fields, KYC fields, guarantor fields, and vehicle returns.
+   *
+   * Note on teamLeaderPhone:
+   * In the rider domain and API contracts, `teamLeaderPhone` represents the assigned
+   * fleet hub manager / coordinator's official operational contact phone number.
+   * It is intentionally provided to riders for vehicle pickup coordination, emergency
+   * SOS, and roadside assistance (surfaced via active_dashboard_screen, tl_details_screen,
+   * and support_center_screen in the Flutter client). It is not rider-writable.
    */
   async updateProfile(riderDbId: string, input: Record<string, unknown>) {
     const existing = await getCachedRider(riderDbId, () =>
@@ -677,7 +797,7 @@ export const riderUseCases = {
     const guarantorData: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(input)) {
-      if (value === undefined || value === null) continue;
+      if (value === undefined || (value === null && key !== 'preferredLocale')) continue;
 
       if (
         !SAFE_RIDER_FIELDS.has(key) &&
@@ -698,7 +818,11 @@ export const riderUseCases = {
       }
 
       if (SAFE_RIDER_FIELDS.has(key)) {
-        riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
+        if (key === 'preferredLocale' && value === null) {
+          riderData[key] = null;
+        } else {
+          riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
+        }
       } else if (SAFE_KYC_FIELDS.has(key)) {
         // PR-ONBOARDING-2026-08-11 (audit 2.10): KYC string values
         // (aadhaarNumber, panNumber, name, address, etc.) are not
@@ -728,52 +852,30 @@ export const riderUseCases = {
 
     // P0: test-mode placeholder URLs must never persist outside dev/test.
     rejectMockDocumentUrls(kycData, guarantorData, riderData);
+    validateFileServiceUrls(kycData, guarantorData, riderData);
 
-    // P1: riders must be 18+. The onboarding picker caps at today-18y;
+    // P1: riders and guarantors must be 18+. The onboarding picker caps at today-18y;
     // enforce server-side too (raw API + admin paths bypass the picker).
-    if (typeof riderData.dob === 'string' && riderData.dob.trim().length > 0) {
-      const dobRaw = (riderData.dob as string).trim();
-      const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dobRaw);
-      const dmy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dobRaw);
-      const parts = iso
-        ? { y: +iso[1], m: +iso[2], d: +iso[3] }
-        : dmy
-          ? { y: +dmy[3], m: +dmy[2], d: +dmy[1] }
-          : null;
-      if (parts) {
-        // P3 fix: reject impossible calendar dates (`new Date(2020, 1, 31)`
-        // silently rolls over to Mar 2) and absurd years — the client
-        // picker already floors at 1940.
-        const dobDate = new Date(parts.y, parts.m - 1, parts.d);
-        if (
-          isNaN(dobDate.getTime()) ||
-          dobDate.getFullYear() !== parts.y ||
-          dobDate.getMonth() !== parts.m - 1 ||
-          dobDate.getDate() !== parts.d
-        ) {
-          throw new RiderValidationError('Enter a valid date of birth');
-        }
-        if (parts.y < 1940) {
-          throw new RiderValidationError('Enter a valid date of birth');
-        }
-        const cutoff = new Date();
-        cutoff.setFullYear(cutoff.getFullYear() - 18);
-        if (dobDate > cutoff) {
-          throw new RiderValidationError('Rider must be at least 18 years old');
-        }
-      }
+    validateDobString(riderData.dob, 'Rider');
+    if (guarantorData.dob) {
+      validateDobString(guarantorData.dob, 'Guarantor');
     }
 
     // P2 fix: emergency contact may not be the rider's own number. The edit
     // screen validates this client-side; raw API calls bypassed it.
     if (typeof riderData.emergencyContact === 'string') {
-      const cleanEmergency = (riderData.emergencyContact as string).replace(/\D/g, '');
-      const cleanPhone = existing.phone ? String(existing.phone).replace(/\D/g, '') : '';
-      if (cleanEmergency.length > 0 && cleanEmergency === cleanPhone) {
+      const cleanEmergency = (riderData.emergencyContact as string).replace(/\D/g, '').slice(-10);
+      const cleanPhone = existing.phone ? String(existing.phone).replace(/\D/g, '').slice(-10) : '';
+      if (cleanEmergency.length === 10 && cleanEmergency === cleanPhone) {
         throw new RiderValidationError('Emergency contact cannot be your own number');
       }
-      if (cleanEmergency.length > 0 && cleanEmergency.length !== 10) {
-        throw new RiderValidationError('Emergency contact must be 10 digits');
+      // EDIT-PROFILE-AUDIT P1-2 (2026-09-08): use the central
+      // `isValidIndianMobile` helper. The Zod schema already
+      // enforces this on the request boundary; the manual
+      // check here is a defense-in-depth for callers that
+      // bypass Zod (e.g., admin tools).
+      if (cleanEmergency.length > 0 && !isValidIndianMobile(cleanEmergency)) {
+        throw new RiderValidationError('Enter a valid 10-digit Indian mobile number');
       }
     }
 
@@ -866,14 +968,18 @@ export const riderUseCases = {
     // below can tell first submission (may advance) from correction
     // (must never regress lifecycle backward).
     let hadKycRow = false;
+    const COSMETIC_KYC_FIELDS = ['profilePhoto', 'riderPhoto', 'selfie'];
+    const hasIdentityKycUpdates = Object.keys(kycData).some(
+      (k) => !COSMETIC_KYC_FIELDS.includes(k)
+    );
     if (Object.keys(kycData).length > 0) {
       const kycExisting = await tx.kycProfile.findUnique({
         where: { riderId: riderDbId },
         select: { status: true, editableFields: true },
       });
       hadKycRow = !!kycExisting;
-      if (kycExisting?.status === 'APPROVED') {
-        throw new Error('KYC is approved and locked. Ask support to request changes first.');
+      if (kycExisting?.status === 'APPROVED' && hasIdentityKycUpdates) {
+        throw new RiderValidationError('KYC is approved and locked. Ask support to request changes first.');
       }
       // P0: enforce the admin-set editableFields allowlist on correction
       // resubmits. Previously any field could be overwritten past an
@@ -882,7 +988,7 @@ export const riderUseCases = {
       // selfie→profilePhoto) are accepted in either form.
       // P1 fix (default-deny): a REJECT/INFO_REQUIRED row with an empty or
       // missing allowlist used to reopen the ENTIRE KYC surface — the
-      // scoping failed open on admin omission. Now it fails closed.
+      // scoping failed open on admin omission. Now it fails closed for identity fields.
       if (
         kycExisting &&
         (kycExisting.status === 'INFO_REQUIRED' ||
@@ -900,18 +1006,26 @@ export const riderUseCases = {
           profilePhoto: 'selfie',
         };
         const blocked = Object.keys(kycData).filter(
-          (k) => !allowed.has(k) && !allowed.has(aliasOf[k] ?? '')
+          (k) =>
+            !COSMETIC_KYC_FIELDS.includes(k) &&
+            !allowed.has(k) &&
+            !allowed.has(aliasOf[k] ?? '')
         );
         if (blocked.length > 0) {
-          throw new Error(
+          throw new RiderValidationError(
             `Only the requested corrections can be resubmitted right now (${blocked.join(', ')} is not editable). Ask support to request changes first.`
           );
         }
       }
+
+      const targetKycStatus = hasIdentityKycUpdates
+        ? 'SUBMITTED'
+        : (kycExisting?.status ?? 'SUBMITTED');
+
       await tx.kycProfile.upsert({
         where: { riderId: riderDbId },
-        create: { riderId: riderDbId, ...(kycData as any), status: 'SUBMITTED' },
-        update: { ...(kycData as any), status: 'SUBMITTED' },
+        create: { riderId: riderDbId, ...(kycData as any), status: targetKycStatus },
+        update: { ...(kycData as any), status: targetKycStatus },
       });
     }
 
@@ -973,11 +1087,17 @@ export const riderUseCases = {
       ];
       const guarantorMatchesStored = (): boolean => {
         if (!storedFull) return false;
-        if (digitsOf(guarantorData.phone) !== digitsOf((storedFull as any).phone)) return false;
+        if (
+          guarantorData.phone !== undefined &&
+          digitsOf(guarantorData.phone) !== digitsOf((storedFull as any).phone)
+        ) {
+          return false;
+        }
         return guarantorCompareKeys.every((k) => {
-          const incoming = k === 'relation' && guarantorData[k] == null
-            ? 'Other'
-            : guarantorData[k];
+          const incoming =
+            k === 'relation' && guarantorData[k] === null
+              ? 'Other'
+              : guarantorData[k];
           if (incoming === undefined) return true;
           return textOf(incoming) === textOf((storedFull as any)[k]);
         });
@@ -1074,8 +1194,8 @@ export const riderUseCases = {
         }
       }
 
-      // 2. If KYC data is present, move forward for first submissions only.
-      if (Object.keys(kycData).length > 0 && !hadKycRow) {
+      // 2. If identity KYC data is present, move forward for first submissions only.
+      if (hasIdentityKycUpdates && !hadKycRow) {
         if (lifecycleNow.lifecycleStatus === 'NEW') {
           await transitionRiderStatus(riderDbId, 'PHONE_VERIFIED', tx);
         }

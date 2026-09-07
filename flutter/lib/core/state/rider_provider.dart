@@ -115,6 +115,8 @@ class RiderState {
       rider?.accountStatus == AccountStatus.active ||
       (rider?.lifecycleStatus.isNotEmpty == true &&
           lifecycleRank(rider!) >= 11);
+  bool get isFromCache =>
+      dataState == DataState.fromCache || (rider?.isFromCache ?? false);
 
   RiderState copyWith({
     RiderModel? rider,
@@ -713,7 +715,13 @@ final riderProvider = NotifierProvider<RiderNotifier, RiderState>(
 final riderRepositoryProvider = Provider<RiderRepository>((ref) {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return RiderRepositoryImpl(vClient);
+  // EDIT-PROFILE-AUDIT P1-1 (2026-09-08): the
+  // `RiderRepositoryImpl` constructor now takes a
+  // `FilesRepository` so the edit-profile save path can
+  // upload photos through the same provider-managed
+  // instance instead of constructing one inline per save
+  // with two fresh `ApiClient()` instances.
+  return RiderRepositoryImpl(vClient, ref.read(filesRepositoryProvider));
 });
 
 final rentalRepositoryProvider = Provider<RentalRepository>((ref) {

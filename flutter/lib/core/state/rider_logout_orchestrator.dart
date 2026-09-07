@@ -30,6 +30,8 @@ import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_
     show userOnboardingNotifierProvider;
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart'
     show guarantorOnboardingNotifierProvider;
+import 'package:voltium_rider/features/profile/presentation/providers/guarantor_verification_provider.dart'
+    show guarantorVerificationProvider;
 // AUDIT FIX (HIGH SECURITY): the guarantor draft now lives in encrypted
 // storage (GuarantorCache); logout must clear it alongside the notifier
 // reset or the next rider on a shared device can resume the previous
@@ -127,6 +129,11 @@ class RiderLogoutOrchestrator {
     support.logout();
     tickets.reset();
     guarantor.reset();
+    // EDIT-PROFILE-AUDIT P1-5 (2026-09-08): the guarantor phone
+    // verification receipt is rider-scoped — a different rider
+    // (or a future login on a shared device) cannot reuse the
+    // previous rider's receipt. Clear on logout.
+    _ref.read(guarantorVerificationProvider.notifier).clear();
 
     // PR-7 (PICKUP P0-2): clear any in-progress pickup draft so a fresh
     // login on a shared device doesn't resume the previous rider's

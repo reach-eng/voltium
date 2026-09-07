@@ -1,14 +1,25 @@
 import { z } from 'zod';
+import { isValidIndianMobile } from '@/lib/phone';
 import { logger } from '@/lib/logger';
-export const sendOtpSchema = z.object({
-  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
-  // PR-VER-2026-08-06 (LOGIN_OTP_INTENT P0-1): the Flutter client now
-  // carries the referral code on send-otp (it used to be dropped before
-  // the request left the device). It is optional and only used as intent
-  // telemetry here — the authoritative capture happens at verify (rider
-  // creation) via `verifyOtpSchema.referralCode`.
-  referralCode: z.string().max(20).nullish(),
-});
+export const sendOtpSchema = z
+  .object({
+    phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+    // PR-VER-2026-08-06 (LOGIN_OTP_INTENT P0-1): the Flutter client now
+    // carries the referral code on send-otp (it used to be dropped before
+    // the request left the device). It is optional and only used as intent
+    // telemetry here — the authoritative capture happens at verify (rider
+    // creation) via `verifyOtpSchema.referralCode`.
+    referralCode: z.string().max(20).nullish(),
+    type: z.enum(['LOGIN', 'GUARANTOR']).optional().default('LOGIN'),
+    guarantorName: z.string().max(100).nullish(),
+  })
+  .refine(
+    (data) => data.type !== 'GUARANTOR' || (typeof data.guarantorName === 'string' && data.guarantorName.trim().length > 0),
+    {
+      message: 'Guarantor name is required for guarantor verification',
+      path: ['guarantorName'],
+    }
+  );
 
 export const verifyOtpSchema = z
   .object({
@@ -26,6 +37,46 @@ export const verifyOtpSchema = z
   });
 
 // ==================== RIDER PROFILE ====================
+/**
+ * Validate date of birth string:
+ * - Must match yyyy-mm-dd or dd-mm-yyyy format.
+ * - Components must round-trip through calendar arithmetic without rollover (e.g. 31-02-2020 -> March 2 is rejected).
+ * - Must be on or after 1940 (lower bound).
+ * - Must be at least 18 years old.
+ */
+export function isValidDob(dobRaw: string): boolean {
+  if (typeof dobRaw !== 'string') return false;
+  const trimmed = dobRaw.trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+  const dmy = /^(\d{2})-(\d{2})-(\d{4})$/.exec(trimmed);
+  const parts = iso
+    ? { y: +iso[1], m: +iso[2], d: +iso[3] }
+    : dmy
+      ? { y: +dmy[3], m: +dmy[2], d: +dmy[1] }
+      : null;
+  if (!parts) return false;
+  if (parts.y < 1940) return false;
+
+  const dobDate = new Date(parts.y, parts.m - 1, parts.d);
+  if (
+    isNaN(dobDate.getTime()) ||
+    dobDate.getFullYear() !== parts.y ||
+    dobDate.getMonth() !== parts.m - 1 ||
+    dobDate.getDate() !== parts.d
+  ) {
+    return false;
+  }
+
+  const cutoff = new Date();
+  cutoff.setHours(23, 59, 59, 999);
+  cutoff.setFullYear(cutoff.getFullYear() - 18);
+  if (dobDate > cutoff) {
+    return false;
+  }
+
+  return true;
+}
+
 export const updateProfileSchema = z.object({
   riderId: z.string().min(1, 'Rider ID required').nullish(),
   fullName: z.string().min(2).max(100).nullish(),
@@ -33,23 +84,35 @@ export const updateProfileSchema = z.object({
   fatherName: z.string().max(100).nullish(),
   motherName: z.string().max(100).nullish(),
   currentAddress: z.string().max(500).nullish(),
-  emergencyContact: z.string().max(20).nullish(),
+  emergencyContact: z
+    .string()
+    .max(20)
+    .nullish()
+    .refine(
+      (v) => v === undefined || v === null || v === '' || isValidIndianMobile(v),
+      { message: 'Enter a valid 10-digit Indian mobile number' }
+    ),
   dob: z
     .string()
     .regex(/^(\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/, 'DOB must be yyyy-mm-dd or dd-mm-yyyy')
-    .nullish(),
+    .refine((v) => !v || isValidDob(v), {
+      message: 'Enter a valid date of birth (must be at least 18 years old and on or after 1940)',
+    })
+    .nullish()
+    .or(z.literal('')),
   intent: z.string().nullish(),
-  // LANGUAGE-AUDIT (2026-08-16) #6: rider's preferred language.
-  // BCP-47 language tag, optional. We accept `en`, `hi`, or any
-  // future language added to `LocaleNotifier.supportedLanguages`
-  // on the mobile side. The server treats it as opaque — only the
-  // mobile client validates it against its own allowlist.
+  // LANGUAGE-AUDIT (2026-08-16) #6 / P1-1 & P1-2: rider's preferred language.
+  // Restricted to supported locales (`en`, `hi`, with optional `_IN` country code).
+  // Accepting null or empty string "" clears the preference back to follow-system.
   preferredLocale: z
-    .string()
-    .min(2)
-    .max(8)
-    .regex(/^[a-z]{2}(_[A-Z]{2})?$/, 'preferredLocale must be a BCP-47 tag')
-    .nullish(),
+    .union([
+      z
+        .string()
+        .regex(/^(en|hi)(_[A-Z]{2})?$/, 'preferredLocale must be a supported language tag (en, hi)'),
+      z.literal(''),
+    ])
+    .nullish()
+    .transform((v) => (v === '' ? null : v)),
   // KYC Urls
   profilePhoto: z.string().nullish().or(z.literal('')),
   riderPhoto: z.string().nullish().or(z.literal('')),
@@ -69,14 +132,30 @@ export const updateProfileSchema = z.object({
   longitude: z.number().nullish(),
   // Guarantor Fields
   guarantorName: z.string().nullish(),
+  // EDIT-PROFILE-AUDIT P1-2 (2026-09-08): use the central
+  // `isValidIndianMobile` helper. Same rule on the client
+  // emergency validator, the OTP gate, the Zod schema
+  // (server), and the server's manual check in
+  // rider.use-cases.ts. The error message is the single
+  // canonical "Enter a valid 10-digit Indian mobile number".
   guarantorPhone: z
     .string()
-    .regex(/^(\d{10})?$/, 'Guarantor phone must be 10 digits')
     .nullish()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .refine(
+      (v) => v === '' || v === undefined || v === null || isValidIndianMobile(v),
+      { message: 'Enter a valid 10-digit Indian mobile number' }
+    ),
   guarantorPhoneReceipt: z.string().nullish(),
   guarantorRelation: z.string().nullish(),
-  guarantorDob: z.string().nullish(),
+  guarantorDob: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2}|\d{2}-\d{2}-\d{4})$/, 'DOB must be yyyy-mm-dd or dd-mm-yyyy')
+    .refine((v) => !v || isValidDob(v), {
+      message: 'Enter a valid date of birth (must be at least 18 years old and on or after 1940)',
+    })
+    .nullish()
+    .or(z.literal('')),
   guarantorFatherName: z.string().nullish(),
   guarantorMotherName: z.string().nullish(),
   guarantorAddress: z.string().nullish(),
@@ -98,14 +177,9 @@ export const updateProfileSchema = z.object({
   // returns 400 with a clear "unrecognized key" error.
   // P1: `requiresHigherDeposit` removed — server-owned surcharge flag, never
   // rider-writable (strict schema rejects it outright; see guarantor/skip).
-  // Permissions
-  locationGranted: z.boolean().nullish(),
-  batteryGranted: z.boolean().nullish(),
-  contactsGranted: z.boolean().nullish(),
-  callLogsGranted: z.boolean().nullish(),
-  micGranted: z.boolean().nullish(),
-  cameraGranted: z.boolean().nullish(),
-  phoneGranted: z.boolean().nullish(),
+  // P3-3: Permission flags (locationGranted, phoneGranted, etc.) removed from
+  // updateProfileSchema. Device permissions are managed exclusively through
+  // POST /api/rider/device/permissions via deviceComplianceUseCases.syncState.
 }).strict();
 
 
@@ -738,7 +812,7 @@ export const createIncidentSchema = z.object({
 
 export const updateIncidentSchema = z.object({
   id: z.string().min(1).optional(),
-  status: z.enum(['REPORTED', 'OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED', 'DISMISSED']).optional(),
+  status: z.enum(['OPEN', 'INVESTIGATING', 'RESOLVED', 'CLOSED']).optional(),
   assignedTo: z.string().optional(),
   resolution: z.string().optional(),
   insuranceClaim: z.boolean().optional(),
@@ -820,6 +894,15 @@ export function formatZodIssueMessage(issue: z.ZodIssue): string {
       return `${field} cannot exceed ${max} characters`;
     }
     return `${field} cannot exceed ${max}`;
+  }
+  if ((issue.code as string) === 'unrecognized_keys') {
+    const keys = (issue as any).keys?.join(', ') || '';
+    return `Unrecognized field: ${keys}`;
+  }
+  if ((issue.code as string) === 'invalid_string') {
+    if ((issue as any).validation === 'email') {
+      return 'Please enter a valid email address';
+    }
   }
   return issue.message;
 }

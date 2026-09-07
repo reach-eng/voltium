@@ -32,15 +32,23 @@ void main() {
       });
 
       test('returns error for invalid length', () {
+        // EDIT-PROFILE-AUDIT P1-2 (2026-09-08): the validator
+        // now returns a single canonical message via
+        // `isValidIndianMobile` (10 digits, prefix 6–9). The
+        // old split messages ("must be 10 digits" / "cannot
+        // exceed 10 digits" / "must start with 6,7,8,9") were
+        // collapsed into one string to match the server's
+        // Zod `.refine` + the `RiderValidationError` thrown by
+        // the use-case layer.
         expect(PhoneValidator.validate('987654321'),
-            'Phone number must be 10 digits');
+            'Enter a valid 10-digit Indian mobile number');
         expect(PhoneValidator.validate('98765432101'),
-            'Phone number cannot exceed 10 digits');
+            'Enter a valid 10-digit Indian mobile number');
       });
 
       test('returns error for invalid prefix', () {
         expect(PhoneValidator.validate('1234567890'),
-            'Phone number must start with 6, 7, 8, or 9');
+            'Enter a valid 10-digit Indian mobile number');
       });
 
       test('returns null for valid phone', () {
