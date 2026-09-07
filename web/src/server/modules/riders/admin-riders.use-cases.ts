@@ -26,6 +26,7 @@ import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidate
 import { invalidateCache } from '@/lib/cache';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { validateKycTransition, type KycStatus as KycMachineStatus } from '@/server/modules/kyc/kyc-state-machine';
+import { promoteToApproved } from '@/server/modules/kyc/kyc.repository';
 import { fleetUseCases } from '@/server/modules/riders/admin-rider-fleet.use-cases';
 
 // Field allowlists for mass-assignment protection
@@ -416,6 +417,12 @@ export const adminRiderUseCases = {
     const kycData: any = {};
     const walletData: any = {};
     const guarantorData: any = {};
+    // NET-005 (2026-09-08): flag the approve branch so the
+    // transaction body calls `promoteToApproved` after the
+    // kyc upsert. The helper writes the four approval
+    // fields atomically with the rest of the transaction's
+    // field updates.
+    let promotingApproved = false;
 
     for (const [key, value] of Object.entries(data)) {
       if (key === 'walletBalance') {
@@ -476,23 +483,29 @@ export const adminRiderUseCases = {
     // recorded (kycDoneAt + guarantorData.status) but the lifecycle
     // stays where it is.
     if (kycData.status === 'APPROVED') {
-      const currentRank = lifecycleRankOf(existing.lifecycleStatus);
-      if (currentRank <= 4) {
-        riderData.lifecycleStatus = 'KYC_APPROVED';
-      }
-      riderData.kycDoneAt = new Date();
-      // PR-ONBOARDING-FLOW-2026-08-13: only auto-approve the guarantor
-      // if it was already in SUBMITTED state. Previously, KYC approval
-      // unconditionally set guarantorData.status = 'APPROVED', which
-      // silently auto-approved a rider's guarantor on KYC review alone.
-      // KYC review and guarantor review are independent gates — the
-      // admin should explicitly approve the guarantor, not piggyback
-      // on KYC approval. If the guarantor is still in PENDING/DRAFT
-      // (rider hasn't submitted it yet), leave it alone.
+      // NET-005 fix (2026-09-08): the inline `lifecycleStatus` /
+      // `kycDoneAt` writes used to be the entire approval
+      // surface. That left the live path divergent from
+      // kycRepository.approveKyc — no `expiresAt` (so the
+      // 365-day expiry sweep never matched), no
+      // `editableFields: []` lock (re-submit was unblocked),
+      // no `pendingCorrections` cleanup, and no
+      // applyPendingCorrections step. The four writes now
+      // live in `promoteToApproved` (kyc.repository.ts),
+      // shared by both the use-case and the repo. The
+      // use-case calls it inside the existing transaction
+      // (see below) so the writes are atomic with the other
+      // field updates. The F-06 rank guard
+      // (`lifecycleStatus` only promoted for ranks 0..3) is
+      // preserved inside `promoteToApproved`.
+      //
+      // The guarantor auto-approve is a separate concern from
+      // NET-005 and stays in this branch:
       const existingGuarantor = await db.guarantor.findUnique({ where: { riderId: id } });
       if (existingGuarantor?.status === 'SUBMITTED') {
         guarantorData.status = 'APPROVED';
       }
+      promotingApproved = true;
     }
     if (kycData.status === 'REJECTED' || kycData.status === 'INFO_REQUIRED') {
       // Same guard for rejections: do not downgrade a rider who is
@@ -551,6 +564,31 @@ export const adminRiderUseCases = {
           update: kycData,
           create: { riderId: id, ...kycData },
         });
+        // NET-005 (2026-09-08): the upsert above writes the
+        // request body's kyc fields (e.g., a corrected
+        // aadhaarFront URL submitted with the approval). The
+        // helper then writes the four approval fields
+        // (status=APPROVED, editableFields=[], expiresAt+365d,
+        // pendingCorrections=DbNull) plus the rider.kycDoneAt
+        // plus the F-06 lifecycleStatus promotion — all in
+        // the same transaction. The helper's writes are
+        // atomic at the row level and overwrite only the four
+        // approval keys, so the upsert's other-field writes
+        // (aadhaarFront, profilePhoto, etc.) survive.
+        if (promotingApproved) {
+          await promoteToApproved(tx, id);
+        }
+      } else if (promotingApproved) {
+        // Edge case: the request body is `kycStatus: 'APPROVED'`
+        // with no other kyc field updates. The `kycData` bucket
+        // is still non-empty (it carries `status`), so the
+        // `if (Object.keys(kycData).length > 0)` branch above
+        // would normally fire. This `else if` is a defensive
+        // fallback for any future code that strips the
+        // status key from `kycData` before the transaction —
+        // in that case the helper still runs and the approval
+        // lands.
+        await promoteToApproved(tx, id);
       }
       if (Object.keys(walletData).length > 0) {
         const wallet =

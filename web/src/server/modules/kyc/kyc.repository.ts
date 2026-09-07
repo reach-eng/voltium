@@ -205,57 +205,19 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx) => {
-      // PR-KYC-CORRECTION: promote the rider's held correction values into
-      // the real Rider/KycProfile columns and clear the blob + allowlist
-      // atomically with the APPROVED status landing.
-      await applyPendingCorrections(tx, riderDbId);
-      const kyc = await tx.kycProfile.update({
+      // NET-005 fix (2026-09-08): call the shared `promoteToApproved`
+      // tx-accepting helper so the four approval writes (status,
+      // editableFields lock, expiresAt +365d, pendingCorrections
+      // cleanup), the rider.kycDoneAt, the applyPendingCorrections
+      // step, and the F-06 lifecycleStatus promotion all run in the
+      // same transaction the kyc.use-cases.ts:reviewKyc path uses.
+      // The previous inline body was duplicated and divergent
+      // (it never set expiresAt), so live-UI approvals never
+      // hit the kyc-expiry.job.ts sweep.
+      await promoteToApproved(tx, riderDbId);
+      const kyc = await tx.kycProfile.findUnique({
         where: { riderId: riderDbId },
-        // AUDIT-RECON 2026-09-02 batch 6 P0-3: lock the profile post-
-        // approval by setting editableFields = []. The rider-side
-        // check at flutter/lib/features/kyc/presentation/screens/
-        // user_onboarding_screen.dart:988-995 is
-        //   kycEditableFields == null || isEmpty
-        //   ? true   // editable
-        //   : contains(fieldName)
-        // A null/empty editableFields means "no restriction" — the
-        // rider can edit every field. The reject path (line ~209)
-        // sets editableFields to the reviewer-supplied list, but
-        // the APPROVE path was leaving it untouched, so an approved
-        // rider could re-submit their name / DOB / Aadhaar number
-        // after approval. Lock everything on approval so a future
-        // re-submit requires an admin REJECT first.
-        //
-        // NET-005 (audit batch 20, 2026-09-02): also set expiresAt
-        // so the kyc-expiry.job.ts worker can later transition this
-        // row from APPROVED to EXPIRED when the 365-day window
-        // passes. The window matches the AuditLog retention for
-        // kyc.* actions (web/src/lib/audit-log.ts:4-10) so the
-        // expiry horizon and the audit trail horizon are aligned.
-        data: {
-          status: 'APPROVED',
-          editableFields: [],
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          pendingCorrections: Prisma.DbNull,
-        },
       });
-      await tx.rider.update({
-        where: { id: riderDbId },
-        data: { kycDoneAt: new Date() },
-      });
-      // F-06: Only advance the rider's lifecycleStatus to KYC_APPROVED if they are
-      // currently at an earlier stage (ranks 0..3: NEW, PHONE_VERIFIED, PROFILE_SUBMITTED, KYC_SUBMITTED).
-      // Higher-ranked riders (ranks 4..14: GUARANTOR_*, DEPOSIT_*, PLAN_SELECTED, PICKUP_SCHEDULED,
-      // ACTIVE, etc.) must NEVER be demoted backward to rank 4, preserving downstream onboarding progress.
-      await tx.rider.updateMany({
-        where: { 
-          id: riderDbId, 
-          lifecycleStatus: { in: LOWER_THAN_KYC_APPROVED },
-        },
-        data: { lifecycleStatus: 'KYC_APPROVED' },
-      });
-
-      invalidateRiderCache(riderDbId);
 
       // BLOCKER 2.7: notification is dispatched by the outbox worker
       // (kyc.use-cases.ts emits NOTIFICATION_SEND inside the same
@@ -416,6 +378,86 @@ export async function applyPendingCorrections(
       pendingCorrections: Prisma.DbNull,
       editableFields: [],
     },
+  });
+  invalidateRiderCache(riderDbId);
+}
+
+// NET-005 fix (2026-09-08): the four "approval" writes
+// were duplicated in two places — kycRepository.approveKyc
+// (the dead repo path used by kyc.use-cases.ts:reviewKyc)
+// and admin-riders.use-cases.ts:update (the live admin
+// bulk-update path). The live path only wrote `status` and
+// `kycDoneAt`; it never set `expiresAt`, never locked
+// `editableFields: []`, never cleared `pendingCorrections`.
+// Result: kyc-expiry.job.ts (which filters
+// `status: 'APPROVED' AND expiresAt < now()`) never matched
+// any live-UI-approved KYC, so the 365-day expiry horizon
+// was a no-op.
+//
+// Extract the four writes + the applyPendingCorrections
+// step + the rider.kycDoneAt + the F-06 lifecycleStatus
+// promotion into a single tx-accepting helper. Both the repo
+// (kycRepository.approveKyc) and the use-case
+// (admin-riders.use-cases.ts:update) call it inside their
+// own transactions, so the writes land atomically with the
+// caller's other field updates.
+//
+// The helper does NOT validate the state-machine transition —
+// that's the caller's responsibility (the repo's approveKyc
+// validates; the use-case's update validates inside its own
+// transaction). The helper is "apply the approval writes
+// given that we're in an APPROVED transition."
+export async function promoteToApproved(
+  tx: KycCorrectionTx,
+  riderDbId: string,
+): Promise<void> {
+  // PR-KYC-CORRECTION: promote the rider's held correction
+  // values into the real Rider/KycProfile columns and clear
+  // the blob + allowlist atomically with the APPROVED status
+  // landing.
+  await applyPendingCorrections(tx, riderDbId);
+  // AUDIT-RECON 2026-09-02 batch 6 P0-3: lock the profile
+  // post-approval by setting editableFields = []. The
+  // rider-side check at flutter/lib/features/kyc/presentation/
+  // screens/user_onboarding_screen.dart:988-995 treats a
+  // null/empty editableFields as "no restriction" (editable).
+  // The reject path sets editableFields to the reviewer
+  // list; the approve path must lock everything so a future
+  // re-submit requires a REJECT first.
+  //
+  // NET-005 (audit batch 20, 2026-09-02): also set
+  // expiresAt so the kyc-expiry.job.ts worker can later
+  // transition this row from APPROVED to EXPIRED when the
+  // 365-day window passes. The window matches the AuditLog
+  // retention for kyc.* actions
+  // (web/src/lib/audit-log.ts:4-10) so the expiry horizon
+  // and the audit trail horizon are aligned.
+  await tx.kycProfile.update({
+    where: { riderId: riderDbId },
+    data: {
+      status: 'APPROVED',
+      editableFields: [],
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      pendingCorrections: Prisma.DbNull,
+    },
+  });
+  await tx.rider.update({
+    where: { id: riderDbId },
+    data: { kycDoneAt: new Date() },
+  });
+  // F-06: Only advance the rider's lifecycleStatus to
+  // KYC_APPROVED if they are currently at an earlier stage
+  // (ranks 0..3: NEW, PHONE_VERIFIED, PROFILE_SUBMITTED,
+  // KYC_SUBMITTED). Higher-ranked riders (ranks 4..14:
+  // GUARANTOR_*, DEPOSIT_*, PLAN_SELECTED, PICKUP_SCHEDULED,
+  // ACTIVE, etc.) must NEVER be demoted backward to rank 4,
+  // preserving downstream onboarding progress.
+  await tx.rider.updateMany({
+    where: {
+      id: riderDbId,
+      lifecycleStatus: { in: LOWER_THAN_KYC_APPROVED },
+    },
+    data: { lifecycleStatus: 'KYC_APPROVED' },
   });
   invalidateRiderCache(riderDbId);
 }
