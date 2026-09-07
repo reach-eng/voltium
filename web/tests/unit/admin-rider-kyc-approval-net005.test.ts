@@ -49,8 +49,19 @@ vi.mock('@/lib/notification-service', () => ({
   },
 }));
 
-vi.mock('@/lib/audit-log', () => ({
+const auditLogMocks = vi.hoisted(() => ({
   createAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('@/lib/audit-log', () => ({
+  createAuditLog: auditLogMocks.createAuditLog,
+  // The tests below only care about the createAuditLog
+  // call shape, not the retention lookup. Returning
+  // unchanged keeps the test simple.
+  getExpiresAt: (action: string) => {
+    const d = new Date();
+    d.setDate(d.getDate() + 90);
+    return d;
+  },
 }));
 
 vi.mock('@/lib/security-events', () => ({
@@ -566,5 +577,215 @@ describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
       tx,
       'interactive'
     );
+  });
+});
+
+describe('NET-005 follow-up-3 (2026-09-08): audit-trail action strings use the dot-separated form', () => {
+  // The audit-trail drift finding: the live admin path
+  // wrote `kyc_${status.toLowerCase()}` (underscore) and
+  // the expiry job wrote `KYC_EXPIRED` (uppercase, no
+  // separator). The retention table in
+  // `lib/audit-log.ts:5-27` splits on `.` and looks up the
+  // prefix; both formats split to a single segment that
+  // does not match the `kyc` key, falling through to the
+  // 90-day default instead of the 365-day KYC retention.
+  // The dead path's `kycRepository.approveKyc` and
+  // `kyc.use-cases.ts:reviewKyc` both write the
+  // dot-separated form (`kyc.approved` / `kyc.rejected`);
+  // the fix aligns the live path + the expiry job.
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "APPROVED" }) writes audit log with action="kyc.approved"', async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      { kycStatus: 'APPROVED' },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    expect(auditLogMocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'kyc.approved',
+        entity: 'rider',
+        entityId: 'r1',
+      })
+    );
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "REJECTED" }) writes audit log with action="kyc.rejected"', async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      {
+        kycStatus: 'REJECTED',
+        rejectionReason: 'Photo is blurry',
+      },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    expect(auditLogMocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'kyc.rejected',
+      })
+    );
+  });
+
+  it('adminRiderUseCases.update({ kycStatus: "INFO_REQUIRED" }) writes audit log with action="kyc.info_required"', async () => {
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'KYC_SUBMITTED',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'SUBMITTED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'SUBMITTED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        create: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      {
+        kycStatus: 'INFO_REQUIRED',
+        rejectionReason: 'Re-upload Aadhaar front',
+      },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    expect(auditLogMocks.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'kyc.info_required',
+      })
+    );
+  });
+
+  it('non-KYC admin update does NOT write a kyc.* audit log', async () => {
+    // Regression: the audit-log write is guarded by the
+    // `kycData.status && ['APPROVED', 'REJECTED',
+    // 'INFO_REQUIRED'].includes(...)` check. An update that
+    // only touches rider fields (e.g., emergencyContact)
+    // must not write a `kyc.*` audit row.
+    mocks.findUnique.mockResolvedValue({
+      id: 'r1',
+      riderId: 'VF-RD-001',
+      serialNumber: 1,
+      lifecycleStatus: 'ACTIVE',
+    });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
+    const tx = {
+      rider: {
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'r1',
+          kycProfile: { status: 'APPROVED' },
+          wallet: { id: 'w1', balanceInPaise: 0 },
+          guarantor: null,
+        }),
+      },
+      kycProfile: {
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        findUnique: vi.fn().mockResolvedValue({ status: 'APPROVED' }),
+      },
+      wallet: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'w1', balanceInPaise: 0 }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      guarantor: { upsert: vi.fn().mockResolvedValue({}) },
+    };
+    mocks.transaction.mockImplementation(async (fn) => fn(tx));
+
+    await adminRiderUseCases.update(
+      'r1',
+      { emergencyContact: '9876543210' },
+      { actorId: 'a1', actorRole: 'ADMIN' }
+    );
+
+    expect(auditLogMocks.createAuditLog).not.toHaveBeenCalled();
   });
 });

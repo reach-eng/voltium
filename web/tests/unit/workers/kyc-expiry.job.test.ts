@@ -59,9 +59,10 @@ describe('KYC Expiry Worker (NET-005)', () => {
       { id: 'kyc-2', riderId: 'r-2', expiresAt: new Date('2026-01-15') },
       { id: 'kyc-3', riderId: 'r-3', expiresAt: new Date('2025-12-01') },
     ]);
+    const txAuditLogCreate = vi.fn().mockResolvedValue({ id: 'audit-1' });
     mockDb.$transaction.mockImplementation(async (cb: any) => {
       const tx = {
-        auditLog: { create: vi.fn().mockResolvedValue({ id: 'audit-1' }) },
+        auditLog: { create: txAuditLogCreate },
         kycProfile: { updateMany: vi.fn().mockResolvedValue({ count: 3 }) },
       };
       return cb(tx);
@@ -75,6 +76,25 @@ describe('KYC Expiry Worker (NET-005)', () => {
         where: expect.objectContaining({
           status: 'APPROVED',
           expiresAt: { lt: expect.any(Date) },
+        }),
+      })
+    );
+    // NET-005 follow-up-3 (2026-09-08): the audit-log
+    // action string must be the dot-separated `kyc.expired`
+    // so the retention lookup in `lib/audit-log.ts:5-27`
+    // hits the 365-day KYC retention. The prior
+    // uppercase `KYC_EXPIRED` form split on `.` to a
+    // single segment that didn't match the `kyc` key,
+    // falling through to the 90-day default — losing
+    // 275 days of retention on the GDPR Art. 30 record.
+    // The `action` field is nested in `data` (Prisma's
+    // auditLog.create signature).
+    expect(txAuditLogCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'kyc.expired',
+          entity: 'KycProfile',
+          entityId: 'bulk',
         }),
       })
     );

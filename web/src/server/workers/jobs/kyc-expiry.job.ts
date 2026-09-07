@@ -78,7 +78,19 @@ export const kycExpiryJob = {
           data: {
             actorId: 'system',
             actorType: 'SYSTEM',
-            action: 'KYC_EXPIRED',
+            // NET-005 follow-up-3 (2026-09-08): use the
+            // dot-separated `kyc.expired` form, not the
+            // uppercase `KYC_EXPIRED` form. The retention
+            // table in `lib/audit-log.ts:5-27` splits on
+            // `.` and looks up the prefix; `KYC_EXPIRED`
+            // (no separator) splits to a single segment
+            // that does not match the `kyc` key, falling
+            // through to the 90-day default instead of
+            // the 365-day KYC retention. The dead path's
+            // kyc.use-cases.ts:reviewKyc writes
+            // `kyc.approved` / `kyc.rejected` (dot, lower);
+            // the expiry job now matches.
+            action: 'kyc.expired',
             entity: 'KycProfile',
             entityId: 'bulk',
             details: JSON.stringify({

@@ -799,7 +799,19 @@ export const adminRiderUseCases = {
       createAuditLog({
         actorId,
         actorType: 'ADMIN',
-        action: `kyc_${kycData.status.toLowerCase()}`,
+        // NET-005 follow-up-3 (2026-09-08): use the
+        // dot-separated `kyc.${status}` form, not the
+        // underscore form. The retention table in
+        // `lib/audit-log.ts:5-27` splits on `.` and looks
+        // up the prefix; `kyc_approved` (underscore) splits
+        // to a single segment that does not match the
+        // `kyc` key, falling through to the 90-day default
+        // instead of the 365-day KYC retention. The dead
+        // path's `kycRepository.approveKyc` and
+        // `kyc.use-cases.ts:reviewKyc` both write the
+        // dot-separated form (`kyc.approved` /
+        // `kyc.rejected`); the live path now matches.
+        action: `kyc.${kycData.status.toLowerCase()}`,
         entity: 'rider',
         entityId: id,
         details: JSON.stringify({
