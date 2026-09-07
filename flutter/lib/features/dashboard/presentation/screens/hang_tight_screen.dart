@@ -19,7 +19,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/core/widgets/wait_state_polling_banner.dart';
@@ -87,20 +86,34 @@ class _HangTightScreenState extends ConsumerState<HangTightScreen> {
 
   Future<void> _safeRefresh() async {
     if (!mounted || _redirected) return;
-    try {
-      await ref.read(riderProvider.notifier).refreshFromApi();
-    } on ApiException catch (e) {
-      // PR-ONBOARDING-FLOW-2026-08-13: surface 401 to the router so
-      // the rider is sent to the login screen instead of being
-      // stranded on a forever-polling HangTight. Every other Api
-      // exception (network drop, 500, etc.) is swallowed — the next
-      // onboarding poller tick will retry.
-      if (e.statusCode == 401) {
-        if (mounted) widget.onSessionExpired?.call();
-        return;
-      }
-    } catch (_) {
-      // Offline / transient — the next poller tick will retry.
+    // HANG-TIGHT-AUDIT P1-1 (2026-09-08): the previous `try { ... }
+    // on ApiException { if (e.statusCode == 401) onSessionExpired(); }
+    // catch (_) {}` was dead code. The provider's `refreshFromApi`
+    // (rider_provider.dart:338-372) catches every error internally
+    // and stamps the rider state — it never rethrows. The 401 path
+    // stamps `lastSessionExpiredAt`, which the router watches at
+    // router_body.dart:528 and routes to login (the single 401
+    // path). The `onSessionExpired` callback this widget accepts
+    // is no longer invoked from this screen; it's kept in the API
+    // for any future surface that might wire it.
+    //
+    // User-visible signal for non-401 failures: capture the
+    // pre-refresh `errorMessage` and show a SnackBar if the provider
+    // set a new one. The text comes from the provider (already
+    // includes "Couldn't refresh your profile. Pull to retry.");
+    // no new ARB key needed.
+    final prevError = ref.read(riderProvider).errorMessage;
+    await ref.read(riderProvider.notifier).refreshFromApi();
+    if (!mounted) return;
+    final newError = ref.read(riderProvider).errorMessage;
+    if (newError != null && newError != prevError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newError),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -823,11 +836,17 @@ class _SpinningIconState extends State<_SpinningIcon>
 }
 
 /// PR-K.1: returns true when the rider's KYC status needs action
-/// (rejected by admin OR info request from admin). Used to gate
-/// the prominent rejection card and the "Fix KYC" button.
+/// (rejected by admin OR info request from admin OR expired).
+/// HANG-TIGHT-AUDIT P1-4 (2026-09-08): `expired` was previously
+/// half-state — the row matrix (`_kycState`) mapped it to
+/// `attention` with a chevron, but the prominent card gate only
+/// covered `rejected`/`infoRequired`, so an expired-KYC rider got
+/// the row + chevron and no explanation card. Include it here.
 bool _isKycAttention(RiderModel? rider) {
   final s = rider?.kycStatus;
-  return s == KycStatus.rejected || s == KycStatus.infoRequired;
+  return s == KycStatus.rejected ||
+      s == KycStatus.infoRequired ||
+      s == KycStatus.expired;
 }
 
 /// PR-K.1: prominent card shown above the status list when KYC is in
@@ -855,12 +874,30 @@ class _KycRejectionCard extends StatelessWidget {
     final fgColor = isRejected ? colors.error : colors.warningForeground;
     final iconData =
         isRejected ? Icons.error_rounded : Icons.help_outline_rounded;
-    final title = l10n?.txtkycRejectionOnHangTightTitle ?? 'KYC rejected';
+    // HANG-TIGHT-AUDIT P1-3 (2026-09-08): the title previously used
+    // `txtkycRejectionOnHangTightTitle` for both `rejected` and
+    // `infoRequired` variants — the amber "need more info" card
+    // was wearing a red "KYC rejected" title. Switch on the
+    // variant. Also covers `expired` (P1-4) with the existing
+    // row label `hangTightKycExpired`.
+    final title = isRejected
+        ? (l10n?.txtkycRejectionOnHangTightTitle ?? 'KYC rejected')
+        : kycStatus == KycStatus.infoRequired
+            ? (l10n?.txtkycInfoRequiredOnHangTightTitle ??
+                'KYC needs more info')
+            : (l10n?.hangTightKycExpired ?? 'KYC expired');
+    // HANG-TIGHT-AUDIT P1-4 (2026-09-08): add the `expired` body
+    // branch. The rejection reason (if non-empty) still wins over
+    // the fallback for both `rejected` and the other variants,
+    // matching the prior contract.
     final bodyFallback = isRejected
         ? (l10n?.txtkycRejectionOnHangTightBody ??
             'Please review the rejection remarks and re-submit your documents to continue.')
-        : (l10n?.txtkycInfoRequiredOnHangTightBody ??
-            'We need more information to verify your identity. Please re-submit your documents to continue.');
+        : kycStatus == KycStatus.infoRequired
+            ? (l10n?.txtkycInfoRequiredOnHangTightBody ??
+                'We need more information to verify your identity. Please re-submit your documents to continue.')
+            : (l10n?.hangTightKycExpiredBody ??
+                'Your KYC has expired. Please re-submit your documents to continue.');
     final reason = rejectionReason?.trim();
     final body = (reason != null && reason.isNotEmpty) ? reason : bodyFallback;
     final buttonLabel = l10n?.txtfixKycButton ?? 'Fix KYC';

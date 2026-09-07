@@ -5164,6 +5164,18 @@ abstract class AppLocalizations {
   /// **'Your guarantor\'s details are required by RBI for verification'**
   String get txtkycGuarantorContextLine;
 
+  /// Title of the KYC needs-more-info card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'KYC needs more info'**
+  String get txtkycInfoRequiredOnHangTightTitle;
+
+  /// Body text for the KYC expired card on the Hang Tight screen
+  ///
+  /// In en, this message translates to:
+  /// **'Your KYC has expired. Please re-submit your documents to continue.'**
+  String get hangTightKycExpiredBody;
+
   /// No description provided for @txtresendOtp.
   ///
   /// In en, this message translates to:

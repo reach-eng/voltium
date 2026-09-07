@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/hang_tight_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -123,7 +122,15 @@ void main() {
       await tester.pump();
 
       expect(find.byKey(const Key('hangTightFixKycButton')), findsOneWidget);
-      expect(find.text('KYC rejected'), findsOneWidget);
+      // HANG-TIGHT-AUDIT P1-3 (2026-09-08): the previous assertion
+      // `find.text('KYC rejected')` was the bug — the amber
+      // "need more info" card was wearing a red "KYC rejected"
+      // title. The card now uses `txtkycInfoRequiredOnHangTightTitle`
+      // for the infoRequired variant. The row label below the card
+      // also reads "KYC needs more info" (the same ARB key feeds
+      // both surfaces), so we expect 2 matches — one in the card,
+      // one in the row.
+      expect(find.text('KYC needs more info'), findsNWidgets(2));
       expect(find.text('Fix KYC'), findsOneWidget);
       expect(find.byIcon(Icons.help_outline_rounded), findsWidgets);
     });
@@ -156,6 +163,40 @@ void main() {
 
       expect(find.byKey(const Key('hangTightFixKycButton')), findsNothing);
       expect(find.text('Fix KYC'), findsNothing);
+    });
+
+    // HANG-TIGHT-AUDIT P1-4 (2026-09-08): `expired` KYC was
+    // half-state — the row matrix mapped it to `attention` with a
+    // chevron + Fix KYC handler, but the prominent card gate
+    // `_isKycAttention` only covered `rejected`/`infoRequired`.
+    // An expired-KYC rider got the row and no explanation card.
+    // The gate now includes `expired`, and the card uses the
+    // existing `hangTightKycExpired` title + the new
+    // `hangTightKycExpiredBody` body.
+    testWidgets('renders the prominent card when kycStatus is expired',
+        (tester) async {
+      await tester.pumpWidget(_buildHarness(
+        rider: _testRider(kyc: KycStatus.expired),
+      ));
+      await tester.pump();
+
+      expect(find.byKey(const Key('hangTightFixKycButton')), findsOneWidget,
+          reason: 'expired must show the prominent Fix KYC card');
+      // HANG-TIGHT-AUDIT P1-4 (2026-09-08): the card title uses
+      // the same `hangTightKycExpired` ARB key as the row label
+      // below, so we expect 2 matches (one in the card, one in
+      // the row). The body text is unique to the card.
+      expect(find.text('KYC expired'), findsNWidgets(2));
+      expect(find.text('Fix KYC'), findsOneWidget);
+      expect(
+        find.text(
+            'Your KYC has expired. Please re-submit your documents to continue.'),
+        findsOneWidget,
+      );
+      // Expired uses the amber variant (not the red rejected
+      // variant), so the icon should be `help_outline`, not
+      // `error_rounded`.
+      expect(find.byIcon(Icons.help_outline_rounded), findsWidgets);
     });
 
     testWidgets('tapping Fix KYC button invokes onFixKyc callback',

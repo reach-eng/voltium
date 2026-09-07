@@ -32,12 +32,9 @@ import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/profile/data/repository_impl.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
-import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
-import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
-    show filesRepositoryProvider;
 import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/core/polling/polling_manager.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -56,6 +53,7 @@ import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.da
 // main RiderNotifier delegates to it; the orchestrator handles
 // `authRepositoryProvider.logout()` + per-feature reset + cache wipe.
 import 'rider_logout_orchestrator.dart';
+import 'riverpod_providers.dart';
 
 export 'rider_provider.dart' show DataState;
 
@@ -92,6 +90,12 @@ class RiderState {
   /// so a fresh login doesn't re-fire the signal.
   final int? lastSessionExpiredAt;
 
+  /// P0-3 follow-up (2026-09-07): server-driven location-sync cadence in
+  /// minutes (public setting `gpsFetchIntervalMins`, registry 1–1440).
+  /// null until the settings load lands; consumers fall back to the
+  /// historical 60s cadence.
+  final int? gpsFetchIntervalMins;
+
   const RiderState({
     this.rider,
     this.riderId,
@@ -102,6 +106,7 @@ class RiderState {
     this.isPollingTimedOut = false,
     this.hasFetchedOnce = false,
     this.lastSessionExpiredAt,
+    this.gpsFetchIntervalMins,
   });
 
   bool get isPlanActive => rider?.rentalStatus == 'ACTIVE';
@@ -121,6 +126,7 @@ class RiderState {
     bool? isPollingTimedOut,
     bool? hasFetchedOnce,
     int? lastSessionExpiredAt,
+    int? gpsFetchIntervalMins,
     bool clearErrorMessage = false,
     bool clearRider = false,
     bool clearLastSessionExpiredAt = false,
@@ -138,6 +144,7 @@ class RiderState {
         lastSessionExpiredAt: clearLastSessionExpiredAt
             ? null
             : (lastSessionExpiredAt ?? this.lastSessionExpiredAt),
+        gpsFetchIntervalMins: gpsFetchIntervalMins ?? this.gpsFetchIntervalMins,
       );
 }
 
@@ -152,6 +159,12 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   late final PollingManager _postPickupPoller;
   Timer? _locationSyncTimer;
   bool _hasSyncedDeviceDataOnce = false;
+
+  // P0-3 follow-up (2026-09-07): public rider settings (currently only
+  // gpsFetchIntervalMins feeds this notifier) load once per session —
+  // same contract as WalletNotifier.loadSettings / SupportNotifier.
+  bool _publicSettingsAttempted = false;
+  Future<void>? _publicSettingsInFlight;
   bool _hasSyncedPermissionsOnce = false;
 
   @override
@@ -378,6 +391,8 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
       onResetHasSyncedDeviceDataOnce: () => _hasSyncedDeviceDataOnce = false,
     );
     await orchestrator.run();
+    _publicSettingsAttempted = false;
+    _publicSettingsInFlight = null;
     state = const RiderState();
   }
 
@@ -432,7 +447,17 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
         _postPickupPoller.stop();
         _stopDeviceDataSync();
         final r = state.rider;
-        if ((r == null || !r.pickupDone) && _onboardingPollCount <= 240) {
+        // HANG-TIGHT-AUDIT P1-2 (2026-09-08): drop the prior
+        // `_onboardingPollCount <= 240` check. After a timeout the
+        // count was > 240 and the gate stayed closed, so any
+        // app-state round-trip back to HangTight left the poller
+        // dead with no UI (compounds the P0-3 polling-timeout
+        // banner UX). `startOnboardingPoll` already resets the
+        // count to 0, clears `isPollingTimedOut`, and restarts the
+        // poller — the poller's own `isRunning` check is the
+        // real guard against double-start, so calling on every
+        // HangTight entry is safe.
+        if (r == null || !r.pickupDone) {
           startOnboardingPoll();
         }
         break;
@@ -540,11 +565,62 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     if (!ref.mounted) return;
     final appState = ref.read(appStateProvider);
     if (appState is! ActiveDashboard) return;
+    // Fire-and-forget: the timer starts immediately on the current
+    // cadence and restarts (below) once the server value lands.
+    unawaited(loadPublicSettings());
     _locationSyncTimer?.cancel();
-    _locationSyncTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+    _locationSyncTimer = Timer.periodic(locationSyncPeriod, (_) {
       if (!ref.mounted) return;
       DeviceDataService().syncLocation(state.riderId ?? state.rider?.id ?? '');
     });
+  }
+
+  /// Foreground location-sync cadence. Server-driven via the public
+  /// `gpsFetchIntervalMins` setting (registry bounds 1–1440 minutes);
+  /// null / invalid values fall back to the historical 60s so an
+  /// offline or failed settings load keeps the pre-wiring behavior.
+  Duration get locationSyncPeriod {
+    final mins = state.gpsFetchIntervalMins;
+    if (mins == null || mins < 1) return const Duration(seconds: 60);
+    return Duration(minutes: mins);
+  }
+
+  /// Loads the public rider settings (once per session, coalesced,
+  /// fail-open). Currently consumes `gpsFetchIntervalMins`; more public
+  /// keys can be read off the same response without extra requests.
+  Future<void> loadPublicSettings() async {
+    if (_publicSettingsAttempted) {
+      // Coalesce concurrent callers onto the in-flight fetch.
+      await _publicSettingsInFlight;
+      return;
+    }
+    _publicSettingsAttempted = true;
+    final inFlight = _fetchAndApplyPublicSettings();
+    _publicSettingsInFlight = inFlight;
+    await inFlight;
+  }
+
+  Future<void> _fetchAndApplyPublicSettings() async {
+    try {
+      final raw = await ref.read(voltiumApiClientProvider).getRiderSettings();
+      if (!ref.mounted) return;
+      final settingsMap = raw['settings'];
+      if (settingsMap is! Map) return;
+      final rawInterval = settingsMap['gpsFetchIntervalMins'];
+      // Registry bounds: 1..1440 minutes. Out-of-range or garbage values
+      // are treated as absent — the fallback cadence keeps working.
+      final interval = rawInterval is num ? rawInterval.toInt() : null;
+      if (interval == null || interval < 1 || interval > 1440) return;
+      if (interval == state.gpsFetchIntervalMins) return;
+      state = state.copyWith(gpsFetchIntervalMins: interval);
+      log('Loaded server gpsFetchIntervalMins: $interval min');
+      // A running timer picks up the new cadence via restart.
+      if (_locationSyncTimer != null) {
+        _startDeviceDataSync();
+      }
+    } catch (e) {
+      log('Failed to load public settings (keeping 60s location cadence): $e');
+    }
   }
 
   void _stopDeviceDataSync() {

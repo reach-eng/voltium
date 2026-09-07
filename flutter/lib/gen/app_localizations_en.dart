@@ -2752,6 +2752,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your guarantor\'s details are required by RBI for verification';
 
   @override
+  String get txtkycInfoRequiredOnHangTightTitle => 'KYC needs more info';
+
+  @override
+  String get hangTightKycExpiredBody =>
+      'Your KYC has expired. Please re-submit your documents to continue.';
+
+  @override
   String get txtresendOtp => 'RESEND';
 
   @override

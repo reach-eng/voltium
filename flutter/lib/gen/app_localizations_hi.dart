@@ -2763,6 +2763,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'RBI सत्यापन के लिए आपके गारंटर के विवरण आवश्यक हैं';
 
   @override
+  String get txtkycInfoRequiredOnHangTightTitle => 'KYC में और जानकारी चाहिए';
+
+  @override
+  String get hangTightKycExpiredBody =>
+      'आपकी KYC की समय सीमा समाप्त हो गई है। कृपया अपने दस्तावेज़ फिर से जमा करें।';
+
+  @override
   String get txtresendOtp => 'फिर से भेजें';
 
   @override

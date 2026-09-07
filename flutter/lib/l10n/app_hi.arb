@@ -839,6 +839,14 @@
   "txtkycContextLine": "ये विवरण RBI द्वारा दुपहिया वाहन किराए पर लेने के लिए आवश्यक हैं",
   "txtkycGuarantorContextLine": "RBI सत्यापन के लिए आपके गारंटर के विवरण आवश्यक हैं",
   "txtkycInfoRequiredOnHangTightBody": "हमें आपकी पहचान सत्यापित करने के लिए और जानकारी चाहिए। कृपया अपने दस्तावेज़ फिर से जमा करें।",
+  "txtkycInfoRequiredOnHangTightTitle": "KYC में और जानकारी चाहिए",
+  "@txtkycInfoRequiredOnHangTightTitle": {
+    "description": "Title of the KYC needs-more-info card on the Hang Tight screen"
+  },
+  "hangTightKycExpiredBody": "आपकी KYC की समय सीमा समाप्त हो गई है। कृपया अपने दस्तावेज़ फिर से जमा करें।",
+  "@hangTightKycExpiredBody": {
+    "description": "Body text for the KYC expired card on the Hang Tight screen"
+  },
   "txtkycRejectionOnHangTightBody": "कृपया अस्वीकृति के कारणों की समीक्षा करें और अपने दस्तावेज़ फिर से जमा करें।",
   "txtkycRejectionOnHangTightTitle": "KYC अस्वीकृत",
   "txtresendOtp": "फिर से भेजें",

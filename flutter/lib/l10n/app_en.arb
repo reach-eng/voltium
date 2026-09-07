@@ -1986,6 +1986,14 @@
   "txtkycContextLine": "These details are required by RBI for two-wheeler rentals",
   "txtkycGuarantorContextLine": "Your guarantor's details are required by RBI for verification",
   "txtkycInfoRequiredOnHangTightBody": "We need more information to verify your identity. Please re-submit your documents to continue.",
+  "txtkycInfoRequiredOnHangTightTitle": "KYC needs more info",
+  "@txtkycInfoRequiredOnHangTightTitle": {
+    "description": "Title of the KYC needs-more-info card on the Hang Tight screen"
+  },
+  "hangTightKycExpiredBody": "Your KYC has expired. Please re-submit your documents to continue.",
+  "@hangTightKycExpiredBody": {
+    "description": "Body text for the KYC expired card on the Hang Tight screen"
+  },
   "txtkycRejectionOnHangTightBody": "Please review the rejection remarks and re-submit your documents to continue.",
   "txtkycRejectionOnHangTightTitle": "KYC rejected",
   "txtresendOtp": "RESEND",
