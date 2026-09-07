@@ -47,6 +47,19 @@ const SAFE_RIDER_FIELDS = new Set([
   'preferredShift',
   'referredBy',
   'assignedVehicle',
+  // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): the bulk Suspend
+  // action goes through `updateStatus` with value
+  // 'SUSPENDED', which the route maps to
+  // `{lifecycleStatus: value}`. The Zod schema
+  // (`updateRiderSchema`) already accepts `lifecycleStatus`
+  // but the use-case allowlist previously did not, so
+  // direct lifecycleStatus writes were silently dropped.
+  // The KYC-status writes at line 445-506 still gate
+  // `lifecycleStatus` through their own rank-based guards;
+  // this allowlist entry is for explicit admin overrides
+  // (Suspend, Restore, manual stage correction).
+  'lifecycleStatus',
+  'lifecycleStage',
 ]);
 
 const KYC_FIELDS = new Set([

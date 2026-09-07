@@ -86,7 +86,13 @@ export interface ConfirmKycState {
 
 export interface LastBulkAction {
   ids: string[];
-  previousStates: Record<string, { state: string; accountStatus: string }>;
+  // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): the previous shape
+  // (`{ state, accountStatus }`) was both virtual — neither
+  // field is a real column. Undo PUT those values, the
+  // schema stripped them, and the use-case dropped them —
+  // Undo was a no-op even when the original bulk action
+  // succeeded. Capture the real `lifecycleStatus` instead.
+  previousStates: Record<string, { lifecycleStatus: string }>;
   action: string;
 }
 

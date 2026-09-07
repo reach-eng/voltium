@@ -34,11 +34,18 @@ async function postHandler(req: NextRequest) {
 
     switch (action) {
       case 'updateStatus': {
+        // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): `accountStatus`
+        // is a virtual field computed in `flattenRider` — it
+        // is not a column on the Rider model. Map the bulk
+        // status update to the real `lifecycleStatus` column
+        // so the write actually persists. The Zod schema
+        // (`updateRiderSchema.lifecycleStatus`) accepts the
+        // full `RiderLifecycleStatus` enum.
         for (const id of ids) {
           try {
             await adminRiderUseCases.update(
               id,
-              { accountStatus: value },
+              { lifecycleStatus: value },
               { actorId: adminId, actorRole: session.adminRole || '' }
             );
             updatedCount++;

@@ -52,8 +52,19 @@ export default function RiderManagement() {
           selectedIds={riderState.selectedIds}
           bulkLoading={riderState.bulkLoading}
           onClear={() => riderState.setSelectedIds(new Set())}
-          onApprove={() => riderState.handleBulkAction('APPROVED')}
-          onSuspend={() => riderState.handleBulkAction('SUSPENDED')}
+          // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): the bulk
+          // route only accepts `updateStatus | delete |
+          // bulkKyc`. Sending human-readable values like
+          // 'APPROVED' / 'SUSPENDED' / 'DELETE' hit the
+          // default branch and returned 400 "Invalid action",
+          // which the client's `if (res.ok)` swallowed — so
+          // every click looked like a no-op. Route Approve
+          // through `bulkKyc` (matches what the per-rider
+          // KYC dialog does); Suspend through `updateStatus`
+          // (lifecycleStatus = 'SUSPENDED'); Delete through
+          // `delete` (soft delete).
+          onApprove={() => riderState.handleBulkAction('bulkKyc', 'APPROVED')}
+          onSuspend={() => riderState.handleBulkAction('updateStatus', 'SUSPENDED')}
           onDelete={() => riderState.setBulkDeleteOpen(true)}
           onUndo={riderState.handleUndo}
           allRiders={riderState.riders}
@@ -118,7 +129,7 @@ export default function RiderManagement() {
           count={riderState.selectedIds.size}
           loading={riderState.bulkLoading}
           onOpenChange={riderState.setBulkDeleteOpen}
-          onConfirm={() => riderState.handleBulkAction('DELETE')}
+          onConfirm={() => riderState.handleBulkAction('delete')}
         />
 
         <RiderKycActionDialog

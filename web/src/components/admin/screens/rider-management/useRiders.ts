@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 import { SortDir, SortKey } from './RiderTable';
 import {
   RIDER_PAGE_SIZE,
@@ -103,11 +104,14 @@ export function useRiders() {
   const handleBulkAction = useCallback(
     async (action: string, value?: string) => {
       if (selectedIds.size === 0) return;
-      const previousStates: Record<string, { state: string; accountStatus: string }> = {};
+      // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): `accountStatus` and
+      // `state` are virtual / stripped. Capture `lifecycleStatus`
+      // (the real column) so Undo can restore it.
+      const previousStates: Record<string, { lifecycleStatus: string }> = {};
       riders
         .filter((r) => selectedIds.has(r.id))
         .forEach((r) => {
-          previousStates[r.id] = { state: r.state ?? '', accountStatus: r.accountStatus ?? '' };
+          previousStates[r.id] = { lifecycleStatus: r.lifecycleStatus ?? '' };
         });
 
       setBulkLoading(true);
@@ -118,6 +122,9 @@ export function useRiders() {
           body: JSON.stringify({ ids: Array.from(selectedIds), action, value }),
         });
         if (res.ok) {
+          const body = await res.json().catch(() => null);
+          const resultCount = (body?.data?.count as number | undefined) ?? selectedIds.size;
+          const failures = (body?.data?.failures as { id: string; error: string }[] | undefined) ?? [];
           setLastAction({
             ids: Array.from(selectedIds),
             previousStates,
@@ -127,9 +134,30 @@ export function useRiders() {
           setTimeout(() => setShowUndoToast(false), 5000);
           setSelectedIds(new Set());
           await fetchRiders();
+          if (failures.length > 0) {
+            // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): surface
+            // partial failures. The route already collects
+            // per-id errors; tell the admin which ones did
+            // not apply.
+            toast.warning(
+              `Bulk ${action}: ${resultCount - failures.length} of ${resultCount} updated. ${failures.length} failed.`
+            );
+          } else {
+            toast.success(`Bulk ${action}: ${resultCount} updated.`);
+          }
+        } else {
+          // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): the previous
+          // `if (res.ok)` branch silently swallowed 4xx/5xx.
+          // The audit's "the entire bulk toolbar is dead"
+          // finding was hidden behind this. Surface the
+          // server's reason.
+          const body = await res.json().catch(() => null);
+          const message = body?.error?.message || body?.message || `Bulk ${action} failed (${res.status})`;
+          toast.error(message);
         }
       } catch (err) {
         logger.error('Bulk action failed', { error: err });
+        toast.error(`Bulk ${action} failed`);
       } finally {
         setBulkLoading(false);
       }
@@ -141,19 +169,31 @@ export function useRiders() {
     if (!lastAction) return;
     setBulkLoading(true);
     try {
+      // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): Undo PUT
+      // `{state, accountStatus}` — both stripped by the
+      // schema and absent from the use-case allowlist, so
+      // Undo was a no-op even when the original action
+      // succeeded. Send `{lifecycleStatus}` instead.
       const promises = Object.entries(lastAction.previousStates).map(([id, prev]) =>
         fetch('/api/admin/riders', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, state: prev.state, accountStatus: prev.accountStatus }),
+          body: JSON.stringify({ id, lifecycleStatus: prev.lifecycleStatus }),
         })
       );
-      await Promise.all(promises);
+      const results = await Promise.all(promises);
+      const allOk = results.every((r) => r.ok);
       setLastAction(null);
       setShowUndoToast(false);
       await fetchRiders();
+      if (allOk) {
+        toast.success('Bulk action undone.');
+      } else {
+        toast.warning('Undo completed with some failures. Check the rider list.');
+      }
     } catch (err) {
       logger.error('Undo failed', { error: err });
+      toast.error('Undo failed');
     } finally {
       setBulkLoading(false);
     }
