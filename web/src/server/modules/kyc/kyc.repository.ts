@@ -498,12 +498,21 @@ export async function promoteToRejected(
   reason: string,
   editableFields: string[],
 ): Promise<void> {
+  // F-12 follow-up (2026-09-08): also clear
+  // `pendingCorrections` on REJECT. A rejected rider's held
+  // draft was previously persisted into the next submit,
+  // where the next APPROVE would call
+  // applyPendingCorrections and silently apply the stale
+  // draft on top of the rejection. After this clear, a
+  // re-submit starts fresh — the held draft is treated as
+  // a one-shot and discarded on REJECT.
   await tx.kycProfile.update({
     where: { riderId: riderDbId },
     data: {
       status: 'REJECTED',
       rejectionReason: reason,
       editableFields,
+      pendingCorrections: Prisma.DbNull,
     },
   });
   // F-12: riders at ranks 0..10 (pre-active onboarding) get

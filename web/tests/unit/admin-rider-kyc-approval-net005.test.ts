@@ -298,7 +298,7 @@ describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
     vi.clearAllMocks();
   });
 
-  it('promoteToRejected writes status=REJECTED, rejectionReason, editableFields, and F-12 SUSPENDED', async () => {
+  it('promoteToRejected writes status=REJECTED, rejectionReason, editableFields, clears pendingCorrections, and runs F-12 SUSPENDED', async () => {
     const tx = {
       kycProfile: {
         update: vi.fn().mockResolvedValue({}),
@@ -316,6 +316,11 @@ describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
         status: 'REJECTED',
         rejectionReason: 'Photo is blurry',
         editableFields: ['profilePhoto'],
+        // F-12 follow-up (2026-09-08): held corrections are
+        // cleared on REJECT so the next APPROVE does not
+        // silently apply a stale draft on top of the
+        // rejection.
+        pendingCorrections: Prisma.DbNull,
       },
     });
 
@@ -416,6 +421,9 @@ describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
       status: 'REJECTED',
       rejectionReason: 'Photo is blurry',
       editableFields: ['profilePhoto'],
+      // F-12 follow-up (2026-09-08): held corrections
+      // cleared on REJECT.
+      pendingCorrections: Prisma.DbNull,
     });
 
     // The F-12 PRE_ACTIVE_STAGES promotion runs.

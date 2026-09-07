@@ -16,7 +16,6 @@ import { signRiderUrlsWithProvider } from '@/lib/sign-rider';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
 import { logAccountSuspension } from '@/lib/security-events';
-import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
@@ -808,9 +807,19 @@ export const adminRiderUseCases = {
           rejectionReason: kycData.rejectionReason || null,
         }),
       }).catch(() => {});
-      notificationService
-        .notifyKycStatusChange(id, kycData.status, kycData.rejectionReason)
-        .catch((e) => logger.error('Failed to notify KYC change', e));
+      // BLOCKER 2.7 (2026-09-08): the legacy direct
+      // `notificationService.notifyKycStatusChange` call
+      // is removed. The KYC notification is now dispatched
+      // via the outbox emit inside the transaction above
+      // (KYC_APPROVED / KYC_REJECTED / KYC_INFO_REQUESTED at
+      // priority 3 with 'interactive' transport — see
+      // kyc.use-cases.ts:reviewKyc for the canonical
+      // pattern). The notification-dispatch job is verified
+      // wired (19/19 tests pass in
+      // tests/unit/workers/notification-dispatch.job.test.ts).
+      // A future failure to deliver is now a queue-level
+      // retry/backoff problem, not a fire-and-forget log
+      // line.
     }
 
     if (!result) throw new Error('Rider not found after KYC update');
