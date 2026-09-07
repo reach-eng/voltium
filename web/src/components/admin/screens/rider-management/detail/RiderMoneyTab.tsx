@@ -5,13 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { TabsContent } from '@/components/ui/tabs';
 import { getKycBadge } from '../helpers';
 import type { Rider, RiderEditForm } from '@/lib/types/admin';
@@ -100,19 +93,21 @@ export function RiderMoneyTab({
               Deposit Payment Status
             </p>
             {isEditing ? (
-              <Select
-                value={editForm.depositStatus || 'PENDING'}
-                onValueChange={(v) => setEditForm({ ...editForm, depositStatus: v })}
+              // ADMIN-RIDER-AUDIT P0-2d (2026-09-08): the
+              // edit-time <Select> wrote `depositStatus` into
+              // the form, but the route schema strips it AND
+              // the use-case `update()` throws "Use the
+              // Deposits API" for direct `depositStatus`
+              // writes. The non-edit badge (now always
+              // rendered) is the read-only surface; mutation
+              // goes through POST /api/admin/deposits/... (out
+              // of scope for this audit pass).
+              <Badge
+                variant="outline"
+                className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge(rider.depositStatus ?? 'PENDING')}`}
               >
-                <SelectTrigger className="bg-transparent border-none h-auto p-0 font-black text-lg focus:outline-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">PENDING</SelectItem>
-                  <SelectItem value="PAID">PAID</SelectItem>
-                  <SelectItem value="REFUNDED">REFUNDED</SelectItem>
-                </SelectContent>
-              </Select>
+                {rider.depositStatus ?? 'PENDING'}
+              </Badge>
             ) : (
               <Badge
                 variant="outline"

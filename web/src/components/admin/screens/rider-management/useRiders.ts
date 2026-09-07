@@ -218,9 +218,21 @@ export function useRiders() {
           prev ? ({ ...prev, ...editForm } as Rider) : null
         );
         setIsEditing(false);
+        toast.success('Rider updated.');
+      } else {
+        // ADMIN-RIDER-AUDIT P0-2 (2026-09-08): the previous
+        // `if (res.ok)` branch silently swallowed 4xx/5xx.
+        // The audit's P0-2e finding (intent: '' and ISO dob
+        // both 400'd the server) was hidden behind this. The
+        // schema now accepts both shapes; the error toast
+        // surfaces any future schema/permission regressions.
+        const body = await res.json().catch(() => null);
+        const message = body?.error?.message || body?.message || `Update failed (${res.status})`;
+        toast.error(message);
       }
     } catch (err) {
       logger.error('Failed to update rider', { error: err });
+      toast.error('Update failed');
     } finally {
       setSaving(false);
     }
@@ -250,9 +262,19 @@ export function useRiders() {
         setSelectedRider((prev) =>
           prev ? ({ ...prev, [deleteDocKey]: null } as Rider) : null
         );
+        toast.success('KYC document cleared.');
+      } else {
+        // ADMIN-RIDER-AUDIT P0-2b (2026-09-08): the previous
+        // `if (res.ok)` branch silently swallowed the 400.
+        // The route schema now accepts `[docKey]: null`, so
+        // any future regression surfaces here.
+        const body = await res.json().catch(() => null);
+        const message = body?.error?.message || body?.message || `KYC delete failed (${res.status})`;
+        toast.error(message);
       }
     } catch (err) {
       logger.error('Failed to delete KYC document', { error: err });
+      toast.error('KYC delete failed');
     } finally {
       setSaving(false);
     }
@@ -280,9 +302,18 @@ export function useRiders() {
           prev ? ({ ...prev, ...updates } as Rider) : null
         );
         setSelectedKycDocs(new Set());
+        toast.success(`${selectedKycDocs.size} KYC document(s) cleared.`);
+      } else {
+        // ADMIN-RIDER-AUDIT P0-2b (2026-09-08): same shape
+        // as `confirmDeleteKycDoc` — surface the server's
+        // reason instead of silent failure.
+        const body = await res.json().catch(() => null);
+        const message = body?.error?.message || body?.message || `Bulk KYC delete failed (${res.status})`;
+        toast.error(message);
       }
     } catch (err) {
       logger.error('Failed to bulk delete KYC documents', { error: err });
+      toast.error('Bulk KYC delete failed');
     } finally {
       setSaving(false);
     }
@@ -376,9 +407,20 @@ export function useRiders() {
             const json = await res.json();
             setSelectedRider(json.data);
           }
+          toast.success(`TL ${action} processed.`);
+        } else {
+          // ADMIN-RIDER-AUDIT P0-2 (2026-09-08): the previous
+          // `if (res.ok)` branch silently swallowed the 400
+          // from the schema stripping `tlAction` (a
+          // ghost-UI key — the audit's P2 sub-bug). The toast
+          // surfaces the rejection.
+          const body = await res.json().catch(() => null);
+          const message = body?.error?.message || body?.message || `TL action failed (${res.status})`;
+          toast.error(message);
         }
       } catch (err) {
         logger.error('Failed to process TL action', { error: err });
+        toast.error('TL action failed');
       }
     },
     [fetchRiders, selectedRider]
@@ -427,9 +469,21 @@ export function useRiders() {
         setRiders((prev) =>
           prev.map((r) => (r.id === selectedRider.id ? (cleared as Rider) : r))
         );
+        toast.success('Guarantor cleared.');
+      } else {
+        // ADMIN-RIDER-AUDIT P0-2a (2026-09-08): the previous
+        // `if (res.ok)` branch silently swallowed the 400
+        // from the schema's `z.string().max(100).optional()`
+        // (no nullable). The schema now accepts null on
+        // every guarantor text field; any future regression
+        // surfaces here.
+        const body = await res.json().catch(() => null);
+        const message = body?.error?.message || body?.message || `Clear guarantor failed (${res.status})`;
+        toast.error(message);
       }
     } catch (err) {
       logger.error('Failed to clear guarantor', { error: err });
+      toast.error('Clear guarantor failed');
     } finally {
       setSaving(false);
       setConfirmClearGuarantor(false);

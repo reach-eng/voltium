@@ -25,76 +25,143 @@ import { toRupeesResponse } from '@/lib/api-money';
 /**
  * Allowlisted update schema — prevents mass assignment by only accepting
  * explicitly declared fields with their correct types.
+ *
+ * ADMIN-RIDER-AUDIT P0-2 (2026-09-08): five field-shape fixes that
+ * closed the silent-failure cluster:
+ *  - P0-2a: guarantor text fields accept `null` and `''` so the
+ *    "Clear Guarantor" admin action can wipe them.
+ *  - P0-2b: KYC doc URL fields accept `null` so per-doc delete and
+ *    bulk delete can remove them.
+ *  - P0-2c: `lifecycleStatus` is now in the allowlist so the
+ *    per-rider detail dialog's Lifecycle Status dropdown can write
+ *    to it (the use-case allowlist was already updated in P0-1).
+ *  - P0-2d: `depositStatus` is intentionally NOT here — the use-case
+ *    `update()` throws "Use the Deposits API" for direct
+ *    depositStatus/securityDeposit writes. The MoneyTab UI now
+ *    renders the status as a read-only badge.
+ *  - P0-2e: `intent` accepts `''` (null-intent riders exist in the
+ *    DB) and `dob` accepts both `dd-MM-yyyy` and `yyyy-MM-dd`
+ *    (the rider app sends ISO; the admin form sends Indian).
+ *
+ * Exported so unit tests can assert the wire shape directly
+ * (`tests/unit/admin-rider-security.test.ts`).
  */
-const updateRiderSchema = z.object({
+export const updateRiderSchema = z.object({
   id: z.string().min(1),
   // Core rider fields
-  fullName: z.string().min(2).max(100).optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  fatherName: z.string().max(100).optional(),
-  motherName: z.string().max(100).optional(),
+  fullName: z.string().min(2).max(100).nullish().or(z.literal('')),
+  email: z.string().email().nullish().or(z.literal('')),
+  fatherName: z.string().max(100).nullish().or(z.literal('')),
+  motherName: z.string().max(100).nullish().or(z.literal('')),
   dob: z
     .string()
-    .regex(/^\d{2}-\d{2}-\d{4}$/)
-    .optional(),
-  currentAddress: z.string().max(500).optional(),
-  emergencyContact: z.string().max(20).optional(),
-  pickupHub: z.string().max(100).optional(),
-  teamLeader: z.string().max(100).optional(),
-  planStartDate: z.string().datetime().optional().or(z.literal('')),
-  planEndDate: z.string().datetime().optional().or(z.literal('')),
-  intent: z.enum(['deliver', 'personal']).optional(),
-  referralCode: z.string().max(20).optional(),
+    .regex(/^(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})$/, 'DOB must be yyyy-MM-dd or dd-MM-yyyy')
+    .nullish()
+    .or(z.literal('')),
+  currentAddress: z.string().max(500).nullish().or(z.literal('')),
+  emergencyContact: z.string().max(20).nullish().or(z.literal('')),
+  pickupHub: z.string().max(100).nullish().or(z.literal('')),
+  teamLeader: z.string().max(100).nullish().or(z.literal('')),
+  planStartDate: z.string().datetime().nullish().or(z.literal('')),
+  planEndDate: z.string().datetime().nullish().or(z.literal('')),
+  // P0-2e: null-intent riders exist in the DB. The edit form
+  // sometimes sends `''`; accept it (and `null` / `undefined`)
+  // so the save does not 400.
+  intent: z.enum(['deliver', 'personal']).nullish().or(z.literal('')),
+  referralCode: z.string().max(20).nullish().or(z.literal('')),
   phone: z
     .string()
     .regex(/^\d{10}$/)
-    .optional(),
-  preferredShift: z.string().max(50).optional(),
-  referredBy: z.string().max(100).optional(),
+    .nullish()
+    .or(z.literal('')),
+  preferredShift: z.string().max(50).nullish().or(z.literal('')),
+  referredBy: z.string().max(100).nullish().or(z.literal('')),
   assignedVehicle: z.string().max(100).optional().nullable(),
   // KYC fields
   kycStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']).optional(),
-  profilePhoto: z.string().url().optional().or(z.literal('')),
-  riderPhoto: z.string().url().optional().or(z.literal('')),
-  riderVideo: z.string().url().optional().or(z.literal('')),
-  signature: z.string().url().optional().or(z.literal('')),
-  aadhaarFront: z.string().url().optional().or(z.literal('')),
-  aadhaarBack: z.string().url().optional().or(z.literal('')),
-  aadhaarNumber: z.string().max(12).optional(),
-  panCard: z.string().url().optional().or(z.literal('')),
-  panNumber: z.string().max(10).optional(),
-  bankAccount: z.string().max(30).optional(),
-  bankIfsc: z.string().max(11).optional(),
-  bankName: z.string().max(100).optional(),
-  accountNumber: z.string().max(30).optional(),
-  ifscCode: z.string().max(11).optional(),
-  rejectionReason: z.string().max(500).optional(),
+  // P0-2b: KYC doc URL fields now accept `null` so the per-doc
+  // delete (`confirmDeleteKycDoc`) and bulk delete
+  // (`handleBulkDeleteKycDocs`) can wipe them. Empty string
+  // was already accepted; the rider app's clear-snapshot path
+  // also sends `''`.
+  profilePhoto: z.string().url().nullish().or(z.literal('')),
+  riderPhoto: z.string().url().nullish().or(z.literal('')),
+  riderVideo: z.string().url().nullish().or(z.literal('')),
+  signature: z.string().url().nullish().or(z.literal('')),
+  aadhaarFront: z.string().url().nullish().or(z.literal('')),
+  aadhaarBack: z.string().url().nullish().or(z.literal('')),
+  aadhaarNumber: z.string().max(12).nullish().or(z.literal('')),
+  panCard: z.string().url().nullish().or(z.literal('')),
+  panNumber: z.string().max(10).nullish().or(z.literal('')),
+  bankAccount: z.string().max(30).nullish().or(z.literal('')),
+  bankIfsc: z.string().max(11).nullish().or(z.literal('')),
+  bankName: z.string().max(100).nullish().or(z.literal('')),
+  accountNumber: z.string().max(30).nullish().or(z.literal('')),
+  ifscCode: z.string().max(11).nullish().or(z.literal('')),
+  rejectionReason: z.string().max(500).nullish().or(z.literal('')),
   editableFields: z.array(z.string()).optional(),
   // Wallet fields
   walletBalance: z.number().optional(),
+  // P0-2c: lifecycleStatus is the real column on the rider model
+  // (`RiderLifecycleStatus` enum). The use-case allowlist was
+  // extended in the prior commit (P0-1); the route schema is
+  // the second gate. The KYC-status write at the use-case
+  // still auto-progresses `lifecycleStatus` from rank-based
+  // logic; this entry is for explicit admin overrides via the
+  // per-rider detail dialog's Lifecycle Status dropdown
+  // (RiderProfileTab / RiderJourneyTab).
+  lifecycleStatus: z
+    .enum([
+      'NEW',
+      'PHONE_VERIFIED',
+      'PROFILE_SUBMITTED',
+      'KYC_SUBMITTED',
+      'KYC_APPROVED',
+      'GUARANTOR_SUBMITTED',
+      'GUARANTOR_APPROVED',
+      'DEPOSIT_PENDING',
+      'DEPOSIT_APPROVED',
+      'PLAN_SELECTED',
+      'PICKUP_SCHEDULED',
+      'ACTIVE',
+      'SUSPENDED',
+      'RETURN_PENDING',
+      'CLOSED',
+    ])
+    .nullish()
+    .or(z.literal('')),
   // Guarantor fields
   guarantorStatus: z
     .enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'])
     .optional(),
-  guarantorName: z.string().max(100).optional(),
-  guarantorRelation: z.string().max(50).optional(),
+  // P0-2a: guarantor text fields now accept `null` and `''` so
+  // the "Clear Guarantor" admin action can wipe them. Before
+  // the fix, `confirmClearGuarantorAction` PUTs all-null
+  // values and the route returned 400, which the client's
+  // `if (res.ok)` branch silently swallowed — the local
+  // state was updated as if the clear had succeeded but the
+  // server's view was unchanged.
+  guarantorName: z.string().max(100).nullish().or(z.literal('')),
+  guarantorRelation: z.string().max(50).nullish().or(z.literal('')),
   guarantorPhone: z
     .string()
     .regex(/^\d{10}$/)
-    .optional(),
+    .nullish()
+    .or(z.literal('')),
   guarantorDob: z
     .string()
     .regex(/^\d{2}-\d{2}-\d{4}$/)
-    .optional(),
-  guarantorAadhaarFront: z.string().url().optional().or(z.literal('')),
-  guarantorAadhaarBack: z.string().url().optional().or(z.literal('')),
-  guarantorPan: z.string().url().optional().or(z.literal('')),
-  guarantorVideo: z.string().url().optional().or(z.literal('')),
-  guarantorSignature: z.string().url().optional().or(z.literal('')),
-  guarantorFatherName: z.string().max(100).optional(),
-  guarantorMotherName: z.string().max(100).optional(),
-  guarantorAddress: z.string().max(500).optional(),
-  guarantorPhoto: z.string().url().optional().or(z.literal('')),
+    .nullish()
+    .or(z.literal('')),
+  guarantorAadhaarFront: z.string().url().nullish().or(z.literal('')),
+  guarantorAadhaarBack: z.string().url().nullish().or(z.literal('')),
+  guarantorPan: z.string().url().nullish().or(z.literal('')),
+  guarantorVideo: z.string().url().nullish().or(z.literal('')),
+  guarantorSignature: z.string().url().nullish().or(z.literal('')),
+  guarantorFatherName: z.string().max(100).nullish().or(z.literal('')),
+  guarantorMotherName: z.string().max(100).nullish().or(z.literal('')),
+  guarantorAddress: z.string().max(500).nullish().or(z.literal('')),
+  guarantorPhoto: z.string().url().nullish().or(z.literal('')),
 });
 
 // GET — list riders with full filters, search, pagination

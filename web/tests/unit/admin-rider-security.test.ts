@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { updateRiderSchema } from '@/app/api/admin/riders/route';
 
 const mocks = vi.hoisted(() => ({
   findUnique: vi.fn(),
@@ -8,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   findMany: vi.fn(),
   transaction: vi.fn(),
+  guarantorFindUnique: vi.fn(),
   getCachedRider: vi.fn((id, fn) => fn()),
 }));
 
@@ -16,6 +18,9 @@ vi.mock('@/lib/db', () => ({
     rider: {
       findUnique: mocks.findUnique,
       update: mocks.update,
+    },
+    guarantor: {
+      findUnique: mocks.guarantorFindUnique,
     },
     $transaction: mocks.transaction,
   },
@@ -62,6 +67,11 @@ describe('Admin Rider Security - Wallet mutations', () => {
       serialNumber: 1,
       lifecycleStatus: 'ACTIVE',
     });
+    // The use-case reads `db.guarantor.findUnique` at line
+    // 485 (outside the transaction) when handling KYC
+    // transitions. No KYC change here, but the call still
+    // runs. Stub it.
+    mocks.guarantorFindUnique.mockResolvedValue(null);
     // The transaction body touches tx.rider.update,
     // tx.kycProfile.findUnique, tx.wallet.findUnique,
     // tx.guarantor.upsert, and tx.rider.findUnique. Mock
@@ -106,6 +116,7 @@ describe('Admin Rider Security - Wallet mutations', () => {
       serialNumber: 1,
       lifecycleStatus: 'ACTIVE',
     });
+    mocks.guarantorFindUnique.mockResolvedValue(null);
     const tx = {
       rider: {
         update: vi.fn().mockResolvedValue({}),
@@ -135,5 +146,122 @@ describe('Admin Rider Security - Wallet mutations', () => {
     const updateCall = tx.rider.update.mock.calls[0][0];
     expect(updateCall.data).not.toHaveProperty('accountStatus');
     expect(updateCall.data).toMatchObject({ lifecycleStatus: 'SUSPENDED' });
+  });
+});
+
+describe('updateRiderSchema wire shape (P0-2 cluster)', () => {
+  // ADMIN-RIDER-AUDIT P0-2 (2026-09-08): the route schema
+  // is the second gate after the use-case allowlist. The
+  // audit's P0-2 cluster found that the schema's
+  // `z.string().max(100).optional()` (no nullable) silently
+  // rejected every Clear-Guarantor and KYC-doc-delete PUT
+  // — both of which send `null` to wipe the field. The
+  // schema now accepts `null` and `''` on every nullable
+  // text field. These tests assert the wire shape.
+
+  it('P0-2a: accepts null on every guarantor text field (Clear Guarantor)', () => {
+    const result = updateRiderSchema.safeParse({
+      id: 'r1',
+      guarantorName: null,
+      guarantorRelation: null,
+      guarantorPhone: null,
+      guarantorDob: null,
+      guarantorAadhaarFront: null,
+      guarantorAadhaarBack: null,
+      guarantorPan: null,
+      guarantorVideo: null,
+      guarantorSignature: null,
+      guarantorFatherName: null,
+      guarantorMotherName: null,
+      guarantorAddress: null,
+      guarantorPhoto: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2a: also accepts empty string on guarantor fields', () => {
+    const result = updateRiderSchema.safeParse({
+      id: 'r1',
+      guarantorName: '',
+      guarantorPhone: '',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2b: accepts null on every KYC doc URL field', () => {
+    const result = updateRiderSchema.safeParse({
+      id: 'r1',
+      profilePhoto: null,
+      riderPhoto: null,
+      riderVideo: null,
+      signature: null,
+      aadhaarFront: null,
+      aadhaarBack: null,
+      panCard: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2c: accepts lifecycleStatus as a writable enum', () => {
+    const result = updateRiderSchema.safeParse({
+      id: 'r1',
+      lifecycleStatus: 'SUSPENDED',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2c: also accepts null/empty for lifecycleStatus (clear)', () => {
+    expect(updateRiderSchema.safeParse({ id: 'r1', lifecycleStatus: null }).success).toBe(true);
+    expect(updateRiderSchema.safeParse({ id: 'r1', lifecycleStatus: '' }).success).toBe(true);
+  });
+
+  it('P0-2c: rejects invalid lifecycleStatus values', () => {
+    const result = updateRiderSchema.safeParse({
+      id: 'r1',
+      lifecycleStatus: 'NOT_A_REAL_STATE',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('P0-2e: accepts intent="" (null-intent riders)', () => {
+    const result = updateRiderSchema.safeParse({ id: 'r1', intent: '' });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2e: accepts intent=null', () => {
+    const result = updateRiderSchema.safeParse({ id: 'r1', intent: null });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2e: accepts dob in dd-MM-yyyy format', () => {
+    const result = updateRiderSchema.safeParse({ id: 'r1', dob: '15-01-1990' });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2e: accepts dob in yyyy-MM-dd format (rider app sends this)', () => {
+    const result = updateRiderSchema.safeParse({ id: 'r1', dob: '1990-01-15' });
+    expect(result.success).toBe(true);
+  });
+
+  it('P0-2e: rejects dob in freeform strings', () => {
+    const result = updateRiderSchema.safeParse({ id: 'r1', dob: '15 Jan 1990' });
+    expect(result.success).toBe(false);
+  });
+
+  it('P0-2d: does NOT include depositStatus (use the Deposits API instead)', () => {
+    // The route schema deliberately omits `depositStatus` so
+    // the MoneyTab's editable select — which the audit found
+    // to write depositStatus into the form — fails the
+    // schema parse (or, in the post-P0-1 strict-strip mode,
+    // silently drops). Either way, the use-case never sees
+    // a direct depositStatus write and the "Use the Deposits
+    // API" throw at use-case:612 stays the only enforcement.
+    const result = updateRiderSchema.safeParse({ id: 'r1', depositStatus: 'PAID' });
+    // The schema is not in .strict() mode, so unknown keys
+    // are stripped. The parse succeeds with `id` only.
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).not.toHaveProperty('depositStatus');
+    }
   });
 });
