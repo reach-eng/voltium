@@ -20,20 +20,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
+import '../pages/app_robots.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Settings – language dialog opens, switches to Hindi, persists',
       (tester) async {
+    final app = AppRobots(tester);
     // Log in as a fresh rider (the language dialog is only
     // reachable from the Settings screen, which is only reachable
     // after the rider is on the dashboard).
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'profileTab');
 
-    // Open App Settings from the Profile screen.
-    final settingsLink = find.byKey(const Key('appSettingsLink'));
+    // Open App Settings from the Profile screen via the
+    // `appSettingsLink` QuickLinkItem (profile_screen.dart:193).
+    // The previous `find.byKey(Key('appSettingsLink'))` form
+    // worked but used a hard-coded key — routed through the
+    // Profile page object for consistency (Gap 9 of the
+    // 2026-09-08 audit).
+    final settingsLink = app.profile.appSettingsLink;
     if (settingsLink.evaluate().isNotEmpty) {
       await tester.scrollUntilVisible(settingsLink, 200);
       await tester.tap(settingsLink);

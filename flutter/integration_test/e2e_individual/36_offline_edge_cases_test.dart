@@ -148,8 +148,12 @@ void main() {
     await navigateToTab(tester, 'profileTab');
     await settle(tester);
 
-    // Find and tap settings
-    final settingsBtn = app.settings.settingsButton;
+    // Find and tap settings. The entry point is the `appSettingsLink`
+    // QuickLinkItem on the Profile screen (profile_screen.dart:193).
+    // `app.settings.settingsButton` was a stale reference that never
+    // existed; the `if (key.exists)` guard made the test silently skip
+    // (Gap 9 of the 2026-09-08 audit).
+    final settingsBtn = app.profile.appSettingsLink;
     if (settingsBtn.evaluate().isNotEmpty) {
       await smartTap(tester, settingsBtn);
       await settle(tester);

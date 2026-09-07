@@ -88,13 +88,20 @@ done
 | 22 | `22_support_chat_test.dart` | Chat input and send |
 | 23 | `23_support_ticket_test.dart` | Raise ticket dialog |
 
-### Settings (4 tests)
+### Settings (3 tests)
 | # | File | Description |
 |---|------|-------------|
 | 24 | `24_settings_screen_test.dart` | All toggles and options |
 | 25 | `25_settings_theme_toggle_test.dart` | Light/dark theme switch |
-| 26 | `26_settings_biometric_toggle_test.dart` | Biometric auth toggle |
 | 49 | `49_language_dialog_test.dart` | Language selection modal and persistence |
+
+> **Note (2026-09-08):** Test 26 (`26_settings_biometric_toggle_test.dart`) was
+> removed — it was a 22-line always-true stub (`expect(true, isTrue)`) that
+> asserted nothing. The biometric flow is unit-testable via
+> `BiometricService.isDeviceSupported()` + `getAvailableBiometrics()`; the
+> device-side behavior depends on enrolled biometrics, so a meaningful E2E
+> test was deferred. If the biometric toggle is re-introduced as a ship-it
+> feature, add a real test then.
 
 ### Full Journeys & Edge Cases (7 tests)
 | # | File | Description |

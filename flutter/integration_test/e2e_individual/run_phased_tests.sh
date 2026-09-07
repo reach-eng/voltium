@@ -81,7 +81,6 @@ ALL_TESTS=(
   "$TEST_DIR/23_support_ticket_test.dart"
   "$TEST_DIR/24_settings_screen_test.dart"
   "$TEST_DIR/25_settings_theme_toggle_test.dart"
-  "$TEST_DIR/26_settings_biometric_toggle_test.dart"
   "$TEST_DIR/27_missing_vehicle_state_test.dart"
   "$TEST_DIR/28_offline_indicator_test.dart"
   "$TEST_DIR/29_empty_referral_test.dart"

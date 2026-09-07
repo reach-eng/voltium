@@ -62,9 +62,11 @@ void main() {
       }
 
       // Step 2: Amount
+      // P0-4 (2026-09-07): client minimum is now server-driven (registry
+      // default ₹1500); ₹100 used to pass under the old ₹100 constant.
       final amountField = app.wallet.customAmountField;
       if (amountField.evaluate().isNotEmpty) {
-        await smartEnterText(tester, amountField, '100');
+        await smartEnterText(tester, amountField, '1500');
         await settle(tester);
       }
 
@@ -130,8 +132,12 @@ void main() {
     // 5. Traversal: Profile & Settings Tab
     await navigateToTab(tester, 'profileTab');
 
-    // Open App Settings
-    final settingsLink = app.settings.appSettingsLink;
+    // Open App Settings. The `appSettingsLink` QuickLinkItem lives on
+    // the Profile screen (profile_screen.dart:193 / profile_widgets.dart:590),
+    // not on App Settings — `app.settings.appSettingsLink` was a stale
+    // reference that silently fell through the `if (key.exists)` guard
+    // (Gap 9 of the 2026-09-08 audit).
+    final settingsLink = app.profile.appSettingsLink;
     if (settingsLink.evaluate().isNotEmpty) {
       await tester.tap(settingsLink);
       await settle(tester);

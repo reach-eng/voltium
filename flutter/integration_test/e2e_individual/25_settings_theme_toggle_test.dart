@@ -3,17 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
+import '../pages/app_robots.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Settings – theme dialog opens and toggles theme',
       (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'profileTab');
 
-    // Tap into App Settings from Profile
-    final settingsLink = find.byKey(const Key('appSettingsLink'));
+    // Tap into App Settings from Profile. The `appSettingsLink`
+    // QuickLinkItem lives on the Profile screen
+    // (profile_screen.dart:193 / profile_widgets.dart:590) — the
+    // previous `find.byKey(Key('appSettingsLink'))` form worked
+    // but was inconsistent with the rest of the suite. Routed
+    // through the Profile page object (Gap 9 of the 2026-09-08
+    // audit).
+    final settingsLink = app.profile.appSettingsLink;
     if (settingsLink.evaluate().isNotEmpty) {
       await tester.scrollUntilVisible(settingsLink, 100);
       await tester.tap(settingsLink);

@@ -54,7 +54,6 @@ TESTS=(
   "integration_test/e2e_individual/23_support_ticket_test.dart"
   "integration_test/e2e_individual/24_settings_screen_test.dart"
   "integration_test/e2e_individual/25_settings_theme_toggle_test.dart"
-  "integration_test/e2e_individual/26_settings_biometric_toggle_test.dart"
   "integration_test/e2e_individual/27_missing_vehicle_state_test.dart"
   "integration_test/e2e_individual/28_offline_indicator_test.dart"
   "integration_test/e2e_individual/29_empty_referral_test.dart"
