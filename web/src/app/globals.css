@@ -106,6 +106,18 @@
   --border: #334155;
   --input: #1e293b;
   --ring: #0369a1;
+
+  /* Dark mode overrides for consumed vf-* tokens (DARK-MODE-AUDIT P1-4) */
+  --color-vf-surface: #1e293b;
+  --color-vf-surface-container: #334155;
+  --color-vf-surface-container-low: #1e293b;
+  --color-vf-surface-container-lowest: #0f172a;
+  --color-vf-surface-container-high: #475569;
+  --color-vf-on-surface: #f8fafc;
+  --color-vf-on-surface-variant: #94a3b8;
+  --color-vf-on-surface-muted: #64748b;
+  --color-vf-outline: #334155;
+  --color-vf-outline-variant: #1e293b;
 }
 
 @layer base {

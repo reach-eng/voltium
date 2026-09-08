@@ -35,6 +35,7 @@ const Set<String> allowedKeepSet = {
   'borderDefault',
   'borderSubtle', // see PR2 note above
   'dangerText',
+  'errorBorder', // migrated to ThemeColors.errorBorder
   'errorLight', // see PR2 note above
   'errorSurface', // migrated to ThemeColors.errorLight
   'infoLight', // see PR2 note above
@@ -61,6 +62,7 @@ const Set<String> allowedKeepSet = {
   'surfaceSubtle', // see PR2 note above
   'tealIcon',
   'tealIconSurface',
+  'warningBorder', // migrated to ThemeColors.warningBorder
   'warningLight', // see PR2 note above
   'white70',
 };

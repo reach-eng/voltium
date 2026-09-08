@@ -21,13 +21,13 @@ import { getKycBadge, getStateBadge, STATE_FILTERS } from '@/lib/admin-ui';
 describe('getKycBadge — color mapping (product decision)', () => {
   it('SUBMITTED is blue (informational, not warning)', () => {
     const cls = getKycBadge('SUBMITTED');
-    expect(cls).toContain('blue-100');
+    expect(cls).toContain('blue');
     expect(cls).not.toContain('amber');
   });
 
   it('PENDING is amber (action needed)', () => {
     const cls = getKycBadge('PENDING');
-    expect(cls).toContain('amber-100');
+    expect(cls).toContain('amber');
   });
 
   it('APPROVED and VERIFIED are emerald', () => {
@@ -99,5 +99,33 @@ describe('STATE_FILTERS — list shape', () => {
     expect(STATE_FILTERS).toContain('ACTIVE');
     expect(STATE_FILTERS).toContain('SUSPENDED');
     expect(STATE_FILTERS).toContain('CLOSED');
+  });
+});
+
+describe('getKycBadge — dark mode parity (DARK-MODE-AUDIT P1-3)', () => {
+  const statuses = [
+    'APPROVED',
+    'VERIFIED',
+    'ACTIVE',
+    'POST_ACTIVE',
+    'REJECTED',
+    'SUSPENDED',
+    'CLOSED',
+    'PENDING',
+    'PRE_ACTIVE',
+    'SUBMITTED',
+    'KYC_SUBMITTED',
+    'INFO_REQUIRED',
+    'ONBOARDING',
+    'UNKNOWN_STATUS',
+    null,
+    undefined,
+  ];
+
+  it('every badge class includes dark: variant', () => {
+    for (const status of statuses) {
+      const cls = getKycBadge(status);
+      expect(cls).toContain('dark:');
+    }
   });
 });

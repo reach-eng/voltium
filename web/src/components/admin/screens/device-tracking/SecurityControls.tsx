@@ -136,7 +136,7 @@ function RestrictHardwareCard({
               <Button
                 size="default"
                 variant="outline"
-                className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
                 onClick={() => onTrigger('DISABLE_CAMERA')}
                 disabled={busy}
               >
@@ -145,7 +145,7 @@ function RestrictHardwareCard({
               <Button
                 size="default"
                 variant="outline"
-                className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
                 onClick={() => onTrigger('ENFORCE_PASSCODE')}
                 disabled={busy}
               >

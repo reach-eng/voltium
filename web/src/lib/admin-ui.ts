@@ -18,22 +18,22 @@ export type { Rider, KycStatus, RiderLifecycleStage };
 // ============================================================================
 
 const KYC_COLOR_MAP: Record<string, string> = {
-  APPROVED: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  VERIFIED: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  ACTIVE: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  POST_ACTIVE: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  REJECTED: 'bg-rose-100 text-rose-800 border-rose-300',
-  SUSPENDED: 'bg-rose-100 text-rose-800 border-rose-300',
-  CLOSED: 'bg-rose-100 text-rose-800 border-rose-300',
-  PENDING: 'bg-amber-100 text-amber-800 border-amber-300',
-  PRE_ACTIVE: 'bg-amber-100 text-amber-800 border-amber-300',
-  SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
-  KYC_SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
-  INFO_REQUIRED: 'bg-orange-100 text-orange-800 border-orange-300',
-  ONBOARDING: 'bg-slate-100 text-slate-600 dark:text-slate-400 border-slate-300',
+  APPROVED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  VERIFIED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  ACTIVE: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  POST_ACTIVE: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  REJECTED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
+  SUSPENDED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
+  CLOSED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
+  PENDING: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
+  PRE_ACTIVE: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
+  SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
+  KYC_SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
+  INFO_REQUIRED: 'border-orange-500/20 text-orange-600 bg-orange-500/5 dark:text-orange-400',
+  ONBOARDING: 'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400',
 };
 
-const FALLBACK_COLOR = 'bg-slate-100 text-slate-600 dark:text-slate-400 border-slate-300';
+const FALLBACK_COLOR = 'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400';
 
 /**
  * Returns a Tailwind class string for a given KYC status.

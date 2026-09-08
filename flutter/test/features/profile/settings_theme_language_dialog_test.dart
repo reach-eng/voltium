@@ -7,6 +7,7 @@ import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/settings_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 
 /// CI-runnable widget coverage for the tri-state theme picker
@@ -16,8 +17,9 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
+    await CacheService().init();
   });
 
   Widget buildTestApp() {
@@ -84,6 +86,28 @@ void main() {
     final systemRadio = tester
         .widget<Radio<ThemeMode>>(find.byKey(const Key('themeSystemRadio')));
     expect(systemRadio.groupValue, ThemeMode.system);
+  });
+
+  testWidgets('P2-1: AMOLED switch displays in Dark mode and toggles isAmoled',
+      (tester) async {
+    await tester.pumpWidget(buildTestApp());
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // Open theme dialog and switch to Dark mode
+    await tester.tap(find.byKey(const Key('themeOption')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('themeDarkRadio')));
+    await tester.pumpAndSettle();
+
+    // Re-open dialog: in Dark mode, amoledSwitch is visible
+    await tester.tap(find.byKey(const Key('themeOption')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('amoledSwitch')), findsOneWidget);
+
+    // Toggle AMOLED on
+    await tester.tap(find.byKey(const Key('amoledSwitch')));
+    await tester.pumpAndSettle();
+    expect(CacheService().getAmoledPreference(), isTrue);
   });
 
   testWidgets('language dialog Follow System radio selects and persists',

@@ -40,7 +40,7 @@ export function SosAlert({ count, confirmed = true, onGoToTickets }: SosAlertPro
               <h4 className="text-xl font-bold text-rose-600 dark:text-rose-400">
                 Emergency SOS Detected
               </h4>
-              <p className="text-sm text-rose-500 font-medium">
+              <p className="text-sm text-rose-500 dark:text-rose-400 font-medium">
                 {count} emergency SOS {count === 1 ? 'alert' : 'alerts'} in the
                 last 24 hours {count === 1 ? 'needs' : 'need'} follow-up
               </p>

@@ -113,6 +113,8 @@ test.describe('Admin Panel Browser Review', () => {
     if (await themeBtn.count() > 0) {
       await themeBtn.first().click();
       await page.waitForTimeout(1500);
+      const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+      expect(isDark).toBe(true);
       await page.screenshot({ path: path.join(screenshotsDir, '07_dark_mode_review.png'), fullPage: true });
     }
 

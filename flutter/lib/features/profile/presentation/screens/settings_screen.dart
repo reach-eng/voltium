@@ -558,6 +558,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Navigator.pop(ctx);
                   },
                 ),
+                if (consumerRef.watch(themeProvider).isDarkMode) ...[
+                  const Divider(),
+                  SwitchListTile(
+                    key: const Key('amoledSwitch'),
+                    title: const Text('True AMOLED Black'),
+                    subtitle:
+                        const Text('Deep black background for OLED screens'),
+                    value: consumerRef.watch(themeProvider).isAmoled,
+                    onChanged: (val) {
+                      ref.read(themeProvider.notifier).setAmoled(val);
+                    },
+                  ),
+                ],
               ],
             ),
           );
@@ -571,8 +584,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case ThemeMode.light:
         return l10n?.settings_themeLight ?? 'Light mode';
       case ThemeMode.dark:
+        if (theme.isAmoled) {
+          return '${l10n?.settings_themeDark ?? 'Dark mode'} (AMOLED)';
+        }
         return l10n?.settings_themeDark ?? 'Dark mode';
       case ThemeMode.system:
+        if (theme.isAmoled && theme.isDarkMode) {
+          return '${l10n?.settings_followSystem ?? 'Follow system'} (AMOLED)';
+        }
         return l10n?.settings_followSystem ?? 'Follow system';
     }
   }

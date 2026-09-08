@@ -126,7 +126,7 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
             <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
               <Label className="text-amber-700 dark:text-amber-400 font-semibold flex items-center justify-between text-xs">
                 <span>Co-Approving Admin ID <span className="text-red-500">*</span></span>
-                <span className="text-[10px] font-normal uppercase tracking-wider text-amber-600 bg-amber-500/20 px-1.5 py-0.5 rounded">Dual Approval</span>
+                <span className="text-[10px] font-normal uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/20 px-1.5 py-0.5 rounded">Dual Approval</span>
               </Label>
               <Input
                 type="text"

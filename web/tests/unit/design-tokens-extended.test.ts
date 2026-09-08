@@ -133,4 +133,20 @@ describe('Ticket #14: design-tokens.json has extended fields', () => {
       expect(tokens.tokens?.colors?.semantic?.dark?.actionPrimary).toBe('#0053C1');
     });
   });
+
+  describe('P1-4: globals.css dark mode overrides for vf-* tokens', () => {
+    it('globals.css defines .dark overrides for consumed vf-* tokens', () => {
+      const cssPath = resolve(__dirname, '../../src/app/globals.css');
+      expect(existsSync(cssPath)).toBe(true);
+      const css = readFileSync(cssPath, 'utf-8');
+
+      // Extract .dark block
+      const darkMatch = css.match(/\.dark\s*\{([^}]+)\}/);
+      expect(darkMatch).toBeTruthy();
+      const darkBlock = darkMatch![1];
+
+      expect(darkBlock).toContain('--color-vf-surface:');
+      expect(darkBlock).toContain('--color-vf-surface-container:');
+    });
+  });
 });
