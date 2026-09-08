@@ -33,7 +33,36 @@ export const teamLeaderUseCases = {
   async update(id: string, data: Prisma.TeamLeaderUpdateInput, actorId: string) {
     const before = await teamLeaderRepository.findById(id);
     const teamLeader = await teamLeaderRepository.update(id, data);
-    logTlAction(actorId, 'tl.update', id, { before, after: teamLeader });
+
+    const inputAsRecord = data as unknown as Record<string, unknown>;
+    const isFlatDefined = (v: unknown): boolean =>
+      v !== undefined &&
+      (v === null ||
+        typeof v === 'string' ||
+        typeof v === 'number' ||
+        typeof v === 'boolean');
+
+    const changedFields = before
+      ? Object.keys(inputAsRecord).filter(
+          (k) =>
+            isFlatDefined(inputAsRecord[k]) &&
+            (before as unknown as Record<string, unknown>)[k] !== inputAsRecord[k]
+        )
+      : Object.keys(inputAsRecord).filter((k) => isFlatDefined(inputAsRecord[k]));
+
+    const pick = (row: Record<string, unknown> | null | undefined, keys: string[]) => {
+      if (!row) return {};
+      const out: Record<string, unknown> = {};
+      for (const k of keys) out[k] = row[k];
+      return out;
+    };
+
+    logTlAction(actorId, 'tl.update', id, {
+      changedFields,
+      before: pick(before as unknown as Record<string, unknown> | null, changedFields),
+      after: pick(teamLeader as unknown as Record<string, unknown>, changedFields),
+    });
+
     return teamLeader;
   },
 
