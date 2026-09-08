@@ -139,6 +139,24 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const action = String(body.action || body.decision || '').toUpperCase();
   if (!riderId || !action) return errors.badRequest('riderId and action are required');
 
+  // NET-005 follow-up-14 (2026-09-08): validate the
+  // action against the canonical set BEFORE
+  // dispatching. The pre-fix code accepted any
+  // string and routed unknown actions into the
+  // `else` branch which called `reviewKyc(riderId,
+  // adminId, {action: 'FROBNICATE' as any, ...})`,
+  // surfacing the state-machine error as 409 (an
+  // "invalid transition" message that suggests a
+  // real state issue, not a typo). Validate up
+  // front so the API returns a clear 400 for
+  // typos and unknown actions.
+  const ALLOWED_KYC_ACTIONS = new Set(['APPROVE', 'REJECT', 'REQUEST_INFO', 'REOPEN']);
+  if (!ALLOWED_KYC_ACTIONS.has(action)) {
+    return errors.badRequest(
+      `action must be one of: ${Array.from(ALLOWED_KYC_ACTIONS).join(', ')}`
+    );
+  }
+
   // PR-26b: route APPROVE through the dedicated `approveKyc` use case so the
   // cross-entity invariants (KYC must be SUBMITTED) and audit log are
   // enforced in one place. REJECT and REQUEST_INFO still go through the

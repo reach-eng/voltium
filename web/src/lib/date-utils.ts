@@ -204,6 +204,38 @@ export function isValidDDMMYYYY(input: string | null | undefined): boolean {
 }
 
 /**
+ * Parse a date string in either ISO 8601 (YYYY-MM-DD) or DD-MM-YYYY
+ * format into a Date. Returns null for invalid input.
+ *
+ * NET-005 follow-up-14 (2026-09-08): the previous
+ * route at `admin/riders/route.ts:185-192` used
+ * `parseDDMMYYYY(...).toISOString() || rawString`,
+ * which silently passed unparseable input to Prisma
+ * (Prisma's `DateTime` filter would then either
+ * throw an opaque error or match nothing). The
+ * `|| rawString` fallback was dead code for the
+ * common case (HTML `<input type="date">` emits ISO
+ * and `parseDDMMYYYY` already accepts it via its
+ * `new Date()` fallback), but the route never
+ * rejected a bad value at the boundary.
+ *
+ * Use this in route handlers to validate the input
+ * up front, then call `.toISOString()` on the result
+ * to hand the use case a clean string. The route
+ * should treat `null` as a 400.
+ *
+ * @example parseLooseDate('2026-09-08')  // → Date(2026-09-08T00:00:00.000Z)
+ * @example parseLooseDate('08-09-2026')  // → Date(2026-09-08T00:00:00.000Z)
+ * @example parseLooseDate('garbage')     // → null
+ */
+export function parseLooseDate(input: string | null | undefined): Date | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  return parseDDMMYYYY(trimmed);
+}
+
+/**
  * Zod-compatible date validator that accepts DD-MM-YYYY.
  * Use as: `z.string().refine(isValidDDMMYYYY, 'Date must be in DD-MM-YYYY format')`
  */

@@ -14,7 +14,7 @@ import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { parseDDMMYYYY } from '@/lib/date-utils';
+import { parseLooseDate } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { createAuditLog } from '@/lib/audit-log';
@@ -184,12 +184,33 @@ export async function GET(req: NextRequest) {
     const kycStatus = url.searchParams.get('kycStatus') || '';
     const startDateRaw = url.searchParams.get('startDate') || '';
     const endDateRaw = url.searchParams.get('endDate') || '';
-    const startDate = startDateRaw
-      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
-      : '';
-    const endDate = endDateRaw
-      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
-      : '';
+    // NET-005 follow-up-14 (2026-09-08): the previous
+    // implementation was `parseDDMMYYYY(...).toISOString()
+    // || startDateRaw` — the `|| rawString` fallback
+    // silently passed unparseable input to Prisma. The
+    // filter "worked by accident" for ISO dates from
+    // HTML `<input type="date">` because
+    // `parseDDMMYYYY` already accepts ISO via its
+    // `new Date()` fallback, but unparseable input
+    // would never have been rejected at the boundary.
+    // Use `parseLooseDate` (explicit name) and reject
+    // with 400 if the input is non-empty but unparseable.
+    let startDate = '';
+    if (startDateRaw) {
+      const parsed = parseLooseDate(startDateRaw);
+      if (!parsed) {
+        return errors.badRequest('startDate must be ISO (YYYY-MM-DD) or DD-MM-YYYY');
+      }
+      startDate = parsed.toISOString();
+    }
+    let endDate = '';
+    if (endDateRaw) {
+      const parsed = parseLooseDate(endDateRaw);
+      if (!parsed) {
+        return errors.badRequest('endDate must be ISO (YYYY-MM-DD) or DD-MM-YYYY');
+      }
+      endDate = parsed.toISOString();
+    }
     const cursor = url.searchParams.get('cursor') || '';
     const page = parsePositiveInt(url.searchParams.get('page'), 1);
     const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);

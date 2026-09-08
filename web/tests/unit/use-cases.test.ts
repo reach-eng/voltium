@@ -284,6 +284,13 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
 
   it('requests additional info', async () => {
     mockKycRepository.requestInfo.mockResolvedValue({ id: 'kyc-1', status: 'INFO_REQUIRED' });
+    // NET-005 follow-up-14 (2026-09-08): the
+    // REQUEST_INFO branch now wraps the repo call
+    // + outbox emit in a single `db.$transaction`
+    // (matching APPROVE / REJECT). Mock the tx to
+    // run the inner fn with an empty tx (same
+    // pattern as the approve / reject tests above).
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REQUEST_INFO',
@@ -351,6 +358,11 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     });
     mockKycRepository.requestInfo.mockResolvedValue({ id: 'kyc-1', status: 'INFO_REQUIRED' });
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
+    // NET-005 follow-up-14 (2026-09-08): the
+    // REQUEST_INFO branch now wraps the repo call
+    // in db.$transaction (matching APPROVE / REJECT).
+    // Mock the tx to run the inner fn.
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REQUEST_INFO',

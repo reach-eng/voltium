@@ -193,22 +193,64 @@ export const kycUseCases = {
           where: { riderId: riderDbId },
           select: { id: true, status: true },
         });
-        const result = await kycRepository.requestInfo(riderDbId, reviewerId, infoRequest);
-        // PR-ONBOARDING-2026-08-11 (audit 3.1 P2): REQUEST_INFO used
-        // a direct `notificationService` call (fire-and-forget) while
-        // APPROVE / REJECT use the outbox. Move it onto the outbox so
-        // retry/backoff is consistent across KYC decisions. The
-        // dispatcher at `notification-dispatch.job.ts:90-95` already
-        // handles the `KYC_INFO_REQUESTED` event type.
-        await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
-          riderId: riderDbId,
-          type: 'KYC_INFO_REQUESTED',
-          infoRequest,
-        }, 3);
-        // PR-ONBOARDING-2026-08-11 (audit 2.7): REQUEST_INFO left no
-        // audit trail. Writes `kyc.requested_info` with reviewer id
-        // and the info text. Fire-and-forget; failure does not block
-        // the state change.
+        // NET-005 follow-up-14 (2026-09-08): the
+        // previous code called
+        // `kycRepository.requestInfo(...)` (which has
+        // its own transaction) and then
+        // `OutboxService.emit(...)` WITHOUT a `tx`
+        // argument — so the notification was outside
+        // the DB write. If the DB write committed but
+        // the Outbox emit failed, the rider would see
+        // a `INFO_REQUIRED` status with no
+        // notification (or vice versa). APPROVE and
+        // REJECT wrap their repo call + outbox emit in
+        // a single `db.$transaction(...)` and pass the
+        // `tx` to the outbox; REQUEST_INFO was missed.
+        // Move REQUEST_INFO into the same shape so the
+        // KYC_INFO_REQUESTED outbox row commits
+        // atomically with the kycProfile status
+        // write. The audit log remains fire-and-forget
+        // (it doesn't need to be transactional — losing
+        // one row is recoverable from the state
+        // machine + the kycProfile row, while a
+        // failed outbox emit is not).
+        const result = await db.$transaction(async (tx) => {
+          const requestInfoResult = await kycRepository.requestInfo(
+            riderDbId,
+            reviewerId,
+            infoRequest
+          );
+          // PR-ONBOARDING-2026-08-11 (audit 3.1 P2):
+          // REQUEST_INFO used a direct
+          // `notificationService` call (fire-and-
+          // forget) while APPROVE / REJECT use the
+          // outbox. Move it onto the outbox so
+          // retry/backoff is consistent across KYC
+          // decisions. The dispatcher at
+          // `notification-dispatch.job.ts:90-95`
+          // already handles the `KYC_INFO_REQUESTED`
+          // event type.
+          await OutboxService.emit(
+            OutboxEventTypes.NOTIFICATION_SEND,
+            {
+              riderId: riderDbId,
+              type: 'KYC_INFO_REQUESTED',
+              infoRequest,
+            },
+            3,
+            tx,
+            // PR-75: KYC notification dispatch is
+            // interactive (rider expects timely
+            // feedback on KYC decisions).
+            'interactive'
+          );
+          return requestInfoResult;
+        });
+        // PR-ONBOARDING-2026-08-11 (audit 2.7):
+        // REQUEST_INFO left no audit trail. Writes
+        // `kyc.requested_info` with reviewer id and
+        // the info text. Fire-and-forget; failure
+        // does not block the state change.
         if (previousSnapshot) {
           createAuditLog({
             actorId: reviewerId,

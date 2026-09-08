@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Shield, ShieldCheck } from 'lucide-react';
 import { MediaPreview, kycDocuments } from './helpers';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { KycRider } from './types';
@@ -24,16 +22,20 @@ export function KycDetailDialog({
   selectedRider,
   setSelectedRider,
 }: KycDetailDialogProps) {
-  const [showPii, setShowPii] = useState(false);
-
+  // NET-005 follow-up-14 (2026-09-08): the "Reveal
+  // PII" toggle is removed. The server returns PII
+  // already masked via flatten-rider.ts (maskAadhaar,
+  // maskPan, maskAccountNumber). The client-side
+  // maskString was toggling between a bullets
+  // pattern and the same already-masked string from
+  // the server, so the "Reveal" button was a no-op.
+  // Keeping it would be privacy-safe (no actual PII
+  // leak) but misleading — admins pressed it and saw
+  // the same masked value. If raw PII access is ever
+  // required, the correct path is a separate audited
+  // admin endpoint (not a client-side toggle on
+  // already-masked data).
   if (!selectedRider) return null;
-
-  const maskString = (val?: string) => {
-    if (!val) return '—';
-    if (showPii) return val;
-    if (val.length <= 4) return '••••';
-    return `••••••••${val.slice(-4)}`;
-  };
 
   return (
     <Dialog open={!!selectedRider} onOpenChange={() => setSelectedRider(null)}>
@@ -107,7 +109,7 @@ export function KycDetailDialog({
                 Aadhaar Number
               </p>
               <p className="text-sm font-medium font-mono">
-                {selectedRider.aadhaarNumber ? maskString(selectedRider.aadhaarNumber) : '—'}
+                {selectedRider.aadhaarNumber || '—'}
               </p>
             </div>
             <div className="bg-background/50 rounded-lg p-3 border border-border/30">
@@ -115,7 +117,7 @@ export function KycDetailDialog({
                 PAN Number
               </p>
               <p className="text-sm font-medium font-mono">
-                {selectedRider.panNumber ? maskString(selectedRider.panNumber) : '—'}
+                {selectedRider.panNumber || '—'}
               </p>
             </div>
             <div className="bg-background/50 rounded-lg p-3 border border-border/30">
@@ -225,21 +227,9 @@ export function KycDetailDialog({
 
           {/* Bank Details */}
           <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">
-                Bank Details
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-[11px] rounded-lg"
-                onClick={() => setShowPii((v) => !v)}
-              >
-                {showPii ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {showPii ? 'Hide PII' : 'Reveal PII'}
-              </Button>
-            </div>
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">
+              Bank Details
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">
@@ -252,7 +242,7 @@ export function KycDetailDialog({
                   Account Number
                 </p>
                 <p className="text-sm font-medium font-mono">
-                  {selectedRider.accountNumber ? maskString(selectedRider.accountNumber) : '—'}
+                  {selectedRider.accountNumber || '—'}
                 </p>
               </div>
               <div className="col-span-2">
@@ -260,7 +250,7 @@ export function KycDetailDialog({
                   IFSC Code
                 </p>
                 <p className="text-sm font-medium font-mono">
-                  {selectedRider.ifscCode ? maskString(selectedRider.ifscCode) : '—'}
+                  {selectedRider.ifscCode || '—'}
                 </p>
               </div>
             </div>
