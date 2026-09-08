@@ -264,6 +264,72 @@ export const kycRepository = {
       return kyc;
     });
   },
+
+  /**
+   * NET-005 follow-up-13 (2026-09-08): admin "Re-verify"
+   * action. Re-opens an EXPIRED KYC profile for
+   * re-submission by transitioning it back to PENDING,
+   * clearing `expiresAt` (so the 365-day clock resets
+   * after the next approval), clearing `editableFields`
+   * (so the rider app's KYC form is editable), and
+   * clearing `pendingCorrections` (any stale "needs
+   * correction" blob from a prior rejection cycle).
+   *
+   * Without this method, an EXPIRED profile was a
+   * dead-end in the state machine — the admin had no
+   * way to revive a rider whose 365-day approval had
+   * lapsed. The fix is the new state-machine transition
+   * `EXPIRED → PENDING` (kyc-state-machine.ts:25-29) +
+   * this repo method.
+   *
+   * Idempotency: if the profile is not EXPIRED,
+   * `validateKycTransition` throws `KycStateError`
+   * (mapped to 409 by the riders PUT route's
+   * `instanceof` check + the canonical
+   * `api-handler.ts:83-90` mapping). The route layer
+   * surfaces the error message to the admin.
+   */
+  async reopenExpiredKyc(riderDbId: string, reviewerId: string) {
+    const existing = await db.kycProfile.findUnique({
+      where: { riderId: riderDbId },
+      select: { status: true, id: true },
+    });
+
+    const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
+    validateKycTransition(currentStatus, 'PENDING');
+
+    return db.$transaction(async (tx) => {
+      await tx.kycProfile.update({
+        where: { riderId: riderDbId },
+        data: {
+          status: 'PENDING',
+          expiresAt: null,
+          // `editableFields` is a non-nullable String[]
+          // (per the Prisma schema), so use an empty
+          // array — the rider app treats `null/empty
+          // editableFields` as "no restriction / fully
+          // editable" (see
+          // flutter/lib/features/kyc/presentation/
+          // screens/user_onboarding_screen.dart:988-995).
+          // The repo's partial-save filter at
+          // `savePartialKyc` only fires for APPROVED
+          // status, so for PENDING this value is
+          // informational only.
+          editableFields: [],
+          pendingCorrections: Prisma.DbNull,
+          // The reviewer is recorded in the audit log
+          // by the caller (use case) — the KycProfile
+          // model has no `reviewerId` column to mirror
+          // it on the row.
+        },
+      });
+      const kyc = await tx.kycProfile.findUnique({
+        where: { riderId: riderDbId },
+      });
+      invalidateRiderCache(riderDbId);
+      return kyc;
+    });
+  },
 };
 
 // PR-KYC-CORRECTION: keys that live on the Rider table (vs the KycProfile

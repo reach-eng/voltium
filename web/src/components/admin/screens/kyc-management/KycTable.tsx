@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Eye,
   Loader2,
+  RotateCcw,
 } from 'lucide-react';
 import { getCompletion, getKycBadge } from './helpers';
 import { formatDateTimeDDMMYYYY } from '@/lib/date-utils';
@@ -268,6 +269,34 @@ export function KycTable({
                             )}
                           </Button>
                         </>
+                      ) : rider.kycStatus === 'EXPIRED' ? (
+                        // NET-005 follow-up-13 (2026-09-08):
+                        // the "Re-verify" button. The state
+                        // machine was a dead-end for EXPIRED
+                        // (no transitions out) — this button
+                        // + the new EXPIRED → PENDING
+                        // transition + the kyc/route.ts
+                        // REOPEN action handler + the
+                        // kyc.use-cases.ts reopenExpiredKyc
+                        // wrapper close the loop. The rider
+                        // is re-notified via the
+                        // KYC_REOPENED outbox event (see
+                        // notification-dispatch.job.ts) so
+                        // their app prompts for re-submission.
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs border-slate-500/30 text-slate-600 dark:text-slate-400"
+                          onClick={() => setConfirmAction({ rider, action: 'reopen' })}
+                          title="Re-verify (re-open for re-submission)"
+                          disabled={isRowLoading}
+                        >
+                          {isRowLoading ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3 h-3" />
+                          )}
+                        </Button>
                       ) : null}
                     </div>
                   </TableCell>

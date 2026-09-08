@@ -18,6 +18,59 @@ export const kycUseCases = {
     return kycRepository.findByRiderId(riderDbId);
   },
 
+  /**
+   * NET-005 follow-up-13 (2026-09-08): admin "Re-verify"
+   * action wrapper. Delegates to
+   * `kycRepository.reopenExpiredKyc` (the state-machine
+   * + write lives in the repo) and adds the audit log
+   * + outbox notification so the rider is told their
+   * KYC needs re-submission.
+   *
+   * The audit log uses the dot-separated `kyc.reopened`
+   * form, matching the prefix-sweep contract from
+   * NET-005 follow-up-3 + follow-up-5. The
+   * `REOPENED → PENDING` transition is the only valid
+   * admin re-verify path; other transitions throw
+   * `KycStateError` from the state machine and are
+   * mapped to 409 by the route layer.
+   */
+  async reopenExpiredKyc(riderDbId: string, reviewerId: string) {
+    const result = await kycRepository.reopenExpiredKyc(riderDbId, reviewerId);
+    // Audit log + outbox notification, fire-and-forget
+    // so they don't block the response. Same pattern as
+    // the REJECT / REQUEST_INFO branches above.
+    createAuditLog({
+      actorId: reviewerId,
+      actorType: 'ADMIN',
+      action: 'kyc.reopened',
+      entity: 'KycProfile',
+      entityId: result?.id ?? riderDbId,
+      details: {
+        riderId: riderDbId,
+        previousStatus: 'EXPIRED',
+        newStatus: 'PENDING',
+      },
+    }).catch((err) => logger.error('[KYC audit] kyc.reopened log failed', err));
+    // Tell the rider their KYC needs re-submission.
+    // The outbox dispatcher at
+    // notification-dispatch.job.ts:90-95 handles the
+    // `KYC_REOPENED` event type (already wired in
+    // NET-005 follow-up-2 for KYC_REJECTED /
+    // KYC_INFO_REQUESTED — same event family).
+    await OutboxService.emit(
+      OutboxEventTypes.NOTIFICATION_SEND,
+      {
+        riderId: riderDbId,
+        type: 'KYC_REOPENED',
+      },
+      3,
+      // No transaction — the audit log + outbox emit
+      // are after the state change committed, and the
+      // rider is not racing themselves to re-submit.
+    );
+    return result;
+  },
+
   async submitKyc(riderDbId: string, input: KycSubmission) {
     // Map frontend field names to Prisma model field names
     const prismaData = mapKycFieldsToPrisma(input as unknown as Record<string, unknown>);

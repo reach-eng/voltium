@@ -97,16 +97,36 @@ export function KycDialogs({
                 ? 'Approve KYC'
                 : confirmAction?.action === 'info_required'
                   ? 'Request Correction'
-                  : 'Reject KYC'}
+                  : confirmAction?.action === 'reopen'
+                    ? 'Re-verify KYC'
+                    : 'Reject KYC'}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <span>
                 Are you sure you want to{' '}
                 {confirmAction?.action === 'info_required'
                   ? 'request corrections for'
-                  : confirmAction?.action}{' '}
+                  : confirmAction?.action === 'reopen'
+                    ? 're-open (re-verify) the KYC for'
+                    : confirmAction?.action}{' '}
                 the KYC verification for <strong>{confirmAction?.rider.fullName}</strong>?
               </span>
+              {/* NET-005 follow-up-13 (2026-09-08): for the
+                  `reopen` action, show a one-line
+                  description of what will happen so the
+                  admin isn't surprised by the state
+                  transition. The rider is re-notified via
+                  the KYC_REOPENED outbox event (see
+                  notification-dispatch.job.ts) so their
+                  app prompts for re-submission. */}
+              {confirmAction?.action === 'reopen' && (
+                <p className="text-xs text-muted-foreground">
+                  The KYC will move from <strong>EXPIRED</strong> back to{' '}
+                  <strong>PENDING</strong>. The 365-day expiry clock is cleared; the
+                  rider will be re-notified to re-submit their documents. The
+                  previous approval (if any) is preserved in the audit log.
+                </p>
+              )}
               {(confirmAction?.action === 'reject' ||
                 confirmAction?.action === 'info_required') && (
                 <div className="pt-2">

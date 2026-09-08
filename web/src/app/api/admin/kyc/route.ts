@@ -143,6 +143,18 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   // cross-entity invariants (KYC must be SUBMITTED) and audit log are
   // enforced in one place. REJECT and REQUEST_INFO still go through the
   // shared `kycUseCases.reviewKyc` path.
+  //
+  // NET-005 follow-up-13 (2026-09-08): add a REOPEN
+  // action for the admin "Re-verify" button. Routes an
+  // EXPIRED profile back to PENDING (via the new state
+  // machine transition EXPIRED → PENDING +
+  // `kycRepository.reopenExpiredKyc`). The state machine
+  // throws `KycStateError` for any source status other
+  // than EXPIRED; the canonical 409 mapping in
+  // `withApiHandler` (api-handler.ts:83-90) handles it
+  // — `KycStateError` is one of the four domain errors
+  // mapped to 409 there. This action re-uses the same
+  // `kyc_approve` permission gate as APPROVE/REJECT.
   let result;
   if (action === 'APPROVE') {
     try {
@@ -153,6 +165,8 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       }
       throw err;
     }
+  } else if (action === 'REOPEN') {
+    result = await kycUseCases.reopenExpiredKyc(riderId, session.adminId || '');
   } else {
     result = await kycUseCases.reviewKyc(riderId, session.adminId || '', {
       reviewerId: session.adminId || '',

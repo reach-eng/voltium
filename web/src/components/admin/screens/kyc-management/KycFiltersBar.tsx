@@ -86,6 +86,20 @@ export function KycFiltersBar({
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="info_required">Needs Correction</TabsTrigger>
+          {/* NET-005 follow-up-13 (2026-09-08): add an
+              Expired tab so admins can find the rows
+              whose KYC hit the 365-day horizon
+              (kyc-expiry.job.ts). Pre-fix, the queue
+              only filtered by PENDING/SUBMITTED/APPROVED/
+              REJECTED/INFO_REQUIRED/ALL — EXPIRED was
+              reachable via the `all` tab but had no
+              dedicated filter, and the badge was the
+              default (no distinct color, see
+              helpers.tsx:24-34). The `expired` value
+              maps to kycStatus=EXPIRED via the URL
+              builder's uppercase fallback in
+              buildKycQueueUrl (useKyc.ts:30-37). */}
+          <TabsTrigger value="expired">Expired</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
       </Tabs>

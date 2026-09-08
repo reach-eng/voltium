@@ -150,23 +150,62 @@ export function useKyc() {
         toast.error('Please provide a reason of at least 5 characters.');
         return;
       }
-      const res = await fetch('/api/admin/riders', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: rider.id,
-          kycStatus: statusMap[action],
-          rejectionReason:
-            action === 'reject' || action === 'info_required'
-              ? rejectionReason.trim()
-              : undefined,
-        }),
-      });
+      // NET-005 follow-up-13 (2026-09-08): the reopen
+      // action routes through `/api/admin/kyc` (not
+      // `/api/admin/riders`) so the kyc POST handler's
+      // `action: 'REOPEN'` branch runs the dedicated
+      // `kycUseCases.reopenExpiredKyc` path — which
+      // validates the EXPIRED → PENDING state-machine
+      // transition, writes the `kyc.reopened` audit
+      // log, and emits the KYC_REOPENED outbox event.
+      // The riders PUT path would bypass all three of
+      // those steps (it just writes the kycStatus
+      // column) and was the original dead-end pattern
+      // we're closing.
+      let res: Response;
+      if (action === 'reopen') {
+        res = await fetch('/api/admin/kyc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ riderId: rider.id, action: 'REOPEN' }),
+        });
+      } else {
+        res = await fetch('/api/admin/riders', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: rider.id,
+            kycStatus: statusMap[action],
+            rejectionReason:
+              action === 'reject' || action === 'info_required'
+                ? rejectionReason.trim()
+                : undefined,
+          }),
+        });
+      }
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || errJson.message || `Request failed: ${res.status}`);
+        // NET-005 follow-up-10 (2026-09-08): the
+        // `error` field is a structured object
+        // `{code, message, details}` (see
+        // api-response.ts:236-250), not a string.
+        const msg =
+          (errJson.error && typeof errJson.error === 'object' && errJson.error.message) ||
+          errJson.error ||
+          errJson.message ||
+          `Request failed: ${res.status}`;
+        throw new Error(msg);
       }
-      toast.success(`Rider KYC ${statusMap[action].toLowerCase()}`);
+      // NET-005 follow-up-13 (2026-09-08): use the
+      // `action` enum directly for the toast (no
+      // `statusMap` for `reopen` — it goes to PENDING
+      // server-side, but the user-facing label is
+      // "re-verify").
+      const successLabel =
+        action === 'reopen'
+          ? 'KYC re-opened for re-submission'
+          : `Rider KYC ${statusMap[action].toLowerCase()}`;
+      toast.success(successLabel);
       // NET-005 follow-up-10 (2026-09-08): only offer
       // undo for reversible KYC transitions. The KYC
       // state machine allows APPROVED → EXPIRED only,
@@ -179,7 +218,7 @@ export function useKyc() {
       // REJECT (REJECTED → SUBMITTED) and INFO_REQUIRED
       // (INFO_REQUIRED → SUBMITTED) are reversible and
       // keep the undo affordance.
-      if (action !== 'approve') {
+      if (action !== 'approve' && action !== 'reopen') {
         setLastAction({
           ids: [rider.id],
           previousStatuses: { [rider.id]: previousStatus },
@@ -197,7 +236,7 @@ export function useKyc() {
       });
       fetchRiders();
       if (selectedRider?.id === rider.id) {
-        setSelectedRider({ ...rider, kycStatus: statusMap[action] });
+        setSelectedRider({ ...rider, kycStatus: action === 'reopen' ? 'PENDING' : statusMap[action] });
       }
     } catch (err: any) {
       logger.error('Failed to update KYC', { error: err });

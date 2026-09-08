@@ -44,6 +44,14 @@ export type NotificationPayloadType =
   | 'KYC_APPROVED'
   | 'KYC_REJECTED'
   | 'KYC_INFO_REQUESTED'
+  // NET-005 follow-up-13 (2026-09-08): emitted by
+  // kyc.use-cases.ts:reopenExpiredKyc when the admin
+  // clicks "Re-verify" on an EXPIRED row. Routed to the
+  // same template family as KYC_REJECTED — the rider's
+  // user-facing flow ("re-upload your documents") is
+  // identical, and reusing the template avoids adding a
+  // new copy block.
+  | 'KYC_REOPENED'
   | 'WALLET_TOPUP_APPROVED'
   | 'WALLET_TOPUP_REJECTED'
   | 'SUPPORT_REPLY'
@@ -148,6 +156,46 @@ export const notificationDispatchJob = {
           payload.reason as string | undefined
         );
         return { delivered: true, channel: 'fcm' };
+
+      // NET-005 follow-up-13 (2026-09-08): the admin
+      // "Re-verify" action transitions an EXPIRED KYC
+      // back to PENDING. The producer
+      // (kyc.use-cases.ts:reopenExpiredKyc) emits
+      // `KYC_REOPENED` so the rider is told their KYC
+      // needs re-submission. We use the existing
+      // `notifyKycStatusChange` channel helper with
+      // status=`REJECTED` and the reason = "KYC
+      // verification expired. Please re-submit your
+      // documents." so the rider app shows the same
+      // "needs correction" flow it already supports.
+      // The semantics aren't a true rejection — the
+      // profile is back in PENDING — but the user-
+      // facing flow ("re-upload your documents") is
+      // identical and reuses the existing template.
+      case 'KYC_REOPENED':
+        await notificationService.notifyKycStatusChange(
+          payload.riderId,
+          'REJECTED',
+          'KYC verification expired. Please re-submit your documents.'
+        );
+        try {
+          await db.notification.create({
+            data: {
+              riderId: payload.riderId as string,
+              type: 'SYSTEM',
+              title: (payload.title as string) ?? 'KYC Expired',
+              message:
+                (payload.body as string) ??
+                'Your KYC verification expired. Please re-submit your documents to continue.',
+            },
+          });
+        } catch (err) {
+          logger.warn(
+            '[NotificationDispatch] Failed to persist in-app KYC_REOPENED notification',
+            { err }
+          );
+        }
+        return { delivered: true, channel: 'fcm+in-app' };
 
       case 'WALLET_TOPUP_APPROVED':
       case 'WALLET_TOPUP_REJECTED':

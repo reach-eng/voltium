@@ -57,7 +57,11 @@ export interface KycRider {
 
 export interface KycConfirmAction {
   rider: KycRider;
-  action: 'approve' | 'reject' | 'info_required';
+  // NET-005 follow-up-13 (2026-09-08): `reopen` is the
+  // admin "Re-verify" action for EXPIRED rows. Maps
+  // to the new `EXPIRED → PENDING` state-machine
+  // transition + the kyc/route.ts REOPEN action.
+  action: 'approve' | 'reject' | 'info_required' | 'reopen';
 }
 
 export interface LastKycBulkAction {

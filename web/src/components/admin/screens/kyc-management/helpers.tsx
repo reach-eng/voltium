@@ -29,6 +29,15 @@ export function getKycBadge(status: string) {
     SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
     REJECTED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
     INFO_REQUIRED: 'border-orange-500/20 text-orange-600 bg-orange-500/5 dark:text-orange-400',
+    // NET-005 follow-up-13 (2026-09-08): add a
+    // distinct EXPIRED badge. Pre-fix, EXPIRED rows
+    // fell through to the default `border-border
+    // text-muted-foreground bg-muted/30` (same as
+    // UNKNOWN), so admins couldn't tell an expired
+    // KYC from a row that had never been started.
+    // Slate is distinct from every other status and
+    // reads as "stale / needs re-submission".
+    EXPIRED: 'border-slate-500/30 text-slate-600 bg-slate-500/5 dark:text-slate-400',
   };
   return styles[status] || 'border-border text-muted-foreground bg-muted/30';
 }
