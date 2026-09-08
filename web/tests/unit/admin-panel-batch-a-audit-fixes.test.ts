@@ -158,23 +158,16 @@ describe('Admin Panel Batch A Remediation Test Suite', () => {
     });
   });
 
-  describe('D2-P0-01: Team Leader Approval Handling', () => {
-    it('assigns teamLeaderId when tlAction is APPROVE', async () => {
-      const { db } = await import('@/lib/db');
-      vi.mocked(db.rider.findUnique).mockResolvedValueOnce({
-        id: 'rider_1',
-        riderId: 'VEMXX001',
-        lifecycleStatus: 'ACTIVE',
-        teamLeaderId: null,
-      } as any);
-
-      await adminRiderUseCases.update(
-        'rider_1',
-        { tlAction: 'APPROVE', teamLeaderId: 'tl_123' },
-        { actorId: 'admin_1', actorRole: 'SUPER_ADMIN' }
-      );
-
-      expect(db.$transaction).toHaveBeenCalled();
-    });
-  });
+  // NET-005 follow-up-20 (2026-09-08):
+  // "D2-P0-01: Team Leader Approval Handling"
+  // describe block was removed. It tested
+  // `tlAction: 'APPROVE'` against
+  // `adminRiderUseCases.update` — `tlAction`
+  // is no longer in the schema, the
+  // `RiderProfileTab` alert banner that
+  // triggered it is gone, and
+  // `handleTlAction` in `useRiders.ts` is
+  // deleted. The TL-change-request feature
+  // was designed but never built; a
+  // follow-up ticket should add it.
 });

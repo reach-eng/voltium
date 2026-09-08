@@ -15,11 +15,21 @@ export const updateRiderSchema = z.object({
     .optional(),
   guarantorName: z.string().optional(),
   guarantorPhone: z.string().optional(),
-  tlAction: z
-    .string()
-    .transform((val) => val.toUpperCase())
-    .pipe(z.enum(['APPROVE', 'REJECT']))
-    .optional(),
+  // NET-005 follow-up-20 (2026-09-08):
+  // `tlAction` removed. The route's
+  // `updateRiderSchema` (in
+  // `app/api/admin/riders/route.ts`) is
+  // the one that actually validates admin
+  // rider updates, and it never had
+  // `tlAction`. This module's schema is
+  // imported by the rider-app profile
+  // update (a different route), where
+  // `tlAction` was always dead code. The
+  // TL-change-request feature was designed
+  // but never built; a follow-up ticket
+  // should add it (with its own dedicated
+  // schema + route, not as a rider-app
+  // profile field).
   fullName: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),

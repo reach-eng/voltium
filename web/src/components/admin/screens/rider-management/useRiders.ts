@@ -393,38 +393,17 @@ export function useRiders() {
     [confirmDelete, selectedRider]
   );
 
-  const handleTlAction = useCallback(
-    async (riderId: string, action: 'approve' | 'reject') => {
-      try {
-        const res = await fetch('/api/admin/riders', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: riderId, tlAction: action }),
-        });
-        if (res.ok) {
-          await fetchRiders();
-          if (selectedRider?.id === riderId) {
-            const json = await res.json();
-            setSelectedRider(json.data);
-          }
-          toast.success(`TL ${action} processed.`);
-        } else {
-          // ADMIN-RIDER-AUDIT P0-2 (2026-09-08): the previous
-          // `if (res.ok)` branch silently swallowed the 400
-          // from the schema stripping `tlAction` (a
-          // ghost-UI key — the audit's P2 sub-bug). The toast
-          // surfaces the rejection.
-          const body = await res.json().catch(() => null);
-          const message = body?.error?.message || body?.message || `TL action failed (${res.status})`;
-          toast.error(message);
-        }
-      } catch (err) {
-        logger.error('Failed to process TL action', { error: err });
-        toast.error('TL action failed');
-      }
-    },
-    [fetchRiders, selectedRider]
-  );
+  // NET-005 follow-up-20 (2026-09-08): the
+  // `handleTlAction` function was removed. It
+  // PUT'd `{ id, tlAction }` to
+  // `/api/admin/riders`; the route's
+  // `updateRiderSchema` strips `tlAction`, so
+  // the action was a server-side no-op. The
+  // corresponding `tlChangeRequested` /
+  // `tlChangeReason` alert block in
+  // `RiderProfileTab` is also removed. A
+  // follow-up ticket should build the
+  // TL-change-request feature properly.
 
   const handleClearGuarantor = useCallback(() => {
     setConfirmClearGuarantor(true);
@@ -612,7 +591,12 @@ export function useRiders() {
     confirmDelete,
     setConfirmDelete,
     onDelete: setConfirmDelete,
-    handleTlAction,
+    // NET-005 follow-up-20 (2026-09-08):
+    // `handleTlAction` removed from the
+    // hook return — the function no longer
+    // exists and the alert block in
+    // `RiderProfileTab` that consumed it
+    // was deleted.
     // KYC
     selectedKycDocs,
     setSelectedKycDocs,

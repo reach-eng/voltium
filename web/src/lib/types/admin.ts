@@ -37,8 +37,19 @@ export interface Rider {
   accountNumber?: string | null;
   ifscCode?: string | null;
   returnPending?: boolean;
-  tlChangeRequested?: boolean;
-  tlChangeReason?: string | null;
+  // NET-005 follow-up-20 (2026-09-08):
+  // `tlChangeRequested` and `tlChangeReason`
+  // were declared here but no server-side code
+  // ever produced them — the rider model has
+  // no such columns, the response schema
+  // doesn't include them, and the alert
+  // banner in `RiderProfileTab` that reads
+  // them can never render. The companion
+  // `handleTlAction` PUTs `tlAction` which the
+  // route's `updateRiderSchema` strips. The
+  // fields are removed; a follow-up ticket
+  // should build the TL-change-request
+  // feature properly.
   teamLeader?: string | null;
   assignedTlName?: string | null;
   assignedTlPhone?: string | null;

@@ -110,6 +110,25 @@ const GUARANTOR_FIELDS = new Set([
   'guarantorPhoto',
 ]);
 
+/**
+ * NET-005 follow-up-19 (2026-09-08): typed error
+ * for the rider-create phone-existence check.
+ * The route catches this and returns 409. A
+ * message-text sniff (e.g. `error.message.includes(
+ * 'already exists')`) is fragile and was replaced
+ * with this typed marker; the Prisma P2002 race
+ * (two concurrent creates that both pass the
+ * pre-check) is caught at the route level via
+ * `PrismaClientKnownRequestError` — the same 409
+ * status, a different signal.
+ */
+export class RiderPhoneExistsError extends Error {
+  constructor(public readonly phone: string) {
+    super(`Rider with phone ${phone} already exists`);
+    this.name = 'RiderPhoneExistsError';
+  }
+}
+
 export const adminRiderUseCases = {
   /**
    * List riders with full filters, search, pagination, and shared guarantor detection.
@@ -389,7 +408,19 @@ export const adminRiderUseCases = {
     const existing = await getCachedRiderByPhone(phone, () =>
       db.rider.findUnique({ where: { phone } })
     );
-    if (existing) throw new Error('Phone already exists');
+    if (existing) {
+      // NET-005 follow-up-19 (2026-09-08): the pre-fix
+      // code threw `Error('Phone already exists')`
+      // and the route sniffed the message string.
+      // The route now catches the typed error and
+      // returns 409; the message-text sniff is gone.
+      // The Prisma P2002 race (two concurrent creates
+      // with the same phone both pass the existence
+      // check) is caught at the route level via the
+      // `PrismaClientKnownRequestError` check — the
+      // message here is just for the pre-check path.
+      throw new RiderPhoneExistsError(phone);
+    }
 
     const riderId = `VF-RD-${randomUUID().slice(0, 8).toUpperCase()}`;
 
@@ -413,7 +444,18 @@ export const adminRiderUseCases = {
       }
 
       await tx.wallet.create({ data: { riderId: created.id } });
-      await tx.kycProfile.create({ data: { riderId: created.id } });
+      // NET-005 follow-up-19 (2026-09-08): the
+      // pre-fix code wrote `tx.kycProfile.create({
+      // data: { riderId } })` with no status, which
+      // lets the DB default (PENDING) win. The
+      // state machine's KYC journey starts at DRAFT
+      // (see kyc-state-machine.ts:DRAFT). PENDING is
+      // only meaningful as a re-verify target from
+      // EXPIRED (follow-up-13) — a freshly-created
+      // rider row should be DRAFT, not PENDING.
+      await tx.kycProfile.create({
+        data: { riderId: created.id, status: 'DRAFT' },
+      });
       await tx.guarantor.create({ data: { riderId: created.id } });
 
       return tx.rider.findUnique({

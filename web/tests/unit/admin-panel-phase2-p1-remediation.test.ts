@@ -8,7 +8,7 @@ import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
 import { db } from '@/lib/db';
 
 describe('Admin Panel Phase 2 P1 Remediation Suite', () => {
-  describe('Rider Guarantor & TL Action Schema (P1-06, P1-07)', () => {
+  describe('Rider Guarantor Schema (P1-06)', () => {
     it('accepts null for guarantorStatus when clearing a guarantor', () => {
       const result = updateRiderSchema.safeParse({
         id: 'rider_123',
@@ -22,25 +22,12 @@ describe('Admin Panel Phase 2 P1 Remediation Suite', () => {
       }
     });
 
-    it('accepts case-insensitive tlAction and transforms to uppercase', () => {
-      const approveResult = updateRiderSchema.safeParse({
-        id: 'rider_123',
-        tlAction: 'approve',
-      });
-      expect(approveResult.success).toBe(true);
-      if (approveResult.success) {
-        expect(approveResult.data.tlAction).toBe('APPROVE');
-      }
-
-      const rejectResult = updateRiderSchema.safeParse({
-        id: 'rider_123',
-        tlAction: 'reject',
-      });
-      expect(rejectResult.success).toBe(true);
-      if (rejectResult.success) {
-        expect(rejectResult.data.tlAction).toBe('REJECT');
-      }
-    });
+    // NET-005 follow-up-20 (2026-09-08):
+    // "accepts case-insensitive tlAction and
+    // transforms to uppercase" was removed.
+    // `tlAction` is no longer in the
+    // `updateRiderSchema` — see the comment
+    // at rider.schemas.ts:updateRiderSchema.
   });
 
   describe('Coupon Percentage Cap on Partial Update (P1-13)', () => {

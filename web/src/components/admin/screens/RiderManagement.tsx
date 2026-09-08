@@ -101,7 +101,9 @@ export default function RiderManagement() {
             handleKycAction={riderState.handleKycAction}
             handleClearGuarantor={riderState.handleClearGuarantor}
             confirmClearGuarantorAction={riderState.confirmClearGuarantorAction}
-            handleTlAction={riderState.handleTlAction}
+            // NET-005 follow-up-20 (2026-09-08):
+            // `handleTlAction` removed — see the
+            // useRiders.ts comment.
             selectedKycDocs={riderState.selectedKycDocs}
             setSelectedKycDocs={riderState.setSelectedKycDocs}
             confirmKycAction={riderState.confirmKycAction}

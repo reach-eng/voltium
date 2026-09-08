@@ -63,7 +63,11 @@ export interface RiderDetailDialogProps {
   handleKycAction: () => void;
   handleClearGuarantor: () => void;
   confirmClearGuarantorAction: () => void;
-  handleTlAction: (riderId: string, action: 'approve' | 'reject') => void;
+  // NET-005 follow-up-20 (2026-09-08):
+  // `handleTlAction` prop removed. It was
+  // only used by the dead "TL Change
+  // Requested" alert block in RiderProfileTab
+  // (now stripped).
 
   // KYC doc selection
   selectedKycDocs: Set<string>;
@@ -111,7 +115,6 @@ export function RiderDetailDialog({
   handleKycAction,
   handleClearGuarantor,
   confirmClearGuarantorAction,
-  handleTlAction,
   selectedKycDocs,
   setSelectedKycDocs,
   confirmKycAction,
@@ -283,7 +286,6 @@ export function RiderDetailDialog({
                   isEditing={isEditing}
                   editForm={editForm}
                   setEditForm={setEditForm}
-                  handleTlAction={handleTlAction}
                 />
 
                 {/* ── KYC Media Tab ── */}

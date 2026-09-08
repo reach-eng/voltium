@@ -10,6 +10,7 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
@@ -18,13 +19,14 @@ import { parseLooseDate } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
 import { logKycDocumentView } from '@/lib/security-events';
-import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { adminRiderUseCases, RiderPhoneExistsError } from '@/server/modules/riders/admin-riders.use-cases';
 import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
 import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
 import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
 import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
 import { parsePositiveInt } from '@/lib/api-utils';
 import { toRupeesResponse } from '@/lib/api-money';
+import { createRiderSchema, validateBody } from '@/lib/validators';
 
 /**
  * Allowlisted update schema — prevents mass assignment by only accepting
@@ -309,16 +311,67 @@ export async function POST(req: NextRequest) {
     return errors.forbidden('Insufficient permissions to create riders');
   }
 
+  // NET-005 follow-up-19 (2026-09-08): the pre-fix
+  // code did `body = await req.json(); const { phone,
+  // fullName } = body;` — no zod, no phone format
+  // check, no validation. A malformed phone would
+  // reach Prisma and surface as a 500. Use the
+  // existing `createRiderSchema` (validators.ts:297,
+  // already exported) so the same rules apply
+  // server-side that the client's `length < 10`
+  // check was supposed to enforce. Reject with
+  // 422 (the validateBody standard) on schema
+  // failure.
+  let body: unknown;
   try {
-    const body = await req.json();
-    const { phone, fullName } = body;
+    body = await req.json();
+  } catch {
+    return errors.badRequest('Request body must be valid JSON');
+  }
+  const parsed = validateBody(createRiderSchema, body);
+  if (!parsed.success) {
+    return errors.validation(parsed.error);
+  }
+  const { phone, fullName } = parsed.data;
 
+  try {
     const result = await adminRiderUseCases.create({ phone, fullName });
     invalidateCache('admin:*');
     return success(result);
   } catch (error) {
-    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {
-      return errors.conflict((error instanceof Error ? error.message : String(error)));
+    // NET-005 follow-up-19 (2026-09-08): the
+    // pre-fix catch relied on a message-text
+    // sniff (`error.message.includes('already
+    // exists')`) which is fragile AND doesn't
+    // catch the Prisma P2002 race (two
+    // concurrent creates that both pass the
+    // pre-existence check). Two typed signals
+    // now map to 409:
+    //   1. The use-case throws
+    //      `RiderPhoneExistsError` on the
+    //      pre-check path (caller already has
+    //      the rider).
+    //   2. Prisma's P2002 unique-constraint
+    //      violation on the race path
+    //      (`rider.phone` unique index).
+    if (error instanceof RiderPhoneExistsError) {
+      return errors.conflict(error.message);
+    }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      // The unique-constraint hit could be
+      // on `rider.phone` or, in theory, on
+      // another unique index (e.g. a future
+      // `riderId` collision). Phone is the
+      // known case; surface a generic
+      // "duplicate" message that doesn't
+      // claim a specific column.
+      logger.info('POST /api/admin/riders caught P2002 (duplicate unique key)', {
+        meta: error.meta,
+      });
+      return errors.conflict('A rider with these details already exists');
     }
     logger.error('Create rider error:', error);
     return errors.internal('Failed to create rider');
