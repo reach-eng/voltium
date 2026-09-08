@@ -469,12 +469,27 @@ export function useRiders() {
     }
   }, [selectedRider]);
 
-  const startEditing = useCallback(() => {
-    if (!selectedRider) return;
-    setEditForm({ ...selectedRider });
-    setIsEditing(true);
-  }, [selectedRider]);
-
+  // NET-005 follow-up-23 (2026-09-08): the
+  // hook's `startEditing` was DEAD CODE that
+  // did `setEditForm({ ...selectedRider })`.
+  // The full spread would have copied
+  // masked PII (`aadhaarNumber`,
+  // `accountNumber` — `XXXX1234`-style) and
+  // the `walletBalance` computed field
+  // (which `update()` throws on by design,
+  // returning a 500). The dialog has its own
+  // LOCAL whitelisted `startEditing` that
+  // only picks the form fields it edits
+  // (RiderDetailDialog.tsx:130) — that's
+  // what the button click calls. This
+  // hook-level `startEditing` is one import
+  // away from being wired in: any future
+  // refactor that passes the hook's
+  // `startEditing` to the button (instead
+  // of relying on the dialog's local one)
+  // would silently re-introduce the
+  // masked-PII writeback. Deleted; see the
+  // export block for the regression note.
   const toggleSelectAll = useCallback(
     (checked: boolean) => {
       setSelectedIds(checked ? new Set(riders.map((r) => r.id)) : new Set());
@@ -585,7 +600,16 @@ export function useRiders() {
     editForm,
     setEditForm,
     saving,
-    startEditing,
+    // NET-005 follow-up-23 (2026-09-08):
+    // `startEditing` removed from the hook
+    // return. The function was DEAD CODE
+    // (no caller) and the full-spread
+    // `setEditForm({ ...selectedRider })`
+    // would have copied masked PII and the
+    // `walletBalance` computed field. The
+    // dialog has its own LOCAL whitelisted
+    // `startEditing` (RiderDetailDialog.tsx:130)
+    // — that's what the button click calls.
     handleUpdateRider,
     handleDeleteRider,
     confirmDelete,
