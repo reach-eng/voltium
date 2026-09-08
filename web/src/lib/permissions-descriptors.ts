@@ -41,6 +41,7 @@ export const PERMISSION_DESCRIPTORS: readonly PermissionDescriptor[] = [
   { key: 'riders_delete', label: 'Delete Riders', category: 'Riders' },
   { key: 'riders_delete_request', label: 'Request Rider Deletion', category: 'Riders' },
   { key: 'riders_delete_approve', label: 'Approve Rider Deletion', category: 'Riders' },
+  { key: 'riders_delete_execute', label: 'Execute Approved Deletion', category: 'Riders' },
   { key: 'riders_delete_recover', label: 'Recover Deleted Rider', category: 'Riders' },
   { key: 'riders_manage', label: 'Manage Riders (bulk)', category: 'Riders' },
   { key: 'impersonate_riders', label: 'Impersonate Riders (dev)', category: 'Riders' },

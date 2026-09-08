@@ -25,8 +25,31 @@ export const ROLE_PERMISSIONS: Readonly<Record<string, RoleSet>> = {
   riders_update: ['OPERATIONS_ADMIN', 'FLEET_MANAGER'],
   riders_delete: [],
   riders_delete_request: ['OPERATIONS_ADMIN'],
-  riders_delete_approve: [],
-  riders_delete_recover: [],
+  // NET-005 follow-up-18 (2026-09-08): the two GDPR
+  // delete keys were granted to NO role, so the only
+  // way to actually approve or recover a deletion was
+  // via the SUPER_ADMIN blanket bypass at
+  // permissions.ts:75 — i.e. the flow was
+  // de-facto superadmin-only by accident. Grant the
+  // two non-execute keys to OPERATIONS_ADMIN and
+  // FINANCE_ADMIN; the existing two-person rule in
+  // the executor route (data-deletion/route.ts:83-85
+  // — "Executor cannot be the same as the requester
+  // or approver") still blocks the same admin from
+  // both requesting and approving.
+  riders_delete_approve: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
+  // riders_delete_execute: the second-person step that
+  // performs the actual soft-delete against the
+  // approval token. Replaces the undeclared
+  // `admin:write` key the executor route used
+  // previously (a key the role map didn't know
+  // about, so the lookup fell through to the
+  // SUPER_ADMIN bypass). SUPER_ADMIN can always
+  // execute (own override); FINANCE_ADMIN is the
+  // natural non-superadmin role because the
+  // executor is a money-integrity-adjacent step.
+  riders_delete_execute: ['SUPER_ADMIN', 'FINANCE_ADMIN'],
+  riders_delete_recover: ['OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
   riders_manage: ['OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
   impersonate_riders: ['OPERATIONS_ADMIN'],
 

@@ -14,9 +14,18 @@ export async function DELETE(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const session = await requirePermission('admin:write');
+  // NET-005 follow-up-18 (2026-09-08): the previous
+  // permission key was the undeclared `admin:write` —
+  // a key the role map didn't know about, so the
+  // lookup at `permissions.ts:88-92` returned
+  // `false`, leaving the SUPER_ADMIN blanket bypass
+  // at line 75 as the only way through. Use the
+  // real `riders_delete_execute` key so non-superadmin
+  // roles with the permission (FINANCE_ADMIN) can
+  // actually execute an approved deletion.
+  const session = await requirePermission('riders_delete_execute');
   if (!session) {
-    return errors.forbidden('Insufficient permissions to delete rider data');
+    return errors.forbidden('Insufficient permissions to execute rider deletion (riders_delete_execute required)');
   }
 
   const { id: riderId } = await context.params;

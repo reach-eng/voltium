@@ -17,7 +17,6 @@ import { logger } from '@/lib/logger';
 import { parseLooseDate } from '@/lib/date-utils';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { invalidateRiderCache } from '@/lib/server-cache';
-import { createAuditLog } from '@/lib/audit-log';
 import { logKycDocumentView } from '@/lib/security-events';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
@@ -429,13 +428,25 @@ export async function DELETE(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return errors.badRequest('ID required');
 
-    await adminRiderUseCases.delete(id);
-    createAuditLog({
-      actorId: session.adminId || session.riderDbId || 'system',
-      action: 'rider.delete',
-      entity: 'rider',
-      entityId: id,
-    }).catch((e: unknown) => logger.error('Audit log failed for rider delete', e));
+    // NET-005 follow-up-18 (2026-09-08): the previous
+    // code called `adminRiderUseCases.delete(id)` with
+    // NO actor and then wrote a SECOND `rider.delete`
+    // audit row here at the route. The use-case's
+    // own audit row (inside the soft-delete transaction)
+    // defaulted to `actorId: 'system', actorType:
+    // 'SYSTEM'` because the optional `actorId` was
+    // undefined. Result: two audit rows, and the
+    // authoritative one (the in-transaction write)
+    // said the system did it. Thread the real actor
+    // into the use-case and drop the duplicate
+    // route-level audit row — the use-case writes the
+    // single, in-transaction, correctly-attributed
+    // record.
+    const adminActorId = session.adminId ?? session.riderDbId;
+    if (!adminActorId) {
+      return errors.unauthorized('Admin session has no actor id');
+    }
+    await adminRiderUseCases.delete(id, adminActorId);
     invalidateCache('admin:*');
     return success(null, 'Rider deleted');
   } catch (error) {

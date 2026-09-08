@@ -57,9 +57,22 @@ async function postHandler(req: NextRequest) {
       }
 
       case 'delete': {
+        // NET-005 follow-up-18 (2026-09-08): the previous
+        // code called `adminRiderUseCases.delete(id)` with
+        // NO actor. The use-case's in-transaction audit
+        // row then wrote `actorId: 'system', actorType:
+        // 'SYSTEM'` — and unlike the single DELETE route,
+        // the bulk route did NOT write a second
+        // route-level audit row to compensate. So bulk
+        // deletes left only the SYSTEM row as evidence.
+        // Thread the real admin id through; the use-case
+        // now requires it.
+        if (!adminId) {
+          return errors.unauthorized('Admin session has no actor id');
+        }
         for (const id of ids) {
           try {
-            await adminRiderUseCases.delete(id);
+            await adminRiderUseCases.delete(id, adminId);
             updatedCount++;
           } catch (e) {
             failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });

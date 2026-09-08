@@ -1246,7 +1246,26 @@ export const adminRiderUseCases = {
    * for audit/forensics and stay hidden via the deletedAt filter. Use the
    * GDPR data-deletion-purge job for lawful full purges, never this path.
    */
-  async delete(id: string, actorId?: string) {
+  async delete(id: string, actorId: string) {
+    // NET-005 follow-up-18 (2026-09-08): the previous
+    // signature was `actorId?: string` and the audit
+    // row inside the soft-delete transaction fell
+    // back to `actorId: 'system', actorType: 'SYSTEM'`
+    // when the caller (the route) didn't pass an
+    // actor. Result: a `rider.delete` audit row
+    // attributed to "system" was the authoritative
+    // record of an admin-initiated delete. The two
+    // call sites (single DELETE + bulk DELETE)
+    // didn't pass an actor at all, so the audit row
+    // said the system did it. Require the actor
+    // explicitly; callers MUST thread the real
+    // `session.adminId` through. Throwing here is
+    // cheaper than the silent-wrong-actor alternative.
+    if (!actorId) {
+      throw new Error(
+        'adminRiderUseCases.delete requires an actorId; pass session.adminId from the route.'
+      );
+    }
     const financial = await db.$transaction(async (tx) => {
       const [wallet, txn, ledger, deposit] = await Promise.all([
         tx.wallet.findFirst({ where: { riderId: id }, select: { id: true } }),
@@ -1268,8 +1287,8 @@ export const adminRiderUseCases = {
           action: 'rider.delete',
           entity: 'rider',
           entityId: id,
-          actorId: actorId ?? 'system',
-          actorType: actorId ? 'ADMIN' : 'SYSTEM',
+          actorId,
+          actorType: 'ADMIN',
           details: JSON.stringify({ riderId: id, mode: 'soft-delete' }),
         },
       });
