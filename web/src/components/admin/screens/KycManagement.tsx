@@ -87,7 +87,14 @@ export default function KycManagement() {
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold tracking-tight">Onboarding / KYC</h2>
         <p className="text-muted-foreground text-sm">
-          Review and approve rider KYC documents and guarantor submissions.
+          {/* NET-005 follow-up-15 (2026-09-08): removed
+              "and guarantor submissions" — the Tabs
+              scaffold below has a single "KYC Review"
+              tab. Guarantor review lives on the
+              rider-management screen, not here. The
+              pre-fix copy promised a second tab the
+              page never delivered. */}
+          Review and approve rider KYC documents.
         </p>
       </div>
       <Tabs defaultValue="kyc" className="space-y-6">
