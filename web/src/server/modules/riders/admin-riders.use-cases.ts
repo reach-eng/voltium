@@ -68,6 +68,29 @@ const SAFE_RIDER_FIELDS = new Set([
   'lifecycleStage',
 ]);
 
+// NET-005 follow-up-21 (2026-09-08): explicit
+// allowlist for `updateSecurityFlags` — the
+// helper writes to `db.rider.update({ data: <x> })`
+// with no key filter, so any caller passing an
+// extra key writes an arbitrary column. Today
+// only the actions route feeds it fixed keys
+// (the 5 below + the special-case `lockPassword`
+// plaintext), but a future refactor that passes
+// `lifecycleStatus` or any other rider column
+// would silently write that column. Throw on
+// unknown keys — defense in depth. The
+// `lockPassword` plaintext is the only non-DB
+// key (it's hashed into `lockPasswordHash` before
+// the write); allowlist it explicitly.
+const SECURITY_RIDER_FIELDS = new Set([
+  'isAdminLocked',
+  'lockPasswordHash',
+  'isUninstallBlocked',
+  'isLocationMandatory',
+  'isAppsControlRestricted',
+  'lockPassword',
+]);
+
 const KYC_FIELDS = new Set([
   'kycStatus',
   'profilePhoto',
@@ -1345,6 +1368,31 @@ export const adminRiderUseCases = {
   },
 
   async updateSecurityFlags(riderId: string, data: Record<string, unknown>, actorId: string) {
+    // NET-005 follow-up-21 (2026-09-08): reject
+    // keys outside the security-field allowlist.
+    // The pre-fix code spread `data` straight
+    // into `db.rider.update({ data })` — a
+    // mass-assignment-shaped helper that today
+    // only sees fixed keys from the actions route
+    // (5 rider security columns + the special-case
+    // `lockPassword` plaintext). One refactor
+    // from a hole: a caller passing
+    // `lifecycleStatus` or any other rider
+    // column would silently write that column.
+    // Throw on unknown keys — defense in depth.
+    // The audit log uses the ORIGINAL `data`
+    // argument (with `lockPassword` stripped via
+    // the destructure below) so the audit
+    // captures the caller's intent.
+    const unknownKeys = Object.keys(data).filter(
+      (k) => !SECURITY_RIDER_FIELDS.has(k)
+    );
+    if (unknownKeys.length > 0) {
+      throw new Error(
+        `updateSecurityFlags received keys outside the security allowlist: ${unknownKeys.join(', ')}. ` +
+          `Allowed: ${Array.from(SECURITY_RIDER_FIELDS).join(', ')}.`
+      );
+    }
     const updateData = { ...data };
     if (updateData.lockPassword && typeof updateData.lockPassword === 'string') {
       const { hashPassword } = await import('@/lib/password');
@@ -1352,12 +1400,24 @@ export const adminRiderUseCases = {
     }
     await db.rider.update({ where: { id: riderId }, data: updateData });
     invalidateRiderCache(riderId);
+    // Strip the plaintext `lockPassword` from the
+    // audit details (the user flagged this and
+    // called it "fine" — confirmed: the plaintext
+    // is hashed into `lockPasswordHash` before
+    // the DB write, so logging the plaintext
+    // would be a leak; the current strip is
+    // correct). Strip `lockPasswordHash` too — the
+    // hash isn't a leak, but logging the value
+    // adds nothing the `isAdminLocked` /
+    // `lockPasswordHash` audit row already implies.
     await createAuditLog({
       action: 'system.config_change',
       entityId: riderId,
       entity: 'rider',
       actorId,
-      details: (({ lockPassword, ...safe }) => safe)(data),
+      details: (({ lockPassword, lockPasswordHash, ...safe }) => safe)(
+        data
+      ),
     });
   },
 
