@@ -85,6 +85,16 @@ vi.mock('@/lib/db', () => ({
     },
     $transaction: vi.fn(async (cb: any) => {
       const fakeTx = {
+        // NET-005 follow-up-22 (2026-09-08):
+        // the route now calls `tx.$executeRaw` to
+        // row-lock the admin before reading the
+        // daily-cap aggregate, and
+        // `tx.transaction.aggregate` to read the
+        // daily-cap. Both mocks are no-ops (the
+        // lock is a Postgres concern; the
+        // aggregate returns the test's
+        // `todayDebitPaise`).
+        $executeRaw: vi.fn(async () => 0),
         transaction: {
           create: vi.fn(async (args: any) => {
             createdTxn = {
@@ -93,6 +103,9 @@ vi.mock('@/lib/db', () => ({
             };
             return createdTxn;
           }),
+          aggregate: vi.fn(async () => ({
+            _sum: { amountInPaise: todayDebitPaise },
+          })),
         },
         wallet: {
           findUnique: vi.fn(async () => ({ balanceInPaise: 100000 })),
@@ -282,6 +295,16 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
   // Default per-day cap is ₹2,00,000 (= 20,000,000 paise). Each test
   // sets todayDebitPaise directly to simulate the admin's prior
   // activity without needing a real DB.
+  //
+  // NET-005 follow-up-22 (2026-09-08): the cap
+  // check now happens INSIDE the transaction
+  // (after a `SELECT ... FOR UPDATE` row lock on
+  // the admin), so the tx IS called and the
+  // throw rolls it back. The pre-fix assertion
+  // `expect((db as any).$transaction).not.toHaveBeenCalled()`
+  // is replaced with the no-ledger-write
+  // assertion (the throw rolled back the tx
+  // before `walletLedgerService.debit` ran).
   it('rejects DEBIT when today + this request exceed the per-day cap', async () => {
     todayDebitPaise = 19_000_000; // ₹1,90,000 already today
     const res = await callPost({
@@ -293,7 +316,9 @@ describe('POST /api/admin/riders/[id]/wallet-adjust — PR-89 (API N6) caps', ()
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error?.message).toMatch(/Daily admin debit cap exceeded/i);
-    expect((db as any).$transaction).not.toHaveBeenCalled();
+    // The ledger write never happened — the tx
+    // threw before `walletLedgerService.debit` ran.
+    expect(ledgerCalled).toBeNull();
   });
 
   it('allows a DEBIT that lands exactly at the per-day cap (boundary)', async () => {

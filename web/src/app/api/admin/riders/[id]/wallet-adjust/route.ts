@@ -31,6 +31,27 @@ const MIN_REASON_LEN = 10;
 // be blocked from both directions.
 const BLOCKED_LIFECYCLE_STATUSES = ['SUSPENDED', 'CLOSED'] as const;
 
+/**
+ * NET-005 follow-up-22 (2026-09-08): typed error
+ * for the daily-debit cap. The route's catch
+ * block maps this to a 400 (the cap is a
+ * per-day ceiling, not a server-internal
+ * failure). A plain `Error` would be caught by
+ * the generic 500 fallback.
+ */
+class DailyDebitCapExceededError extends Error {
+  constructor(
+    public readonly todayPaise: number,
+    public readonly attemptedPaise: number,
+    public readonly capPaise: number
+  ) {
+    super(
+      `Daily admin debit cap exceeded. Today: ₹${(todayPaise / 100).toFixed(2)} + this request ₹${(attemptedPaise / 100).toFixed(2)} > max ₹${(capPaise / 100).toFixed(0)} per day.`
+    );
+    this.name = 'DailyDebitCapExceededError';
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -42,6 +63,27 @@ export async function POST(
   if (!session) return errors.unauthorized();
   if (!hasPermission(session, 'riders_update')) {
     return errors.forbidden('Insufficient permissions');
+  }
+  // NET-005 follow-up-22 (2026-09-08): the
+  // pre-fix code passed `session.adminId`
+  // straight to the daily-cap aggregate
+  // (`where: { approvedBy: session.adminId }`)
+  // and the audit log (`actorId: session.adminId!`
+  // non-null assertion). The session shape is
+  // `adminId?: string` — it can be undefined.
+  // Prisma's `where: { field: undefined }`
+  // drops the filter (NOT match-nothing), so the
+  // aggregate would silently sum EVERY admin's
+  // debits, and the audit log's non-null
+  // assertion would explode at runtime. Refuse
+  // the request at the top of the route —
+  // a session without an actorId can't
+  // attribute destructive operations. Same
+  // pattern as the soft-delete fix
+  // (followup-18) and the bulk-delete fix
+  // (followup-18).
+  if (!session.adminId) {
+    return errors.unauthorized('Admin session has no actor id');
   }
 
   try {
@@ -89,36 +131,18 @@ export async function POST(
       );
     }
 
-    // AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day aggregate cap. Read
-    // the admin's total DEBIT in paise since UTC midnight and reject
-    // if the new request would push them over the daily ceiling. The
-    // cap tracks the ORIGINAL admin (`approvedBy`), so co-approved
-    // debits still count against the original admin's daily budget —
-    // a determined admin cannot bypass the cap by having a co-admin
-    // sign off on every back-to-back call. UTC midnight keeps the
-    // boundary deterministic regardless of server timezone; switch
-    // to IST midnight (+5:30) if the business wants IST-aligned days.
-    if (type === 'DEBIT') {
-      const now = new Date();
-      const todayUtcMidnight = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-      );
-      const todayAggregate = await db.transaction.aggregate({
-        where: {
-          approvedBy: session.adminId,
-          type: 'DEBIT',
-          status: 'APPROVED',
-          createdAt: { gte: todayUtcMidnight },
-        },
-        _sum: { amountInPaise: true },
-      });
-      const todayDebitPaise = todayAggregate._sum.amountInPaise ?? 0;
-      if (todayDebitPaise + amountInPaise > MAX_DEBIT_PER_DAY_PAISE) {
-        return errors.badRequest(
-          `Daily admin debit cap exceeded. Today: ₹${(todayDebitPaise / 100).toFixed(2)} + this request ₹${amount} > max ₹${env.MAX_ADMIN_DEBIT_PER_DAY_INR} per day.`,
-        );
-      }
-    }
+    // AUDIT-RECON 2026-09-02 batch 5 P0-1: per-day
+    // aggregate cap. The aggregate check moved
+    // INSIDE the transaction below (and now
+    // includes a `SELECT ... FOR UPDATE` row
+    // lock on the admin) so concurrent debits
+    // by the same admin serialize — the pre-fix
+    // version was a read-then-act: the aggregate
+    // ran OUTSIDE the tx, two concurrent requests
+    // both read the same snapshot, both passed
+    // the cap check, both wrote. UTC midnight
+    // keeps the day boundary deterministic
+    // regardless of server timezone.
 
     // PR-89 (API N6): for amounts above the threshold, require a
 
@@ -172,6 +196,54 @@ export async function POST(
     }
 
     const result = await db.$transaction(async (tx) => {
+      // NET-005 follow-up-22 (2026-09-08):
+      // Row-lock the admin row so concurrent
+      // debits by the same admin serialize. The
+      // lock is per-admin (other admins' debits
+      // are not blocked). The aggregate that
+      // follows is then authoritative — under
+      // READ COMMITTED (Prisma's default), the
+      // FOR UPDATE blocks the second concurrent
+      // transaction until the first commits,
+      // so the second sees the first's debit
+      // in its aggregate. The pre-fix code did
+      // the aggregate outside the tx; two
+      // concurrent requests both read the same
+      // snapshot, both passed the cap, both
+      // wrote — exceeding the daily ceiling.
+      //
+      // `approvedBy` is indexed (see
+      // prisma/migrations/* approvedBy_index).
+      // The lock is on the Admin row, not the
+      // transaction aggregate, because the
+      // aggregate is virtual — locking the
+      // admin serializes the read-modify-write
+      // cycle for the daily-cap invariant.
+      if (type === 'DEBIT') {
+        await tx.$executeRaw`SELECT id FROM "Admin" WHERE id = ${session.adminId} FOR UPDATE`;
+        const now = new Date();
+        const todayUtcMidnight = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+        );
+        const todayAggregate = await tx.transaction.aggregate({
+          where: {
+            approvedBy: session.adminId,
+            type: 'DEBIT',
+            status: 'APPROVED',
+            createdAt: { gte: todayUtcMidnight },
+          },
+          _sum: { amountInPaise: true },
+        });
+        const todayDebitPaise = todayAggregate._sum.amountInPaise ?? 0;
+        if (todayDebitPaise + amountInPaise > MAX_DEBIT_PER_DAY_PAISE) {
+          throw new DailyDebitCapExceededError(
+            todayDebitPaise,
+            amountInPaise,
+            MAX_DEBIT_PER_DAY_PAISE,
+          );
+        }
+      }
+
       // Create a Transaction record for transparency
       const txn = await tx.transaction.create({
         data: {
@@ -225,7 +297,13 @@ export async function POST(
     });
 
     createAuditLog({
-      actorId: session.adminId!,
+      // NET-005 follow-up-22 (2026-09-08):
+      // the top-of-route adminId guard
+      // guarantees this is a string — the
+      // pre-fix `!` non-null assertion was
+      // load-bearing against an
+      // undefined-value crash.
+      actorId: session.adminId,
       actorType: 'ADMIN',
       action: 'wallet.adjustment',
       entity: 'wallet',
@@ -251,6 +329,17 @@ export async function POST(
         walletBalance: wallet?.balanceInPaise ? wallet.balanceInPaise / 100 : 0,
       };
       return success(toRupeesResponse(result));
+    }
+    // NET-005 follow-up-22 (2026-09-08): the
+    // daily-cap throw (inside the tx) is
+    // mapped to 400 — the cap is a per-day
+    // ceiling, not a server-internal failure.
+    // The pre-fix version did the cap check
+    // pre-tx and returned 400 directly; the
+    // in-tx version throws a typed error so
+    // the transaction can roll back cleanly.
+    if (error instanceof DailyDebitCapExceededError) {
+      return errors.badRequest(error.message);
     }
     logger.error('Wallet adjust error:', error);
     return errors.internal('Failed to adjust wallet');
