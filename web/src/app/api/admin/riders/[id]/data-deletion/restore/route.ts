@@ -64,26 +64,73 @@ export async function POST(
     //
     // NET-005 follow-up-19 (2026-09-08): the pre-fix
     // code wrote `lifecycleStatus: 'ACTIVE'` directly
-    // with no state-machine check. ACTIVE was only
-    // reachable from PICKUP_SCHEDULED in the machine,
-    // and the restore was for a CLOSED rider. Add
-    // the CLOSED → ACTIVE transition (rider-lifecycle
+    // with no state-machine check. Add the CLOSED →
+    // ACTIVE transition (rider-lifecycle
     // .service.ts:CLOSED) and validate explicitly so
     // the route 409s if a non-CLOSED rider is somehow
-    // restored (e.g. lifecycle drift after a future
-    // schema migration). The `lifecycleStatus !==
-    // 'CLOSED'` check above is the user-facing
-    // short-circuit (returns 400 "not in soft-deleted
-    // state"); the state-machine call is
-    // defense-in-depth.
+    // restored.
+    //
+    // NET-005 follow-up-22 (2026-09-08): the
+    // pre-fix code fabricated the post-restore
+    // state — every rider came back as ACTIVE
+    // regardless of source. A previously SUSPENDED
+    // or RETURN_PENDING rider (or any future pre-
+    // active state we add to the soft-delete
+    // source set) would come back wrong. Read the
+    // most recent
+    // `rider.data_deletion.initiated` audit log
+    // for this rider to recover the pre-deletion
+    // state. The capture happens in the execute
+    // route (`data-deletion/route.ts:previousLifecycleStatus`).
+    // Fallback (no audit row found): 500 — we
+    // can't fabricate the state; the right answer
+    // is to fail loud so the operator investigates.
+    const initiatedLog = await db.auditLog.findFirst({
+      where: {
+        action: 'rider.data_deletion.initiated',
+        entityId: riderId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!initiatedLog) {
+      logger.error(
+        'Restore cannot find the rider.data_deletion.initiated audit row; refusing to fabricate state',
+        { riderId }
+      );
+      return errors.internal(
+        'Cannot restore: no soft-delete audit row found for this rider. ' +
+          'Investigate the rider history and contact engineering.'
+      );
+    }
+    const initiatedDetails =
+      typeof initiatedLog.details === 'string'
+        ? JSON.parse(initiatedLog.details)
+        : (initiatedLog.details as Record<string, unknown> | null) ?? {};
+    const previousLifecycleStatus = initiatedDetails.previousLifecycleStatus as
+      | string
+      | undefined;
+    if (!previousLifecycleStatus) {
+      // Audit row exists but the pre-fix execute
+      // route didn't capture the pre-deletion
+      // state. Refuse rather than guess.
+      logger.error(
+        'Restore audit row exists but previousLifecycleStatus is missing; refusing to fabricate state',
+        { riderId, auditId: initiatedLog.id }
+      );
+      return errors.internal(
+        'Cannot restore: the pre-deletion state was not captured. ' +
+          'Investigate the audit row and contact engineering.'
+      );
+    }
     validateTransition(
       rider.lifecycleStatus as Parameters<typeof validateTransition>[0],
-      'ACTIVE'
+      previousLifecycleStatus as Parameters<typeof validateTransition>[1]
     );
     await db.rider.update({
       where: { id: riderId },
       data: {
-        lifecycleStatus: 'ACTIVE',
+        lifecycleStatus:
+          previousLifecycleStatus as Parameters<typeof validateTransition>[1],
         deletedAt: null,
       }
     });
@@ -99,6 +146,11 @@ export async function POST(
       details: {
         reason: parsed.data?.reason,
         requestId: parsed.data?.requestId,
+        // NET-005 follow-up-22 (2026-09-08):
+        // record the restored-to state so a
+        // follow-up audit can verify the
+        // pre-fix fabricated state is gone.
+        restoredTo: previousLifecycleStatus,
       },
     });
 

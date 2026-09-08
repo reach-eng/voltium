@@ -52,14 +52,29 @@ const VALID_TRANSITIONS: TransitionMap = {
   // NET-005 follow-up-18 (2026-09-08): the GDPR
   // data-deletion flow soft-deletes a rider by writing
   // `lifecycleStatus: 'CLOSED'`. The restore flow then
-  // needs to bring the rider back to ACTIVE. Without
-  // this transition, the restore used a direct write
-  // that bypassed the state machine. Allow CLOSED →
-  // ACTIVE for the restore path; the restore route
-  // validates via `validateTransition('CLOSED', 'ACTIVE')`
-  // to make the call site explicit. CLOSED is otherwise
-  // a dead-end (no other transitions out).
-  CLOSED: ['ACTIVE'],
+  // needs to bring the rider back to the rider's
+  // pre-deletion state (ACTIVE / SUSPENDED /
+  // RETURN_PENDING — the only legal source states for
+  // the soft-delete). Without these transitions, the
+  // restore used a direct write that bypassed the
+  // state machine. CLOSED is otherwise a dead-end
+  // (no other transitions out).
+  //
+  // NET-005 follow-up-22 (2026-09-08): extended
+  // from `['ACTIVE']` to `['ACTIVE', 'SUSPENDED',
+  // 'RETURN_PENDING']`. The pre-fix restore
+  // hard-coded `lifecycleStatus: 'ACTIVE'` for every
+  // rider — a previously SUSPENDED or RETURN_PENDING
+  // rider would come back as ACTIVE. With these
+  // three targets, the restore can validate the
+  // CLOSED → previous-state transition explicitly
+  // via `validateTransition`. The previous-state
+  // lookup lives in the audit log
+  // (`rider.data_deletion.initiated.details
+  // .previousLifecycleStatus`) — see the data-
+  // deletion execute route for the capture and
+  // the restore route for the read.
+  CLOSED: ['ACTIVE', 'SUSPENDED', 'RETURN_PENDING'],
 };
 
 // ── Public API ──────────────────────────────────────────────────────────

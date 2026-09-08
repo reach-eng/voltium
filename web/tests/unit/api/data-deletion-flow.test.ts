@@ -116,10 +116,28 @@ describe('Data Deletion Flow', () => {
   });
 
   describe('POST /restore', () => {
-    it('restores a soft-deleted rider', async () => {
+    it('restores a soft-deleted rider to their pre-deletion state', async () => {
+      // NET-005 follow-up-22 (2026-09-08): the
+      // pre-fix code hard-coded
+      // `lifecycleStatus: 'ACTIVE'` regardless of
+      // source state. The fix reads the
+      // pre-deletion state from the audit log
+      // (`rider.data_deletion.initiated.details
+      // .previousLifecycleStatus`) and restores
+      // to that state. This test pins the new
+      // behavior: a previously SUSPENDED rider
+      // comes back as SUSPENDED, not ACTIVE.
       vi.mocked(db.rider.findUnique).mockResolvedValue({
         id: 'rider-1',
         lifecycleStatus: 'CLOSED'
+      } as any);
+      // Mock the audit log with the pre-deletion
+      // state = SUSPENDED.
+      vi.mocked(db.auditLog.findFirst).mockResolvedValue({
+        details: JSON.stringify({
+          approvalToken: 'tok',
+          previousLifecycleStatus: 'SUSPENDED',
+        }),
       } as any);
 
       const req = new NextRequest('http://localhost/api/admin/riders/rider-1/data-deletion/restore', {
@@ -132,9 +150,12 @@ describe('Data Deletion Flow', () => {
 
       expect(res.status).toBe(200);
       expect(json.data.message).toMatch(/restored successfully/);
+      // Restored to SUSPENDED (the pre-deletion
+      // state), not ACTIVE. The fabricated-state
+      // bug is fixed.
       expect(db.rider.update).toHaveBeenCalledWith({
         where: { id: 'rider-1' },
-        data: { lifecycleStatus: 'ACTIVE', deletedAt: null } // PR-7: clear deletedAt so the soft-delete middleware stops hiding the rider
+        data: { lifecycleStatus: 'SUSPENDED', deletedAt: null } // PR-7: clear deletedAt so the soft-delete middleware stops hiding the rider
       });
     });
 

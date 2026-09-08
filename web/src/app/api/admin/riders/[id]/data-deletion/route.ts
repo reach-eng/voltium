@@ -137,6 +137,24 @@ export async function DELETE(
     // RiderLifecycleError instanceof check in the
     // catch block needs the static import.)
     validateTransition(rider.lifecycleStatus as Parameters<typeof validateTransition>[0], 'CLOSED');
+    // NET-005 follow-up-22 (2026-09-08): capture
+    // the rider's pre-deletion lifecycleStatus
+    // BEFORE the write so the restore route can
+    // bring the rider back to the real state. The
+    // pre-fix code lost this — restore fabricated
+    // 'ACTIVE' regardless of source. Persist in
+    // the audit log details (the cheapest
+    // non-schema-migration path: the audit log is
+    // already the source of truth for "what
+    // happened", and we already have a dedicated
+    // initiated-event row for each soft-delete).
+    // The restore route reads the most recent
+    // `rider.data_deletion.initiated` row for this
+    // rider and uses `details.previousLifecycleStatus`
+    // as the target. Fallback (no audit row found):
+    // the restore route 500s — fabricating a state
+    // is the bug we're fixing.
+    const previousLifecycleStatus = rider.lifecycleStatus;
     await db.$transaction(async (tx) => {
       await tx.rider.update({
         where: { id: riderId },
@@ -168,7 +186,14 @@ export async function DELETE(
       action: 'rider.data_deletion.initiated',
       entity: 'Rider',
       entityId: riderId,
-      details: { approvalToken }
+      details: {
+        approvalToken,
+        // NET-005 follow-up-22 (2026-09-08): the
+        // rider's pre-deletion lifecycleStatus —
+        // the restore route reads this and
+        // restores to it (not always ACTIVE).
+        previousLifecycleStatus,
+      }
     });
 
     return success({

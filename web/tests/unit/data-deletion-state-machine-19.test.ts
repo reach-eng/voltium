@@ -165,6 +165,18 @@ describe('NET-005 follow-up-19: data-deletion restore validates CLOSED source', 
     mocks.requirePermission.mockResolvedValue({
       adminId: 'admin-1',
     });
+    // NET-005 follow-up-22 (2026-09-08): the
+    // restore route now reads the
+    // `rider.data_deletion.initiated` audit log
+    // to recover the pre-deletion state.
+    // Mock it for the happy-path tests. The
+    // failure-path tests override as needed.
+    mocks.auditLogFindFirst.mockResolvedValue({
+      details: JSON.stringify({
+        approvalToken: 'tok',
+        previousLifecycleStatus: 'ACTIVE',
+      }),
+    });
   });
 
   it('rejects restore from NEW (route short-circuits with 400 "not in soft-deleted state")', async () => {
@@ -299,14 +311,24 @@ describe('NET-005 follow-up-19: state machine CLOSED transition is in the map', 
     expect(() => validateTransition('CLOSED', 'ACTIVE')).not.toThrow();
   });
 
-  it('CLOSED → anything other than ACTIVE is rejected', async () => {
+  it('CLOSED → {ACTIVE, SUSPENDED, RETURN_PENDING} all allowed; pre-active states still rejected', async () => {
+    // NET-005 follow-up-22 (2026-09-08): the
+    // three legal restore target states are
+    // ACTIVE, SUSPENDED, RETURN_PENDING. The
+    // pre-fix only allowed ACTIVE.
     const { validateTransition } = await import(
       '@/server/modules/riders/rider-lifecycle.service'
     );
+    expect(() => validateTransition('CLOSED', 'ACTIVE')).not.toThrow();
+    expect(() => validateTransition('CLOSED', 'SUSPENDED')).not.toThrow();
+    expect(() => validateTransition('CLOSED', 'RETURN_PENDING')).not.toThrow();
+    // Pre-active states are still rejected.
     expect(() => validateTransition('CLOSED', 'NEW')).toThrow(RiderLifecycleError);
     expect(() => validateTransition('CLOSED', 'PICKUP_SCHEDULED')).toThrow(
       RiderLifecycleError
     );
-    expect(() => validateTransition('CLOSED', 'SUSPENDED')).toThrow(RiderLifecycleError);
+    expect(() => validateTransition('CLOSED', 'KYC_SUBMITTED')).toThrow(
+      RiderLifecycleError
+    );
   });
 });

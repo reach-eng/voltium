@@ -362,20 +362,38 @@ describe('Rider Lifecycle State Machine', () => {
     expect(isValidRiderTransition('NEW', 'ACTIVE')).toBe(false);
   });
 
-  it('allows CLOSED → ACTIVE (GDPR restore path)', () => {
-    // NET-005 follow-up-19 (2026-09-08): the GDPR
-    // data-deletion flow soft-deletes a rider by
-    // writing `lifecycleStatus: 'CLOSED'`. The
-    // restore flow then needs to bring the rider
-    // back to ACTIVE. Added the CLOSED → ACTIVE
-    // transition to `rider-lifecycle.service.ts`
-    // so the restore route can validate. CLOSED
+  it('allows CLOSED → {ACTIVE, SUSPENDED, RETURN_PENDING} (the GDPR restore paths)', () => {
+    // NET-005 follow-up-19 (2026-09-08): added
+    // the CLOSED → ACTIVE transition so the
+    // restore route can validate.
+    //
+    // NET-005 follow-up-22 (2026-09-08): extended
+    // to also allow CLOSED → SUSPENDED and
+    // CLOSED → RETURN_PENDING. The pre-fix
+    // restore hard-coded 'ACTIVE' regardless of
+    // source — a previously SUSPENDED or
+    // RETURN_PENDING rider would come back as
+    // ACTIVE (fabricated state). The restore now
+    // reads the pre-deletion state from the audit
+    // log and validates the transition
+    // explicitly, so all three legal source
+    // states are valid restore targets. CLOSED
     // is otherwise a dead end (no other
     // transitions out).
     expect(isValidRiderTransition('CLOSED', 'ACTIVE')).toBe(true);
+    expect(isValidRiderTransition('CLOSED', 'SUSPENDED')).toBe(true);
+    expect(isValidRiderTransition('CLOSED', 'RETURN_PENDING')).toBe(true);
   });
 
-  it('blocks CLOSED → RETURN_PENDING (no path back to RETURN_PENDING from terminal)', () => {
-    expect(isValidRiderTransition('CLOSED', 'RETURN_PENDING')).toBe(false);
+  it('blocks CLOSED → pre-active states (NEW, PHONE_VERIFIED, etc.)', () => {
+    // The pre-deletion state must be one of the
+    // soft-delete source states (ACTIVE, SUSPENDED,
+    // RETURN_PENDING). Pre-active riders cannot
+    // be soft-deleted via the GDPR flow (the
+    // execute route validates this), so the
+    // restore can't be asked to bring one back.
+    expect(isValidRiderTransition('CLOSED', 'NEW')).toBe(false);
+    expect(isValidRiderTransition('CLOSED', 'PHONE_VERIFIED')).toBe(false);
+    expect(isValidRiderTransition('CLOSED', 'KYC_SUBMITTED')).toBe(false);
   });
 });
