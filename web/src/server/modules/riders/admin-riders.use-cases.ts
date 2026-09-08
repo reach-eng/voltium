@@ -675,6 +675,116 @@ export const adminRiderUseCases = {
       }
     }
 
+    // NET-005 follow-up-24 (2026-09-08): the
+    // `update()` use-case previously wrote
+    // `assignedVehicle`, `planStartDate/EndDate`,
+    // `referralCode`, and `teamLeaderId` straight
+    // to the rider row with NO application-level
+    // validation. The only paths that guarded
+    // these fields with FK / state / uniqueness
+    // checks were the canonical rider-flow
+    // paths (`completePickup`, `assignPlan`,
+    // `endRental`). The admin bulk update path
+    // — used by the per-rider detail dialog and
+    // the bulk update handler — bypassed all of
+    // them. The DB-level FK on `teamLeaderId`
+    // and the @unique on `referralCode` would
+    // catch the most egregious cases, but they'd
+    // surface as 500s (Prisma throws on
+    // constraint violation) instead of a clean
+    // 400. `assignedVehicle` has no DB-level
+    // constraint at all — the column is a free
+    // string, so a typo or stale id would
+    // silently land in the DB and break the
+    // vehicle-resolve logic in `endRental` /
+    // `completePickup` (`if (!vehicleDbId &&
+    // assignedVehicleString)` would then look up
+    // the wrong vehicle). Add the missing
+    // application-level checks here so every
+    // write — canonical or admin — validates the
+    // same surface. Run BEFORE the tx so a 400
+    // doesn't roll back a half-written state.
+    if ('assignedVehicle' in data && data.assignedVehicle != null && data.assignedVehicle !== '') {
+      // The column holds the human-readable
+      // `vehicleNumber` (e.g. "VF-001") — match
+      // either by `vehicleId` (DB cuid) or
+      // `vehicleNumber` (display) to mirror the
+      // resolve logic in `endRental` (line ~1180).
+      const v = await db.vehicle.findFirst({
+        where: {
+          OR: [
+            { vehicleId: data.assignedVehicle as string },
+            { vehicleNumber: data.assignedVehicle as string },
+          ],
+        },
+        select: { id: true, vehicleNumber: true },
+      });
+      if (!v) {
+        throw new Error(
+          `assignedVehicle "${data.assignedVehicle}" does not match any known vehicle (checked vehicleId and vehicleNumber)`
+        );
+      }
+    }
+    if ('teamLeaderId' in data && data.teamLeaderId != null) {
+      const tl = await db.teamLeader.findUnique({
+        where: { id: data.teamLeaderId as string },
+        select: { id: true, isActive: true },
+      });
+      if (!tl) {
+        throw new Error(
+          `teamLeaderId "${data.teamLeaderId}" does not match any known team leader`
+        );
+      }
+      if (!tl.isActive) {
+        throw new Error(
+          `teamLeaderId "${data.teamLeaderId}" refers to an inactive team leader`
+        );
+      }
+    }
+    if ('referralCode' in data && data.referralCode != null && data.referralCode !== '') {
+      // The schema has `referralCode @unique`,
+      // so a duplicate would surface as Prisma
+      // P2002 — a 500. Check here and return a
+      // clean 400.
+      const conflict = await db.rider.findFirst({
+        where: {
+          referralCode: data.referralCode as string,
+          NOT: { id },
+        },
+        select: { id: true, riderId: true },
+      });
+      if (conflict) {
+        throw new Error(
+          `referralCode "${data.referralCode}" is already in use by rider ${conflict.riderId} (${conflict.id})`
+        );
+      }
+    }
+    if ('planStartDate' in data && 'planEndDate' in data && data.planStartDate && data.planEndDate) {
+      const start = new Date(data.planStartDate as string | Date);
+      const end = new Date(data.planEndDate as string | Date);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end.getTime() < start.getTime()) {
+        throw new Error('planEndDate must be on or after planStartDate');
+      }
+    }
+
+    // NET-005 follow-up-24 (2026-09-08): the
+    // pre-fix code did NOT call
+    // `invalidateRiderPhoneCache` when the
+    // phone changed. The create() use-case
+    // does (line ~428), but update() didn't —
+    // so a phone change left the old phone
+    // cached as a "rider exists" hit (the rider
+    // is now under the new phone) and the new
+    // phone cached as a "rider does not exist"
+    // hit (the rider is now under this phone
+    // but the cache hasn't seen the update).
+    // Capture the old phone BEFORE the tx so we
+    // can invalidate it; capture the new phone
+    // from the write data.
+    const phoneChanged =
+      'phone' in data && data.phone !== existing.phone;
+    const oldPhone = existing.phone;
+
     const result = await db.$transaction(async (tx) => {
       if (Object.keys(riderData).length > 0) {
         if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
@@ -976,6 +1086,23 @@ export const adminRiderUseCases = {
     });
 
     invalidateRiderCache(id);
+    // NET-005 follow-up-24 (2026-09-08): the
+    // pre-fix update() did NOT invalidate the
+    // phone-lookup cache when the phone
+    // changed. The create() use-case does, but
+    // update() left stale entries — a phone
+    // change from 9999999999 → 8888888888
+    // would leave `9999999999` cached as "rider
+    // exists" (the rider is now under the new
+    // phone) and `8888888888` cached as "rider
+    // does not exist" (the cache hasn't seen
+    // the update). Invalidate BOTH the old and
+    // new phone keys so the next read fetches
+    // fresh DB state.
+    if (phoneChanged && data.phone) {
+      invalidateRiderPhoneCache(oldPhone);
+      invalidateRiderPhoneCache(data.phone as string);
+    }
 
     // Audit log for KYC actions
     if (kycData.status && ['APPROVED', 'REJECTED', 'INFO_REQUIRED'].includes(kycData.status)) {
