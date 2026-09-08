@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { validateBody, sendOtpSchema } from '@/lib/validators';
+import { validateBody, sendOtpSchema, verifyPhoneSchema } from '@/lib/validators';
 import { verifyOtp } from '@/lib/otp-store';
 import { issueVerifyReceipt } from '@/lib/verify-receipt';
 import { requireRiderSession } from '@/lib/rider-auth';
@@ -9,11 +9,6 @@ import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
 import { z } from 'zod';
-
-const verifyPhoneSchema = z.object({
-  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
-  otp: z.string().length(6, 'OTP must be 6 digits'),
-});
 
 const VERIFY_PHONE_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,

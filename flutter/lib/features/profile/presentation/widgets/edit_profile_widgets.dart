@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -42,7 +43,16 @@ class EditProfileAdminNote extends StatelessWidget {
           SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Most profile changes require admin approval before becoming active. Emergency contact is updated immediately.',
+              // EDIT-PROFILE-AUDIT P2-6 (2026-09-08): the previous copy
+              // ("Most profile changes require admin approval")
+              // overpromised — the PUT path applies name, email, DOB,
+              // address, emergency contact, and photo immediately. Only
+              // guarantor changes ride the admin-review path (and a
+              // guarantor save can advance the rider's lifecycle state).
+              // The note now states the actual split, and is localized
+              // (P2-9) — it was hardcoded English.
+              AppLocalizations.of(context)?.txteditProfileAdminNote ??
+                  'Name, email, address, and emergency contact save immediately. Changes to guarantor details are reviewed by an admin before becoming active.',
               style: GoogleFonts.plusJakartaSans(
                 color: AppColors.warningDark,
                 fontSize: 13,

@@ -2768,6 +2768,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get txtsendOtp => 'SEND OTP';
 
   @override
+  String get txtresend => 'Resend';
+
+  @override
+  String txtprofileUpdatedElsewhere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fields are',
+      one: '1 field is',
+    );
+    return 'Your profile was updated elsewhere. $_temp0 now different from the server. Review before saving.';
+  }
+
+  @override
+  String get txteditProfileAdminNote =>
+      'Name, email, address, and emergency contact save immediately. Changes to guarantor details are reviewed by an admin before becoming active.';
+
+  @override
   String get kycPushTitleApproved => 'KYC Approved';
 
   @override

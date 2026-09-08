@@ -2003,6 +2003,18 @@
   "txtresendOtp": "RESEND",
   "txtsendOtp": "SEND OTP",
 
+  "txtresend": "Resend",
+  "@txtresend": { "description": "Guarantor OTP resend button label (normal case)" },
+  "txtprofileUpdatedElsewhere": "Your profile was updated elsewhere. {count, plural, =1{1 field is} other{{count} fields are}} now different from the server. Review before saving.",
+  "@txtprofileUpdatedElsewhere": {
+    "description": "Banner shown when a server-side rider update lands mid-edit on the Edit Profile screen",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "txteditProfileAdminNote": "Name, email, address, and emergency contact save immediately. Changes to guarantor details are reviewed by an admin before becoming active.",
+  "@txteditProfileAdminNote": { "description": "Informational note on the Edit Profile screen about what saves immediately vs. what needs admin review" },
+
   "kycPushTitleApproved": "KYC Approved",
   "kycPushBodyApproved": "Your documents have been verified. You can now pick up your vehicle.",
   "kycPushTitleRejected": "KYC Update Required",

@@ -116,8 +116,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   // OTP Resend Cooldown (P1-5)
+  // EDIT-PROFILE-AUDIT P1-5 (2026-09-08): the countdown is scoped to
+  // the OTP button via `ValueListenableBuilder` (see
+  // `_resendCooldownListenable`) instead of a whole-form `setState`
+  // every second — the previous `Timer.periodic` + `setState` rebuilt
+  // every TextField (and re-ran every validator) once per second
+  // during the 30s cooldown.
   int _resendCooldown = 0;
   Timer? _cooldownTimer;
+
+  /// Change-notifier view of the cooldown counter for the OTP button.
+  /// Listens on the widget (cheap int compare in `setState`) rather
+  /// than rebuilding the entire form.
+  late final ValueNotifier<int> _resendCooldownListenable =
+      ValueNotifier<int>(0);
 
   // EDIT-PROFILE-AUDIT P1-3 (2026-09-08): when a server-side
   // rider update lands mid-edit (post-PUT refresh, 30–60s
@@ -263,16 +275,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         }
         setPreviousInitial(newValue);
         _conflictingFields.remove(field);
-      } else if (current != newValue) {
-        // User has touched AND the new server value differs from
-        // the user's text → flag the conflict.
-        _conflictingFields.add(field);
-      } else {
-        // User happens to match the new server value → no
-        // conflict; update the initial so subsequent diffs
-        // are against the server value, not the snapshot.
-        setPreviousInitial(newValue);
-        _conflictingFields.remove(field);
+      } else if (newValue != previous) {
+        // Server changed a field the user ALSO touched.
+        if (current == newValue) {
+          // User happens to match the new server value → no
+          // conflict; update the initial so subsequent diffs
+          // are against the server value, not the snapshot.
+          setPreviousInitial(newValue);
+          _conflictingFields.remove(field);
+        } else {
+          // True conflict: server changed the field and differs
+          // from the user's text → flag the conflict.
+          _conflictingFields.add(field);
+        }
       }
     }
 
@@ -491,25 +506,27 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _startCooldown() {
     _resendCooldown = 30;
+    _resendCooldownListenable.value = 30;
     _cooldownTimer?.cancel();
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      setState(() {
-        if (_resendCooldown > 0) {
-          _resendCooldown--;
-        } else {
-          timer.cancel();
-        }
-      });
+      if (_resendCooldown > 0) {
+        _resendCooldown--;
+      } else {
+        timer.cancel();
+      }
+      // P1-5: only the OTP button listens to this — no whole-form rebuild.
+      _resendCooldownListenable.value = _resendCooldown;
     });
   }
 
   @override
   void dispose() {
     _cooldownTimer?.cancel();
+    _resendCooldownListenable.dispose();
     for (var controller in [
       _nameController,
       _emailController,
@@ -1269,7 +1286,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                         ),
                                       )
                                     : Text(
-                                        'SUBMIT FOR APPROVAL',
+                                        // P2-9: was hardcoded English.
+                                        // Existing ARB key covers en + hi.
+                                        l10n.txtsubmitForApproval,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 1.2,
@@ -1424,7 +1443,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            'Guarantor Phone',
+            // P2-9: was hardcoded English. Existing ARB key covers en + hi.
+            AppLocalizations.of(context)?.txtguarantorPhone ??
+                'Guarantor Phone',
             style: AppTypography.bodySmall
                 .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted),
@@ -1469,7 +1490,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     // any new number (we don't infer verified from local
                     // text comparison — the receipt is the source of
                     // truth).
-                    if (curr != orig || orig.isEmpty) {
+                    final verifiedPhone = ref
+                        .read(guarantorVerificationProvider)
+                        .verifiedForPhone
+                        ?.replaceAll(RegExp(r'\D'), '');
+                    if ((curr != orig || orig.isEmpty) &&
+                        curr != verifiedPhone) {
                       ref.read(guarantorVerificationProvider.notifier).clear();
                     }
                   },
@@ -1502,37 +1528,51 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(width: 8),
               SizedBox(
                 height: 52,
-                child: ElevatedButton(
-                  onPressed: (_isSendingGOtp || _resendCooldown > 0)
-                      ? null
-                      : _sendGuarantorOtp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: AppColors.primaryLightBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                // EDIT-PROFILE-AUDIT P1-5 (2026-09-08): the countdown
+                // rebuilds ONLY this button (ValueListenableBuilder)
+                // instead of the whole form — the previous
+                // `Timer.periodic` + `setState` re-ran every validator
+                // on the form once per second during cooldown.
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _resendCooldownListenable,
+                  builder: (context, cooldown, _) => ElevatedButton(
+                    onPressed: (_isSendingGOtp || cooldown > 0)
+                        ? null
+                        : _sendGuarantorOtp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.primaryLightBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: _isSendingGOtp
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            cooldown > 0
+                                ? '${cooldown}s'
+                                : (_isGOtpSent
+                                    ? (AppLocalizations.of(context)
+                                            ?.txtresend ??
+                                        'Resend')
+                                    : (AppLocalizations.of(context)
+                                            ?.txtsendOtp ??
+                                        'Send OTP')),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
-                  child: _isSendingGOtp
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          _resendCooldown > 0
-                              ? '${_resendCooldown}s'
-                              : (_isGOtpSent ? 'Resend' : 'Send OTP'),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
               ),
             ],
@@ -1607,7 +1647,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ),
                         )
                       : Text(
-                          'Verify',
+                          AppLocalizations.of(context)?.txtverify ?? 'Verify',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -1635,7 +1675,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     color: AppColors.success, size: 14),
                 const SizedBox(width: 6),
                 Text(
-                  'Phone verified',
+                  AppLocalizations.of(context)?.txtphoneVerified ??
+                      'Phone verified',
                   style: AppTypography.labelSmall
                       .copyWith(color: AppColors.of(context).onSurface),
                 ),
@@ -1685,9 +1726,12 @@ class _StaleSeedBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Your profile was updated elsewhere. '
-              '$count field${count == 1 ? '' : 's'} ${count == 1 ? 'is' : 'are'} '
-              'now different from the server. Review before saving.',
+              // P2-9: localized (pluralized) banner copy — was hardcoded
+              // English string interpolation.
+              AppLocalizations.of(context)?.txtprofileUpdatedElsewhere(count) ??
+                  (count == 1
+                      ? 'Your profile was updated elsewhere. 1 field is now different from the server. Review before saving.'
+                      : 'Your profile was updated elsewhere. $count fields are now different from the server. Review before saving.'),
               style: AppTypography.bodySmall.copyWith(
                 color: colors.onSurface,
                 height: 1.4,

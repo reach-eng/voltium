@@ -11,6 +11,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { TeamLeaderFormState } from './types';
 
 interface TeamLeaderFormDialogProps {
@@ -18,6 +25,7 @@ interface TeamLeaderFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editing: boolean;
   form: TeamLeaderFormState;
+  hubs?: Array<{ id: string; name: string }>;
   onFormChange: (updater: (prev: TeamLeaderFormState) => TeamLeaderFormState) => void;
   saving: boolean;
   error: string | null;
@@ -29,6 +37,7 @@ export function TeamLeaderFormDialog({
   onOpenChange,
   editing,
   form,
+  hubs = [],
   onFormChange,
   saving,
   error,
@@ -62,12 +71,37 @@ export function TeamLeaderFormDialog({
             <Input
               value={form.phone}
               onChange={(e) => {
-                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
-                set({ phone: cleaned });
+                const digits = e.target.value.replace(/\D/g, '');
+                const normalized =
+                  digits.length > 10 && digits.startsWith('91')
+                    ? digits.slice(2)
+                    : digits.length > 10 && digits.startsWith('0')
+                    ? digits.slice(1)
+                    : digits;
+                set({ phone: normalized.slice(0, 10) });
               }}
               placeholder="10-digit phone number"
               maxLength={10}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Assigned Hub</Label>
+            <Select
+              value={form.hubId || 'NONE'}
+              onValueChange={(val) => set({ hubId: val === 'NONE' ? null : val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select hub (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">No Hub / Unassigned</SelectItem>
+                {hubs.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label>Email</Label>

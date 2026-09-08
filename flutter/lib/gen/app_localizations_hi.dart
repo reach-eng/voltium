@@ -2779,6 +2779,24 @@ class AppLocalizationsHi extends AppLocalizations {
   String get txtsendOtp => 'OTP भेजें';
 
   @override
+  String get txtresend => 'फिर भेजें';
+
+  @override
+  String txtprofileUpdatedElsewhere(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count फ़ील्ड',
+      one: '1 फ़ील्ड',
+    );
+    return 'आपकी प्रोफ़ाइल कहीं और अपडेट की गई थी। $_temp0 अब सर्वर से अलग है। सहेजने से पहले समीक्षा करें।';
+  }
+
+  @override
+  String get txteditProfileAdminNote =>
+      'नाम, ईमेल, पता और आपातकालीन संपर्क तुरंत सहेजे जाते हैं। गारंटर विवरण में बदलाव प्रभावी होने से पहले एडमिन द्वारा समीक्षा की जाती है।';
+
+  @override
   String get kycPushTitleApproved => 'KYC स्वीकृत';
 
   @override

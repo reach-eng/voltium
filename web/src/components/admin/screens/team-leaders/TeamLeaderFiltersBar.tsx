@@ -17,20 +17,26 @@ interface TeamLeaderFiltersBarProps {
   onSearchChange: (v: string) => void;
   activeFilter: string;
   onActiveFilterChange: (v: string) => void;
+  hubFilter?: string;
+  onHubFilterChange?: (v: string) => void;
+  hubs?: Array<{ id: string; name: string }>;
   onClear: () => void;
 }
 
 /**
- * R3.7aa split — search input + status filter + clear button row.
+ * R3.7aa split — search input + status filter + hub filter + clear button row.
  */
 export function TeamLeaderFiltersBar({
   search,
   onSearchChange,
   activeFilter,
   onActiveFilterChange,
+  hubFilter = 'ALL',
+  onHubFilterChange,
+  hubs = [],
   onClear,
 }: TeamLeaderFiltersBarProps) {
-  const hasFilter = !!search || activeFilter !== 'ALL';
+  const hasFilter = !!search || activeFilter !== 'ALL' || hubFilter !== 'ALL';
 
   return (
     <div className="flex items-center gap-3">
@@ -60,6 +66,26 @@ export function TeamLeaderFiltersBar({
           ))}
         </SelectContent>
       </Select>
+      {hubs.length > 0 && onHubFilterChange && (
+        <Select
+          value={hubFilter}
+          onValueChange={(v) => {
+            onHubFilterChange(v);
+          }}
+        >
+          <SelectTrigger className="h-11 w-44 rounded-xl border-muted-foreground/20 text-base">
+            <SelectValue placeholder="All Hubs" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Hubs</SelectItem>
+            {hubs.map((h) => (
+              <SelectItem key={h.id} value={h.id}>
+                {h.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {hasFilter && (
         <Button
           variant="ghost"

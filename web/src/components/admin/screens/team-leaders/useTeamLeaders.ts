@@ -28,6 +28,8 @@ export function useTeamLeaders() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [hubFilter, setHubFilter] = useState('ALL');
+  const [hubs, setHubs] = useState<Array<{ id: string; name: string }>>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -70,6 +72,7 @@ export function useTeamLeaders() {
       params.set('limit', String(TEAM_LEADER_PAGE_SIZE));
       if (search) params.set('search', search);
       if (activeFilter !== 'ALL') params.set('isActive', activeFilter);
+      if (hubFilter !== 'ALL') params.set('hubId', hubFilter);
 
       const res = await fetch(`/api/admin/team-leaders?${params}`);
       if (!mountedRef.current) return;
@@ -88,7 +91,18 @@ export function useTeamLeaders() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [page, search, activeFilter]);
+  }, [page, search, activeFilter, hubFilter]);
+
+  useEffect(() => {
+    fetch('/api/admin/hubs?limit=100')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && Array.isArray(j.data)) {
+          setHubs(j.data.map((h: { id: string; name: string }) => ({ id: h.id, name: h.name })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -111,6 +125,7 @@ export function useTeamLeaders() {
       name: leader.name,
       phone: leader.phone,
       email: leader.email || '',
+      hubId: leader.hubId ?? null,
       isActive: leader.isActive,
     });
     setError(null);
@@ -331,6 +346,9 @@ export function useTeamLeaders() {
     setSearch,
     activeFilter,
     setActiveFilter,
+    hubFilter,
+    setHubFilter,
+    hubs,
     page,
     setPage,
     totalPages,

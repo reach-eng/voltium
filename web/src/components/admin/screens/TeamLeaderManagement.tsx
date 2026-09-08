@@ -56,9 +56,13 @@ export default function TeamLeaderManagement() {
           onSearchChange={t.setSearch}
           activeFilter={t.activeFilter}
           onActiveFilterChange={t.setActiveFilter}
+          hubFilter={t.hubFilter}
+          onHubFilterChange={t.setHubFilter}
+          hubs={t.hubs}
           onClear={() => {
             t.setSearch('');
             t.setActiveFilter('ALL');
+            t.setHubFilter('ALL');
             t.setPage(1);
           }}
         />
@@ -119,6 +123,7 @@ export default function TeamLeaderManagement() {
         }}
         editing={!!t.editLeader}
         form={t.form}
+        hubs={t.hubs}
         onFormChange={updateForm}
         saving={t.saving}
         error={t.error}

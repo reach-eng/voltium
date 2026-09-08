@@ -234,5 +234,36 @@ describe('Profile Audit P0 & P1 Unit Tests', () => {
       expect(mockTx.guarantor.upsert).not.toHaveBeenCalled();
       expect(mockTx.rider.update).not.toHaveBeenCalled();
     });
+
+    it('rejects changed guarantor phone without receipt with RiderValidationError (test gap 1)', async () => {
+      (db.rider.findUnique as any).mockResolvedValue({
+        id: riderId,
+        phone: '9876543210',
+        lifecycleStatus: 'ACTIVE',
+      });
+
+      mockTx.rider.findUnique.mockResolvedValue({
+        id: riderId,
+        phone: '9876543210',
+        lifecycleStatus: 'ACTIVE',
+      });
+
+      mockTx.guarantor.findUnique.mockResolvedValue({
+        name: 'Ramesh Sharma',
+        phone: '9876500000',
+        address: '123 Main St',
+      });
+
+      await expect(
+        riderUseCases.updateProfile(riderId, {
+          guarantorName: 'Ramesh Sharma',
+          guarantorPhone: '9888877777', // changed phone number!
+          guarantorAddress: '123 Main St',
+          // guarantorPhoneReceipt omitted!
+        })
+      ).rejects.toThrow(
+        'Guarantor phone verification is required. Please verify the new number with OTP first.'
+      );
+    });
   });
 });

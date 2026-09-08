@@ -20,7 +20,7 @@ export interface TeamLeaderFormState {
   name: string;
   phone: string;
   email: string;
-  hubId?: string | null;
+  hubId: string | null;
   isActive: boolean;
 }
 
@@ -32,7 +32,7 @@ export const EMPTY_LEADER_FORM: TeamLeaderFormState = {
   isActive: true,
 };
 
-export const TEAM_LEADER_PAGE_SIZE = 21;
+export const TEAM_LEADER_PAGE_SIZE = 20;
 
 export const ACTIVE_FILTERS: { value: string; label: string }[] = [
   { value: 'ALL', label: 'All Status' },

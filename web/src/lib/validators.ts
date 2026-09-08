@@ -37,6 +37,11 @@ export const verifyOtpSchema = z
     path: ['idToken'],
   });
 
+export const verifyPhoneSchema = z.object({
+  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+});
+
 // ==================== RIDER PROFILE ====================
 /**
  * Validate date of birth string:

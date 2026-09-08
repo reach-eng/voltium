@@ -856,6 +856,10 @@
   "txtresendOtp": "फिर से भेजें",
   "txtsendOtp": "OTP भेजें",
 
+  "txtresend": "फिर भेजें",
+  "txtprofileUpdatedElsewhere": "आपकी प्रोफ़ाइल कहीं और अपडेट की गई थी। {count, plural, =1{1 फ़ील्ड} other{{count} फ़ील्ड}} अब सर्वर से अलग है। सहेजने से पहले समीक्षा करें।",
+  "txteditProfileAdminNote": "नाम, ईमेल, पता और आपातकालीन संपर्क तुरंत सहेजे जाते हैं। गारंटर विवरण में बदलाव प्रभावी होने से पहले एडमिन द्वारा समीक्षा की जाती है।",
+
   "kycPushTitleApproved": "KYC स्वीकृत",
   "kycPushBodyApproved": "आपके दस्तावेज़ सत्यापित हो गए हैं। अब आप वाहन उठा सकते हैं।",
   "kycPushTitleRejected": "KYC अपडेट आवश्यक",

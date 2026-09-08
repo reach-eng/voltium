@@ -5194,6 +5194,24 @@ abstract class AppLocalizations {
   /// **'SEND OTP'**
   String get txtsendOtp;
 
+  /// Guarantor OTP resend button label (normal case)
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get txtresend;
+
+  /// Banner shown when a server-side rider update lands mid-edit on the Edit Profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile was updated elsewhere. {count, plural, =1{1 field is} other{{count} fields are}} now different from the server. Review before saving.'**
+  String txtprofileUpdatedElsewhere(int count);
+
+  /// Informational note on the Edit Profile screen about what saves immediately vs. what needs admin review
+  ///
+  /// In en, this message translates to:
+  /// **'Name, email, address, and emergency contact save immediately. Changes to guarantor details are reviewed by an admin before becoming active.'**
+  String get txteditProfileAdminNote;
+
   /// No description provided for @kycPushTitleApproved.
   ///
   /// In en, this message translates to:
