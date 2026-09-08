@@ -742,20 +742,27 @@ export const adminRiderUseCases = {
         );
       }
     }
-    if ('teamLeaderId' in data && data.teamLeaderId != null) {
-      const tl = await db.teamLeader.findUnique({
-        where: { id: data.teamLeaderId as string },
-        select: { id: true, isActive: true },
-      });
-      if (!tl) {
-        throw new Error(
-          `teamLeaderId "${data.teamLeaderId}" does not match any known team leader`
-        );
-      }
-      if (!tl.isActive) {
-        throw new Error(
-          `teamLeaderId "${data.teamLeaderId}" refers to an inactive team leader`
-        );
+    if ('teamLeaderId' in data) {
+      if (data.teamLeaderId != null && data.teamLeaderId !== '') {
+        const tl = await db.teamLeader.findUnique({
+          where: { id: data.teamLeaderId as string },
+          select: { id: true, isActive: true, name: true },
+        });
+        if (!tl) {
+          throw new Error(
+            `teamLeaderId "${data.teamLeaderId}" does not match any known team leader`
+          );
+        }
+        if (!tl.isActive) {
+          throw new Error(
+            `teamLeaderId "${data.teamLeaderId}" refers to an inactive team leader`
+          );
+        }
+        riderData.teamLeaderId = tl.id;
+        riderData.teamLeader = tl.name;
+      } else {
+        riderData.teamLeaderId = null;
+        riderData.teamLeader = null;
       }
     }
     if ('referralCode' in data && data.referralCode != null && data.referralCode !== '') {

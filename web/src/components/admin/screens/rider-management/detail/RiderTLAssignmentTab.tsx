@@ -1,7 +1,15 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Users, Bike } from 'lucide-react';
 import { TabsContent } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { DetailGroup } from '../helpers';
 import type { Rider, RiderEditForm } from '@/lib/types/admin';
 
@@ -18,6 +26,18 @@ export function RiderTLAssignmentTab({
   editForm,
   setEditForm,
 }: RiderTLAssignmentTabProps) {
+  const [teamLeaders, setTeamLeaders] = useState<Array<{ id: string; name: string; phone: string }>>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/team-leaders?limit=100&isActive=ACTIVE')
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success && j.data?.leaders) {
+          setTeamLeaders(j.data.leaders);
+        }
+      })
+      .catch(() => {});
+  }, []);
   return (
     <TabsContent
       value="ops"
@@ -29,13 +49,45 @@ export function RiderTLAssignmentTab({
             <Users className="w-4 h-4" /> Hierarchy & Support
           </h4>
           <div className="space-y-4">
-            <DetailGroup
-              label="Assigned Team Leader"
-              value={isEditing ? editForm.teamLeader : rider.teamLeader}
-              isEditing={isEditing}
-              field="teamLeader"
-              onEdit={(v) => setEditForm({ ...editForm, teamLeader: v })}
-            />
+            {isEditing ? (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted-foreground">Assigned Team Leader</label>
+                <Select
+                  value={editForm.teamLeaderId || 'NONE'}
+                  onValueChange={(v) => {
+                    if (v === 'NONE') {
+                      setEditForm({ ...editForm, teamLeaderId: null, teamLeader: '' });
+                    } else {
+                      const selected = teamLeaders.find((tl) => tl.id === v);
+                      setEditForm({
+                        ...editForm,
+                        teamLeaderId: v,
+                        teamLeader: selected?.name || '',
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select Team Leader" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Unassigned</SelectItem>
+                    {teamLeaders.map((tl) => (
+                      <SelectItem key={tl.id} value={tl.id}>
+                        {tl.name} ({tl.phone})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <DetailGroup
+                label="Assigned Team Leader"
+                value={rider.teamLeader}
+                isEditing={false}
+                field="teamLeader"
+              />
+            )}
             <DetailGroup
               label="Assigned TL Name"
               value={

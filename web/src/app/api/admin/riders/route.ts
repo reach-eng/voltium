@@ -68,6 +68,7 @@ export const updateRiderSchema = z.object({
   emergencyContact: z.string().max(20).nullish().or(z.literal('')),
   pickupHub: z.string().max(100).nullish().or(z.literal('')),
   teamLeader: z.string().max(100).nullish().or(z.literal('')),
+  teamLeaderId: z.string().cuid().nullish().or(z.literal('')),
   planStartDate: z.string().datetime().nullish().or(z.literal('')),
   planEndDate: z.string().datetime().nullish().or(z.literal('')),
   // P0-2e: null-intent riders exist in the DB. The edit form
@@ -138,7 +139,7 @@ export const updateRiderSchema = z.object({
     .or(z.literal('')),
   // Guarantor fields
   guarantorStatus: z
-    .enum(['PENDING', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED', 'REPLACED'])
+    .enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'])
     .nullish()
     .or(z.literal('')),
   // P0-2a: guarantor text fields now accept `null` and `''` so

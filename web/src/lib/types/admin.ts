@@ -51,6 +51,7 @@ export interface Rider {
   // should build the TL-change-request
   // feature properly.
   teamLeader?: string | null;
+  teamLeaderId?: string | null;
   assignedTlName?: string | null;
   assignedTlPhone?: string | null;
   referredBy?: string | null;
@@ -119,6 +120,7 @@ export interface RiderEditForm {
   accountNumber?: string;
   ifscCode?: string;
   teamLeader?: string;
+  teamLeaderId?: string | null;
   assignedTlName?: string;
   assignedTlPhone?: string;
   referredBy?: string;
