@@ -517,6 +517,104 @@ void main() {
           reason: 'Render must be exception-free under reduce motion');
     });
 
+    // HANG-TIGHT-AUDIT P2-3 (2026-09-08): the in-screen re-arm.
+    // The gate test (rider_lifecycle_gate_test.dart) pins routing;
+    // this pins the widget contract: after `onActivated` fires, an
+    // admin reversal (pickupDone true→false) must re-arm the
+    // `_redirected` flag so a subsequent activation fires
+    // `onActivated` again instead of being swallowed.
+    testWidgets(
+        'P2-3: admin reversal re-arms the redirect — onActivated fires again after pickupDone true→false→true',
+        (tester) async {
+      var activatedCount = 0;
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        rider: _rider(pickupDone: false),
+        notifier: notifier,
+        onActivated: () => activatedCount++,
+      ));
+      await tester.pump();
+      expect(activatedCount, 0);
+
+      // Admin activates: pickupDone flips false→true.
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(pickupDone: true),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(activatedCount, 1, reason: 'first activation must fire');
+
+      // Admin reverses: pickupDone flips true→false. The screen must
+      // reset `_redirected` (no assertion possible on the private flag;
+      // the next activation is the observable contract).
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(pickupDone: false),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(activatedCount, 1,
+          reason: 'reversal alone must not fire onActivated');
+
+      // Admin re-activates: pickupDone flips false→true again. Without
+      // the re-arm this would be swallowed.
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(pickupDone: true),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(activatedCount, 2,
+          reason: 're-activation after reversal must fire onActivated again');
+    });
+
+    // HANG-TIGHT-AUDIT P0-2 (2026-09-08): the true post-submit server
+    // shape. `syncPickup` writes `pickedUpAt` + `PICKUP_SCHEDULED` in
+    // one transaction, and pre-P0-1 the flatten OR'd `pickedUpAt` into
+    // `pickupDone` — so the client received PICKUP_SCHEDULED +
+    // `pickupDone: true` and the wait state was bypassed. Post-fix,
+    // `pickupDone` is rank-only: the true post-submit shape the client
+    // receives is PICKUP_SCHEDULED + `pickupDone: false`. This fixture
+    // pins the render + no-redirect behavior against that production
+    // shape (the previous fixtures were already correct post-fix; this
+    // test makes the contract explicit and guards the gate/screen
+    // pairing).
+    testWidgets(
+        'P0-2: true post-submit shape (PICKUP_SCHEDULED + pickupDone=false) renders the wait state and does not redirect',
+        (tester) async {
+      var activated = false;
+      final notifier = _StubRiderNotifier();
+      await tester.pumpWidget(_buildHarness(
+        // This is exactly what flattenRider emits for a rider seconds
+        // after submitting the pickup form (pickedUpAt is set on the
+        // server row but does NOT feed pickupDone).
+        rider: _rider(
+          lifecycleStatus: 'PICKUP_SCHEDULED',
+          pickupDone: false,
+          kyc: KycStatus.submitted,
+          guarantor: GuarantorStatus.submitted,
+        ),
+        notifier: notifier,
+        onActivated: () => activated = true,
+      ));
+      await tester.pump();
+      await tester.pump();
+
+      // Wait state renders: title, in-progress pill, no redirect.
+      expect(find.text(l10n.hangTightTitle), findsOneWidget);
+      expect(find.text(l10n.hangTightReviewInProgress), findsOneWidget);
+      expect(activated, isFalse,
+          reason:
+              'post-submit shape must NOT fire onActivated — the rider waits here for admin activation');
+
+      // And the poll→activation flip still works from this state.
+      notifier.state = notifier.state.copyWith(
+        rider: _rider(lifecycleStatus: 'ACTIVE', pickupDone: true),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(activated, isTrue,
+          reason: 'activation from the post-submit state must redirect');
+    });
+
     // HANG-TIGHT-AUDIT P3-3 (2026-09-08): the guarantor `replaced`
     // state renders as `inProgress` with the `autorenew_rounded`
     // icon data and the brand primary color
