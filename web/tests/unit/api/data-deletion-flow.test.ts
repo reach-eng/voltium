@@ -89,8 +89,15 @@ describe('Data Deletion Flow', () => {
         })
       } as any);
 
+      // NET-005 follow-up-19 (2026-09-08): the route
+      // now calls `validateTransition(rider.lifecycleStatus,
+      // 'CLOSED')` before the soft-delete write. The
+      // transition map allows → CLOSED from
+      // {ACTIVE, SUSPENDED, RETURN_PENDING}; the test
+      // uses ACTIVE as the success-path fixture.
       vi.mocked(db.rider.findUnique).mockResolvedValue({
         id: 'rider-1',
+        lifecycleStatus: 'ACTIVE',
         leases: []
       } as any);
 

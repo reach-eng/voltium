@@ -18,13 +18,14 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logAccountSuspension } from '@/lib/security-events';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
-import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { transitionRiderStatus, validateTransition, RiderLifecycleError } from '@/server/modules/riders/rider-lifecycle.service';
 import { getDurationForPlanType } from '@/server/modules/plans/plan.use-cases';
 import { ensureActiveRentalLease } from '@/server/modules/rentals/rental.use-cases';
 import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache, invalidateVehicleCache } from '@/lib/server-cache';
 import { invalidateCache } from '@/lib/cache';
 import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
 import { validateKycTransition, type KycStatus as KycMachineStatus } from '@/server/modules/kyc/kyc-state-machine';
+import { validateGuarantorTransition, type GuarantorStatus } from '@/server/modules/guarantors/guarantor-state-machine';
 import {
   promoteToApproved,
   promoteToRejected,
@@ -566,13 +567,35 @@ export const adminRiderUseCases = {
       // previous inline write's "promote to KYC_SUBMITTED
       // for ranks 0..4" was an undocumented extra not in
       // the F-12 / dead-path standard. The refactor drops it.
+      //
+      // NET-005 follow-up-19 (2026-09-08): the previous
+      // code unconditionally set `guarantorData.status =
+      // 'REJECTED' | 'INFO_REQUIRED'`, clobbering the
+      // guarantor's existing state. The user flagged
+      // this as the "reject clobbers an APPROVED
+      // guarantor" bug. Mirror the APPROVE branch's
+      // guard (line 544-547) — only set the guarantor
+      // status when the current is SUBMITTED (the
+      // state from which both REJECTED and
+      // INFO_REQUIRED are valid transitions per
+      // `guarantor-state-machine.ts:SUBMITTED`).
+      // DRAFT (no guarantor submitted yet) and
+      // APPROVED (already approved) are no-ops: the
+      // KYC decision is recorded on the KycProfile
+      // but the guarantor row is left alone.
       const wasSuspended = kycData.status === 'REJECTED';
       if (wasSuspended) {
         promotingRejected = true;
       } else {
         promotingInfoRequired = true;
       }
-      guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
+      const existingGuarantorForSideEffect = await db.guarantor.findUnique({
+        where: { riderId: id },
+        select: { status: true },
+      });
+      if (existingGuarantorForSideEffect?.status === 'SUBMITTED') {
+        guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
+      }
 
       // PR-99: fire the security-event logger when a rider is suspended
       // (KYC rejection). Fire-and-forget so the update tx is not slowed
@@ -593,6 +616,42 @@ export const adminRiderUseCases = {
           const name = riderData.fullName as string;
           const prefix = name.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
           riderData.riderId = `VEM${prefix}${String(existing.serialNumber).padStart(3, '0')}`;
+        }
+        // NET-005 follow-up-19 (2026-09-08): the
+        // previous code wrote `lifecycleStatus`
+        // directly via `tx.rider.update` whenever
+        // the body included the key. The state
+        // machine's `validateTransition` is only
+        // invoked via `transitionRiderStatus` (used
+        // by assignPlan/completePickup/endRental/
+        // profile-return) — every admin write
+        // (Suspend, manual stage correction,
+        // anything) skipped the machine. Mirror
+        // the KYC pattern at line 605-617: fetch
+        // the current status, call
+        // `validateTransition`, throw
+        // `RiderLifecycleError` on illegal target.
+        // The route already maps RiderLifecycleError
+        // to 409 via the api-handler.
+        //
+        // The bulk Suspend path goes through
+        // `update()` with `lifecycleStatus:
+        // 'SUSPENDED'`. After this fix, bulk
+        // suspend from a state where SUSPENDED
+        // is not in the allowed set
+        // (NEW/PHONE_VERIFIED/PROFILE_SUBMITTED/
+        // GUARANTOR_APPROVED/DEPOSIT_APPROVED/
+        // PLAN_SELECTED/PICKUP_SCHEDULED/ACTIVE/
+        // RETURN_PENDING/CLOSED — i.e. most
+        // states) will 409. The bulk Suspend
+        // needs to use the dedicated suspend
+        // use-case (not the generic update) — that
+        // is a follow-up.
+        if (riderData.lifecycleStatus) {
+          validateTransition(
+            existing.lifecycleStatus as Parameters<typeof validateTransition>[0],
+            riderData.lifecycleStatus as Parameters<typeof validateTransition>[1]
+          );
         }
         await tx.rider.update({ where: { id }, data: riderData });
       }
@@ -808,6 +867,37 @@ export const adminRiderUseCases = {
         }
       }
       if (Object.keys(guarantorData).length > 0) {
+        // NET-005 follow-up-19 (2026-09-08): the
+        // previous code wrote any `guarantorStatus`
+        // (or the KYC side-effect's auto-set at
+        // line 545-547/575) directly to the
+        // guarantor row with no transition
+        // validation. The repository's
+        // `submitGuarantor` / `approveGuarantor` /
+        // `rejectGuarantor` / `requestInfo` paths
+        // already call `validateGuarantorTransition`,
+        // but the admin `update()` use-case
+        // bypassed the repository entirely. Mirror
+        // the KYC pattern at line 605-617: fetch
+        // the current status, validate the
+        // transition, throw `GuarantorStateError`
+        // on illegal target. The route already
+        // maps GuarantorStateError to 409.
+        if (guarantorData.status) {
+          const currentGuarantor = await tx.guarantor.findUnique({
+            where: { riderId: id },
+            select: { status: true },
+          });
+          // PENDING is the DB default for a never-submitted
+          // guarantor — normalize to DRAFT for transition
+          // purposes (the machine starts at DRAFT).
+          const normGuarantor = (s: string | null | undefined): GuarantorStatus =>
+            ((s === 'PENDING' || !s) ? 'DRAFT' : s) as GuarantorStatus;
+          validateGuarantorTransition(
+            normGuarantor(currentGuarantor?.status),
+            normGuarantor(guarantorData.status as string)
+          );
+        }
         await tx.guarantor.upsert({
           where: { riderId: id },
           update: guarantorData,

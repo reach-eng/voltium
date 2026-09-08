@@ -5,6 +5,10 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import type { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import {
+  validateTransition,
+  RiderLifecycleError,
+} from '@/server/modules/riders/rider-lifecycle.service';
 
 const deleteRequestSchema = z.object({
   approvalToken: z.string().min(1)
@@ -111,6 +115,28 @@ export async function DELETE(
   }
 
   try {
+    // NET-005 follow-up-19 (2026-09-08): the pre-fix
+    // code wrote `lifecycleStatus: 'CLOSED'` directly
+    // with no state-machine check. The transition
+    // map only allows → CLOSED from
+    // {ACTIVE, SUSPENDED, RETURN_PENDING} — a rider
+    // already in CLOSED (double-soft-delete) and
+    // a rider in any other state would silently
+    // bypass the machine. Validate explicitly. The
+    // legal source states for the GDPR soft-delete
+    // are ACTIVE / SUSPENDED / RETURN_PENDING
+    // (pre-active riders cannot have a GDPR
+    // soft-delete: their PII is cleared by the
+    // purge job, not the soft-delete path). If a
+    // caller needs to soft-delete a pre-active
+    // rider, that is a separate admin action (not
+    // the GDPR flow).
+    // (validateTransition is imported at the top
+    // of this file now; the dynamic import was
+    // removed in follow-up-19 because the
+    // RiderLifecycleError instanceof check in the
+    // catch block needs the static import.)
+    validateTransition(rider.lifecycleStatus as Parameters<typeof validateTransition>[0], 'CLOSED');
     await db.$transaction(async (tx) => {
       await tx.rider.update({
         where: { id: riderId },
@@ -149,8 +175,22 @@ export async function DELETE(
       message: 'Rider soft-deleted successfully.'
     });
   } catch (error) {
+    // NET-005 follow-up-19 (2026-09-08): the
+    // state-machine validation (CLOSED transition)
+    // throws RiderLifecycleError. The api-handler's
+    // canonical 409 mapping at api-handler.ts:83-90
+    // doesn't apply because the data-deletion route
+    // is a thin route handler (not wrapped in
+    // withApiHandler). Re-throw / map the state
+    // machine error to 409 here so the client gets
+    // the right status code; everything else falls
+    // through to 500.
+    if (error instanceof RiderLifecycleError) {
+      logger.info('Data deletion rejected by state machine', { riderId, error: error.message });
+      return errors.conflict(error.message);
+    }
     logger.error('Data deletion initiated failed:', error);
-    
+
     await createAuditLog({
       actorId,
       actorType: 'ADMIN',

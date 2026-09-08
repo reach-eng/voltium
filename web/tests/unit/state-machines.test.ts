@@ -362,8 +362,20 @@ describe('Rider Lifecycle State Machine', () => {
     expect(isValidRiderTransition('NEW', 'ACTIVE')).toBe(false);
   });
 
-  it('blocks CLOSED → anything', () => {
-    expect(isValidRiderTransition('CLOSED', 'ACTIVE')).toBe(false);
+  it('allows CLOSED → ACTIVE (GDPR restore path)', () => {
+    // NET-005 follow-up-19 (2026-09-08): the GDPR
+    // data-deletion flow soft-deletes a rider by
+    // writing `lifecycleStatus: 'CLOSED'`. The
+    // restore flow then needs to bring the rider
+    // back to ACTIVE. Added the CLOSED → ACTIVE
+    // transition to `rider-lifecycle.service.ts`
+    // so the restore route can validate. CLOSED
+    // is otherwise a dead end (no other
+    // transitions out).
+    expect(isValidRiderTransition('CLOSED', 'ACTIVE')).toBe(true);
+  });
+
+  it('blocks CLOSED → RETURN_PENDING (no path back to RETURN_PENDING from terminal)', () => {
     expect(isValidRiderTransition('CLOSED', 'RETURN_PENDING')).toBe(false);
   });
 });

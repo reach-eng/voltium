@@ -49,7 +49,17 @@ const VALID_TRANSITIONS: TransitionMap = {
   ACTIVE: ['SUSPENDED', 'RETURN_PENDING', 'CLOSED'],
   SUSPENDED: ['ACTIVE', 'CLOSED'], // Reinstatement or terminal
   RETURN_PENDING: ['CLOSED'],
-  CLOSED: [],
+  // NET-005 follow-up-18 (2026-09-08): the GDPR
+  // data-deletion flow soft-deletes a rider by writing
+  // `lifecycleStatus: 'CLOSED'`. The restore flow then
+  // needs to bring the rider back to ACTIVE. Without
+  // this transition, the restore used a direct write
+  // that bypassed the state machine. Allow CLOSED →
+  // ACTIVE for the restore path; the restore route
+  // validates via `validateTransition('CLOSED', 'ACTIVE')`
+  // to make the call site explicit. CLOSED is otherwise
+  // a dead-end (no other transitions out).
+  CLOSED: ['ACTIVE'],
 };
 
 // ── Public API ──────────────────────────────────────────────────────────
