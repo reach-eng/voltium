@@ -126,4 +126,18 @@ class FilesRepository {
         return 'application/octet-stream';
     }
   }
+
+  /// Delete a previously uploaded file by its URL.
+  ///
+  /// Backed by `DELETE /api/rider/files?url=…`, which is idempotent
+  /// (missing files → 204) and ownership-checked server-side. Best
+  /// effort: transport failures and empty-body responses are swallowed
+  /// so orphan cleanup never breaks the edit-profile save flow.
+  Future<void> deleteFile(String url) async {
+    try {
+      await _client.delete('/api/rider/files', queryParams: {'url': url});
+    } catch (_) {
+      // Best-effort cleanup — ignore.
+    }
+  }
 }

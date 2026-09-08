@@ -423,7 +423,7 @@ export const OutboxService = {
     const result = await db.$executeRaw`
       UPDATE "outbox_events"
       SET
-        "status" = 'PENDING',
+        "status" = 'PENDING'::"OutboxEventStatus",
         "attempts" = CASE
           WHEN "attempts" >= "maxAttempts" THEN 0
           ELSE "attempts"
@@ -432,7 +432,7 @@ export const OutboxService = {
           WHEN "attempts" >= "maxAttempts" THEN NULL
           ELSE "error"
         END
-      WHERE "status" = 'FAILED'
+      WHERE "status" = 'FAILED'::"OutboxEventStatus"
     `;
     return Number(result);
   },

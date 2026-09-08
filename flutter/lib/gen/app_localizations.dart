@@ -5511,6 +5511,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to fetch vehicles: {error}'**
   String pickupHub_fetchVehiclesFailed(String error);
+
+  /// No description provided for @txtenterGuarantorNameBeforeOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the guarantor name before sending an OTP.'**
+  String get txtenterGuarantorNameBeforeOtp;
+
+  /// No description provided for @txtverifyGuarantorPhoneBeforeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Please verify the new guarantor phone number before saving.'**
+  String get txtverifyGuarantorPhoneBeforeSave;
+
+  /// No description provided for @txtreverifyGuarantorPhoneBeforeSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Please re-verify the guarantor phone number before saving.'**
+  String get txtreverifyGuarantorPhoneBeforeSave;
+
+  /// No description provided for @txtdiscardChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get txtdiscardChangesTitle;
+
+  /// No description provided for @txtdiscardChangesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Are you sure you want to discard them and exit?'**
+  String get txtdiscardChangesBody;
+
+  /// No description provided for @txtkeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Editing'**
+  String get txtkeepEditing;
+
+  /// No description provided for @txtenterAValidEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get txtenterAValidEmailAddress;
+
+  /// No description provided for @notif_supportReplyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Ticket Update 💬'**
+  String get notif_supportReplyTitle;
+
+  /// Body of support reply push notification with ticket ID
+  ///
+  /// In en, this message translates to:
+  /// **'New response received on ticket #{ticketId}.'**
+  String notif_supportReplyBody(String ticketId);
+
+  /// No description provided for @notif_supportReplyBodyFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'New response received on your support ticket.'**
+  String get notif_supportReplyBodyFallback;
+
+  /// No description provided for @notif_paymentDueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Reminder 💳'**
+  String get notif_paymentDueTitle;
+
+  /// Body of rental payment due push notification with formatted amount
+  ///
+  /// In en, this message translates to:
+  /// **'Your rental payment of {amount} is due.'**
+  String notif_paymentDueBody(String amount);
+
+  /// No description provided for @notif_paymentDueBodyFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rental payment is due. Please top up your wallet.'**
+  String get notif_paymentDueBodyFallback;
+
+  /// No description provided for @notif_rewardMilestoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reward Earned! 🏆'**
+  String get notif_rewardMilestoneTitle;
+
+  /// Body of reward milestone push notification
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve earned {points} points for {milestoneTitle}.'**
+  String notif_rewardMilestoneBody(String points, String milestoneTitle);
+
+  /// No description provided for @notif_rewardMilestoneBodyFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve earned reward points! Check your rewards.'**
+  String get notif_rewardMilestoneBodyFallback;
+
+  /// Title of birthday wish push notification with name
+  ///
+  /// In en, this message translates to:
+  /// **'Happy Birthday, {name}! 🎂'**
+  String notif_birthdayWishTitle(String name);
+
+  /// No description provided for @notif_birthdayWishTitleFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Happy Birthday! 🎂'**
+  String get notif_birthdayWishTitleFallback;
+
+  /// No description provided for @notif_birthdayWishBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Wishing you a fantastic day ahead. Enjoy a special birthday reward on us!'**
+  String get notif_birthdayWishBody;
+
+  /// No description provided for @notif_shiftReminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming Shift ⏰'**
+  String get notif_shiftReminderTitle;
+
+  /// Body of shift reminder push notification with start time
+  ///
+  /// In en, this message translates to:
+  /// **'Your shift starts at {startTime}. Please be ready!'**
+  String notif_shiftReminderBody(String startTime);
+
+  /// No description provided for @notif_shiftReminderBodyFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Your shift is starting soon. Please be ready!'**
+  String get notif_shiftReminderBodyFallback;
 }
 
 class _AppLocalizationsDelegate

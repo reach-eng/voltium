@@ -17,14 +17,34 @@ import {
 } from './rider-management';
 import AdjustWalletModal from './rider-management/AdjustWalletModal';
 import { Users } from 'lucide-react';
+import type { SessionPayload } from '@/lib/session-payload';
+import { hasPermission } from '@/lib/permissions';
+
+export interface RiderManagementProps {
+  session?: SessionPayload | null;
+}
 
 /**
  * RiderManagement — Main coordinator screen shell.
  * Delegates state management to useRiders() and layout rendering
  * to modular Presentational components under ./rider-management/
  */
-export default function RiderManagement() {
+export default function RiderManagement({ session }: RiderManagementProps = {}) {
   const riderState = useRiders();
+
+  // UX button gating is client-side defense; server endpoints enforce authoritatively.
+  const canCreate = !session || hasPermission(session, 'riders_create');
+  const canUpdate = !session || hasPermission(session, 'riders_update');
+  const canDelete = !session || hasPermission(session, 'riders_delete');
+  const canKycApprove = !session || hasPermission(session, 'kyc_approve');
+  const canKycBulkApprove =
+    !session ||
+    hasPermission(session, 'kyc_bulk_approve') ||
+    hasPermission(session, 'kyc_approve');
+  const canAdjustWallet =
+    !session ||
+    hasPermission(session, 'transactions_manage') ||
+    hasPermission(session, 'transactions_approve');
 
   return (
     <AdminErrorBoundary>
@@ -44,13 +64,19 @@ export default function RiderManagement() {
         {/* Filters Bar */}
         <RiderFiltersBar
           {...riderState}
+          canCreate={canCreate}
           onAddRider={() => riderState.setShowAddDialog(true)}
         />
 
         {/* Bulk Actions Toolbar */}
         <RiderBulkActionsBar
           selectedIds={riderState.selectedIds}
+          selectedCount={riderState.selectedIds.size}
           bulkLoading={riderState.bulkLoading}
+          canUndo={!!riderState.lastAction}
+          canApprove={canKycBulkApprove}
+          canSuspend={canUpdate}
+          canDelete={canDelete}
           onClear={() => riderState.setSelectedIds(new Set())}
           // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): the bulk
           // route only accepts `updateStatus | delete |
@@ -71,7 +97,7 @@ export default function RiderManagement() {
         />
 
         {/* Main Data Table */}
-        <RiderTable {...riderState} />
+        <RiderTable {...riderState} canDelete={canDelete} />
 
         {/* Add Rider Dialog */}
         <AddRiderDialog
@@ -93,28 +119,17 @@ export default function RiderManagement() {
             editForm={riderState.editForm as any}
             setEditForm={riderState.setEditForm as any}
             saving={riderState.saving}
+            canUpdate={canUpdate}
+            canKycApprove={canKycApprove}
+            canAdjustWallet={canAdjustWallet}
             handleUpdateRider={riderState.handleUpdateRider}
             handleDeleteKycDoc={riderState.handleDeleteKycDoc}
-            confirmDeleteKycDoc={riderState.confirmDeleteKycDoc}
             handleBulkDeleteKycDocs={riderState.handleBulkDeleteKycDocs}
             toggleKycDoc={riderState.toggleKycDoc}
-            handleKycAction={riderState.handleKycAction}
             handleClearGuarantor={riderState.handleClearGuarantor}
-            confirmClearGuarantorAction={riderState.confirmClearGuarantorAction}
-            // NET-005 follow-up-20 (2026-09-08):
-            // `handleTlAction` removed — see the
-            // useRiders.ts comment.
             selectedKycDocs={riderState.selectedKycDocs}
             setSelectedKycDocs={riderState.setSelectedKycDocs}
-            confirmKycAction={riderState.confirmKycAction}
             setConfirmKycAction={riderState.setConfirmKycAction}
-            kycRejectionReason={riderState.kycRejectionReason}
-            setKycRejectionReason={riderState.setKycRejectionReason}
-            deleteDocKey={riderState.deleteDocKey}
-            setDeleteDocKey={riderState.setDeleteDocKey}
-            confirmClearGuarantor={riderState.confirmClearGuarantor}
-            setConfirmClearGuarantor={riderState.setConfirmClearGuarantor}
-            showAdjustWallet={riderState.showAdjustWallet}
             setShowAdjustWallet={riderState.setShowAdjustWallet}
           />
         )}
@@ -138,6 +153,8 @@ export default function RiderManagement() {
           state={riderState.confirmKycAction}
           reason={riderState.kycRejectionReason}
           saving={riderState.saving}
+          selectedDocs={riderState.selectedKycDocs}
+          onSelectedDocsChange={riderState.setSelectedKycDocs}
           onReasonChange={riderState.setKycRejectionReason}
           onOpenChange={(open) => !open && riderState.setConfirmKycAction(null)}
           onConfirm={riderState.handleKycAction}

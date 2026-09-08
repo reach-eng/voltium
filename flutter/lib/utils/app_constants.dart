@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:voltium_rider/utils/avatar_url.dart' as avatar_url;
 
 class AppConstants {
   static const double lowBalanceThresholdRatio = 0.3;
@@ -104,4 +105,14 @@ class AppConstants {
   static const String referralBonusCopy =
       'earn bonus rewards on their first ride.';
   static const String referralDeepLinkBaseUrl = 'https://voltium.app/ref/';
+
+  /// Centralised file/proof URL resolvers (delegate to utils/avatar_url).
+  /// Used by proof thumbnails and avatar widgets so emulator localhost
+  /// translation and traversal stripping live in one place.
+  static String? resolveFileUrl(String? raw, {bool? isAndroid}) =>
+      avatar_url.resolveFileUrl(raw, isAndroid: isAndroid);
+
+  /// Proof URLs resolve with the same rules as file URLs.
+  static String? resolveProofUrl(String? raw, {bool? isAndroid}) =>
+      avatar_url.resolveFileUrl(raw, isAndroid: isAndroid);
 }

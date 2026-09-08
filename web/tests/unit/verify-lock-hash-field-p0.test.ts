@@ -93,7 +93,7 @@ describe('P0-1: verify-lock reads lockPasswordHash', () => {
     mocks.findUnique.mockResolvedValue({ lockPasswordHash: 'hashed-1234' });
     mocks.verifyPassword.mockResolvedValue({ valid: false });
 
-    const res = await POST(makeRequest({ password: 'wrong' }));
+    const res = await POST(makeRequest({ password: '0000' }));
     const json = await res.json();
     expect(json.data.success).toBe(false);
     expect(JSON.stringify(json)).not.toContain('hashed-1234');

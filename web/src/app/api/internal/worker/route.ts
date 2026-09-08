@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
     await JobQueue.processJobs(
       OutboxEventTypes.SMS_SEND,
       async (job) => {
-        const { phone, message } = job.payload as { phone: string; message: string };
-        const success = await sendSms(phone, message);
+        const { phone, message, locale } = job.payload as { phone: string; message: string; locale?: string | null };
+        const success = await sendSms(phone, message, { locale });
         if (!success) throw new Error('SMS Provider failure');
       },
       5,

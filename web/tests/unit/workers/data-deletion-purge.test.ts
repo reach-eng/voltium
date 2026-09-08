@@ -125,7 +125,7 @@ describe('dataDeletionPurgeJob', () => {
     expect(tx.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          action: 'RIDER_DATA_DELETION_PURGED',
+          action: 'rider.data_deletion.purged',
           entityId: 'rider-1',
         }),
       })

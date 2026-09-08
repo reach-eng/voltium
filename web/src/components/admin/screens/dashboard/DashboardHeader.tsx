@@ -10,6 +10,8 @@ interface DashboardHeaderProps {
   onRefresh: () => void;
   onExport: () => void;
   onSystemHealth: () => void;
+  /** P2: no stats loaded yet — export would silently no-op. */
+  exportDisabled?: boolean;
 }
 
 /**
@@ -21,6 +23,7 @@ export function DashboardHeader({
   onRefresh,
   onExport,
   onSystemHealth,
+  exportDisabled = false,
 }: DashboardHeaderProps) {
   const today = formatDateDDMMYYYY(new Date().toISOString());
 
@@ -59,6 +62,7 @@ export function DashboardHeader({
           onClick={onRefresh}
           disabled={refreshing}
           title="Refresh dashboard"
+          aria-label="Refresh dashboard"
         >
           <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
         </Button>
@@ -67,6 +71,8 @@ export function DashboardHeader({
           size="default"
           className="rounded-full px-5 h-11 font-medium transition-all duration-200"
           onClick={onExport}
+          disabled={exportDisabled}
+          title={exportDisabled ? 'Waiting for dashboard data' : 'Export report as CSV'}
         >
           Export Report
         </Button>

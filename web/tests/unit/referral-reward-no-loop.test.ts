@@ -61,11 +61,11 @@ describe('Referral Reward Self-Loop Prevention', () => {
     expect(mocks.emit).not.toHaveBeenCalled();
   });
 
-  // PR-9 (2026-08-06 fix plan): Reward.points has two unit semantics — the
-  // referral path stores PAISE (setting '5000' = ₹50 → points 5000), while
-  // the manual admin award path stores a raw count. Pin the referral writer
-  // so a future refactor can't silently switch it to rupees.
-  it('stores Reward.points as PAISE (not rupees) for the referral bonus', async () => {
+  // Unit decision: Reward.points stores POINT COUNTS, not paise — the
+  // referral writer converts the paise setting (setting '25000' = ₹250
+  // → 250 points). Pin this so a future refactor can't silently switch
+  // it back to paise (which read as 100× points and redeemed 100× cash).
+  it('stores Reward.points as point counts (not paise) for the referral bonus', async () => {
     const rewardCreate = vi.fn().mockResolvedValue({ id: 'rw_2' });
     mocks.findUniqueRider
       .mockResolvedValueOnce({
@@ -91,6 +91,6 @@ describe('Referral Reward Self-Loop Prevention', () => {
     const arg = rewardCreate.mock.calls[0][0] as {
       data: { points: number };
     };
-    expect(arg.data.points).toBe(25000);
+    expect(arg.data.points).toBe(250);
   });
 });

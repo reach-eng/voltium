@@ -13,6 +13,13 @@ interface PricingCardProps {
 
 const FIELDS: Array<{ key: SettingsKey; label: string; help: string }> = [
   { key: 'walletMinTopup', label: 'Wallet Min Top-up', help: 'Minimum wallet balance to proceed' },
+  // P1-1 (settings audit, 2026-09-08): these three keys existed in the
+  // registry but no writer accepted them — admin edits always 400'd and
+  // the defaults applied forever. They are business knobs with no other
+  // editing surface, so they render here.
+  { key: 'walletMaxTopup', label: 'Wallet Max Top-up', help: 'Maximum allowed single top-up' },
+  { key: 'autoApproveTopupLimit', label: 'Auto-approve Top-up Limit', help: 'Top-ups at or below this are auto-approved' },
+  { key: 'referralBonusCap', label: 'Referral Bonus Cap', help: 'Maximum referral bonus per rider' },
   { key: 'lateFee', label: 'Late Fee / Day', help: 'Fee charged per day for late returns' },
   { key: 'referralBonus', label: 'Referral Bonus', help: 'Reward for successful referrals' },
 ];

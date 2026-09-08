@@ -89,6 +89,8 @@ async function postHandler(req: NextRequest) {
     // P0-6: scoped invalidation — any mutation clears the shared transactions
     // list cache, regardless of outcome.
     invalidateCache('admin:transactions:*');
+    // P1: bulk approvals move revenue/wallet aggregates — refresh dashboard.
+    invalidateCache('admin:dashboard:*');
 
     // P0-3 (financial audit): the old code always returned 200 with per-ID
     // ERROR rows — a green toast over 50 failures. Any failure now surfaces

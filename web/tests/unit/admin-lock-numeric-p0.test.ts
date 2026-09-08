@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   hashPassword: vi.fn(),
   sendAdminLock: vi.fn(),
   sendUnlockDevice: vi.fn(),
-  createAuditLog: vi.fn(),
+  createAuditLog: vi.fn().mockResolvedValue(undefined),
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 

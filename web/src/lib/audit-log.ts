@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { redactPii } from '@/lib/pii-redact';
+import { redactPii, maskPhoneLike } from '@/lib/pii-redact';
 import { getRequestContext } from '@/lib/correlation-id';
 
 // Audit-log retention table. The keys here are the action-string
@@ -127,9 +127,11 @@ export async function createAuditLog(params: {
     // happened at the admin GET read path (web/src/app/api/admin/audit-logs/
     // route.ts:50-68, PR-153) — leaving raw PII readable to anyone with DB
     // access and violating DPDP Act §8(4) (storage limitation).
+    // P1: redactPii(string) ignores 10-digit phones — mask phone-like
+    // entityIds explicitly (legacy rows use raw phones as entityId).
     const redactedEntityId =
       params.entityId != null
-        ? (redactPii(params.entityId) as string)
+        ? (maskPhoneLike(redactPii(params.entityId)) as string)
         : null;
     const reqCtx = getRequestContext();
     let detailsObj: any = null;

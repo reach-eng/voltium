@@ -46,6 +46,9 @@ class MockFilesRepository implements FilesRepository {
     uploadCalled = true;
     return 'http://example.com/proof.jpg';
   }
+
+  @override
+  Future<void> deleteFile(String url) async {}
 }
 
 void main() {

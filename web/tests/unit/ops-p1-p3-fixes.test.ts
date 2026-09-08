@@ -247,7 +247,7 @@ describe('P1-16/P2-13: feature-flags route', () => {
     expect(res.status).toBe(200);
     expect(flagMocks.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'feature_flag.update',
+        action: 'settings.update',
         entityId: 'maxUploadSizeMb',
         details: { key: 'maxUploadSizeMb', valueType: 'number' },
       })

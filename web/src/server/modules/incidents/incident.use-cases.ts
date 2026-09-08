@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
@@ -111,7 +112,8 @@ export const incidentUseCases = {
       if (!vehicle) throw new Error('Vehicle not found');
     }
 
-    const incidentId = `INC-${Date.now()}`;
+    const suffix = randomBytes(2).toString('hex').toUpperCase();
+    const incidentId = `INC-${Date.now()}-${suffix}`;
 
     const incident = await db.incident.create({
       data: {

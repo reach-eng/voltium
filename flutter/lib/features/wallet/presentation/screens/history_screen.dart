@@ -19,6 +19,7 @@ import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
+import 'package:voltium_rider/utils/toast.dart';
 
 class HistoryScreen extends ConsumerStatefulWidget {
   final String riderId;
@@ -49,10 +50,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       duration: const Duration(milliseconds: 600),
     )..forward();
     Future.microtask(() {
-      final riderId = ref.read(riderProvider).riderId;
-      if (riderId != null) {
-        ref.read(walletProvider.notifier).refreshTransactions(riderId: riderId);
+      if (!mounted) return;
+      final rId = (widget.riderId.isNotEmpty && widget.riderId != 'local')
+          ? widget.riderId
+          : ref.read(riderProvider).riderId;
+      if (rId == null || rId.isEmpty || rId == 'local') {
+        Toast.error(context, 'Rider session unavailable.');
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+        return;
       }
+      ref.read(walletProvider.notifier).refreshTransactions(riderId: rId);
     });
   }
 

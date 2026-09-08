@@ -220,24 +220,29 @@ export const fcmService = {
     if (!firebaseAdmin) return { success: false, error: 'Firebase Admin not initialized' };
 
     try {
+      const hasNotification = Boolean((title && title.trim()) || (body && body.trim()));
       const message = {
         token,
-        notification: { title, body },
+        ...(hasNotification ? { notification: { title, body } } : {}),
         data: {
-          ...data,
           type: 'NOTIFICATION',
+          ...data,
           timestamp: new Date().toISOString(),
         },
         android: {
           priority: 'high' as const,
-          notification: {
-            channelId: 'voltium_notifications',
-            priority: 'high' as const,
-          },
+          ...(hasNotification
+            ? {
+                notification: {
+                  channelId: 'voltium_notifications',
+                  priority: 'high' as const,
+                },
+              }
+            : {}),
         },
       };
 
-      const response = await getMessaging(firebaseAdmin).send(message);
+      const response = await getMessaging(firebaseAdmin).send(message as any);
       return { success: true, messageId: response };
     } catch (error: unknown) {
       logger.error('[FCM] Error sending push:', error);

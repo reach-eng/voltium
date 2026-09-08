@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/extract-error';
 import type { KycRider, KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
 import { KYC_PAGE_SIZE } from './types';
 
@@ -49,7 +50,9 @@ export function buildKycQueueUrl(input: {
 export function useKyc() {
   const [riders, setRiders] = useState<KycRider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('pending');
+  // P0-2: Default landing tab is 'submitted' (actionable cohort).
+  // 'pending' is a view-only funnel tab where riders have not submitted docs yet.
+  const [tab, setTab] = useState('submitted');
   // NET-005 follow-up-12: page state for the queue.
   // `page` is 1-indexed to match the server's
   // `parsePositiveInt(... 'page', 1)` default in
@@ -61,6 +64,7 @@ export function useKyc() {
   const [confirmAction, setConfirmAction] = useState<KycConfirmAction | null>(null);
   const [bulkConfirmAction, setBulkConfirmAction] = useState<KycBulkConfirmAction | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedKycDocs, setSelectedKycDocs] = useState<Set<string>>(new Set());
   const [bulkRejectionReason, setBulkRejectionReason] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [startDate, setStartDate] = useState('');
@@ -107,13 +111,11 @@ export function useKyc() {
   }, [fetchRiders]);
 
   // NET-005 follow-up-12: when filters change, reset to
-  // page 1. Without this, switching tabs while on page 3
-  // could land the admin on an empty page (e.g. the
-  // INFO_REQUIRED tab has only 2 records, so page 3 is
-  // empty). Matches the rider-management reset pattern
-  // (`useRiders.ts:99-102`).
+  // page 1 and clear selected rows so selections from one
+  // tab do not leak into another tab.
   useEffect(() => {
     setPage(1);
+    setSelectedIds(new Set());
   }, [tab, startDate, endDate]);
 
   const filteredRiders = Array.isArray(riders) ? riders : [];
@@ -131,10 +133,12 @@ export function useKyc() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filteredRiders.length && filteredRiders.length > 0) {
+    // P0-2: PENDING rows are view-only and cannot be bulk-actioned.
+    const actionable = filteredRiders.filter((r) => r.kycStatus !== 'PENDING');
+    if (selectedIds.size === actionable.length && actionable.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredRiders.map((r) => r.id)));
+      setSelectedIds(new Set(actionable.map((r) => r.id)));
     }
   };
 
@@ -148,6 +152,11 @@ export function useKyc() {
     try {
       if ((action === 'reject' || action === 'info_required') && rejectionReason.trim().length < 5) {
         toast.error('Please provide a reason of at least 5 characters.');
+        return;
+      }
+      // P1-3 (Phase 4): REJECT and INFO_REQUIRED require at least one document/field to correct
+      if ((action === 'reject' || action === 'info_required') && selectedKycDocs.size === 0) {
+        toast.error('Please select at least one document or field that requires correction.');
         return;
       }
       // NET-005 follow-up-13 (2026-09-08): the reopen
@@ -180,20 +189,16 @@ export function useKyc() {
               action === 'reject' || action === 'info_required'
                 ? rejectionReason.trim()
                 : undefined,
+            editableFields:
+              action === 'reject' || action === 'info_required'
+                ? Array.from(selectedKycDocs)
+                : undefined,
           }),
         });
       }
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        // NET-005 follow-up-10 (2026-09-08): the
-        // `error` field is a structured object
-        // `{code, message, details}` (see
-        // api-response.ts:236-250), not a string.
-        const msg =
-          (errJson.error && typeof errJson.error === 'object' && errJson.error.message) ||
-          errJson.error ||
-          errJson.message ||
-          `Request failed: ${res.status}`;
+        const msg = extractErrorMessage(errJson, `Request failed: ${res.status}`);
         throw new Error(msg);
       }
       // NET-005 follow-up-13 (2026-09-08): use the
@@ -229,6 +234,7 @@ export function useKyc() {
       }
       setConfirmAction(null);
       setRejectionReason('');
+      setSelectedKycDocs(new Set());
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(rider.id);
@@ -275,9 +281,7 @@ export function useKyc() {
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));
           throw new Error(
-            errJson.error ||
-              errJson.message ||
-              `Undo failed for ${id} (HTTP ${res.status})`
+            extractErrorMessage(errJson, `Undo failed for ${id} (HTTP ${res.status})`)
           );
         }
       });
@@ -329,28 +333,69 @@ export function useKyc() {
       });
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || errJson.message || `Bulk request failed: ${res.status}`);
+        const msg = extractErrorMessage(errJson, `Bulk request failed: ${res.status}`);
+        throw new Error(msg);
       }
-      toast.success(`Bulk KYC ${statusMap[action].toLowerCase()} applied to ${targetIds.length} rider(s)`);
-      // NET-005 follow-up-10 (2026-09-08): same
-      // reversal logic as `handleKycAction` above. A
-      // bulk-approve can never be undone (APPROVED has
-      // no forward transition back to SUBMITTED in the
-      // state machine), so don't offer undo after a
-      // bulk-approve. Bulk REJECT and INFO_REQUIRED
-      // keep the undo affordance.
-      if (action !== 'approve') {
+
+      // P1-2: Parse count and failures from the bulk response
+      const resJson = await res.json().catch(() => ({}));
+      const resData = resJson.data || resJson;
+      const updatedCount = typeof resData.count === 'number' ? resData.count : targetIds.length;
+      const failures: { id: string; error: string }[] = Array.isArray(resData.failures)
+        ? resData.failures
+        : [];
+
+      const failedIds = new Set(failures.map((f) => f.id));
+      const succeededIds = targetIds.filter((id) => !failedIds.has(id));
+
+      if (failures.length > 0) {
+        // P1-2: Retain selection on failed IDs so admin can review or retry
+        setSelectedIds(failedIds);
+
+        const firstError = failures[0]?.error;
+        if (updatedCount > 0) {
+          // Partial failure: updated X of N (Y failed)
+          toast.warning(
+            `Updated ${updatedCount} of ${targetIds.length} on this page (${failures.length} failed${
+              firstError ? `: ${firstError}` : ''
+            })`
+          );
+        } else {
+          // All selected failed
+          toast.error(
+            `Failed to update ${failures.length} rider(s) on this page${
+              firstError ? `: ${firstError}` : ''
+            }`
+          );
+        }
+      } else {
+        // Full success: clear selection
+        setSelectedIds(new Set());
+        toast.success(
+          `Bulk KYC ${statusMap[action].toLowerCase()} applied to ${updatedCount} rider(s) on this page`
+        );
+      }
+
+      // NET-005 follow-up-10: only offer undo for reversible KYC transitions
+      // and only for the rows that actually succeeded.
+      if (action !== 'approve' && succeededIds.length > 0) {
+        const succeededPreviousStatuses: Record<string, string> = {};
+        succeededIds.forEach((id) => {
+          if (previousStatuses[id]) {
+            succeededPreviousStatuses[id] = previousStatuses[id];
+          }
+        });
         setLastAction({
-          ids: targetIds,
-          previousStatuses,
+          ids: succeededIds,
+          previousStatuses: succeededPreviousStatuses,
           action: statusMap[action],
         });
         setShowUndoToast(true);
         setTimeout(() => setShowUndoToast(false), 5000);
       }
+
       setBulkConfirmAction(null);
       setBulkRejectionReason('');
-      setSelectedIds(new Set());
       fetchRiders();
     } catch (err: any) {
       logger.error('Bulk KYC action failed', { error: err });
@@ -384,6 +429,8 @@ export function useKyc() {
     setBulkConfirmAction,
     rejectionReason,
     setRejectionReason,
+    selectedKycDocs,
+    setSelectedKycDocs,
     bulkRejectionReason,
     setBulkRejectionReason,
     selectedIds,

@@ -27,7 +27,7 @@ import { requireRiderSession } from '@/lib/rider-auth';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
-import { redactPii } from '@/lib/pii-redact';
+import { redactPii, maskPhoneLike } from '@/lib/pii-redact';
 
 const sosSchema = z
   .object({
@@ -137,6 +137,19 @@ export async function POST(request: NextRequest) {
     logger.error('[POST /api/emergency/sos] Failed to record SOS', {
       error: redactPii(err),
     });
+    // P1: a lost SOS previously looked identical to success with zero
+    // signal — page on-duty staff best-effort so the outage itself is
+    // visible even though the rider is never blocked.
+    void import('@/lib/alerter')
+      .then(({ alerter }) =>
+        alerter.send({
+          level: 'critical',
+          title: '🚨 SOS record FAILED',
+          message: 'POST /api/emergency/sos threw before persisting. Check logs — an SOS may be unrecorded.',
+          source: 'api/emergency/sos',
+        })
+      )
+      .catch(() => {});
     return success({ acknowledged: false }, 'SOS alert recorded');
   }
 }
@@ -147,6 +160,7 @@ interface FanoutInput {
   contacts: Array<{ name: string; phone: string }>;
   latitude: number | null;
   longitude: number | null;
+  preferredLocale?: string | null;
 }
 
 /**
@@ -158,25 +172,50 @@ interface FanoutInput {
 async function fanoutSosAlert(input: FanoutInput): Promise<void> {
   const { contacts, latitude, longitude, riderPhone, riderDbId } = input;
 
+  let preferredLocale = input.preferredLocale;
+  if (preferredLocale === undefined) {
+    try {
+      const { db } = await import('@/lib/db');
+      const rider = await db.rider.findUnique({
+        where: { id: riderDbId },
+        select: { preferredLocale: true },
+      });
+      preferredLocale = rider?.preferredLocale ?? null;
+    } catch {
+      preferredLocale = null;
+    }
+  }
+
+  const isHindi =
+    preferredLocale?.toLowerCase() === 'hi' ||
+    preferredLocale?.toLowerCase().startsWith('hi_') ||
+    preferredLocale?.toLowerCase().startsWith('hi-');
+
   const locationFragment =
     latitude != null && longitude != null
-      ? ` Location: https://maps.google.com/?q=${latitude},${longitude}`
+      ? (isHindi
+          ? ` स्थान: https://maps.google.com/?q=${latitude},${longitude}`
+          : ` Location: https://maps.google.com/?q=${latitude},${longitude}`)
       : '';
 
-  const smsBody = `Voltium rider SOS: ${riderPhone} triggered an emergency alert.${locationFragment} Please try to reach them. — Voltium Safety`;
+  const smsBody = isHindi
+    ? `Voltium राइडर SOS: ${riderPhone} ने एक आपातकालीन अलर्ट ट्रिगर किया है।${locationFragment} कृपया उन तक पहुँचने का प्रयास करें। — Voltium Safety`
+    : `Voltium rider SOS: ${riderPhone} triggered an emergency alert.${locationFragment} Please try to reach them. — Voltium Safety`;
 
   for (const contact of contacts) {
     try {
       // Dynamic import keeps the route loadable when MSG91 isn't
       // configured. The helper is a thin wrapper around fetch().
       const { sendSms } = await import('@/lib/sms-provider');
-      await sendSms(contact.phone, smsBody);
+      await sendSms(contact.phone, smsBody, { locale: preferredLocale });
+      // P1: log the masked number — the raw contact phone is PII and
+      // the SMS provider already has delivery truth.
       logger.info('[POST /api/emergency/sos] SMS sent to contact', {
-        contactPhone: contact.phone,
+        contactPhone: maskPhoneLike(contact.phone),
       });
     } catch (err) {
       logger.error('[POST /api/emergency/sos] SMS to contact failed', {
-        contactPhone: contact.phone,
+        contactPhone: maskPhoneLike(contact.phone),
         error: redactPii(err),
       });
     }

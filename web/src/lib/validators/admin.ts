@@ -268,8 +268,24 @@ export const updateLegalAdminSchema = z
 // keys up front (a typo'd key that silently no-ops is just as
 // dangerous as a typo'd field on a typed schema). `z.record` does
 // not support `.strict()` so we enforce the allowlist via a refine.
-const ADMIN_SETTING_KEYS = [
+//
+// P1-1 (settings audit, 2026-09-08): the allowlist previously drifted
+// behind the registry — walletMaxTopup / autoApproveTopupLimit /
+// referralBonusCap existed in SETTING_REGISTRY but no writer accepted
+// them, so admin edits always 400'd and the registry defaults applied
+// forever. They are business knobs with no other surface, so they are
+// editable here (and rendered on the Pricing card).
+//
+// `skipGuarantorExtraDeposit` is deliberately NOT in this allowlist: it
+// has a dedicated writer (PUT /api/admin/config/skip-guarantor) and a
+// rider read endpoint (/api/rider/config/skip-deposit), and its own
+// validation. The registry↔allowlist liveness contract is pinned by
+// tests/unit/settings-p1-hardening.test.ts.
+export const ADMIN_SETTING_KEYS = [
   'walletMinTopup',
+  'walletMaxTopup',
+  'autoApproveTopupLimit',
+  'referralBonusCap',
   'lateFee',
   'referralBonus',
   'autoApproveKYC',
@@ -285,8 +301,13 @@ const ADMIN_SETTING_KEYS = [
   'supportPhone',
 ] as const;
 
+// P1-7 (settings audit, 2026-09-08): BOOLEAN settings (autoApproveKYC,
+// emailNotifications, smsNotifications) are now accepted as native
+// booleans. The UI keeps stringifying, but a direct API caller sending
+// `true` no longer gets a 400 — `coerceSettingValue` already handled
+// native booleans; only this schema stood in the way.
 export const updateSettingsAdminSchema = z
-  .record(z.string().min(1), z.union([z.string(), z.number()]).optional())
+  .record(z.string().min(1), z.union([z.string(), z.number(), z.boolean()]).optional())
   .refine((obj) => Object.keys(obj).length > 0, {
     message: 'At least one setting key is required',
   })

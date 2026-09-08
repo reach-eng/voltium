@@ -49,7 +49,7 @@ export function KycFiltersBar({
               phone: k.phone,
               fullName: k.fullName,
               kycStatus: k.kycStatus,
-              state: k.state,
+              lifecycleStatus: k.lifecycleStatus || k.state,
               guarantorStatus: k.guarantorStatus,
               hasAadhaar: !!(k.aadhaarFront && k.aadhaarBack),
               hasPan: !!k.panCard,
@@ -63,7 +63,7 @@ export function KycFiltersBar({
               { key: 'phone', label: 'Phone' },
               { key: 'fullName', label: 'Name' },
               { key: 'kycStatus', label: 'KYC Status' },
-              { key: 'state', label: 'State' },
+              { key: 'lifecycleStatus', label: 'Lifecycle Status' },
               { key: 'guarantorStatus', label: 'Guarantor Status' },
               { key: 'hasAadhaar', label: 'Has Aadhaar' },
               { key: 'hasPan', label: 'Has PAN' },
@@ -73,7 +73,24 @@ export function KycFiltersBar({
             ]}
             onExportStart={() => setExportProgress(0)}
             onExportProgress={(p) => setExportProgress(p)}
-            onExportComplete={() => setExportProgress(null)}
+            onExportComplete={() => {
+              setExportProgress(null);
+              // P2-1 (Phase 6): Record audit trail for KYC exports containing PII
+              fetch('/api/admin/audit-logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  action: 'kyc.export',
+                  riderId: 'kyc_export',
+                  details: {
+                    count: filteredRiders.length,
+                    tab,
+                    startDate: startDate || null,
+                    endDate: endDate || null,
+                  },
+                }),
+              }).catch(() => {});
+            }}
           />
         </div>
       </div>
@@ -81,11 +98,11 @@ export function KycFiltersBar({
       {/* Tab Filters */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="submitted">Submitted</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="info_required">Needs Correction</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="info_required">Needs Correction</TabsTrigger>
           {/* NET-005 follow-up-13 (2026-09-08): add an
               Expired tab so admins can find the rows
               whose KYC hit the 365-day horizon

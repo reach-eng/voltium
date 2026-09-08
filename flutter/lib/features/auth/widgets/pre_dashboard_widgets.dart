@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:voltium_rider/utils/avatar_url.dart';
 import '../../../models/rider_model.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/premium_cards.dart';
@@ -233,17 +234,23 @@ class PreDashboardProfileCard extends StatelessWidget {
                           border: Border.all(color: AppColors.error, width: 2),
                         ),
                         child: ClipOval(
-                          child: rider.profilePhoto != null &&
-                                  rider.profilePhoto!.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: rider.profilePhoto!,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) =>
-                                      _buildPlaceholder(rider),
-                                  placeholder: (_, __) =>
-                                      _buildPlaceholder(rider),
-                                )
-                              : _buildPlaceholder(rider),
+                          child: Builder(builder: (context) {
+                            // P1: same URL validation as the active
+                            // dashboard avatar (scheme check, no `//`,
+                            // traversal stripped, relative paths resolved).
+                            final photoUrl =
+                                resolveAvatarUrl(rider.profilePhoto);
+                            if (photoUrl == null) {
+                              return _buildPlaceholder(rider);
+                            }
+                            return CachedNetworkImage(
+                              imageUrl: photoUrl,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) =>
+                                  _buildPlaceholder(rider),
+                              placeholder: (_, __) => _buildPlaceholder(rider),
+                            );
+                          }),
                         ),
                       ),
                     ),
@@ -356,16 +363,18 @@ class PreDashboardProfileCard extends StatelessWidget {
                           Border.all(color: colors.iconBackground, width: 4),
                     ),
                     child: ClipOval(
-                      child: rider.profilePhoto != null &&
-                              rider.profilePhoto!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: rider.profilePhoto!,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) =>
-                                  _buildPlaceholder(rider),
-                              placeholder: (_, __) => _buildPlaceholder(rider),
-                            )
-                          : _buildPlaceholder(rider),
+                      child: Builder(builder: (context) {
+                        final photoUrl = resolveAvatarUrl(rider.profilePhoto);
+                        if (photoUrl == null) {
+                          return _buildPlaceholder(rider);
+                        }
+                        return CachedNetworkImage(
+                          imageUrl: photoUrl,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => _buildPlaceholder(rider),
+                          placeholder: (_, __) => _buildPlaceholder(rider),
+                        );
+                      }),
                     ),
                   ),
                   SizedBox(height: 14),
@@ -541,7 +550,6 @@ class PreDashboardCtaCard extends StatelessWidget {
   final List<Color> gradientColors;
   final Color buttonColor;
   final VoidCallback? onPressed;
-  final bool showCurtain;
 
   const PreDashboardCtaCard({
     super.key,
@@ -552,7 +560,6 @@ class PreDashboardCtaCard extends StatelessWidget {
     required this.gradientColors,
     required this.buttonColor,
     this.onPressed,
-    this.showCurtain = false,
   });
 
   factory PreDashboardCtaCard.bookVehicle({
@@ -654,46 +661,6 @@ class PreDashboardCtaCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Pickup Vehicle button.
-class PickupButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-
-  const PickupButton({super.key, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-          ),
-          elevation: 8,
-          shadowColor: AppColors.primary.withValues(alpha: 0.4),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.local_shipping, size: 22),
-            SizedBox(width: 12),
-            Text(
-              'PICKUP YOUR VEHICLE',
-              style: AppTypography.labelLarge
-                  .copyWith(fontWeight: FontWeight.w700)
-                  .copyWith(letterSpacing: 1.2),
-            ),
-          ],
-        ),
       ),
     );
   }

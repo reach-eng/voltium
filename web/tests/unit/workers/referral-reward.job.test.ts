@@ -73,7 +73,9 @@ describe('Referral Reward Job', () => {
 
     const reward = await testDb.reward.findFirst({ where: { riderId: referrerId } });
     expect(reward).toBeDefined();
-    expect(reward?.points).toBe(20000);
+    // Unit decision: Reward.points stores POINT COUNTS, not paise —
+    // the ₹200 bonus stores 200 (wallet/ledger/txn stay paise).
+    expect(reward?.points).toBe(200);
 
     const ledger = await testDb.walletLedger.findFirst({ where: { walletId: wallet.id } });
     expect(ledger?.amountInPaise).toBe(20000);

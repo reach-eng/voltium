@@ -153,11 +153,20 @@ export const referralUseCases = {
         note: `Referral reward for ${referee.fullName || referee.phone}`,
       });
 
+      // Unit decision: Reward.points stores POINT COUNTS, not paise.
+      // The wallet/transaction legs above use paise (correct), but every
+      // points reader (redeem ×100→paise, tier thresholds, admin "+pts")
+      // treats the column as counts — storing paise here made a ₹200
+      // bonus read as 20000 pts (instant Gold) and redeem into ₹20,000.
+      const bonusPoints = Math.max(
+        0,
+        Math.round((Number.isFinite(bonusPaise) ? bonusPaise : 20000) / 100)
+      );
       await tx.reward.create({
         data: {
           riderId: referrer.id,
           title: `Referral bonus: ${referee.fullName || referee.phone} joined`,
-          points: bonusPaise,
+          points: bonusPoints,
         },
       });
       });

@@ -3,8 +3,9 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Banner shown when the rider provider's onboarding/post-pickup
-/// polling has reached the max-poll limit (~8 minutes) without a
-/// server-side state change. The user can tap "Refresh" to retry.
+/// polling has reached the max-poll limit (240 polls — ~120 min on the
+/// 30s active cadence, longer when backgrounded) without a server-side
+/// state change. The user can tap "Refresh" to retry.
 ///
 /// Pure presentational widget — the parent owns the polling state
 /// and provides the refresh callback.

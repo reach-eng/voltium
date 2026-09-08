@@ -26,8 +26,21 @@ export enum EditableField {
   motherName = 'motherName',
   bankName = 'bankName',
   bankAccount = 'accountNumber',
-  bankIfsc = 'ifscCode'
+  bankIfsc = 'ifscCode',
 }
+
+export const ALL_KYC_DOCUMENT_KEYS = [
+  'profilePhoto',
+  'riderPhoto',
+  'riderVideo',
+  'signature',
+  'aadhaarFront',
+  'aadhaarBack',
+  'panCard',
+  'bankName',
+  'accountNumber',
+  'ifscCode',
+] as const;
 
 export interface KycSubmission {
   riderId: string;

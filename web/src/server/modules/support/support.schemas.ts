@@ -13,7 +13,9 @@ import {
 export { createTicketSchema, updateTicketSchema, ticketReplySchema, chatMessageSchema };
 
 export const supportQuerySchema = z.object({
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
+  // Must include WAITING_ON_RIDER — it is a live TicketStatus (state
+  // machine + Prisma enum); dropping it 400s the tickets screen filter.
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED']).optional(),
   category: z.string().optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   page: z.coerce.number().int().positive().default(1),

@@ -403,13 +403,13 @@ describe('NET-005 follow-up-9: admin KYC document-view logging', () => {
     it('returns 409 when GuarantorStateError is thrown', async () => {
       mocks.updateRider.mockRejectedValue(
         new GuarantorStateError(
-          'Invalid guarantor transition: "APPROVED" → "PENDING".',
+          'Invalid guarantor transition: "APPROVED" → "DRAFT".',
           'APPROVED',
-          'PENDING'
+          'DRAFT'
         )
       );
 
-      const req = makePutReq({ id: 'r1', guarantorStatus: 'PENDING' });
+      const req = makePutReq({ id: 'r1', guarantorStatus: 'DRAFT' });
       const res = await updateRider(req);
       expect(res.status).toBe(409);
     });

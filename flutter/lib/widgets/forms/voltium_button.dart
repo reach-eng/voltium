@@ -150,8 +150,9 @@ class VoltiumButton extends StatelessWidget {
     // (the underlying TextButton already does this, but the explicit
     // wrapper makes the contract obvious and lets us control the
     // label independently of the visible text).
-    final effectiveSemanticsLabel =
-        semanticsLabel ?? labelText ?? (label is Text ? (label as Text).data : null);
+    final effectiveSemanticsLabel = semanticsLabel ??
+        labelText ??
+        (label is Text ? (label as Text).data : null);
 
     final semanticallyWrapped = Semantics(
       button: true,

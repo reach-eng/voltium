@@ -23,6 +23,7 @@ export interface RiderFiltersBarProps {
   onStateFilterChange: (v: string) => void;
   onKycFilterChange: (v: string) => void;
   onAddRider?: () => void;
+  canCreate?: boolean;
   exportProgress?: number | null;
   onExportStart?: () => void;
   onExportProgress?: (p: number) => void;
@@ -43,6 +44,7 @@ export function RiderFiltersBar({
   onStateFilterChange,
   onKycFilterChange,
   onAddRider,
+  canCreate = true,
   exportProgress = null,
   onExportStart,
   onExportProgress,
@@ -72,6 +74,8 @@ export function RiderFiltersBar({
               size="default"
               className="rounded-xl h-11 px-5"
               onClick={onAddRider}
+              disabled={canCreate === false}
+              title={canCreate === false ? 'Requires riders_create permission' : undefined}
             >
               <UserPlus className="w-5 h-5 mr-2" /> Add Rider
             </Button>

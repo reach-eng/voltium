@@ -164,6 +164,8 @@ PENDING
   │
   ├────► FAILED
   │
+  ├────► CANCELLED (terminal: rider changed mind)
+  │
   └────► REFUNDED
 ```
 
@@ -175,13 +177,14 @@ APPROVED ──► REVERSED
 
 ### Transitions
 
-| From     | To       | Trigger                  |
-|----------|----------|--------------------------|
-| PENDING  | APPROVED | Admin approves           |
-| PENDING  | REJECTED | Admin rejects            |
-| PENDING  | FAILED   | Payment provider failure |
-| APPROVED | REVERSED | Admin reversal           |
-| APPROVED | REFUNDED | Admin initiates refund   |
+| From     | To        | Trigger                       |
+|----------|-----------|-------------------------------|
+| PENDING  | APPROVED  | Admin approves                |
+| PENDING  | REJECTED  | Admin rejects                 |
+| PENDING  | FAILED    | Payment provider failure      |
+| PENDING  | CANCELLED | Rider cancels before payment  |
+| APPROVED | REVERSED  | Admin reversal                |
+| APPROVED | REFUNDED  | Admin initiates refund        |
 
 ---
 
@@ -231,10 +234,12 @@ AVAILABLE
   │                       │
   │                       └────► MAINTENANCE (incident)
   │
-  ├────► RETIRED
+  ├────► RETIRED (can reactivate -> MAINTENANCE -> AVAILABLE)
   │
-  └────► LOST
+  └────► LOST (can recover -> MAINTENANCE -> AVAILABLE)
 ```
+
+> **Ops Note on Vehicle Terminals**: The vehicle state machine deliberately has no hard terminal state (`RETIRED` and `LOST` cycle back to `MAINTENANCE` upon vehicle recovery or refurbishing). If a permanently unrecoverable terminal state is ever required, a `SCRAPPED` state will be introduced via an explicit schema migration.
 
 ---
 
@@ -255,6 +260,8 @@ OPEN
   │
   └────► CLOSED
 ```
+
+> **Ops Note on Ticket CLOSED State & Reversals**: Bulk revert and admin reopen operations (`support.use-cases.ts: ticket.bulk_revert`) deliberately bypass the standard forward-only machine and write audited events. Consequently, `CLOSED` is advisory; operational procedures require auditing reopened closed tickets during weekly review.
 
 ---
 
@@ -300,6 +307,8 @@ HUB_MANAGER        → Vehicle pickup/return at hub
 FLEET_MANAGER      → Vehicle/hub CRUD
 READ_ONLY          → Dashboard/reports only
 ```
+
+> **Ops Note on Deletion Posture (`riders_delete: []`)**: Direct hard deletion of rider accounts is prohibited across all roles (`riders_delete: []` in `ROLE_PERMISSIONS`). In compliance with DPDP and data governance policies, rider lifecycle follows request/approve/recover workflows rather than un-audited direct deletions.
 
 ---
 

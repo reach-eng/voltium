@@ -14,6 +14,7 @@ interface RiderRowProps {
   onToggleSelect: (checked: boolean) => void;
   onViewDetails: () => void;
   onDelete: () => void;
+  canDelete?: boolean;
 }
 
 export const RiderRow = React.memo(function RiderRow({
@@ -22,6 +23,7 @@ export const RiderRow = React.memo(function RiderRow({
   onToggleSelect,
   onViewDetails,
   onDelete,
+  canDelete = true,
 }: RiderRowProps) {
   const isActive = rider.lifecycleStatus === 'ACTIVE';
   const isRed =
@@ -123,15 +125,17 @@ export const RiderRow = React.memo(function RiderRow({
             >
               <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-              onClick={onDelete}
-              title="Remove Rider"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            {canDelete !== false && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                onClick={onDelete}
+                title="Remove Rider"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         ) : (
           <div className="w-[72px] h-8" aria-hidden />

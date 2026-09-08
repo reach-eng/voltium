@@ -19,7 +19,7 @@ export function KycBulkActionsBar({
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border border-primary/20 rounded-lg">
-      <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
+      <span className="text-sm font-medium text-primary">{selectedIds.size} selected on this page</span>
       <Button
         size="default"
         onClick={() => setBulkConfirmAction('approve')}

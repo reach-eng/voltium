@@ -11,6 +11,7 @@ import 'package:voltium_rider/features/notifications/presentation/screens/notifi
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/utils/phone_formatter.dart';
 
 class _SeededRiderNotifier extends RiderNotifier {
   final RiderModel _seed;
@@ -84,7 +85,8 @@ void main() {
 
       // Identity Card
       expect(find.text('Vikram Sharma'), findsAtLeastNWidgets(1));
-      expect(find.text('+919876543210'), findsAtLeastNWidgets(1));
+      expect(find.text(formatRiderPhone(mockRider.phone)),
+          findsAtLeastNWidgets(1));
       expect(find.textContaining('KYC'), findsAtLeastNWidgets(1));
 
       // Preferences Section

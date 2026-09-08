@@ -8,6 +8,8 @@ import { RentalStateError } from '@/server/modules/rentals/rental-state-machine'
 import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
 import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
 import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
+import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
+import { IncidentStateError } from '@/server/modules/incidents/incident-state-machine';
 
 type DomainError = Error & { code?: string };
 
@@ -84,7 +86,9 @@ export function withApiHandler(
         err instanceof KycStateError ||
         err instanceof GuarantorStateError ||
         err instanceof DepositStateMachineError ||
-        err instanceof RentalStateError
+        err instanceof RentalStateError ||
+        err instanceof TransactionStateError ||
+        err instanceof IncidentStateError
       ) {
         return errors.conflict(domainErr.message);
       }

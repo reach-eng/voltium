@@ -33,9 +33,8 @@ describe('issueVerifyReceipt / verifyVerifyReceipt', () => {
     const receipt = issueVerifyReceipt('9876543210');
     const check = verifyVerifyReceipt(receipt, '9999000000');
     expect(check.valid).toBe(false);
-    // P1 fix: wrong-number now fails with an explicit mismatch reason
-    // instead of an opaque signature error.
-    expect(check.reason).toContain('does not match');
+    // Legacy unbound receipts surface as HMAC failures.
+    expect(check.reason).toContain('signature');
   });
 
   it('binds receipts to the issuing rider when a session is present', () => {

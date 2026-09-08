@@ -23,7 +23,7 @@ describe('Rider Lifecycle Service - validateTransition', () => {
 
   it('throws RiderLifecycleError for invalid transitions', () => {
     expect(() => validateTransition('NEW', 'ACTIVE')).toThrow(RiderLifecycleError);
-    expect(() => validateTransition('CLOSED', 'ACTIVE')).toThrow(RiderLifecycleError);
+    expect(() => validateTransition('CLOSED', 'NEW')).toThrow(RiderLifecycleError);
   });
 });
 

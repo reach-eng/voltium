@@ -27,6 +27,7 @@ import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/widgets/forms/forms.dart';
+import 'package:voltium_rider/widgets/lifecycle_route_guard.dart';
 import '../../../../utils/app_logger.dart';
 
 /// State for UserOnboardingScreen managed via Riverpod Notifier.
@@ -173,7 +174,8 @@ class UserOnboardingScreen extends ConsumerStatefulWidget {
       _UserOnboardingScreenState();
 }
 
-class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
+class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen>
+    with LifecycleRouteGuard {
   final ImageCompressionService _compressionService = ImageCompressionService();
   KycRepository? _kycRepository;
   final _nameController = TextEditingController();
@@ -995,6 +997,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    registerLifecycleGuard();
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
     final onboardingState = ref.watch(userOnboardingNotifierProvider);

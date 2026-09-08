@@ -54,8 +54,7 @@ class GuarantorVerification {
 }
 
 /// EDIT-PROFILE-AUDIT P1-5 (2026-09-08).
-class GuarantorVerificationNotifier
-    extends Notifier<GuarantorVerification> {
+class GuarantorVerificationNotifier extends Notifier<GuarantorVerification> {
   @override
   GuarantorVerification build() => const GuarantorVerification();
 

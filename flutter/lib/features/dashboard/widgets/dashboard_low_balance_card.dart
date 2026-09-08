@@ -40,10 +40,12 @@ class DashboardLowBalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // P2: round, don't truncate — toInt() understated the minimum by up
+    // to ₹1 (e.g. 1999.60 → 1999), letting a top-up fall short.
     final minTopUp = (requiredPayment > 0
             ? requiredPayment
             : AppConstants.defaultRentalPrice)
-        .toInt();
+        .round();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color themeColor = isDailyPlan

@@ -32,6 +32,7 @@
 import { kycRepository } from '../kyc.repository';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { KycApproveError } from './errors';
 
 export interface ApproveKycResult {
@@ -75,21 +76,34 @@ export async function approveKyc(
   // ── Delegate to the repository for the actual state transition + lifecycle bump ──
   const kyc = await kycRepository.approveKyc(riderDbId, approvedBy);
 
+  // ── Notification outbox emit ─────────────────────────────────────────
+  // Emits NOTIFICATION_SEND for the outbox worker to deliver to the rider.
+  await OutboxService.emit(
+    OutboxEventTypes.NOTIFICATION_SEND,
+    { riderId: riderDbId, type: 'KYC_APPROVED' },
+    3,
+    undefined,
+    'interactive',
+  ).catch((err) => {
+    logger.warn('[approveKyc] outbox emit failed (non-blocking)', { err });
+  });
+
   // ── Audit log — "fix the carry-over" from the audit plan ────────────
   // The repository does NOT write an audit log; this is the gap PR-26b closes.
+  const kycId = kyc?.id ?? existing.id;
   await createAuditLog({
     actorId: approvedBy,
     actorType: 'ADMIN',
     action: 'kyc.approved',
     entity: 'KycProfile',
-    entityId: kyc.id,
+    entityId: kycId,
     details: { riderId: riderDbId, previousStatus: 'SUBMITTED', newStatus: 'APPROVED' },
   }).catch((err) => {
     logger.warn('[approveKyc] audit log write failed (non-blocking)', { err });
   });
 
   return {
-    id: kyc.id,
+    id: kycId,
     status: 'APPROVED',
     riderId: riderDbId,
   };

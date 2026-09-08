@@ -4,8 +4,10 @@ export interface KycRider {
   phone: string;
   fullName: string | null;
   kycStatus: string;
-  state: string;
+  /** Canonical lifecycle status enum value (e.g. 'KYC_SUBMITTED', 'ACTIVE') */
   lifecycleStatus: string;
+  /** @deprecated Legacy alias of lifecycleStatus provided by flattenRider */
+  state: string;
   profilePhoto: string | null;
   riderPhoto: string | null;
   riderVideo: string | null;

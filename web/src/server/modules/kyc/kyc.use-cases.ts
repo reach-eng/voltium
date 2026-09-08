@@ -80,7 +80,11 @@ export const kycUseCases = {
     // Partial uploads just save data and keep current status (DRAFT)
     const existing = await kycRepository.findByRiderId(riderDbId);
 
-    if (existing?.status === 'REJECTED' && existing.editableFields && existing.editableFields.length > 0) {
+    if (
+      (existing?.status === 'REJECTED' || existing?.status === 'INFO_REQUIRED') &&
+      existing.editableFields &&
+      existing.editableFields.length > 0
+    ) {
       // Filter prismaData to ONLY allow fields present in editableFields
       const allowedKeys = new Set(existing.editableFields);
       for (const key of Object.keys(prismaData)) {
@@ -218,7 +222,8 @@ export const kycUseCases = {
           const requestInfoResult = await kycRepository.requestInfo(
             riderDbId,
             reviewerId,
-            infoRequest
+            infoRequest,
+            review.editableFields || []
           );
           // PR-ONBOARDING-2026-08-11 (audit 3.1 P2):
           // REQUEST_INFO used a direct

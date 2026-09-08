@@ -3,6 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { validateBody, sendOtpSchema } from '@/lib/validators';
 import { verifyOtp } from '@/lib/otp-store';
 import { issueVerifyReceipt } from '@/lib/verify-receipt';
+import { requireRiderSession } from '@/lib/rider-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
@@ -60,8 +61,16 @@ export async function POST(request: NextRequest) {
     // flows (e.g. pickup emergency contact) can prove server-side that this
     // number was OTP-verified — the gate stops being client-only. TTL is
     // 15 minutes; the pickup route validates phone + expiry on submit.
+    //
+    // Rider-bound when a live session exists (guarantor flow), so the
+    // receipt cannot authorize a different rider on a shared device.
+    let boundRiderDbId: string | undefined;
+    try {
+      const maybeAuth = await requireRiderSession(request);
+      if (!(maybeAuth instanceof Response)) boundRiderDbId = maybeAuth.riderDbId;
+    } catch {}
     return success(
-      { verified: true, receipt: issueVerifyReceipt(phone) },
+      { verified: true, receipt: issueVerifyReceipt(phone, boundRiderDbId) },
       'Phone verified successfully'
     );
   } catch (err) {

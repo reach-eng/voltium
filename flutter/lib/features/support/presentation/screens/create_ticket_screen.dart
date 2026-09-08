@@ -152,6 +152,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             );
           } catch (_) {}
 
+          if (!mounted) return;
+
           final nav = Navigator.of(context);
           nav.pop();
           Toast.info(

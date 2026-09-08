@@ -29,13 +29,24 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/widgets/lifecycle_route_guard.dart';
 
 class RiderWorkflowHubScreen extends ConsumerWidget {
   const RiderWorkflowHubScreen({super.key});
 
+  Future<void> _guardedPush(
+    BuildContext context,
+    WidgetRef ref,
+    Widget screen,
+  ) async {
+    final allowed = await guardHubPush(ref, context);
+    if (!allowed || !context.mounted) return;
+    AppNavigator.push(context, screen);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final riderId = ref.read(riderProvider).riderId ?? 'local';
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context);
 
@@ -58,39 +69,69 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 icon: Icons.assignment_outlined,
                 iconColor: AppColors.primary,
                 onTap: () =>
-                    AppNavigator.push(context, const IntentOfUseScreen()),
+                    _guardedPush(context, ref, const IntentOfUseScreen()),
               ),
               _Tile(
                 title: 'Rider profile',
                 icon: Icons.person_add_alt,
                 iconColor: AppColors.info,
                 onTap: () =>
-                    AppNavigator.push(context, const UserOnboardingScreen()),
+                    _guardedPush(context, ref, const UserOnboardingScreen()),
               ),
               _Tile(
                 title: 'Signature / consent',
                 icon: Icons.draw_outlined,
                 iconColor: AppColors.accentPurple,
                 onTap: () =>
-                    AppNavigator.push(context, const SignaturePadScreen()),
+                    _guardedPush(context, ref, const SignaturePadScreen()),
               ),
               _Tile(
                 title: l10n?.menu_myDocuments ?? 'My documents',
                 icon: Icons.folder_copy_outlined,
                 iconColor: AppColors.success,
                 onTap: () =>
-                    AppNavigator.push(context, const MyDocumentsScreen()),
+                    _guardedPush(context, ref, const MyDocumentsScreen()),
               ),
               _Tile(
                 title: 'Guarantor details',
                 icon: Icons.verified_user_outlined,
                 iconColor: AppColors.primary,
-                onTap: () => AppNavigator.push(
-                  context,
-                  GuarantorOnboardingScreen(
-                    onNext: () => Navigator.maybePop(context),
-                  ),
-                ),
+                onTap: () {
+                  final rider = ref.read(riderProvider).rider;
+                  final isPickupDone = rider?.pickupDone == true;
+                  _guardedPush(
+                    context,
+                    ref,
+                    GuarantorOnboardingScreen(
+                      onNext: isPickupDone
+                          ? () {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          : () {
+                              _guardedPush(
+                                context,
+                                ref,
+                                ChoosePlanScreen(
+                                  onNext: () {
+                                    final chosen = ref
+                                        .read(riderProvider)
+                                        .rider
+                                        ?.activeRentalPlanSecurityDeposit
+                                        .toInt();
+                                    _guardedPush(
+                                      context,
+                                      ref,
+                                      TopUpFlow(initialAmount: chosen),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -101,39 +142,83 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 title: 'Choose plan',
                 icon: Icons.electric_bolt_outlined,
                 iconColor: AppColors.warning,
-                onTap: () => AppNavigator.push(
-                  context,
-                  ChoosePlanScreen(
-                    onNext: () => Navigator.maybePop(context),
-                  ),
-                ),
+                onTap: () {
+                  final rider = ref.read(riderProvider).rider;
+                  final isPickupDone = rider?.pickupDone == true;
+                  _guardedPush(
+                    context,
+                    ref,
+                    ChoosePlanScreen(
+                      onNext: isPickupDone
+                          ? () {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              }
+                            }
+                          : () {
+                              final chosen = ref
+                                  .read(riderProvider)
+                                  .rider
+                                  ?.activeRentalPlanSecurityDeposit
+                                  .toInt();
+                              final flowAmount =
+                                  ref.read(topUpFlowProvider).amount;
+                              final initial = (chosen != null && chosen > 0)
+                                  ? chosen
+                                  : (flowAmount > 0 ? flowAmount : null);
+                              _guardedPush(
+                                context,
+                                ref,
+                                TopUpFlow(initialAmount: initial),
+                              );
+                            },
+                    ),
+                  );
+                },
               ),
               _Tile(
                 title: 'Top-up / deposit flow',
                 icon: Icons.account_balance_wallet_outlined,
                 iconColor: AppColors.primary,
-                onTap: () => AppNavigator.push(context, const TopUpFlow()),
+                onTap: () {
+                  final flowAmount = ref.read(topUpFlowProvider).amount;
+                  _guardedPush(
+                    context,
+                    ref,
+                    TopUpFlow(
+                      initialAmount: flowAmount > 0 ? flowAmount : null,
+                    ),
+                  );
+                },
               ),
               _Tile(
                 title: 'Transaction history',
                 icon: Icons.history,
                 iconColor: AppColors.info,
-                onTap: () => AppNavigator.push(
-                  context,
-                  HistoryScreen(riderId: riderId),
-                ),
+                onTap: () {
+                  final currentRiderId = ref.read(riderProvider).riderId;
+                  if (currentRiderId == null || currentRiderId.isEmpty) {
+                    Toast.error(context, 'Rider session unavailable.');
+                    return;
+                  }
+                  _guardedPush(
+                    context,
+                    ref,
+                    HistoryScreen(riderId: currentRiderId),
+                  );
+                },
               ),
               _Tile(
                 title: l10n?.menu_rewards ?? 'Rewards',
                 icon: Icons.card_giftcard_outlined,
                 iconColor: AppColors.accentPurple,
-                onTap: () => AppNavigator.push(context, const RewardsScreen()),
+                onTap: () => _guardedPush(context, ref, const RewardsScreen()),
               ),
               _Tile(
                 title: l10n?.menu_referralProgram ?? 'Referrals',
                 icon: Icons.people_alt_outlined,
                 iconColor: AppColors.warning,
-                onTap: () => AppNavigator.push(context, const ReferralScreen()),
+                onTap: () => _guardedPush(context, ref, const ReferralScreen()),
               ),
             ],
           ),
@@ -145,14 +230,14 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 icon: Icons.description_outlined,
                 iconColor: AppColors.info,
                 onTap: () =>
-                    AppNavigator.push(context, const RentalDetailsScreen()),
+                    _guardedPush(context, ref, const RentalDetailsScreen()),
               ),
               _Tile(
                 title: 'End rental / return',
                 icon: Icons.assignment_return_outlined,
                 iconColor: AppColors.error,
                 onTap: () =>
-                    AppNavigator.push(context, const EndRentalScreen()),
+                    _guardedPush(context, ref, const EndRentalScreen()),
               ),
             ],
           ),
@@ -164,14 +249,15 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 icon: Icons.support_agent,
                 iconColor: AppColors.primary,
                 onTap: () =>
-                    AppNavigator.push(context, const SupportCenterScreen()),
+                    _guardedPush(context, ref, const SupportCenterScreen()),
               ),
               _Tile(
                 title: 'Support checklist',
                 icon: Icons.checklist_outlined,
                 iconColor: AppColors.info,
-                onTap: () => AppNavigator.push(
+                onTap: () => _guardedPush(
                   context,
+                  ref,
                   const SupportChecklistScreen(),
                 ),
               ),
@@ -179,21 +265,22 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 title: 'FAQ',
                 icon: Icons.help_outline,
                 iconColor: AppColors.accentPurple,
-                onTap: () => AppNavigator.push(context, const FaqScreen()),
+                onTap: () => _guardedPush(context, ref, const FaqScreen()),
               ),
               _Tile(
                 title: 'Troubleshooter',
                 icon: Icons.build_circle_outlined,
                 iconColor: AppColors.warning,
                 onTap: () =>
-                    AppNavigator.push(context, const TroubleshooterScreen()),
+                    _guardedPush(context, ref, const TroubleshooterScreen()),
               ),
               _Tile(
                 title: l10n?.settings_feedback ?? 'Feedback',
                 icon: Icons.rate_review_outlined,
                 iconColor: AppColors.accentPurple,
-                onTap: () => AppNavigator.push(
+                onTap: () => _guardedPush(
                   context,
+                  ref,
                   FeedbackScreen(
                     onSubmit: () => Navigator.maybePop(context),
                   ),
@@ -203,8 +290,9 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 title: l10n?.settings_notifications ?? 'Notifications',
                 icon: Icons.notifications_outlined,
                 iconColor: AppColors.primary,
-                onTap: () => AppNavigator.push(
+                onTap: () => _guardedPush(
                   context,
+                  ref,
                   const NotificationsScreen(),
                 ),
               ),
@@ -218,28 +306,29 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 icon: Icons.edit_outlined,
                 iconColor: AppColors.info,
                 onTap: () =>
-                    AppNavigator.push(context, const EditProfileScreen()),
+                    _guardedPush(context, ref, const EditProfileScreen()),
               ),
               _Tile(
                 title: l10n?.settings_legal ?? 'Legal documents',
                 icon: Icons.gavel_outlined,
                 iconColor: AppColors.successDark,
                 onTap: () =>
-                    AppNavigator.push(context, const LegalPageScreen()),
+                    _guardedPush(context, ref, const LegalPageScreen()),
               ),
               _Tile(
                 title: l10n?.menu_emergencySos ?? 'Emergency SOS',
                 icon: Icons.sos_outlined,
                 iconColor: AppColors.error,
                 onTap: () =>
-                    AppNavigator.push(context, const EmergencySOSScreen()),
+                    _guardedPush(context, ref, const EmergencySOSScreen()),
               ),
               _Tile(
                 title: 'Emergency contacts',
                 icon: Icons.contact_phone_outlined,
                 iconColor: AppColors.warning,
-                onTap: () => AppNavigator.push(
+                onTap: () => _guardedPush(
                   context,
+                  ref,
                   const EmergencyContactsScreen(),
                 ),
               ),

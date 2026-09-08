@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -11,27 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
-  Edit,
-  Phone,
-  Mail,
   Lock,
   Unlock,
-  Loader2,
   User,
   ShieldCheck,
 } from 'lucide-react';
 import type { Rider, RiderEditForm } from '@/lib/types/admin';
-import { getKycBadge } from './helpers';
 import {
   RiderProfileTab,
   RiderKycDocsTab,
@@ -57,44 +43,24 @@ export interface RiderDetailDialogProps {
   // Handler functions
   handleUpdateRider: () => void;
   handleDeleteKycDoc: (docKey: string) => void;
-  confirmDeleteKycDoc: () => void;
   handleBulkDeleteKycDocs: () => void;
   toggleKycDoc: (docKey: string) => void;
-  handleKycAction: () => void;
   handleClearGuarantor: () => void;
-  confirmClearGuarantorAction: () => void;
-  // NET-005 follow-up-20 (2026-09-08):
-  // `handleTlAction` prop removed. It was
-  // only used by the dead "TL Change
-  // Requested" alert block in RiderProfileTab
-  // (now stripped).
 
-  // KYC doc selection
+  // KYC doc selection & actions
   selectedKycDocs: Set<string>;
   setSelectedKycDocs: (docs: Set<string>) => void;
-
-  // KYC action confirmation state
-  confirmKycAction: {
-    rider: Rider;
-    action: 'approve' | 'reject' | 'info_required';
-  } | null;
   setConfirmKycAction: (
     action: { rider: Rider; action: 'approve' | 'reject' | 'info_required' } | null,
   ) => void;
-  kycRejectionReason: string;
-  setKycRejectionReason: (reason: string) => void;
-
-  // Delete doc confirmation state
-  deleteDocKey: string | null;
-  setDeleteDocKey: (key: string | null) => void;
-
-  // Clear guarantor confirmation state
-  confirmClearGuarantor: boolean;
-  setConfirmClearGuarantor: (confirm: boolean) => void;
 
   // Wallet
-  showAdjustWallet: boolean;
   setShowAdjustWallet: (show: boolean) => void;
+
+  // RBAC gating
+  canUpdate?: boolean;
+  canKycApprove?: boolean;
+  canAdjustWallet?: boolean;
 }
 
 /* ── Main Component ── */
@@ -109,24 +75,25 @@ export function RiderDetailDialog({
   onClose,
   handleUpdateRider,
   handleDeleteKycDoc,
-  confirmDeleteKycDoc,
   handleBulkDeleteKycDocs,
   toggleKycDoc,
-  handleKycAction,
   handleClearGuarantor,
-  confirmClearGuarantorAction,
   selectedKycDocs,
   setSelectedKycDocs,
-  confirmKycAction,
   setConfirmKycAction,
-  kycRejectionReason,
-  setKycRejectionReason,
-  deleteDocKey,
-  setDeleteDocKey,
-  confirmClearGuarantor,
-  setConfirmClearGuarantor,
   setShowAdjustWallet,
+  canUpdate = true,
+  canKycApprove = true,
+  canAdjustWallet = true,
 }: RiderDetailDialogProps) {
+  const [activeTab, setActiveTab] = useState('profile');
+
+  useEffect(() => {
+    if (rider) {
+      setActiveTab('profile');
+    }
+  }, [rider]);
+
   function startEditing() {
     if (!rider) return;
     // Coerce Rider -> RiderEditForm (only the form fields matter)
@@ -218,6 +185,8 @@ export function RiderDetailDialog({
                   size="sm"
                   className={`rounded-xl h-10 px-5 gap-2 font-bold transition-all ${isEditing ? 'bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-500/20 border-none' : ''}`}
                   onClick={() => (isEditing ? setIsEditing(false) : startEditing())}
+                  disabled={!isEditing && canUpdate === false}
+                  title={!isEditing && canUpdate === false ? 'Requires riders_update permission' : undefined}
                 >
                   {isEditing ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                   {isEditing ? 'Editing Active' : 'Unlock to Edit'}
@@ -234,7 +203,7 @@ export function RiderDetailDialog({
 
           <div className="flex-1 overflow-y-auto px-8 py-4 no-scrollbar">
             {rider && (
-              <Tabs defaultValue="profile" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-8 mb-8 bg-muted/30 p-1 rounded-2xl h-12 sticky top-0 z-10 backdrop-blur-md">
                   <TabsTrigger
                     value="profile"
@@ -286,6 +255,7 @@ export function RiderDetailDialog({
                   isEditing={isEditing}
                   editForm={editForm}
                   setEditForm={setEditForm}
+                  onReviewPhotos={() => setActiveTab('inspection')}
                 />
 
                 {/* ── KYC Media Tab ── */}
@@ -301,6 +271,7 @@ export function RiderDetailDialog({
                   handleDeleteKycDoc={handleDeleteKycDoc}
                   handleBulkDeleteKycDocs={handleBulkDeleteKycDocs}
                   setConfirmKycAction={setConfirmKycAction}
+                  canKycApprove={canKycApprove}
                 />
 
                 {/* ── Guarantor Tab ── */}
@@ -330,6 +301,7 @@ export function RiderDetailDialog({
                   editForm={editForm}
                   setEditForm={setEditForm}
                   setShowAdjustWallet={setShowAdjustWallet}
+                  canAdjustWallet={canAdjustWallet}
                 />
 
                 {/* ── Device Tab ── */}
@@ -368,7 +340,8 @@ export function RiderDetailDialog({
               {isEditing && (
                 <Button
                   onClick={handleUpdateRider}
-                  disabled={saving}
+                  disabled={saving || canUpdate === false}
+                  title={canUpdate === false ? 'Requires riders_update permission' : undefined}
                   className="rounded-xl h-11 px-10 font-black uppercase text-[10px] tracking-widest bg-primary shadow-lg shadow-primary/20 transition-all hover:scale-105"
                 >
                   {saving ? 'Saving...' : 'Save Changes'}

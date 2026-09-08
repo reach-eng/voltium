@@ -96,7 +96,14 @@ export const transactionRepository = {
       rider: t.rider
         ? {
             ...t.rider,
-            fullName: t.rider.fullName || t.rider.phone || t.rider.riderId || 'Unknown',
+            // P0: the fallback used the RAW phone, defeating the mask
+            // below — display-name consumers render fullName first, leaking
+            // the full number for nameless riders. Mask the fallback too.
+            fullName:
+              t.rider.fullName ||
+              maskPhone(t.rider.phone) ||
+              t.rider.riderId ||
+              'Unknown',
             // P2-17 (financial audit): admin-facing transaction lists must not
             // leak the full rider phone — mask to the last 4 digits. (Search
             // by phone still matches on the raw value server-side.)

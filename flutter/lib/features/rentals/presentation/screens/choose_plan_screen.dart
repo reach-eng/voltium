@@ -15,6 +15,7 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/features/guarantor/data/skip_deposit_config.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import 'package:voltium_rider/widgets/lifecycle_route_guard.dart';
 import '../../../../utils/app_logger.dart';
 
 class ChoosePlanScreen extends ConsumerStatefulWidget {
@@ -27,7 +28,8 @@ class ChoosePlanScreen extends ConsumerStatefulWidget {
   ConsumerState<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
 }
 
-class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
+class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen>
+    with LifecycleRouteGuard {
   List<PlanModel> _plans = [];
   bool _isLoading = true;
   String? _error;
@@ -284,6 +286,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    registerLifecycleGuard();
     // DARK-MODE-AUDIT 2026-08-14 P0-5: the previous version used
     // the static `AppColors.of(context).surfaceBright` (#F8FAFC) which is
     // the LIGHT slate-50. In dark mode the scaffold stayed

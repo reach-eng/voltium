@@ -241,10 +241,27 @@ export const adminRiderUseCases = {
       }
     }
     if (startDate || endDate) {
-      where.createdAt = {
-        ...(startDate ? { gte: new Date(startDate) } : {}),
-        ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
-      };
+      let gteDate: Date | undefined;
+      if (startDate) {
+        const d = new Date(startDate);
+        if (!Number.isNaN(d.getTime())) gteDate = d;
+      }
+      let lteDate: Date | undefined;
+      if (endDate) {
+        // P2-2: Handle both ISO datetime ('2026-09-08T00:00:00.000Z') and date-only ('2026-09-08')
+        // safely without creating invalid string concatenations like `...ZT23:59:59.999Z`.
+        const d = new Date(endDate);
+        if (!Number.isNaN(d.getTime())) {
+          d.setUTCHours(23, 59, 59, 999);
+          lteDate = d;
+        }
+      }
+      if (gteDate || lteDate) {
+        where.createdAt = {
+          ...(gteDate ? { gte: gteDate } : {}),
+          ...(lteDate ? { lte: lteDate } : {}),
+        };
+      }
     }
 
     const validSortFields = new Set([
@@ -880,15 +897,16 @@ export const adminRiderUseCases = {
           // path's `requestInfo` does not touch lifecycle).
           const infoRequest =
             (kycData.rejectionReason as string) || 'Additional information required';
-          await promoteToInfoRequired(tx, id, infoRequest);
+          const editableFields = (kycData.editableFields as string[]) || [];
+          await promoteToInfoRequired(tx, id, infoRequest, editableFields);
         }
         // Outbox emit for the KYC decision. Mirrors what
-        // kyc.use-cases.ts:reviewKyc does (BLOCKER 2.7
+        // kyc.use-cases.ts:reviewKyc does (BLOCKER 2.7 / P1-5
         // consolidation). Priority 3 (rider-visible KYC
-        // decision) and 'interactive' (PR-75). The existing
-        // direct `notificationService.notifyKycStatusChange`
-        // call (post-transaction, line 686) stays for now;
-        // a follow-up will consolidate fully on the outbox.
+        // decision) and 'interactive' (PR-75). The legacy direct
+        // `notificationService.notifyKycStatusChange` was removed
+        // in BLOCKER 2.7; all KYC transitions dispatch reliably
+        // via the outbox inside this transaction.
         if (promotingApproved) {
           await OutboxService.emit(
             OutboxEventTypes.NOTIFICATION_SEND,
@@ -963,6 +981,7 @@ export const adminRiderUseCases = {
           tx,
           id,
           ((kycData as Record<string, unknown>).rejectionReason as string) || 'Additional information required',
+          ((kycData as Record<string, unknown>).editableFields as string[]) || [],
         );
         await OutboxService.emit(
           OutboxEventTypes.NOTIFICATION_SEND,
@@ -1042,42 +1061,59 @@ export const adminRiderUseCases = {
         }
       }
       if (Object.keys(guarantorData).length > 0) {
-        // NET-005 follow-up-19 (2026-09-08): the
-        // previous code wrote any `guarantorStatus`
-        // (or the KYC side-effect's auto-set at
-        // line 545-547/575) directly to the
-        // guarantor row with no transition
-        // validation. The repository's
-        // `submitGuarantor` / `approveGuarantor` /
-        // `rejectGuarantor` / `requestInfo` paths
-        // already call `validateGuarantorTransition`,
-        // but the admin `update()` use-case
-        // bypassed the repository entirely. Mirror
-        // the KYC pattern at line 605-617: fetch
-        // the current status, validate the
-        // transition, throw `GuarantorStateError`
-        // on illegal target. The route already
-        // maps GuarantorStateError to 409.
-        if (guarantorData.status) {
-          const currentGuarantor = await tx.guarantor.findUnique({
+        // P0-2 (2026-09-08): if ALL provided guarantor fields are null or empty,
+        // the admin is executing "Clear Guarantor". In Prisma, Guarantor.status
+        // is non-nullable, so writing null crashes the DB. Correct semantics is
+        // deleting the guarantor row, and skipping the state machine transition check.
+        const isClearGuarantor = Object.values(guarantorData).every(
+          (v) => v === null || v === '' || v === undefined
+        );
+
+        if (isClearGuarantor) {
+          await tx.guarantor.deleteMany({ where: { riderId: id } });
+        } else {
+          // If status is empty/null in a partial update, drop it so Prisma doesn't crash on non-nullable enum
+          if (guarantorData.status === null || guarantorData.status === '') {
+            delete guarantorData.status;
+          }
+
+          // NET-005 follow-up-19 (2026-09-08): the
+          // previous code wrote any `guarantorStatus`
+          // (or the KYC side-effect's auto-set at
+          // line 545-547/575) directly to the
+          // guarantor row with no transition
+          // validation. The repository's
+          // `submitGuarantor` / `approveGuarantor` /
+          // `rejectGuarantor` / `requestInfo` paths
+          // already call `validateGuarantorTransition`,
+          // but the admin `update()` use-case
+          // bypassed the repository entirely. Mirror
+          // the KYC pattern at line 605-617: fetch
+          // the current status, validate the
+          // transition, throw `GuarantorStateError`
+          // on illegal target. The route already
+          // maps GuarantorStateError to 409.
+          if (guarantorData.status) {
+            const currentGuarantor = await tx.guarantor.findUnique({
+              where: { riderId: id },
+              select: { status: true },
+            });
+            // PENDING is the DB default for a never-submitted
+            // guarantor — normalize to DRAFT for transition
+            // purposes (the machine starts at DRAFT).
+            const normGuarantor = (s: string | null | undefined): GuarantorStatus =>
+              ((s === 'PENDING' || !s) ? 'DRAFT' : s) as GuarantorStatus;
+            validateGuarantorTransition(
+              normGuarantor(currentGuarantor?.status),
+              normGuarantor(guarantorData.status as string)
+            );
+          }
+          await tx.guarantor.upsert({
             where: { riderId: id },
-            select: { status: true },
+            update: guarantorData,
+            create: { riderId: id, ...guarantorData },
           });
-          // PENDING is the DB default for a never-submitted
-          // guarantor — normalize to DRAFT for transition
-          // purposes (the machine starts at DRAFT).
-          const normGuarantor = (s: string | null | undefined): GuarantorStatus =>
-            ((s === 'PENDING' || !s) ? 'DRAFT' : s) as GuarantorStatus;
-          validateGuarantorTransition(
-            normGuarantor(currentGuarantor?.status),
-            normGuarantor(guarantorData.status as string)
-          );
         }
-        await tx.guarantor.upsert({
-          where: { riderId: id },
-          update: guarantorData,
-          create: { riderId: id, ...guarantorData },
-        });
       }
       return tx.rider.findUnique({
         where: { id },
@@ -1546,6 +1582,47 @@ export const adminRiderUseCases = {
         data
       ),
     });
+  },
+
+  /**
+   * Suspend a rider (administrative override).
+   *
+   * Deliberately bypasses the lifecycle state machine to permit
+   * suspending from any state (including NEW, PHONE_VERIFIED, etc.).
+   * Audited via 'rider.suspend'.
+   */
+  async suspend(
+    id: string,
+    context: { actorId: string; actorRole?: string; reason?: string }
+  ) {
+    const existing = await getCachedRider(id, () => db.rider.findUnique({ where: { id } }));
+    if (!existing) throw new Error('Rider not found');
+
+    const previousStatus = existing.lifecycleStatus;
+
+    const result = await db.rider.update({
+      where: { id },
+      data: { lifecycleStatus: 'SUSPENDED' },
+    });
+
+    invalidateRiderCache(id);
+    invalidateCache('admin:*');
+
+    await createAuditLog({
+      actorId: context.actorId,
+      actorType: 'ADMIN',
+      action: 'rider.suspend',
+      entity: 'rider',
+      entityId: id,
+      details: {
+        previousStatus,
+        ...(context.reason ? { reason: context.reason } : {}),
+      },
+    }).catch((err) => {
+      logger.error('[RIDER_SUSPEND_AUDIT_ERROR]', err);
+    });
+
+    return result;
   },
 
   /**

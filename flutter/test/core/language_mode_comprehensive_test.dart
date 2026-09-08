@@ -161,6 +161,24 @@ void main() {
       expect(state.isHindi, isFalse);
     });
 
+    test(
+        'maybeApplyFromServer ignores unsupported remote locale (e.g. fr, zz) (P1-2)',
+        () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(CacheService().getLocale(), isNull);
+      await container.read(localeProvider.notifier).maybeApplyFromServer('fr');
+
+      final state = container.read(localeProvider);
+      expect(state.locale.languageCode, equals('en'));
+      expect(CacheService().getLocale(), isNull);
+
+      await container.read(localeProvider.notifier).maybeApplyFromServer('zz');
+      expect(container.read(localeProvider).locale.languageCode, equals('en'));
+      expect(CacheService().getLocale(), isNull);
+    });
+
     test('displayNameFor resolves correct language names', () {
       final l10n = lookupAppLocalizations(const Locale('en'));
       expect(LocaleNotifier.displayNameFor(const Locale('en'), l10n),

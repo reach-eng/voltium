@@ -183,6 +183,14 @@ describe('transaction-state-machine', () => {
       expect(() => validateTransactionTransition('PENDING', 'REVERSED')).toThrow(TransactionStateError);
     });
 
+    it('allows PENDING → CANCELLED (rider cancels pending txn)', () => {
+      expect(() => validateTransactionTransition('PENDING', 'CANCELLED')).not.toThrow();
+    });
+
+    it('throws for CANCELLED → APPROVED (terminal)', () => {
+      expect(() => validateTransactionTransition('CANCELLED', 'APPROVED')).toThrow(TransactionStateError);
+    });
+
     it('error includes currentStatus and targetStatus properties', () => {
       let err: TransactionStateError | undefined;
       try {
@@ -200,6 +208,14 @@ describe('transaction-state-machine', () => {
   describe('canTransitionTransaction', () => {
     it('returns true for PENDING → APPROVED', () => {
       expect(canTransitionTransaction('PENDING', 'APPROVED')).toBe(true);
+    });
+
+    it('returns true for PENDING → CANCELLED', () => {
+      expect(canTransitionTransaction('PENDING', 'CANCELLED')).toBe(true);
+    });
+
+    it('returns false for CANCELLED → APPROVED', () => {
+      expect(canTransitionTransaction('CANCELLED', 'APPROVED')).toBe(false);
     });
 
     it('returns false for REVERSED → PENDING', () => {

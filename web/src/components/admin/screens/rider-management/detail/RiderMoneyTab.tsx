@@ -1,6 +1,6 @@
 'use client';
 
-import { Wallet, ShieldCheck, Calendar, Zap } from 'lucide-react';
+import { Wallet, ShieldCheck, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ export interface RiderMoneyTabProps {
   editForm: RiderEditForm;
   setEditForm: (form: RiderEditForm | Partial<RiderEditForm>) => void;
   setShowAdjustWallet: (show: boolean) => void;
+  canAdjustWallet?: boolean;
 }
 
 export function RiderMoneyTab({
@@ -23,6 +24,7 @@ export function RiderMoneyTab({
   editForm,
   setEditForm,
   setShowAdjustWallet,
+  canAdjustWallet = true,
 }: RiderMoneyTabProps) {
   return (
     <TabsContent
@@ -49,6 +51,8 @@ export function RiderMoneyTab({
               size="sm"
               className="rounded-xl border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50"
               onClick={() => setShowAdjustWallet(true)}
+              disabled={canAdjustWallet === false}
+              title={canAdjustWallet === false ? 'Requires transactions_manage permission' : undefined}
             >
               Adjust Balance
             </Button>

@@ -67,6 +67,26 @@ const MIN_PATTERN_LENGTH = 16;
 const REDACTED = '[REDACTED]';
 
 /**
+ * P1 fix: mask a bare value that looks like an Indian mobile number
+ * (10 digits starting 6–9, optional +91/91 prefix). `redactPii(string)`
+ * only matches ≥16-char token patterns, so 10-digit phones used as
+ * `entityId` (or contact numbers) passed through untouched at both the
+ * audit write path and the admin read path. Scoped to full-string
+ * matches only — never applied to free text or object graphs.
+ */
+export function maskPhoneLike(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const digits = value.replace(/[\s\-()+]/g, '');
+  const normalized = digits.startsWith('91') && digits.length === 12
+    ? digits.slice(2)
+    : digits;
+  if (/^[6-9]\d{9}$/.test(normalized)) {
+    return `******${normalized.slice(-4)}`;
+  }
+  return value;
+}
+
+/**
  * Redact sensitive fields from a value recursively.
  * Returns a safe-for-logging copy.
  *

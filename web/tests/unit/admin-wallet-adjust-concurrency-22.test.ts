@@ -67,6 +67,7 @@ const mocks = vi.hoisted(() => ({
   // Capture the order of calls inside the tx —
   // row lock MUST come before the aggregate.
   txCallOrder: [] as string[],
+  todayDebitPaise: 0 as number | null,
 }));
 
 vi.mock('@/lib/get-session', () => ({

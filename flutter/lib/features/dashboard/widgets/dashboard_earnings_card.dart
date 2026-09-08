@@ -5,6 +5,10 @@ import 'package:voltium_rider/widgets/premium_cards.dart';
 
 /// Hero card for Rider Dashboard displaying today's earnings, weekly trend sparkline,
 /// and earning streak badge.
+///
+/// NOTE: currently not mounted in production (no earnings feed yet) —
+/// kept covered by widget tests for the upcoming earnings rollout.
+/// Delete with its test if the rollout is cancelled.
 class DashboardEarningsCard extends StatelessWidget {
   final double todayEarnings;
   final List<double> weeklyEarnings;

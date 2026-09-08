@@ -22,12 +22,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 
 const mockFindMany = vi.fn();
+const mockFindUnique = vi.fn();
 const mockUpsert = vi.fn();
 const mockGetFeatureFlags = vi.fn();
 
 vi.mock('@/lib/db', () => ({
   db: {
     systemSetting: {
+      findUnique: (...args: unknown[]) => mockFindUnique(...args),
       findMany: (...args: unknown[]) => mockFindMany(...args),
       upsert: (...args: unknown[]) => mockUpsert(...args),
     },
@@ -273,7 +275,7 @@ describe('settingUseCases.getAll', () => {
     expect(result.settings).toMatchObject({
       walletMinTopup: '1500', // rupees
       lateFee: '100', // rupees
-      referralBonus: '200', // rupees
+      referralBonus: '500', // rupees
       autoApproveKYC: 'false',
       gracePeriodHours: '24',
       emailNotifications: 'true',
@@ -317,16 +319,16 @@ describe('settingUseCases.getPublic', () => {
   it('falls back to defaults when DB row is missing', async () => {
     mockFindMany.mockResolvedValue([]); // no rows
     const result = await useCases.getPublic();
-    // Empty result (no rows to return); the use-case does not merge defaults here,
-    // only the stored values. This is a documented limitation — defaults must
-    // be in the DB after first deploy.
-    expect(result.settings).toEqual({});
+    expect(result.settings.walletMinTopup).toBe(1500); // 150000 paise -> 1500 rupees
+    expect(result.settings.supportEmail).toBe('support@voltium.app');
+    expect(result.settings).not.toHaveProperty('autoApproveKYC');
   });
 });
 
 describe('settingUseCases.update', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFindUnique.mockResolvedValue(null);
     mockUpsert.mockImplementation(({ where, create }) => ({
       id: `row-${where.key}`,
       key: where.key,

@@ -62,6 +62,8 @@ function KycManagementTab() {
           setConfirmAction={kyc.setConfirmAction}
           rejectionReason={kyc.rejectionReason}
           setRejectionReason={kyc.setRejectionReason}
+          selectedKycDocs={kyc.selectedKycDocs}
+          setSelectedKycDocs={kyc.setSelectedKycDocs}
           handleKycAction={kyc.handleKycAction}
           actionLoading={kyc.actionLoading}
           selectedCount={kyc.selectedIds.size}

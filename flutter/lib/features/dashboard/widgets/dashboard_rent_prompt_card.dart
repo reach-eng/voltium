@@ -114,8 +114,15 @@ class DashboardRentPromptCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                l10n?.txttopUpBeforeTomorrow6am ??
-                    'Top-up before tomorrow 6 AM',
+                // P2 fix: the headline claimed "tomorrow 6 AM" even when
+                // the label reads "Overdue" — show an overdue headline then.
+                // (Hardcoded: no overdue headline key exists in the
+                // generated localizations; adding one requires an ARB
+                // + codegen pass.)
+                prompt.dueTimeFormatted == 'Overdue'
+                    ? 'Rent overdue — top up now'
+                    : (l10n?.txttopUpBeforeTomorrow6am ??
+                        'Top-up before tomorrow 6 AM'),
                 style: AppTypography.headingSmall.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 6),

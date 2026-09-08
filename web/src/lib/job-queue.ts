@@ -81,14 +81,14 @@ export const JobQueue = {
     const pending = (await db.$queryRaw(
       Prisma.sql`
         UPDATE "outbox_events"
-        SET status = 'PROCESSING'
+        SET status = 'PROCESSING'::"OutboxEventStatus"
         WHERE id IN (
           SELECT id
           FROM "outbox_events"
           WHERE "eventType" = ${type}
-            AND status = 'PENDING'
+            AND status = 'PENDING'::"OutboxEventStatus"
             AND attempts < "maxAttempts"
-            AND ("readyAt" IS NULL OR "readyAt" <= ${now.toISOString()}::timestamp)
+            AND ("readyAt" IS NULL OR "readyAt" <= ${now.toISOString()}::timestamptz)
             ${priorityFragment}
           ORDER BY "createdAt" ASC
           LIMIT ${concurrency}
@@ -180,8 +180,8 @@ export const JobQueue = {
     const result = await db.$executeRaw`
       UPDATE "outbox_events"
       SET status = CASE
-            WHEN attempts + 1 >= "maxAttempts" THEN 'FAILED'
-            ELSE 'PENDING'
+            WHEN attempts + 1 >= "maxAttempts" THEN 'FAILED'::"OutboxEventStatus"
+            ELSE 'PENDING'::"OutboxEventStatus"
           END,
           attempts = attempts + 1,
           error = CASE
@@ -193,7 +193,7 @@ export const JobQueue = {
             ELSE "processedAt"
           END,
           "updatedAt" = ${now}
-      WHERE status = 'PROCESSING'
+      WHERE status = 'PROCESSING'::"OutboxEventStatus"
         AND (
           ("eventType" = 'sms.send' AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})
           OR ("eventType" = 'wallet.reconciliation' AND "updatedAt" <= ${new Date(now.getTime() - 15 * 60 * 1000)})

@@ -45,7 +45,7 @@ export default function DashboardOverview() {
 
   if (d.loading) {
     return (
-      <div className="space-y-8 animate-pulse">
+      <div className="space-y-8 animate-pulse" aria-busy="true" aria-label="Loading dashboard">
         <div className="space-y-2">
           <Skeleton className="h-8 w-64 rounded-lg" />
           <Skeleton className="h-4 w-48 rounded-md" />
@@ -59,6 +59,27 @@ export default function DashboardOverview() {
           <Skeleton className="h-80 rounded-2xl" />
           <Skeleton className="h-80 rounded-2xl" />
         </div>
+      </div>
+    );
+  }
+
+  // P0: without this branch a total stats failure (now correctly reported
+  // via d.error, including network rejects) rendered an empty dashboard
+  // with a fresh timestamp and no explanation.
+  if (d.error && !d.stats) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-4 text-destructive">
+          <span aria-hidden="true">⚠</span>
+        </div>
+        <h3 className="text-lg font-semibold">Dashboard unavailable</h3>
+        <p className="text-sm text-muted-foreground mt-1 max-w-sm">{d.error}</p>
+        <button
+          onClick={() => void d.fetchData()}
+          className="mt-4 px-5 py-2 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary/90"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -77,10 +98,33 @@ export default function DashboardOverview() {
         onSystemHealth={() => {
           void handleSystemHealth();
         }}
+        exportDisabled={!d.stats}
       />
+
+      {d.error && d.stats && (
+        <div
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-800 dark:text-amber-200 flex items-center justify-between gap-4"
+        >
+          <span>{d.error} — showing last known data from {d.lastUpdated ? d.lastUpdated.toLocaleTimeString('en-IN') : 'cache'}.</span>
+          <button onClick={() => void d.fetchData()} className="underline font-medium shrink-0">Retry</button>
+        </div>
+      )}
+
+      {d.forbiddenSections.length > 0 && (
+        <div
+          role="note"
+          className="rounded-xl border border-slate-500/30 bg-slate-500/10 px-4 py-2 text-sm text-slate-700 dark:text-slate-300"
+        >
+          Your role has no access to: {d.forbiddenSections.join(', ')}. Those
+          sections are hidden rather than empty — contact an administrator if
+          you need access.
+        </div>
+      )}
 
       <SosAlert
         count={d.sosCount}
+        confirmed={d.sosConfirmed}
         onGoToTickets={() => setActiveSection('tickets')}
       />
 
@@ -98,14 +142,20 @@ export default function DashboardOverview() {
           <RecentTransactionsCard
             transactions={d.recentTransactions}
             onCardClick={() => setActiveSection('transactions')}
+            accessDenied={d.forbiddenSections.includes('transactions')}
           />
           <RecentTicketsCard
             tickets={d.recentTickets}
             onCardClick={() => setActiveSection('tickets')}
+            accessDenied={d.forbiddenSections.includes('tickets')}
           />
         </div>
         <div className="lg:col-span-4">
-          <ActivityStream logs={d.auditLogs} adminNames={d.adminNames} />
+          <ActivityStream
+            logs={d.auditLogs}
+            adminNames={d.adminNames}
+            accessDenied={d.forbiddenSections.includes('activity')}
+          />
         </div>
       </div>
 

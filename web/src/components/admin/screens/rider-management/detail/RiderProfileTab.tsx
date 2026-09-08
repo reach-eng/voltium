@@ -19,6 +19,7 @@ export interface RiderProfileTabProps {
   isEditing: boolean;
   editForm: RiderEditForm;
   setEditForm: (form: RiderEditForm | Partial<RiderEditForm>) => void;
+  onReviewPhotos?: () => void;
 }
 
 export function RiderProfileTab({
@@ -26,6 +27,7 @@ export function RiderProfileTab({
   isEditing,
   editForm,
   setEditForm,
+  onReviewPhotos,
 }: RiderProfileTabProps) {
   return (
     <TabsContent
@@ -53,6 +55,7 @@ export function RiderProfileTab({
               size="sm"
               variant="outline"
               className="border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
+              onClick={onReviewPhotos}
             >
               Review Photos
             </Button>

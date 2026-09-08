@@ -300,7 +300,8 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     expect(mockKycRepository.requestInfo).toHaveBeenCalledWith(
       'rider-123',
       'admin-1',
-      'Please provide clear photo'
+      'Please provide clear photo',
+      []
     );
   });
 
@@ -959,7 +960,7 @@ describe('Support — Ticket Flow', () => {
       'rider-123',
       'RIDER',
       'Still experiencing the issue',
-      []
+      undefined
     );
   });
 

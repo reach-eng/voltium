@@ -36,6 +36,8 @@ export interface DashboardStats {
   pendingGuarantor: number;
   pendingInfoRequired: number;
   totalAdmins: number;
+  /** Server-evaluated SOS count (24h emergency.sos_triggered audit events). */
+  sosCount?: number;
   trend?: TrendPoint[];
 }
 
@@ -123,6 +125,8 @@ export const STAT_CARDS: StatCardConfig[] = [
 ];
 
 export function formatINR(amount: number): string {
+  // P2: guard non-finite input — Intl formats NaN as the literal "NaN".
+  if (!Number.isFinite(amount)) return '—';
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
@@ -131,7 +135,10 @@ export function formatINR(amount: number): string {
 }
 
 export function formatDashboardDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
+  // P2: invalid ISO previously rendered the literal "Invalid Date".
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

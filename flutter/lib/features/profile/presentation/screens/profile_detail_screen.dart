@@ -345,6 +345,13 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
               value: rider?.emergencyContact ?? notProvided,
             ),
           ),
+          // P2 fix: explicit "deletion pending" banner so the rider
+          // knows their request was recorded. Surface before vehicle
+          // details to avoid hiding it behind conditional blocks.
+          if (rider?.isDeletionRequested ?? false) ...[
+            const CustomDivider(),
+            _DeletionPendingBanner(),
+          ],
           if (rider?.assignedVehicle != null &&
               rider!.assignedVehicle!.isNotEmpty &&
               rider.assignedVehicle != 'Not Assigned') ...[
@@ -422,6 +429,37 @@ class _SectionLabel extends StatelessWidget {
         fontWeight: FontWeight.w800,
         letterSpacing: 1.2,
         color: colors.onSurfaceMuted,
+      ),
+    );
+  }
+}
+
+class _DeletionPendingBanner extends StatelessWidget {
+  const _DeletionPendingBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.warningSurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              size: 18, color: AppColors.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Account deletion requested — an admin will review it. You can log out now or keep browsing until it is processed.',
+              style: AppTypography.bodySmall
+                  .copyWith(color: colors.onSurfaceMuted),
+            ),
+          ),
+        ],
       ),
     );
   }

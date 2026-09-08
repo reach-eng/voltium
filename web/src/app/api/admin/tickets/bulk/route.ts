@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireAdmin();
     if (!session) return adminUnauthorized();
-    if (!hasPermission(session.adminRole || '', 'tickets_manage')) return adminForbidden();
+    if (!hasPermission(session, 'tickets_manage')) return adminForbidden();
 
     const body = await req.json();
     const validation = validateBody(ticketBulkActionSchema, body);
@@ -27,8 +27,18 @@ export async function POST(req: NextRequest) {
 
     return success(result, 'Bulk action completed');
   } catch (error) {
-    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('is required')) {
-      return errors.badRequest((error instanceof Error ? error.message : String(error)));
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('is required')) {
+      return errors.badRequest(message);
+    }
+    // State-machine rejections (TicketStateError) are client errors, not 500s.
+    if (error instanceof Error && error.name === 'TicketStateError') {
+      return errors.badRequest(message);
+    }
+    // Use-case input validation (unknown admin, bad priority value)
+    // is a 400, not a 500.
+    if (/^(Assigned admin|Invalid priority value)/.test(message)) {
+      return errors.badRequest(message);
     }
     return errors.internal('Failed to process bulk action');
   }

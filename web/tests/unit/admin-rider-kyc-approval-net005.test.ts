@@ -374,11 +374,28 @@ describe('REJECT symmetry (2026-09-08, follow-up to NET-005)', () => {
       data: {
         status: 'INFO_REQUIRED',
         rejectionReason: 'Please re-upload a clearer Aadhaar front',
+        editableFields: [],
       },
     });
     // INFO_REQUIRED does not touch lifecycle.
     expect(tx.rider.update).not.toHaveBeenCalled();
     expect(tx.rider.updateMany).not.toHaveBeenCalled();
+
+    // P1-3 (Phase 4): with explicit editableFields
+    await promoteToInfoRequired(
+      tx as any,
+      'r1',
+      'Please re-upload a clearer Aadhaar front',
+      ['aadhaarFront']
+    );
+    expect(tx.kycProfile.update).toHaveBeenCalledWith({
+      where: { riderId: 'r1' },
+      data: {
+        status: 'INFO_REQUIRED',
+        rejectionReason: 'Please re-upload a clearer Aadhaar front',
+        editableFields: ['aadhaarFront'],
+      },
+    });
   });
 
   it('adminRiderUseCases.update({ kycStatus: "REJECTED" }) calls promoteToRejected + emits KYC_REJECTED outbox event', async () => {

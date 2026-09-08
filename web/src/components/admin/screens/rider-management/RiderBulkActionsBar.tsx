@@ -10,6 +10,9 @@ export interface RiderBulkActionsBarProps {
   selectedCount?: number;
   bulkLoading?: boolean;
   canUndo?: boolean;
+  canApprove?: boolean;
+  canSuspend?: boolean;
+  canDelete?: boolean;
   allRiders?: Rider[];
   selectedIds: Set<string>;
   onApprove?: () => void;
@@ -28,6 +31,9 @@ export function RiderBulkActionsBar({
   selectedCount,
   bulkLoading = false,
   canUndo = false,
+  canApprove = true,
+  canSuspend = true,
+  canDelete = true,
   allRiders = [],
   selectedIds,
   onApprove,
@@ -42,15 +48,15 @@ export function RiderBulkActionsBar({
   return (
     <div className="flex items-center gap-1 p-1 bg-primary/5 rounded-xl border border-primary/20 animate-in fade-in slide-in-from-right-2">
       <span className="text-xs px-2 font-medium text-primary">
-        {count} selected
+        {count} selected on this page
       </span>
       <Button
         variant="ghost"
         size="sm"
         className="h-10 text-xs px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-        disabled={bulkLoading}
+        disabled={bulkLoading || canApprove === false}
         onClick={onApprove}
-        title="Approve selected riders"
+        title={canApprove === false ? 'Requires kyc_bulk_approve permission' : 'Approve selected riders'}
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
@@ -63,9 +69,9 @@ export function RiderBulkActionsBar({
         variant="ghost"
         size="sm"
         className="h-10 text-xs px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
-        disabled={bulkLoading}
+        disabled={bulkLoading || canSuspend === false}
         onClick={onSuspend}
-        title="Suspend selected riders"
+        title={canSuspend === false ? 'Requires riders_update permission' : 'Suspend selected riders'}
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
@@ -78,8 +84,9 @@ export function RiderBulkActionsBar({
         variant="ghost"
         size="sm"
         className="h-10 text-xs px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
-        disabled={bulkLoading}
+        disabled={bulkLoading || canDelete === false}
         onClick={onDelete}
+        title={canDelete === false ? 'Requires riders_delete permission' : 'Delete selected riders'}
       >
         <Trash2 className="w-4 h-4 mr-1.5" /> Delete
       </Button>

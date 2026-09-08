@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '@/lib/extract-error';
 import { SortDir, SortKey } from './RiderTable';
 import {
   RIDER_PAGE_SIZE,
@@ -51,11 +52,13 @@ export function useRiders() {
   const [addingRider, setAddingRider] = useState(false);
   const [showAdjustWallet, setShowAdjustWallet] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchRiders = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
@@ -76,9 +79,17 @@ export function useRiders() {
           setTotalPages(json.pagination.totalPages || 1);
           setTotal(json.pagination.total || 0);
         }
+      } else {
+        const body = await res.json().catch(() => null);
+        const message =
+          body?.error?.message ||
+          body?.message ||
+          `Failed to fetch riders (${res.status})`;
+        setFetchError(message);
       }
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Failed to fetch riders', { error: err });
+      setFetchError(err?.message || 'Network error fetching riders');
     } finally {
       setLoading(false);
       setSearching(false);
@@ -327,6 +338,16 @@ export function useRiders() {
       reject: 'REJECTED',
       info_required: 'INFO_REQUIRED',
     };
+    if (action === 'reject' || action === 'info_required') {
+      if (kycRejectionReason.trim().length < 5) {
+        toast.error('Please provide a reason of at least 5 characters.');
+        return;
+      }
+      if (selectedKycDocs.size === 0) {
+        toast.error('Please select at least one document or field that requires correction.');
+        return;
+      }
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/admin/riders', {
@@ -337,7 +358,7 @@ export function useRiders() {
           kycStatus: statusMap[action],
           rejectionReason:
             action === 'reject' || action === 'info_required'
-              ? kycRejectionReason
+              ? kycRejectionReason.trim()
               : undefined,
           editableFields:
             action === 'reject' || action === 'info_required'
@@ -355,13 +376,21 @@ export function useRiders() {
         );
         setConfirmKycAction(null);
         setKycRejectionReason('');
+        setSelectedKycDocs(new Set());
+        toast.success(`KYC status updated to ${kycStatus}.`);
+        await fetchRiders();
+      } else {
+        const body = await res.json().catch(() => null);
+        const message = extractErrorMessage(body, `KYC update failed (${res.status})`);
+        toast.error(message);
       }
     } catch (err) {
       logger.error('Failed to update KYC', { error: err });
+      toast.error('Failed to update KYC');
     } finally {
       setSaving(false);
     }
-  }, [confirmKycAction, kycRejectionReason, selectedKycDocs]);
+  }, [confirmKycAction, kycRejectionReason, selectedKycDocs, fetchRiders]);
 
   const toggleKycDoc = useCallback((docKey: string) => {
     setSelectedKycDocs((prev) => {
@@ -383,9 +412,15 @@ export function useRiders() {
         if (res.ok) {
           setRiders((prev) => prev.filter((r) => r.id !== riderId));
           if (selectedRider?.id === riderId) setSelectedRider(null);
+          toast.success('Rider deleted.');
+        } else {
+          const body = await res.json().catch(() => null);
+          const message = extractErrorMessage(body, `Delete failed (${res.status})`);
+          toast.error(message);
         }
       } catch (err) {
         logger.error('Delete failed', { error: err });
+        toast.error('Delete failed');
       } finally {
         setConfirmDelete(null);
       }
@@ -457,7 +492,7 @@ export function useRiders() {
         // every guarantor text field; any future regression
         // surfaces here.
         const body = await res.json().catch(() => null);
-        const message = body?.error?.message || body?.message || `Clear guarantor failed (${res.status})`;
+        const message = extractErrorMessage(body, `Clear guarantor failed (${res.status})`);
         toast.error(message);
       }
     } catch (err) {
@@ -534,10 +569,19 @@ export function useRiders() {
       if (res.ok) {
         setShowAddDialog(false);
         setNewRider({ phone: '', fullName: '' });
-        fetchRiders();
+        toast.success('Rider added.');
+        await fetchRiders();
+      } else {
+        const body = await res.json().catch(() => null);
+        const message =
+          body?.error?.message ||
+          body?.message ||
+          `Failed to add rider (${res.status})`;
+        toast.error(message);
       }
     } catch (err) {
-      console.error('Failed to add rider', err);
+      logger.error('Failed to add rider', { error: err });
+      toast.error('Failed to add rider');
     } finally {
       setAddingRider(false);
     }
@@ -559,6 +603,8 @@ export function useRiders() {
     riders,
     loading,
     searching,
+    fetchError,
+    onRetry: fetchRiders,
     // filters
     search,
     setSearch,

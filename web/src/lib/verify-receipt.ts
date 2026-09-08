@@ -40,11 +40,16 @@ export function _getVerifyReceiptSecret(): string {
 }
 
 /** Issue a signed receipt proving `phone` was OTP-verified, valid 15 minutes. */
-export function issueVerifyReceipt(phone: string): string {
+export function issueVerifyReceipt(phone: string, riderDbId?: string): string {
   const secret = _getVerifyReceiptSecret();
   const expiresAt = Date.now() + VERIFY_RECEIPT_TTL_MS;
-  const payload = `${phone}:${expiresAt}`;
+  const scope = riderDbId ? `${riderDbId}:${phone}` : phone;
+  const payload = `${scope}:${expiresAt}`;
   const hmac = createHmac('sha256', secret).update(payload).digest('hex');
+  if (riderDbId) {
+    const scopeB64 = Buffer.from(scope, 'utf8').toString('base64url');
+    return `${expiresAt}.${scopeB64}.${hmac}`;
+  }
   return `${expiresAt}.${hmac}`;
 }
 
@@ -53,18 +58,22 @@ export function issueVerifyReceipt(phone: string): string {
  * carries. Fails on: malformed shape, expired window, signature mismatch
  * (tampering), or phone mismatch. Phone comparison is exact — callers
  * normalize to digits before invoking.
+ *
+ * When `expectedRiderDbId` is provided, the receipt must be rider-bound;
+ * legacy unbound receipts are rejected. This prevents cross-account replay
+ * on shared devices.
  */
 export function verifyVerifyReceipt(
   receipt: string,
-  expectedPhone: string
+  expectedPhone: string,
+  expectedRiderDbId?: string
 ): { valid: boolean; reason?: string } {
   try {
-    const dotIndex = receipt.indexOf('.');
-    if (dotIndex === -1) {
+    const parts = receipt.split('.');
+    if (parts.length !== 2 && parts.length !== 3) {
       return { valid: false, reason: 'Malformed receipt' };
     }
-    const expiresAt = parseInt(receipt.slice(0, dotIndex), 10);
-    const providedHmac = receipt.slice(dotIndex + 1);
+    const expiresAt = parseInt(parts[0], 10);
     if (isNaN(expiresAt)) {
       return { valid: false, reason: 'Malformed receipt' };
     }
@@ -73,16 +82,51 @@ export function verifyVerifyReceipt(
     }
 
     const secret = _getVerifyReceiptSecret();
+    if (parts.length === 3) {
+      let scope: string;
+      try {
+        scope = Buffer.from(parts[1], 'base64url').toString('utf8');
+      } catch {
+        return { valid: false, reason: 'Malformed receipt' };
+      }
+      const providedHmac = parts[2];
+      const payload = `${scope}:${expiresAt}`;
+      const expected = createHmac('sha256', secret).update(payload).digest('hex');
+      if (providedHmac.length !== expected.length) {
+        return { valid: false, reason: 'Invalid signature' };
+      }
+      if (!timingSafeEqual(Buffer.from(providedHmac, 'utf8'), Buffer.from(expected, 'utf8'))) {
+        return { valid: false, reason: 'Invalid signature' };
+      }
+      const sep = scope.lastIndexOf(':');
+      if (sep === -1) {
+        // Bound receipt but scope malformed — treat as signature failure.
+        return { valid: false, reason: 'Invalid signature' };
+      }
+      const scopePhone = scope.slice(sep + 1);
+      if (scopePhone !== expectedPhone) {
+        return { valid: false, reason: 'Invalid signature' };
+      }
+      if (expectedRiderDbId) {
+        const scopeRider = scope.slice(0, sep);
+        if (scopeRider !== expectedRiderDbId) {
+          return { valid: false, reason: 'Receipt was issued for a different account. Please re-verify the number.' };
+        }
+      }
+      return { valid: true };
+    }
+
+    // Legacy 2-part receipt.
+    if (expectedRiderDbId) {
+      return { valid: false, reason: 'Receipt is not bound to this account. Please re-verify the number.' };
+    }
+    const providedHmac = parts[1];
     const payload = `${expectedPhone}:${expiresAt}`;
     const expected = createHmac('sha256', secret).update(payload).digest('hex');
-
-    // Constant-time comparison to prevent timing attacks.
     if (providedHmac.length !== expected.length) {
       return { valid: false, reason: 'Invalid signature' };
     }
-    const a = Buffer.from(providedHmac, 'utf8');
-    const b = Buffer.from(expected, 'utf8');
-    if (!timingSafeEqual(a, b)) {
+    if (!timingSafeEqual(Buffer.from(providedHmac, 'utf8'), Buffer.from(expected, 'utf8'))) {
       return { valid: false, reason: 'Invalid signature' };
     }
     return { valid: true };

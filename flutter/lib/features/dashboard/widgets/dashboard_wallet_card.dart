@@ -34,10 +34,18 @@ class WalletCard extends StatelessWidget {
     final hasActivePlan = planEndDate != null;
     final daysUntilDue =
         hasActivePlan ? planEndDate!.difference(now).inDays : null;
-    final bool isDueSoon = hasActivePlan && (daysUntilDue! <= 3);
-    final bool isCriticalDue = hasActivePlan && (daysUntilDue! <= 1);
     final double rentAmount =
         requiredPayment > 0 ? requiredPayment : AppConstants.defaultRentalPrice;
+    // P1: without an active plan there is no due date, so plan-less riders
+    // with an empty wallet always saw the calm Normal card with no
+    // actionable prompt — yet they still need funds (deposit/plan).
+    // They get the Low card, but WITHOUT the infinite pulsating halo
+    // (that urgency signal stays plan-gated to due dates): the halo
+    // below still keys off isDueSoon only.
+    final bool isDueSoon = hasActivePlan && (daysUntilDue! <= 3);
+    final bool showLowCard =
+        walletBalance < rentAmount && (isDueSoon || !hasActivePlan);
+    final bool isCriticalDue = hasActivePlan && (daysUntilDue! <= 1);
 
     final bool hasPulsatingRedAmountHalo =
         (walletBalance < rentAmount) && isDueSoon;
@@ -52,7 +60,7 @@ class WalletCard extends StatelessWidget {
         currentPlan?.toLowerCase().contains('daily') ?? false;
 
     Widget cardChild;
-    if (walletBalance < rentAmount && isDueSoon) {
+    if (showLowCard) {
       cardChild = DashboardLowBalanceCard(
         walletBalance: walletBalance,
         requiredPayment: requiredPayment,

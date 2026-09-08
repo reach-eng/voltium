@@ -27,6 +27,7 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/widgets/lifecycle_route_guard.dart';
 import '../../../../utils/app_logger.dart';
 
 /// State for GuarantorOnboardingScreen managed via Riverpod Notifier.
@@ -296,7 +297,7 @@ class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _GuarantorOnboardingScreenState
-    extends ConsumerState<GuarantorOnboardingScreen> {
+    extends ConsumerState<GuarantorOnboardingScreen> with LifecycleRouteGuard {
   final ImageCompressionService _compressionService = ImageCompressionService();
   final _nameController = TextEditingController();
   final _dobController = TextEditingController();
@@ -1180,6 +1181,7 @@ class _GuarantorOnboardingScreenState
 
   @override
   Widget build(BuildContext context) {
+    registerLifecycleGuard();
     final colors = AppColors.of(context);
     final state = ref.watch(guarantorOnboardingNotifierProvider);
 

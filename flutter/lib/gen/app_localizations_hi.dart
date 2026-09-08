@@ -2967,4 +2967,89 @@ class AppLocalizationsHi extends AppLocalizations {
   String pickupHub_fetchVehiclesFailed(String error) {
     return 'वाहन लोड करने में विफल: $error';
   }
+
+  @override
+  String get txtenterGuarantorNameBeforeOtp =>
+      'OTP भेजने से पहले गारंटर का नाम दर्ज करें।';
+
+  @override
+  String get txtverifyGuarantorPhoneBeforeSave =>
+      'सहेजने से पहले नए गारंटर फ़ोन नंबर को सत्यापित करें।';
+
+  @override
+  String get txtreverifyGuarantorPhoneBeforeSave =>
+      'सहेजने से पहले कृपया गारंटर फ़ोन नंबर को फिर से सत्यापित करें।';
+
+  @override
+  String get txtdiscardChangesTitle => 'परिवर्तन छोड़ें?';
+
+  @override
+  String get txtdiscardChangesBody =>
+      'आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप निश्चित रूप से उन्हें छोड़कर बाहर निकलना चाहते हैं?';
+
+  @override
+  String get txtkeepEditing => 'संपादन जारी रखें';
+
+  @override
+  String get txtenterAValidEmailAddress => 'एक मान्य ईमेल पता दर्ज करें';
+
+  @override
+  String get notif_supportReplyTitle => 'सपोर्ट टिकट अपडेट 💬';
+
+  @override
+  String notif_supportReplyBody(String ticketId) {
+    return 'टिकट #$ticketId पर नया उत्तर प्राप्त हुआ है।';
+  }
+
+  @override
+  String get notif_supportReplyBodyFallback =>
+      'आपके सपोर्ट टिकट पर नया उत्तर प्राप्त हुआ है।';
+
+  @override
+  String get notif_paymentDueTitle => 'भुगतान अनुस्मारक 💳';
+
+  @override
+  String notif_paymentDueBody(String amount) {
+    return 'आपका $amount का किराया भुगतान देय है।';
+  }
+
+  @override
+  String get notif_paymentDueBodyFallback =>
+      'आपका किराया भुगतान देय है। कृपया अपना वॉलेट रिचार्ज करें।';
+
+  @override
+  String get notif_rewardMilestoneTitle => 'पुरस्कार प्राप्त हुआ! 🏆';
+
+  @override
+  String notif_rewardMilestoneBody(String points, String milestoneTitle) {
+    return 'आपने $milestoneTitle के लिए $points अंक अर्जित किए हैं।';
+  }
+
+  @override
+  String get notif_rewardMilestoneBodyFallback =>
+      'आपने पुरस्कार अंक अर्जित किए हैं! अपने पुरस्कार देखें।';
+
+  @override
+  String notif_birthdayWishTitle(String name) {
+    return 'जन्मदिन मुबारक हो, $name! 🎂';
+  }
+
+  @override
+  String get notif_birthdayWishTitleFallback => 'जन्मदिन मुबारक हो! 🎂';
+
+  @override
+  String get notif_birthdayWishBody =>
+      'आपका दिन शानदार रहे। हमारी ओर से विशेष जन्मदिन पुरस्कार का आनंद लें!';
+
+  @override
+  String get notif_shiftReminderTitle => 'आगामी शिफ्ट ⏰';
+
+  @override
+  String notif_shiftReminderBody(String startTime) {
+    return 'आपकी शिफ्ट $startTime पर शुरू होती है। कृपया तैयार रहें!';
+  }
+
+  @override
+  String get notif_shiftReminderBodyFallback =>
+      'आपकी शिफ्ट जल्द ही शुरू होने वाली है। कृपया तैयार रहें!';
 }

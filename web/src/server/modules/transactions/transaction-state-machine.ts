@@ -15,17 +15,20 @@ export type TransactionStatus =
   | 'REJECTED'
   | 'FAILED'
   | 'REVERSED'
-  | 'REFUNDED';
+  | 'REFUNDED'
+  | 'CANCELLED';
 
 type TransitionMap = Record<TransactionStatus, TransactionStatus[]>;
 
 const VALID_TRANSITIONS: TransitionMap = {
-  PENDING: ['APPROVED', 'REJECTED', 'FAILED'],
+  PENDING: ['APPROVED', 'REJECTED', 'FAILED', 'CANCELLED'],
   APPROVED: ['REVERSED', 'REFUNDED'],
   REJECTED: ['PENDING'],
   FAILED: ['PENDING'],
   REVERSED: [],
   REFUNDED: [],
+  // WORKFLOW-AUDIT (2026-09-08, P1-5): Terminal state — user or system cancelled before processing
+  CANCELLED: [],
 };
 
 export class TransactionStateError extends Error {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Camera } from 'lucide-react';
+import { Camera, AlertCircle, ExternalLink } from 'lucide-react';
 import type { KycRider } from './types';
 
 export const kycDocuments = [
@@ -24,6 +24,8 @@ export function getCompletion(rider: KycRider): number {
 export function getKycBadge(status: string) {
   const styles: Record<string, string> = {
     APPROVED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+    // P3-1: Legacy alias for APPROVED; the state machine emits APPROVED, but
+    // VERIFIED is preserved for display backward compatibility with historical records.
     VERIFIED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
     PENDING: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
     SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
@@ -52,6 +54,7 @@ export function MediaPreview({
   type?: 'image' | 'video';
 }) {
   const [open, setOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   if (!src)
     return (
@@ -60,6 +63,30 @@ export function MediaPreview({
         <span className="text-[10px] font-bold uppercase">{label} Missing</span>
       </div>
     );
+
+  // P3-3: Fallback when image fails to load or signed URL expired
+  if (hasError) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+          {label}
+        </Label>
+        <div className="aspect-video bg-muted/20 border border-dashed border-amber-500/30 rounded-2xl flex flex-col items-center justify-center p-3 text-center gap-1.5">
+          <AlertCircle className="w-5 h-5 text-amber-500" />
+          <span className="text-[11px] font-medium text-muted-foreground">Unable to preview</span>
+          <a
+            href={src}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-primary hover:underline flex items-center gap-1 font-semibold"
+          >
+            Open direct link <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-2">
@@ -76,10 +103,16 @@ export function MediaPreview({
               alt={label}
               loading="lazy"
               decoding="async"
+              onError={() => setHasError(true)}
               className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
           ) : (
-            <video src={src} controls className="w-full h-full object-cover" />
+            <video
+              src={src}
+              controls
+              onError={() => setHasError(true)}
+              className="w-full h-full object-cover"
+            />
           )}
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Button
@@ -107,10 +140,16 @@ export function MediaPreview({
               <img
                 src={src}
                 alt={label}
+                onError={() => setHasError(true)}
                 className="max-w-full max-h-full object-contain rounded-lg shadow-md"
               />
             ) : (
-              <video src={src} controls className="max-w-full max-h-full rounded-lg" />
+              <video
+                src={src}
+                controls
+                onError={() => setHasError(true)}
+                className="max-w-full max-h-full rounded-lg"
+              />
             )}
           </div>
         </DialogContent>

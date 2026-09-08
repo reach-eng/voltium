@@ -2124,5 +2124,76 @@
         "type": "String"
       }
     }
-  }
+  },
+  "txtenterGuarantorNameBeforeOtp": "Enter the guarantor name before sending an OTP.",
+  "txtverifyGuarantorPhoneBeforeSave": "Please verify the new guarantor phone number before saving.",
+  "txtreverifyGuarantorPhoneBeforeSave": "Please re-verify the guarantor phone number before saving.",
+  "txtdiscardChangesTitle": "Discard changes?",
+  "txtdiscardChangesBody": "You have unsaved changes. Are you sure you want to discard them and exit?",
+  "txtkeepEditing": "Keep Editing",
+  "txtenterAValidEmailAddress": "Enter a valid email address",
+  "notif_supportReplyTitle": "Support Ticket Update 💬",
+  "notif_supportReplyBody": "New response received on ticket #{ticketId}.",
+  "@notif_supportReplyBody": {
+    "description": "Body of support reply push notification with ticket ID",
+    "placeholders": {
+      "ticketId": {
+        "type": "String",
+        "example": "TICK-123"
+      }
+    }
+  },
+  "notif_supportReplyBodyFallback": "New response received on your support ticket.",
+  "notif_paymentDueTitle": "Payment Reminder 💳",
+  "notif_paymentDueBody": "Your rental payment of {amount} is due.",
+  "@notif_paymentDueBody": {
+    "description": "Body of rental payment due push notification with formatted amount",
+    "placeholders": {
+      "amount": {
+        "type": "String",
+        "example": "₹500"
+      }
+    }
+  },
+  "notif_paymentDueBodyFallback": "Your rental payment is due. Please top up your wallet.",
+  "notif_rewardMilestoneTitle": "Reward Earned! 🏆",
+  "notif_rewardMilestoneBody": "You've earned {points} points for {milestoneTitle}.",
+  "@notif_rewardMilestoneBody": {
+    "description": "Body of reward milestone push notification",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "100"
+      },
+      "milestoneTitle": {
+        "type": "String",
+        "example": "50 Rides Completed"
+      }
+    }
+  },
+  "notif_rewardMilestoneBodyFallback": "You've earned reward points! Check your rewards.",
+  "notif_birthdayWishTitle": "Happy Birthday, {name}! 🎂",
+  "@notif_birthdayWishTitle": {
+    "description": "Title of birthday wish push notification with name",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Rahul"
+      }
+    }
+  },
+  "notif_birthdayWishTitleFallback": "Happy Birthday! 🎂",
+  "notif_birthdayWishBody": "Wishing you a fantastic day ahead. Enjoy a special birthday reward on us!",
+  "notif_shiftReminderTitle": "Upcoming Shift ⏰",
+  "notif_shiftReminderBody": "Your shift starts at {startTime}. Please be ready!",
+  "@notif_shiftReminderBody": {
+    "description": "Body of shift reminder push notification with start time",
+    "placeholders": {
+      "startTime": {
+        "type": "String",
+        "example": "9:00 AM"
+      }
+    }
+  },
+  "notif_shiftReminderBodyFallback": "Your shift is starting soon. Please be ready!"
 }

@@ -226,22 +226,26 @@ async function handleSecurityAction(
   // (NET-005 follow-up-5) classifies the row
   // correctly.
   const auditAction = `device.${action.toLowerCase()}`;
-  await createAuditLog({
-    actorId: session.adminId ?? 'unknown',
-    actorType: 'ADMIN',
-    action: auditAction,
-    entity: 'rider',
-    entityId: rider.id,
-    details: {
-      fcmResult: fcmResult.success ? 'ok' : 'failed',
-      fcmError: fcmResult.success ? undefined : fcmResult.error,
-      // Mirror the columns the admin wanted to set,
-      // if any. Empty for FCM-only actions.
-      ...(Object.keys(dbUpdate).length > 0
-        ? { dbUpdate: (({ lockPasswordHash, ...safe }) => safe)(dbUpdate) }
-        : {}),
-    },
-  }).catch((err) => logger.error('[rider actions] audit log failed', { err }));
+  try {
+    await createAuditLog({
+      actorId: session.adminId ?? 'unknown',
+      actorType: 'ADMIN',
+      action: auditAction,
+      entity: 'rider',
+      entityId: rider.id,
+      details: {
+        fcmResult: fcmResult.success ? 'ok' : 'failed',
+        fcmError: fcmResult.success ? undefined : fcmResult.error,
+        // Mirror the columns the admin wanted to set,
+        // if any. Empty for FCM-only actions.
+        ...(Object.keys(dbUpdate).length > 0
+          ? { dbUpdate: (({ lockPasswordHash, ...safe }) => safe)(dbUpdate) }
+          : {}),
+      },
+    });
+  } catch (err) {
+    logger.error('[rider actions] audit log failed', { err });
+  }
 
   if (Object.keys(dbUpdate).length > 0) {
     await adminRiderUseCases.updateSecurityFlags(rider.id, dbUpdate, session.adminId || 'SYSTEM');

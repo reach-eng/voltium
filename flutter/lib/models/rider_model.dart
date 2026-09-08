@@ -161,6 +161,10 @@ class RiderModel {
   // rider's chosen language. NULL means "follow system". Mirrored
   // from the server's `Rider.preferredLocale` column on every
   // profile fetch and on every `LocaleNotifier.setLocale()` call.
+  // P2 fix: deletion-request visibility. The server now returns the
+  // timestamp of an in-flight deletion request (the free-text reason stays
+  // server-only and is not named here). Null when no request is pending.
+  final String? deletionRequestedAt;
   final String? preferredLocale;
   final String? pickupPhotoFront;
   final String? pickupPhotoBack;
@@ -173,6 +177,17 @@ class RiderModel {
   final bool kycDone;
   final bool planDone;
   final bool pickupDone;
+
+  bool get isDeletionRequested => deletionRequestedAt != null;
+  DateTime? get deletionRequestedAtParsed {
+    final raw = deletionRequestedAt;
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return DateTime.tryParse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
 
   // ── Account ──────────────────────────────────────────────────────────────────
   final AccountStatus accountStatus;
@@ -189,6 +204,12 @@ class RiderModel {
 
   // ── Proactive Rent Prompt ──────────────────────────────────────────────────
   final UpcomingRentPrompt? upcomingRentPrompt;
+
+  /// True when this instance was hydrated from the on-device cache rather
+  /// than the network. Read by `RiderState.isFromCache` alongside the
+  /// provider-level `DataState`. Never serialized to the API.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final bool isFromCache;
 
   // ── Timestamps ──────────────────────────────────────────────────────────
   final DateTime? createdAt;
@@ -260,6 +281,7 @@ class RiderModel {
     this.teamLeader,
     this.teamLeaderPhone,
     this.emergencyContact,
+    this.deletionRequestedAt,
     this.registrationDone = false,
     this.depositDone = false,
     this.kycDone = false,
@@ -272,6 +294,7 @@ class RiderModel {
     this.referralCode,
     this.totalRewardPoints = 0,
     this.upcomingRentPrompt,
+    this.isFromCache = false,
     this.createdAt,
     this.updatedAt,
     this.intent,
@@ -384,6 +407,8 @@ class RiderModel {
     String? aadhaarFront,
     String? aadhaarBack,
     String? panCard,
+    String? kycRejectionReason,
+    List<String>? kycEditableFields,
     String? bankAccount,
     String? bankIfsc,
     String? bankName,
@@ -400,8 +425,10 @@ class RiderModel {
     double? walletBalance,
     double? securityDeposit,
     DepositStatus? depositStatus,
+    DepositRecord? depositRecord,
     int? paymentStreak,
     String? planStatus,
+    String? planRejectionReason,
     String? currentPlan,
     String? currentPlanId,
     double? currentPlanPrice,
@@ -431,6 +458,11 @@ class RiderModel {
     bool? returnPending,
     bool? requiresHigherDeposit,
     String? preferredLocale,
+    String? pickupPhotoFront,
+    String? pickupPhotoBack,
+    String? pickupPhotoLeft,
+    String? pickupPhotoRight,
+    String? pickupPhotoWithVehicle,
     String? bankPassbook,
     String? guarantorPhoto,
     String? guarantorAddress,
@@ -438,6 +470,23 @@ class RiderModel {
     double? carbonSaved,
     double? currentSpeed,
     double? batteryPercent,
+    // P0 fix: these existed on the model but had no copyWith params, so
+    // any copyWith call (e.g. intent update) silently reset them to
+    // null/0/false — wiping referral code, rent prompt, deposit record.
+    String? fcmToken,
+    bool? isAdminLocked,
+    bool? isUninstallBlocked,
+    bool? isLocationMandatory,
+    bool? isAppsControlRestricted,
+    bool? deviceAdminGranted,
+    bool? displayOverlayGranted,
+    DateTime? lastDeviceViolationAt,
+    int? deviceViolationCount,
+    bool? advanceRentPaid,
+    String? referralCode,
+    int? totalRewardPoints,
+    UpcomingRentPrompt? upcomingRentPrompt,
+    bool? isFromCache,
   }) {
     return RiderModel(
       id: id ?? this.id,
@@ -456,6 +505,8 @@ class RiderModel {
       aadhaarFront: aadhaarFront ?? this.aadhaarFront,
       aadhaarBack: aadhaarBack ?? this.aadhaarBack,
       panCard: panCard ?? this.panCard,
+      kycRejectionReason: kycRejectionReason ?? this.kycRejectionReason,
+      kycEditableFields: kycEditableFields ?? this.kycEditableFields,
       bankAccount: bankAccount ?? this.bankAccount,
       bankIfsc: bankIfsc ?? this.bankIfsc,
       bankName: bankName ?? this.bankName,
@@ -473,8 +524,10 @@ class RiderModel {
       walletBalance: walletBalance ?? this.walletBalance,
       securityDeposit: securityDeposit ?? this.securityDeposit,
       depositStatus: depositStatus ?? this.depositStatus,
+      depositRecord: depositRecord ?? this.depositRecord,
       paymentStreak: paymentStreak ?? this.paymentStreak,
       planStatus: planStatus ?? this.planStatus,
+      planRejectionReason: planRejectionReason ?? this.planRejectionReason,
       currentPlan: currentPlan ?? this.currentPlan,
       currentPlanId: currentPlanId ?? this.currentPlanId,
       currentPlanPrice: currentPlanPrice ?? this.currentPlanPrice,
@@ -506,11 +559,12 @@ class RiderModel {
       requiresHigherDeposit:
           requiresHigherDeposit ?? this.requiresHigherDeposit,
       preferredLocale: preferredLocale ?? this.preferredLocale,
-      pickupPhotoFront: pickupPhotoFront,
-      pickupPhotoBack: pickupPhotoBack,
-      pickupPhotoLeft: pickupPhotoLeft,
-      pickupPhotoRight: pickupPhotoRight,
-      pickupPhotoWithVehicle: pickupPhotoWithVehicle,
+      pickupPhotoFront: pickupPhotoFront ?? this.pickupPhotoFront,
+      pickupPhotoBack: pickupPhotoBack ?? this.pickupPhotoBack,
+      pickupPhotoLeft: pickupPhotoLeft ?? this.pickupPhotoLeft,
+      pickupPhotoRight: pickupPhotoRight ?? this.pickupPhotoRight,
+      pickupPhotoWithVehicle:
+          pickupPhotoWithVehicle ?? this.pickupPhotoWithVehicle,
       bankPassbook: bankPassbook ?? this.bankPassbook,
       guarantorPhoto: guarantorPhoto ?? this.guarantorPhoto,
       guarantorAddress: guarantorAddress ?? this.guarantorAddress,
@@ -518,6 +572,23 @@ class RiderModel {
       carbonSaved: carbonSaved ?? this.carbonSaved,
       currentSpeed: currentSpeed ?? this.currentSpeed,
       batteryPercent: batteryPercent ?? this.batteryPercent,
+      fcmToken: fcmToken ?? this.fcmToken,
+      isAdminLocked: isAdminLocked ?? this.isAdminLocked,
+      isUninstallBlocked: isUninstallBlocked ?? this.isUninstallBlocked,
+      isLocationMandatory: isLocationMandatory ?? this.isLocationMandatory,
+      isAppsControlRestricted:
+          isAppsControlRestricted ?? this.isAppsControlRestricted,
+      deviceAdminGranted: deviceAdminGranted ?? this.deviceAdminGranted,
+      displayOverlayGranted:
+          displayOverlayGranted ?? this.displayOverlayGranted,
+      lastDeviceViolationAt:
+          lastDeviceViolationAt ?? this.lastDeviceViolationAt,
+      deviceViolationCount: deviceViolationCount ?? this.deviceViolationCount,
+      advanceRentPaid: advanceRentPaid ?? this.advanceRentPaid,
+      referralCode: referralCode ?? this.referralCode,
+      totalRewardPoints: totalRewardPoints ?? this.totalRewardPoints,
+      upcomingRentPrompt: upcomingRentPrompt ?? this.upcomingRentPrompt,
+      isFromCache: isFromCache ?? this.isFromCache,
     );
   }
 
@@ -644,9 +715,11 @@ class RiderModel {
         : (planPrice > 0 ? planPrice : walletMinTopup);
   }
 
-  // ── fromJson ────────────────────────────────────────────────────────────
-
   factory RiderModel.fromJson(Map<String, dynamic> json) {
+    // P2 fix: deletionRequestedAt is the in-flight-delete signal from
+    // flattenRider (the reason stays server-only). Tolerate missing
+    // / legacy shapes defensively.
+    final deletionRaw = json['deletionRequestedAt'];
     return RiderModel(
       id: json['id'] as String?,
       riderId: json['riderId'] as String? ?? '',
@@ -723,6 +796,9 @@ class RiderModel {
       teamLeader: json['teamLeader'] as String?,
       teamLeaderPhone: json['teamLeaderPhone'] as String?,
       emergencyContact: json['emergencyContact'] as String?,
+      deletionRequestedAt: deletionRaw is String
+          ? deletionRaw
+          : (deletionRaw is DateTime ? deletionRaw.toIso8601String() : null),
       registrationDone: json['registrationDone'] as bool? ?? false,
       depositDone: json['depositDone'] as bool? ?? false,
       kycDone: json['kycDone'] as bool? ?? false,
@@ -792,8 +868,10 @@ class RiderModel {
       'vehicleModel': vehicleModel,
       'pickupHub': pickupHub,
       'teamLeader': teamLeader,
-      'teamLeaderPhone': teamLeaderPhone,
-      'emergencyContact': emergencyContact,
+      // P2 fix: PII is never written to plaintext SharedPreferences.
+      // teamLeaderPhone + emergencyContact are re-fetched from the
+      // network on each session start.
+      'emergencyContact': null,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
       'isNewRider': isNewRider,
@@ -814,6 +892,19 @@ class RiderModel {
       'planEndDate': planEndDate?.toIso8601String(),
       'paymentStreak': paymentStreak,
       'requiresHigherDeposit': requiresHigherDeposit,
+      // P1 fix: fromCacheMap reads these but toCacheMap never wrote them,
+      // so cold starts reset referral/deposit/guarantor state until the
+      // next refresh.
+      // Rent prompt IS cached but with its own short TTL (see
+      // fromCacheMap) — the 24h rider TTL would serve stale rent dues.
+      'upcomingRentPrompt': upcomingRentPrompt?.toJson(),
+      'upcomingRentPromptCachedAt':
+          upcomingRentPrompt != null ? DateTime.now().toIso8601String() : null,
+      'referralCode': referralCode,
+      'currentPlanId': currentPlanId,
+      'currentPlanSecurityDepositInRupees': currentPlanSecurityDepositInRupees,
+      'depositStatus': depositStatus.name,
+      'guarantorStatus': guarantorStatus.name,
     };
   }
 
@@ -875,6 +966,10 @@ class RiderModel {
       rentalStatus: cache['rentalStatus'] as String? ?? 'NONE',
       returnPending: _toBool(cache['returnPending']) ?? false,
       intent: cache['intent'] as String?,
+      // P0 fix: toCacheMap writes referralCode but fromCacheMap never
+      // read it — cold starts lost the code (pre-dashboard then showed a
+      // fake riderId/'VOLT-RD-88' fallback as shareable).
+      referralCode: cache['referralCode'] as String?,
       submissionDate: cache['submissionDate'] != null
           ? DateTime.tryParse(cache['submissionDate'] as String)
           : null,
@@ -888,7 +983,35 @@ class RiderModel {
               CacheService().getString(
                       'voltium_requires_higher_deposit:${cache['riderId']}') ==
                   'true'),
+      // Rent prompt restores only when fresh (short TTL) — a day-old
+      // cached due is worse than none (refreshFromApi replaces it
+      // immediately when online).
+      upcomingRentPrompt: _cachedRentPromptOrNull(cache),
+      // This factory only ever hydrates on-device cache rows.
+      isFromCache: true,
     );
+  }
+
+  /// Short TTL for the cached rent prompt, separate from the 24h rider
+  /// cache. Stale dues must never render.
+  static const Duration rentPromptCacheTtl = Duration(minutes: 60);
+
+  static UpcomingRentPrompt? _cachedRentPromptOrNull(
+      Map<String, dynamic> cache) {
+    final raw = cache['upcomingRentPrompt'];
+    final stamped = cache['upcomingRentPromptCachedAt'];
+    if (raw is! Map<String, dynamic>) return null;
+    final cachedAt = stamped is String ? DateTime.tryParse(stamped) : null;
+    if (cachedAt == null ||
+        DateTime.now().difference(cachedAt) > rentPromptCacheTtl) {
+      return null;
+    }
+    try {
+      final prompt = UpcomingRentPrompt.fromJson(raw);
+      return prompt.showPrompt ? prompt : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   // ── toJson ──────────────────────────────────────────────────────────────

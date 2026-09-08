@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/widgets/animated_balance_counter.dart';
@@ -270,6 +271,40 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('plan-less rider with low balance gets the Low card',
+        (tester) async {
+      await tester.pumpWidget(wrapInMaterialApp(
+        const WalletCard(
+          walletBalance: 100,
+          requiredPayment: 2000,
+          paymentStreak: 0,
+          planEndDate: null,
+        ),
+      ));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      // Low card CTA present (uses pump, not settle: the Low card's
+      // urgency halo ticks indefinitely by design).
+      expect(find.text('Top Up Wallet'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('plan-less rider with sufficient balance gets Normal card',
+        (tester) async {
+      await tester.pumpWidget(wrapInMaterialApp(
+        const WalletCard(
+          walletBalance: 5000,
+          requiredPayment: 2000,
+          paymentStreak: 0,
+          planEndDate: null,
+        ),
+      ));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text('Top Up Wallet'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('WalletCard — Edge Cases', () {
@@ -480,6 +515,15 @@ void main() {
     });
 
     testWidgets('copy button copies to clipboard', (tester) async {
+      // The card awaits Clipboard.setData (platform channel) before
+      // firing onCopy — mock the channel like the other service tests.
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+              SystemChannels.platform, (MethodCall call) async => null);
+      addTearDown(() => TestDefaultBinaryMessengerBinding
+          .instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+
       bool copyCalled = false;
       await tester.pumpWidget(wrapInMaterialApp(
         ReferralCard(
@@ -491,6 +535,7 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.byIcon(Icons.copy));
+      await tester.pump();
       await tester.pump();
       expect(copyCalled, isTrue);
     });

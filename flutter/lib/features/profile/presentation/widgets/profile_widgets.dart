@@ -82,6 +82,7 @@ class QuickLinkItem extends StatelessWidget {
   final Color iconColor;
   final Color iconBgColor;
   final String title;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget? trailing;
   final bool showContainer;
@@ -93,6 +94,7 @@ class QuickLinkItem extends StatelessWidget {
     required this.iconColor,
     required this.iconBgColor,
     required this.title,
+    this.subtitle,
     this.onTap,
     this.trailing,
     this.showContainer = true,
@@ -126,19 +128,38 @@ class QuickLinkItem extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.labelLarge
-                      .copyWith(fontWeight: FontWeight.w700)
-                      .copyWith(color: colors.onSurface),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.labelLarge
+                          .copyWith(fontWeight: FontWeight.w700)
+                          .copyWith(color: colors.onSurface),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: AppTypography.bodySmall
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: colors.onSurfaceMuted),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              trailing ??
-                  Icon(
-                    Icons.chevron_right,
-                    color: colors.outlineVariant,
-                    size: 20,
-                  ),
+              if (trailing != null)
+                Flexible(
+                  child: trailing!,
+                )
+              else
+                Icon(
+                  Icons.chevron_right,
+                  color: colors.outlineVariant,
+                  size: 20,
+                ),
             ],
           ),
         ),

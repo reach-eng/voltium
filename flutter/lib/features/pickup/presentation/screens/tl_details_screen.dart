@@ -6,6 +6,7 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
@@ -191,8 +192,11 @@ class _TlDetailsScreenState extends ConsumerState<TlDetailsScreen> {
             onPressed: () async {
               HapticService.light();
               PostHogService.capture('team_leader_call_clicked');
-              final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
-              if (sanitized.isEmpty) {
+              // Validated tel: URI (single leading +, 7–15 digits) like
+              // the dashboard call sites — the old filter preserved
+              // embedded `+` (e.g. `12+34` → invalid `tel:12+34`).
+              final uri = PhoneValidator.toDialUri(phone);
+              if (uri == null) {
                 if (context.mounted) {
                   Toast.warning(
                     context,
@@ -202,9 +206,9 @@ class _TlDetailsScreenState extends ConsumerState<TlDetailsScreen> {
                 }
                 return;
               }
-              final uri = Uri.parse('tel:$sanitized');
               try {
-                if (!await launchUrl(uri)) {
+                if (!await launchUrl(uri,
+                    mode: LaunchMode.externalApplication)) {
                   throw Exception('Could not launch dialer');
                 }
               } catch (e) {

@@ -12,6 +12,7 @@ export const sendOtpSchema = z
     referralCode: z.string().max(20).nullish(),
     type: z.enum(['LOGIN', 'GUARANTOR']).optional().default('LOGIN'),
     guarantorName: z.string().max(100).nullish(),
+    locale: z.string().max(10).nullish(),
   })
   .refine(
     (data) => data.type !== 'GUARANTOR' || (typeof data.guarantorName === 'string' && data.guarantorName.trim().length > 0),
@@ -719,9 +720,10 @@ export const registerTokenSchema = z.object({
 
 // ==================== ADMIN BULK ACTIONS ====================
 export const bulkActionSchema = z.object({
-  ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
-  action: z.enum(['updateStatus', 'assignHub', 'assignTeamLeader', 'delete', 'bulkKyc']),
+  ids: z.array(z.string()).min(1, 'ids must be a non-empty array').max(500, 'Max 500 IDs'),
+  action: z.enum(['updateStatus', 'assignHub', 'assignTeamLeader', 'delete', 'bulkKyc', 'suspend']),
   value: z.string().optional(),
+  rejectionReason: z.string().optional(),
 });
 
 export const vehicleBulkActionSchema = z.object({

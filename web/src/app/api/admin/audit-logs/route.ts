@@ -4,8 +4,25 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
-import { redactPii } from '@/lib/pii-redact';
+import { redactPii, maskPhoneLike } from '@/lib/pii-redact';
 import { parsePositiveInt } from '@/lib/api-utils';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+const AUDIT_READ_LIMIT = { windowMs: 60_000, maxRequests: 60 };
+const AUDIT_WRITE_LIMIT = { windowMs: 60_000, maxRequests: 20 };
+
+async function checkAuditRateLimit(adminId: string, config: typeof AUDIT_READ_LIMIT) {
+  // The dashboard polls audit-logs every 30s; cap per admin so a hot
+  // loop can't fan out. Fail-open: reads/writes stay available during
+  // a limiter outage.
+  const rl = await checkRateLimit(`admin:audit:${adminId}`, config);
+  if (!rl.allowed) {
+    return errors.tooManyRequests('Too many requests. Please try again later.', {
+      rateLimit: { limit: config.maxRequests, remaining: rl.remaining, resetAt: rl.resetAt },
+    });
+  }
+  return null;
+}
 
 /**
  * P2-6/P2-7 (2026-08-05 ops audit): `log.details` is a JSON string, but a
@@ -31,7 +48,10 @@ export async function GET(req: NextRequest) {
   // READ_ONLY admin could enumerate every actor, their work hours, the
   // riders they touch (entityId), and financial events. audit_view is
   // granted to ops/finance roles only (READ_ONLY removed from the matrix).
-  if (!hasPermission(session.adminRole || '', 'audit_view')) return adminForbidden();
+  if (!hasPermission(session, 'audit_view')) return adminForbidden();
+
+  const limited = await checkAuditRateLimit(session.adminId || 'unknown', AUDIT_READ_LIMIT);
+  if (limited) return limited;
 
   try {
     const url = req.nextUrl;
@@ -61,11 +81,10 @@ export async function GET(req: NextRequest) {
     const redactedLogs = result.logs.map((log: any) => ({
       ...log,
       details: redactPii(parseDetails(log.details)),
-      // P1-5: entityId is a key into rider PII (and occasionally a raw phone
-      // for legacy rows) — run it through the same redaction pass. Values
-      // that look like tokens/phones get masked; ordinary UUIDs pass through
-      // so the admin UI filter keeps working.
-      entityId: log.entityId ? redactPii(log.entityId) : null,
+      // P1: redactPii(string) ignores 10-digit phones — mask phone-like
+      // entityIds explicitly (legacy rows use raw phones). Ordinary UUIDs
+      // pass through so the admin UI filter keeps working.
+      entityId: log.entityId ? maskPhoneLike(redactPii(log.entityId)) : null,
     }));
 
     return success(redactedLogs, undefined, 200, {
@@ -82,22 +101,54 @@ export async function GET(req: NextRequest) {
   }
 }
 
+/**
+ * The POST previously let ANY admin write arbitrary
+ * `action`/`entity`/`details` rows — audit forgery. Now gated on
+ * `audit_view` (same as GET) with an allowlisted action set; the only
+ * known client use is the KYC PII-reveal log.
+ */
+const ALLOWED_AUDIT_POST_ACTIONS = new Set(['admin.kyc_pii_revealed', 'kyc.export']);
+
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
 
+  const limited = await checkAuditRateLimit(session.adminId || 'unknown', AUDIT_WRITE_LIMIT);
+  if (limited) return limited;
+
   try {
     const body = await req.json().catch(() => ({}));
     const { riderId, action = 'admin.kyc_pii_revealed', details } = body;
+
+    if (!ALLOWED_AUDIT_POST_ACTIONS.has(action)) {
+      return errors.validation(`action must be one of: ${[...ALLOWED_AUDIT_POST_ACTIONS].join(', ')}`);
+    }
+
+    const isKycAction = action === 'kyc.export' || action === 'admin.kyc_pii_revealed';
+    const hasAuth = isKycAction
+      ? hasPermission(session, 'kyc_view') || hasPermission(session, 'audit_view')
+      : hasPermission(session, 'audit_view');
+    if (!hasAuth) return adminForbidden();
+
+    const effectiveRiderId =
+      typeof riderId === 'string' && riderId.trim().length > 0
+        ? riderId.trim()
+        : action === 'kyc.export'
+        ? 'export'
+        : '';
+
+    if (!effectiveRiderId || effectiveRiderId.length > 100) {
+      return errors.validation('riderId is required and must be at most 100 characters');
+    }
 
     const { createAuditLog } = await import('@/lib/audit-log');
     const log = await createAuditLog({
       actorId: session.adminId || 'unknown',
       actorType: 'ADMIN',
       action,
-      entity: 'Rider',
-      entityId: riderId,
-      details,
+      entity: action.startsWith('kyc.') ? 'kyc' : 'Rider',
+      entityId: effectiveRiderId,
+      details: details && typeof details === 'object' ? details : {},
     });
 
     return success({ log });

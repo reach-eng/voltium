@@ -97,6 +97,11 @@ export async function getCachedHub<T>(
 export function invalidateRiderCache(riderId: string): void {
   const key = normalizeRiderId(riderId);
   invalidateCache(`rider:id:${key}`);
+  // P1 fix: status reads are shape-scoped (`rider:status:simple|wide:{k}`)
+  // but invalidation deleted the unshaped key, which is never written —
+  // stale status survived every invalidation. Delete both shapes.
+  invalidateCache(`rider:status:simple:${key}`);
+  invalidateCache(`rider:status:wide:${key}`);
   invalidateCache(`rider:status:${key}`);
   invalidateCache(`rider:profile:${key}`);
   revalidateEntityTag(`rider:${key}`);

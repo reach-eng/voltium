@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -228,6 +229,15 @@ void main() {
 
     testWidgets('ReferralCard displays code and supports copy action',
         (tester) async {
+      // The card awaits Clipboard.setData (platform channel) before
+      // firing onCopy — mock the channel like the other service tests.
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+              SystemChannels.platform, (MethodCall call) async => null);
+      addTearDown(() => TestDefaultBinaryMessengerBinding
+          .instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+
       bool copyTapped = false;
       await tester.pumpWidget(
         createLocalizedTestApp(
@@ -246,6 +256,7 @@ void main() {
       expect(find.text('VOLT2026'), findsOneWidget);
 
       await tester.tap(find.byIcon(Icons.copy));
+      await tester.pump();
       await tester.pump();
       expect(copyTapped, isTrue);
     });

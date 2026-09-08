@@ -157,6 +157,16 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     );
   }
 
+  // P1-3 (Phase 4): REJECT and REQUEST_INFO writes must include a non-empty
+  // editableFields allowlist to prevent opening the entire KYC surface implicitly.
+  if (action === 'REJECT' || action === 'REQUEST_INFO') {
+    if (!Array.isArray(body.editableFields) || body.editableFields.length === 0) {
+      return errors.validation(
+        'KYC rejection and correction requests require a non-empty editableFields allowlist'
+      );
+    }
+  }
+
   // PR-26b: route APPROVE through the dedicated `approveKyc` use case so the
   // cross-entity invariants (KYC must be SUBMITTED) and audit log are
   // enforced in one place. REJECT and REQUEST_INFO still go through the

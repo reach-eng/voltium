@@ -113,6 +113,8 @@ export const analyticsUseCases = {
       pendingInfoRequired,
       totalAdmins,
       activeRentals,
+      totalRevenueResult,
+      sosCount,
     ] = await Promise.all([
       db.rider.count(),
       db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
@@ -131,10 +133,28 @@ export const analyticsUseCases = {
       // not vehicles flagged ACTIVE_RENTAL/OVERDUE — the lease row is the
       // source of truth and matches the Operations overview endpoint.
       db.rentalLease.count({ where: { status: 'ACTIVE' } }),
+      db.transaction.aggregate({
+        _sum: { amountInPaise: true },
+        where: { status: 'APPROVED', type: 'DEBIT', purpose: 'RENT_PAYMENT' },
+      }),
+      // SOS reality — Prisma TicketCategory has NO SOS member, so "SOS
+      // tickets" can never exist. Real SOS alerts are
+      // `emergency.sos_triggered` audit-log events written by POST
+      // /api/emergency/sos. Count triggers in the last 24h. Fail-safe:
+      // an audit-log outage must not 500 the whole dashboard.
+      db.auditLog
+        .count({
+          where: {
+            action: 'emergency.sos_triggered',
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          },
+        })
+        .catch(() => 0),
     ]);
 
     const totalBalance = paiseToRupees(walletBalanceResult._sum.balanceInPaise || 0);
     const totalDeposits = paiseToRupees(walletDepositResult._sum.securityDepositInPaise || 0);
+    const totalRevenue = paiseToRupees(totalRevenueResult._sum.amountInPaise || 0);
 
     return {
       totalRiders,
@@ -143,6 +163,7 @@ export const analyticsUseCases = {
       availableVehicles,
       totalBalance,
       totalDeposits,
+      totalRevenue,
       pendingTransactions,
       openTickets,
       activeRentals,
@@ -151,6 +172,7 @@ export const analyticsUseCases = {
       pendingGuarantor,
       pendingInfoRequired,
       totalAdmins,
+      sosCount,
     };
   },
 
@@ -159,14 +181,18 @@ export const analyticsUseCases = {
    * lib/services/dashboard.ts (see getDashboardStats).
    */
   async getRevenueTrend(days = 7) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
+    // Use UTC midnight for deterministic grouping — DATE("createdAt") in
+    // Postgres is evaluated in UTC (TIMESTAMPTZ). Mixing local midnight
+    // with UTC grouping caused off-by-one on IST evenings.
+    const now = new Date();
+    const utcMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const startDate = new Date(utcMidnight);
+    startDate.setUTCDate(startDate.getUTCDate() - days + 1);
 
     const dailyMap = new Map<string, { revenue: number; riders: number }>();
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+      date.setUTCDate(startDate.getUTCDate() + i);
       const key = date.toISOString().split('T')[0];
       dailyMap.set(key, { revenue: 0, riders: 0 });
     }
@@ -193,10 +219,15 @@ export const analyticsUseCases = {
         'type',
         'purpose',
       ] as const
-    ) as Array<{ date: string; revenue: bigint; riderCount: bigint }>;
+    ) as Array<{ date: string | Date; revenue: bigint; riderCount: bigint }>;
 
     for (const row of result) {
-      const key = row.date;
+      // Postgres DATE() returns a Date object via pg, not a YYYY-MM-DD
+      // string — normalize both shapes so the map lookup actually hits.
+      const key =
+        row.date instanceof Date
+          ? row.date.toISOString().split('T')[0]
+          : String(row.date).split('T')[0];
       const entry = dailyMap.get(key);
       if (entry) {
         entry.revenue = Number(row.revenue) / 100;

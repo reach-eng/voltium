@@ -32,12 +32,27 @@ export const notificationService = {
         ? (rawUpper as any)
         : (TYPE_MAP[rawUpper] || 'INFO');
 
+      const defaultTitle =
+        rawUpper === 'KYC_UPDATE'
+          ? 'KYC Update'
+          : rawUpper === 'SUPPORT_REPLY'
+            ? 'Support Ticket Update 💬'
+            : rawUpper === 'PAYMENT_DUE'
+              ? 'Payment Reminder 💳'
+              : rawUpper === 'REWARD'
+                ? 'Reward Earned! 🏆'
+                : rawUpper === 'BIRTHDAY_WISH'
+                  ? 'Birthday Wish 🎂'
+                  : rawUpper === 'SHIFT_REMINDER'
+                    ? 'Upcoming Shift ⏰'
+                    : 'Notification';
+
       // 1 & 2. Save notification to DB and fetch rider FCM token concurrently
       const [_, rider] = await Promise.all([
         db.notification.create({
           data: {
             riderId,
-            title: title || 'Notification',
+            title: title || defaultTitle,
             message: message || '',
             type: sanitizedType,
           },
@@ -142,12 +157,14 @@ export const notificationService = {
   async notifySupportReply(riderId: string, ticketId: string, subject: string) {
     return this.createAndSend(
       riderId,
-      'Support Ticket Update 💬',
-      `New message regarding: ${subject}`,
+      '',
+      '',
       'SUPPORT_REPLY',
       {
         screen: 'SUPPORT_TICKET',
+        type: 'SUPPORT_REPLY',
         ticketId,
+        subject: subject || '',
         triggerOverlay: 'SUPPORT_REPLY',
       }
     );
@@ -156,11 +173,14 @@ export const notificationService = {
   async notifyPaymentReminder(riderId: string, amount: number, dueDate: string) {
     return this.createAndSend(
       riderId,
-      'Payment Reminder 💳',
-      `Your rental payment of ₹${amount.toFixed(2)} is due.`,
+      '',
+      '',
       'PAYMENT_DUE',
       {
         screen: 'WALLET',
+        type: 'PAYMENT_DUE',
+        amountPaise: String(Math.round(amount)),
+        dueDate: dueDate || '',
       }
     );
   },
@@ -168,11 +188,14 @@ export const notificationService = {
   async notifyRewardMilestone(riderId: string, points: number, title: string) {
     return this.createAndSend(
       riderId,
-      'Reward Earned! 🏆',
-      `You've earned ${points} points for ${title}.`,
+      '',
+      '',
       'REWARD',
       {
         screen: 'REWARDS',
+        type: 'REWARD',
+        points: String(points),
+        milestoneTitle: title || '',
       }
     );
   },
@@ -180,10 +203,13 @@ export const notificationService = {
   async notifyBirthdayWish(riderId: string, name: string) {
     return this.createAndSend(
       riderId,
-      `Happy Birthday, ${name}! 🎂`,
-      'Wishing you a fantastic day ahead. Enjoy a special birthday reward on us!',
+      '',
+      '',
       'BIRTHDAY_WISH',
       {
+        screen: 'HOME',
+        type: 'BIRTHDAY_WISH',
+        name: name || '',
         triggerOverlay: 'BIRTHDAY_WISH',
       }
     );
@@ -196,9 +222,14 @@ export const notificationService = {
   async notifyShiftReminder(riderId: string, startTime: string) {
     return this.createAndSend(
       riderId,
-      'Upcoming Shift ⏰',
-      `Your shift starts at ${startTime}. Please be ready!`,
-      'SHIFT_REMINDER'
+      '',
+      '',
+      'SHIFT_REMINDER',
+      {
+        screen: 'SHIFT',
+        type: 'SHIFT_REMINDER',
+        startTime: startTime || '',
+      }
     );
   },
 

@@ -4,6 +4,7 @@
  * DRAFT → SUBMITTED → APPROVED | REJECTED | INFO_REQUIRED
  * REJECTED → SUBMITTED (rider re-submits)
  * APPROVED → REPLACED (rider requests replacement)
+ * REPLACED → SUBMITTED (re-opens with new guarantor details by design)
  *
  * See docs/STATE_MACHINES.md for full transition map.
  */

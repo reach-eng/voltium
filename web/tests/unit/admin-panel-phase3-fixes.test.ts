@@ -254,7 +254,7 @@ describe('Admin Panel Phase 3 Fixes Verification', () => {
 
       const csv = buildSelectedRiderCsv(testRiders, new Set(['r_1']));
       expect(csv).toContain('"Arjun ""The Ace"" Sharma, Jr."');
-      expect(csv).toContain('Rider ID,Name,Phone,State,KYC Status');
+      expect(csv).toContain('Rider ID,Name,Phone,Email,State,KYC Status');
     });
 
     it('escapes quotes and commas in Team Leader CSV export', () => {

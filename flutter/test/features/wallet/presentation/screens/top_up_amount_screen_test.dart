@@ -59,7 +59,8 @@ void main() {
                 lifecycleStatus: 'ACTIVE',
               ),
             )),
-        walletProvider.overrideWith(() => _SeededWalletNotifier(walletMinTopup)),
+        walletProvider
+            .overrideWith(() => _SeededWalletNotifier(walletMinTopup)),
       ],
       child: MaterialApp(
         localizationsDelegates: const [

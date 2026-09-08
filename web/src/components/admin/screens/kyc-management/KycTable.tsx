@@ -84,6 +84,8 @@ export function KycTable({
     );
   }
 
+  const actionableRiders = filteredRiders.filter((r) => r.kycStatus !== 'PENDING');
+
   return (
     <Card className="rounded-xl shadow-sm overflow-x-auto">
       <CardContent className="p-0">
@@ -93,8 +95,9 @@ export function KycTable({
               <TableHead className="w-10">
                 <Checkbox
                   checked={
-                    filteredRiders.length > 0 && selectedIds.size === filteredRiders.length
+                    actionableRiders.length > 0 && selectedIds.size === actionableRiders.length
                   }
+                  disabled={actionableRiders.length === 0}
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
@@ -129,6 +132,8 @@ export function KycTable({
                     <Checkbox
                       checked={selectedIds.has(rider.id)}
                       onCheckedChange={() => toggleSelect(rider.id)}
+                      disabled={rider.kycStatus === 'PENDING'}
+                      title={rider.kycStatus === 'PENDING' ? 'Pending riders cannot be bulk-actioned' : undefined}
                     />
                   </TableCell>
                   <TableCell>
@@ -218,12 +223,11 @@ export function KycTable({
                         size="sm"
                         onClick={() => setSelectedRider(rider)}
                         disabled={isRowLoading}
+                        title="View Documents"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {rider.kycStatus === 'PENDING' ||
-                      rider.kycStatus === 'SUBMITTED' ||
-                      rider.kycStatus === 'INFO_REQUIRED' ? (
+                      {rider.kycStatus === 'SUBMITTED' ? (
                         <>
                           <Button
                             size="sm"
@@ -246,6 +250,43 @@ export function KycTable({
                               setConfirmAction({ rider, action: 'info_required' })
                             }
                             title="Needs Correction"
+                            disabled={isRowLoading}
+                          >
+                            {isRowLoading ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <ShieldAlert className="w-3 h-3" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="text-xs"
+                            onClick={() => setConfirmAction({ rider, action: 'reject' })}
+                            title="Reject"
+                            disabled={isRowLoading}
+                          >
+                            {isRowLoading ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <ShieldX className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </>
+                      ) : rider.kycStatus === 'INFO_REQUIRED' ? (
+                        // P0-2: On INFO_REQUIRED, Approve is deliberately hidden because the state
+                        // machine strictly forbids INFO_REQUIRED -> APPROVED (requires SUBMITTED first;
+                        // an approve attempt here throws 409). Admins can update the correction request
+                        // or reject if new disqualifying information arises.
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs border-orange-500/30 text-orange-600 dark:text-orange-400"
+                            onClick={() =>
+                              setConfirmAction({ rider, action: 'info_required' })
+                            }
+                            title="Update Correction Request"
                             disabled={isRowLoading}
                           >
                             {isRowLoading ? (
@@ -297,7 +338,7 @@ export function KycTable({
                             <RotateCcw className="w-3 h-3" />
                           )}
                         </Button>
-                      ) : null}
+                      ) : null /* PENDING, APPROVED, REJECTED are view-only */}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const faqs = await db.faq.findMany({
       where: {
         isActive: true,
+        deletedAt: null,
         OR: [
           { question: { contains: q, mode: 'insensitive' } },
           { answer: { contains: q, mode: 'insensitive' } },

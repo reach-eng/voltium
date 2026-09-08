@@ -61,9 +61,7 @@ class PrimaryCta extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final isInteractive = enabled && !isLoading && onPressed != null;
-    final bg = isInteractive
-        ? AppColors.primary
-        : colors.outlineVariant;
+    final bg = isInteractive ? AppColors.primary : colors.outlineVariant;
     final fg = isInteractive ? Colors.white : colors.onSurfaceMuted;
 
     Widget content = Container(

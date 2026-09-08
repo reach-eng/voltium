@@ -9,16 +9,22 @@ class SendOtpRequest {
   // The server accepts it (captured at rider creation on verify), so the
   // client now carries it through.
   final String? referralCode;
+  final String? type;
+  final String? guarantorName;
 
   SendOtpRequest({
     required this.phone,
     this.referralCode,
+    this.type,
+    this.guarantorName,
   });
 
   factory SendOtpRequest.fromJson(Map<String, dynamic> json) {
     return SendOtpRequest(
       phone: json['phone'] as String,
       referralCode: json['referralCode'] as String?,
+      type: json['type'] as String?,
+      guarantorName: json['guarantorName'] as String?,
     );
   }
 
@@ -26,6 +32,8 @@ class SendOtpRequest {
     return {
       'phone': phone,
       'referralCode': referralCode,
+      if (type != null) 'type': type,
+      if (guarantorName != null) 'guarantorName': guarantorName,
     };
   }
 }

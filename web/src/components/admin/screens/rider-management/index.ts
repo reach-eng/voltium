@@ -2,8 +2,7 @@
  * R3.7cc barrel — re-export the Rider Management feature modules
  * so the screen shell only needs one import path.
  */
-export { DetailGroup } from './DetailGroup';
-export { MediaPreview } from './MediaPreview';
+export { DetailGroup, MediaPreview } from './helpers';
 export { RiderBulkActionsBar } from './RiderBulkActionsBar';
 export { RiderFiltersBar, type RiderFiltersBarProps } from './RiderFiltersBar';
 export {

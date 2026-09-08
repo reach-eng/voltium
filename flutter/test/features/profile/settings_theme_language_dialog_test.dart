@@ -144,8 +144,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Initially: Follow System selected (default).
-    final systemRadio0 =
-        tester.widget<Radio<ThemeMode>>(find.byKey(const Key('themeSystemRadio')));
+    final systemRadio0 = tester
+        .widget<Radio<ThemeMode>>(find.byKey(const Key('themeSystemRadio')));
     expect(systemRadio0.groupValue, ThemeMode.system);
 
     // Flip the theme to Dark via the provider (simulating another
@@ -156,12 +156,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // The dark radio should now be selected.
-    final darkRadio =
-        tester.widget<Radio<ThemeMode>>(find.byKey(const Key('themeDarkRadio')));
+    final darkRadio = tester
+        .widget<Radio<ThemeMode>>(find.byKey(const Key('themeDarkRadio')));
     expect(darkRadio.groupValue, ThemeMode.dark);
   });
 
-  testWidgets('P3-3 language dialog updates radio when locale changes while open',
+  testWidgets(
+      'P3-3 language dialog updates radio when locale changes while open',
       (tester) async {
     await tester.pumpWidget(buildTestApp());
     await tester.pump(const Duration(milliseconds: 400));

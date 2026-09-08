@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/widgets/notification_bell.dart';
@@ -12,6 +13,7 @@ import 'package:voltium_rider/features/rentals/presentation/screens/rental_detai
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/widgets/cards.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_profile_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_rent_prompt_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_referral_card.dart';
@@ -277,6 +279,8 @@ class _DashboardContentWidget extends ConsumerWidget {
                     index: 1,
                     child: RepaintBoundary(
                       child: DashboardProfileCard(
+                        // P2: integration-test hook (07 expects it).
+                        key: const Key('assignedVehicleCard'),
                         rider: rider,
                         onTap: () => AppNavigator.push(
                           context,
@@ -299,6 +303,8 @@ class _DashboardContentWidget extends ConsumerWidget {
                   FadeSlideEntrance(
                     index: 3,
                     child: RepaintBoundary(
+                      // P2: integration-test hook.
+                      key: const Key('walletCard'),
                       child: TiltCard(
                         child: WalletCard(
                           walletBalance: rider.walletBalance,
@@ -316,6 +322,37 @@ class _DashboardContentWidget extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // The rent prompt previously never rendered — the widget
+                  // existed but was mounted nowhere. Fed by
+                  // `upcomingRentPrompt` on the live profile payload.
+                  // P2 a11y: single consolidated announcement (excluded
+                  // subtree) instead of label + every inner text.
+                  if (rider.upcomingRentPrompt != null &&
+                      rider.upcomingRentPrompt!.showPrompt) ...[
+                    FadeSlideEntrance(
+                      index: 4,
+                      child: RepaintBoundary(
+                        child: Builder(builder: (context) {
+                          final prompt = rider.upcomingRentPrompt!;
+                          final summary = prompt.requiresTopUp
+                              ? 'Upcoming rent debit of '
+                                  '₹${prompt.rentAmountInRupees}. Wallet balance '
+                                  '₹${prompt.walletBalanceInRupees}, shortfall '
+                                  '₹${prompt.shortfallInRupees}. ${prompt.dueTimeFormatted}.'
+                              : 'Upcoming rent debit of '
+                                  '₹${prompt.rentAmountInRupees}. Wallet balance is sufficient. '
+                                  '${prompt.dueTimeFormatted}.';
+                          return Semantics(
+                            label: summary,
+                            button: true,
+                            excludeSemantics: true,
+                            child: DashboardRentPromptCard(prompt: prompt),
+                          );
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   FadeSlideEntrance(
                     index: 4,
                     child: RepaintBoundary(
@@ -338,9 +375,10 @@ class _DashboardContentWidget extends ConsumerWidget {
                                   rider.teamLeaderPhone!.isEmpty)
                               ? ''
                               : rider.teamLeaderPhone!;
-                          final sanitized =
-                              phone.replaceAll(RegExp(r'[^\d+]'), '');
-                          if (sanitized.isEmpty) {
+                          // P2: validated tel: URI (single leading +,
+                          // 7–15 digits) instead of raw string interpolation.
+                          final uri = PhoneValidator.toDialUri(phone);
+                          if (uri == null) {
                             if (context.mounted) {
                               Toast.warning(
                                 context,
@@ -350,10 +388,10 @@ class _DashboardContentWidget extends ConsumerWidget {
                             }
                             return;
                           }
-                          final uri = Uri.parse('tel:$sanitized');
 
                           try {
-                            if (!await launchUrl(uri)) {
+                            if (!await launchUrl(uri,
+                                mode: LaunchMode.externalApplication)) {
                               throw Exception('Could not launch dialer');
                             }
                           } catch (e) {

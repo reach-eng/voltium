@@ -468,9 +468,8 @@ class RecentTicketsContainer extends ConsumerWidget {
               child: ErrorStateWidget(
                 title: "Couldn't load your tickets",
                 message: ticketState.error,
-                onRetry: () => ref
-                    .read(supportTicketsProvider.notifier)
-                    .fetchTickets(),
+                onRetry: () =>
+                    ref.read(supportTicketsProvider.notifier).fetchTickets(),
               ),
             )
           else if (ticketState.filteredTickets.isEmpty)

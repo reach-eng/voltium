@@ -17,6 +17,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockFindByRiderId = vi.fn();
 const mockApproveKycRepo = vi.fn();
 const mockAuditLog = vi.fn().mockResolvedValue(undefined);
+const mockOutboxEmit = vi.fn().mockResolvedValue(undefined);
 const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 vi.mock('@/server/modules/kyc/kyc.repository', () => ({
@@ -27,6 +28,10 @@ vi.mock('@/server/modules/kyc/kyc.repository', () => ({
 }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mockAuditLog }));
 vi.mock('@/lib/logger', () => ({ logger: mockLogger }));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: { emit: mockOutboxEmit },
+  OutboxEventTypes: { NOTIFICATION_SEND: 'NOTIFICATION_SEND' },
+}));
 
 const { approveKyc } = await import('@/server/modules/kyc/use-cases/approveKyc');
 const { KycApproveError } = await import('@/server/modules/kyc/use-cases/errors');
@@ -63,6 +68,18 @@ describe('approveKyc use case — happy path', () => {
           newStatus: 'APPROVED',
         }),
       })
+    );
+  });
+
+  it('emits NOTIFICATION_SEND outbox event for KYC_APPROVED', async () => {
+    await approveKyc('rider-1', 'admin-1');
+
+    expect(mockOutboxEmit).toHaveBeenCalledWith(
+      'NOTIFICATION_SEND',
+      { riderId: 'rider-1', type: 'KYC_APPROVED' },
+      3,
+      undefined,
+      'interactive'
     );
   });
 });

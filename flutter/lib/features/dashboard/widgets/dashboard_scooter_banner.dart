@@ -8,13 +8,11 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 class ScooterSubmissionBanner extends StatelessWidget {
   final String? submissionDate;
   final String? pickupHub;
-  final String? returnIntent;
 
   const ScooterSubmissionBanner({
     super.key,
     this.submissionDate,
     this.pickupHub,
-    this.returnIntent,
   });
 
   String _formatDate(DateTime date) {

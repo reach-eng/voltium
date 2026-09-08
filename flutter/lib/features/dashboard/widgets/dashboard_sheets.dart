@@ -15,6 +15,7 @@ import 'package:voltium_rider/theme/app_typography.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/haptic_service.dart';
+import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/toast.dart';
 
 /// TL Details bottom sheet
@@ -75,71 +76,100 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                   .copyWith(color: colors.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
-            Container(
-              padding: Spacing.paddingMd,
-              decoration: BoxDecoration(
-                color: colors.surfaceBright,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.phone_outlined,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    (rider.teamLeaderPhone == null ||
-                            rider.teamLeaderPhone!.isEmpty)
-                        ? ''
-                        : rider.teamLeaderPhone!,
-                    style: AppTypography.bodyLarge
-                        .copyWith(color: colors.onSurface),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    key: const Key('callTeamLeaderButton'),
-                    tooltip: 'Call team leader',
-                    onPressed: () async {
-                      HapticService.light();
-                      // PR-AUDIT-FIX 2026-08-17 (AD-P0-1): dial the assigned Team Leader's phone
-                      final phone = (rider.teamLeaderPhone == null ||
-                              rider.teamLeaderPhone!.isEmpty)
-                          ? ''
-                          : rider.teamLeaderPhone!;
-                      final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
-                      if (sanitized.isEmpty) {
-                        if (context.mounted) {
-                          Toast.warning(
-                            context,
-                            l10n?.txtnoContactNumberTl ??
-                                'No contact number available for your Team Leader.',
-                          );
+            // P1: when no TL is assigned the phone row rendered blank
+            // (empty Text + dead call button). Show the pending notice
+            // instead; the Change-TL request action below stays available.
+            if (isUnassigned)
+              Container(
+                padding: Spacing.paddingMd,
+                decoration: BoxDecoration(
+                  color: colors.surfaceBright,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.hourglass_empty,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        l10n?.txttlPendingNotice ??
+                            'Your hub will assign a team leader shortly',
+                        style: AppTypography.bodyLarge
+                            .copyWith(color: colors.onSurface),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: Spacing.paddingMd,
+                decoration: BoxDecoration(
+                  color: colors.surfaceBright,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.phone_outlined,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      rider.teamLeaderPhone ?? '',
+                      style: AppTypography.bodyLarge
+                          .copyWith(color: colors.onSurface),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      key: const Key('callTeamLeaderButton'),
+                      tooltip: 'Call team leader',
+                      onPressed: () async {
+                        HapticService.light();
+                        // PR-AUDIT-FIX 2026-08-17 (AD-P0-1): dial the assigned Team Leader's phone
+                        final phone = (rider.teamLeaderPhone == null ||
+                                rider.teamLeaderPhone!.isEmpty)
+                            ? ''
+                            : rider.teamLeaderPhone!;
+                        // P2: validated tel: URI (single leading +,
+                        // 7–15 digits) instead of raw string interpolation.
+                        final uri = PhoneValidator.toDialUri(phone);
+                        if (uri == null) {
+                          if (context.mounted) {
+                            Toast.warning(
+                              context,
+                              l10n?.txtnoContactNumberTl ??
+                                  'No contact number available for your Team Leader.',
+                            );
+                          }
+                          return;
                         }
-                        return;
-                      }
-                      final uri = Uri.parse('tel:$sanitized');
 
-                      try {
-                        if (!await launchUrl(uri)) {
-                          throw Exception('Could not launch dialer');
+                        try {
+                          if (!await launchUrl(uri,
+                              mode: LaunchMode.externalApplication)) {
+                            throw Exception('Could not launch dialer');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            Toast.error(
+                              context,
+                              l10n?.txtcouldNotOpenDialer ??
+                                  'Could not open the phone dialer. Please try again.',
+                            );
+                          }
                         }
-                      } catch (e) {
-                        if (context.mounted) {
-                          Toast.error(
-                            context,
-                            l10n?.txtcouldNotOpenDialer ??
-                                'Could not open the phone dialer. Please try again.',
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.call, color: AppColors.success),
-                  ),
-                ],
+                      },
+                      icon: const Icon(Icons.call, color: AppColors.success),
+                    ),
+                  ],
+                ),
               ),
-            ),
             const SizedBox(height: 32),
             Row(
               children: [
@@ -327,7 +357,11 @@ void showChangeTLReasonSheet(BuildContext context) {
   ).whenComplete(() => reasonController.dispose());
 }
 
-/// Subscription management bottom sheet
+/// Subscription management bottom sheet.
+///
+/// NOTE: currently not called in production (only covered by widget
+/// tests) — kept for the upcoming plan-management rollout. Delete with
+/// its test if the rollout is cancelled.
 void showSubscriptionSheet(
   BuildContext context,
   RiderModel rider, {
@@ -439,7 +473,8 @@ void showSubscriptionSheet(
                         color: colors.onSurfaceVariant,
                       ),
                       Text(
-                        '${rider.activeRentalPlanPrice.toInt()} $cadence',
+                        // P2: round, don't truncate displayed prices.
+                        '${rider.activeRentalPlanPrice.round()} $cadence',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurfaceVariant),

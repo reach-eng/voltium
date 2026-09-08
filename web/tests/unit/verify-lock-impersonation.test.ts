@@ -93,7 +93,7 @@ describe('verify-lock — impersonation block', () => {
   it('PROCEEDS to requireRiderSession on POST without x-rider-id header', async () => {
     const POST = await getRoute();
     const req = mockRequest({});
-    req.json = async () => ({ password: 'test-pw' });
+    req.json = async () => ({ password: '1234' });
     const res = await POST(req as any);
 
     // Normal path proceeds: requireRiderSession is called FIRST.
@@ -110,7 +110,7 @@ describe('verify-lock — impersonation block', () => {
     );
     const POST = await getRoute();
     const req = mockRequest({});
-    req.json = async () => ({ password: 'test-pw' });
+    req.json = async () => ({ password: '1234' });
     const res = await POST(req as any);
 
     expect(res.status).toBe(401);

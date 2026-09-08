@@ -115,6 +115,39 @@ class WalletNotifier extends Notifier<WalletState> {
     state = state.copyWith(walletMinTopup: minTopup);
   }
 
+  /// P0-4 (settings audit, 2026-09-08): pull the server-driven public
+  /// config (GET /api/rider/settings) and seed the wallet floor from
+  /// `settings.walletMinTopup` (rupees). Previously this method and
+  /// `setWalletSettings` had ZERO callers, so the app's minimum top-up
+  /// was permanently the compile-time fallback and admin edits to
+  /// `walletMinTopup` never reached riders.
+  ///
+  /// Best-effort and silent: on failure the state keeps its current
+  /// value (0.0 pre-fetch), and callers fall back to
+  /// `AppConstants.minTopUpAmount` — the same offline-first pattern as
+  /// the locale mirror. Safe to call repeatedly.
+  Future<void> syncServerSettings({ApiClient? apiClient}) async {
+    try {
+      final client = apiClient ?? ApiClient();
+      final response = await VoltiumApiClient(client).getRiderSettings();
+      // `ApiClient.get` unwraps the `{success, data}` envelope, so the
+      // response is already `{settings, featureFlags}`. Keep the `data`
+      // lookup for raw-transport callers that skip the unwrap.
+      final data = response['data'];
+      final settingsMap = data is Map<String, dynamic> ? data : response;
+      final settings = settingsMap['settings'];
+      if (settings is! Map<String, dynamic>) return;
+      final raw = settings['walletMinTopup'];
+      final value = raw is num ? raw.toDouble() : double.tryParse('$raw');
+      if (value != null && value.isFinite && value > 0) {
+        setWalletSettings(value);
+      }
+    } catch (e) {
+      // Offline / session-expired: keep the current (fallback) floor.
+      appDebug('WalletNotifier: syncServerSettings failed: $e');
+    }
+  }
+
   Future<void> topUpWallet({
     required double amount,
     required String method,

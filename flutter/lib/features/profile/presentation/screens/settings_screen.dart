@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -119,19 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconColor: colors.onSurfaceVariant,
                 iconBgColor: colors.iconBackground,
                 title: l10n?.settings_appearance ?? 'Appearance',
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _themeModeLabel(themeProv, l10n),
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontWeight: FontWeight.w600)
-                          .copyWith(color: colors.onSurfaceMuted),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.chevron_right, color: colors.outline, size: 20),
-                  ],
-                ),
+                subtitle: _themeModeLabel(themeProv, l10n),
                 onTap: () => _showThemeDialog(context, ref),
               ),
             ),
@@ -153,22 +141,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 iconColor: AppColors.success,
                 iconBgColor: colors.successSurface,
                 title: l10n?.menu_language ?? 'Language',
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      localeProv.isFollowingSystem
-                          ? (l10n?.settings_followSystem ?? 'Follow system')
-                          : LocaleNotifier.displayNameFor(localeProv.locale,
-                              l10n ?? AppLocalizations.of(context)!),
-                      style: AppTypography.bodyMedium
-                          .copyWith(fontWeight: FontWeight.w600)
-                          .copyWith(color: colors.onSurfaceMuted),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.chevron_right, color: colors.outline, size: 20),
-                  ],
-                ),
+                subtitle: localeProv.isFollowingSystem
+                    ? (l10n?.settings_followSystem ?? 'Follow system')
+                    : LocaleNotifier.displayNameFor(localeProv.locale,
+                        l10n ?? AppLocalizations.of(context)!),
                 onTap: () => _showLanguageDialog(context, ref),
               ),
             ),
@@ -312,7 +288,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   try {
                     final canLaunch = await canLaunchUrl(url);
                     if (!canLaunch) {
-                      if (mounted) {
+                      if (context.mounted) {
                         Toast.error(
                           context,
                           l10n?.rateUs_noHandler ??
@@ -325,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       url,
                       mode: LaunchMode.externalApplication,
                     );
-                    if (!launched && mounted) {
+                    if (!launched && context.mounted) {
                       Toast.error(
                         context,
                         l10n?.rateUs_launchFailed ??
@@ -335,7 +311,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   } catch (e) {
                     appDebug(
                         'SettingsScreen: failed to open store listing: $e');
-                    if (mounted) {
+                    if (context.mounted) {
                       Toast.error(
                         context,
                         l10n?.rateUs_launchFailed ??

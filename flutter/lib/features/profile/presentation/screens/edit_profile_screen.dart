@@ -16,7 +16,8 @@ import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart'
     show riderProvider, riderRepositoryProvider;
-import 'package:voltium_rider/core/state/riverpod_providers.dart' show voltiumApiClientProvider;
+import 'package:voltium_rider/core/state/riverpod_providers.dart'
+    show voltiumApiClientProvider;
 import 'package:voltium_rider/features/profile/presentation/providers/guarantor_verification_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart' show RiderModel;
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -152,7 +153,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   static bool _isUserCorrectableMessage(String msg) {
     if (_userCorrectablePrefixesOrMessages.contains(msg)) return true;
-    if (msg.startsWith('Guarantor phone verification receipt is invalid')) return true;
+    if (msg.startsWith('Guarantor phone verification receipt is invalid'))
+      return true;
     if (msg.startsWith('Enter a valid date of birth')) return true;
     if (msg.startsWith('DOB must be')) return true;
     if (msg.contains('must be an uploaded file key')) return true;
@@ -760,32 +762,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       await riderRepo.updateProfile(
         riderId: rider.riderId,
         request: UpdateProfileRequest(
-              riderId: rider.riderId,
-              fullName: _nameController.text.trim(),
-              email: _emailController.text.trim(),
-              fatherName: _fatherNameController.text.trim(),
-              motherName: _motherNameController.text.trim(),
-              dob: _dobController.text.isNotEmpty ? _dobController.text : null,
-              currentAddress: _addressController.text.trim(),
-              emergencyContact: _emergencyContactController.text.trim(),
-              guarantorName:
-                  allGuarantorMatch ? null : _gNameController.text.trim(),
-              guarantorPhone:
-                  allGuarantorMatch ? null : _gPhoneController.text.trim(),
-              guarantorPhoneReceipt:
-                  allGuarantorMatch ? null : _gPhoneReceipt,
-              guarantorAddress:
-                  allGuarantorMatch ? null : _gAddressController.text.trim(),
-              // EDIT-PROFILE-AUDIT P1-4 (2026-09-08): `riderPhoto`
-              // alias removed. It's a legacy admin-view alias
-              // (flatten-rider.ts:178 maps `kycProfile.riderPhoto`
-              // for backwards-compat) and the server is the
-              // canonical source of truth for it. Carrying it
-              // on edit-profile silently overwrites any
-              // admin-distinguished value. `profilePhoto` is the
-              // single source of truth on the rider-side PUT.
-              profilePhoto: uploadedPhotoUrl,
-            ),
+          riderId: rider.riderId,
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          fatherName: _fatherNameController.text.trim(),
+          motherName: _motherNameController.text.trim(),
+          dob: _dobController.text.isNotEmpty ? _dobController.text : null,
+          currentAddress: _addressController.text.trim(),
+          emergencyContact: _emergencyContactController.text.trim(),
+          guarantorName:
+              allGuarantorMatch ? null : _gNameController.text.trim(),
+          guarantorPhone:
+              allGuarantorMatch ? null : _gPhoneController.text.trim(),
+          guarantorPhoneReceipt: allGuarantorMatch ? null : _gPhoneReceipt,
+          guarantorAddress:
+              allGuarantorMatch ? null : _gAddressController.text.trim(),
+          // EDIT-PROFILE-AUDIT P1-4 (2026-09-08): `riderPhoto`
+          // alias removed. It's a legacy admin-view alias
+          // (flatten-rider.ts:178 maps `kycProfile.riderPhoto`
+          // for backwards-compat) and the server is the
+          // canonical source of truth for it. Carrying it
+          // on edit-profile silently overwrites any
+          // admin-distinguished value. `profilePhoto` is the
+          // single source of truth on the rider-side PUT.
+          profilePhoto: uploadedPhotoUrl,
+        ),
       );
 
       await provider.refreshFromApi();
@@ -821,7 +822,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             : e
                 .toString()
                 .replaceAll(
-                    RegExp(r'^(ApiException(\([^)]*\))?:\s*|Exception:\s*|Error:\s*)'), '')
+                    RegExp(
+                        r'^(ApiException(\([^)]*\))?:\s*|Exception:\s*|Error:\s*)'),
+                    '')
                 .trim();
         // AUDIT FIX (P2-2 & P3): Map validation / user-correctable messages;
         // handle unrecognized field drift with helpful copy; fallback to generic localized message.
@@ -988,7 +991,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             // checks `_conflictingFields.contains('field')`
                             // in the build path).
                             if (_hasConflicts)
-                              _StaleSeedBanner(count: _conflictingFields.length),
+                              _StaleSeedBanner(
+                                  count: _conflictingFields.length),
                             FadeUpWidget(
                                 delay: 0, child: _buildAvatarSection()),
                             const SizedBox(height: 32),
@@ -998,7 +1002,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   EditProfileSectionHeader(
-                                    title: l10n.txtpersonalDetails.toUpperCase(),
+                                    title:
+                                        l10n.txtpersonalDetails.toUpperCase(),
                                   ),
                                   VoltiumTextField(
                                     fieldKey: const Key('editFullNameField'),
@@ -1092,8 +1097,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     onTap: () async {
                                       final firstDate = DateTime(1940);
                                       final now = DateTime.now();
-                                      final lastDate =
-                                          DateTime(now.year - 18, now.month, now.day);
+                                      final lastDate = DateTime(
+                                          now.year - 18, now.month, now.day);
                                       final parsed =
                                           (_dobController.text.isNotEmpty
                                                   ? DateTime.tryParse(
@@ -1120,7 +1125,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       );
                                       if (picked != null) {
                                         setState(() {
-                                          _dobController.text = _formatDob(picked);
+                                          _dobController.text =
+                                              _formatDob(picked);
                                         });
                                       }
                                     },
@@ -1152,7 +1158,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                           v?.replaceAll(RegExp(r'\D'), '') ??
                                               '';
                                       if (clean.isNotEmpty &&
-                                          !PhoneValidator.isValidIndianMobile(clean)) {
+                                          !PhoneValidator.isValidIndianMobile(
+                                              clean)) {
                                         return 'Enter a valid 10-digit Indian mobile number';
                                       }
                                       final rider =
@@ -1191,7 +1198,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   EditProfileSectionHeader(
-                                    title: l10n.txtguarantorDetails.toUpperCase(),
+                                    title:
+                                        l10n.txtguarantorDetails.toUpperCase(),
                                   ),
                                   VoltiumTextField(
                                     fieldKey:
@@ -1462,8 +1470,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     // text comparison — the receipt is the source of
                     // truth).
                     if (curr != orig || orig.isEmpty) {
-                      ref.read(guarantorVerificationProvider.notifier)
-                          .clear();
+                      ref.read(guarantorVerificationProvider.notifier).clear();
                     }
                   },
                   style: AppTypography.bodyLarge

@@ -12,6 +12,10 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { withIdempotency } from '@/lib/api-middleware';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
+import { validateBody, bulkActionSchema } from '@/lib/validators';
+import { invalidateCache } from '@/lib/cache';
+import { createAuditLog } from '@/lib/audit-log';
+import { ALL_KYC_DOCUMENT_KEYS } from '@/server/modules/kyc/kyc.types';
 
 async function postHandler(req: NextRequest) {
   try {
@@ -19,38 +23,75 @@ async function postHandler(req: NextRequest) {
     if (!session) return adminUnauthorized();
 
     const body = await req.json();
-    const { ids, action, value, rejectionReason } = body;
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return errors.badRequest('ids must be a non-empty array');
+    const validation = validateBody(bulkActionSchema, body);
+    if (!validation.success) {
+      return errors.badRequest(validation.error);
     }
 
-    const requiredPerm = action === 'delete' ? 'riders_delete' : 'riders_update';
-    if (!hasPermission(session, requiredPerm as any)) return adminForbidden();
+    const { ids, action, value, rejectionReason } = validation.data;
+
+    if (action === 'delete') {
+      if (!hasPermission(session, 'riders_delete')) return adminForbidden();
+    } else if (action === 'bulkKyc') {
+      if (!hasPermission(session, 'kyc_bulk_approve') && !hasPermission(session, 'kyc_approve')) {
+        return adminForbidden();
+      }
+    } else {
+      if (!hasPermission(session, 'riders_update')) return adminForbidden();
+    }
 
     const adminId = session.adminId || session.riderDbId;
     let updatedCount = 0;
     const failures: { id: string; error: string }[] = [];
 
     switch (action) {
-      case 'updateStatus': {
-        // ADMIN-RIDER-AUDIT P0-1 (2026-09-08): `accountStatus`
-        // is a virtual field computed in `flattenRider` — it
-        // is not a column on the Rider model. Map the bulk
-        // status update to the real `lifecycleStatus` column
-        // so the write actually persists. The Zod schema
-        // (`updateRiderSchema.lifecycleStatus`) accepts the
-        // full `RiderLifecycleStatus` enum.
+      case 'suspend': {
         for (const id of ids) {
           try {
-            await adminRiderUseCases.update(
-              id,
-              { lifecycleStatus: value },
-              { actorId: adminId, actorRole: session.adminRole || '' }
-            );
+            await adminRiderUseCases.suspend(id, {
+              actorId: adminId || 'unknown',
+              actorRole: session.adminRole || '',
+              reason: typeof value === 'string' ? value : undefined,
+            });
             updatedCount++;
           } catch (e) {
-            failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });
+            failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+          }
+        }
+        break;
+      }
+
+      case 'updateStatus': {
+        // ADMIN-RIDER-AUDIT P0-1 (2026-09-08):
+        // If value is 'SUSPENDED', route to adminRiderUseCases.suspend
+        // (deliberate machine bypass — admin override, ticket-revert precedent).
+        // Otherwise, map status update to the real `lifecycleStatus` column
+        // via adminRiderUseCases.update.
+        if (value === 'SUSPENDED') {
+          for (const id of ids) {
+            try {
+              await adminRiderUseCases.suspend(id, {
+                actorId: adminId || 'unknown',
+                actorRole: session.adminRole || '',
+                reason: 'Bulk suspend',
+              });
+              updatedCount++;
+            } catch (e) {
+              failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+            }
+          }
+        } else {
+          for (const id of ids) {
+            try {
+              await adminRiderUseCases.update(
+                id,
+                { lifecycleStatus: value },
+                { actorId: adminId, actorRole: session.adminRole || '' }
+              );
+              updatedCount++;
+            } catch (e) {
+              failures.push({ id, error: e instanceof Error ? e.message : String(e) });
+            }
           }
         }
         break;
@@ -103,6 +144,16 @@ async function postHandler(req: NextRequest) {
           typeof rejectionReason === 'string' && rejectionReason.trim().length > 0
             ? rejectionReason.trim()
             : undefined;
+
+        // P1-1: Validate minimum reason lengths matching the UI constraints
+        // when a reason is provided. Fallback generics apply when omitted.
+        if (kycStatus === 'REJECTED' && trimmedReason && trimmedReason.length < 10) {
+          return errors.badRequest('Rejection reason must be at least 10 characters');
+        }
+        if (kycStatus === 'INFO_REQUIRED' && trimmedReason && trimmedReason.length < 5) {
+          return errors.badRequest('Correction details must be at least 5 characters');
+        }
+
         // APPROVED never carries a rejection reason (the dialog
         // doesn't expose one, and the pre-fix code hardcoded
         // `undefined` for it). For REJECTED and INFO_REQUIRED,
@@ -124,12 +175,15 @@ async function postHandler(req: NextRequest) {
               {
                 kycStatus,
                 ...(finalReason !== undefined ? { rejectionReason: finalReason } : {}),
+                ...(kycStatus === 'REJECTED' || kycStatus === 'INFO_REQUIRED'
+                  ? { editableFields: Array.from(ALL_KYC_DOCUMENT_KEYS) }
+                  : {}),
               },
               { actorId: adminId, actorRole: session.adminRole || '' }
             );
             updatedCount++;
           } catch (e) {
-            failures.push({ id, error: e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e) });
+            failures.push({ id, error: e instanceof Error ? e.message : String(e) });
           }
         }
         break;
@@ -138,6 +192,26 @@ async function postHandler(req: NextRequest) {
       default:
         return errors.badRequest('Invalid action');
     }
+
+    // Invalidate admin cache after bulk modifications to prevent list staleness
+    invalidateCache('admin:*');
+
+    // Write batch audit log for bulk operations (P1-6)
+    createAuditLog({
+      actorId: adminId || 'unknown',
+      action: `rider.bulk_${action}`,
+      entity: 'rider',
+      entityId: 'multiple',
+      details: {
+        ids,
+        count: updatedCount,
+        failedCount: failures.length,
+        action,
+        value,
+      },
+    }).catch((err) => {
+      logger.error('Failed to create bulk action audit log', { error: err });
+    });
 
     return success({ count: updatedCount, failures }, 'Bulk action completed');
   } catch (error) {

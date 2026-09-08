@@ -234,4 +234,35 @@ describe('NET-005 follow-up-11: bulk KYC route propagates rejectionReason', () =
       { id: 'r2', error: 'transition failed' },
     ]);
   });
+
+  it('P1-1: rejects REJECTED with non-empty reason shorter than 10 characters with 400', async () => {
+    const req = makePostReq({
+      ids: ['r1'],
+      action: 'bulkKyc',
+      value: 'REJECTED',
+      rejectionReason: 'too short',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+
+    const json = await res.json();
+    expect(json.error.message).toContain('at least 10 characters');
+    expect(mocks.updateRider).not.toHaveBeenCalled();
+  });
+
+  it('P1-1: rejects INFO_REQUIRED with non-empty reason shorter than 5 characters with 400', async () => {
+    const req = makePostReq({
+      ids: ['r1'],
+      action: 'bulkKyc',
+      value: 'INFO_REQUIRED',
+      rejectionReason: 'bad',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+
+    const json = await res.json();
+    expect(json.error.message).toContain('at least 5 characters');
+    expect(mocks.updateRider).not.toHaveBeenCalled();
+  });
 });
+

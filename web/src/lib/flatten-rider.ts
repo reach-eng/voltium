@@ -135,7 +135,10 @@ export function flattenRider(
   // thresholds are.
   const rank = lifecycleRankOf(lifecycleStatus);
   const registrationDone = rank >= 2;
-  const kycDone = kycProfile?.status === 'APPROVED' || rank >= 10;
+  const isKycRejectedOrInfoRequired =
+    kycProfile?.status === 'REJECTED' || kycProfile?.status === 'INFO_REQUIRED';
+  const kycDone =
+    !isKycRejectedOrInfoRequired && (kycProfile?.status === 'APPROVED' || rank >= 10);
   const depositDone = wallet?.depositStatus === 'APPROVED' || (wallet?.securityDepositInPaise ?? 0) > 0 || rank >= 10;
   const planDone = !!r.currentPlan || rank >= 9;
   // HANG-TIGHT-AUDIT P0-1 (2026-09-08): the prior `|| !!r.pickedUpAt`
@@ -183,6 +186,12 @@ export function flattenRider(
     name: r.fullName ?? '', // Compatibility alias
 
     // --- KYC Profile fields ---
+    // P2 fix: explicit "pending deletion" flag so the app can show an
+    // in-flight state + offer immediate logout, instead of staying fully
+    // interactive after the request. The free-text reason stays server-only.
+    deletionRequestedAt: (r as any).deletionRequestedAt
+      ? new Date((r as any).deletionRequestedAt as Date).toISOString()
+      : null,
     kycStatus: kycProfile?.status || 'PENDING',
     kycRejectionReason: (kycProfile as any)?.rejectionReason ?? null,
     kycEditableFields: (kycProfile as any)?.editableFields ?? null,

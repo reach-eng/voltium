@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Undo2, XCircle, Loader2 } from 'lucide-react';
+import { KycDocumentPicker } from '@/components/admin/KycDocumentPicker';
 import type { KycConfirmAction, LastKycBulkAction, KycBulkConfirmAction } from './types';
 
 export interface KycDialogsProps {
@@ -28,6 +29,8 @@ export interface KycDialogsProps {
   setConfirmAction: (action: KycConfirmAction | null) => void;
   rejectionReason: string;
   setRejectionReason: (reason: string) => void;
+  selectedKycDocs?: Set<string>;
+  setSelectedKycDocs?: (docs: Set<string>) => void;
   handleKycAction: () => void;
   actionLoading: boolean;
 
@@ -52,6 +55,8 @@ export function KycDialogs({
   setConfirmAction,
   rejectionReason,
   setRejectionReason,
+  selectedKycDocs,
+  setSelectedKycDocs,
   handleKycAction,
   actionLoading,
   selectedCount,
@@ -89,7 +94,15 @@ export function KycDialogs({
       )}
 
       {/* Single-Rider Confirm Action Dialog */}
-      <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+      <AlertDialog
+        open={!!confirmAction}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmAction(null);
+            setSelectedKycDocs?.(new Set());
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -129,21 +142,30 @@ export function KycDialogs({
               )}
               {(confirmAction?.action === 'reject' ||
                 confirmAction?.action === 'info_required') && (
-                <div className="pt-2">
-                  <Label className="text-xs font-semibold text-foreground mb-1 block">
-                    {confirmAction?.action === 'info_required'
-                      ? 'Correction Details (Min 5 chars)'
-                      : 'Rejection Reason (Min 5 chars)'}
-                  </Label>
-                  <Textarea
-                    placeholder={
-                      confirmAction?.action === 'info_required'
-                        ? 'What needs correction...'
-                        : 'Rejection reason...'
-                    }
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                  />
+                <div className="pt-2 space-y-3">
+                  <div>
+                    <Label className="text-xs font-semibold text-foreground mb-1 block">
+                      {confirmAction?.action === 'info_required'
+                        ? 'Correction Details (Min 5 chars)'
+                        : 'Rejection Reason (Min 5 chars)'}
+                    </Label>
+                    <Textarea
+                      placeholder={
+                        confirmAction?.action === 'info_required'
+                          ? 'What needs correction...'
+                          : 'Rejection reason...'
+                      }
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                    />
+                  </div>
+                  {setSelectedKycDocs && (
+                    <KycDocumentPicker
+                      selectedDocs={selectedKycDocs ?? new Set()}
+                      onChange={setSelectedKycDocs}
+                      disabled={actionLoading}
+                    />
+                  )}
                 </div>
               )}
             </AlertDialogDescription>
@@ -155,7 +177,7 @@ export function KycDialogs({
               disabled={
                 actionLoading ||
                 ((confirmAction?.action === 'reject' || confirmAction?.action === 'info_required') &&
-                  rejectionReason.trim().length < 5)
+                  (rejectionReason.trim().length < 5 || (selectedKycDocs ? selectedKycDocs.size === 0 : false)))
               }
               className={
                 confirmAction?.action === 'reject'
@@ -187,7 +209,7 @@ export function KycDialogs({
             <AlertDialogTitle>Bulk Approve KYC</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to approve KYC verification for all{' '}
-              <strong>{selectedCount}</strong> selected rider(s)? This action will update their KYC status to APPROVED.
+              <strong>{selectedCount}</strong> selected rider(s) on this page? This action will update their KYC status to APPROVED.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -202,7 +224,7 @@ export function KycDialogs({
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Approving...
                 </>
               ) : (
-                `Approve ${selectedCount} Rider(s)`
+                `Approve ${selectedCount} on This Page`
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -218,8 +240,8 @@ export function KycDialogs({
           <DialogHeader>
             <DialogTitle>
               {bulkConfirmAction === 'reject'
-                ? `Bulk Reject (${selectedCount} Riders)`
-                : `Bulk Request Correction (${selectedCount} Riders)`}
+                ? `Bulk Reject (${selectedCount} selected on this page)`
+                : `Bulk Request Correction (${selectedCount} selected on this page)`}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
@@ -265,8 +287,8 @@ export function KycDialogs({
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}
               {bulkConfirmAction === 'reject'
-                ? `Reject ${selectedCount} Selected`
-                : `Request Correction`}
+                ? `Reject ${selectedCount} on This Page`
+                : `Request Correction (${selectedCount} on This Page)`}
             </Button>
           </DialogFooter>
         </DialogContent>

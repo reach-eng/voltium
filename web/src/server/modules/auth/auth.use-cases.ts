@@ -51,7 +51,14 @@ export const authUseCases = {
 
     // Send via SMS/Push
     const flags = await getFeatureFlags();
-    const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
+    const riderLocale = input.locale || existingRider?.preferredLocale || null;
+    const isHindi =
+      riderLocale?.toLowerCase() === 'hi' ||
+      riderLocale?.toLowerCase().startsWith('hi_') ||
+      riderLocale?.toLowerCase().startsWith('hi-');
+    const message = isHindi
+      ? `आपका Voltium सत्यापन कोड है: ${otp}। यह कोड किसी के साथ साझा न करें।`
+      : `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
     // @allow-outbox-standalone — the SMS emit has no parent business
     // write to be atomic with. The user already has the OTP (in
@@ -64,6 +71,7 @@ export const authUseCases = {
         phone: tenDigitPhone,
         message,
         channel: flags.enablePushNotifications ? 'push' : 'sms',
+        locale: riderLocale,
       },
       3,
       undefined,

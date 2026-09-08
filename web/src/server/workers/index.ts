@@ -258,8 +258,8 @@ export const WORKERS: WorkerDefinition[] = [
     // SMS sends — processes sms.send events from auth use-cases
     jobType: OutboxEventTypes.SMS_SEND,
     processor: async (job: QueueJob) => {
-      const { phone, message } = job.payload as { phone: string; message: string };
-      await sendSms(phone, message);
+      const { phone, message, locale } = job.payload as { phone: string; message: string; locale?: string | null };
+      await sendSms(phone, message, { locale });
     },
     concurrency: 5,
     description: 'SMS dispatch via provider',

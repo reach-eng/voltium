@@ -17,23 +17,51 @@ import {
   updateAdminTicketSchema,
 } from '@/lib/validators/admin';
 import { supportUseCases } from '@/server/modules/support/support.use-cases';
-import { parsePositiveInt } from '@/lib/api-utils';
+import { supportQuerySchema } from '@/server/modules/support/support.schemas';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'tickets_view')) return adminForbidden();
+  if (!hasPermission(session, 'tickets_view')) return adminForbidden();
+
+  // Polled by the dashboard every 30s — cap per admin (fail-open:
+  // reads stay available during a limiter outage).
+  const TICKETS_LIMIT = { windowMs: 60_000, maxRequests: 60 };
+  const rl = await checkRateLimit(`admin:tickets:${session.adminId || 'unknown'}`, TICKETS_LIMIT);
+  if (!rl.allowed) {
+    return errors.tooManyRequests('Too many requests. Please try again later.', {
+      rateLimit: { limit: TICKETS_LIMIT.maxRequests, remaining: rl.remaining, resetAt: rl.resetAt },
+    });
+  }
 
   try {
     const url = req.nextUrl;
-    const status = url.searchParams.get('status') || '';
-    const priority = url.searchParams.get('priority') || '';
+    // Validate enums via supportQuerySchema — `status=banana` previously
+    // reached Prisma and threw → 500. Invalid values now return 400.
+    // (NaN-safe pagination preserved via coerce+positive in the schema.)
+    const parsed = supportQuerySchema.safeParse({
+      status: url.searchParams.get('status') || undefined,
+      priority: url.searchParams.get('priority') || undefined,
+      page: url.searchParams.get('page') || undefined,
+      limit: url.searchParams.get('limit') || undefined,
+    });
+    if (!parsed.success) {
+      const message = parsed.error.issues[0]?.message || 'Invalid query parameters';
+      return errors.validation(message);
+    }
     const search = url.searchParams.get('search') || '';
-    // PR-4b (13th audit P0-6): NaN-safe pagination.
-    const page = parsePositiveInt(url.searchParams.get('page'), 1);
-    const limit = parsePositiveInt(url.searchParams.get('limit'), 20, 100);
+    const lean = url.searchParams.get('lean') === 'true';
+    const { status, priority, page, limit } = parsed.data;
 
-    const result = await supportUseCases.getAdminTickets({ status, priority, search, page, limit });
+    const result = await supportUseCases.getAdminTickets({
+      status,
+      priority,
+      search,
+      page,
+      limit,
+      lean,
+    });
     return withCacheHeaders(success(result.tickets, undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('GET /api/admin/tickets error:', error);
@@ -44,7 +72,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'tickets_resolve')) return adminForbidden();
+  if (!hasPermission(session, 'tickets_resolve')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -85,7 +113,7 @@ export async function PUT(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'tickets_manage')) return adminForbidden();
+  if (!hasPermission(session, 'tickets_manage')) return adminForbidden();
 
   try {
     const body = await req.json();

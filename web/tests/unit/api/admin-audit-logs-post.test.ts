@@ -40,7 +40,7 @@ describe('POST /api/admin/audit-logs (PII reveal tracking)', () => {
   it('records audit log when admin reveals rider PII', async () => {
     (requireAdmin as any).mockResolvedValueOnce({
       adminId: 'adm_1',
-      adminRole: 'OPS_SUPERVISOR',
+      adminRole: 'OPERATIONS_ADMIN',
     });
 
     const req = new NextRequest('http://localhost/api/admin/audit-logs', {

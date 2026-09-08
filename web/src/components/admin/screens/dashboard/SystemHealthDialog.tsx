@@ -64,11 +64,17 @@ export function SystemHealthDialog({
         </DialogHeader>
         <div className="space-y-3 py-2">
           {loading ? (
-            <div className="space-y-3">
+            <div className="space-y-3" aria-busy="true" aria-label="Checking system health">
               {[...Array(2)].map((_, i) => (
                 <Skeleton key={i} className="h-14 rounded-lg" />
               ))}
             </div>
+          ) : checks.length === 0 ? (
+            // P2: previously rendered a blank dialog when checks were
+            // empty (reachable if the probe runner ever resolves empty).
+            <p className="text-sm text-muted-foreground text-center py-6">
+              No health checks available yet.
+            </p>
           ) : (
             checks.map((check) => {
               const { Icon, color, bg } = getStatusStyle(check.status);

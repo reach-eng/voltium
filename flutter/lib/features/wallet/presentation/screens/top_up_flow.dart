@@ -10,12 +10,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'top_up_amount_screen.dart';
 import 'top_up_proof_screen.dart';
+import 'top_up_receipt_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/network/api_error_messages.dart';
-import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/utils/toast.dart';
+import 'package:voltium_rider/widgets/lifecycle_route_guard.dart';
 
 class TopUpFlow extends ConsumerStatefulWidget {
   final int? initialAmount;
@@ -25,7 +26,8 @@ class TopUpFlow extends ConsumerStatefulWidget {
   ConsumerState<TopUpFlow> createState() => _TopUpFlowState();
 }
 
-class _TopUpFlowState extends ConsumerState<TopUpFlow> {
+class _TopUpFlowState extends ConsumerState<TopUpFlow>
+    with LifecycleRouteGuard {
   final PageController _pageController = PageController();
 
   late int _amount;
@@ -38,6 +40,16 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
     _amount = (widget.initialAmount != null && widget.initialAmount! > 0)
         ? widget.initialAmount!
         : 2000;
+    // P0-4 (settings audit, 2026-09-08): refresh the server-driven
+    // minimum top-up when the rider enters the flow, so admin edits to
+    // `walletMinTopup` reach the top-up floor without an app update.
+    // Best-effort — the amount screen still falls back to the
+    // compile-time constant while this is in flight or offline.
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(walletProvider.notifier).syncServerSettings();
+      }
+    });
   }
 
   void _nextPage() {
@@ -62,6 +74,7 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
 
   @override
   Widget build(BuildContext context) {
+    registerLifecycleGuard();
     return PopScope(
       canPop: _currentPage == 0,
       onPopInvokedWithResult: (didPop, result) {
@@ -148,11 +161,14 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   }
                   if (context.mounted) {
                     final nav = Navigator.of(context);
-                    nav.pop();
-                    Toast.success(
-                      context,
-                      AppLocalizations.of(context)!
-                          .txttopUpProofSubmittedSuccessfully,
+                    nav.pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => TopUpReceiptScreen(
+                          amount: _amount,
+                          purpose: isDeposit ? 'SECURITY_DEPOSIT' : 'TOP_UP',
+                          onBackToDashboard: () => Navigator.of(context).pop(),
+                        ),
+                      ),
                     );
                   }
                 } catch (e) {

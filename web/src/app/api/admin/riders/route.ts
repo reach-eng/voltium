@@ -138,8 +138,9 @@ export const updateRiderSchema = z.object({
     .or(z.literal('')),
   // Guarantor fields
   guarantorStatus: z
-    .enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'])
-    .optional(),
+    .enum(['PENDING', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED', 'REPLACED'])
+    .nullish()
+    .or(z.literal('')),
   // P0-2a: guarantor text fields now accept `null` and `''` so
   // the "Clear Guarantor" admin action can wipe them. Before
   // the fix, `confirmClearGuarantorAction` PUTs all-null
@@ -183,6 +184,13 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get('search') || '';
     const state = url.searchParams.get('state') || '';
     const kycStatus = url.searchParams.get('kycStatus') || '';
+
+    // P1-6 (Phase 6): kycStatus filter is specific to the KYC review queue.
+    // Querying the KYC queue requires kyc_view permission.
+    if (kycStatus && !hasPermission(session, 'kyc_view')) {
+      return errors.forbidden('Insufficient permissions to view KYC queue; kyc_view required');
+    }
+
     const startDateRaw = url.searchParams.get('startDate') || '';
     const endDateRaw = url.searchParams.get('endDate') || '';
     // NET-005 follow-up-14 (2026-09-08): the previous
@@ -270,28 +278,49 @@ export async function GET(req: NextRequest) {
     // response. documentType=`riders_list` distinguishes this
     // from the KYC queue and single-rider-detail views in the
     // security-event stream.
+    // P1-6 (Phase 6): Gate KYC document fields on kyc_view permission.
+    // Roles with riders_view but without kyc_view (e.g. Finance, Support, Fleet)
+    // receive identity, contact, wallet, and lifecycle data, but sensitive
+    // KYC document and photo evidence URLs are redacted.
+    const canViewKyc = hasPermission(session, 'kyc_view');
     if (result && Array.isArray((result as { riders?: unknown[] }).riders)) {
       const adminId = session.adminId ?? session.riderDbId ?? 'unknown';
-      for (const rider of (result as { riders: Array<{ id: string; kycStatus?: string; profilePhoto?: string | null; aadhaarFront?: string | null; aadhaarBack?: string | null; panCard?: string | null; riderPhoto?: string | null; signature?: string | null }> }).riders) {
-        // Skip riders with no KYC data (PENDING with no doc URLs).
-        // A kycProfile row with `status: PENDING` is the DB default
-        // and indistinguishable in the flat shape from "no row" —
-        // both mean "nothing to view yet" unless the rider has
-        // started a partial upload.
-        if (
-          rider.kycStatus !== 'PENDING' ||
-          rider.profilePhoto ||
-          rider.aadhaarFront ||
-          rider.aadhaarBack ||
-          rider.panCard ||
-          rider.riderPhoto ||
-          rider.signature
-        ) {
-          void logKycDocumentView({
-            adminId,
-            riderId: rider.id,
-            documentType: 'riders_list',
-          });
+      for (const rider of (result as { riders: Array<Record<string, unknown>> }).riders) {
+        if (!canViewKyc) {
+          rider.profilePhoto = null;
+          rider.riderPhoto = null;
+          rider.riderVideo = null;
+          rider.signature = null;
+          rider.aadhaarFront = null;
+          rider.aadhaarBack = null;
+          rider.panCard = null;
+          rider.guarantorAadhaarFront = null;
+          rider.guarantorAadhaarBack = null;
+          rider.guarantorPan = null;
+          rider.guarantorPhoto = null;
+          rider.guarantorSignature = null;
+          rider.guarantorVideo = null;
+        } else {
+          // Skip riders with no KYC data (PENDING with no doc URLs).
+          // A kycProfile row with `status: PENDING` is the DB default
+          // and indistinguishable in the flat shape from "no row" —
+          // both mean "nothing to view yet" unless the rider has
+          // started a partial upload.
+          if (
+            rider.kycStatus !== 'PENDING' ||
+            rider.profilePhoto ||
+            rider.aadhaarFront ||
+            rider.aadhaarBack ||
+            rider.panCard ||
+            rider.riderPhoto ||
+            rider.signature
+          ) {
+            void logKycDocumentView({
+              adminId,
+              riderId: rider.id as string,
+              documentType: 'riders_list',
+            });
+          }
         }
       }
     }
@@ -388,6 +417,21 @@ export async function PUT(req: NextRequest) {
 
   try {
     const raw = await req.json();
+
+    // P2: log server warning on stripped keys instead of flipping to .strict()
+    // (which would 400 legit saves where clients send extra fields).
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const allowedKeys = new Set(Object.keys(updateRiderSchema.shape));
+      const strippedKeys = Object.keys(raw).filter((k) => !allowedKeys.has(k));
+      if (strippedKeys.length > 0) {
+        logger.warn('PUT /api/admin/riders stripped unexpected keys from payload', {
+          riderId: (raw as Record<string, unknown>).id,
+          strippedKeys,
+          actorId: session.adminId ?? session.riderDbId ?? 'unknown',
+        });
+      }
+    }
+
     const parsed = updateRiderSchema.safeParse(raw);
     if (!parsed.success) {
       return errors.badRequest(
@@ -420,6 +464,17 @@ export async function PUT(req: NextRequest) {
       if (!hasPermission(session, 'kyc_approve')) {
         return errors.forbidden(
           'Insufficient permissions to change KYC status; kyc_approve required'
+        );
+      }
+    }
+
+    // P1-3 (Phase 4): REJECT and INFO_REQUIRED writes must include a non-empty
+    // editableFields allowlist to prevent opening the entire KYC surface implicitly.
+    if (kycStatus === 'REJECTED' || kycStatus === 'INFO_REQUIRED') {
+      const editableFields = (data as Record<string, unknown>).editableFields;
+      if (!Array.isArray(editableFields) || editableFields.length === 0) {
+        return errors.validation(
+          'KYC rejection and correction requests require a non-empty editableFields allowlist'
         );
       }
     }

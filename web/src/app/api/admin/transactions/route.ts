@@ -134,6 +134,9 @@ async function putHandler(req: NextRequest) {
     // P0-6: scoped invalidation — no more clearing every admin's cache.
     invalidateCache('admin:transactions:*');
     invalidateCache('admin:riders:*');
+    // P1: approvals change revenue/wallet aggregates — the dashboard stat
+    // cards would otherwise stay stale for the full TTL on every worker.
+    invalidateCache('admin:dashboard:*');
     return success(toRupeesResponse(result), `Transaction ${stateAction.toLowerCase()}d`);
   } catch (error) {
     // P0-2: lost CAS race (concurrent admin already processed it) → 409.

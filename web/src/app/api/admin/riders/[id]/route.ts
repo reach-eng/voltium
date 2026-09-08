@@ -142,24 +142,40 @@ export const GET = withApiHandler(
     // SOC2: every admin access to a rider's KYC
     // data is recorded. The audit row is fired
     // fire-and-forget so it doesn't block the
-    // response; failures are logged but don't
-    // surface to the admin. Skipped when the rider
-    // has no kycProfile row (PENDING-only would
-    // log a no-op view) — same behavior as
-    // follow-up-9 before this commit, preserved
-    // here to keep the admin-kyc-docview-logging
-    // test green.
-    if (rider.kycProfile) {
+    // Sign the CDN URLs in the KYC doc fields
+    // before returning.
+    const signed = (await signRiderUrls(
+      rider as Parameters<typeof signRiderUrls>[0]
+    )) as Record<string, any>;
+
+    // P1-6 (Phase 6): Gate KYC & guarantor document fields on kyc_view permission.
+    const canViewKyc = hasPermission(session.adminRole || '', 'kyc_view');
+    if (!canViewKyc) {
+      if (signed.kycProfile) {
+        signed.kycProfile.profilePhoto = null;
+        signed.kycProfile.riderPhoto = null;
+        signed.kycProfile.signature = null;
+        signed.kycProfile.aadhaarFront = null;
+        signed.kycProfile.aadhaarBack = null;
+        signed.kycProfile.panCard = null;
+      }
+      if (signed.guarantor) {
+        signed.guarantor.aadhaarFront = null;
+        signed.guarantor.aadhaarBack = null;
+        signed.guarantor.pan = null;
+        signed.guarantor.video = null;
+        signed.guarantor.signature = null;
+        signed.guarantor.photo = null;
+      }
+    } else if (rider.kycProfile) {
+      // SOC2: every admin access to a rider's KYC
+      // data is recorded. Fired only when admin has kyc_view.
       void logKycDocumentView({
         adminId: session.adminId ?? session.riderDbId ?? 'unknown',
         riderId: rider.id,
         documentType: 'rider_detail',
       });
     }
-
-    // Sign the CDN URLs in the KYC doc fields
-    // before returning.
-    const signed = await signRiderUrls(rider as Parameters<typeof signRiderUrls>[0]);
 
     return success(signed);
   }

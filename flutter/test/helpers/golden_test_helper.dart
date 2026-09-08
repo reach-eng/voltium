@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 export 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
@@ -27,11 +26,13 @@ Widget wrapForGolden(
   Widget child, {
   List<Override> overrides = const [],
   ThemeMode? themeMode,
+  Locale? locale,
 }) {
   final useAppThemes = themeMode != null;
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
+      locale: locale,
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       localizationsDelegates: const [

@@ -13,12 +13,16 @@ export const supportRepository = {
       priority?: string;
       status?: string;
       vehicleId?: string | null;
-      attachments?: string | null;
+      attachments?: string | string[] | null;
+      troubleshootPath?: string | null;
     }
   ) {
     // Typed sweep (2026-08-16): input strings are validated upstream (route
     // zod schema / caller defaults); cast to the schema enums at the Prisma
     // boundary rather than widening the create input.
+    const attachments = Array.isArray(data.attachments)
+      ? JSON.stringify(data.attachments)
+      : (data.attachments || null);
     return db.supportTicket.create({
       data: {
         ticketId: data.ticketId,
@@ -29,7 +33,11 @@ export const supportRepository = {
         riderId: riderDbId,
         status: (data.status ?? 'OPEN') as SupportTicketStatus,
         vehicleId: data.vehicleId || null,
-        attachments: data.attachments || null,
+        attachments,
+        // P0 fix: the troubleshooter diagnostic path was validated by the
+        // schema but dropped here (and at the route) — the column exists,
+        // the data never arrived. Store it.
+        troubleshootPath: data.troubleshootPath || null,
       },
     });
   },
@@ -166,7 +174,13 @@ export const supportRepository = {
 
   async getFaqs() {
     // P1: bound — FAQs are a small reference table, but never unbounded.
-    return db.faq.findMany({ where: { isActive: true }, orderBy: { order: 'asc' }, take: 200 });
+    // P0 fix: exclude soft-deleted rows — admin delete sets `deletedAt`
+    // (leaving isActive:true), so isActive alone still leaked deleted FAQs.
+    return db.faq.findMany({
+      where: { isActive: true, deletedAt: null },
+      orderBy: { order: 'asc' },
+      take: 200,
+    });
   },
 
   async findByIdWithMessages(ticketId: string) {

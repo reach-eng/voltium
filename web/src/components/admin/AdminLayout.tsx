@@ -186,9 +186,9 @@ function AdminSectionRenderer({ section, session }: { section: string; session: 
     }
   }
 
-  const Component = sectionMap[section];
+  const Component = sectionMap[section] as React.ComponentType<any> | undefined;
   if (Component) {
-    return <Component />;
+    return <Component session={session} />;
   }
   return <PlaceholderSection name={sectionLabels[section] || section} />;
 }

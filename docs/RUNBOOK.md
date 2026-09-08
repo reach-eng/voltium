@@ -262,3 +262,18 @@ Default gate is `error`. To see reaper activity, set `ALERT_MIN_LEVEL=warn`.
 **High failure rate:** Check `error` column on OutboxEvent, use `JobQueue.retryFailedJobs(type)`.
 
 **Reconciliation drift:** Query `reconciliationReports` table, check `driftedRiders` in report details.
+
+## Operational State Machine & Governance Policies
+
+### 1. Vehicle Lifecycle Terminals
+- Vehicles in `RETIRED` or `LOST` states may transition back to `MAINTENANCE` and subsequent `AVAILABLE` upon recovery, refurbishing, or reassessment. This cycle is deliberate.
+- If physical destruction or permanent write-off occurs, vehicles remain documented in `RETIRED` until an explicit `SCRAPPED` migration is deployed.
+
+### 2. Support Ticket `CLOSED` State & Reopen Auditing
+- Admin bulk revert and reopen endpoints (`ticket.bulk_revert` in `support.use-cases.ts`) bypass the linear forward machine to resolve administrative errors.
+- Therefore, `CLOSED` is advisory in automated audits.
+- **Weekly Runbook Task**: Operations leads must inspect `auditLog` for `ticket.bulk_revert` actions to ensure reopened tickets are justified.
+
+### 3. Rider Deletion Posture (`riders_delete: []`)
+- Direct un-audited deletion of rider entities is prohibited across all roles (`riders_delete: []` in `ROLE_PERMISSIONS`).
+- DPDP compliance and account removal adhere strictly to the request/approve/recover lifecycle.

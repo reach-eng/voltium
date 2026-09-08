@@ -12,6 +12,9 @@
 export type RentalStatus =
   | 'NO_RENTAL'
   | 'BOOKED'
+  // WORKFLOW-AUDIT (2026-09-08, P1-4): DEPOSIT_APPROVED is read-only
+  // (rider lifecycle comparison only — absent from Prisma RentalStatus and
+  // never a lease write target).
   | 'DEPOSIT_APPROVED'
   | 'PLAN_SELECTED'
   | 'PICKUP_SCHEDULED'
@@ -31,6 +34,7 @@ const VALID_TRANSITIONS: TransitionMap = {
   // Transitions to PICKUP_SCHEDULED on the rider side, and the
   // lease-side ACTIVE is set by syncPickup.
   BOOKED: ['PICKUP_SCHEDULED', 'ACTIVE'],
+  // Read-only lifecycle comparison edge — never a lease write target.
   DEPOSIT_APPROVED: ['PLAN_SELECTED'],
   PLAN_SELECTED: ['PICKUP_SCHEDULED', 'ACTIVE'],
   PICKUP_SCHEDULED: ['ACTIVE'],

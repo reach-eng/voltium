@@ -236,7 +236,12 @@ export const kycRepository = {
     });
   },
 
-  async requestInfo(riderDbId: string, reviewerId: string, infoRequest: string) {
+  async requestInfo(
+    riderDbId: string,
+    reviewerId: string,
+    infoRequest: string,
+    editableFields: string[] = []
+  ) {
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
       select: { status: true },
@@ -253,7 +258,7 @@ export const kycRepository = {
       // `tx`-accepting companion. Wrapping the update in a
       // transaction matches the other KYC decisions and lets
       // the live admin path call this inside its own tx.
-      await promoteToInfoRequired(tx, riderDbId, infoRequest);
+      await promoteToInfoRequired(tx, riderDbId, infoRequest, editableFields);
       const kyc = await tx.kycProfile.findUnique({
         where: { riderId: riderDbId },
       });
@@ -578,12 +583,14 @@ export async function promoteToInfoRequired(
   tx: KycCorrectionTx,
   riderDbId: string,
   infoRequest: string,
+  editableFields: string[] = [],
 ): Promise<void> {
   await tx.kycProfile.update({
     where: { riderId: riderDbId },
     data: {
       status: 'INFO_REQUIRED',
       rejectionReason: infoRequest,
+      editableFields,
     },
   });
   invalidateRiderCache(riderDbId);

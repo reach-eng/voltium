@@ -40,6 +40,10 @@ export interface RiderTableProps {
   sortKey: SortKey;
   sortDir: SortDir;
   selectedIds: Set<string>;
+  search?: string;
+  fetchError?: string | null;
+  onRetry?: () => void;
+  canDelete?: boolean;
   onToggleAll: (checked: boolean) => void;
   onToggleOne: (id: string, checked: boolean) => void;
   onSort: (key: Exclude<SortKey, null>) => void;
@@ -57,6 +61,10 @@ export function RiderTable({
   sortKey,
   sortDir,
   selectedIds,
+  search,
+  fetchError,
+  onRetry,
+  canDelete = true,
   onToggleAll,
   onToggleOne,
   onSort,
@@ -104,12 +112,34 @@ export function RiderTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {riders.length === 0 ? (
+              {fetchError ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="h-64 text-center">
+                    <div className="flex flex-col items-center justify-center text-destructive gap-3">
+                      <AlertTriangle className="w-8 h-8 text-destructive/80" />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-sm">Failed to load riders</p>
+                        <p className="text-xs text-muted-foreground">{fetchError}</p>
+                      </div>
+                      {onRetry && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onRetry}
+                          className="mt-2 text-xs font-semibold"
+                        >
+                          Retry
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : riders.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="h-64 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                       <AlertTriangle className="w-8 h-8 opacity-20" />
-                      <p>No riders found</p>
+                      <p>{search ? `No riders matching "${search}"` : 'No riders found'}</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -122,6 +152,7 @@ export function RiderTable({
                     onToggleSelect={(checked) => onToggleOne(rider.id, checked)}
                     onViewDetails={() => onViewDetails(rider)}
                     onDelete={() => onDelete(rider.id)}
+                    canDelete={canDelete}
                   />
                 ))
               )}
@@ -130,7 +161,7 @@ export function RiderTable({
         )}
       </CardContent>
 
-      {totalPages > 1 && (
+      {!fetchError && totalPages > 1 && (
         <div className="flex items-center justify-between p-4 border-t">
           <p className="text-sm text-muted-foreground">
             Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}

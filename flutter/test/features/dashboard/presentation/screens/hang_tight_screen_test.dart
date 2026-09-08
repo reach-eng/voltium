@@ -157,8 +157,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     // Seed the rider state after the provider is initialized.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(riderProvider.notifier).state =
-          ref.read(riderProvider).copyWith(
+      ref.read(riderProvider.notifier).state = ref.read(riderProvider).copyWith(
             rider: widget.rider,
             isPollingTimedOut: widget.isPollingTimedOut,
           );
@@ -464,8 +463,7 @@ void main() {
 
       // Set isRefreshing: true on the rider state. The screen
       // watches this flag and re-renders.
-      notifier.state =
-          notifier.state.copyWith(isRefreshing: true);
+      notifier.state = notifier.state.copyWith(isRefreshing: true);
       await tester.pump();
 
       // The refresh icon is gone, replaced by a spinner; the
@@ -473,8 +471,7 @@ void main() {
       expect(find.byIcon(Icons.refresh_rounded), findsNothing);
       button = tester.widget<OutlinedButton>(buttonFinder);
       expect(button.onPressed, isNull,
-          reason:
-              'Refresh button must be disabled while a fetch is in flight');
+          reason: 'Refresh button must be disabled while a fetch is in flight');
     });
 
     // HANG-TIGHT-AUDIT P2-6 (2026-09-08): when the OS "reduce
@@ -517,8 +514,7 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
 
       expect(tester.takeException(), isNull,
-          reason:
-              'Render must be exception-free under reduce motion');
+          reason: 'Render must be exception-free under reduce motion');
     });
 
     // HANG-TIGHT-AUDIT P3-3 (2026-09-08): the guarantor `replaced`

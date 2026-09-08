@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { KycDocumentPicker } from '@/components/admin/KycDocumentPicker';
 import type { Rider, ConfirmKycState } from './types';
 
 interface RiderDeleteDialogProps {
@@ -54,6 +55,8 @@ interface RiderKycActionDialogProps {
   state: ConfirmKycState | null;
   reason: string;
   saving: boolean;
+  selectedDocs?: Set<string>;
+  onSelectedDocsChange?: (docs: Set<string>) => void;
   onReasonChange: (v: string) => void;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -63,6 +66,8 @@ export function RiderKycActionDialog({
   state,
   reason,
   saving,
+  selectedDocs,
+  onSelectedDocsChange,
   onReasonChange,
   onOpenChange,
   onConfirm,
@@ -98,6 +103,9 @@ export function RiderKycActionDialog({
     <AlertDialog
       open={!!state}
       onOpenChange={(open) => {
+        if (!open) {
+          onSelectedDocsChange?.(new Set());
+        }
         onOpenChange(open);
       }}
     >
@@ -108,16 +116,25 @@ export function RiderKycActionDialog({
             Are you sure you want to {verb} the KYC verification for{' '}
             <strong>{state?.rider.fullName}</strong>?
             {needsReason && (
-              <textarea
-                className="w-full mt-3 p-2 border rounded-lg text-sm"
-                placeholder={
-                  state?.action === 'info_required'
-                    ? 'What needs correction...'
-                    : 'Rejection reason...'
-                }
-                value={reason}
-                onChange={(e) => onReasonChange(e.target.value)}
-              />
+              <div className="space-y-3 mt-3">
+                <textarea
+                  className="w-full p-2 border rounded-lg text-sm"
+                  placeholder={
+                    state?.action === 'info_required'
+                      ? 'What needs correction...'
+                      : 'Rejection reason...'
+                  }
+                  value={reason}
+                  onChange={(e) => onReasonChange(e.target.value)}
+                />
+                {onSelectedDocsChange && (
+                  <KycDocumentPicker
+                    selectedDocs={selectedDocs ?? new Set()}
+                    onChange={onSelectedDocsChange}
+                    disabled={saving}
+                  />
+                )}
+              </div>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -125,7 +142,13 @@ export function RiderKycActionDialog({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            disabled={saving || (needsReason && !reason.trim())}
+            disabled={
+              saving ||
+              (needsReason &&
+                (!reason.trim() ||
+                  reason.trim().length < 5 ||
+                  (selectedDocs ? selectedDocs.size === 0 : false)))
+            }
             className={ctaClass}
           >
             {ctaLabel}

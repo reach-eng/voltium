@@ -9,6 +9,12 @@ class DashboardPageObject {
   // Locators
   Finder get dashboardTab => find.byKey(const Key('dashboardTab'));
   Finder get notificationBell => find.byKey(const Key('notificationBell'));
+  // P2: no points badge exists on the dashboard (rewards live on the
+  // Rewards screen) — the old key could never match. Assert the wallet
+  // card, which is always rendered for an active rider, instead.
+  Finder get walletCard => find.byKey(const Key('walletCard'));
+  // Legacy alias kept for test 36, which taps it defensively
+  // (`if isNotEmpty`). Do not use in new tests.
   Finder get pointsBadge => find.byKey(const Key('pointsBadge'));
   Finder get assignedVehicleCard =>
       find.byKey(const Key('assignedVehicleCard'));
@@ -46,7 +52,7 @@ class DashboardPageObject {
   void expectLoaded() {
     expect(dashboardTab, findsOneWidget);
     expect(notificationBell, findsOneWidget);
-    expect(pointsBadge, findsOneWidget);
+    expect(walletCard, findsOneWidget);
     expect(assignedVehicleCard, findsOneWidget);
     expect(copyReferralButton, findsOneWidget);
   }

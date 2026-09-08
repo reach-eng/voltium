@@ -10,6 +10,16 @@ import { updateSystemSettingSchema } from '@/lib/validators/admin';
 /**
  * Admin System Settings API
  *
+ * P1-6 (settings audit, 2026-09-08): this is one of TWO admin surfaces
+ * on the shared `systemSetting` table — see the split table in
+ * `web/src/app/api/admin/settings/route.ts`. The short version: THIS
+ * surface is single-key/raw-string/SUPER_ADMIN-only and owns
+ * infrastructure config (URLs, storage roots, backup policy,
+ * maintenance); the `/api/admin/settings` surface is multi-key/
+ * rupees-in/any-settings_manage-role and owns the BUSINESS registry
+ * keys. Both honor `isEditable`, so a row frozen via either surface
+ * is frozen for both.
+ *
  * Editable settings (stored in SystemSetting table):
  *   APP_PUBLIC_URL, API_BASE_URL, LOCAL_STORAGE_ROOT,
  *   BACKUP_ROOT, BACKUP_SECONDARY_ROOT, BACKUP_FREQUENCY,

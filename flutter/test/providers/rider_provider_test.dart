@@ -88,6 +88,9 @@ class MockFilesRepository implements FilesRepository {
   Future<String> uploadFile(File file, dynamic category) async {
     return 'url';
   }
+
+  @override
+  Future<void> deleteFile(String url) async {}
 }
 
 void main() {

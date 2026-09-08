@@ -208,6 +208,31 @@ class FCMService {
   }
 
   @visibleForTesting
+  static bool isSupportPushType(String? type) {
+    return type == 'SUPPORT_REPLY';
+  }
+
+  @visibleForTesting
+  static bool isPaymentPushType(String? type) {
+    return type == 'PAYMENT_DUE';
+  }
+
+  @visibleForTesting
+  static bool isRewardPushType(String? type) {
+    return type == 'REWARD' || type == 'REWARD_MILESTONE';
+  }
+
+  @visibleForTesting
+  static bool isBirthdayPushType(String? type) {
+    return type == 'BIRTHDAY_WISH';
+  }
+
+  @visibleForTesting
+  static bool isShiftPushType(String? type) {
+    return type == 'SHIFT_REMINDER';
+  }
+
+  @visibleForTesting
   static void initializeForTesting({
     required DevicePolicyProvider devicePolicy,
     required WalletProvider wallet,
@@ -300,6 +325,16 @@ class FCMService {
         // saved locale from CacheService and looks up the ARB
         // strings; see NotificationService.showKycPushFromFcm.
         await NotificationService.showKycPushFromFcm(data);
+      } else if (isSupportPushType(data['type'] as String?)) {
+        await NotificationService.showSupportPushFromFcm(data);
+      } else if (isPaymentPushType(data['type'] as String?)) {
+        await NotificationService.showPaymentPushFromFcm(data);
+      } else if (isRewardPushType(data['type'] as String?)) {
+        await NotificationService.showRewardPushFromFcm(data);
+      } else if (isBirthdayPushType(data['type'] as String?)) {
+        await NotificationService.showBirthdayPushFromFcm(data);
+      } else if (isShiftPushType(data['type'] as String?)) {
+        await NotificationService.showShiftPushFromFcm(data);
       }
     });
 
@@ -589,6 +624,21 @@ class FCMService {
       handleOverlayTrigger(message);
     } else if (isKycPushType(data['type'] as String?)) {
       _rider?.refresh();
+    } else if (isPaymentPushType(data['type'] as String?)) {
+      _rider?.refresh();
+      final riderId = _rider?.rider?.id;
+      if (riderId != null) {
+        _wallet?.refreshTransactions(riderId: riderId, force: true);
+      }
+    } else if (isSupportPushType(data['type'] as String?)) {
+      _support?.refreshTickets();
+      _supportTickets?.fetchTickets();
+    } else if (isRewardPushType(data['type'] as String?)) {
+      _rider?.refresh();
+    } else if (isBirthdayPushType(data['type'] as String?)) {
+      handleOverlayTrigger(message);
+    } else if (isShiftPushType(data['type'] as String?)) {
+      _rider?.refresh();
     }
 
     onMessageOpenedAppCallback?.call(message);
@@ -618,10 +668,15 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final isSecurity = data['type'] == 'SECURITY_COMMAND';
   final isOverlay = data['type'] == 'OVERLAY_TRIGGER';
   final isKyc = FCMService.isKycPushType(data['type'] as String?);
+  final isSupport = FCMService.isSupportPushType(data['type'] as String?);
+  final isPayment = FCMService.isPaymentPushType(data['type'] as String?);
+  final isReward = FCMService.isRewardPushType(data['type'] as String?);
+  final isBirthday = FCMService.isBirthdayPushType(data['type'] as String?);
+  final isShift = FCMService.isShiftPushType(data['type'] as String?);
   final action = data['action'];
 
-  // P2-12 follow-up (PR-H, 2026-08-28): KYC pushes don't carry an
-  // `action` field — they're data-only FCM messages with just the
+  // Data-only localized pushes (KYC, Support, Payment, Reward, Birthday, Shift)
+  // don't carry an `action` field — they're data-only FCM messages with just the
   // discriminator. Handle them BEFORE the action null-check, and
   // skip the security/overlay whitelist gates that follow.
   if (isKyc) {
@@ -629,6 +684,51 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       await NotificationService.showKycPushFromFcm(data);
     } catch (e) {
       appDebug('FCM background: KYC push failed: $e');
+    }
+    return;
+  }
+
+  if (isSupport) {
+    try {
+      await NotificationService.showSupportPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: Support push failed: $e');
+    }
+    return;
+  }
+
+  if (isPayment) {
+    try {
+      await NotificationService.showPaymentPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: Payment push failed: $e');
+    }
+    return;
+  }
+
+  if (isReward) {
+    try {
+      await NotificationService.showRewardPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: Reward push failed: $e');
+    }
+    return;
+  }
+
+  if (isBirthday) {
+    try {
+      await NotificationService.showBirthdayPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: Birthday push failed: $e');
+    }
+    return;
+  }
+
+  if (isShift) {
+    try {
+      await NotificationService.showShiftPushFromFcm(data);
+    } catch (e) {
+      appDebug('FCM background: Shift push failed: $e');
     }
     return;
   }

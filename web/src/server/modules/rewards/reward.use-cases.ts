@@ -6,13 +6,12 @@ import { rewardRepository } from './reward.repository';
 /**
  * Admin reward management.
  *
- * `points` is stored in PAISE (1 point = 1 paise, so a ₹200 bonus stores
- * 20000). This matches the schema comment on `Reward.points` (PR-9 of
- * 2026-08-06 fix plan). The redeem endpoint at
- * `rider/rewards/[id]/redeem/route.ts:36` reads `reward.points * 100`
- * because the column was historically misread as "point count" and the
- * call-site conversion was kept for back-compat. If you change this
- * file's interpretation, change the redeem endpoint in lockstep.
+ * Unit decision (dashboard audit): `Reward.points` stores POINT COUNTS,
+ * not paise — a ₹200 bonus stores 200. The redeem endpoint converts
+ * ×100 → paise at payout, tier thresholds and admin "+pts" read counts,
+ * and both referral writers now store counts. Do NOT store paise here:
+ * paise figures read as 100× points and redeem 100× cash. If you change
+ * this interpretation, change the redeem endpoint in lockstep.
  */
 export const adminRewardUseCases = {
   async list(params: { search?: string | null; page: number; limit: number }) {

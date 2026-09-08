@@ -13,6 +13,7 @@ export interface OtpEntry {
 
 export interface SendOtpInput {
   phone: string;
+  locale?: string | null;
 }
 
 export interface VerifyOtpInput {

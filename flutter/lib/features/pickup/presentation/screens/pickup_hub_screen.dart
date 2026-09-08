@@ -517,6 +517,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         }
       }
     } catch (e) {
+      if (!mounted) return;
       // PR-ONBOARDING-FLOW-2026-08-13: 4xx responses are real failures
       // (validation, auth) — surface them. Transient errors get
       // up to 3 retries with exponential backoff (1s, 2s, 4s) before
@@ -615,9 +616,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     final digits = phone.replaceAll(RegExp(r'\D'), '');
 
     if (digits.length != 10) {
-      _showError(
-          AppLocalizations.of(context)?.pickupHub_enterValid10Digit ??
-              'Enter a valid 10-digit number');
+      _showError(AppLocalizations.of(context)?.pickupHub_enterValid10Digit ??
+          'Enter a valid 10-digit number');
       return;
     }
 
@@ -632,7 +632,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     }
     if (digits == guarantorPhone) {
       _showError(
-        AppLocalizations.of(context)?.pickupHub_emergencyContactSameAsGuarantor ??
+        AppLocalizations.of(context)
+                ?.pickupHub_emergencyContactSameAsGuarantor ??
             'Emergency contact cannot be the same as guarantor phone number',
       );
       return;
@@ -652,9 +653,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         _isOtpSent = true;
         _isOtpVerified = false;
       });
-      _showSuccess(
-          AppLocalizations.of(context)?.pickupHub_otpSent ??
-              'OTP sent to emergency contact');
+      _showSuccess(AppLocalizations.of(context)?.pickupHub_otpSent ??
+          'OTP sent to emergency contact');
       if (AppConstants.isTestMode) {
         final testOtp =
             response['data'] is Map ? (response['data'] as Map)['otp'] : null;
@@ -678,9 +678,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
     final otp = _otpController.text;
 
     if (otp.length != 6) {
-      _showError(
-          AppLocalizations.of(context)?.pickupHub_enter6DigitOtp ??
-              'Enter 6-digit OTP');
+      _showError(AppLocalizations.of(context)?.pickupHub_enter6DigitOtp ??
+          'Enter 6-digit OTP');
       return;
     }
 
@@ -738,14 +737,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
       // can never diverge (a fresh marker without a receipt would show
       // "verified" but 403 on submit in enforced mode).
       widget.onEmergencyContactVerified?.call(phone, receipt);
-      _showSuccess(
-          AppLocalizations.of(context)?.pickupHub_verified ??
-              'Emergency contact verified successfully ✓');
+      _showSuccess(AppLocalizations.of(context)?.pickupHub_verified ??
+          'Emergency contact verified successfully ✓');
     } catch (e) {
       if (!mounted) return;
-      _showError(
-          AppLocalizations.of(context)?.pickupHub_otpVerifyFailed ??
-              'OTP verification failed. Please try again.');
+      _showError(AppLocalizations.of(context)?.pickupHub_otpVerifyFailed ??
+          'OTP verification failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isVerifyingOtp = false);
     }
@@ -782,9 +779,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen>
         entry.isUploading = false;
       });
       DocumentLocalCache.save('pickup_$type', compressed.path);
-      _showSuccess(
-          AppLocalizations.of(context)?.pickupHub_photoUploaded ??
-              'Photo uploaded successfully');
+      _showSuccess(AppLocalizations.of(context)?.pickupHub_photoUploaded ??
+          'Photo uploaded successfully');
     } catch (e) {
       if (mounted) {
         final entry = _photos[type]!;

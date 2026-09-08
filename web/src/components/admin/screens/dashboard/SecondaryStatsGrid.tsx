@@ -33,14 +33,22 @@ export function SecondaryStatsGrid({ stats }: SecondaryStatsGridProps) {
       </CardHeader>
       <CardContent className="p-0">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y divide-border/30">
-          {items.map((item) => (
-            <div key={item.label} className="px-4 py-3">
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-              <p className="text-lg font-semibold text-foreground">
-                {String(item.value ?? '-')}
-              </p>
-            </div>
-          ))}
+          {items.map((item) => {
+            // P2: match StatCards — non-finite renders as em dash (never
+            // "NaN") with en-IN grouping and tabular numerals.
+            const display =
+              typeof item.value === 'number' && Number.isFinite(item.value)
+                ? item.value.toLocaleString('en-IN')
+                : '—';
+            return (
+              <div key={item.label} className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">{item.label}</p>
+                <p className="text-lg font-semibold text-foreground tabular-nums">
+                  {display}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

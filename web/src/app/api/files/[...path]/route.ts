@@ -78,13 +78,9 @@ export async function GET(
     const session = await getSession(request);
     const adminSession = await getAdminSession(request);
 
-    if (!session && !adminSession) {
-      // P1: envelope JSON (was plain-text 'Unauthorized' — normalizeApiResponse
-      // degrades it to 'Invalid response format', losing the real code).
-      return errors.unauthorized();
-    }
+    const { path: rawPath } = await params;
+    const path = rawPath.length > 0 && rawPath[0] === 'download' ? rawPath.slice(1) : rawPath;
 
-    const { path } = await params;
     const { db } = await import('@/lib/db');
     const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
     const baseDir =
@@ -111,6 +107,11 @@ export async function GET(
       return errors.notFound('File not found');
     }
 
+    const isPublicAccess = record.visibility === 'PUBLIC' || record.purpose === 'profile_photo';
+    if (!session && !adminSession && !isPublicAccess) {
+      return errors.unauthorized();
+    }
+
     // Perform ownership/permission check
     let actor: { role: string; adminRole?: string; permissions?: string[]; riderDbId?: string } | null = null;
     if (adminSession) {
@@ -127,12 +128,14 @@ export async function GET(
       };
     }
 
-    if (!actor || !fileService.canViewFile(actor, record as any)) {
-      return errors.forbidden();
+    if (!isPublicAccess) {
+      if (!actor || !fileService.canViewFile(actor, record as any)) {
+        return errors.forbidden();
+      }
     }
 
     // Log admin view if actor is admin
-    if (actor.role === 'admin' && actor.riderDbId) {
+    if (actor?.role === 'admin' && actor.riderDbId) {
       await fileService
         .logAdminFileView(actor.riderDbId, record.id, record.purpose, record.ownerId)
         .catch((err) => {

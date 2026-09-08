@@ -496,17 +496,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return ErrorStateWidget(
         title: "Couldn't load your notifications",
         message: notificationsError,
-        onRetry: () => ref
-            .read(engagementProvider.notifier)
-            .refreshNotifications(),
+        onRetry: () =>
+            ref.read(engagementProvider.notifier).refreshNotifications(),
       );
     }
     if (filtered.isEmpty) return _buildEmptyState();
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () async => ref
-          .read(engagementProvider.notifier)
-          .initEngagementData(),
+      onRefresh: () async =>
+          ref.read(engagementProvider.notifier).initEngagementData(),
       child: ListView.builder(
         addRepaintBoundaries: true,
         addAutomaticKeepAlives: false,

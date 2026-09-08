@@ -124,11 +124,14 @@ export const referralRewardJob = {
           note: `Referral reward for rider ${referredRiderId}`,
         }, tx);
 
+        // Unit decision: Reward.points stores POINT COUNTS, not paise
+        // (redeem converts ×100 → paise). Storing paise here read as
+        // 100× points and redeemed 100× cash. See referral.use-cases.
         await tx.reward.create({
           data: {
             riderId: referrer.id,
             title: `Referral bonus: New rider joined`,
-            points: REWARD_AMOUNT_PAISE,
+            points: Math.max(0, Math.round(REWARD_AMOUNT_PAISE / 100)),
           },
         });
       });

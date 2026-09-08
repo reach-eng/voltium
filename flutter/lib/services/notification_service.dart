@@ -5,6 +5,7 @@ import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_logger.dart';
 import '../gen/app_localizations.dart';
+import '../core/money/money.dart' show formatRupees;
 import 'cache_service.dart';
 
 class NotificationService {
@@ -238,10 +239,113 @@ class NotificationService {
     return null;
   }
 
-  // Fixed notification ID for the KYC push channel. Stable so
-  // a re-arrival replaces the previous KYC notification rather
-  // than stacking.
+  // Fixed notification IDs for push channels so re-arrivals replace rather than stack.
   static const int _kycPushNotificationId = 9100;
+  static const int _supportPushNotificationId = 9101;
+  static const int _paymentPushNotificationId = 9102;
+  static const int _rewardPushNotificationId = 9103;
+  static const int _birthdayPushNotificationId = 9104;
+  static const int _shiftPushNotificationId = 9105;
+
+  /// P1-4 (Stage A): render support reply push notification from structured data
+  static ({String title, String body})? renderSupportPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type != 'SUPPORT_REPLY') return null;
+    final ticketId = data['ticketId'] as String?;
+    return (
+      title: l10n.notif_supportReplyTitle,
+      body: ticketId != null && ticketId.isNotEmpty
+          ? l10n.notif_supportReplyBody(ticketId)
+          : l10n.notif_supportReplyBodyFallback,
+    );
+  }
+
+  /// P1-4 (Stage A): render payment due push notification from structured data
+  static ({String title, String body})? renderPaymentPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type != 'PAYMENT_DUE') return null;
+    final rawAmount = data['amountPaise'] ?? data['amount'];
+    num? paise;
+    if (rawAmount is num) {
+      paise = rawAmount;
+    } else if (rawAmount is String && rawAmount.isNotEmpty) {
+      paise = num.tryParse(rawAmount);
+    }
+    if (paise != null && paise > 0) {
+      final formatted = formatRupees(
+        paise / 100,
+        includeDecimals: (paise % 100 != 0),
+      );
+      return (
+        title: l10n.notif_paymentDueTitle,
+        body: l10n.notif_paymentDueBody(formatted),
+      );
+    }
+    return (
+      title: l10n.notif_paymentDueTitle,
+      body: l10n.notif_paymentDueBodyFallback,
+    );
+  }
+
+  /// P1-4 (Stage C): render reward milestone push notification from structured data
+  static ({String title, String body})? renderRewardPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type != 'REWARD' && type != 'REWARD_MILESTONE') return null;
+    final points = data['points']?.toString();
+    final milestoneTitle =
+        data['milestoneTitle']?.toString() ?? data['title']?.toString();
+    final hasDetails = points != null &&
+        points.isNotEmpty &&
+        milestoneTitle != null &&
+        milestoneTitle.isNotEmpty;
+    return (
+      title: l10n.notif_rewardMilestoneTitle,
+      body: hasDetails
+          ? l10n.notif_rewardMilestoneBody(points, milestoneTitle)
+          : l10n.notif_rewardMilestoneBodyFallback,
+    );
+  }
+
+  /// P1-4 (Stage C): render birthday wish push notification from structured data
+  static ({String title, String body})? renderBirthdayPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type != 'BIRTHDAY_WISH') return null;
+    final name = data['name']?.toString();
+    return (
+      title: name != null && name.isNotEmpty
+          ? l10n.notif_birthdayWishTitle(name)
+          : l10n.notif_birthdayWishTitleFallback,
+      body: l10n.notif_birthdayWishBody,
+    );
+  }
+
+  /// P1-4 (Stage C): render shift reminder push notification from structured data
+  static ({String title, String body})? renderShiftPushFromData(
+    Map<String, dynamic> data,
+    AppLocalizations l10n,
+  ) {
+    final type = data['type'] as String?;
+    if (type != 'SHIFT_REMINDER') return null;
+    final startTime = data['startTime']?.toString();
+    return (
+      title: l10n.notif_shiftReminderTitle,
+      body: startTime != null && startTime.isNotEmpty
+          ? l10n.notif_shiftReminderBody(startTime)
+          : l10n.notif_shiftReminderBodyFallback,
+    );
+  }
 
   // P2-12 follow-up (PR-H, 2026-08-28): the FCM-to-local-notification
   // bridge. The server's KYC push is delivered as an FCM data
@@ -278,6 +382,106 @@ class NotificationService {
       return true;
     } catch (e) {
       appDebug('NotificationService: showKycPushFromFcm failed: $e');
+      return false;
+    }
+  }
+
+  /// P1-4 (Stage A): show local notification for support reply from FCM data message
+  static Future<bool> showSupportPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderSupportPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _supportPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'support_ticket_${data['ticketId'] ?? ''}',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showSupportPushFromFcm failed: $e');
+      return false;
+    }
+  }
+
+  /// P1-4 (Stage A): show local notification for payment due from FCM data message
+  static Future<bool> showPaymentPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderPaymentPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _paymentPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'wallet',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showPaymentPushFromFcm failed: $e');
+      return false;
+    }
+  }
+
+  /// P1-4 (Stage C): show local notification for reward milestone from FCM data message
+  static Future<bool> showRewardPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderRewardPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _rewardPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'rewards',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showRewardPushFromFcm failed: $e');
+      return false;
+    }
+  }
+
+  /// P1-4 (Stage C): show local notification for birthday wish from FCM data message
+  static Future<bool> showBirthdayPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderBirthdayPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _birthdayPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'birthday',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showBirthdayPushFromFcm failed: $e');
+      return false;
+    }
+  }
+
+  /// P1-4 (Stage C): show local notification for shift reminder from FCM data message
+  static Future<bool> showShiftPushFromFcm(Map<String, dynamic> data) async {
+    try {
+      final localeCode = CacheService().getLocale() ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
+      final result = renderShiftPushFromData(data, l10n);
+      if (result == null) return false;
+      await NotificationService().showNotification(
+        id: _shiftPushNotificationId,
+        title: result.title,
+        body: result.body,
+        payload: 'shifts',
+      );
+      return true;
+    } catch (e) {
+      appDebug('NotificationService: showShiftPushFromFcm failed: $e');
       return false;
     }
   }

@@ -22,6 +22,7 @@ export interface RiderKycDocsTabProps {
   setConfirmKycAction: (
     action: { rider: Rider; action: 'approve' | 'reject' | 'info_required' } | null,
   ) => void;
+  canKycApprove?: boolean;
 }
 
 export function RiderKycDocsTab({
@@ -36,6 +37,7 @@ export function RiderKycDocsTab({
   handleDeleteKycDoc,
   handleBulkDeleteKycDocs,
   setConfirmKycAction,
+  canKycApprove = true,
 }: RiderKycDocsTabProps) {
   return (
     <TabsContent
@@ -87,6 +89,8 @@ export function RiderKycDocsTab({
             <Button
               size="sm"
               className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+              disabled={canKycApprove === false}
+              title={canKycApprove === false ? 'Requires kyc_approve permission' : undefined}
               onClick={() =>
                 setConfirmKycAction({ rider: rider, action: 'approve' })
               }
@@ -97,6 +101,8 @@ export function RiderKycDocsTab({
               size="sm"
               variant="outline"
               className="h-7 text-xs border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10"
+              disabled={canKycApprove === false}
+              title={canKycApprove === false ? 'Requires kyc_approve permission' : undefined}
               onClick={() =>
                 setConfirmKycAction({ rider: rider, action: 'info_required' })
               }
@@ -107,6 +113,8 @@ export function RiderKycDocsTab({
               size="sm"
               variant="destructive"
               className="h-7 text-xs"
+              disabled={canKycApprove === false}
+              title={canKycApprove === false ? 'Requires kyc_approve permission' : undefined}
               onClick={() =>
                 setConfirmKycAction({ rider: rider, action: 'reject' })
               }

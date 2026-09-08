@@ -10,7 +10,7 @@ export { updateProfileSchema };
 export const updateRiderSchema = z.object({
   id: z.string().min(1),
   guarantorStatus: z
-    .enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'])
+    .enum(['PENDING', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED', 'REPLACED'])
     .nullable()
     .optional(),
   guarantorName: z.string().optional(),

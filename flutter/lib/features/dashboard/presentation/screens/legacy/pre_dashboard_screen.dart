@@ -321,7 +321,9 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
         delay: 250,
         child: TopUpRequestSentCard(
           rider: rider,
-          topUpAmount: rider.requiredPaymentAmount(walletMinTopup).toInt(),
+          // P2: round, don't truncate — toInt() understated the due
+          // amount by up to ₹1.
+          topUpAmount: rider.requiredPaymentAmount(walletMinTopup).round(),
           onResubmit: () => widget.onStepNavigation(AuthState.topUpAmount),
         ),
       );

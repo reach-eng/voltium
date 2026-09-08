@@ -926,5 +926,27 @@
   "pickupHub_fetchVehiclesFailed": "वाहन लोड करने में विफल: {error}",
   "@pickupHub_fetchVehiclesFailed": {
     "placeholders": { "error": { "type": "String" } }
-  }
+  },
+  "txtenterGuarantorNameBeforeOtp": "OTP भेजने से पहले गारंटर का नाम दर्ज करें।",
+  "txtverifyGuarantorPhoneBeforeSave": "सहेजने से पहले नए गारंटर फ़ोन नंबर को सत्यापित करें।",
+  "txtreverifyGuarantorPhoneBeforeSave": "सहेजने से पहले कृपया गारंटर फ़ोन नंबर को फिर से सत्यापित करें।",
+  "txtdiscardChangesTitle": "परिवर्तन छोड़ें?",
+  "txtdiscardChangesBody": "आपके पास बिना सहेजे गए परिवर्तन हैं। क्या आप निश्चित रूप से उन्हें छोड़कर बाहर निकलना चाहते हैं?",
+  "txtkeepEditing": "संपादन जारी रखें",
+  "txtenterAValidEmailAddress": "एक मान्य ईमेल पता दर्ज करें",
+  "notif_supportReplyTitle": "सपोर्ट टिकट अपडेट 💬",
+  "notif_supportReplyBody": "टिकट #{ticketId} पर नया उत्तर प्राप्त हुआ है।",
+  "notif_supportReplyBodyFallback": "आपके सपोर्ट टिकट पर नया उत्तर प्राप्त हुआ है।",
+  "notif_paymentDueTitle": "भुगतान अनुस्मारक 💳",
+  "notif_paymentDueBody": "आपका {amount} का किराया भुगतान देय है।",
+  "notif_paymentDueBodyFallback": "आपका किराया भुगतान देय है। कृपया अपना वॉलेट रिचार्ज करें।",
+  "notif_rewardMilestoneTitle": "पुरस्कार प्राप्त हुआ! 🏆",
+  "notif_rewardMilestoneBody": "आपने {milestoneTitle} के लिए {points} अंक अर्जित किए हैं।",
+  "notif_rewardMilestoneBodyFallback": "आपने पुरस्कार अंक अर्जित किए हैं! अपने पुरस्कार देखें।",
+  "notif_birthdayWishTitle": "जन्मदिन मुबारक हो, {name}! 🎂",
+  "notif_birthdayWishTitleFallback": "जन्मदिन मुबारक हो! 🎂",
+  "notif_birthdayWishBody": "आपका दिन शानदार रहे। हमारी ओर से विशेष जन्मदिन पुरस्कार का आनंद लें!",
+  "notif_shiftReminderTitle": "आगामी शिफ्ट ⏰",
+  "notif_shiftReminderBody": "आपकी शिफ्ट {startTime} पर शुरू होती है। कृपया तैयार रहें!",
+  "notif_shiftReminderBodyFallback": "आपकी शिफ्ट जल्द ही शुरू होने वाली है। कृपया तैयार रहें!"
 }

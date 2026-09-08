@@ -274,3 +274,20 @@ export class TransactionError extends Error {
     this.code = code;
   }
 }
+
+const KNOWN_LEDGER_PURPOSES = new Set([
+  'TOP_UP',
+  'REWARD',
+  'REFUND',
+  'REVERSAL',
+  'RENT_PAYMENT',
+]);
+
+export function ledgerCategoryForPurpose(purpose?: string | null): string {
+  if (!purpose) return 'ADMIN_ADJUSTMENT';
+  const normalized = purpose.trim().toUpperCase();
+  if (KNOWN_LEDGER_PURPOSES.has(normalized)) {
+    return normalized;
+  }
+  return 'ADMIN_ADJUSTMENT';
+}

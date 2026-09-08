@@ -9,30 +9,39 @@ import { formatLogTime, type AuditLogEntry } from './types';
 interface ActivityStreamProps {
   logs: AuditLogEntry[];
   adminNames: Map<string, string>;
+  /** P1: role lacks audit access — say so instead of "No recent activity". */
+  accessDenied?: boolean;
 }
 
-function getActionDot(action: string): string {
-  if (action.includes('delete')) return 'bg-rose-500';
-  if (action.includes('update')) return 'bg-primary';
+function getActionDot(action: string | null | undefined): string {
+  const a = (action ?? '').toLowerCase();
+  if (a.includes('delete') || a.includes('remove')) return 'bg-rose-500';
+  if (a.includes('update') || a.includes('edit')) return 'bg-primary';
   return 'bg-emerald-500';
 }
 
-function humanizeAction(action: string): string {
+function humanizeAction(action: string | null | undefined): string {
+  if (!action) return 'Unknown action';
   return action
-    .split('.')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .split(/[._]/)
+    .map((w) =>
+      // P2: keep well-known acronyms (SOS) instead of "Sos".
+      w.toUpperCase() === 'SOS'
+        ? 'SOS'
+        : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+    )
     .join(' ');
 }
 
 function actorName(log: AuditLogEntry, adminNames: Map<string, string>): string {
   if (!log.actorId) return 'System';
-  return adminNames.get(log.actorId) || `Admin ${log.actorId.slice(-4)}`;
+  return adminNames.get(log.actorId) || 'Admin';
 }
 
 /**
  * R3.7z split — audit-log activity stream sidebar.
  */
-export function ActivityStream({ logs, adminNames }: ActivityStreamProps) {
+export function ActivityStream({ logs, adminNames, accessDenied = false }: ActivityStreamProps) {
   return (
     <Card className="rounded-2xl border-border/50 shadow-sm overflow-hidden">
       <CardHeader className="border-b bg-muted/20 px-6 py-4 flex flex-row items-center justify-between">
@@ -50,7 +59,12 @@ export function ActivityStream({ logs, adminNames }: ActivityStreamProps) {
       <CardContent className="p-0">
         <ScrollArea className="h-[600px]">
           <div className="p-4 space-y-6">
-            {logs.length === 0 ? (
+            {accessDenied ? (
+              <div className="text-center py-10 opacity-40">
+                <Clock className="w-10 h-10 mx-auto mb-2" />
+                <p className="text-sm">Your role has no access to the audit log.</p>
+              </div>
+            ) : logs.length === 0 ? (
               <div className="text-center py-10 opacity-40">
                 <Clock className="w-10 h-10 mx-auto mb-2" />
                 <p className="text-sm">No recent activity</p>
@@ -71,9 +85,9 @@ export function ActivityStream({ logs, adminNames }: ActivityStreamProps) {
                         {humanizeAction(log.action)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {log.entity}{' '}
+                        {log.entity ?? 'entity'}{' '}
                         <span className="font-mono text-[10px] opacity-70">
-                          #{log.entityId.slice(-6)}
+                          #{String(log.entityId ?? '').slice(-6) || '—'}
                         </span>
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">

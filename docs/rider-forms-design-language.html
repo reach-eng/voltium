@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Voltium Forms · Kinetic Precision — Flutter Form Redesigns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   PRINT DOCUMENT — A4 portrait, 4 pages
+   Page 1  Design-language spec (tokens + components)
+   Page 2  01 Rider Details Form
+   Page 3  02 Onboarding Form (Intent of Use)
+   Page 4  03 Pickup Form
+   ══════════════════════════════════════════════════════════════ */
+@page { size: A4 portrait; margin: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --vf-primary:#0053C1; --vf-primary-deep:#003E92; --vf-grad-b:#2F6DDE;
+  --success:#16A34A; --success-surface:#DCFCE7;
+  --warning:#F59E0B; --warning-surface:#FEF3C7;
+  --error:#EF4444;   --error-surface:#FEF2F2;
+  --surface:#F7F9FB; --card:#FFFFFF; --input-fill:#F1F5F9; --icon-bg:#F1F5F9;
+  --on-surface:#101828; --on-surface-variant:#475467; --on-surface-muted:#667085;
+  --divider:#E0E3E5; --outline:#D0D5DD; --outline-variant:#E2E8F0;
+  --dark-surface:#0F172A; --dark-card:#1E293B; --dark-on:#F1F5F9;
+  --dark-muted:#94A3B8; --dark-div:#334155; --dark-input:#1E293B;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+html,body{background:#fff}
+body{font-family:'Plus Jakarta Sans',sans-serif;color:var(--on-surface);font-size:10px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:210mm;height:297mm;page-break-after:always;position:relative;overflow:hidden;padding:12mm 11mm;display:flex;flex-direction:column;background:#fff}
+.page:last-child{page-break-after:auto}
+
+/* ── shared header/footer ─────────────────────────────────────── */
+.pg-head{display:flex;align-items:center;gap:8px;margin-bottom:5mm}
+.pg-head .mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--vf-primary),var(--vf-grad-b));display:flex;align-items:center;justify-content:center}
+.pg-head .mark svg{width:12px;height:12px;fill:#fff}
+.pg-head b{font-size:12px;font-weight:800;letter-spacing:-.2px}
+.pg-head .crumb{margin-left:auto;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--on-surface-muted)}
+.pg-foot{margin-top:auto;padding-top:3mm;border-top:1px solid var(--divider);display:flex;font-size:7.5px;font-weight:700;color:var(--on-surface-muted)}
+.pg-foot span:last-child{margin-left:auto}
+
+/* ── cover ────────────────────────────────────────────────────── */
+.hero{background:linear-gradient(135deg,var(--vf-primary) 0%,var(--vf-grad-b) 100%);border-radius:14px;padding:9mm;color:#fff;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero::before{content:'';position:absolute;right:40px;bottom:-50px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero .kick{font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.hero h1{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.12;margin:6px 0 7px}
+.hero p{font-size:9.5px;font-weight:500;max-width:130mm;opacity:.92;line-height:1.6}
+.hero .scope{display:flex;gap:5px;margin-top:6mm;flex-wrap:wrap}
+.hero .scope span{font-size:7.5px;font-weight:800;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);padding:4px 9px;border-radius:999px}
+.sect-t{font-size:11px;font-weight:800;letter-spacing:-.2px;margin:6mm 0 3mm;display:flex;align-items:center;gap:6px}
+.sect-t::after{content:'';flex:1;height:1px;background:var(--divider)}
+.sect-t .no{font-size:8px;font-weight:800;color:var(--vf-primary);letter-spacing:1px}
+
+/* token grid */
+.tok-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm}
+.tok-card{border:1px solid var(--outline-variant);border-radius:10px;padding:3.5mm}
+.tok-card h4{font-size:8px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--on-surface-muted);margin-bottom:2.5mm}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:2mm}
+.sw{border-radius:7px;overflow:hidden;border:1px solid var(--outline-variant)}
+.sw i{display:block;height:22px}
+.sw em{display:block;font-style:normal;font-size:6px;font-weight:700;padding:1.5px 3px;line-height:1.35;color:var(--on-surface-variant)}
+.sw em b{display:block;color:var(--on-surface);font-size:6.2px;letter-spacing:.1px}
+.type-row{display:flex;align-items:baseline;gap:3mm;border-bottom:1px dashed var(--divider);padding:1.4mm 0}
+.type-row:last-child{border-bottom:none}
+.type-row .lbl{font-size:6.5px;font-weight:800;color:var(--on-surface-muted);width:26mm;flex-shrink:0;letter-spacing:.4px}
+.radius-row{display:flex;gap:3mm;align-items:flex-end}
+.radius-demo{display:flex;flex-direction:column;align-items:center;gap:1mm}
+.radius-demo i{display:block;width:16mm;height:11mm;background:var(--icon-bg);border:1.5px solid var(--vf-primary)}
+.radius-demo em{font-style:normal;font-size:6.5px;font-weight:700;color:var(--on-surface-variant)}
+
+/* component anatomy */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4mm}
+.comp-card{border:1px solid var(--outline-variant);border-radius:10px;padding:3.5mm}
+.comp-card h4{font-size:8px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--on-surface-muted);margin-bottom:2.5mm}
+.demo-btn{height:11mm;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin-bottom:2mm}
+.demo-btn.pri{background:linear-gradient(135deg,var(--vf-primary),var(--vf-grad-b));color:#fff;box-shadow:0 4px 12px rgba(0,83,193,.25)}
+.demo-btn.des{background:var(--error);color:#fff}
+.demo-btn.sec{background:var(--vf-primary-surface);color:var(--vf-primary);border:1px solid var(--outline)}
+.demo-btn.gho{color:var(--vf-primary);border:1px dashed var(--outline);background:#fff}
+.comp-note{font-size:7px;color:var(--on-surface-variant);line-height:1.55}
+.demo-field{position:relative;margin-bottom:2mm}
+.demo-field svg{position:absolute;left:8px;top:9px;width:10px;height:10px;stroke:var(--on-surface-muted);stroke-width:2;fill:none}
+.demo-field .box{border:1.5px solid transparent;background:var(--input-fill);border-radius:9px;height:10.5mm;display:flex;align-items:center;padding:0 8px 0 24px;font-size:8.5px;font-weight:600;color:var(--on-surface-muted)}
+.demo-field.focus .box{border-color:var(--vf-primary);background:#fff;box-shadow:0 0 0 2.5px rgba(0,83,193,.12)}
+.demo-field.focus svg{stroke:var(--vf-primary)}
+.demo-field .lab{font-size:6.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--on-surface-variant);margin-bottom:1.2mm}
+.rule{border-left:2.5px solid var(--vf-primary);background:var(--surface);border-radius:0 8px 8px 0;padding:2.5mm 3mm;font-size:7.5px;font-weight:600;color:var(--on-surface-variant);line-height:1.6}
+.rule b{color:var(--on-surface)}
+
+/* ── form pages ───────────────────────────────────────────────── */
+.form-head{display:flex;align-items:flex-start;gap:4mm;margin-bottom:5mm}
+.form-no{font-size:22px;font-weight:800;letter-spacing:-1px;color:var(--vf-primary);line-height:1;opacity:.25}
+.form-title h2{font-size:16px;font-weight:800;letter-spacing:-.4px;line-height:1.15}
+.form-title p{font-size:8.5px;color:var(--on-surface-muted);margin-top:1mm;max-width:120mm;line-height:1.55}
+.src-tag{margin-left:auto;font-size:7px;font-weight:800;letter-spacing:.5px;color:var(--vf-primary);background:var(--vf-primary-surface);border:1px solid rgba(0,83,193,.18);padding:3px 8px;border-radius:999px;white-space:nowrap}
+
+.mocks{display:flex;gap:5mm;justify-content:center}
+.phone-wrap{zoom:.66}
+.phone{width:300px;height:600px;border-radius:30px;background:var(--surface);border:6px solid #0F172A;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 14px 34px rgba(15,23,42,.16)}
+.phone .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:14px;background:#0F172A;border-radius:0 0 10px 10px;z-index:5}
+.p-top{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--outline-variant);padding:20px 12px 8px;position:relative}
+.p-top-row{display:flex;align-items:center;gap:6px}
+.p-brand{width:22px;height:22px;border-radius:8px;background:linear-gradient(135deg,var(--vf-primary),var(--vf-grad-b));display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.p-brand svg{width:11px;height:11px;fill:#fff}
+.p-top h5{font-size:10px;font-weight:800;letter-spacing:-.2px}
+.p-top .p-sub{font-size:6px;font-weight:700;color:var(--on-surface-muted);letter-spacing:.5px}
+.p-chip{margin-left:auto;font-size:7px;font-weight:800;color:var(--vf-primary);background:var(--vf-primary-surface);padding:2px 7px;border-radius:999px}
+.p-chip.ok{color:var(--success);background:var(--success-surface)}
+.p-line{height:2px;background:var(--outline-variant);margin-top:6px;border-radius:2px;overflow:hidden}
+.p-line i{display:block;height:100%;background:linear-gradient(90deg,var(--vf-primary),var(--vf-grad-b))}
+.p-line i.ok{background:var(--success)}
+.p-pills{display:flex;gap:4px;padding:6px 10px 4px;background:rgba(255,255,255,.92)}
+.p-pill{flex:1;display:flex;align-items:center;gap:4px;border:1px solid var(--outline-variant);background:#fff;border-radius:9px;padding:4px 6px}
+.p-pill .d{width:13px;height:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:800;background:var(--icon-bg);color:var(--on-surface-muted);border:1.5px solid var(--outline-variant);flex-shrink:0}
+.p-pill b{font-size:6.5px;font-weight:800;color:var(--on-surface-muted);line-height:1.15}
+.p-pill.on{border-color:var(--vf-primary);background:var(--vf-primary-surface)}
+.p-pill.on .d{background:var(--vf-primary);border-color:var(--vf-primary);color:#fff}
+.p-pill.on b{color:var(--vf-primary)}
+.p-pill.done .d{background:var(--success);border-color:var(--success);color:#fff}
+.p-body{flex:1;overflow:hidden;padding:10px 12px}
+.p-panel{background:var(--card);border:1px solid var(--outline-variant);border-radius:14px;padding:10px;height:100%;display:flex;flex-direction:column}
+.p-kick{font-size:5.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--vf-primary);margin-bottom:2px}
+.p-h{font-size:12px;font-weight:800;letter-spacing:-.3px;line-height:1.15}
+.p-sh{font-size:6.5px;color:var(--on-surface-muted);margin-top:2px;line-height:1.45}
+.f-lab{font-size:5.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--on-surface-variant);margin-bottom:1.5px}
+.f-lab .rq{color:var(--error)}
+.f-lab .op{color:var(--on-surface-muted);text-transform:none;letter-spacing:.2px;font-weight:600}
+.f-box{position:relative;margin-bottom:4.5px}
+.f-box svg{position:absolute;left:6px;top:6.5px;width:8px;height:8px;stroke:var(--on-surface-muted);stroke-width:2;fill:none}
+.f-box .in{background:var(--input-fill);border-radius:8px;height:17px;display:flex;align-items:center;padding:0 6px 0 19px;font-size:7.5px;font-weight:600}
+.f-box .in.ph{color:var(--on-surface-muted);font-weight:500}
+.f-box .in.val{color:var(--on-surface);font-weight:600}
+.f-box.ok .in{border:1px solid rgba(22,163,74,.55);position:relative}
+.f-box.ok .in::after{content:'✓';position:absolute;right:6px;color:var(--success);font-size:8px;font-weight:800}
+.f-box.focus .in{border:1.5px solid var(--vf-primary);background:#fff;box-shadow:0 0 0 2px rgba(0,83,193,.12)}
+.f-box.focus svg{stroke:var(--vf-primary)}
+.f-2col{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.up-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4.5px}
+.up{border:1.2px dashed var(--outline);border-radius:9px;background:var(--input-fill);height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.up .cam{width:15px;height:15px;border-radius:6px;background:#fff;box-shadow:0 2px 6px rgba(15,23,42,.1);display:flex;align-items:center;justify-content:center}
+.up .cam svg{position:static;width:8px;height:8px;stroke:var(--vf-primary);stroke-width:2;fill:none}
+.up b{font-size:6px;font-weight:800}
+.up span{font-size:5px;font-weight:600;color:var(--on-surface-muted)}
+.up.full{grid-column:1/-1;flex-direction:row;gap:7px;height:34px}
+.up.done{border-style:solid;border-color:rgba(22,163,74,.45);background:rgba(220,252,231,.5)}
+.p-bbar{background:#fff;border-top:1px solid var(--outline-variant);padding:6px 10px;display:flex;gap:5px;align-items:center}
+.p-btn{flex:1;height:22px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700}
+.p-btn.pri{background:linear-gradient(135deg,var(--vf-primary),var(--vf-grad-b));color:#fff;box-shadow:0 3px 9px rgba(0,83,193,.28)}
+.p-btn.gho{background:var(--icon-bg);color:var(--on-surface-muted);flex:0 0 56px}
+.p-btn.dis{background:var(--outline-variant);color:var(--on-surface-muted)}
+.sig{border:1.2px dashed var(--outline);border-radius:9px;overflow:hidden}
+.sig .sig-h{background:var(--input-fill);padding:4px 7px;font-size:6px;font-weight:800;display:flex;align-items:center}
+.sig .sig-h span{margin-left:auto;font-size:5px;font-weight:800;color:var(--on-surface-variant);border:1px solid var(--outline-variant);border-radius:999px;padding:1px 5px}
+.sig .pad{height:52px;background:repeating-linear-gradient(0deg,transparent,transparent 13px,var(--divider) 13px,var(--divider) 14px)}
+.chk-row{display:flex;gap:5px;align-items:flex-start;margin:5px 0}
+.chk{width:9px;height:9px;border-radius:3px;border:1.5px solid var(--outline);background:#fff;flex-shrink:0;margin-top:1px}
+.chk.on{background:var(--vf-primary);border-color:var(--vf-primary);position:relative}
+.chk.on::after{content:'✓';position:absolute;inset:0;color:#fff;font-size:6px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.intent-card{border:1.5px solid var(--outline-variant);border-radius:11px;padding:8px;margin-bottom:6px;display:flex;gap:7px;align-items:flex-start}
+.intent-card.sel{border-color:var(--vf-primary);background:var(--vf-primary-surface);box-shadow:0 3px 10px rgba(0,83,193,.12)}
+.intent-ic{width:22px;height:22px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.intent-ic svg{width:11px;height:11px;stroke-width:2;fill:none}
+.intent-card b{font-size:8px;font-weight:800;display:block}
+.intent-card span{font-size:6px;color:var(--on-surface-muted);line-height:1.45;display:block;margin-top:1px}
+.p-note{background:var(--vf-primary-surface);border:1px solid rgba(0,83,193,.16);border-radius:9px;padding:5px 7px;font-size:5.8px;color:var(--on-surface-variant);line-height:1.5;display:flex;gap:4px}
+.p-note svg{width:7px;height:7px;stroke:var(--vf-primary);stroke-width:2;fill:none;flex-shrink:0;margin-top:.5px}
+.p-status{display:flex;align-items:center;gap:3px;font-size:6.5px;font-weight:600;margin-bottom:4px}
+.p-status .ck{color:var(--success);font-weight:800}
+
+/* spec table on form pages */
+.spec{margin-top:5mm}
+.spec-t{font-size:9px;font-weight:800;letter-spacing:-.1px;margin-bottom:2.5mm}
+.spec-cols{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.spec-card{border:1px solid var(--outline-variant);border-radius:10px;padding:3.5mm}
+.spec-card h4{font-size:7.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--on-surface-muted);margin-bottom:2mm}
+.chips{display:flex;flex-wrap:wrap;gap:1.6mm}
+.chip{font-size:7px;font-weight:700;border:1px solid var(--outline-variant);background:var(--surface);border-radius:999px;padding:2px 7px;color:var(--on-surface-variant)}
+.chip.req{border-color:rgba(239,68,68,.3);color:var(--error);background:var(--error-surface)}
+.chip.opt{color:var(--on-surface-muted)}
+.notes{list-style:none}
+.notes li{font-size:7.5px;font-weight:600;color:var(--on-surface-variant);padding:1.4mm 0 1.4mm 4mm;position:relative;line-height:1.5;border-bottom:1px dashed var(--divider)}
+.notes li:last-child{border-bottom:none}
+.notes li::before{content:'';position:absolute;left:0;top:2.9mm;width:2mm;height:2mm;border-radius:50%;background:var(--vf-primary);opacity:.85}
+.dl-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:6.5px;font-weight:600;background:var(--surface);border:1px solid var(--outline-variant);border-radius:4px;padding:0 3px;color:var(--vf-primary-deep)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ PAGE 1 · DESIGN LANGUAGE ═══════════════════ -->
+<div class="page">
+  <div class="pg-head">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+    <b>Voltium Forms · Kinetic Precision</b>
+    <span class="crumb">Flutter form redesigns — spec for implementation</span>
+  </div>
+
+  <div class="hero">
+    <p class="kick">Design-Language Specification · v1.0</p>
+    <h1>Three Flutter forms,<br>reimagined in one language.</h1>
+    <p>Rider Details, Onboarding (Intent of Use) and Pickup — rebuilt on the Voltium Kinetic Precision system already proven in the web admin and the rider-details HTML explorations. Same tokens, same components, same motion curve. This document is the implementation reference for the Flutter forms; application code is intentionally untouched.</p>
+    <div class="scope">
+      <span>01 · Rider Details</span><span>02 · Onboarding / Intent</span><span>03 · Pickup</span><span>Dark mode first-class</span><span>WCAG AA pairs</span>
+    </div>
+  </div>
+
+  <div class="sect-t"><span class="no">A</span> CORE TOKENS</div>
+  <div class="tok-grid">
+    <div class="tok-card">
+      <h4>Color · light / dark</h4>
+      <div class="swatches">
+        <div class="sw"><i style="background:#0053C1"></i><em><b>primary</b>#0053C1</em></div>
+        <div class="sw"><i style="background:#16A34A"></i><em><b>success</b>#16A34A</em></div>
+        <div class="sw"><i style="background:#F59E0B"></i><em><b>warning</b>#F59E0B</em></div>
+        <div class="sw"><i style="background:#EF4444"></i><em><b>error</b>#EF4444</em></div>
+        <div class="sw"><i style="background:#F7F9FB"></i><em><b>surface</b>#F7F9FB</em></div>
+        <div class="sw"><i style="background:#F1F5F9"></i><em><b>input fill</b>#F1F5F9</em></div>
+        <div class="sw"><i style="background:#0F172A"></i><em><b>dark surface</b>#0F172A</em></div>
+        <div class="sw"><i style="background:#1E293B"></i><em><b>dark card</b>#1E293B</em></div>
+        <div class="sw"><i style="background:#34D399"></i><em><b>dark success</b>#34D399</em></div>
+      </div>
+      <p style="font-size:6.5px;color:var(--on-surface-variant);margin-top:2mm;line-height:1.5">Theme-dependent tokens <b>must</b> read via <span class="dl-tag">AppColors.of(context)</span> (ThemeExtension). Brand hues may stay static.</p>
+    </div>
+    <div class="tok-card">
+      <h4>Typography · Plus Jakarta Sans</h4>
+      <div class="type-row"><span class="lbl">headingLarge</span><span style="font-size:15px;font-weight:800;letter-spacing:-.4px">Ready to Roll?</span></div>
+      <div class="type-row"><span class="lbl">headingMedium</span><span style="font-size:13px;font-weight:800;letter-spacing:-.3px">Tell us about yourself</span></div>
+      <div class="type-row"><span class="lbl">titleMedium</span><span style="font-size:11px;font-weight:700">Section headers</span></div>
+      <div class="type-row"><span class="lbl">bodyMedium</span><span style="font-size:10px;font-weight:500">Default body &amp; helper text</span></div>
+      <div class="type-row"><span class="lbl">labelLarge</span><span style="font-size:9.5px;font-weight:700">Button labels · w700</span></div>
+      <div class="type-row"><span class="lbl">overline</span><span style="font-size:7.5px;font-weight:800;letter-spacing:1.2px">STEP 1 — PERSONAL</span></div>
+      <div class="type-row"><span class="lbl">codeMedium</span><span class="mono" style="font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:600">SBIN0001234</span></div>
+    </div>
+    <div class="tok-card">
+      <h4>Geometry &amp; motion</h4>
+      <div class="radius-row">
+        <div class="radius-demo"><i style="border-radius:6px"></i><em>sm 8</em></div>
+        <div class="radius-demo"><i style="border-radius:9px"></i><em>md 12</em></div>
+        <div class="radius-demo"><i style="border-radius:13px"></i><em>lg 16</em></div>
+        <div class="radius-demo"><i style="border-radius:20px"></i><em>xl 24</em></div>
+        <div class="radius-demo"><i style="border-radius:999px"></i><em>full pills</em></div>
+      </div>
+      <p style="font-size:6.5px;color:var(--on-surface-variant);margin:2.5mm 0;line-height:1.5">Inputs use <b>lg 16</b> · cards <b>xl 24</b> · buttons &amp; chips <b>full</b>. Field height <b>≥ 50dp</b> touch target.</p>
+      <div class="rule" style="font-size:6.8px"><b>Motion:</b> entrance/press 150–300ms · curve <span class="dl-tag">easeOutCubic</span> ≈ web [.22,1,.36,1] · success pops <span class="dl-tag">elasticOut</span> · infinite loops must gate on <span class="dl-tag">MediaQuery.disableAnimationsOf</span>.</div>
+    </div>
+  </div>
+
+  <div class="sect-t"><span class="no">B</span> SHARED COMPONENTS</div>
+  <div class="comp-grid">
+    <div class="comp-card">
+      <h4>VoltiumButton · 4 variants</h4>
+      <div class="demo-btn pri">Continue</div>
+      <div class="demo-btn des">End Rental</div>
+      <div class="demo-btn sec">Maybe later</div>
+      <div class="demo-btn gho">Learn more</div>
+      <p class="comp-note" style="margin-top:2mm">Primary = gradient CTA · <b>destructive</b> = solid error · secondary = tonal outline · ghost = text. Loading keeps label width, swaps spinner, disables taps. Semantics(button, label) built in.</p>
+    </div>
+    <div class="comp-card">
+      <h4>Field anatomy</h4>
+      <div class="demo-field">
+        <div class="lab">Full name <span style="color:var(--error)">*</span></div>
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="box">e.g. Rohan Sharma</div>
+      </div>
+      <div class="demo-field focus">
+        <div class="lab">Ifsc code <span style="color:var(--error)">*</span></div>
+        <svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5Z"/></svg>
+        <div class="box" style="font-family:'JetBrains Mono',monospace;font-size:8px">SBIN0001234</div>
+      </div>
+      <p class="comp-note">Lead icon · 1.5px resting border (visible in light) · focus adds 2px primary + halo · valid = green edge + check · error = red fill + shake-in message.</p>
+    </div>
+    <div class="comp-card">
+      <h4>Capture tile &amp; status</h4>
+      <div style="border:1.2px dashed var(--outline);border-radius:9px;background:var(--input-fill);height:17mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1mm;margin-bottom:2mm">
+        <div style="width:8mm;height:8mm;border-radius:3.5mm;background:#fff;box-shadow:0 2px 6px rgba(15,23,42,.12);display:flex;align-items:center;justify-content:center">
+          <svg style="width:4.5mm;height:4.5mm;stroke:var(--vf-primary);stroke-width:2;fill:none" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <b style="font-size:7px">Take photo</b><span style="font-size:6px;color:var(--on-surface-muted)">or choose from gallery</span>
+      </div>
+      <p class="comp-note">Camera-first (<span class="dl-tag">capture=environment</span> spirit: camera source preferred), preview with filename/size badge, remove affordance, success tint when attached. Skeletons over spinners for list loads.</p>
+    </div>
+  </div>
+
+  <div class="rule" style="margin-top:4mm"><b>Dark mode contract:</b> every screen must pass with <span class="dl-tag">ThemeColors.dark</span> / <span class="dl-tag">amoled</span> — surfaces <span class="dl-tag">colors.card</span> (never Colors.white), muted text #94A3B8 (7.0:1 on #0F172A), success/error/warning use dark-tuned token values. <b>Light-mode statics of theme-dependent tokens are a bug.</b></div>
+
+  <div class="pg-foot"><span>Voltium · Kinetic Precision</span><span>Page 1 of 4 · Tokens &amp; components</span></div>
+</div>
+
+<!-- ═══════════════════ PAGE 2 · RIDER DETAILS ═══════════════════ -->
+<div class="page">
+  <div class="pg-head">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+    <b>Voltium Forms · Kinetic Precision</b>
+    <span class="crumb">Form 01 / 03</span>
+  </div>
+
+  <div class="form-head">
+    <div class="form-no">01</div>
+    <div class="form-title">
+      <h2>Rider Details Form</h2>
+      <p>The KYC workhorse: personal identity, documents, payout account and biometrics — restructured into three gated steps with a persistent completeness meter, autosaved draft and a review-before-submit gate.</p>
+    </div>
+    <span class="src-tag">user_onboarding_screen.dart</span>
+  </div>
+
+  <div class="mocks">
+    <!-- Phone 1: Personal -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Rider Details</h5><div class="p-sub">KYC · STEP 2 OF 5</div></div>
+          <span class="p-chip">29%</span>
+        </div>
+        <div class="p-line"><i style="width:29%"></i></div>
+        <div class="p-pills">
+          <div class="p-pill on"><span class="d">1</span><b>Personal</b></div>
+          <div class="p-pill"><span class="d">2</span><b>Docs &amp; Bank</b></div>
+          <div class="p-pill"><span class="d">3</span><b>Identity</b></div>
+        </div>
+      </div>
+      <div class="p-body"><div class="p-panel">
+        <div class="p-kick">Step 1 — Personal</div>
+        <div class="p-h">Tell us about yourself</div>
+        <div class="p-sh">Exactly as printed on your government ID.</div>
+        <div style="height:5px"></div>
+        <div class="f-lab">Full name <span class="rq">*</span></div>
+        <div class="f-box ok"><div class="in val">Rohan Sharma</div></div>
+        <div class="f-lab">Email <span class="op">(optional)</span></div>
+        <div class="f-box"><div class="in ph">you@example.com</div></div>
+        <div class="f-2col">
+          <div><div class="f-lab">Date of birth <span class="rq">*</span></div><div class="f-box"><div class="in val" style="font-size:7px">1998-06-15</div></div></div>
+          <div><div class="f-lab">Phone <span class="op">(login)</span></div><div class="f-box"><div class="in val" style="font-size:6.8px;opacity:.75">+91 98765 43210</div></div></div>
+        </div>
+        <div class="f-2col">
+          <div><div class="f-lab">Father's name <span class="rq">*</span></div><div class="f-box focus"><div class="in val">Suresh Sharma</div></div></div>
+          <div><div class="f-lab">Mother's name <span class="rq">*</span></div><div class="f-box"><div class="in val">Meera Sharma</div></div></div>
+        </div>
+        <div class="f-lab">Current address <span class="rq">*</span></div>
+        <div class="f-box"><div class="in val" style="height:26px;align-items:flex-start;padding-top:4px;font-size:6.8px;line-height:1.45">221B Linking Road, Bandra West,<br>Mumbai, Maharashtra 400050</div></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Continue →</div></div>
+    </div></div>
+
+    <!-- Phone 2: Docs & Bank -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Rider Details</h5><div class="p-sub">KYC · STEP 2 OF 5</div></div>
+          <span class="p-chip">71%</span>
+        </div>
+        <div class="p-line"><i style="width:71%"></i></div>
+        <div class="p-pills">
+          <div class="p-pill done"><span class="d">✓</span><b>Personal</b></div>
+          <div class="p-pill on"><span class="d">2</span><b>Docs &amp; Bank</b></div>
+          <div class="p-pill"><span class="d">3</span><b>Identity</b></div>
+        </div>
+      </div>
+      <div class="p-body"><div class="p-panel">
+        <div class="p-kick">Step 2 — Documents &amp; Payout</div>
+        <div class="p-h">Documents &amp; bank account</div>
+        <div class="p-sh">Clear photos, all four corners visible.</div>
+        <div style="height:5px"></div>
+        <div class="up-row">
+          <div class="up done" style="position:relative"><img src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:linear-gradient(135deg,#DBEAFE,#EFF6FF)"><div style="position:absolute;left:3px;bottom:3px;right:3px;background:rgba(255,255,255,.9);border-radius:5px;padding:1.5px 3px;font-size:4.8px;font-weight:800;display:flex;justify-content:space-between"><span>aadhaar-front.jpg</span><span>0.24 MB</span></div><div style="position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:4px;background:var(--error);color:#fff;font-size:6px;display:flex;align-items:center;justify-content:center;font-weight:800">✕</div></div>
+          <div class="up done" style="position:relative"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#E0E7FF,#F5F3FF)"></div><div style="position:absolute;left:3px;bottom:3px;right:3px;background:rgba(255,255,255,.9);border-radius:5px;padding:1.5px 3px;font-size:4.8px;font-weight:800;display:flex;justify-content:space-between"><span>aadhaar-back.jpg</span><span>0.25 MB</span></div><div style="position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:4px;background:var(--error);color:#fff;font-size:6px;display:flex;align-items:center;justify-content:center;font-weight:800">✕</div></div>
+        </div>
+        <div class="up-row">
+          <div class="up full"><div class="cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg></div><span style="text-align:left"><b style="display:block;font-size:6.5px">Take photo of the card</b><span>PAN · all corners visible</span></span></div>
+        </div>
+        <div class="f-lab" style="margin-top:3px">Bank name <span class="rq">*</span></div>
+        <div class="f-box ok"><div class="in val">State Bank of India</div></div>
+        <div class="f-2col">
+          <div><div class="f-lab">Account no. <span class="rq">*</span></div><div class="f-box"><div class="in val" style="font-family:'JetBrains Mono',monospace;font-size:6.8px">1234567890123</div></div></div>
+          <div><div class="f-lab">IFSC <span class="rq">*</span></div><div class="f-box ok"><div class="in val" style="font-family:'JetBrains Mono',monospace;font-size:6.8px">SBIN0001234</div></div></div>
+        </div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Continue →</div></div>
+    </div></div>
+
+    <!-- Phone 3: Identity -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Rider Details</h5><div class="p-sub">KYC · STEP 2 OF 5</div></div>
+          <span class="p-chip ok">100%</span>
+        </div>
+        <div class="p-line"><i class="ok" style="width:100%"></i></div>
+        <div class="p-pills">
+          <div class="p-pill done"><span class="d">✓</span><b>Personal</b></div>
+          <div class="p-pill done"><span class="d">✓</span><b>Docs &amp; Bank</b></div>
+          <div class="p-pill on"><span class="d">3</span><b>Identity</b></div>
+        </div>
+      </div>
+      <div class="p-body"><div class="p-panel">
+        <div class="p-kick">Step 3 — Identity</div>
+        <div class="p-h">Face &amp; signature</div>
+        <div class="p-sh">Last step — selfie matches you to your documents; signature goes on the agreement.</div>
+        <div style="height:5px"></div>
+        <div class="up done" style="position:relative;height:52px;margin-bottom:5px"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#FEF3C7,#FCE7F3)"></div><div style="position:absolute;left:3px;bottom:3px;background:rgba(255,255,255,.9);border-radius:5px;padding:1.5px 4px;font-size:4.8px;font-weight:800">selfie.jpg · 0.27 MB</div><div style="position:absolute;top:3px;right:3px;width:10px;height:10px;border-radius:4px;background:var(--error);color:#fff;font-size:6px;display:flex;align-items:center;justify-content:center;font-weight:800">✕</div></div>
+        <div class="sig">
+          <div class="sig-h">Draw your signature<span>Clear</span></div>
+          <div class="pad" style="position:relative"><svg style="position:absolute;left:24px;top:22px;width:190px;height:24px" viewBox="0 0 190 24" fill="none"><path d="M2 20 C 30 2, 55 24, 85 12 S 140 4, 188 14" stroke="#101828" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div style="padding:3px 7px;font-size:5px;color:var(--on-surface-muted);font-weight:600">Use your finger — printed on your rental agreement.</div>
+        </div>
+        <div class="p-note" style="margin-top:5px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span>Review &amp; submit screen follows — every value shown once before upload with staged progress.</span></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Review &amp; submit</div></div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-t">Data collected (unchanged 1:1) &amp; behavior contract</div>
+    <div class="spec-cols">
+      <div class="spec-card">
+        <h4>Collected fields — 14 total</h4>
+        <div class="chips">
+          <span class="chip req">Full name*</span><span class="chip opt">Email (valid-if-present)</span><span class="chip req">DOB* 1940–today</span><span class="chip req">Father's name*</span><span class="chip req">Mother's name*</span><span class="chip req">Address*</span><span class="chip req">Aadhaar front*</span><span class="chip req">Aadhaar back*</span><span class="chip req">PAN*</span><span class="chip req">Bank name*</span><span class="chip req">Account 8–18 digits*</span><span class="chip req">IFSC*</span><span class="chip req">Selfie*</span><span class="chip req">Signature*</span>
+        </div>
+        <p style="font-size:6.8px;color:var(--on-surface-muted);margin-top:2mm;line-height:1.55">Read-only verified phone from login is displayed, not collected. Validators mirror <span class="dl-tag">FormValidators.dart</span>.</p>
+      </div>
+      <div class="spec-card">
+        <h4>Behavior contract</h4>
+        <ul class="notes">
+          <li><b>3-step gating</b> mirrors <span class="dl-tag">_canProceedCurrentStep</span>; per-step inline errors instead of a toast dump.</li>
+          <li><b>Draft autosave</b> per keystroke (debounced) — restores on re-entry, toast on restore failure (PR-E path).</li>
+          <li><b>Review step</b> shows all 14 values before submit; missing fields listed in a destructive banner.</li>
+          <li><b>Upload</b> runs staged progress per document; success screen confirms; draft is cleared.</li>
+          <li><b>Completeness meter</b> (header) always shows % — never blocks navigation, only submit.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>Voltium · Kinetic Precision</span><span>Page 2 of 4 · 01 Rider Details</span></div>
+</div>
+
+<!-- ═══════════════════ PAGE 3 · ONBOARDING (INTENT) ═══════════════════ -->
+<div class="page">
+  <div class="pg-head">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+    <b>Voltium Forms · Kinetic Precision</b>
+    <span class="crumb">Form 02 / 03</span>
+  </div>
+
+  <div class="form-head">
+    <div class="form-no">02</div>
+    <div class="form-title">
+      <h2>Onboarding Form — Intent of Use</h2>
+      <p>Single-decision screen: the rider's primary usage customises pricing, support and hub access. Redesigned as large, glanceable selection cards with an honest, always-visible affordance for switching later.</p>
+    </div>
+    <span class="src-tag">intent_of_use_screen.dart</span>
+  </div>
+
+  <div class="mocks">
+    <!-- Phone 1: selection -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Onboarding</h5><div class="p-sub">KYC · STEP 1 OF 5</div></div>
+          <span class="p-chip">2%</span>
+        </div>
+        <div class="p-line"><i style="width:12%"></i></div>
+      </div>
+      <div class="p-body"><div class="p-panel" style="justify-content:flex-start">
+        <div class="p-kick">Step 0 — Intent</div>
+        <div class="p-h" style="text-align:center;font-size:14px">How will you use<br><span style="color:var(--vf-primary)">Voltium</span>?</div>
+        <div class="p-sh" style="text-align:center">Select your primary usage — we tailor pricing, support and hub access to it.</div>
+        <div style="height:8px"></div>
+        <div class="intent-card sel">
+          <div class="intent-ic" style="background:var(--vf-primary)"><svg style="stroke:#fff" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div style="flex:1"><b>Deliver with Us</b><span>Rent an EV for logistics, delivery or commercial needs. Includes hub support and priority dispatch.</span></div>
+          <div class="chk on" style="width:11px;height:11px;border-radius:50%;margin-top:2px"></div>
+        </div>
+        <div class="intent-card">
+          <div class="intent-ic" style="background:var(--vf-primary-surface)"><svg style="stroke:var(--vf-primary)" viewBox="0 0 24 24"><path d="M5 17h14M6 17l-1.5-6h15L18 17M9 17v2m6-2v2"/><circle cx="7.5" cy="16" r="1"/><circle cx="16.5" cy="16" r="1"/></svg></div>
+          <div style="flex:1"><b>Personal Usage</b><span>Daily commutes, weekend trips, general city riding.</span></div>
+          <div class="chk" style="width:11px;height:11px;border-radius:50%;margin-top:2px"></div>
+        </div>
+        <div class="p-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span>You can switch later in Settings — commercial access may require extra verification.</span></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Continue →</div></div>
+    </div></div>
+
+    <!-- Phone 2: confirmed + submitting -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Onboarding</h5><div class="p-sub">KYC · STEP 1 OF 5</div></div>
+          <span class="p-chip ok">✓</span>
+        </div>
+        <div class="p-line"><i class="ok" style="width:14%"></i></div>
+      </div>
+      <div class="p-body"><div class="p-panel" style="justify-content:flex-start">
+        <div class="p-kick">Step 0 — Intent</div>
+        <div class="p-h" style="text-align:center;font-size:14px">How will you use<br><span style="color:var(--vf-primary)">Voltium</span>?</div>
+        <div class="p-sh" style="text-align:center">Saved to your profile — change anytime in Settings.</div>
+        <div style="height:8px"></div>
+        <div class="intent-card sel">
+          <div class="intent-ic" style="background:var(--vf-primary)"><svg style="stroke:#fff" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div style="flex:1"><b>Deliver with Us</b><span>Commercial EV rental with hub support.</span></div>
+          <div class="chk on" style="width:11px;height:11px;border-radius:50%;margin-top:2px"></div>
+        </div>
+        <div class="intent-card" style="opacity:.62">
+          <div class="intent-ic" style="background:var(--vf-primary-surface)"><svg style="stroke:var(--vf-primary)" viewBox="0 0 24 24"><path d="M5 17h14M6 17l-1.5-6h15L18 17M9 17v2m6-2v2"/><circle cx="7.5" cy="16" r="1"/><circle cx="16.5" cy="16" r="1"/></svg></div>
+          <div style="flex:1"><b>Personal Usage</b><span>Daily commutes, weekend trips, city riding.</span></div>
+          <div class="chk" style="width:11px;height:11px;border-radius:50%;margin-top:2px"></div>
+        </div>
+        <div class="p-status" style="justify-content:center;margin-top:6px"><span class="ck">✓</span> Intent saved · <span style="font-family:'JetBrains Mono',monospace;font-size:5.5px;color:var(--on-surface-muted)">intent = "deliver"</span></div>
+        <div class="p-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span>Double-tap guard: Continue is inert while the first request is in flight (<span class="dl-tag">_isSubmitting</span>).</span></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Continue →</div></div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-t">Data collected &amp; behavior contract</div>
+    <div class="spec-cols">
+      <div class="spec-card">
+        <h4>Collected field — 1 total</h4>
+        <div class="chips">
+          <span class="chip req">intent* — "deliver" | "personal"</span>
+        </div>
+        <p style="font-size:6.8px;color:var(--on-surface-muted);margin-top:2mm;line-height:1.55">Persisted via <span class="dl-tag">PUT /rider/profile</span> (<span class="dl-tag">UpdateProfileRequest(intent)</span>). Exactly one selection is required; nothing else is asked on this screen.</p>
+      </div>
+      <div class="spec-card">
+        <h4>Behavior contract</h4>
+        <ul class="notes">
+          <li><b>Selection cards</b> replace small radio rows: 64dp minimum height, icon chip + title + one-line description, single-select with animated check.</li>
+          <li><b>Continue is disabled until a card is chosen</b> — the disabled style is the neutral token pair, never red.</li>
+          <li><b>Info banner</b> stays on-screen: switchability later + commercial-verification caveat (honest expectations).</li>
+          <li><b>Double-tap race guard</b> from ONBOARDING-AUDIT P1-4 is preserved: submitting state blocks re-entry.</li>
+          <li>Session-missing fallback keeps the toast error path (<span class="dl-tag">riderId == null</span>).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>Voltium · Kinetic Precision</span><span>Page 3 of 4 · 02 Onboarding / Intent of Use</span></div>
+</div>
+
+<!-- ═══════════════════ PAGE 4 · PICKUP ═══════════════════ -->
+<div class="page">
+  <div class="pg-head">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+    <b>Voltium Forms · Kinetic Precision</b>
+    <span class="crumb">Form 03 / 03</span>
+  </div>
+
+  <div class="form-head">
+    <div class="form-no">03</div>
+    <div class="form-title">
+      <h2>Pickup Form — Condition Capture &amp; Final Verification</h2>
+      <p>The vehicle handoff: five condition photos that protect the rider's deposit, then a single honest confirmation gate before the rental goes live. Photos-first layout with per-slot completion state.</p>
+    </div>
+    <span class="src-tag">vehicle_photos_screen.dart · pickup_verification_screen.dart</span>
+  </div>
+
+  <div class="mocks">
+    <!-- Phone 1: photo capture -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Pickup</h5><div class="p-sub">VEHICLE · VLT-042</div></div>
+          <span class="p-chip">80%</span>
+        </div>
+        <div class="p-line"><i style="width:80%"></i></div>
+      </div>
+      <div class="p-body"><div class="p-panel">
+        <div class="p-kick">Before you roll</div>
+        <div class="p-h">Capture the vehicle condition</div>
+        <div class="p-sh">Five quick photos protect your deposit — timestamped and attached to this rental.</div>
+        <div style="height:6px"></div>
+        <div class="up-row">
+          <div class="up done" style="position:relative"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#DBEAFE,#BFDBFE)"></div><div style="position:absolute;left:0;top:0;background:var(--success);color:#fff;font-size:5.5px;font-weight:800;padding:1px 4px;border-radius:0 0 5px 0">✓ FRONT VIEW</div></div>
+          <div class="up done" style="position:relative"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#E0E7FF,#C7D2FE)"></div><div style="position:absolute;left:0;top:0;background:var(--success);color:#fff;font-size:5.5px;font-weight:800;padding:1px 4px;border-radius:0 0 5px 0">✓ BACK VIEW</div></div>
+        </div>
+        <div class="up-row">
+          <div class="up done" style="position:relative"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#DCFCE7,#D1FAE5)"></div><div style="position:absolute;left:0;top:0;background:var(--success);color:#fff;font-size:5.5px;font-weight:800;padding:1px 4px;border-radius:0 0 5px 0">✓ LEFT SIDE</div></div>
+          <div class="up done" style="position:relative"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#FEF9C3,#FDE68A)"></div><div style="position:absolute;left:0;top:0;background:var(--success);color:#fff;font-size:5.5px;font-weight:800;padding:1px 4px;border-radius:0 0 5px 0">✓ RIGHT SIDE</div></div>
+        </div>
+        <div class="up-row">
+          <div class="up full"><div class="cam"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/></svg></div><span style="text-align:left"><b style="display:block;font-size:6.5px">Photo with Vehicle</b><span>You + the scooter, helmet on — final slot</span></span><span style="margin-left:auto;font-size:7px;font-weight:800;color:var(--vf-primary)">4 / 5</span></div>
+        </div>
+        <div class="p-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span>Retake anytime before verification — the newest photo replaces the slot.</span></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Continue →</div></div>
+    </div></div>
+
+    <!-- Phone 2: final verification -->
+    <div class="phone-wrap"><div class="phone">
+      <div class="notch"></div>
+      <div class="p-top">
+        <div class="p-top-row">
+          <div class="p-brand"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19.5 9.5H12.5L13 2Z"/></svg></div>
+          <div><h5>Final Verification</h5><div class="p-sub">READY TO ROLL</div></div>
+          <span class="p-chip ok">✓</span>
+        </div>
+        <div class="p-line"><i class="ok" style="width:96%"></i></div>
+      </div>
+      <div class="p-body"><div class="p-panel">
+        <div class="p-kick">Final verification</div>
+        <div class="p-h" style="font-size:15px">Ready to Roll?</div>
+        <div class="p-sh">Review the digital rental agreement before collecting your vehicle.</div>
+        <div style="height:6px"></div>
+        <div style="border:1px solid var(--outline-variant);border-radius:10px;overflow:hidden;margin-bottom:6px">
+          <div style="background:var(--input-fill);padding:4px 8px;font-size:6.5px;font-weight:800;display:flex;align-items:center;gap:4px">Rental agreement · summary<span style="margin-left:auto;color:var(--vf-primary);font-weight:800">Read full →</span></div>
+          <div style="padding:6px 8px;font-size:6px;color:var(--on-surface-variant);line-height:1.6">Plan · Weekly · ₹1,499 &nbsp;·&nbsp; Vehicle · VLT-042 &nbsp;·&nbsp; Deposit held · ₹2,000<br>Condition photos: 5 of 5 attached · Odometer photos included</div>
+        </div>
+        <div class="p-status"><span class="ck">✓</span> Vehicle photos captured</div>
+        <div class="chk-row">
+          <div class="chk on"></div>
+          <span style="font-size:6.8px;line-height:1.5;color:var(--on-surface);font-weight:500">I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.</span>
+        </div>
+        <div class="p-note"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg><span>Server-side verification enforces signature + 15-min TTL + phone match — the checkbox is never trusted alone.</span></div>
+      </div></div>
+      <div class="p-bbar"><div class="p-btn gho">Back</div><div class="p-btn pri">Complete &amp; Start Riding ⚡</div></div>
+    </div></div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-t">Data collected &amp; behavior contract</div>
+    <div class="spec-cols">
+      <div class="spec-card">
+        <h4>Collected fields — 6 total</h4>
+        <div class="chips">
+          <span class="chip req">Photo — Front view*</span><span class="chip req">Photo — Back view*</span><span class="chip req">Photo — Left side*</span><span class="chip req">Photo — Right side*</span><span class="chip req">Photo — With vehicle*</span><span class="chip req">Agreement confirmation*</span>
+        </div>
+        <p style="font-size:6.8px;color:var(--on-surface-muted);margin-top:2mm;line-height:1.55">Slot labels map to <span class="dl-tag">pickupPhotoFront/Back/Left/Right/WithVehicle</span> on the rider profile.</p>
+      </div>
+      <div class="spec-card">
+        <h4>Behavior contract</h4>
+        <ul class="notes">
+          <li><b>Photos-first grid</b> with per-slot ✓ badge and n/5 counter; retake replaces the slot in place.</li>
+          <li><b>Agreement summary card</b> before the checkbox — plan, vehicle, deposit, photo count — so confirmation is informed, not blind.</li>
+          <li><b>Complete &amp; Start Riding</b> stays disabled until the confirmation is checked (existing <span class="dl-tag">_agreedToTerms</span> gate).</li>
+          <li><b>Server is the source of truth</b>: signature + 15-minute TTL + phone match verified server-side.</li>
+          <li>Success routes to the active dashboard; error keeps the toast path (<span class="dl-tag">safeErrorMessage</span>).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-foot"><span>Voltium · Kinetic Precision</span><span>Page 4 of 4 · 03 Pickup</span></div>
+</div>
+
+</body>
+</html>

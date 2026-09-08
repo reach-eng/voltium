@@ -59,10 +59,15 @@ class TeamLeaderCard extends StatelessWidget {
                             onViewDetails!();
                           }
                         : null,
-                    child: Text(
-                      l10n?.txtviewDetailsAction ?? 'View Details',
-                      style: AppTypography.labelMedium
-                          .copyWith(color: AppColors.primary),
+                    // P2: 48px minimum touch target (was ~24px tall).
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 12),
+                      child: Text(
+                        l10n?.txtviewDetailsAction ?? 'View Details',
+                        style: AppTypography.labelMedium
+                            .copyWith(color: AppColors.primary),
+                      ),
                     ),
                   ),
                 ],

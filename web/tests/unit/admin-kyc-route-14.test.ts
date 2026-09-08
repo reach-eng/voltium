@@ -203,7 +203,7 @@ describe('NET-005 follow-up-14: POST /api/admin/kyc action validation', () => {
     routeMocks.approveKyc.mockResolvedValue({ id: 'kp1', status: 'APPROVED' });
 
     for (const action of ['APPROVE', 'REJECT', 'REQUEST_INFO', 'REOPEN']) {
-      const req = makePostReq({ riderId: 'r1', action });
+      const req = makePostReq({ riderId: 'r1', action, editableFields: ['panCard'] });
       const res = await kycPost(req);
       expect(res.status, `action=${action} should be accepted`).toBe(200);
     }

@@ -397,6 +397,7 @@ export const riderUseCases = {
       referralCode: rider.referralCode,
       unreadNotificationCount,
       totalRewardPoints: rewardAggregates._sum.points || 0,
+      upcomingRentPrompt,
     });
   },
 
@@ -818,7 +819,7 @@ export const riderUseCases = {
       }
 
       if (SAFE_RIDER_FIELDS.has(key)) {
-        if (key === 'preferredLocale' && value === null) {
+        if (key === 'preferredLocale' && (value === null || value === '')) {
           riderData[key] = null;
         } else {
           riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;

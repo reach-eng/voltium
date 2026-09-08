@@ -142,10 +142,8 @@ class LocaleNotifier extends Notifier<LocaleState> {
   /// requires a full app rebuild because Flutter caches the
   /// `PlatformDispatcher.locale` at startup.
   ///
-  /// LANGUAGE-AUDIT (2026-08-16) #6: also clears the server-side
-  /// `preferredLocale` by sending an empty string. The validator
-  /// treats empty as null and the rider.use-cases writes through
-  /// the SAFE_RIDER_FIELDS allowlist.
+  /// LANGUAGE-AUDIT (2026-09-08) P1-1: also clears the server-side
+  /// `preferredLocale` by sending null.
   Future<void> setFollowSystem() async {
     // Clear the persisted explicit choice; the next launch re-derives
     // from the system locale and `isFollowingSystem` stays true.
@@ -178,6 +176,8 @@ class LocaleNotifier extends Notifier<LocaleState> {
     if (serverPreferredLocale == null || serverPreferredLocale.isEmpty) {
       return; // server has no preference; nothing to apply
     }
+    // LANGUAGE-AUDIT (2026-09-08) P1-2: gate adopted locales against supportedLanguages
+    if (!supportedLanguages.any((l) => l.code == serverPreferredLocale)) return;
     final localSaved = CacheService().getLocale();
     if (localSaved != null) {
       // Rider has an explicit local choice. Don't override it.
@@ -208,7 +208,7 @@ class LocaleNotifier extends Notifier<LocaleState> {
       final api = ApiClient();
       await api.put(
         '/api/rider/profile',
-        body: {'preferredLocale': code ?? ''},
+        body: {'preferredLocale': code},
       );
     } catch (e) {
       // Silent. The local copy is correct; the server will re-sync

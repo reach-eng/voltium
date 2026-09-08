@@ -14,7 +14,8 @@ class PhoneValidator {
   }
 
   static bool isValidPhone(String phone) {
-    return isValidIndianMobile(phone) && _digitsOnly.hasMatch(phone.replaceAll(RegExp(r'\D'), ''));
+    return isValidIndianMobile(phone) &&
+        _digitsOnly.hasMatch(phone.replaceAll(RegExp(r'\D'), ''));
   }
 
   static String? validate(String? value) {

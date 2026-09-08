@@ -2955,4 +2955,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String pickupHub_fetchVehiclesFailed(String error) {
     return 'Failed to fetch vehicles: $error';
   }
+
+  @override
+  String get txtenterGuarantorNameBeforeOtp =>
+      'Enter the guarantor name before sending an OTP.';
+
+  @override
+  String get txtverifyGuarantorPhoneBeforeSave =>
+      'Please verify the new guarantor phone number before saving.';
+
+  @override
+  String get txtreverifyGuarantorPhoneBeforeSave =>
+      'Please re-verify the guarantor phone number before saving.';
+
+  @override
+  String get txtdiscardChangesTitle => 'Discard changes?';
+
+  @override
+  String get txtdiscardChangesBody =>
+      'You have unsaved changes. Are you sure you want to discard them and exit?';
+
+  @override
+  String get txtkeepEditing => 'Keep Editing';
+
+  @override
+  String get txtenterAValidEmailAddress => 'Enter a valid email address';
+
+  @override
+  String get notif_supportReplyTitle => 'Support Ticket Update 💬';
+
+  @override
+  String notif_supportReplyBody(String ticketId) {
+    return 'New response received on ticket #$ticketId.';
+  }
+
+  @override
+  String get notif_supportReplyBodyFallback =>
+      'New response received on your support ticket.';
+
+  @override
+  String get notif_paymentDueTitle => 'Payment Reminder 💳';
+
+  @override
+  String notif_paymentDueBody(String amount) {
+    return 'Your rental payment of $amount is due.';
+  }
+
+  @override
+  String get notif_paymentDueBodyFallback =>
+      'Your rental payment is due. Please top up your wallet.';
+
+  @override
+  String get notif_rewardMilestoneTitle => 'Reward Earned! 🏆';
+
+  @override
+  String notif_rewardMilestoneBody(String points, String milestoneTitle) {
+    return 'You\'ve earned $points points for $milestoneTitle.';
+  }
+
+  @override
+  String get notif_rewardMilestoneBodyFallback =>
+      'You\'ve earned reward points! Check your rewards.';
+
+  @override
+  String notif_birthdayWishTitle(String name) {
+    return 'Happy Birthday, $name! 🎂';
+  }
+
+  @override
+  String get notif_birthdayWishTitleFallback => 'Happy Birthday! 🎂';
+
+  @override
+  String get notif_birthdayWishBody =>
+      'Wishing you a fantastic day ahead. Enjoy a special birthday reward on us!';
+
+  @override
+  String get notif_shiftReminderTitle => 'Upcoming Shift ⏰';
+
+  @override
+  String notif_shiftReminderBody(String startTime) {
+    return 'Your shift starts at $startTime. Please be ready!';
+  }
+
+  @override
+  String get notif_shiftReminderBodyFallback =>
+      'Your shift is starting soon. Please be ready!';
 }

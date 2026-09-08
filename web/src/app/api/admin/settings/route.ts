@@ -7,6 +7,31 @@ import { invalidateCache } from '@/lib/cache';
 import { settingUseCases } from '@/server/modules/settings/setting.use-cases';
 import { updateSettingsAdminSchema } from '@/lib/validators/admin';
 
+/**
+ * Business Settings API — one of TWO admin surfaces on the shared
+ * `systemSetting` table. They must not be confused:
+ *
+ * ┌─────────────────────┬──────────────────────────┬────────────────────────────┐
+ * │ Surface             │ THIS route (admin/settings) │ /api/admin/system-settings │
+ * ├─────────────────────┼──────────────────────────┼────────────────────────────┤
+ * │ Scope               │ BUSINESS registry keys     │ Infra/config keys          │
+ * │                     │ (pricing, policy, contact) │ (APP_PUBLIC_URL, BACKUP_*) │
+ * │ Permission          │ any role with              │ settings_manage AND        │
+ * │                     │ settings_manage            │ SUPER_ADMIN                │
+ * │ Body shape          │ multi-key map, rupees in   │ single {key, value}, raw   │
+ * │                     │ (coerced to paise server-  │ strings                    │
+ * │                     │ side)                      │                            │
+ * │ Honors isEditable   │ yes (via settingUseCases.  │ yes (route-level guard)    │
+ * │                     │ update, P1-6 audit fix)    │                            │
+ * └─────────────────────┴──────────────────────────┴────────────────────────────┘
+ *
+ * Both flows upsert the same table and honor `isEditable`, so a frozen
+ * row is frozen for both. Which keys belong to which surface is decided
+ * by the registry category (`SETTING_REGISTRY`) plus the allowlist in
+ * `updateSettingsAdminSchema`. See tests/unit/settings-p1-hardening.test.ts
+ * for the contract tests pinning the split.
+ */
+
 export async function GET() {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();

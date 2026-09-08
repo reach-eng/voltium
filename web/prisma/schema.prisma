@@ -450,6 +450,7 @@ model KycProfile {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   editableFields  String[]
+  pendingCorrections Json?
   rider           Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([status])
@@ -903,9 +904,13 @@ model Reward {
   id         String    @id @default(cuid())
   riderId    String
   title      String
-  // PR-9 (2026-08-06 fix plan): unit is PAISE (1 point = 1 paise, so a
-  // ₹200 bonus stores 20000). The column was historically misread as a
-  // point count — display code must divide by 100 for ₹.
+  // Unit decision (dashboard audit): `points` stores POINT COUNTS, not
+  // paise — a ₹200 bonus stores 200. All readers agree (redeem converts
+  // ×100 → paise at payout; tier thresholds and admin "+pts" read
+  // counts). An earlier PR-9 comment claimed paise and two writers
+  // stored paise figures, which read as 100× points and redeemed 100×
+  // cash — fixed at the writers. NOTE: rows written before this fix
+  // still hold paise-scale values and need a one-time /100 backfill.
   points     Int
   createdAt  DateTime  @default(now())
   redeemedAt DateTime?

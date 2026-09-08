@@ -116,59 +116,98 @@ class ReferralCard extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        InkWell(
-                          onTap: () {
-                            HapticService.light();
-                            Clipboard.setData(ClipboardData(text: displayCode));
-                            Toast.success(
-                              context,
-                              l10n?.txtreferralCodeCopied ??
-                                  'Referral code copied!',
-                            );
-                            onCopy?.call();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: const Icon(
-                              Icons.copy,
-                              color: Colors.white,
-                              size: 16,
+                        Semantics(
+                          label: 'Copy referral code',
+                          button: true,
+                          child: InkWell(
+                            // P2: integration-test hook.
+                            key: const Key('copyReferralButton'),
+                            onTap: referralCode.isEmpty
+                                ? null
+                                : () async {
+                                    // P2: guard empty codes (nothing to
+                                    // copy) and surface clipboard failures
+                                    // instead of toasting success regardless.
+                                    HapticService.light();
+                                    try {
+                                      await Clipboard.setData(
+                                          ClipboardData(text: displayCode));
+                                      if (!context.mounted) return;
+                                      Toast.success(
+                                        context,
+                                        l10n?.txtreferralCodeCopied ??
+                                            'Referral code copied!',
+                                      );
+                                      onCopy?.call();
+                                    } catch (_) {
+                                      if (!context.mounted) return;
+                                      Toast.error(
+                                        context,
+                                        'Could not copy the code. Try again.',
+                                      );
+                                    }
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                              ),
+                              child: const Icon(
+                                Icons.copy,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () {
-                            HapticService.light();
-                            PostHogService.capture('referral_shared',
-                                properties: {'code': displayCode});
-                            final shareMsg =
-                                l10n?.txtshareReferralMessage(displayCode) ??
-                                    'Use my code $displayCode to join Voltium!';
-                            final shareSub =
-                                l10n?.txtjoinVoltiumSubject ?? 'Join Voltium';
-                            SharePlus.instance.share(
-                              ShareParams(
-                                text: shareMsg,
-                                subject: shareSub,
+                        Semantics(
+                          label: 'Share referral code',
+                          button: true,
+                          child: InkWell(
+                            onTap: referralCode.isEmpty
+                                ? null
+                                : () async {
+                                    HapticService.light();
+                                    try {
+                                      PostHogService.capture('referral_shared',
+                                          properties: {'code': displayCode});
+                                      final shareMsg = l10n
+                                              ?.txtshareReferralMessage(
+                                                  displayCode) ??
+                                          'Use my code $displayCode to join Voltium!';
+                                      final shareSub =
+                                          l10n?.txtjoinVoltiumSubject ??
+                                              'Join Voltium';
+                                      await SharePlus.instance.share(
+                                        ShareParams(
+                                          text: shareMsg,
+                                          subject: shareSub,
+                                        ),
+                                      );
+                                      onShare?.call();
+                                    } catch (_) {
+                                      if (!context.mounted) return;
+                                      Toast.error(
+                                        context,
+                                        'Could not share the code. Try again.',
+                                      );
+                                    }
+                                  },
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                               ),
-                            );
-                            onShare?.call();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: const Icon(
-                              Icons.share,
-                              color: Colors.white,
-                              size: 16,
+                              child: const Icon(
+                                Icons.share,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                         ),

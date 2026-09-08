@@ -135,7 +135,9 @@ void main() {
     // After the P0-1 fix, `pickupDone` is rank-only; this test pins
     // the post-fix behavior so a regression in the server or the
     // gate would be caught immediately.
-    test('HANG-TIGHT-AUDIT P0-2: PICKUP_SCHEDULED with pickupDone=false routes to hangTight', () {
+    test(
+        'HANG-TIGHT-AUDIT P0-2: PICKUP_SCHEDULED with pickupDone=false routes to hangTight',
+        () {
       final rider = createRider('PICKUP_SCHEDULED', pickupDone: false);
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.hangTight);
     });
@@ -147,7 +149,9 @@ void main() {
     // when `pickupDone` flips true→false on the same lifecycle
     // status, the gate must re-route to hangTight. This pins both
     // directions of the bounce.
-    test('HANG-TIGHT-AUDIT P2-3: reversal — pickupDone true→false re-routes to hangTight', () {
+    test(
+        'HANG-TIGHT-AUDIT P2-3: reversal — pickupDone true→false re-routes to hangTight',
+        () {
       // Admin activated: PICKUP_SCHEDULED + pickupDone: true (the
       // pre-fix bypass shape; the gate still routes to dashboard
       // because the post-fix server can never emit this, but the

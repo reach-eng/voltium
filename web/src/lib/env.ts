@@ -68,6 +68,7 @@ export const envSchema = z.object({
   SMS_PROVIDER: z.enum(['mock', 'msg91']).default('mock'),
   MSG91_AUTH_KEY: z.string().optional(),
   MSG91_TEMPLATE_ID: z.string().optional(),
+  MSG91_TEMPLATE_ID_HI: z.string().optional(),
 
   // Data mode — 'default' (any) or 'local_laptop' (all data stays on laptop)
   DATA_MODE: z.enum(['default', 'local_laptop']).default('default'),
