@@ -275,7 +275,7 @@ export function useTeamLeaders() {
       const res = await fetch('/api/admin/team-leaders/bulk/undo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, action: lastAction.action }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {

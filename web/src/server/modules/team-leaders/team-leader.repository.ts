@@ -78,9 +78,12 @@ export const teamLeaderRepository = {
     });
   },
 
+  // P1-3 (2026-09-08 hubs audit): no `deletedAt: null` filter — activating a
+  // soft-deleted team leader resurrected an invisible zombie row. Matches
+  // hubRepository's fix.
   async bulkActivate(ids: string[]) {
     const result = await db.teamLeader.updateMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, deletedAt: null },
       data: { isActive: true },
     });
     return result.count;
@@ -88,7 +91,7 @@ export const teamLeaderRepository = {
 
   async bulkDeactivate(ids: string[]) {
     const result = await db.teamLeader.updateMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, deletedAt: null },
       data: { isActive: false },
     });
     return result.count;
@@ -96,7 +99,7 @@ export const teamLeaderRepository = {
 
   async bulkDelete(ids: string[]) {
     const result = await db.teamLeader.updateMany({ 
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, deletedAt: null },
       data: { isActive: false, deletedAt: new Date() }
     });
     return result.count;

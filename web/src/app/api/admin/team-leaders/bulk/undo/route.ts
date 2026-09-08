@@ -8,12 +8,16 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { invalidateCache } from '@/lib/cache';
 
 const undoSchema = z.object({
-  items: z.array(z.object({
-    id: z.string().min(1),
-    isActive: z.boolean(),
-  })),
+  items: z.array(
+    z.object({
+      id: z.string().min(1),
+      isActive: z.boolean(),
+    })
+  ),
+  action: z.enum(['activate', 'deactivate', 'delete']).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -31,22 +35,34 @@ export async function POST(req: NextRequest) {
     const validation = validateBody(undoSchema, body);
     if (!validation.success) return errors.validation(validation.error);
 
-    const { items } = validation.data;
-    
+    const { items, action } = validation.data;
+
     if (items.length === 0) {
       return success({ count: 0 });
     }
 
     await db.$transaction(async (tx) => {
-      // Execute all updates
-      await Promise.all(
-        items.map(item =>
-          tx.teamLeader.update({
-            where: { id: item.id },
-            data: { isActive: item.isActive, deletedAt: null },
-          })
-        )
-      );
+      if (action === 'delete') {
+        // Explicit undo of delete restores deletedAt: null
+        await Promise.all(
+          items.map((item) =>
+            tx.teamLeader.update({
+              where: { id: item.id },
+              data: { isActive: item.isActive, deletedAt: null },
+            })
+          )
+        );
+      } else {
+        // Undoing activate/deactivate ONLY affects non-deleted rows
+        await Promise.all(
+          items.map((item) =>
+            tx.teamLeader.updateMany({
+              where: { id: item.id, deletedAt: null },
+              data: { isActive: item.isActive },
+            })
+          )
+        );
+      }
 
       // Log a single audit entry
       await createAuditLog({
@@ -54,9 +70,11 @@ export async function POST(req: NextRequest) {
         action: 'teamleader.bulk_undo',
         entity: 'team_leader',
         entityId: 'multiple',
-        details: { count: items.length, items: items.map(i => i.id) },
+        details: { count: items.length, items: items.map((i) => i.id), action },
       });
     });
+
+    invalidateCache('admin:team-leaders:*');
 
     return success({ count: items.length }, 'Bulk undo successful');
   } catch (error) {
