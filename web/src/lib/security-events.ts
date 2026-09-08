@@ -168,6 +168,33 @@ export async function logKycDocumentView(params: {
 }
 
 /**
+ * NET-005 follow-up-16 (2026-09-08): log an
+ * admin's access to a rider's device data
+ * (locations / contacts / call logs) for SOC2 /
+ * GDPR Art. 30 record-keeping. Mirrors
+ * `logKycDocumentView` so the two helpers are
+ * symmetric — every admin view of rider PII is
+ * recorded regardless of which surface the admin
+ * used to reach it.
+ */
+export async function logDeviceDataAccess(params: {
+  adminId: string;
+  riderId: string;
+  dataType: string;
+}): Promise<void> {
+  await logSecurityEvent({
+    type: 'device.data_view',
+    severity: 'info',
+    actorId: params.adminId,
+    actorType: 'ADMIN',
+    details: {
+      riderId: params.riderId,
+      dataType: params.dataType,
+    },
+  });
+}
+
+/**
  * Log a failed OTP attempt (when rate limit is nearly reached).
  */
 export async function logFailedOtpAttempt(params: {

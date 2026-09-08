@@ -31,6 +31,17 @@
  *      both reject reason and info-request text).
  *   4. Unauthenticated request -> 401/403.
  *
+ * Shape note (NET-005 follow-up-16, 2026-09-08):
+ *   The orphan GET `/api/admin/riders/[id]` returns
+ *   a `select`-projected payload — the response has
+ *   `kycProfile.status` / `kycProfile.rejectionReason`
+ *   (nested), NOT the flattened `kycStatus` /
+ *   `kycRejectionReason` that `flattenRider` would
+ *   produce. This test reads the new shape. The list
+ *   endpoint (which the admin UI actually consumes)
+ *   still flattens; only the detail endpoint is
+ *   nested.
+ *
  * Mirrors the style of the existing
  * `kyc_workflow.test.ts` (uses `api()` helper from
  * `tests/integration/helpers.ts`).
@@ -89,7 +100,7 @@ describe('KYC Live Workflow (PUT /api/admin/riders with kycStatus)', () => {
       method: 'GET',
       cookie,
     });
-    expect(after.data?.kycStatus).toBe('APPROVED');
+    expect(after.data?.kycProfile?.status).toBe('APPROVED');
   });
 
   it('2. Admin can reject a SUBMITTED rider with a rejectionReason', async () => {
@@ -113,12 +124,12 @@ describe('KYC Live Workflow (PUT /api/admin/riders with kycStatus)', () => {
       method: 'GET',
       cookie,
     });
-    expect(after.data?.kycStatus).toBe('REJECTED');
+    expect(after.data?.kycProfile?.status).toBe('REJECTED');
     // The single `rejectionReason` column carries both
     // reject reasons and info-request text (per the
     // backend's field-allowlist at
     // `riders/route.ts:101`).
-    expect(after.data?.kycRejectionReason).toContain('Aadhaar image is blurry');
+    expect(after.data?.kycProfile?.rejectionReason).toContain('Aadhaar image is blurry');
   });
 
   it('3. Admin can request additional information (INFO_REQUIRED) on a SUBMITTED rider', async () => {
@@ -142,8 +153,8 @@ describe('KYC Live Workflow (PUT /api/admin/riders with kycStatus)', () => {
       method: 'GET',
       cookie,
     });
-    expect(after.data?.kycStatus).toBe('INFO_REQUIRED');
-    expect(after.data?.kycRejectionReason).toContain('PAN card');
+    expect(after.data?.kycProfile?.status).toBe('INFO_REQUIRED');
+    expect(after.data?.kycProfile?.rejectionReason).toContain('PAN card');
   });
 
   it('4. Unauthenticated PUT is rejected (no cookie, no token)', async () => {
@@ -183,9 +194,9 @@ describe('KYC Live Workflow (PUT /api/admin/riders with kycStatus)', () => {
     });
     // kycStatus is unchanged because the PUT didn't
     // include it.
-    expect(after.data?.kycStatus).not.toBe('APPROVED');
-    expect(after.data?.kycStatus).not.toBe('REJECTED');
-    expect(after.data?.kycStatus).not.toBe('INFO_REQUIRED');
+    expect(after.data?.kycProfile?.status).not.toBe('APPROVED');
+    expect(after.data?.kycProfile?.status).not.toBe('REJECTED');
+    expect(after.data?.kycProfile?.status).not.toBe('INFO_REQUIRED');
   });
 
   // NOTE: a FLEET_MANAGER-without-kyc_approve test

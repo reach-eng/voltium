@@ -10,6 +10,7 @@ import { validateBody, riderActionSchema } from '@/lib/validators';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { generateNumericPassword } from '@/lib/utils';
+import { createAuditLog } from '@/lib/audit-log';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 import { RiderLifecycleError } from '@/server/modules/riders/rider-lifecycle.service';
 
@@ -210,6 +211,37 @@ async function handleSecurityAction(
   }
 
   if (!fcmResult.success) return errors.internal(`Failed to signal device: ${fcmResult.error}`);
+
+  // NET-005 follow-up-16 (2026-09-08): always audit
+  // the device action regardless of `dbUpdate`. The
+  // pre-fix code only wrote the audit log via
+  // `updateSecurityFlags` when `dbUpdate` was
+  // non-empty, which meant the 6 FCM-only branches
+  // (FACTORY_RESET, DISABLE_CAMERA, ENABLE_CAMERA,
+  // ENFORCE_PASSCODE, CHECK_LOCATION_INTEGRITY,
+  // SYNC_DEVICE_DATA) left no record — including
+  // the most severe one, a remote phone wipe via
+  // FACTORY_RESET. Use a `device.*` action prefix
+  // so the existing audit-log-prefix sweep test
+  // (NET-005 follow-up-5) classifies the row
+  // correctly.
+  const auditAction = `device.${action.toLowerCase()}`;
+  await createAuditLog({
+    actorId: session.adminId ?? 'unknown',
+    actorType: 'ADMIN',
+    action: auditAction,
+    entity: 'rider',
+    entityId: rider.id,
+    details: {
+      fcmResult: fcmResult.success ? 'ok' : 'failed',
+      fcmError: fcmResult.success ? undefined : fcmResult.error,
+      // Mirror the columns the admin wanted to set,
+      // if any. Empty for FCM-only actions.
+      ...(Object.keys(dbUpdate).length > 0
+        ? { dbUpdate: (({ lockPasswordHash, ...safe }) => safe)(dbUpdate) }
+        : {}),
+    },
+  }).catch((err) => logger.error('[rider actions] audit log failed', { err }));
 
   if (Object.keys(dbUpdate).length > 0) {
     await adminRiderUseCases.updateSecurityFlags(rider.id, dbUpdate, session.adminId || 'SYSTEM');
