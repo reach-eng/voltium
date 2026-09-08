@@ -2,22 +2,15 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { validateBody, teamLeaderBulkActionSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/auth';
-import { teamLeaderUseCases } from '@/server/modules/team-leaders/team-leader.use-cases';
+import { requireAdmin, adminUnauthorized, adminForbidden, canManageTeamLeaders } from '@/lib/rbac';
+import { teamLeaderUseCases, TeamLeaderStateError } from '@/server/modules/team-leaders/team-leader.use-cases';
+import { invalidateCache } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
   try {
     const session = await requireAdmin();
     if (!session) return adminUnauthorized();
-    // PR-1 (2026-08-06 fix plan): `tl_manage` is a legacy duplicate key
-    // (same roles as `team_leaders_manage`). Use the canonical key, with a
-    // legacy fallback so admins whose stored permission column still lists
-    // `tl_manage` keep access (explicit adminPermissions win in hasPermission).
-    const canManage =
-      hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-      hasPermission(session.adminRole || '', 'tl_manage');
-    if (!canManage) return adminForbidden();
+    if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
     const body = await req.json();
     const validation = validateBody(teamLeaderBulkActionSchema, body);
@@ -41,8 +34,12 @@ export async function POST(req: NextRequest) {
         return errors.badRequest('Invalid action');
     }
 
+    invalidateCache('admin:team-leaders:*');
     return success({ count }, 'Bulk action completed');
   } catch (error) {
+    if (error instanceof TeamLeaderStateError) {
+      return errors.conflict(error.message);
+    }
     logger.error('POST /api/admin/team-leaders/bulk error:', error);
     return errors.internal('Failed to process bulk action');
   }

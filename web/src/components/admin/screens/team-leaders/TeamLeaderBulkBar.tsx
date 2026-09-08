@@ -83,7 +83,7 @@ export function TeamLeaderBulkBar({
         className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
         onClick={() => downloadTeamLeaderCsv(selectedLeaders)}
       >
-        <Download className="w-4 h-4 mr-1.5" /> Export
+        <Download className="w-4 h-4 mr-1.5" /> Export Selected ({selectedCount})
       </Button>
       {canUndo && (
         <>

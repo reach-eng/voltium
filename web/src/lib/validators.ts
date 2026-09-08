@@ -37,11 +37,6 @@ export const verifyOtpSchema = z
     path: ['idToken'],
   });
 
-export const verifyPhoneSchema = z.object({
-  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
-  otp: z.string().length(6, 'OTP must be 6 digits'),
-});
-
 // ==================== RIDER PROFILE ====================
 /**
  * Validate date of birth string:
@@ -291,7 +286,15 @@ export const createTicketSchema = z.object({
       z.string().max(5000).refine(isUrlListString, {
         message: 'Attachments must be URL(s): JSON array or comma-separated https URLs (max 5)',
       }),
-      z.array(z.string().url().max(2000)).max(5),
+      // P1-3 (support audit): `z.string().url()` accepts `javascript:` /
+      // `data:` URLs (the WHATWG URL constructor doesn't restrict
+      // protocols) — array-form attachments must be http(s) like the
+      // string form below.
+      z
+        .array(z.string().max(2000).refine((u) => /^https?:\/\//.test(u), {
+          message: 'Attachments must be http(s) URLs',
+        }))
+        .max(5),
       z.null(),
       z.undefined(),
     ])
@@ -529,28 +532,55 @@ export const createFaqSchema = z.object({
 // ==================== ADMIN - HUBS ====================
 export const createHubSchema = z.object({
   name: z.string().min(2, 'Name is required').max(100),
-  location: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
+  // P1-1 (2026-09-08 hubs audit): the UI sends `location: form.location ||
+  // null` — null was rejected (`invalid_union`) so every create/edit with an
+  // empty city 400'd. Null, undefined, and '' are all legal empty values.
+  location: z.string().max(300).optional().nullable().or(z.literal('')),
+  city: z.string().max(100).optional().nullable().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
 });
+
+// P2-1 (2026-09-08 hubs audit): the PUT route used to build its schema as
+// `createHubSchema.partial().extend({id})` — the inherited `isActive`
+// default meant parsing `{id, name}` yielded `isActive: true`, so ANY edit
+// of a deactivated hub silently re-activated it. isActive is re-declared
+// WITHOUT a default: it is only written when the client sends it.
+export const updateHubSchema = createHubSchema
+  .omit({ isActive: true })
+  .partial()
+  .extend({ id: z.string().min(1), isActive: z.boolean().optional() });
 
 // ==================== ADMIN - TEAM LEADERS ====================
 export const createTeamLeaderSchema = z.object({
   name: z.string().min(2, 'Name is required').max(100),
-  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+  phone: z.preprocess(
+    (v) => {
+      if (typeof v !== 'string') return v;
+      const cleaned = v.replace(/\D/g, '');
+      if (cleaned.length === 12 && cleaned.startsWith('91')) return cleaned.slice(2);
+      if (cleaned.length === 11 && cleaned.startsWith('0')) return cleaned.slice(1);
+      return cleaned;
+    },
+    z.string().regex(/^[6-9]\d{9}$|^\d{10}$/, 'Phone must be a valid 10-digit mobile number')
+  ),
   email: z.string().email().optional().or(z.literal('')),
   hubId: z.string().optional().nullable().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
 }).strict();
 
 // ==================== ADMIN - TICKETS (UPDATE) ====================
-export const updateTicketSchema = z.object({
-  id: z.string().min(1, 'id is required').optional(),
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED']).optional(),
-  assignedTo: z.string().optional(),
-  isEscalated: z.boolean().optional(),
-  refundAmountInPaise: z.number().int().nonnegative().optional(),
-});
+export const updateTicketSchema = z
+  .object({
+    id: z.string().min(1, 'id is required').optional(),
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED']).optional(),
+    assignedTo: z.string().optional(),
+    isEscalated: z.boolean().optional(),
+    // P2-3 (support audit): `refundAmountInPaise` removed — it is not a
+    // SupportTicket column; the use-case only stripped it defensively after
+    // the schema accepted it. No caller sends it. (The ticket refund flow
+    // lives in the wallet/deposit modules, not here.)
+  })
+  .strict();
 
 export const ticketReplySchema = z.object({
   message: z.string().min(1, 'Message is required').max(5000),
@@ -561,7 +591,12 @@ export const ticketReplySchema = z.object({
       z.string().max(5000).refine(isUrlListString, {
         message: 'Attachments must be URL(s): JSON array or comma-separated https URLs (max 5)',
       }),
-      z.array(z.string().url().max(2000)).max(5),
+      // P1-3 (support audit): http(s)-only — see createTicketSchema note.
+      z
+        .array(z.string().max(2000).refine((u) => /^https?:\/\//.test(u), {
+          message: 'Attachments must be http(s) URLs',
+        }))
+        .max(5),
       z.null(),
       z.undefined(),
     ])
@@ -759,6 +794,21 @@ export const ticketBulkActionSchema = z.object({
   ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
   action: z.enum(['changeStatus', 'assign', 'changePriority', 'closeResolved', 'revert', 'escalate']),
   value: z.string().optional(),
+  // P2-1 (support audit): the admin UI captures each ticket's state before a
+  // bulk action and sends it back on undo (action: 'revert'). The server
+  // restores exactly those captured states instead of force-setting OPEN.
+  previousStates: z
+    .record(
+      z.string(),
+      z
+        .object({
+          status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED']).optional(),
+          priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
+          assignedTo: z.string().nullable().optional(),
+        })
+        .optional()
+    )
+    .optional(),
 });
 
 export const hubBulkActionSchema = z.object({
@@ -824,6 +874,25 @@ export const updateIncidentSchema = z.object({
   resolution: z.string().optional(),
   insuranceClaim: z.boolean().optional(),
   insuranceClaimNumber: z.string().optional(),
+});
+
+// ==================== ADMIN - FINES ====================
+// P1-3 (2026-09-08 incidents & fines audit): the TrafficFine model existed
+// with zero writers — these schemas make the fines half of the section live.
+export const createFineSchema = z.object({
+  riderId: z.string().min(1),
+  vehicleId: z.string().optional(),
+  amountInPaise: z.number().int().positive('Amount must be positive'),
+  location: z.string().max(300).optional(),
+  violationType: z.string().min(2).max(200),
+  violationDate: z.coerce.date(),
+  dueDate: z.coerce.date(),
+});
+
+export const updateFineSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(['PENDING', 'PAID', 'DISPUTED', 'OVERDUE', 'WAIVED']),
+  reason: z.string().max(500).optional(),
 });
 
 // ==================== RIDER EARNINGS ====================

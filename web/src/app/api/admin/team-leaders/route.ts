@@ -1,12 +1,13 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createTeamLeaderSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/auth';
-import { teamLeaderUseCases } from '@/server/modules/team-leaders/team-leader.use-cases';
+import { requireAdmin, adminUnauthorized, adminForbidden, canManageTeamLeaders } from '@/lib/rbac';
+import { teamLeaderUseCases, TeamLeaderStateError } from '@/server/modules/team-leaders/team-leader.use-cases';
 import { parsePositiveInt } from '@/lib/api-utils';
+import { invalidateCache } from '@/lib/cache';
 
 const deleteTeamLeaderSchema = z.object({
   id: z.string().min(1),
@@ -23,12 +24,7 @@ const updateTeamLeaderSchema = createTeamLeaderSchema.partial().extend({
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
-  // Accept both so admins with stored legacy permissions aren't locked out.
-  const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
-  if (!canManage) return adminForbidden();
+  if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
   try {
     const { searchParams } = req.nextUrl;
@@ -50,19 +46,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
-  // Accept both so admins with stored legacy permissions aren't locked out.
-  const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
-  if (!canManage) return adminForbidden();
+  if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
   try {
     const body = await req.json();
     const validation = validateBody(createTeamLeaderSchema, body);
     if (!validation.success) return errors.validation(validation.error);
 
-    const teamLeader = await teamLeaderUseCases.create(validation.data, session.adminId || '');
+    const teamLeader = await teamLeaderUseCases.create(
+      validation.data as Prisma.TeamLeaderCreateInput,
+      session.adminId || ''
+    );
+    invalidateCache('admin:team-leaders:*');
     return success(teamLeader, 'Team leader created', 201);
   } catch (error) {
     logger.error('POST /api/admin/team-leaders error:', error);
@@ -73,12 +68,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
-  // Accept both so admins with stored legacy permissions aren't locked out.
-  const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
-  if (!canManage) return adminForbidden();
+  if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
   try {
     const body = await req.json();
@@ -102,6 +92,7 @@ export async function PUT(req: NextRequest) {
       return errors.badRequest('No fields to update');
     }
     const teamLeader = await teamLeaderUseCases.update(id, data, session.adminId || '');
+    invalidateCache('admin:team-leaders:*');
     return success(teamLeader);
   } catch (error) {
     logger.error('PUT /api/admin/team-leaders error:', error);
@@ -112,12 +103,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
-  // Accept both so admins with stored legacy permissions aren't locked out.
-  const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
-  if (!canManage) return adminForbidden();
+  if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
   try {
     // P1-3/P3-3: the audit flagged body-id DELETE as inconsistent with a
@@ -131,8 +117,12 @@ export async function DELETE(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error);
 
     await teamLeaderUseCases.delete(validation.data.id, session.adminId || '');
+    invalidateCache('admin:team-leaders:*');
     return success(null, 'Team leader deleted');
   } catch (error) {
+    if (error instanceof TeamLeaderStateError) {
+      return errors.conflict(error.message);
+    }
     logger.error('DELETE /api/admin/team-leaders error:', error);
     return errors.internal('Failed to delete team leader');
   }

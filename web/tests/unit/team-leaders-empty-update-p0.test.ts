@@ -23,6 +23,7 @@ vi.mock('@/lib/rbac', () => ({
   requireAdmin: mocks.requireAdmin,
   adminUnauthorized: mocks.adminUnauthorized,
   adminForbidden: mocks.adminForbidden,
+  canManageTeamLeaders: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock('@/lib/auth', () => ({ hasPermission: mocks.hasPermission }));

@@ -33,6 +33,10 @@ export async function requirePermission(permission: Permission): Promise<Session
   return session;
 }
 
+export function canManageTeamLeaders(role: string): boolean {
+  return hasPermission(role, 'team_leaders_manage') || hasPermission(role, 'tl_manage' as Permission);
+}
+
 export function adminUnauthorized() {
   return errors.unauthorized('Admin authentication required');
 }

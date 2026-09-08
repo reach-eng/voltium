@@ -1,7 +1,15 @@
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { db } from '@/lib/db';
 import { teamLeaderRepository } from './team-leader.repository';
 import { Prisma } from '@prisma/client';
+
+export class TeamLeaderStateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TeamLeaderStateError';
+  }
+}
 
 const logTlAction = (actorId: string, action: string, id: string, details?: Record<string, unknown>) => {
   createAuditLog({
@@ -67,6 +75,14 @@ export const teamLeaderUseCases = {
   },
 
   async delete(id: string, actorId: string) {
+    const activeRidersCount = await db.rider.count({
+      where: { teamLeaderId: id, deletedAt: null },
+    });
+    if (activeRidersCount > 0) {
+      throw new TeamLeaderStateError(
+        `Cannot delete team leader: ${activeRidersCount} active rider(s) are currently assigned. Reassign them first.`
+      );
+    }
     await teamLeaderRepository.delete(id);
     logTlAction(actorId, 'tl.delete', id);
   },
@@ -84,6 +100,14 @@ export const teamLeaderUseCases = {
   },
 
   async bulkDelete(ids: string[], actorId: string) {
+    const activeRidersCount = await db.rider.count({
+      where: { teamLeaderId: { in: ids }, deletedAt: null },
+    });
+    if (activeRidersCount > 0) {
+      throw new TeamLeaderStateError(
+        `Cannot delete team leaders: ${activeRidersCount} active rider(s) are currently assigned. Reassign them first.`
+      );
+    }
     const count = await teamLeaderRepository.bulkDelete(ids);
     logTlAction(actorId, 'team_leader.bulk_delete', 'multiple', { ids, count });
     return count;

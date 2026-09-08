@@ -13,11 +13,14 @@ vi.mock('../../src/lib/db', () => ({
     }),
     teamLeader: {
       update: vi.fn(),
-    }
-  }
+    },
+    rider: {
+      count: vi.fn().mockResolvedValue(0),
+    },
+  },
 }));
 vi.mock('../../src/lib/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn() }
+  logger: { error: vi.fn(), info: vi.fn() },
 }));
 
 describe('Team Leader Soft Delete & Audit', () => {
@@ -28,7 +31,7 @@ describe('Team Leader Soft Delete & Audit', () => {
   it('update() captures before and after states for audit diffs', async () => {
     const mockBefore = { id: 'tl-1', name: 'Old', isActive: true };
     const mockAfter = { id: 'tl-1', name: 'New', isActive: true };
-    
+
     vi.mocked(teamLeaderRepository.findById).mockResolvedValue(mockBefore as any);
     vi.mocked(teamLeaderRepository.update).mockResolvedValue(mockAfter as any);
     vi.mocked(auditLog.createAuditLog).mockResolvedValue(null as any);
@@ -41,7 +44,11 @@ describe('Team Leader Soft Delete & Audit', () => {
       action: 'tl.update',
       entity: 'team_leader',
       entityId: 'tl-1',
-      details: { before: mockBefore, after: mockAfter },
+      details: {
+        changedFields: ['name'],
+        before: { name: 'Old' },
+        after: { name: 'New' },
+      },
     });
   });
 

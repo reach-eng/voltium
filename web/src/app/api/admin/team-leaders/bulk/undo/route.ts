@@ -4,8 +4,7 @@ import { Prisma } from '@prisma/client';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/auth';
+import { requireAdmin, adminUnauthorized, adminForbidden, canManageTeamLeaders } from '@/lib/rbac';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { invalidateCache } from '@/lib/cache';
@@ -23,12 +22,7 @@ const undoSchema = z.object({
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  // PR-1 (2026-08-06 fix plan): canonical key — `tl_manage` is a legacy alias.
-  // Accept both so admins with stored legacy permissions aren't locked out.
-  const canManage =
-    hasPermission(session.adminRole || '', 'team_leaders_manage') ||
-    hasPermission(session.adminRole || '', 'tl_manage');
-  if (!canManage) return adminForbidden();
+  if (!canManageTeamLeaders(session.adminRole || '')) return adminForbidden();
 
   try {
     const body = await req.json();

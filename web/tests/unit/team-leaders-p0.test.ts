@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   hasPermission: vi.fn(),
   teamLeaderFindUnique: vi.fn(),
   riderFindMany: vi.fn(),
+  riderCount: vi.fn(),
   walletFindMany: vi.fn(),
   rentalLeaseFindMany: vi.fn(),
   bulkActivate: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('@/lib/rbac', () => ({
   requireAdmin: mocks.requireAdmin,
   adminUnauthorized: mocks.adminUnauthorized,
   adminForbidden: mocks.adminForbidden,
+  canManageTeamLeaders: vi.fn((role: string) => mocks.hasPermission(role, 'team_leaders_manage') || mocks.hasPermission(role, 'tl_manage')),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -35,6 +37,7 @@ vi.mock('@/lib/db', () => ({
     },
     rider: {
       findMany: mocks.riderFindMany,
+      count: mocks.riderCount,
     },
     wallet: {
       findMany: mocks.walletFindMany,
@@ -51,6 +54,12 @@ vi.mock('@/server/modules/team-leaders/team-leader.use-cases', () => ({
     bulkDeactivate: mocks.bulkDeactivate,
     bulkDelete: mocks.bulkDelete,
   },
+  TeamLeaderStateError: class TeamLeaderStateError extends Error {
+    constructor(msg: string) {
+      super(msg);
+      this.name = 'TeamLeaderStateError';
+    }
+  },
 }));
 
 import { GET as getRiders } from '@/app/api/admin/team-leaders/[id]/riders/route';
@@ -61,6 +70,7 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
     vi.clearAllMocks();
     mocks.requireAdmin.mockResolvedValue({ adminId: 'admin_1', adminRole: 'OPERATIONS_ADMIN' });
     mocks.hasPermission.mockReturnValue(true);
+    mocks.riderCount.mockResolvedValue(1);
   });
 
   describe('GET /api/admin/team-leaders/[id]/riders', () => {
@@ -92,6 +102,7 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
           phone: true,
           lifecycleStatus: true,
         },
+        take: 100,
       });
 
       // Verify hubId was excluded from select
@@ -133,6 +144,7 @@ describe('PR-TL-1: Team Leaders P0 Fixes', () => {
 
     it('correctly calculates thresholds for OVERDUE_BALANCE_PAISE (-50000) and HEALTHY_BALANCE_PAISE (0)', async () => {
       mocks.teamLeaderFindUnique.mockResolvedValue({ id: 'tl_123', name: 'Leader Alpha' });
+      mocks.riderCount.mockResolvedValue(4);
       mocks.riderFindMany.mockResolvedValue([
         { id: 'r_overdue', riderId: 'VF-001', fullName: 'Rider 1', phone: '111', lifecycleStatus: 'ACTIVE' },
         { id: 'r_upcoming', riderId: 'VF-002', fullName: 'Rider 2', phone: '222', lifecycleStatus: 'ACTIVE' },
