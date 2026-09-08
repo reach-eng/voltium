@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { extractErrorMessage } from '@/lib/extract-error';
 import {
   EMPTY_LEADER_FORM,
   TEAM_LEADER_PAGE_SIZE,
@@ -307,14 +308,17 @@ export function useTeamLeaders() {
     setSelectedTlStats(null);
     try {
       const res = await fetch(`/api/admin/team-leaders/${leader.id}/riders`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success) {
-          setSelectedTlStats({ leader, data: json.data });
-        }
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        setSelectedTlStats({ leader, data: json.data });
+      } else {
+        const msg = extractErrorMessage(json, `Failed to load stats (${res.status})`);
+        toast.error(msg);
+        setStatsModalOpen(false);
       }
     } catch {
-      toast.error('Failed to load stats');
+      toast.error('Network error while loading stats');
+      setStatsModalOpen(false);
     } finally {
       setStatsLoading(false);
     }

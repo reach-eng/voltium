@@ -5,6 +5,7 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { toRupeesResponse } from '@/lib/api-money';
+import { parsePositiveInt } from '@/lib/api-utils';
 
 // PR-RUPEES-2026-08-08: thresholds are in paise (DB unit). They are
 // converted to rupees at the response boundary (the API exposes
@@ -33,17 +34,24 @@ export async function GET(
       return errors.notFound('Team leader not found');
     }
 
-    // Fetch all riders assigned to this team leader
-    const riders = await db.rider.findMany({
-      where: { teamLeaderId: id },
-      select: {
-        id: true,
-        riderId: true,
-        fullName: true,
-        phone: true,
-        lifecycleStatus: true,
-      }
-    });
+    const { searchParams } = req.nextUrl;
+    const limit = parsePositiveInt(searchParams.get('limit'), 100, 200);
+
+    // Fetch total count and bounded riders assigned to this team leader
+    const [totalRidersCount, riders] = await Promise.all([
+      db.rider.count({ where: { teamLeaderId: id } }),
+      db.rider.findMany({
+        where: { teamLeaderId: id },
+        select: {
+          id: true,
+          riderId: true,
+          fullName: true,
+          phone: true,
+          lifecycleStatus: true,
+        },
+        take: limit,
+      }),
+    ]);
 
     const riderIds = riders.map((r: { id: string }) => r.id);
     
@@ -108,7 +116,7 @@ export async function GET(
 
     return success({
       stats: {
-        totalRiders: riders.length,
+        totalRiders: totalRidersCount,
         churned: churnedCount,
         overdueRent: overdueRentCount,
         upcomingRent: upcomingRentCount,
