@@ -4,6 +4,23 @@
 
 export type SettingType = 'BOOLEAN' | 'STRING' | 'NUMBER';
 
+/**
+ * 2026-09-08 configuration audit: domain-level rejection of a client-supplied
+ * setting key/value (unknown key, type mismatch, non-finite, out of the
+ * registry's min/max range). Throwing the plain `Error` this replaces made
+ * every rejection indistinguishable from a server fault — both admin PUT
+ * routes surfaced range violations as 500s instead of 400s.
+ * `coerceSettingValue` throws this (and nothing else) for bad input;
+ * `settingUseCases.update` throws it for read-only rows and unknown keys.
+ * Messages are unchanged from the plain-Error era.
+ */
+export class SettingValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SettingValidationError';
+  }
+}
+
 export interface SettingMetadata {
   key: string;
   category: 'BUSINESS' | 'POLICY' | 'NOTIFICATION' | 'LOCATION' | string;
@@ -91,6 +108,32 @@ export const SETTING_REGISTRY: SettingMetadata[] = [
     description: 'Referral bonus in paise',
   },
   {
+    // P0-2 (system-settings audit, 2026-09-08): `dailyRent` was a live
+    // per-day revenue figure with ONE writer — the raw-string
+    // system-settings PUT — and ONE reader (`rental.use-cases.ts:236`,
+    // `parseInt(value) || 18000`). The BUSINESS surface on the same
+    // table rejected it as an unknown key, so the unvalidated
+    // system-settings surface was the only path. Promoting it here:
+    //   - the BUSINESS surface (multi-key, rupee-in, registry-coerced)
+    //     becomes the validated writer,
+    //   - the system-settings surface PUT allowlist refuses it
+    //     (see `INFRA_PUT_ALLOWED_KEYS`),
+    //   - the rental reader is unchanged (it still reads the raw
+    //     paise string from the DB row) — its default of 18000 paise
+    //     is now the registry's `defaultValue` too, so a missing row
+    //     is consistent on both sides.
+    key: 'dailyRent',
+    category: 'BUSINESS',
+    valueType: 'NUMBER',
+    defaultValue: '18000', // 180 rupees in paise — matches rental.use-cases fallback
+    isPublic: false,
+    min: 1, // rupees — 0 would price rentals at zero
+    max: 100000, // rupees — cap at ₹1,00,000/day to keep a fat-finger save from breaking pricing
+    description: 'Base daily rental price in paise (legacy name: dailyRent). ' +
+                 'PR-2 (system-settings audit, 2026-09-08) promoted this from the ' +
+                 'raw-string system-settings surface to the validated BUSINESS registry.',
+  },
+  {
     key: 'skipGuarantorExtraDeposit',
     category: 'BUSINESS',
     valueType: 'NUMBER',
@@ -165,6 +208,16 @@ export const SETTING_REGISTRY: SettingMetadata[] = [
     description: 'Maximum penalty calculation period cap in days',
   },
   {
+    key: 'walletOverdueReviewDays',
+    category: 'POLICY',
+    valueType: 'NUMBER',
+    defaultValue: '3',
+    isPublic: false,
+    min: 1, // days
+    max: 30,
+    description: 'Days a rider can remain in negative balance before flagged for admin review',
+  },
+  {
     key: 'maxWalletBalance',
     category: 'BUSINESS',
     valueType: 'NUMBER',
@@ -223,12 +276,12 @@ export function coerceSettingValue(
   value: unknown
 ): { stored: string; valueType: SettingType } {
   if (value === null || value === undefined) {
-    throw new Error(`Value for ${key} cannot be null or undefined`);
+    throw new SettingValidationError(`Value for ${key} cannot be null or undefined`);
   }
 
   const meta = SETTINGS_BY_KEY.get(key);
   if (!meta) {
-    throw new Error(`Unknown setting key: ${key}`);
+    throw new SettingValidationError(`Unknown setting key: ${key}`);
   }
 
   switch (meta.valueType) {
@@ -239,7 +292,7 @@ export function coerceSettingValue(
       if (value === 'true' || value === 'false') {
         return { stored: value, valueType: 'BOOLEAN' };
       }
-      throw new Error(`Setting ${key} expects boolean, got ${typeof value}`);
+      throw new SettingValidationError(`Setting ${key} expects boolean, got ${typeof value}`);
     }
     case 'NUMBER': {
       let num: number;
@@ -261,26 +314,43 @@ export function coerceSettingValue(
       // keys, raw units otherwise) and enforced BEFORE the paise
       // conversion so error messages match what the admin typed.
       if (meta.min !== undefined && num < meta.min) {
-        throw new Error(
+        throw new SettingValidationError(
           `Setting ${key} must be >= ${meta.min} (got ${num})`
         );
       }
       if (meta.max !== undefined && num > meta.max) {
-        throw new Error(
+        throw new SettingValidationError(
           `Setting ${key} must be <= ${meta.max} (got ${num})`
         );
       }
 
       let storedNum = num;
       if (meta.category === 'BUSINESS') {
-        // Convert rupees to paise
-        storedNum = num * 100;
+        // Convert rupees to paise.
+        // CONFIG-AUDIT-2026-09-08 (P1-4): Math.round — `19.99 * 100` is
+        // `1998.9999999999998` in IEEE-754; without rounding the stored
+        // string carried float debris and every reader's parseInt truncated
+        // ₹19.99 to ₹19.98 (the coupon module fixed this same bug first).
+        // Fractional paise cannot be represented anyway, so rounding is the
+        // only lossless-in-paise choice; inputs beyond 2 decimals round to
+        // the nearest paise.
+        storedNum = Math.round(num * 100);
       }
 
       return { stored: String(storedNum), valueType: 'NUMBER' };
     }
     case 'STRING': {
-      return { stored: String(value), valueType: 'STRING' };
+      const strValue = String(value);
+      // CONFIG-AUDIT-2026-09-08 (P2-7): shape-check the contact strings —
+      // a typo'd supportEmail ships to every rider surface. Numbers are
+      // range-checked above; strings get the same scrutiny.
+      if (key === 'supportEmail' && strValue.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(strValue.trim())) {
+        throw new SettingValidationError(`Setting ${key} must be a valid email address (got "${strValue.trim()}")`);
+      }
+      if (key === 'supportPhone' && strValue.trim() !== '' && !/^\+?[0-9][0-9\s-]{5,19}$/.test(strValue.trim())) {
+        throw new SettingValidationError(`Setting ${key} must be a valid phone number (got "${strValue.trim()}")`);
+      }
+      return { stored: strValue, valueType: 'STRING' };
     }
   }
 }

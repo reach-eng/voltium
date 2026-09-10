@@ -152,7 +152,14 @@ export const updateAdminSchema = z
     id: z.string().min(1, 'id is required'),
     name: z.string().min(1).max(200).optional(),
     email: z.string().email().optional(),
-    password: PasswordComplexitySchema.optional(),
+    // P0-1 (2026-09-08 admin-access audit): '' is accepted here and means
+    // "no password change" — the edit dialog keeps an always-present
+    // password field whose blank value must not fail complexity validation
+    // (the previous schema 400'd EVERY UI edit because the form re-sent
+    // `password: ''` on each save). The route normalizes '' to undefined
+    // before any password logic runs. A real password still must satisfy
+    // PasswordComplexitySchema.
+    password: z.union([PasswordComplexitySchema, z.literal('')]).optional(),
     // P0-3 (2026-08-05 ops audit): required when changing `password`. The
     // route verifies it against the ACTOR's own hash (re-authentication), not
     // the target's — verifying the target's password would deadlock password
@@ -187,7 +194,18 @@ export const updateFeatureFlagSchema = z
     key: z.enum(FEATURE_FLAG_KEYS),
     value: z.union([z.string(), z.number(), z.boolean()]),
   })
-  .strict();
+  .strict()
+  // CONFIG-AUDIT-2026-09-08 (P1-2): the numeric flag was unbounded — a `0`
+  // or negative maxUploadSizeMb bricks ALL uploads fleet-wide (KYC photos,
+  // payment proofs, ticket evidence), and absurd-large invites storage
+  // abuse. Range-cap it server-side (getMaxUploadSize used to trust it
+  // blindly).
+  .refine(
+    (v) =>
+      v.key !== 'maxUploadSizeMb' ||
+      (Number(v.value) >= 1 && Number(v.value) <= 100),
+    { message: 'maxUploadSizeMb must be between 1 and 100 MB' }
+  );
 
 // ==================== ADMIN - SYSTEM SETTINGS (new, N2 fix) ====================
 // PR-26 — N2 fix for `admin/system-settings` PUT. `isSecret` is
@@ -218,6 +236,7 @@ export const createFaqAdminSchema = z
     category: z.string().max(100).optional(),
     order: z.number().int().min(0).optional().default(0),
     isActive: z.boolean().optional().default(true),
+    locale: z.enum(['en', 'hi']).default('en'),
   })
   .strict();
 
@@ -227,8 +246,8 @@ export const updateFaqAdminSchema = z
     question: z.string().min(5).max(500).optional(),
     answer: z.string().min(5).max(5000).optional(),
     category: z.string().max(100).optional(),
-    order: z.number().int().min(0).optional(),
     isActive: z.boolean().optional(),
+    locale: z.enum(['en', 'hi']).optional(),
   })
   .strict();
 
@@ -253,11 +272,18 @@ export const updateLegalAdminSchema = z
     type: z.enum(LEGAL_DOCUMENT_KEYS as [string, ...string[]]),
     title: z.string().max(200).optional(),
     content: z.string().min(1, 'content is required').max(100000).optional(),
-    isActive: z.boolean().optional(),
+    // P0 (2026-09-08 legal audit): `isActive` was REMOVED — the
+    // LegalDocument model has no such column, so accepting it made the
+    // schema advertise a toggle whose every write was a Prisma
+    // unknown-argument 500 (and createData always injected
+    // `isActive: true` behind an `as any`, so first-time creates 500'd
+    // too). There is no unpublish concept on this model; deleting a
+    // document type is a schema/migration decision, not a toggle.
+    locale: z.enum(['en', 'hi']).default('en'),
   })
   .strict()
-  .refine((data) => data.content !== undefined || data.isActive !== undefined, {
-    message: 'content is required unless toggling isActive',
+  .refine((data) => data.content !== undefined, {
+    message: 'content is required',
     path: ['content'],
   });
 
@@ -299,6 +325,13 @@ export const ADMIN_SETTING_KEYS = [
   'loyaltyPointsPerRupee',
   'supportEmail',
   'supportPhone',
+  'walletOverdueReviewDays',
+  // P0-2 (system-settings audit, 2026-09-08): `dailyRent` was a live
+  // per-day price behind the unvalidated system-settings PUT. Now in
+  // the BUSINESS registry and writable here with full rupee/paise
+  // coercion (the previous unvalidated writer — system-settings —
+  // refuses it via its own PUT allowlist).
+  'dailyRent',
 ] as const;
 
 // P1-7 (settings audit, 2026-09-08): BOOLEAN settings (autoApproveKYC,

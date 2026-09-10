@@ -1080,10 +1080,21 @@ async function main() {
 
   // ==================== SETTINGS ====================
   const settings = [
-    { key: 'dailyRent', value: String(paise(399)), category: 'BUSINESS', isEditable: true },
-    { key: 'weeklyRent', value: String(paise(2199)), category: 'BUSINESS', isEditable: true },
-    { key: 'monthlyRent', value: String(paise(7499)), category: 'BUSINESS', isEditable: true },
-    { key: 'securityDeposit', value: String(paise(5000)), category: 'BUSINESS', isEditable: true },
+    { key: 'dailyRent', value: String(paise(399)), category: 'BUSINESS', isEditable: true,
+      description: 'Base daily rental price in paise. PR-2 (system-settings audit, 2026-09-08) ' +
+                   'promoted this to the validated BUSINESS registry — write via /admin/settings.' },
+    { key: 'weeklyRent', value: String(paise(2199)), category: 'BUSINESS', isEditable: false,
+      description: 'Legacy row preserved for forensic context. Runtime pricing uses `dailyRent` ' +
+                   '(now in the BUSINESS settings registry) and per-vehicle `Plan` rows. ' +
+                   'This row is read by no production code path.' },
+    { key: 'monthlyRent', value: String(paise(7499)), category: 'BUSINESS', isEditable: false,
+      description: 'Legacy row preserved for forensic context. Runtime pricing uses `dailyRent` ' +
+                   '(now in the BUSINESS settings registry) and per-vehicle `Plan` rows. ' +
+                   'This row is read by no production code path.' },
+    { key: 'securityDeposit', value: String(paise(5000)), category: 'BUSINESS', isEditable: false,
+      description: 'Legacy row preserved for forensic context. Runtime uses the per-vehicle `Plan` ' +
+                   'deposit and the `skipGuarantorExtraDeposit` BUSINESS registry key. ' +
+                   'This row is read by no production code path.' },
     { key: 'lateFee', value: String(paise(50)), category: 'BUSINESS', isEditable: true },
     { key: 'referralBonus', value: String(paise(500)), category: 'BUSINESS', isEditable: true },
     { key: 'autoApproveKYC', value: 'false', category: 'BUSINESS', isEditable: true },

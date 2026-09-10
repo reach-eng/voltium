@@ -6,6 +6,12 @@ import { withApiHandler } from '@/lib/api-handler';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hasPermission } from '@/lib/permissions';
 import { updateSystemSettingSchema } from '@/lib/validators/admin';
+import {
+  INFRA_PUT_ALLOWED_KEYS,
+  managedElsewhere,
+  validateInfraKey,
+} from './infra-key-validators';
+import { SettingValidationError } from '@/server/modules/settings/settings.registry';
 
 /**
  * Admin System Settings API
@@ -137,6 +143,18 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
 
   const { key, value } = validation.data;
 
+  // P0-2 (system-settings audit, 2026-09-08): allowlist the PUT to the
+  // 5 LIVE infrastructure keys (LOCAL_STORAGE_ROOT, BACKUP_ROOT,
+  // BACKUP_SECONDARY_ROOT, MAINTENANCE_MODE, MAINTENANCE_MESSAGE).
+  // Business keys (referralBonus, lateFee, dailyRent, ...) live on the
+  // /api/admin/settings surface with full rupee/paise coercion; flag.*
+  // lives on the Feature Flags tab; the 10 dead knobs from PR-1 are
+  // frozen. The check runs BEFORE the DB read so a non-allowlisted
+  // key gets a clear 400 + the right surface pointer, not a 404.
+  if (!INFRA_PUT_ALLOWED_KEYS.has(key)) {
+    return errors.validation(managedElsewhere(key));
+  }
+
   // Check if setting exists and is editable
   const existing = await db.systemSetting.findUnique({ where: { key } });
   if (!existing) {
@@ -146,13 +164,29 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     return errors.forbidden(`Setting "${key}" is read-only`);
   }
 
+  // P0-2: per-key validation (PATH shape, BOOLEAN literal, message
+  // length, etc.). The BUSINESS surface coerces via the registry; this
+  // surface is the catch-up — it had raw-string acceptance for live
+  // infra keys, and a typo like `BACKUP_KEEP_DAILY=abc` or a path
+  // traversal in BACKUP_ROOT would persist. `validateInfraKey` either
+  // returns the canonical value or throws SettingValidationError.
+  let storedValue: string;
+  try {
+    storedValue = validateInfraKey(key, value);
+  } catch (err) {
+    if (err instanceof SettingValidationError) {
+      return errors.validation(err.message);
+    }
+    throw err;
+  }
+
   // Guard: if setting is a secret and value hasn't changed, skip update
   // This prevents saving the masked placeholder "[CONFIGURED]" as the actual value
-  if (existing.isSecret && value === '[CONFIGURED]') {
+  if (existing.isSecret && storedValue === '[CONFIGURED]') {
     // P2-17: tell the admin the request was a no-op — the old 'unchanged'
     // message looked like a silent success and invited re-submits.
     return success(
-      { key, value },
+      { key, value: storedValue },
       'Setting unchanged — it is already configured'
     );
   }
@@ -161,20 +195,31 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   await db.systemSetting.update({
     where: { key },
     data: {
-      value,
+      value: storedValue,
       updatedByAdminId: session.adminId ?? session.riderDbId,
     },
   });
 
-  // Audit log
+  // P1-1 (system-settings audit, 2026-09-08): the audit log used to
+  // record `details: { key, isSecret }` only — the higher-blast-radius
+  // surface (storage roots, maintenance state, URLs) had a weaker
+  // trail than the BUSINESS surface on the same table. Mirror the
+  // BUSINESS shape: per-key before/after with `[REDACTED]` for
+  // secrets. No secrets exist today (see PR-4 / P1-3), but the field
+  // is in the contract so a future secret row gets the right shape.
   await createAuditLog({
     actorId: session.adminId || session.riderDbId || 'unknown',
     actorType: 'ADMIN',
     action: 'system.config',
     entity: 'SystemSetting',
     entityId: key,
-    details: { key, isSecret: existing.isSecret },
+    details: {
+      key,
+      old: existing.isSecret ? '[REDACTED]' : existing.value,
+      new: existing.isSecret ? '[REDACTED]' : storedValue,
+      isSecret: existing.isSecret,
+    },
   });
 
-  return success({ key, value });
+  return success({ key, value: storedValue });
 });
