@@ -142,6 +142,25 @@ function RestrictHardwareCard({
               >
                 Off Cam
               </Button>
+              {/* P1-1 (device-tracking audit, 2026-09-08): ENABLE_CAMERA
+                  — without this, an admin who fat-fingers "Off Cam"
+                  has no UI path back. The camera flag is FCM-only
+                  (no server-side persistence on `RiderAdminLock`),
+                  so the button is stateless — both directions are
+                  always available, matching the audit's "mirror the
+                  PERSIST_APP toggle pattern" guidance (the toggle
+                  there is stateful; this one is action-only). */}
+              <Button
+                size="default"
+                variant="outline"
+                className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors"
+                onClick={() => onTrigger('ENABLE_CAMERA')}
+                disabled={busy}
+              >
+                On Cam
+              </Button>
+            </div>
+            <div className="flex gap-2">
               <Button
                 size="default"
                 variant="outline"
