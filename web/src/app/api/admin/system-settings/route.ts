@@ -6,6 +6,7 @@ import { withApiHandler } from '@/lib/api-handler';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hasPermission } from '@/lib/permissions';
 import { updateSystemSettingSchema } from '@/lib/validators/admin';
+import { logger } from '@/lib/logger';
 // P1-2 (system-settings audit, 2026-09-08): when this surface writes
 // MAINTENANCE_MODE / MAINTENANCE_MESSAGE it must drop the middleware's
 // in-memory cache so the rider gate reflects the change instantly
@@ -233,12 +234,43 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     );
   }
 
+  // P3-1 (system-settings audit, 2026-09-08): optimistic concurrency
+  // on the PUT. The audit's full recommendation was a 409-on-stale
+  // via If-Match; the surface is SUPER_ADMIN-only so a strict 400
+  // is also acceptable (cheap, and admin-facing). If the client
+  // sends an If-Match header and it doesn't match the row's
+  // `updatedAt`, refuse with a clear "modified by another session"
+  // message and let the operator refresh. The header is OPTIONAL —
+  // a missing If-Match skips the check (last-write-wins is the
+  // default for the unversioned client; we only enforce when the
+  // client opted in).
+  const ifMatch = request.headers.get('if-match');
+  if (ifMatch && ifMatch !== existing.updatedAt.toISOString()) {
+    return errors.validation(
+      `Setting "${key}" was modified by another session. Refresh and retry.`
+    );
+  }
+
+  // P3-2 (system-settings audit, 2026-09-08): the previous code
+  // did `session.adminId ?? session.riderDbId` — silently attributing
+  // an infra change to a rider id when an admin id was missing.
+  // `/api/admin/auth/me` 401s without adminId, so reaching this
+  // surface without one is a code bug; fail loud (logged + 500)
+  // instead of mis-attributing.
+  if (!session.adminId) {
+    logger.error('[admin/system-settings] PUT reached without session.adminId', {
+      session: { adminRole: session.adminRole, hasRiderDbId: !!session.riderDbId },
+      key,
+    });
+    return errors.internal('Admin session is missing an adminId — refusing to attribute infra changes');
+  }
+
   // Update the setting
   await db.systemSetting.update({
     where: { key },
     data: {
       value: storedValue,
-      updatedByAdminId: session.adminId ?? session.riderDbId,
+      updatedByAdminId: session.adminId,
     },
   });
 
@@ -260,7 +292,12 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   // secrets. No secrets exist today (see PR-4 / P1-3), but the field
   // is in the contract so a future secret row gets the right shape.
   await createAuditLog({
-    actorId: session.adminId || session.riderDbId || 'unknown',
+    // P3-2: by this point the adminId guard above has thrown
+    // (logged + 500) if session.adminId was missing, so the
+    // `?? session.riderDbId` fallback is dead code. Keep a
+    // minimal fallback to satisfy the audit log's actorId type
+    // (string), but `session.adminId` is always present here.
+    actorId: session.adminId ?? 'unknown',
     actorType: 'ADMIN',
     action,
     entity: 'SystemSetting',
