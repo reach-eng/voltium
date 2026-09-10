@@ -3,6 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { deviceComplianceUseCases } from '@/server/modules/device-compliance/device-compliance.use-cases';
 
 const reportViolationSchema = z.object({
@@ -30,6 +31,22 @@ export async function POST(request: NextRequest) {
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;
+
+    // P1-4 (device-tracking audit, 2026-09-08): rider-scoped rate
+    // limit on the violation-report path. The previous code
+    // accepted unlimited reports per minute, which — combined
+    // with the 6/session client-side backoff — still let a
+    // compromised token create many ACTIVE rows (now blocked
+    // by the P1-3 server-side dedupe) and inflate the counter
+    // (now resolved by P1-3's resolve-on-grant). 5/min is
+    // well above the expected failure rate.
+    const rl = await checkRateLimit(`rider-device-violation:${riderDbId}`, {
+      windowMs: 60_000,
+      maxRequests: 5,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many violation reports. Try again in a minute.');
+    }
 
     let body;
     try {

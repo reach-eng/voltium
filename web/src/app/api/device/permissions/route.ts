@@ -1,9 +1,24 @@
 import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { success, errors } from '@/lib/api-response';
 import { requireRiderSession } from '@/lib/rider-auth';
-import { deviceComplianceUseCases } from '@/server/modules/device-compliance/device-compliance.use-cases';
+import { checkRateLimit } from '@/lib/rate-limit';
+import {
+  deviceComplianceUseCases,
+  mapDevicePermissions,
+} from '@/server/modules/device-compliance/device-compliance.use-cases';
 import { logger } from '@/lib/logger';
 import { isDeviceSeedAllowed } from '@/lib/device-policy';
+
+// P1-4 (device-tracking audit, 2026-09-08): Zod envelope for the
+// permissions payload. `permissions` is a permissive record (the
+// use-case filters out unrecognized keys at the mapping step
+// `mapDevicePermissions`); the rest of the envelope is strict.
+const devicePermissionsSchema = z
+  .object({
+    permissions: z.record(z.string(), z.boolean()),
+  })
+  .strict();
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +29,7 @@ export async function POST(request: NextRequest) {
       // Dev / test bypass — body-supplied riderId is allowed in dev mode or
       // when running under the E2E test harness. Production and staging
       // (per device-policy.ts) always require a real session.
-      const body = await request.clone().json();
+      const body = await request.clone().json().catch(() => ({}));
       riderDbId = body.riderId || 'test-rider-001';
     } else {
       const auth = await requireRiderSession(request);
@@ -22,43 +37,30 @@ export async function POST(request: NextRequest) {
       riderDbId = auth.riderDbId;
     }
 
-    const body = await request.json();
-    const { permissions } = body;
-
-    if (!permissions || typeof permissions !== 'object') {
-      return errors.badRequest('Permissions map is required');
+    // P1-4: rider-scoped rate limit. 5/min/rider, matches the
+    // sync/data and rider/device routes in this PR.
+    const rl = await checkRateLimit(`device-permissions:${riderDbId}`, {
+      windowMs: 60_000,
+      maxRequests: 5,
+    });
+    if (!rl.allowed) {
+      return errors.tooManyRequests('Too many permission syncs. Try again in a minute.');
     }
 
-    // Map keys to match DB fields if needed, or update DB columns
-    // The DB expectations in deviceComplianceUseCases.syncState:
-    // database keys: locationGranted, batteryGranted, contactsGranted, callLogsGranted, micGranted, cameraGranted, phoneGranted, deviceAdminGranted, displayOverlayGranted
-    const dbPermissions: Record<string, boolean> = {};
-    if (typeof permissions.locationGranted === 'boolean') dbPermissions.locationGranted = permissions.locationGranted;
-    else if (typeof permissions.location === 'boolean') dbPermissions.locationGranted = permissions.location;
+    const body = await request.json().catch(() => null);
+    const validation = devicePermissionsSchema.safeParse(body);
+    if (!validation.success) {
+      return errors.validation(validation.error.message);
+    }
+    const { permissions } = validation.data;
 
-    if (typeof permissions.batteryGranted === 'boolean') dbPermissions.batteryGranted = permissions.batteryGranted;
-    else if (typeof permissions.battery === 'boolean') dbPermissions.batteryGranted = permissions.battery;
+    // 2026-09-08 device-tracking audit P1-2: shared mapping — the verbatim
+    // copy of this ladder lived here and in /api/rider/device/permissions.
+    const dbPermissions = mapDevicePermissions(permissions);
 
-    if (typeof permissions.contactsGranted === 'boolean') dbPermissions.contactsGranted = permissions.contactsGranted;
-    else if (typeof permissions.contacts === 'boolean') dbPermissions.contactsGranted = permissions.contacts;
-
-    if (typeof permissions.callLogsGranted === 'boolean') dbPermissions.callLogsGranted = permissions.callLogsGranted;
-    else if (typeof permissions.callLog === 'boolean') dbPermissions.callLogsGranted = permissions.callLog;
-
-    if (typeof permissions.micGranted === 'boolean') dbPermissions.micGranted = permissions.micGranted;
-    else if (typeof permissions.mic === 'boolean') dbPermissions.micGranted = permissions.mic;
-
-    if (typeof permissions.cameraGranted === 'boolean') dbPermissions.cameraGranted = permissions.cameraGranted;
-    else if (typeof permissions.camera === 'boolean') dbPermissions.cameraGranted = permissions.camera;
-
-    if (typeof permissions.phoneGranted === 'boolean') dbPermissions.phoneGranted = permissions.phoneGranted;
-    else if (typeof permissions.phone === 'boolean') dbPermissions.phoneGranted = permissions.phone;
-
-    if (typeof permissions.deviceAdminGranted === 'boolean') dbPermissions.deviceAdminGranted = permissions.deviceAdminGranted;
-    else if (typeof permissions.deviceAdmin === 'boolean') dbPermissions.deviceAdminGranted = permissions.deviceAdmin;
-
-    if (typeof permissions.displayOverlayGranted === 'boolean') dbPermissions.displayOverlayGranted = permissions.displayOverlayGranted;
-    else if (typeof permissions.displayOverApps === 'boolean') dbPermissions.displayOverlayGranted = permissions.displayOverApps;
+    if (Object.keys(dbPermissions).length === 0) {
+      return errors.badRequest('No recognized permission keys in payload');
+    }
 
     await deviceComplianceUseCases.syncState(riderDbId, dbPermissions);
 
