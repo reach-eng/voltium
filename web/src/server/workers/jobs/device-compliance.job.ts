@@ -70,14 +70,31 @@ export const deviceComplianceJob = {
               },
             });
             result.violationsFound++;
+            // P1-2 (device-tracking audit, 2026-09-08): emit on
+            // transition only. The previous code emitted
+            // `DEVICE_VIOLATION` for every rider with a missing
+            // permission on every sweep (no `!existing` guard),
+            // and `deviceViolationCount` only grows, so a rider
+            // who denied location for a month generated a Slack
+            // message per minute per missing permission —
+            // exactly the failure mode that teaches operators to
+            // mute the channel carrying safety-adjacent alerts.
+            // The per-permission emit below fires only on the
+            // transition from "no ACTIVE row" → "ACTIVE row".
+            // Resolves and resolves-by-grant are not emitted (the
+            // alert is "a NEW violation appeared"); the
+            // auto-resolver doesn't need a noisy signal either.
+            await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION, {
+              riderId: rider.id,
+              // Keep the existing `violations` array shape so the
+              // orphan consumer in `orphan-event-consumer.job.ts:117`
+              // doesn't need to change. Each emit is one new
+              // violation, so the array has exactly one element.
+              violations: [permissionId],
+              permissionId,
+            }).catch(() => {});
           }
         }
-
-        // Emit outbox event for admin notification
-        await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION, {
-          riderId: rider.id,
-          violations: missingPermissions,
-        }).catch(() => {});
       }
 
       // Auto-resolve old violations if rider is now compliant.
