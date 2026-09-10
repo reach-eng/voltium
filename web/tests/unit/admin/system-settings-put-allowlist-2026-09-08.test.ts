@@ -3,6 +3,8 @@ import {
   INFRA_PUT_ALLOWED_KEYS,
   managedElsewhere,
   validateInfraKey,
+  auditActionForKey,
+  isMaintenanceKey,
 } from '../../../src/app/api/admin/system-settings/infra-key-validators';
 
 /**
@@ -119,5 +121,69 @@ describe('validateInfraKey — per-key validation', () => {
     expect(() => validateInfraKey('dailyRent', '50000')).toThrow(/Business settings surface/);
     expect(() => validateInfraKey('referralBonus', '50000')).toThrow(/Business settings surface/);
     expect(() => validateInfraKey('BACKUP_FREQUENCY', 'DAILY')).toThrow(/read-only display/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// P1-2 (system-settings audit, 2026-09-08) — maintenance writes
+// (MAINTENANCE_MODE / MAINTENANCE_MESSAGE) must:
+//   1. Emit the same audit action names as the dedicated maintenance
+//      route (so a single toggle from either surface shows up under
+//      a single action).
+//   2. Invalidate the middleware's in-memory maintenance cache so the
+//      rider gate reflects the change instantly (not after the 5s
+//      TTL). The dedicated maintenance route already does this; the
+//      system-settings surface historically skipped it.
+// ---------------------------------------------------------------------------
+
+describe('P1-2: maintenance audit action names', () => {
+  it('MAINTENANCE_MODE="true" → MAINTENANCE_ENABLED', () => {
+    expect(auditActionForKey('MAINTENANCE_MODE', 'true')).toBe('MAINTENANCE_ENABLED');
+  });
+
+  it('MAINTENANCE_MODE="false" → MAINTENANCE_DISABLED', () => {
+    expect(auditActionForKey('MAINTENANCE_MODE', 'false')).toBe('MAINTENANCE_DISABLED');
+  });
+
+  it('MAINTENANCE_MESSAGE → maintenance.message_updated (any value)', () => {
+    expect(auditActionForKey('MAINTENANCE_MESSAGE', 'short banner')).toBe('maintenance.message_updated');
+    expect(auditActionForKey('MAINTENANCE_MESSAGE', '')).toBe('maintenance.message_updated');
+  });
+
+  it('non-maintenance keys keep the generic system.config action', () => {
+    expect(auditActionForKey('LOCAL_STORAGE_ROOT', 'D:/data')).toBe('system.config');
+    expect(auditActionForKey('BACKUP_ROOT', 'D:/backups')).toBe('system.config');
+    expect(auditActionForKey('BACKUP_SECONDARY_ROOT', '')).toBe('system.config');
+  });
+
+  it('matches the dedicated maintenance route\'s action names', () => {
+    // The dedicated route (`/api/admin/maintenance-mode`) emits
+    // MAINTENANCE_ENABLED / MAINTENANCE_DISABLED on PUT and
+    // maintenance.message_updated on PATCH. The system-settings
+    // surface now emits the same names, so a single toggle from
+    // either surface shows up under a single action in the audit log.
+    expect(auditActionForKey('MAINTENANCE_MODE', 'true')).toBe('MAINTENANCE_ENABLED');
+    expect(auditActionForKey('MAINTENANCE_MODE', 'false')).toBe('MAINTENANCE_DISABLED');
+  });
+});
+
+describe('P1-2: isMaintenanceKey — which keys drop the cache', () => {
+  it('returns true for the two maintenance keys', () => {
+    expect(isMaintenanceKey('MAINTENANCE_MODE')).toBe(true);
+    expect(isMaintenanceKey('MAINTENANCE_MESSAGE')).toBe(true);
+  });
+
+  it('returns false for everything else (storage, URLs, etc.)', () => {
+    expect(isMaintenanceKey('LOCAL_STORAGE_ROOT')).toBe(false);
+    expect(isMaintenanceKey('BACKUP_ROOT')).toBe(false);
+    expect(isMaintenanceKey('BACKUP_SECONDARY_ROOT')).toBe(false);
+    // And — the critical case — for the dead knobs from PR-1 that
+    // are still in the table as `isEditable: false`. The route
+    // refuses them with 400 before this point, but the helper
+    // returning false means even a future re-enable wouldn't
+    // accidentally call invalidateMaintenanceCache() on a non-
+    // maintenance key.
+    expect(isMaintenanceKey('BACKUP_FREQUENCY')).toBe(false);
+    expect(isMaintenanceKey('APP_PUBLIC_URL')).toBe(false);
   });
 });

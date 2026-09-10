@@ -141,3 +141,26 @@ function validatePath(value: string, key: string): string {
   }
   return value;
 }
+
+/** P1-2 (system-settings audit, 2026-09-08): the audit action name
+ *  for a given system-settings PUT. Mirrors the dedicated maintenance
+ *  route (`MAINTENANCE_ENABLED` / `MAINTENANCE_DISABLED` /
+ *  `maintenance.message_updated`) so a single toggle from either
+ *  surface shows up under a single action in the audit log. Other
+ *  keys continue to use the generic `system.config`. Exported for
+ *  testability. */
+export function auditActionForKey(key: string, newValue: string): string {
+  if (key === 'MAINTENANCE_MODE') {
+    if (newValue === 'true') return 'MAINTENANCE_ENABLED';
+    if (newValue === 'false') return 'MAINTENANCE_DISABLED';
+  } else if (key === 'MAINTENANCE_MESSAGE') {
+    return 'maintenance.message_updated';
+  }
+  return 'system.config';
+}
+
+/** P1-2: does this key require `invalidateMaintenanceCache()` after
+ *  the write? Maintenance keys do; everything else doesn't. */
+export function isMaintenanceKey(key: string): boolean {
+  return key === 'MAINTENANCE_MODE' || key === 'MAINTENANCE_MESSAGE';
+}

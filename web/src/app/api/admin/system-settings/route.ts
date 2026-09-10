@@ -6,10 +6,20 @@ import { withApiHandler } from '@/lib/api-handler';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hasPermission } from '@/lib/permissions';
 import { updateSystemSettingSchema } from '@/lib/validators/admin';
+// P1-2 (system-settings audit, 2026-09-08): when this surface writes
+// MAINTENANCE_MODE / MAINTENANCE_MESSAGE it must drop the middleware's
+// in-memory cache so the rider gate reflects the change instantly
+// (not after the 5s TTL). The dedicated maintenance route already
+// does this; the system-settings surface historically skipped it,
+// fragmenting the maintenance control plane across two surfaces that
+// disagree on cache semantics.
+import { invalidateMaintenanceCache } from '@/lib/maintenance-cache';
 import {
   INFRA_PUT_ALLOWED_KEYS,
   managedElsewhere,
   validateInfraKey,
+  auditActionForKey,
+  isMaintenanceKey,
 } from './infra-key-validators';
 import { SettingValidationError } from '@/server/modules/settings/settings.registry';
 
@@ -36,6 +46,20 @@ import { SettingValidationError } from '@/server/modules/settings/settings.regis
  *     `BACKUP_KEEP_MANUAL`, `BACKUP_MINIMUM_FREE_DISK_GB` →
  *     Data Management → Schedule tab (`BackupSchedule` table).
  *   - `APP_PUBLIC_URL`, `API_BASE_URL` → `NEXT_PUBLIC_API_BASE_URL` env.
+ *
+ * P0-2 (system-settings audit, 2026-09-08): the PUT is now
+ * allowlisted to the 5 LIVE infra keys below and per-key validated
+ * (see `infra-key-validators.ts`). Business keys (referralBonus,
+ * lateFee, dailyRent, ...), `flag.*`, and the 10 dead knobs are
+ * refused with 400 + a surface pointer.
+ *
+ * P1-1 + P1-2 (system-settings audit, 2026-09-08): maintenance writes
+ * from this surface invalidate the middleware cache (so the rider
+ * gate reflects the change instantly, not after the 5s TTL) and emit
+ * the same action names as the dedicated maintenance route
+ * (`MAINTENANCE_ENABLED` / `MAINTENANCE_DISABLED` / `maintenance.message_updated`).
+ * Other keys continue to emit `system.config` with a per-key
+ * before/after diff.
  *
  * Editable settings (stored in SystemSetting table):
  *   LOCAL_STORAGE_ROOT, BACKUP_ROOT, BACKUP_SECONDARY_ROOT,
@@ -200,6 +224,16 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     },
   });
 
+  // P1-2 (system-settings audit, 2026-09-08): the dedicated
+  // maintenance route emits `MAINTENANCE_ENABLED` / `MAINTENANCE_DISABLED`
+  // (PUT) and `maintenance.message_updated` (PATCH). The system-
+  // settings surface historically emitted generic `system.config`
+  // for the same events, fragmenting the maintenance incident
+  // timeline across two action names for one event. Match the
+  // maintenance route's names so a single toggle shows up under
+  // a single action in the audit log.
+  const action = auditActionForKey(key, storedValue);
+
   // P1-1 (system-settings audit, 2026-09-08): the audit log used to
   // record `details: { key, isSecret }` only — the higher-blast-radius
   // surface (storage roots, maintenance state, URLs) had a weaker
@@ -210,7 +244,7 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   await createAuditLog({
     actorId: session.adminId || session.riderDbId || 'unknown',
     actorType: 'ADMIN',
-    action: 'system.config',
+    action,
     entity: 'SystemSetting',
     entityId: key,
     details: {
@@ -220,6 +254,15 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
       isSecret: existing.isSecret,
     },
   });
+
+  // P1-2: drop the middleware's in-memory maintenance cache so the
+  // rider gate reflects the new state instantly (not after the 5s
+  // TTL). The dedicated maintenance route already does this; do
+  // it here too so the system-settings surface doesn't fragment
+  // the cache state across the two writers.
+  if (isMaintenanceKey(key)) {
+    invalidateMaintenanceCache();
+  }
 
   return success({ key, value: storedValue });
 });
