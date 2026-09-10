@@ -3,11 +3,28 @@ export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAdmin } from '@/lib/rbac';
-import { execFileSync } from 'child_process';
 import { existsSync, accessSync, constants } from 'fs';
-import { join, parse } from 'path';
+import { join } from 'path';
+import { readFileSync } from 'fs';
+import os from 'os';
+import { getDiskUsageCached } from './_diskCache';
+import { evaluateOutboxHealth } from '@/lib/outbox-health';
 
-const VERSION = process.env.npm_package_version ?? '0.2.0';
+// P2-2: read the version from package.json at module init. The
+// previous `process.env.npm_package_version` only fires when launched
+// via `npm run`; under PM2 / standalone / CI it is unset, so the
+// response permanently reported "0.2.0". An explicit "unknown"
+// fallback is honest; the old constant was misleading.
+const VERSION: string = (() => {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
+    ) as { version?: string };
+    return pkg.version ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+})();
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -17,60 +34,9 @@ function getProbePath(): string {
   return process.env.LOCAL_STORAGE_ROOT || process.env.VOLTIUM_SERVER_ROOT || process.cwd();
 }
 
-function getDiskUsage(): {
-  totalMB: number;
-  freeMB: number;
-  usedMB: number;
-  usagePercent: number;
-  source: string;
-} {
-  const probePath = getProbePath();
-
-  // Windows: use PowerShell/CIM for the drive containing the probe path.
-  if (process.platform === 'win32') {
-    try {
-      const root = parse(probePath).root.replace(/\\$/, ''); // e.g. D:
-      const deviceId = root.slice(0, 2); // e.g. D:
-      const script = `$d = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='${deviceId}'"; if ($d) { [Console]::WriteLine(($d.Size).ToString() + ',' + ($d.FreeSpace).ToString()) }`;
-      const output = execFileSync('powershell', ['-NoProfile', '-Command', script], {
-        encoding: 'utf8',
-      }).trim();
-      const [totalBytesRaw, freeBytesRaw] = output.split(',');
-      const totalBytes = Number(totalBytesRaw || 0);
-      const freeBytes = Number(freeBytesRaw || 0);
-      if (totalBytes > 0) {
-        const usedBytes = totalBytes - freeBytes;
-        return {
-          totalMB: Math.round(totalBytes / 1024 / 1024),
-          freeMB: Math.round(freeBytes / 1024 / 1024),
-          usedMB: Math.round(usedBytes / 1024 / 1024),
-          usagePercent: Math.round((usedBytes / totalBytes) * 100),
-          source: deviceId,
-        };
-      }
-    } catch {
-      // fall through to POSIX df fallback
-    }
-  }
-
-  // POSIX fallback.
-  try {
-    const output = execFileSync('df', ['-m', probePath], { encoding: 'utf8' });
-    const lines = output.trim().split('\n');
-    if (lines.length >= 2) {
-      const parts = lines[1].split(/\s+/);
-      const totalMB = parseInt(parts[1], 10);
-      const usedMB = parseInt(parts[2], 10);
-      const freeMB = parseInt(parts[3], 10);
-      const usagePercent = Math.round((usedMB / totalMB) * 100);
-      return { totalMB, freeMB, usedMB, usagePercent, source: probePath };
-    }
-  } catch {
-    // no disk metrics available
-  }
-
-  return { totalMB: 0, freeMB: 0, usedMB: 0, usagePercent: 0, source: probePath };
-}
+// P1-1: getDiskUsage moved to ./_diskCache.ts (cached, 60s TTL).
+// Callers use getDiskUsageCached() from that module. The original
+// pure probe remains available there as getDiskUsageRaw() for tests.
 
 function checkWritable(path: string): { exists: boolean; writable: boolean } {
   try {
@@ -104,8 +70,6 @@ async function checkDatabase(): Promise<{
   }
 }
 
-import os from 'os';
-
 function getMemoryUsage(): {
   status: 'healthy';
   freeMB: number;
@@ -126,11 +90,20 @@ function getMemoryUsage(): {
   };
 }
 
+// P2-3: two-sample CPU delta. The previous cumulative-tick ratio
+// measures average busyness since process boot — it converges to a
+// flat number and never spikes. We sample (totalTick, totalIdle, at)
+// now; if we have a previous sample at least 1s old, we report the
+// delta. Otherwise the first call returns 0% (and the card copy
+// should say "first sample" — see HardwareMetricsCard).
+let lastCpuSample: { totalTick: number; totalIdle: number; at: number } | null = null;
+
 function getCpuUsage(): {
   status: 'healthy';
   usagePercent: number;
   cores: number;
   model: string;
+  sampleMs: number;
 } {
   const cpus = os.cpus();
   let totalIdle = 0;
@@ -143,12 +116,22 @@ function getCpuUsage(): {
       totalIdle += cpu.times.idle;
     }
   }
-  const usagePercent = totalTick > 0 ? Math.round((1 - totalIdle / totalTick) * 100) : 0;
+  const now = Date.now();
+  let usagePercent = 0;
+  let sampleMs = 0;
+  if (lastCpuSample && now - lastCpuSample.at >= 1000) {
+    const dTick = totalTick - lastCpuSample.totalTick;
+    const dIdle = totalIdle - lastCpuSample.totalIdle;
+    usagePercent = dTick > 0 ? Math.round((1 - dIdle / dTick) * 100) : 0;
+    sampleMs = now - lastCpuSample.at;
+  }
+  lastCpuSample = { totalTick, totalIdle, at: now };
   return {
     status: 'healthy',
     usagePercent,
     cores: cpus?.length || 1,
     model: cpus[0]?.model || 'Unknown',
+    sampleMs,
   };
 }
 
@@ -160,7 +143,8 @@ function checkDisk(): {
   usedMB: number;
   source: string;
 } {
-  const disk = getDiskUsage();
+  // P1-1: cached disk probe (60s TTL). See ./_diskCache.ts.
+  const disk = getDiskUsageCached();
   if (disk.usagePercent === 0) {
     return { status: 'degraded', ...disk };
   }
@@ -186,9 +170,13 @@ async function checkOutbox(detailed: boolean) {
     const oldestPendingAgeSeconds = Number(oldestRes?.[0]?.age_seconds ?? 0);
     const stuckCount = Number(stuckRes?.[0]?.count ?? 0);
 
-    const status: 'healthy' | 'degraded' | 'unhealthy' =
-      stuckCount > 10 || failedCount > 50 ? 'unhealthy' :
-      queueDepth > 100 || failedCount > 10 || stuckCount > 0 ? 'degraded' : 'healthy';
+    // P1-4: shared threshold table — see @/lib/outbox-health.
+    const status = evaluateOutboxHealth({
+      pending: queueDepth,
+      failed: failedCount,
+      stuck: stuckCount,
+      oldestPendingAgeSeconds,
+    });
 
     if (detailed) {
       return {
@@ -261,18 +249,21 @@ export async function GET(request: NextRequest) {
   const status = anyUnhealthy ? 'unhealthy' : anyDegraded ? 'degraded' : 'healthy';
   const statusCode = status === 'unhealthy' ? 503 : 200;
 
+  // P2-1: the public (non-detailed) body strips version, serviceMode,
+  // and outbox.queueDepth so anonymous load-balancer callers can't
+  // fingerprint the build or read operational internals.
   const body: Record<string, unknown> = {
     status,
     checks,
     timestamp: new Date().toISOString(),
-    version: VERSION,
-    serviceMode: 'local_laptop',
+    ...(detailed ? { version: VERSION, serviceMode: 'local_laptop' } : {}),
   };
 
   if (!detailed) {
     body.checks = {
       database: { status: checks.database.status },
-      outbox: checks.outbox,
+      // queueDepth is operational internals; only show it to admins.
+      outbox: { status: checks.outbox.status },
       disk: { status: checks.disk.status },
       uploadPath: { status: checks.uploadPath.status },
       backupPath: { status: checks.backupPath.status },

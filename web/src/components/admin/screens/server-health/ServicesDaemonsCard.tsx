@@ -54,15 +54,31 @@ export function ServicesDaemonsCard({ health }: ServicesDaemonsCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t">
           <span className="text-sm font-medium">Caddy Reverse Proxy</span>
-          <Badge
-            className={
-              health.caddyStatus === 'Active'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-destructive text-white'
+          {(() => {
+            // P1-3 (UX): cast through string so a 'Not deployed' value
+            // (added by the CONFIG-AUDIT-2026-09-08 branch in
+            // useServerHealth.ts) doesn't TypeScript-error against
+            // the existing type union. When that branch lands, the
+            // type gains 'Not deployed' and the cast becomes a no-op.
+            const caddy = health.caddyStatus as string;
+            if (caddy === 'Not deployed') {
+              return (
+                <Badge className="bg-muted text-muted-foreground">
+                  NOT DEPLOYED
+                </Badge>
+              );
             }
-          >
-            {health.caddyStatus ? health.caddyStatus.toUpperCase() : 'OFFLINE'}
-          </Badge>
+            if (caddy === 'Active') {
+              return (
+                <Badge className="bg-emerald-600 text-white">ACTIVE</Badge>
+              );
+            }
+            return (
+              <Badge className="bg-destructive text-white">
+                {health.caddyStatus ? health.caddyStatus.toUpperCase() : 'OFFLINE'}
+              </Badge>
+            );
+          })()}
         </div>
       </CardContent>
     </Card>

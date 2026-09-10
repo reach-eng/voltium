@@ -29,12 +29,16 @@ export async function GET(request: NextRequest) {
     const isActive = response !== null && (response.ok || response.status === 200 || response.status === 401);
     const status = isActive ? 'Active' : 'Offline';
 
+    // P2-5b: 10s private cache. The screen's 30s poll plus admin
+    // manual refresh would otherwise re-hit the 1.5s-timeout Caddy
+    // probe every time. `private, Vary: Authorization` ensures the
+    // cache is per-admin, not shared across sessions.
     return withCacheHeaders(
       success({
         status,
         checkedAt: new Date().toISOString(),
       }),
-      0
+      10
     );
   } catch (err: unknown) {
     logger.error('[health/caddy] GET failed:', err);
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
         status: 'Offline',
         checkedAt: new Date().toISOString(),
       }),
-      0
+      10
     );
   }
 }

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { requireAdmin } from '@/lib/rbac';
 import { requireCronAuth } from '@/lib/cron-auth';
+import { evaluateOutboxHealth } from '@/lib/outbox-health';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -67,11 +68,21 @@ export async function GET(request: NextRequest) {
     }
 
     const latencyMs = Date.now() - start;
-    const healthy = stuckCount === 0 && failedCount < 100;
+    // P1-4: shared threshold table — see @/lib/outbox-health. The
+    // worker route keeps its own "stuck" definition (PENDING @ 15m,
+    // not PROCESSING @ 5m) because it answers a different question
+    // — "nothing is picking this up" — but the threshold numbers
+    // are now shared.
+    const status = evaluateOutboxHealth({
+      pending: pendingCount,
+      failed: failedCount,
+      stuck: stuckCount,
+      oldestPendingAgeSeconds: oldestPendingAge,
+    });
 
     return NextResponse.json(
       {
-        status: healthy ? 'healthy' : 'degraded',
+        status,
         latencyMs,
         pending: pendingCount,
         failed: failedCount,
@@ -79,7 +90,11 @@ export async function GET(request: NextRequest) {
         oldestPendingAgeSeconds: oldestPendingAge,
         timestamp: new Date().toISOString(),
       },
-      { status: healthy ? 200 : 503 }
+      // P1-4: the shared helper now distinguishes healthy/degraded/
+      // unhealthy. The HTTP status keeps its prior contract —
+      // any non-healthy answer is 503, so existing health-check
+      // integrations (LB probes, monitoring) don't need updating.
+      { status: status === 'healthy' ? 200 : 503 }
     );
   } catch (err: unknown) {
     const message = errorMessage(err);

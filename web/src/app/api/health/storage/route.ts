@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { access, mkdir } from 'fs/promises';
+import { access } from 'fs/promises';
 import { constants, existsSync } from 'fs';
 import { join } from 'path';
 import { db } from '@/lib/db';
@@ -17,13 +17,22 @@ async function getSetting(key: string, fallback: string): Promise<string> {
   }
 }
 
+// P1-2: read-only storage check. The previous version called
+// `mkdir(path, { recursive: true })` whenever a configured path was
+// missing — a health check that mutates the filesystem. Misconfigs
+// self-healed into real directory trees instead of alerting. The
+// fix is to report non-existent without creating. The backup/restore
+// job (which legitimately needs the dirs) owns creation.
 async function checkPath(path: string) {
-  const existedBefore = existsSync(path);
-  if (!existedBefore) {
-    await mkdir(path, { recursive: true });
+  if (!existsSync(path)) {
+    return { path, exists: false, writable: false };
   }
-  await access(path, constants.R_OK | constants.W_OK);
-  return { path, exists: true, writable: true, created: !existedBefore };
+  try {
+    await access(path, constants.R_OK | constants.W_OK);
+    return { path, exists: true, writable: true };
+  } catch {
+    return { path, exists: true, writable: false };
+  }
 }
 
 function errorMessage(err: unknown): string {
