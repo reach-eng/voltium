@@ -126,7 +126,27 @@ export function useDeviceTracking(riderId: string | undefined) {
         }
         const json = await res.json();
         if (json.success) {
-          toast.success(json.message || `${action} triggered successfully`);
+          // P2 (device-tracking audit, 2026-09-08): actions that
+          // don't go through FCM (PERSIST_APP, ENFORCE_LOCATION,
+          // RESTRICT_APPS_CONTROL, ADMIN_LOCK without a token) are
+          // DB-only — they succeed on the server but the device
+          // doesn't see them until the next 120s poll. The toast
+          // used to claim "triggered successfully" with no caveat,
+          // which an operator could read as "the device already
+          // acted". Append the queue note for those actions.
+          const dbOnlyActions = new Set([
+            'PERSIST_APP',
+            'ENFORCE_LOCATION',
+            'RESTRICT_APPS_CONTROL',
+            'ADMIN_LOCK',
+            'ENFORCE_PASSCODE',
+            'CHECK_LOCATION_INTEGRITY',
+          ]);
+          const baseMessage = json.message || `${action} triggered successfully`;
+          const message = dbOnlyActions.has(action)
+            ? `${baseMessage} — will apply on next device sync (~120s)`
+            : baseMessage;
+          toast.success(message);
           // P1-5 (device-tracking audit, 2026-09-08): UNLOCK_DEVICE
           // also rotates a new 12-digit code server-side
           // (`actions/route.ts:174-176`). The previous check only

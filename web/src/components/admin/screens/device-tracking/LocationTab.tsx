@@ -18,8 +18,13 @@ function formatAccuracy(loc: LocationPing): string {
 
 // P2-10 (2026-08-05 legal/device audit): "Live Active" was hardcoded — a
 // rider whose last ping was 3 days ago still showed the emerald badge. A ping
-// is considered live only if it arrived within the last minute.
-const LIVE_THRESHOLD_MS = 60_000;
+// is considered live only if it arrived within the live window.
+//
+// P2 (device-tracking audit, 2026-09-08): bump from 60s to 90s. The
+// sync cadence is ~60s, so a rider whose ping lands at second 61
+// would flap LIVE → stale on every poll. 90s gives the cadence
+// headroom without making "live" meaningless.
+const LIVE_THRESHOLD_MS = 90_000;
 
 /**
  * R3.7bb split — Live GPS sub-tab with radar + ping list.

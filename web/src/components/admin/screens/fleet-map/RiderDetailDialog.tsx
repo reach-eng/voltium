@@ -37,7 +37,9 @@ export function RiderDetailDialog({ selectedRider, onOpenChange }: RiderDetailDi
             {selectedRider?.fullName || selectedRider?.riderId}
           </DialogTitle>
         </DialogHeader>
-        {selectedRider && <RiderDetailBody rider={selectedRider} />}
+        {selectedRider && (
+          <RiderDetailBody rider={selectedRider} onOpenChange={onOpenChange} />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -45,7 +47,13 @@ export function RiderDetailDialog({ selectedRider, onOpenChange }: RiderDetailDi
 
 /** The dialog body — extracted to its own component so the hook
  * can render it without `selectedRider` being nullable. */
-function RiderDetailBody({ rider }: { rider: FleetRider }) {
+function RiderDetailBody({
+  rider,
+  onOpenChange,
+}: {
+  rider: FleetRider;
+  onOpenChange: (open: boolean) => void;
+}) {
   const status = getRiderStatus(rider);
   const BatIcon = getBatteryIcon(rider.batteryLevel);
   const batColor = getBatteryColor(rider.batteryLevel);
@@ -96,10 +104,19 @@ function RiderDetailBody({ rider }: { rider: FleetRider }) {
             <span>{rider.teamLeader}</span>
           </div>
         )}
-        {rider.lastLocationAt && (
+        {rider.lastLocationAt ? (
           <div className="flex justify-between">
             <span className="text-muted-foreground">Last Location</span>
             <span className="text-xs">{formatDateTimeDDMMYYYY(rider.lastLocationAt)}</span>
+          </div>
+        ) : (
+          // P0-1 (fleet-map audit): these riders used to be filtered out of
+          // the grid entirely — surface the gap instead of hiding it.
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Last Location</span>
+            <span className="text-xs italic text-muted-foreground">
+              No GPS ever reported — check device
+            </span>
           </div>
         )}
       </div>
@@ -112,9 +129,27 @@ function RiderDetailBody({ rider }: { rider: FleetRider }) {
           <Phone className="w-5 h-5 mr-2" />
           Call
         </Button>
-        <Button variant="outline" size="default" className="flex-1 h-11">
+        {/* P2 (device-tracking audit, 2026-09-08): the previous
+            "View Profile" button had no onClick handler — a
+            no-op that operators couldn't distinguish from a
+            broken link. The fleet map has no rider detail
+            page in this app router (the rider-management
+            surface lives elsewhere), so wiring it requires
+            either a new page or a new parent route. The audit
+            gave the choice: wire or remove. Removing is the
+            honest option until a real rider detail deep-link
+            is designed; the audit calls this a "latent
+            cosmetic risk" rather than a security issue, and
+            the "Call" button above gives the operator the
+            only cross-tab action that's actually wired. */}
+        <Button
+          variant="outline"
+          size="default"
+          className="flex-1 h-11"
+          onClick={() => onOpenChange(false)}
+        >
           <User className="w-5 h-5 mr-2" />
-          View Profile
+          Close
         </Button>
       </div>
     </div>
