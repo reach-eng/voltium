@@ -20,7 +20,16 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'team-leaders', label: 'Team Leaders', icon: 'UserCog', permission: 'team_leaders_manage' },
   { id: 'operations', label: 'Operations', icon: 'Activity', permission: 'analytics_view' },
 
-  { id: 'fleet-map', label: 'Fleet Map', icon: 'Map', permission: 'vehicles_view' },
+  // P1-6 (device-tracking audit, 2026-09-08): align the nav
+  // permission with the route's `riders_view` check. The fleet
+  // map shows riders on a map (rider-centric); `riders_view` is
+  // the right semantic key. The previous `vehicles_view` was
+  // checked by the route too, but with an OR — a role with
+  // only `vehicles_view` could hit the route while not seeing
+  // the nav. Today every `vehicles_view` holder also holds
+  // `riders_view`, so the change is invisible until a future
+  // role reshuffle.
+  { id: 'fleet-map', label: 'Fleet Map', icon: 'Map', permission: 'riders_view' },
   { id: 'shifts', label: 'Shifts', icon: 'Clock', permission: 'shifts_manage' },
   { id: 'rider-scoring', label: 'Rider Scoring', icon: 'Target', permission: 'analytics_view' },
   { id: 'notifications', label: 'Messaging', icon: 'Bell', permission: 'notifications_manage' },
