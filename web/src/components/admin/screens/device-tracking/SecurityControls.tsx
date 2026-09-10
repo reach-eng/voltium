@@ -1,6 +1,6 @@
 'use client';
 
-import { Key, Lock, MapPin, Phone, Trash2 } from 'lucide-react';
+import { Key, Lock, MapPin, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -249,43 +249,14 @@ function LocationIntegrityCard({
   );
 }
 
-function FactoryResetCard({
-  busy,
-  onTrigger,
-}: {
-  busy: boolean;
-  onTrigger: (action: SecurityAction, extra?: Record<string, unknown>) => void;
-}) {
-  return (
-    <Card className="bg-rose-500/5 border-rose-500/30 hover:bg-rose-500/10 transition-all col-span-full relative overflow-hidden group hover:border-rose-500/60 shadow-sm">
-      <div className="absolute top-0 left-0 right-0 h-1 opacity-70 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#f43f5e_10px,#f43f5e_20px)] transition-opacity duration-300 group-hover:opacity-100" />
-      <CardContent className="py-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400">
-              <Trash2 className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-rose-600 dark:text-rose-400">Emergency Factory Reset</p>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Wipe all device data. Use only in case of theft or total loss.
-              </p>
-            </div>
-          </div>
-          <Button
-            size="default"
-            variant="destructive"
-            className="px-8 text-[11px] font-bold uppercase tracking-widest h-11 shadow-lg shadow-rose-500/20"
-            onClick={() => onTrigger('FACTORY_RESET')}
-            disabled={busy}
-          >
-            {busy ? 'Processing...' : 'Wipe Device'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// P0-1 (device-tracking audit, 2026-09-08): the Emergency Wipe button
+// was wired to a backend that always throws. The audit explicitly
+// says "remove or implement — don't half-do" and calls out that a
+// "factory reset" pipeline is multi-week Android-Enterprise / Apple-MDM
+// work. The honest option is to remove the surface so admins don't
+// learn to distrust confirms on a destructive action. The
+// `factoryReset` Flutter handler stays (see `fcm_service.dart:611`)
+// so a future implementation has a client endpoint to wire to.
 
 function NoPermissionCard() {
   return (
@@ -343,7 +314,6 @@ export function SecurityControls({
       />
       <RestrictHardwareCard rider={r} busy={busy} onTrigger={onTrigger} />
       <LocationIntegrityCard rider={r} busy={busy} onTrigger={onTrigger} />
-      <FactoryResetCard busy={busy} onTrigger={onTrigger} />
     </div>
   );
 }

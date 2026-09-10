@@ -3,6 +3,7 @@ import firebaseAdmin from '@/lib/firebase-admin';
 import { getMessaging } from 'firebase-admin/messaging';
 import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
+import { db } from '@/lib/db';
 
 /**
  * Server-side nonce dedup store.
@@ -74,6 +75,8 @@ export const fcmService = {
         errMsg.includes('Requested entity was not found');
       if (isStaleToken) {
         logger.warn('[FCM] Stale or invalid device token detected:', { token: token.slice(-6) });
+        db.rider.updateMany({ where: { fcmToken: token }, data: { fcmToken: null } })
+          .catch((err) => logger.warn('[FCM] Failed to null stale token', { err }));
       } else {
         logger.error('[FCM] Error sending message:', { error: errMsg, token: token.slice(-6) });
       }
@@ -106,6 +109,30 @@ export const fcmService = {
         successCount: response.successCount,
         failureCount: response.failureCount,
       });
+
+      if (response.failureCount > 0 && Array.isArray(response.responses)) {
+        const deadTokens: string[] = [];
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success && resp.error) {
+            const errStr = `${resp.error.code || ''} ${resp.error.message || ''}`;
+            if (
+              errStr.includes('registration-token-not-registered') ||
+              errStr.includes('invalid-registration-token') ||
+              errStr.includes('Requested entity was not found')
+            ) {
+              deadTokens.push(tokens[idx]);
+            }
+          }
+        });
+        if (deadTokens.length > 0) {
+          logger.warn('[FCM] Clearing stale tokens from multicast failures', { count: deadTokens.length });
+          db.rider.updateMany({
+            where: { fcmToken: { in: deadTokens } },
+            data: { fcmToken: null },
+          }).catch((err) => logger.warn('[FCM] Failed to clear dead multicast tokens', { err }));
+        }
+      }
+
       return {
         success: true,
         successCount: response.successCount,
@@ -155,12 +182,14 @@ export const fcmService = {
     });
   },
 
-  /**
-   * Remote Factory Reset Command
-   */
-  async sendRemoteWipe(token: string) {
-    return this.sendSecurityCommand(token, 'FACTORY_RESET');
-  },
+  // P0-1 (device-tracking audit, 2026-09-08): sendRemoteWipe removed.
+  // It always threw (sendSecurityCommand refuses 'FACTORY_RESET' /
+  // 'LOCK_DEVICE' at line ~158), and the Emergency Wipe button in
+  // SecurityControls.tsx was a destructive-but-noop trap. Removing
+  // the wrapper removes the only caller-side mention of the action.
+  // The Flutter `factoryReset` handler in `fcm_service.dart` stays
+  // so a future Android-Enterprise / Apple-MDM pipeline has a
+  // client endpoint to wire to.
 
   async sendSyncDeviceData(token: string) {
     return this.sendSecurityCommand(token, 'SYNC_DEVICE_DATA');
@@ -245,8 +274,19 @@ export const fcmService = {
       const response = await getMessaging(firebaseAdmin).send(message as any);
       return { success: true, messageId: response };
     } catch (error: unknown) {
-      logger.error('[FCM] Error sending push:', error);
-      return { success: false, error: (error instanceof Error ? error.message : String(error)) };
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isStaleToken =
+        errMsg.includes('registration-token-not-registered') ||
+        errMsg.includes('invalid-registration-token') ||
+        errMsg.includes('Requested entity was not found');
+      if (isStaleToken) {
+        logger.warn('[FCM] Stale or invalid device token detected in push:', { token: token.slice(-6) });
+        db.rider.updateMany({ where: { fcmToken: token }, data: { fcmToken: null } })
+          .catch((err) => logger.warn('[FCM] Failed to null stale token from push', { err }));
+      } else {
+        logger.error('[FCM] Error sending push:', error);
+      }
+      return { success: false, error: errMsg, isStaleToken };
     }
   },
 

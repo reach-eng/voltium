@@ -48,12 +48,6 @@ export function buildSecurityActionCopy(
           : 'Prevent the rider from force-stopping the app or clearing its data?',
       };
     }
-    case 'FACTORY_RESET':
-      return {
-        title: 'Emergency Wipe',
-        message:
-          'WARNING: This will permanently wipe all data and factory reset the device. This action cannot be undone. Are you absolutely sure?',
-      };
     case 'DISABLE_CAMERA':
       return {
         title: 'Disable Camera',

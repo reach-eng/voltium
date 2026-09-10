@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidIndianMobile } from '@/lib/phone';
 import { logger } from '@/lib/logger';
+import { normalizeReferralCode } from '@/lib/referral-code';
 export const sendOtpSchema = z
   .object({
     phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
@@ -9,7 +10,16 @@ export const sendOtpSchema = z
     // the request left the device). It is optional and only used as intent
     // telemetry here — the authoritative capture happens at verify (rider
     // creation) via `verifyOtpSchema.referralCode`.
-    referralCode: z.string().max(20).nullish(),
+    //
+    // LOGIN-OTP-INTENT P0-1: normalize (trim + uppercase) at the schema
+    // boundary so a pasted lowercase code never reaches the case-sensitive
+    // exact-match payout lookup. Resolution/existence is checked only at
+    // verify (checking here would be a referral-code enumeration oracle).
+    referralCode: z
+      .string()
+      .max(20)
+      .nullish()
+      .transform((v) => normalizeReferralCode(v)),
     type: z.enum(['LOGIN', 'GUARANTOR']).optional().default('LOGIN'),
     guarantorName: z.string().max(100).nullish(),
     locale: z.string().max(10).nullish(),
@@ -30,7 +40,13 @@ export const verifyOtpSchema = z
       .nullish(),
     otp: z.string().length(6, 'OTP must be 6 digits').nullish(),
     idToken: z.string().nullish(),
-    referralCode: z.string().max(20).nullish(),
+    // LOGIN-OTP-INTENT P0-1: normalize here too — the authoritative capture
+    // (rider creation) reads this value, and the payout job matches exactly.
+    referralCode: z
+      .string()
+      .max(20)
+      .nullish()
+      .transform((v) => normalizeReferralCode(v)),
   })
   .refine((data) => data.idToken || (data.phone && data.otp), {
     message: 'Either idToken or phone and otp are required',
@@ -78,6 +94,34 @@ export function isValidDob(dobRaw: string): boolean {
   return true;
 }
 
+export const safeFileUrlOrPath = z
+  .string()
+  .nullish()
+  .or(z.literal(''))
+  .refine(
+    (val) => {
+      if (!val || val === '') return true;
+      if (
+        val.includes('..') ||
+        val.includes('\0') ||
+        val.startsWith('javascript:') ||
+        val.startsWith('data:')
+      ) {
+        return false;
+      }
+      if (val.startsWith('http://') || val.startsWith('https://')) {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return /^[a-zA-Z0-9_\-\./]+$/.test(val);
+    },
+    { message: 'Invalid file URL or storage path' }
+  );
+
 export const updateProfileSchema = z.object({
   riderId: z.string().min(1, 'Rider ID required').nullish(),
   fullName: z.string().min(2).max(100).nullish(),
@@ -115,16 +159,23 @@ export const updateProfileSchema = z.object({
     .nullish()
     .transform((v) => (v === '' ? null : v)),
   // KYC Urls
-  profilePhoto: z.string().nullish().or(z.literal('')),
-  riderPhoto: z.string().nullish().or(z.literal('')),
-  signature: z.string().nullish().or(z.literal('')),
-  aadhaarFront: z.string().nullish().or(z.literal('')),
-  aadhaarBack: z.string().nullish().or(z.literal('')),
-  panCard: z.string().nullish().or(z.literal('')),
+  //
+  // USER-ONBOARDING-AUDIT P0-1 (2026-09-09): every document-URL field now
+  // goes through `safeFileUrlOrPath`, exactly like `profilePhoto`/`riderPhoto`.
+  // These fields were previously bare `z.string()` — any string (javascript:
+  // URIs, megabyte text blobs, external hosts) persisted as a "document URL",
+  // and the admin KYC review queue renders them as <img src> / <video> — i.e.
+  // stored content-injection into an admin browser context.
+  profilePhoto: safeFileUrlOrPath,
+  riderPhoto: safeFileUrlOrPath,
+  signature: safeFileUrlOrPath,
+  aadhaarFront: safeFileUrlOrPath,
+  aadhaarBack: safeFileUrlOrPath,
+  panCard: safeFileUrlOrPath,
   bankName: z.string().nullish().or(z.literal('')),
   bankAccount: z.string().nullish().or(z.literal('')),
   bankIfsc: z.string().nullish().or(z.literal('')),
-  selfie: z.string().nullish().or(z.literal('')),
+  selfie: safeFileUrlOrPath,
   // Vehicle Return Fields
   returnPending: z.boolean().nullish(),
   returnPhotos: z.array(z.string().url()).nullish(),
@@ -160,12 +211,14 @@ export const updateProfileSchema = z.object({
   guarantorFatherName: z.string().nullish(),
   guarantorMotherName: z.string().nullish(),
   guarantorAddress: z.string().nullish(),
-  guarantorAadhaarFront: z.string().nullish(),
-  guarantorAadhaarBack: z.string().nullish(),
-  guarantorPan: z.string().nullish(),
-  guarantorVideo: z.string().nullish(),
-  guarantorSignature: z.string().nullish(),
-  guarantorPhoto: z.string().nullish(),
+  // USER-ONBOARDING-AUDIT P0-1: same document-URL hardening as the rider
+  // fields above — all six had the identical content-injection gap.
+  guarantorAadhaarFront: safeFileUrlOrPath,
+  guarantorAadhaarBack: safeFileUrlOrPath,
+  guarantorPan: safeFileUrlOrPath,
+  guarantorVideo: safeFileUrlOrPath,
+  guarantorSignature: safeFileUrlOrPath,
+  guarantorPhoto: safeFileUrlOrPath,
   // EDIT-PROFILE-AUDIT P0-3 (2026-09-08): `guarantorStatus` removed
   // from the rider-writable schema. Status transitions are
   // server-only — the upsert at rider.use-cases.ts:1032-1041
@@ -191,6 +244,13 @@ export const consentSchema = z.object({
   // for every permission it requests — the enum must accept them all or the
   // sync 400s. Adding values here is safe: the Consent model stores the type
   // as a string and no consumer switches exhaustively over it.
+  //
+  // P1-2 (2026-09-08 legal audit): the same policyVersion field is the right
+  // vehicle for Terms/Privacy acceptance — riders see the legal docs during
+  // onboarding but no Consent row recorded them, so "which terms was this
+  // rider under?" was answerable only for device permissions. The document
+  // type keys mirror LEGAL_DOCUMENT_TYPES; the server stamps source=SERVER
+  // for these rows (see rider/consent route).
   consentType: z.enum([
     'LOCATION',
     'CONTACTS',
@@ -201,6 +261,13 @@ export const consentSchema = z.object({
     'BATTERY',
     'NOTIFICATIONS',
     'DEVICE_ADMIN',
+    // Legal document acceptance (source=SERVER):
+    'TERMS',
+    'PRIVACY',
+    'RENTAL_SAFETY',
+    'REFUND',
+    'GUARANTOR',
+    'LEASE',
   ]),
   granted: z.boolean(),
   policyVersion: z.string().optional().default('public-beta-v1'),
@@ -219,8 +286,9 @@ export const topUpSchema = z.object({
   method: z.enum(['UPI', 'CASH', 'CARD', 'INSTANT']),
   reason: z.string().max(200).optional(),
   // Backend hardening: UPI ref 6–50 alnum plus -/_ (covers 12-digit UTR
-  // and test markers like H6-DEFAULT-*). Client already limits to 22
-  // alnum; server allows a superset so legacy callers don't break.
+  // and test markers like H6-DEFAULT-*). The Flutter client enforces the
+  // same rule (P1-4 wallet-deposits audit); the server keeps the superset
+  // so legacy callers don't break.
   upiRef: z
     .string()
     .regex(
@@ -231,13 +299,15 @@ export const topUpSchema = z.object({
     .nullable(),
   // proofUrl accepts either an https URL (signed) or a storage path.
   // Caps length to prevent junk bloating the admin queue.
+  // WALLET-DEPOSITS-AUDIT P2 (2026-09-08): http:// rejected — proof
+  // transport must not be tamperable mixed-content. Storage paths
+  // (relative, no scheme) remain valid for offline-queued uploads.
   proofUrl: z
     .string()
     .max(500, 'Proof URL too long')
     .refine(
       (v) =>
         v.startsWith('https://') ||
-        v.startsWith('http://') ||
         /^[A-Za-z0-9._\-/]+$/.test(v),
       'Invalid proof URL or storage path',
     )
@@ -246,8 +316,25 @@ export const topUpSchema = z.object({
   // P3 fix: accepted-but-ignored (no verified gateway webhook exists; prod
   // top-ups always enter PENDING). Kept optional for backward compat —
   // remove when a server-verified settlement path lands.
+  // WALLET-DEPOSITS-AUDIT P2 (2026-09-08): explicit client contract — the
+  // response `status` field is authoritative. INSTANT + SUCCESS does NOT
+  // mean settled; it means "queued for manual review like everything else".
+  // Clients must render PENDING until an admin approves.
   gatewayStatus: z.enum(['SUCCESS', 'FAILURE', 'PENDING']).optional(),
   mdrAmount: z.number().nonnegative().optional(),
+}).superRefine((val, ctx) => {
+  // TOPUP-SCREENS-AUDIT P1-3 (2026-09-09): a UPI top-up without a UTR is
+  // unmatchable — the admin queue gets an image and an amount but no
+  // transaction key to reconcile against the bank statement, which is the
+  // exact field that makes UPI verification cheap. Require it when the
+  // method is UPI. CASH/CARD/INSTANT are unaffected.
+  if (val.method === 'UPI' && !val.upiRef) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['upiRef'],
+      message: 'UPI reference (UTR) is required for UPI payments',
+    });
+  }
 });
 
 // ==================== TICKETS ====================
@@ -361,15 +448,11 @@ export const createVehicleSchema = z.object({
   status: z
     .enum([
       'AVAILABLE',
-      'RESERVED',
-      'ASSIGNED',
-      'ACTIVE_RENTAL',
-      'RETURN_PENDING',
       'MAINTENANCE',
       'RETIRED',
-      'LOST',
     ])
-    .optional(),
+    .optional()
+    .default('AVAILABLE'),
 });
 
 export const updateVehicleSchema = z.object({
@@ -407,7 +490,10 @@ export const sendNotificationSchema = z.object({
     (val) => (typeof val === 'string' ? val.toUpperCase() : val),
     z.enum(['INFO', 'ALERT', 'PROMOTION', 'PAYMENT', 'VEHICLE', 'SYSTEM'])
   ).default('INFO'),
-  riderIds: z.array(z.string()).optional(),
+  // P1-5 (SUPPORT_SECTION_AUDIT_2026-09-08): cap at 100 to prevent a
+  // multi-MB outbox event; the per-admin rate limit on the riderIds branch
+  // (notifications/route.ts) provides the complementary defence.
+  riderIds: z.array(z.string()).max(100, 'riderIds exceeds 100-recipient cap — split into batches').optional(),
   // P1-13/P2-11 (2026-08-05 ops audit): the legacy singular `riderId` was
   // read straight off the raw body with no validation — a non-string value
   // could reach the use-case. It's now schema-validated alongside the plural
@@ -453,14 +539,28 @@ const couponPercentCap = (val: {
   }
   return true;
 };
+
+const COUPON_CODE_REGEX = /^[A-Za-z0-9_-]+$/;
+
 export const createCouponSchema = z
   .object({
-    code: z.string().min(2, 'Code is required').max(50),
-    description: z.string().min(2, 'Description is required').max(500),
+    code: z
+      .string()
+      .trim()
+      .min(2, 'Code is required')
+      .max(50)
+      .regex(COUPON_CODE_REGEX, 'Coupon code can only contain letters, numbers, hyphens, and underscores')
+      .transform((val) => val.toUpperCase()),
+    description: z.string().trim().min(2, 'Description is required').max(500),
     discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
     discountValue: z.number().positive('discountValue must be positive'),
-    minAmount: z.number().min(0).optional(),
-    maxUses: z.number().int().positive().optional(),
+    // 2026-09-08 offers audit P0-1: the compose form sends explicit nulls for
+    // "no minimum spend / no usage cap" — the most common promo shape. A bare
+    // .optional() rejected null with invalid_type, so every simple coupon
+    // 400'd at the route. (Third instance of the null-vs-optional trap:
+    // hubs location, incidents hasInsurance, and now this.)
+    minAmount: z.number().min(0).nullable().optional(),
+    maxUses: z.number().int().positive().nullable().optional(),
     validFrom: z.string().min(1, 'validFrom is required'),
     validUntil: z.string().min(1, 'validUntil is required'),
     isActive: z.boolean().optional().default(true),
@@ -471,6 +571,14 @@ export const createCouponSchema = z
         code: z.ZodIssueCode.custom,
         path: ['discountValue'],
         message: 'Percentage discount cannot exceed 100%',
+      });
+    }
+    // P1-3: Bound FIXED discount exposure to ₹25,000 maximum per coupon
+    if (val.discountType === 'FIXED' && val.discountValue > 25000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'Fixed discount cannot exceed ₹25,000',
       });
     }
     if (val.validFrom && val.validUntil) {
@@ -489,12 +597,20 @@ export const createCouponSchema = z
 export const updateCouponSchema = z
   .object({
     id: z.string().min(1, 'id is required'),
-    code: z.string().min(2).max(50).optional(),
-    description: z.string().min(2).max(500).optional(),
+    code: z
+      .string()
+      .trim()
+      .min(2)
+      .max(50)
+      .regex(COUPON_CODE_REGEX, 'Coupon code can only contain letters, numbers, hyphens, and underscores')
+      .transform((val) => val.toUpperCase())
+      .optional(),
+    description: z.string().trim().min(2).max(500).optional(),
     discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
     discountValue: z.number().positive().optional(),
-    minAmount: z.number().min(0).optional(),
-    maxUses: z.number().int().positive().optional(),
+    // P0-1: null is how the form says "remove the minimum spend / usage cap".
+    minAmount: z.number().min(0).nullable().optional(),
+    maxUses: z.number().int().positive().nullable().optional(),
     validFrom: z.string().min(1).optional(),
     validUntil: z.string().min(1).optional(),
     isActive: z.boolean().optional(),
@@ -505,6 +621,13 @@ export const updateCouponSchema = z
         code: z.ZodIssueCode.custom,
         path: ['discountValue'],
         message: 'Percentage discount cannot exceed 100%',
+      });
+    }
+    if (val.discountType === 'FIXED' && val.discountValue != null && val.discountValue > 25000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['discountValue'],
+        message: 'Fixed discount cannot exceed ₹25,000',
       });
     }
     if (val.validFrom && val.validUntil) {
@@ -527,6 +650,7 @@ export const createFaqSchema = z.object({
   category: z.string().max(100).optional(),
   order: z.number().int().min(0).optional().default(0),
   isActive: z.boolean().optional().default(true),
+  locale: z.enum(['en', 'hi']).default('en'),
 });
 
 // ==================== ADMIN - HUBS ====================
@@ -567,6 +691,14 @@ export const createTeamLeaderSchema = z.object({
   hubId: z.string().optional().nullable().or(z.literal('')),
   isActive: z.boolean().optional().default(true),
 }).strict();
+
+// 2026-09-09 hubs audit (P1-9): updateTeamLeaderSchema re-declares isActive WITHOUT
+// a default, matching updateHubSchema — so editing a team leader's name/phone does
+// NOT silently reactivate an inactive team leader.
+export const updateTeamLeaderSchema = createTeamLeaderSchema
+  .omit({ isActive: true })
+  .partial()
+  .extend({ id: z.string().min(1), isActive: z.boolean().optional() });
 
 // ==================== ADMIN - TICKETS (UPDATE) ====================
 export const updateTicketSchema = z
@@ -611,6 +743,10 @@ export const ticketReplySchema = z.object({
 
 // ==================== ADMIN - SETTINGS (UPSERT) ====================
 const VALID_SETTING_KEYS = [
+  // TOPUP-SCREENS-AUDIT P1-1 (2026-09-09): the destination VPA riders pay
+  // into is admin-editable server-side config (was a hardcoded client
+  // string, so rotation required an app release + store review).
+  'payoutUpiId',
   'walletMinTopup',
   'lateFee',
   'referralBonus',
@@ -649,7 +785,9 @@ export const approveTransactionSchema = z
   .object({
     id: z.string().min(1),
     // REVERT is deprecated — use REVERSE (creates an offsetting ledger entry, terminal state)
-    action: z.enum(['APPROVE', 'REJECT', 'REVERSE']),
+    // REOPEN restores a REJECTED transaction back to PENDING with an audit reason
+    action: z.enum(['APPROVE', 'REJECT', 'REVERSE', 'REOPEN']),
+    reason: z.string().max(200).optional(),
     rejectionReason: z.string().max(200).optional(),
     walletCreditAmount: z
       .number()
@@ -670,6 +808,20 @@ export const approveTransactionSchema = z
         'Rejection reason is required (minimum 10 characters) when rejecting a transaction',
       path: ['rejectionReason'],
     }
+  )
+  .refine(
+    (data) => {
+      if (data.action === 'REOPEN') {
+        const r = data.reason || data.rejectionReason;
+        return typeof r === 'string' && r.trim().length >= 10;
+      }
+      return true;
+    },
+    {
+      message:
+        'Reason is required (minimum 10 characters) when re-opening a transaction',
+      path: ['rejectionReason'],
+    }
   );
 
 // ==================== RIDER - PLANS ====================
@@ -682,6 +834,13 @@ export const subscribePlanSchema = z.object({
   // versions that never call POST /api/rider/guarantor/skip still record the
   // surcharge flag at the enforcement point. Never clears the flag.
   guarantorSkipped: z.boolean().optional(),
+  // P0-2: wire coupon discount into plan checkout
+  couponCode: z.string().trim().optional(),
+  // CHOOSE-PLAN-AUDIT P1-1 (2026-09-10): the client generated an idempotency
+  // key but never sent it, so a killed-app / timeout retry double-posted:
+  // it re-ran coupon redemption (burning another use) and wrote duplicate
+  // audit rows. Bounded 8-72 chars to match the `idempotency_keys.key` column.
+  idempotencyKey: z.string().trim().min(8).max(72).optional(),
 });
 
 // ==================== SYNC QUEUE ====================
@@ -713,12 +872,16 @@ export const chatMessageSchema = z.object({
 // `SYNC_DEVICE_DATA` was missing entirely even though the admin UI sends it
 // (the Sync Data button) and the route has a live case for it — validation
 // used to reject every sync click with a 422. It is now an enum member.
+// P0-1 (device-tracking audit, 2026-09-08): FACTORY_RESET removed.
+// `fcm.sendRemoteWipe` → `sendSecurityCommand('FACTORY_RESET')` throws
+// unconditionally (`fcm.ts:158`), so the Emergency Wipe button was a
+// destructive-but-noop trap. Keep this enum in lockstep with
+// `SecurityAction` in `components/admin/screens/device-tracking/types.ts`.
 export const riderActionSchema = z.object({
   action: z.enum([
     'ASSIGN_PLAN',
     'COMPLETE_PICKUP',
     'END_RENTAL',
-    'FACTORY_RESET',
     'SYNC_DEVICE_DATA',
     'DISABLE_CAMERA',
     'ENABLE_CAMERA',
@@ -749,6 +912,7 @@ export const adminRentalActionSchema = z.enum([
   'MARK_OVERDUE',
   'REQUEST_RETURN',
   'APPROVE_RETURN',
+  'REJECT_RETURN',
   'CLOSE',
   'SUSPEND',
 ]);
@@ -764,12 +928,45 @@ export const bulkActionSchema = z.object({
   action: z.enum(['updateStatus', 'assignHub', 'assignTeamLeader', 'delete', 'bulkKyc', 'suspend']),
   value: z.string().optional(),
   rejectionReason: z.string().optional(),
+  editableFields: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.action === 'bulkKyc') {
+    if (!data.value || !['APPROVED', 'REJECTED', 'INFO_REQUIRED'].includes(data.value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['value'],
+        message: 'value must be APPROVED, REJECTED, or INFO_REQUIRED for bulkKyc',
+      });
+    }
+  }
 });
 
 export const vehicleBulkActionSchema = z.object({
   ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
   action: z.enum(['changeStatus', 'reassignHub', 'delete']),
   value: z.string().optional(),
+});
+
+/**
+ * vehicleBulkUndoSchema — used by POST /api/admin/vehicles/bulk/undo.
+ *
+ * Each item carries the vehicle's captured state *before* the bulk action ran,
+ * so the undo route can restore it exactly.  `action` identifies the original
+ * operation so the use-case can handle soft-delete restoration differently from
+ * status/hub rollbacks (compensating writes skip the state-machine).
+ */
+export const vehicleBulkUndoSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        status: z.string().min(1),
+        hubId: z.string().min(1),
+      })
+    )
+    .min(1, 'At least one item required')
+    .max(500, 'Max 500 items'),
+  action: z.enum(['changeStatus', 'reassignHub', 'delete']).optional(),
 });
 
 export const transactionBulkActionSchema = z
@@ -824,14 +1021,14 @@ export const teamLeaderBulkActionSchema = z.object({
 // ==================== ADMIN REWARDS ====================
 export const awardRewardSchema = z.object({
   riderDbId: z.string().min(1, 'Rider ID is required'),
-  title: z.string().min(1, 'Title is required').max(100),
-  points: z.number().int().min(1, 'Points must be positive'),
+  title: z.string().trim().min(1, 'Title is required').max(100),
+  points: z.number().int().min(1, 'Points must be positive').max(50000, 'Points cannot exceed 50,000'),
 });
 
 export const updateRewardSchema = z.object({
   id: z.string().min(1, 'Reward ID is required'),
-  title: z.string().min(1).max(100).optional(),
-  points: z.number().int().min(1).optional(),
+  title: z.string().trim().min(1).max(100).optional(),
+  points: z.number().int().min(1, 'Points must be positive').max(50000, 'Points cannot exceed 50,000').optional(),
 });
 
 // ==================== WALLET TOPUP ====================
@@ -842,14 +1039,41 @@ export const adminWalletTopupSchema = z.object({
 });
 
 // ==================== ANNOUNCEMENTS ====================
-export const createAnnouncementSchema = z.object({
-  title: z.string().min(3).max(200),
-  message: z.string().min(5).max(5000),
-  channel: z.enum(['PUSH', 'SMS', 'IN_APP']),
-  targetAudience: z.enum(['ALL', 'BY_HUB', 'BY_STATUS', 'BY_PLAN']),
-  targetIds: z.array(z.string()).optional().default([]),
-  scheduledAt: z.string().optional(),
-});
+// 2026-09-08 messaging audit:
+//   P1-2  the 'SMS' option removed — the pipeline has no SMS gateway for
+//         broadcasts (the MSG91 provider is template-based, used by OTP), so
+//         an "SMS" announcement was actually delivered as an in-app INFO row
+//         with no text message and no warning. Re-add alongside a real
+//         broadcast gateway.
+//   P2-3  scheduledAt must be a valid ISO datetime strictly in the future —
+//         a past value used to pass and fire on the cron's next tick.
+//   P1-1  BY_STATUS ids are validated against the broadcastable lifecycle
+//         whitelist in the use-case (AnnouncementValidationError → 400) so
+//         the schema stays free of Prisma-enum imports.
+export const ANNOUNCEMENT_CHANNELS = ['PUSH', 'IN_APP'] as const;
+export const createAnnouncementSchema = z
+  .object({
+    title: z.string().min(3).max(200),
+    message: z.string().min(5).max(5000),
+    channel: z.enum(ANNOUNCEMENT_CHANNELS),
+    targetAudience: z.enum(['ALL', 'BY_HUB', 'BY_STATUS', 'BY_PLAN']),
+    targetIds: z.array(z.string()).optional().default([]),
+    scheduledAt: z
+      .string()
+      .datetime({ offset: true })
+      .refine((v) => new Date(v).getTime() > Date.now(), {
+        message: 'scheduledAt must be in the future',
+      })
+      .optional(),
+  })
+  // BY_HUB requires hub ids; BY_STATUS requires lifecycle values; BY_PLAN
+  // requires plan names (free strings).
+  .refine(
+    (v) =>
+      v.targetAudience === 'ALL' ||
+      (Array.isArray(v.targetIds) && v.targetIds.length > 0),
+    { message: 'targetIds is required for the selected audience' }
+  );
 
 // ==================== INCIDENTS ====================
 export const createIncidentSchema = z.object({

@@ -103,8 +103,11 @@ async function handleSecurityAction(
     return adminForbidden('Requires device_remote_control permission');
   }
 
+  // P0-1 (device-tracking audit, 2026-09-08): FACTORY_RESET removed —
+  // the Emergency Wipe button was a destructive-but-noop trap (the
+  // backend threw unconditionally). Keep this list in lockstep with
+  // `riderActionSchema` in `lib/validators.ts`.
   const fcmRequiredActions = [
-    'FACTORY_RESET',
     'DISABLE_CAMERA',
     'ENABLE_CAMERA',
     'ENFORCE_PASSCODE',
@@ -120,9 +123,6 @@ async function handleSecurityAction(
   const dbUpdate: Prisma.RiderUpdateInput = {};
 
   switch (action) {
-    case 'FACTORY_RESET':
-      fcmResult = await fcmService.sendRemoteWipe(rider.fcmToken!);
-      break;
     case 'SYNC_DEVICE_DATA':
       fcmResult = await fcmService.sendSyncDeviceData(rider.fcmToken!);
       break;
@@ -216,36 +216,33 @@ async function handleSecurityAction(
   // the device action regardless of `dbUpdate`. The
   // pre-fix code only wrote the audit log via
   // `updateSecurityFlags` when `dbUpdate` was
-  // non-empty, which meant the 6 FCM-only branches
-  // (FACTORY_RESET, DISABLE_CAMERA, ENABLE_CAMERA,
+  // non-empty, which meant the 5 FCM-only branches
+  // (DISABLE_CAMERA, ENABLE_CAMERA,
   // ENFORCE_PASSCODE, CHECK_LOCATION_INTEGRITY,
-  // SYNC_DEVICE_DATA) left no record — including
-  // the most severe one, a remote phone wipe via
-  // FACTORY_RESET. Use a `device.*` action prefix
+  // SYNC_DEVICE_DATA) left no record. P0-1
+  // (device-tracking audit, 2026-09-08) removed
+  // FACTORY_RESET entirely (the Emergency Wipe
+  // button was a noop trap). Use a `device.*` action prefix
   // so the existing audit-log-prefix sweep test
   // (NET-005 follow-up-5) classifies the row
   // correctly.
   const auditAction = `device.${action.toLowerCase()}`;
-  try {
-    await createAuditLog({
-      actorId: session.adminId ?? 'unknown',
-      actorType: 'ADMIN',
-      action: auditAction,
-      entity: 'rider',
-      entityId: rider.id,
-      details: {
-        fcmResult: fcmResult.success ? 'ok' : 'failed',
-        fcmError: fcmResult.success ? undefined : fcmResult.error,
-        // Mirror the columns the admin wanted to set,
-        // if any. Empty for FCM-only actions.
-        ...(Object.keys(dbUpdate).length > 0
-          ? { dbUpdate: (({ lockPasswordHash, ...safe }) => safe)(dbUpdate) }
-          : {}),
-      },
-    });
-  } catch (err) {
-    logger.error('[rider actions] audit log failed', { err });
-  }
+  await createAuditLog({
+    actorId: session.adminId ?? 'unknown',
+    actorType: 'ADMIN',
+    action: auditAction,
+    entity: 'rider',
+    entityId: rider.id,
+    details: {
+      fcmResult: fcmResult.success ? 'ok' : 'failed',
+      fcmError: fcmResult.success ? undefined : fcmResult.error,
+      // Mirror the columns the admin wanted to set,
+      // if any. Empty for FCM-only actions.
+      ...(Object.keys(dbUpdate).length > 0
+        ? { dbUpdate: (({ lockPasswordHash, ...safe }) => safe)(dbUpdate) }
+        : {}),
+    },
+  }).catch((err) => logger.error('[rider actions] audit log failed', { err }));
 
   if (Object.keys(dbUpdate).length > 0) {
     await adminRiderUseCases.updateSecurityFlags(rider.id, dbUpdate, session.adminId || 'SYSTEM');
