@@ -7,23 +7,28 @@ import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
+import 'dart:async';
 import 'package:voltium_rider/utils/toast.dart';
 import 'legal_page_screen.dart';
 import '../legal_fallback_loader.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/widgets/language_toggle.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
-class LegalScreen extends StatefulWidget {
+class LegalScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
 
   const LegalScreen({super.key, this.onNext, this.onBack});
 
   @override
-  State<LegalScreen> createState() => _LegalScreenState();
+  ConsumerState<LegalScreen> createState() => _LegalScreenState();
 }
 
-class _LegalScreenState extends State<LegalScreen>
+class _LegalScreenState extends ConsumerState<LegalScreen>
     with TickerProviderStateMixin {
   final Set<String> _expandedIds = {};
   bool _accepted = false;
@@ -87,13 +92,9 @@ class _LegalScreenState extends State<LegalScreen>
   Future<void> _loadDocs() async {
     setState(() => _loadingDocs = true);
     try {
-      // PR-13: was a wrapper call to
-      // `VoltiumApiService.fetchLegalDocuments`, which is a 1-line
-      // pass-through to `ApiClient.getWithSWR('/api/rider/legal')`.
-      // This screen is `StatefulWidget` (no `ref`); construct the
-      // transport ad hoc. The new-instance allocation is cheap
-      // (it shares the shared pinned HTTP client).
-      final envelope = await ApiClient().getWithSWR('/api/rider/legal');
+      final locale = ref.read(localeProvider).locale.languageCode;
+      final envelope =
+          await ApiClient().getWithSWR('/api/rider/legal?locale=$locale');
       final data = envelope['data'];
       if (data is List) {
         final docs = <String, ({String title, String content})>{};
@@ -142,6 +143,25 @@ class _LegalScreenState extends State<LegalScreen>
     try {
       await CacheService().setBool('legal_accepted_v1', true);
       PostHogService.capture('legal_accepted');
+      // LEGAL-AUDIT-P0-1-2026-09-08: server-side proof of acceptance.
+      // Fire-and-forget — setConsent catches + logs its own network
+      // errors so the wall never blocks on a slow /api/rider/consent.
+      // The server (web/src/app/api/rider/consent/route.ts:32-40)
+      // marks these as `source: 'SERVER'`. We use unawaited so the
+      // wall advances immediately; the consent rows land server-side
+      // within ~1s in normal conditions, independently of the
+      // rider's UI progress.
+      const _legalTypes = <ConsentType>[
+        ConsentType.terms,
+        ConsentType.privacy,
+        ConsentType.rentalSafety,
+        ConsentType.refund,
+        ConsentType.guarantor,
+        ConsentType.lease,
+      ];
+      for (final t in _legalTypes) {
+        unawaited(ConsentService().setConsent(t, granted: true));
+      }
       widget.onNext?.call();
     } catch (e) {
       // AUDIT FIX: a failed consent write used to propagate unhandled out
@@ -163,6 +183,11 @@ class _LegalScreenState extends State<LegalScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(localeProvider, (prev, next) {
+      if (prev?.locale.languageCode != next.locale.languageCode) {
+        _loadDocs();
+      }
+    });
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
 
@@ -179,7 +204,13 @@ class _LegalScreenState extends State<LegalScreen>
                   parent: _entryCtrl,
                   curve: const Interval(0, 0.5, curve: Curves.easeIn),
                 ),
-                child: _buildBackButton(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildBackButton(),
+                    _buildLanguageButton(),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -290,6 +321,29 @@ class _LegalScreenState extends State<LegalScreen>
         ),
         child: Icon(
           Icons.arrow_back,
+          size: 20,
+          color: colors.onSurface,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageButton() {
+    final colors = AppColors.of(context);
+    return GestureDetector(
+      key: const Key('languageToggleButton'),
+      onTap: () => showAppLanguageDialog(context, ref),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: colors.card.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
+          boxShadow: AppShadows.card,
+        ),
+        child: Icon(
+          Icons.translate,
           size: 20,
           color: colors.onSurface,
         ),

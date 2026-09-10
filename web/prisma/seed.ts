@@ -1301,34 +1301,65 @@ async function main() {
   console.log('Created system settings');
 
   // ==================== LEGAL DOCUMENTS ====================
+  // LEGAL-AUDIT-P1-1-2026-09-08: the previous version wrote
+  // `where: { type: doc.type }` against the `@@unique([type, locale])`
+  // compound key (schema.prisma) — Prisma rejected it, so the seed
+  // aborted at this loop on every run after the rider-safety seed.
+  // Also only seeded 4 of 6 types (no rental_safety / guarantor) and
+  // no `locale`. Fix: use the compound `type_locale` selector, seed
+  // all six types, and add `locale: 'en'`. `update: {}` keeps re-runs
+  // idempotent. Content for the 2 new types is a small stub — the
+  // legal team fills in the real policy text in a follow-up.
   const legalDocs = [
     {
       type: 'terms',
+      locale: 'en',
       title: 'Terms of Service',
       content:
         '# Terms of Service\n\n**Last Updated:** October 15, 2024\n\n## 1. Acceptance of Terms\n\nBy accessing or using the Voltium platform, you agree to be bound by these Terms.\n\n## 2. Vehicle Rental\n\n### 2.1 Eligibility\n- Must be at least 18 years old\n- Must hold a valid driving license\n- Must complete KYC verification\n\n## 3. Payments\n\n### 3.1 Security Deposit\n- ₹5,000 refundable security deposit\n- Refunded within 7 business days\n\n### 3.2 Late Fees\n- ₹50/hour after grace period',
     },
     {
       type: 'privacy',
+      locale: 'en',
       title: 'Privacy Policy',
       content:
         '# Privacy Policy\n\n## Information We Collect\n\n### Personal Information\n- Full name, email, phone number\n- Government ID details\n- Bank account details\n\n## Data Security\n- AES-256 encryption\n- Regular security audits',
     },
     {
       type: 'refund',
+      locale: 'en',
       title: 'Refund Policy',
       content:
         '# Refund Policy\n\n## Security Deposit\n- Processed within 7 business days\n- Deducted for damages or unpaid fees\n\n## Top-up Refunds\n- Unused wallet balance refundable\n- Processing: 5-7 business days',
     },
     {
+      type: 'rental_safety',
+      locale: 'en',
+      title: 'Rental Safety',
+      content:
+        '# Rental Safety\n\n## Before Every Ride\n- Inspect brakes, tyres, and lights\n- Wear a helmet\n- Obey local traffic laws',
+    },
+    {
+      type: 'guarantor',
+      locale: 'en',
+      title: 'Guarantor Agreement',
+      content:
+        '# Guarantor Agreement\n\nA guarantor accepts responsibility for the rider\'s obligations under these Terms, including payment of unpaid fees and damage charges, up to the cap declared at the time of agreement.',
+    },
+    {
       type: 'lease',
+      locale: 'en',
       title: 'Lease Agreement',
       content:
         '# Vehicle Lease Agreement\n\n## Parties\n- **Voltium Electric Mobility** (Lessor)\n- **Rider** (Lessee)\n\n## Terms\n- Security Deposit: ₹5,000\n- Maintenance handled by Lessor\n- 24-hour roadside assistance',
     },
   ];
   for (const doc of legalDocs) {
-    await db.legalDocument.upsert({ where: { type: doc.type }, update: {}, create: doc });
+    await db.legalDocument.upsert({
+      where: { type_locale: { type: doc.type, locale: doc.locale } },
+      update: {},
+      create: doc,
+    });
   }
   console.log('Created legal documents');
 

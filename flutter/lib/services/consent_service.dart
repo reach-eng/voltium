@@ -7,7 +7,16 @@ import '../utils/app_logger.dart';
 /// (previously only location/contacts/call-logs synced — the other six were
 /// local-only). Values must match the backend consentSchema enum in
 /// web/src/lib/validators.ts.
+///
+/// LEGAL-AUDIT-P0-1-2026-09-08: extended with the six LEGAL_CONSENT_TYPES
+/// (TERMS, PRIVACY, RENTAL_SAFETY, REFUND, GUARANTOR, LEASE). The server
+/// side (web/src/app/api/rider/consent/route.ts) marks these as
+/// `source: 'SERVER'` (i.e. the acceptance was against server-rendered
+/// content, not a device permission). The Flutter side just sends them
+/// like any other consent; the server decides the source based on the
+/// LEGAL_CONSENT_TYPES set.
 enum ConsentType {
+  // Device consent types (existing).
   location('LOCATION'),
   contacts('CONTACTS'),
   callLogs('CALL_LOGS'),
@@ -16,7 +25,14 @@ enum ConsentType {
   mic('MIC'),
   battery('BATTERY'),
   notifications('NOTIFICATIONS'),
-  deviceAdmin('DEVICE_ADMIN');
+  deviceAdmin('DEVICE_ADMIN'),
+  // Legal acceptance types (LEGAL-AUDIT-P0-1-2026-09-08).
+  terms('TERMS'),
+  privacy('PRIVACY'),
+  rentalSafety('RENTAL_SAFETY'),
+  refund('REFUND'),
+  guarantor('GUARANTOR'),
+  lease('LEASE');
 
   const ConsentType(this.apiValue);
   final String apiValue;
