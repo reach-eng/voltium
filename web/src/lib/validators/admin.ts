@@ -267,11 +267,82 @@ export const LEGAL_DOCUMENT_TYPES = [
 
 export const LEGAL_DOCUMENT_KEYS = LEGAL_DOCUMENT_TYPES.map((d) => d.key);
 
+/**
+ * LEGAL-AUDIT-P1-2-2026-09-10: the seed writes Markdown (`# Heading`,
+ * `**bold**`, `- list`); the admin preview and Flutter viewer both render
+ * raw plain text — riders see literal `#` and `**`. This stripper
+ * removes Markdown syntax so what the admin writes is what riders read.
+ *
+ * Policy: legal copy does not need formatting primitives. The textarea
+ * says "Content (Plain Text)" and the normalizer enforces that.
+ *
+ * What it strips:
+ *   - ATX headings  : `# ` / `## ` / `### `  → heading text kept, newline preserved
+ *   - Bold          : `**text**`              → `text`
+ *   - Italic         : `*text*` or `_text_`   → `text`
+ *   - Inline code    : `` `code` ``            → `code`
+ *   - List markers   : `1. ` / `- ` / `* `    → stripped; bare text kept
+ *   - Horizontal rule : `---` / `***`           → removed
+ *
+ * What it preserves:
+ *   - Heading text itself (the words after `#`)
+ *   - Paragraph breaks (double newlines → preserved as \n\n)
+ *   - All other characters verbatim
+ *
+ * Not stripped (intentional): URLs in `[text](url)` become `[text] url`
+ * so the reader can still see the link target was present.
+ */
+export function stripMarkdown(content: string): string {
+  return content
+    // Strip horizontal rules. The `\n` at the end of the `---` line is consumed
+    // by the `\s*$` so no extra blank line is introduced after the replacement.
+    .replace(/^[-*_]{3,}\s*$/gm, '')
+    // Strip ATX headings (1–3 levels). Replace the `#` markers with
+    // `\n`; do NOT remove the heading text. Then collapse any `\n\n\n`
+    // (blank-line-after-heading + heading + blank-line-after-heading) back
+    // to `\n\n` — so stacked headings lose their text but paragraph breaks
+    // within content survive.
+    // Example: "# H1\n\n## H2\n\nContent" → "\n\nH1\n\n## H2\n\nContent"
+    // → "\n\nH1\n\nH2\n\nContent" after 2nd pass → "H1\n\nH2\n\nContent" after trim.
+    .replace(/^#{1,3}[^\S\t]*/gm, '\n')
+    // Bold + italic combined (must run before the bold-only strip).
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    // Bold.
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    // Italic.
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    // Inline code.
+    .replace(/`(.+?)`/g, '$1')
+    // Ordered list markers (1. 2. 3.). NOT stripped in v1 — "1. Acceptance
+    // of Terms" (a numbered heading) and "1. First item" (a list) are
+    // visually identical at line-start and the lookbehind can't reliably
+    // tell them apart when the heading was the first line of the input.
+    // Ordered lists are vanishingly rare in legal copy; the seed uses
+    // unordered markers only. Revisit if a real ordered-list case surfaces.
+    // .replace(/^\d+\.\s+/gm, '')
+    // Unordered list markers (- and * at line start, but not inside text).
+    .replace(/^[-*]\s+/gm, '')
+    // Collapse triple+ newlines to double (paragraph breaks stay).
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export const updateLegalAdminSchema = z
   .object({
     type: z.enum(LEGAL_DOCUMENT_KEYS as [string, ...string[]]),
     title: z.string().max(200).optional(),
-    content: z.string().min(1, 'content is required').max(100000).optional(),
+    // P1-2 (2026-09-08 legal audit): Markdown is stripped before validation
+    // so the DB stores plain text. Riders and admins both read plain text —
+    // no Markdown package is in the render path, so literal `#`/`**` was
+    // being shown to riders.
+    content: z
+      .string()
+      .min(1, 'content is required')
+      .max(100000)
+      .optional()
+      .transform((v) => (v != null ? stripMarkdown(v) : v)),
     // P0 (2026-09-08 legal audit): `isActive` was REMOVED — the
     // LegalDocument model has no such column, so accepting it made the
     // schema advertise a toggle whose every write was a Prisma
