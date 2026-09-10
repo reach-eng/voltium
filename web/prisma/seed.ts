@@ -1104,26 +1104,44 @@ async function main() {
   console.log('Created settings');
 
   // ==================== SYSTEM SETTINGS ====================
+  // P0-1 (system-settings audit, 2026-09-08): the 10 rows flagged with
+  // `isEditable: false` below are dead knobs — they have ZERO runtime
+  // readers in `src/` (verified by search). Scheduling, retention, the
+  // low-disk guard, and the public/API URLs all resolve elsewhere
+  // (`BackupSchedule` table, `NEXT_PUBLIC_API_BASE_URL` env, etc.), so
+  // editing them here changes nothing while convincing the operator it
+  // did. The values are preserved on disk (operators may have set intent
+  // here even though the runtime ignores it) but the Save button is gone
+  // and the description now says where the knob actually lives. The
+  // matching `migration.sql` flips the same rows to `isEditable: false`
+  // for databases seeded before this change.
   const systemSettings = [
     {
       key: 'APP_PUBLIC_URL',
       value: 'http://localhost:8081',
       valueType: 'URL',
       category: 'APP_URLS',
-      description: 'Public URL of the rider application website.',
+      isEditable: false,
+      description:
+        'Informational only — runtime uses the same base as NEXT_PUBLIC_API_BASE_URL. ' +
+        'This row is preserved for reference.',
     },
     {
       key: 'API_BASE_URL',
       value: 'http://localhost:8081/api',
       valueType: 'URL',
       category: 'APP_URLS',
-      description: 'Base endpoint URL of the backend service APIs.',
+      isEditable: false,
+      description:
+        'Set via NEXT_PUBLIC_API_BASE_URL environment variable. This row is ' +
+        'preserved for reference only; runtime does not read it.',
     },
     {
       key: 'LOCAL_STORAGE_ROOT',
       value: 'D:/VoltiumServer/data/uploads',
       valueType: 'PATH',
       category: 'STORAGE',
+      isEditable: true,
       description: 'Local directory root path where rider uploaded files are stored.',
     },
     {
@@ -1131,6 +1149,7 @@ async function main() {
       value: 'D:/VoltiumServer/data/backups',
       valueType: 'PATH',
       category: 'BACKUP',
+      isEditable: true,
       description: 'Local directory path where database and uploads backups are stored.',
     },
     {
@@ -1138,6 +1157,7 @@ async function main() {
       value: '',
       valueType: 'PATH',
       category: 'BACKUP',
+      isEditable: true,
       description: 'Optional secondary destination path (e.g. USB flash drive) for backups.',
     },
     {
@@ -1145,63 +1165,87 @@ async function main() {
       value: 'DAILY',
       valueType: 'STRING',
       category: 'BACKUP',
+      isEditable: false,
       description:
-        'How often scheduled automatic backups are triggered (DAILY, WEEKLY, MONTHLY, MANUAL).',
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_TIME_OF_DAY',
       value: '02:00',
       valueType: 'STRING',
       category: 'BACKUP',
-      description: 'Hour and minute (HH:MM) in 24hr format when the backup triggers.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_TIMEZONE',
       value: 'Asia/Kolkata',
       valueType: 'STRING',
       category: 'BACKUP',
-      description: 'Timezone context to resolve the trigger time of day.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_KEEP_DAILY',
       value: '7',
       valueType: 'NUMBER',
       category: 'BACKUP',
-      description: 'Number of daily backups to preserve under retention policy.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_KEEP_WEEKLY',
       value: '4',
       valueType: 'NUMBER',
       category: 'BACKUP',
-      description: 'Number of weekly backups to preserve under retention policy.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_KEEP_MONTHLY',
       value: '3',
       valueType: 'NUMBER',
       category: 'BACKUP',
-      description: 'Number of monthly backups to preserve under retention policy.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_KEEP_MANUAL',
       value: '10',
       valueType: 'NUMBER',
       category: 'BACKUP',
-      description: 'Max limit of manual backups to retain before pruning.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'BACKUP_MINIMUM_FREE_DISK_GB',
       value: '10',
       valueType: 'NUMBER',
       category: 'BACKUP',
-      description: 'Minimum remaining disk space in GB required to trigger a backup.',
+      isEditable: false,
+      description:
+        'Superseded by Data Management → Schedule tab (BackupSchedule table). ' +
+        'This row is preserved for reference only; runtime does not read it.',
     },
     {
       key: 'MAINTENANCE_MODE',
       value: 'false',
       valueType: 'BOOLEAN',
       category: 'SERVER',
+      isEditable: true,
       description:
         'Whether the application is currently in maintenance mode blocking rider operations.',
     },
@@ -1210,6 +1254,7 @@ async function main() {
       value: 'System is currently under maintenance. Please check back later.',
       valueType: 'STRING',
       category: 'SERVER',
+      isEditable: true,
       description: 'Banner message shown to riders when maintenance mode is active.',
     },
   ];
@@ -1217,7 +1262,9 @@ async function main() {
   for (const s of systemSettings) {
     await db.systemSetting.upsert({
       where: { key: s.key },
-      update: {},
+      // Mirror the migration: preserve the operator's value but pin
+      // isEditable so fresh installs and existing installs converge.
+      update: { isEditable: s.isEditable, description: s.description },
       create: s,
     });
   }

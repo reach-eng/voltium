@@ -13,23 +13,37 @@ import { updateSystemSettingSchema } from '@/lib/validators/admin';
  * P1-6 (settings audit, 2026-09-08): this is one of TWO admin surfaces
  * on the shared `systemSetting` table — see the split table in
  * `web/src/app/api/admin/settings/route.ts`. The short version: THIS
- * surface is single-key/raw-string/SUPER_ADMIN-only and owns
- * infrastructure config (URLs, storage roots, backup policy,
- * maintenance); the `/api/admin/settings` surface is multi-key/
- * rupees-in/any-settings_manage-role and owns the BUSINESS registry
- * keys. Both honor `isEditable`, so a row frozen via either surface
- * is frozen for both.
+ * surface is single-key/raw-string/SUPER_ADMIN-only and owns LIVE
+ * infrastructure config (storage roots, maintenance); the
+ * `/api/admin/settings` surface is multi-key/rupees-in/any-
+ * settings_manage-role and owns the BUSINESS registry keys. Both
+ * honor `isEditable`, so a row frozen via either surface is frozen
+ * for both.
+ *
+ * P0-1 (system-settings audit, 2026-09-08): the 10 rows below
+ * previously listed as "editable" had ZERO runtime readers. They
+ * remain in the table (the operator's last value is preserved for
+ * forensic context) but their `isEditable` flag is `false` and the
+ * description now points to where the knob actually lives:
+ *   - `BACKUP_FREQUENCY`, `BACKUP_TIME_OF_DAY`, `BACKUP_TIMEZONE`,
+ *     `BACKUP_KEEP_DAILY`, `BACKUP_KEEP_WEEKLY`, `BACKUP_KEEP_MONTHLY`,
+ *     `BACKUP_KEEP_MANUAL`, `BACKUP_MINIMUM_FREE_DISK_GB` →
+ *     Data Management → Schedule tab (`BackupSchedule` table).
+ *   - `APP_PUBLIC_URL`, `API_BASE_URL` → `NEXT_PUBLIC_API_BASE_URL` env.
  *
  * Editable settings (stored in SystemSetting table):
- *   APP_PUBLIC_URL, API_BASE_URL, LOCAL_STORAGE_ROOT,
- *   BACKUP_ROOT, BACKUP_SECONDARY_ROOT, BACKUP_FREQUENCY,
- *   BACKUP_TIME_OF_DAY, BACKUP_TIMEZONE,
- *   BACKUP_KEEP_DAILY, BACKUP_KEEP_WEEKLY, BACKUP_KEEP_MONTHLY,
- *   BACKUP_KEEP_MANUAL, BACKUP_MINIMUM_FREE_DISK_GB
+ *   LOCAL_STORAGE_ROOT, BACKUP_ROOT, BACKUP_SECONDARY_ROOT,
+ *   MAINTENANCE_MODE, MAINTENANCE_MESSAGE
  *
  * Read-only settings (displayed from env/status):
  *   NODE_ENV, APP_ENV, DATA_MODE, STORAGE_PROVIDER,
  *   ENABLE_TEST_OTP, ENABLE_DEV_ADMIN_LOGIN
+ *
+ * Read-only display (dead knobs — see P0-1):
+ *   APP_PUBLIC_URL, API_BASE_URL, BACKUP_FREQUENCY,
+ *   BACKUP_TIME_OF_DAY, BACKUP_TIMEZONE,
+ *   BACKUP_KEEP_DAILY, BACKUP_KEEP_WEEKLY, BACKUP_KEEP_MONTHLY,
+ *   BACKUP_KEEP_MANUAL, BACKUP_MINIMUM_FREE_DISK_GB
  */
 
 export const GET = withApiHandler(async (request: NextRequest) => {

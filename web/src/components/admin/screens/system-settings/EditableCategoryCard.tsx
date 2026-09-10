@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings2 } from 'lucide-react';
+import { DeadKnobBanner } from './DeadKnobBanner';
 import { SettingRow } from './SettingRow';
 import type { EditableSetting } from './types';
 import { CATEGORY_ICONS, CATEGORY_LABELS } from './types';
@@ -36,6 +37,11 @@ export function EditableCategoryCard({
   isSuperAdmin,
   onSave,
 }: EditableCategoryCardProps) {
+  // P0-1 (system-settings audit, 2026-09-08): show the dead-knob banner
+  // only when this card actually contains at least one frozen row. The
+  // banner copy is keyed by category (BACKUP / APP_URLS) and explains
+  // where the knob actually lives.
+  const hasFrozenKnob = settings.some(([, setting]) => !setting.isEditable);
   return (
     <Card className="rounded-xl border border-border/50 shadow-sm">
       <CardHeader className="pb-3">
@@ -47,6 +53,7 @@ export function EditableCategoryCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
+        {hasFrozenKnob && <DeadKnobBanner category={category} />}
         {settings.map(([key, setting]) => (
           <SettingRow
             key={key}
