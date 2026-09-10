@@ -45,9 +45,17 @@ export function useSystemSettings() {
           setEditValues(values);
         }
       } else if (res.status === 401) {
-        toast.error('Session expired — redirecting to login');
+        // P2-1 (system-settings audit, 2026-09-08): the previous
+        // handler redirected to `/admin/login` — a route that does
+        // not exist in the app router. Login is an inline
+        // `AdminLoginForm` inside `AdminLayout`, so an expired
+        // session should reload the admin shell (which re-renders
+        // its own login form). `window.location.reload()` re-hits
+        // the page; the auth check on `AdminLayout` re-evaluates
+        // and the inline form appears.
+        toast.error('Session expired — please log in again');
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
+          window.location.reload();
         }
       } else if (res.status === 403) {
         toast.error('Forbidden: Super Admin access required for system settings');
@@ -90,9 +98,12 @@ export function useSystemSettings() {
           });
         }
       } else if (res.status === 401) {
-        toast.error('Session expired — redirecting to login');
+        // P2-1: same fix as the GET handler above — no `/admin/login`
+        // route in the app router. Reload the admin shell so
+        // AdminLayout re-renders its own login form.
+        toast.error('Session expired — please log in again');
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
+          window.location.reload();
         }
       } else if (res.status === 403) {
         toast.error('Super Admin permission required to modify system settings');

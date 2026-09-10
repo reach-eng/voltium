@@ -22,16 +22,31 @@ import { SystemSettingsSkeleton } from './system-settings/SystemSettingsSkeleton
 export default function SystemSettingsScreen() {
   const s = useSystemSettings();
 
-  // Group editable settings by category. Stable across re-renders.
-  const grouped = useMemo(() => {
-    if (!s.data) return {};
-    const out: Record<string, Array<[string, (typeof s.data)['editable'][string]]>> = {};
-    for (const [key, setting] of Object.entries(s.data.editable)) {
-      const cat = setting.category || 'SERVER';
-      if (!out[cat]) out[cat] = [];
-      out[cat].push([key, setting]);
+  // P2-4 (system-settings audit, 2026-09-08): the screen used to
+  // group every row (editable + frozen) into one list per category.
+  // Mixed cards made the dead-knob banner (PR-1) harder to read
+  // (the banner appeared at the top of a card that also contained
+  // editable rows) and invited edits to corpses. Split the rows:
+  //   - `editable` — `isEditable: true` rows (the 5 LIVE infra keys
+  //     after PR-1's freeze). Rendered as before, one card per
+  //     category, Save button enabled.
+  //   - `frozen` — `isEditable: false` rows (the 10 dead knobs,
+  //     INTERNAL locks, BUSINESS legacy rows that this surface
+  //     doesn't own). Rendered as a separate "Read-only display"
+  //     section below, grouped by category, no Save button.
+  // Stable across re-renders.
+  const { editable, frozen } = useMemo(() => {
+    const editable: Record<string, Array<[string, (typeof s.data)['editable'][string]]>> = {};
+    const frozen: Record<string, Array<[string, (typeof s.data)['editable'][string]]>> = {};
+    if (s.data) {
+      for (const [key, setting] of Object.entries(s.data.editable)) {
+        const cat = setting.category || 'SERVER';
+        const bucket = setting.isEditable ? editable : frozen;
+        if (!bucket[cat]) bucket[cat] = [];
+        bucket[cat].push([key, setting]);
+      }
     }
-    return out;
+    return { editable, frozen };
   }, [s.data]);
 
   if (s.loading) return <SystemSettingsSkeleton />;
@@ -59,7 +74,7 @@ export default function SystemSettingsScreen() {
 
       {s.adminRole !== null && !s.isSuperAdmin && <RoleLockBanner adminRole={s.adminRole} />}
 
-      {Object.entries(grouped).map(([category, settings]) => (
+      {Object.entries(editable).map(([category, settings]) => (
         <EditableCategoryCard
           key={category}
           category={category}
@@ -73,6 +88,36 @@ export default function SystemSettingsScreen() {
           onSave={s.handleSave}
         />
       ))}
+
+      {Object.keys(frozen).length > 0 && (
+        <>
+          <div className="h-px bg-border" />
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              Read-only display — preserved for forensic context
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              The rows below are not editable from this surface. Their values
+              are preserved for reference; the description on each row
+              points to the active configuration surface.
+            </p>
+            {Object.entries(frozen).map(([category, settings]) => (
+              <EditableCategoryCard
+                key={`frozen-${category}`}
+                category={category}
+                settings={settings}
+                editValues={s.editValues}
+                setEditValues={s.setEditValues}
+                showSecrets={s.showSecrets}
+                setShowSecrets={s.setShowSecrets}
+                saving={s.saving}
+                isSuperAdmin={s.isSuperAdmin}
+                onSave={s.handleSave}
+              />
+            ))}
+          </section>
+        </>
+      )}
 
       <div className="h-px bg-border" />
 

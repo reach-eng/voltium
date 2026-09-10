@@ -5,7 +5,7 @@ import {
 } from './admin.repository';
 import { AUDIT_ACTIONS } from './admin.types';
 import { logAdminAction } from './admin.policy';
-import { parsePermissions } from '@/lib/permissions';
+import { parsePermissions, parsePermissionsSafe } from '@/lib/permissions';
 import { LoginError } from './login-error';
 
 export { LoginError } from './login-error';
@@ -24,7 +24,14 @@ export const adminUseCases = {
       adminRepository.list({ page, limit, ...rest }),
       adminRepository.count(rest),
     ]);
-    const sanitized = result.map(({ password: _pw, ...safe }: (typeof result)[number]) => safe);
+    const sanitized = result.map(({ password: _pw, ...safe }: (typeof result)[number]) => {
+      const { permissions, isMalformed } = parsePermissionsSafe(safe.permissions);
+      return {
+        ...safe,
+        permissions,
+        permissionsMalformed: isMalformed,
+      };
+    });
     return {
       admins: sanitized,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -75,6 +82,23 @@ export const adminUseCases = {
     }
 
     const admin = await adminRepository.update(id, params);
+
+    // P2-2 (system-settings audit, 2026-09-08): the system-settings
+    // UI gates Save buttons on the DB-fresh `role` (read via
+    // `/api/admin/auth/me`), but the PUT enforces the SUPER_ADMIN
+    // check from the JWT's `adminRole` claim. The JWT has a 2h
+    // access-token TTL — a freshly demoted ex-superadmin keeps a
+    // valid token and can still hit raw PUTs (including the
+    // system-settings surface) until expiry. Bump `tokenVersion`
+    // on role or isActive change so the demotion takes effect on
+    // the next request, not in 2h.
+    const roleChanged =
+      params.role !== undefined && params.role !== existing.role;
+    const activeChanged =
+      params.isActive !== undefined && params.isActive !== existing.isActive;
+    if (roleChanged || activeChanged) {
+      await adminRepository.incrementTokenVersion(id);
+    }
 
     await logAdminAction({
       actorId,
