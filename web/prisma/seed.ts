@@ -1153,7 +1153,15 @@ async function main() {
       valueType: 'PATH',
       category: 'STORAGE',
       isEditable: true,
-      description: 'Local directory root path where rider uploaded files are stored.',
+      // P1-4 (system-settings audit, 2026-09-08): storage roots are
+      // memoized in `StoragePathBuilder` per-process, so a sibling
+      // worker in PM2 cluster mode keeps the old value until restart.
+      // The PUT also calls `invalidateCache()` (PR-5) so the local
+      // process picks up the new value immediately, but cluster
+      // siblings need a restart.
+      requiresRestart: true,
+      description: 'Local directory root path where rider uploaded files are stored. ' +
+                   'Edit triggers an immediate local-process cache reset; cluster siblings need a restart.',
     },
     {
       key: 'BACKUP_ROOT',
@@ -1161,7 +1169,9 @@ async function main() {
       valueType: 'PATH',
       category: 'BACKUP',
       isEditable: true,
-      description: 'Local directory path where database and uploads backups are stored.',
+      requiresRestart: true,
+      description: 'Local directory path where database and uploads backups are stored. ' +
+                   'Edit triggers an immediate local-process cache reset; cluster siblings need a restart.',
     },
     {
       key: 'BACKUP_SECONDARY_ROOT',
@@ -1169,7 +1179,9 @@ async function main() {
       valueType: 'PATH',
       category: 'BACKUP',
       isEditable: true,
-      description: 'Optional secondary destination path (e.g. USB flash drive) for backups.',
+      requiresRestart: true,
+      description: 'Optional secondary destination path (e.g. USB flash drive) for backups. ' +
+                   'Edit triggers an immediate local-process cache reset; cluster siblings need a restart.',
     },
     {
       key: 'BACKUP_FREQUENCY',
@@ -1274,8 +1286,15 @@ async function main() {
     await db.systemSetting.upsert({
       where: { key: s.key },
       // Mirror the migration: preserve the operator's value but pin
-      // isEditable so fresh installs and existing installs converge.
-      update: { isEditable: s.isEditable, description: s.description },
+      // isEditable and requiresRestart so fresh installs and existing
+      // installs converge. P1-4 added `requiresRestart`; storage
+      // roots are true, everything else false (the migration backfill
+      // is the source of truth for existing databases).
+      update: {
+        isEditable: s.isEditable,
+        description: s.description,
+        requiresRestart: s.requiresRestart ?? false,
+      },
       create: s,
     });
   }

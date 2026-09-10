@@ -16,6 +16,10 @@ export interface EditableSetting {
   isSecret: boolean;
   isEditable: boolean;
   description: string | null;
+  // P1-4 (system-settings audit, 2026-09-08): operator hint that an
+  // edit needs a process restart to take effect on all workers
+  // (PM2 cluster). Rendered as a small badge on the row.
+  requiresRestart: boolean;
 }
 
 export interface SystemSettingsData {

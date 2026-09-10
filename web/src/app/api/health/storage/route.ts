@@ -74,6 +74,37 @@ export async function GET(request: NextRequest) {
 
     const healthy = uploads.writable && backups.writable && (!secondary || secondary.writable);
 
+    // P1-4 (system-settings audit, 2026-09-08): the runtime and the
+    // health check used to disagree on which source each reported
+    // path came from (DB / env / default). Monitoring and runtime
+    // would each confidently report a different value. Tag every
+    // path with its source so monitoring can flag drift explicitly
+    // instead of relying on the path string alone. We re-query the
+    // row's existence and the env var so the source label reflects
+    // reality, not the DB-first fallback.
+    async function sourceFor(
+      key: string,
+      envVarName: string,
+      _reportedValue: string
+    ): Promise<'DB' | 'env' | 'default'> {
+      try {
+        const row = await db.systemSetting.findUnique({ where: { key } });
+        if (row?.value) return 'DB';
+      } catch {
+        // DB unavailable — fall through to env/default detection
+      }
+      if (process.env[envVarName]) return 'env';
+      // If we got here, the reported value is the default. The exact
+      // default path string isn't important for monitoring — what
+      // matters is "this is not from your config".
+      return 'default';
+    }
+    const uploadsSource = await sourceFor('LOCAL_STORAGE_ROOT', 'LOCAL_STORAGE_ROOT', uploadsRoot);
+    const backupSource = await sourceFor('BACKUP_ROOT', 'BACKUP_ROOT', backupRoot);
+    const secondarySource = secondaryRoot
+      ? await sourceFor('BACKUP_SECONDARY_ROOT', 'BACKUP_SECONDARY_ROOT', secondaryRoot)
+      : null;
+
     return NextResponse.json(
       {
         status: healthy ? 'healthy' : 'degraded',
@@ -81,6 +112,13 @@ export async function GET(request: NextRequest) {
         storageRoot: uploadsRoot,
         backupRoot,
         secondaryBackupRoot: secondaryRoot || null,
+        // P1-4: tag each path with its source (DB / env / default)
+        // so monitoring can flag drift explicitly.
+        sources: {
+          uploadsRoot: uploadsSource,
+          backupRoot: backupSource,
+          secondaryBackupRoot: secondarySource,
+        },
         checks: { uploads, backups, secondary },
         latencyMs: Date.now() - start,
         timestamp: new Date().toISOString(),

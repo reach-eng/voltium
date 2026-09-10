@@ -364,6 +364,11 @@ model Rider {
   // soft-delete predicate injected into every rider read had no indexes.
   @@index([lifecycleStatus])
   @@index([deletedAt])
+  // 2026-09-08 fleet-map audit (P2-7): the fleet endpoint sorts every
+  // page by lastLocationAt DESC NULLS LAST — the column had no index
+  // (the 2026-09-03 bound-fix comment itself noted it was unindexed),
+  // so each 30s fleet poll scanned+sorted the riders table.
+  @@index([lastLocationAt])
   // P1: search-by-email seq-scanned (non-unique: dupes allowed, index only).
   @@index([email])
   @@map("riders")
@@ -874,9 +879,14 @@ model Offer {
   isSponsored Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  // 2026-09-08 offers audit P2-3: soft delete replaces the hard delete —
+  // the last remaining unrecoverable admin deletes. Set (never nulled back)
+  // by the DELETE handler; every reader filters it.
+  deletedAt   DateTime?
 
   // P1: offer-list scans filtered on (isActive, validUntil).
   @@index([isActive, validUntil])
+  @@index([deletedAt])
   @@map("offers")
 }
 
@@ -894,9 +904,13 @@ model Coupon {
   isActive             Boolean      @default(true)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
+  // P2-3: soft delete (see Offer). code is suffixed `#DELETED-<id8>` at
+  // delete time so the @unique column frees the code for reuse.
+  deletedAt            DateTime?
 
   // P1: coupon-list scans filtered on (isActive, validUntil).
   @@index([isActive, validUntil])
+  @@index([deletedAt])
   @@map("coupons")
 }
 
@@ -914,12 +928,28 @@ model Reward {
   points     Int
   createdAt  DateTime  @default(now())
   redeemedAt DateTime?
-  // P1: forensics ordering (nullable — no backfill needed).
+  // 2026-09-08 rewards audit P1-2: soft revoke replaces the hard delete —
+  // a revocation must stay queryable (compliance/forensics), and revoking a
+  // REDEEMED reward must not erase the redemption record. Revoked rows are
+  // excluded from rider history (they can't be redeemed or re-shown as
+  // spendable) but remain in admin lists with their status.
+  revokedAt  DateTime?
+  // 2026-09-08 rewards audit P2-4: optional client-generated idempotency key
+  // for manual awards — a UNIQUE guard so a double submit with the same key
+  // returns the first award instead of creating a second one (mirrors
+  // WalletLedger.idempotencyKey; the referral writers already rely on that
+  // pattern for their wallet leg).
+  awardKey   String?   @unique
+  // P1 forensics note (updated 2026-09-08): Prisma sets @updatedAt on EVERY
+  // update, so this column is "last modified", not creation metadata. Order
+  // forensics by createdAt; use updatedAt only to detect post-creation
+  // edits. Nullable only for rows never touched since creation.
   updatedAt  DateTime? @updatedAt
   rider      Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   // P1: rider reward-history scans were unindexed.
   @@index([riderId])
+  @@index([revokedAt])
   @@map("rewards")
 }
 
@@ -937,6 +967,14 @@ model SystemSetting {
   isEditable       Boolean  @default(true)
   description      String?
   updatedByAdminId String?
+  // P1-4 (system-settings audit, 2026-09-08): operator hint that an
+  // edit needs a process restart to take effect on all workers
+  // (PM2 cluster). The 3 storage roots are memoized in
+  // `StoragePathBuilder` per-process, so a sibling worker keeps the
+  // old value until restart. Maintenance keys are reflected instantly
+  // via middleware cache invalidation (PR-3). Everything else is
+  // read fresh from the DB on every read.
+  requiresRestart  Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -947,9 +985,10 @@ model SystemSetting {
 
 model LegalDocument {
   id        String   @id @default(cuid())
-  type      String   @unique
+  type      String
   title     String
   content   String
+  locale    String   @default("en")
   updatedAt DateTime @updatedAt
 
   // P1-2 (2026-08-05 legal/device audit): every upsert previously overwrote
@@ -957,6 +996,8 @@ model LegalDocument {
   // Revisions are written on each save; the doc row is the current pointer.
   revisions LegalDocumentRevision[]
 
+  @@unique([type, locale])
+  @@index([locale])
   @@map("legal_documents")
 }
 
@@ -981,10 +1022,12 @@ model Faq {
   category  String?
   order     Int       @default(0)
   isActive  Boolean   @default(true)
+  locale    String    @default("en")
   deletedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  @@index([locale, order])
   @@map("faqs")
 }
 

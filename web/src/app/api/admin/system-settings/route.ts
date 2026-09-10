@@ -14,6 +14,16 @@ import { updateSystemSettingSchema } from '@/lib/validators/admin';
 // fragmenting the maintenance control plane across two surfaces that
 // disagree on cache semantics.
 import { invalidateMaintenanceCache } from '@/lib/maintenance-cache';
+// P1-4 (system-settings audit, 2026-09-08): storage roots are
+// memoized in `StoragePathBuilder` (no TTL). Editing LOCAL_STORAGE_ROOT
+// / BACKUP_ROOT / BACKUP_SECONDARY_ROOT through this surface used to
+// change nothing until `invalidateCache()` was called manually, and
+// even then the LOCAL process is the only one that resets — sibling
+// workers in PM2 cluster mode keep the old value until restart. The
+// PUT now calls `invalidateCache()` so the local process is correct
+// immediately; the `requiresRestart` column on the row tells the
+// operator that cluster siblings need a process restart.
+import { StoragePathBuilder } from '@/lib/storage-path-builder';
 import {
   INFRA_PUT_ALLOWED_KEYS,
   managedElsewhere,
@@ -104,6 +114,13 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       isSecret: boolean;
       isEditable: boolean;
       description: string | null;
+      // P1-4 (system-settings audit, 2026-09-08): operator hint
+      // that an edit needs a process restart to take effect on
+      // all workers (PM2 cluster). The PUT also calls
+      // `StoragePathBuilder.invalidateCache()` so the local
+      // process is correct immediately, but cluster siblings need
+      // a restart to reset their in-memory module cache.
+      requiresRestart: boolean;
     }
   > = {};
   for (const s of systemSettings) {
@@ -114,6 +131,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       isSecret: s.isSecret,
       isEditable: s.isEditable,
       description: s.description,
+      requiresRestart: s.requiresRestart,
     };
   }
 
@@ -262,6 +280,19 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   // the cache state across the two writers.
   if (isMaintenanceKey(key)) {
     invalidateMaintenanceCache();
+  }
+
+  // P1-4: drop the StoragePathBuilder module cache so the local
+  // process picks up the new root immediately. Sibling workers in
+  // PM2 cluster mode keep the old value until restart — the
+  // `requiresRestart` row metadata (read on GET) tells the operator
+  // which keys need that restart.
+  if (
+    key === 'LOCAL_STORAGE_ROOT' ||
+    key === 'BACKUP_ROOT' ||
+    key === 'BACKUP_SECONDARY_ROOT'
+  ) {
+    StoragePathBuilder.invalidateCache();
   }
 
   return success({ key, value: storedValue });
