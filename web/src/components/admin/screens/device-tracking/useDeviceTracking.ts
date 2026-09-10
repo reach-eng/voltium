@@ -127,7 +127,19 @@ export function useDeviceTracking(riderId: string | undefined) {
         const json = await res.json();
         if (json.success) {
           toast.success(json.message || `${action} triggered successfully`);
-          if (action === 'ADMIN_LOCK' && json.data?.unlockCode) {
+          // P1-5 (device-tracking audit, 2026-09-08): UNLOCK_DEVICE
+          // also rotates a new 12-digit code server-side
+          // (`actions/route.ts:174-176`). The previous check only
+          // surfaced the code for ADMIN_LOCK, so an admin who
+          // closed the one-time dialog after UNLOCK lost the
+          // rotated code — escalating every non-SUPER_ADMIN
+          // recovery to SUPER_ADMIN. The dialog already says
+          // "will not be able to view it again", so surfacing
+          // the code here is the documented path.
+          if (
+            (action === 'ADMIN_LOCK' || action === 'UNLOCK_DEVICE') &&
+            json.data?.unlockCode
+          ) {
             setGeneratedUnlockCode(json.data.unlockCode);
           }
           setUnlockPasswordInput('');
